@@ -30984,7 +30984,7 @@ escape 0;
 Test { [[
 input int&& E;
 var int e =
-    watching E -> (a) do
+    watching E -> (&a) do
         await FOREVER;
     end;
 escape 0;
@@ -33724,6 +33724,20 @@ spawn Ff() -> (x);
 
 escape 0;
 ]],
+    parser = 'line 7 : after `(´ : expected `&´ or `_´',
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
+    var int v = 0;
+    x = &v;
+end
+
+var int x;
+spawn Ff() -> (&x);
+
+escape 0;
+]],
     stmts = 'line 7 : invalid binding : argument #1 : expected alias `&´ declaration',
 }
 
@@ -33734,7 +33748,7 @@ code/await Ff (void) -> (var& int x) -> void do
 end
 
 var& bool x;
-spawn Ff() -> (x);
+spawn Ff() -> (&x);
 
 escape 0;
 ]],
@@ -33783,7 +33797,7 @@ code/await Ff (void) -> (var& int x) -> void do
 end
 
 vector&[] int x;
-spawn Ff() -> (x);
+spawn Ff() -> (&x);
 
 escape 0;
 ]],
@@ -33841,7 +33855,7 @@ end
 
 var int aaa = 10;
 var& int bbb;
-spawn Ff(aaa) -> (bbb);
+spawn Ff(aaa) -> (&bbb);
 
 escape bbb;
 ]],
@@ -33976,7 +33990,7 @@ code/await Ff (void) -> (var& int x) -> void do
     x = &v;
 end
 var& int x;
-spawn Ff() -> (x);
+spawn Ff() -> (&x);
 escape 0;
 ]],
     stmts = 'line 6 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
@@ -33989,7 +34003,7 @@ code/await Ff (void) -> (var& int x) -> void do
 end
 pool[] Ff ffs;
 var& int x;
-spawn Ff() in ffs -> (x);
+spawn Ff() in ffs -> (&x);
 escape 0;
 ]],
     stmts = 'line 7 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
@@ -34001,7 +34015,7 @@ code/await Ff (void) -> (var& int x) -> void do
     x = &v;
 end
 var&? int x;
-spawn Ff() -> (x);
+spawn Ff() -> (&x);
 escape 0;
 ]],
     stmts = 'line 6 : invalid binding : argument #1 : unmatching alias `&´ declaration',
@@ -34013,7 +34027,7 @@ code/await Ff (void) -> (var&? int x) -> void do
     x = &v;
 end
 var&? int x;
-spawn Ff() -> (x);
+spawn Ff() -> (&x);
 escape (x? as int) + 1;
 ]],
     run = 1,
@@ -34026,7 +34040,7 @@ code/await Ff (void) -> (var&? int x) -> void do
     await 1s;
 end
 var&? int x;
-spawn Ff() -> (x);
+spawn Ff() -> (&x);
 escape x! + 1;
 ]],
     run = 11,
@@ -34039,7 +34053,7 @@ code/await Ff (void) -> (var&? int x) -> void do
 end
 pool[] Ff ffs;
 var&? int x;
-spawn Ff() in ffs -> (x);
+spawn Ff() in ffs -> (&x);
 escape (x? as int) + 1;
 ]],
     run = 1,
@@ -34056,7 +34070,7 @@ code/await Ff (void) -> (var&? int x) -> void do
 end
 
 var&? int x;
-spawn Ff() -> (x);
+spawn Ff() -> (&x);
 await x;
 
 escape 1;
@@ -34074,7 +34088,7 @@ end
 
 pool[] Ff ffs;
 var&? int x_;
-spawn Ff() in ffs -> (x_);
+spawn Ff() in ffs -> (&x_);
 
 await x_;
 
@@ -34090,7 +34104,7 @@ code/await Ff (void) -> (var& int x) -> FOREVER do
     await FOREVER;
 end
 var& int x;
-spawn Ff() -> (x);
+spawn Ff() -> (&x);
 escape x + 1;
 ]],
     run = 11,
@@ -34104,7 +34118,7 @@ code/await Ff (void) -> (var& int x) -> FOREVER do
 end
 pool[] Ff ffs;
 var& int x;
-spawn Ff() in ffs -> (x);
+spawn Ff() in ffs -> (&x);
 escape x + 1;
 ]],
     run = 11,
@@ -34118,7 +34132,7 @@ code/await Ff (void) -> (var&? int x) -> void do
 end
 pool[] Ff ffs;
 var&? int x;
-spawn Ff() in ffs -> (x);
+spawn Ff() in ffs -> (&x);
 escape x! + 1;
 ]],
     run = 11,
@@ -34213,7 +34227,7 @@ end
 var int ret = 0;
 
 var&? int x;
-spawn Ff() -> (x);
+spawn Ff() -> (&x);
 
 ret = x!;
 await x!;
@@ -34234,7 +34248,7 @@ end
 var int ret = 0;
 
 var&? int x;
-spawn Ff() -> (x);
+spawn Ff() -> (&x);
 
 escape x!;
 ]],
@@ -34249,7 +34263,7 @@ code/await Ff (void) -> (var&? int x) -> void do
 end
 
 var&? int x;
-spawn Ff() -> (x);
+spawn Ff() -> (&x);
 
 var int ret = x!;
 await async do end;
@@ -34268,7 +34282,7 @@ end
 var int ret = 0;
 
 var&? int x;
-spawn Ff() -> (x);
+spawn Ff() -> (&x);
 
 escape (x? as int) + 1;
 ]],
@@ -34293,7 +34307,7 @@ end
 var int ret = 0;
 
 var&? int x;
-spawn Ff() -> (x);
+spawn Ff() -> (&x);
 
 ret = x!;
 await x!;    // err
@@ -34314,7 +34328,7 @@ end
 var int ret = 0;
 
 var&? int x;
-spawn Ff() -> (x);
+spawn Ff() -> (&x);
 
 ret = x!;
 await x;
@@ -34334,7 +34348,7 @@ end
 var int ret = 0;
 
 var&? int x;
-spawn Ff() -> (x);
+spawn Ff() -> (&x);
 await x;
 ret = ret + (x? as int) + 1;
 
@@ -34418,7 +34432,7 @@ code/await Code (void) -> (var& int y) -> void do
 end
 
 var int y;
-watching Code() -> (y) do
+watching Code() -> (&y) do
     escape 1;
 end
 
@@ -34439,7 +34453,7 @@ end
 var& int y;
 var int x = 10;
 var int? a =
-    watching Code(&x) -> (y) do
+    watching Code(&x) -> (&y) do
         y = y + 1;
         await 5s;
         escape 1;
@@ -34458,7 +34472,7 @@ end
 
 var& int y;
 do
-    watching Code() -> (y) do
+    watching Code() -> (&y) do
     end
 end
 do
@@ -34482,7 +34496,7 @@ end
 var& int y, z;
 var int x = 10;
 var int? a =
-    watching Code(&x) -> (y,z) do
+    watching Code(&x) -> (&y,&z) do
         y = y + 1;
         await 5s;
         escape 1;
@@ -34503,7 +34517,7 @@ do
 end
 var& int y;
 var int x = 10;
-watching Code(&x) -> (y) do
+watching Code(&x) -> (&y) do
     y = y + 1;
     await 5s;
     escape y;
@@ -34527,7 +34541,7 @@ do
 end
 
 var& _SDL_Window win;
-watching SDL_Go() -> (win) do
+watching SDL_Go() -> (&win) do
     await 1s;
     _printf("%p\n", win);
 end
@@ -34668,7 +34682,7 @@ end
 var int ret = 0;
 var& _int vvv;
 var int? x =
-    watching Fx() -> (vvv) do
+    watching Fx() -> (&vvv) do
         ret = ret + vvv;
         await 1s;
     end;
@@ -34684,7 +34698,7 @@ code/await Ff (void) -> (var int x) -> void do
     await FOREVER;
 end
 
-watching Ff() -> (a) do
+watching Ff() -> (&a) do
     escape a + 1;
 end
 
@@ -34700,7 +34714,7 @@ code/await Ff (void) -> (var& int x) -> void do
 end
 
 var& int a,b;
-watching Ff() -> (a,b) do
+watching Ff() -> (&a,&b) do
 end
 
 escape 0;
@@ -34716,7 +34730,7 @@ code/await Ff (void) -> (var& int x, var& int y) -> void do
 end
 
 var& int a;
-watching Ff() -> (a) do
+watching Ff() -> (&a) do
 end
 
 escape 0;
@@ -34732,7 +34746,7 @@ code/await Ff (void) -> (var& int x, var& int y) -> void do
 end
 
 var& int a;
-watching Ff() -> (_,a) do
+watching Ff() -> (_,&a) do
     escape a + 1;
 end
 
@@ -34754,7 +34768,7 @@ do
 end
 
 vector&[10] Int nums;
-watching Texs() -> (nums) do
+watching Texs() -> (&nums) do
     vector&[10] Int nums_ = &nums;
 end
 
@@ -34840,7 +34854,7 @@ do
 end
 
 var& int x;
-spawn Ff() -> (x);
+spawn Ff() -> (&x);
 escape x;
 ]],
     stmts = 'line 9 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
@@ -34854,7 +34868,7 @@ do
 end
 
 var& int x;
-spawn Ff() -> (x);
+spawn Ff() -> (&x);
 escape x;
 ]],
     run = 10,
@@ -34869,7 +34883,7 @@ do
 end
 
 var& int x;
-spawn Ff() -> (x);
+spawn Ff() -> (&x);
 await 1s;
 escape x;
 ]],
@@ -34901,7 +34915,7 @@ do
 end
 
 var&? int x;
-spawn Ff() -> (x);
+spawn Ff() -> (&x);
 await 1s;
 escape x!;
 ]],
@@ -34921,7 +34935,7 @@ end
 
 var  int vv = 0;
 var& int v;
-watching Ff() -> (v) do
+watching Ff() -> (&v) do
     v = &vv;
     escape v;
 end
@@ -34938,7 +34952,7 @@ end
 
 var  int vv = 0;
 var& int v  = &vv;
-watching Ff() -> (v) do
+watching Ff() -> (&v) do
     escape v;
 end
 escape 0;
@@ -34955,7 +34969,7 @@ code/await Ff (void) -> (var& int v1, var& int v2) -> void do
 end
 
 var& int v;
-watching Ff() -> (v,v) do
+watching Ff() -> (&v,&v) do
     escape v;
 end
 escape 0;
@@ -34971,7 +34985,7 @@ code/await Ff (void) -> (var& int v) -> void do
 end
 
 var& int v;
-watching Ff() -> (v) do
+watching Ff() -> (&v) do
     escape v;
 end
 escape 0;
@@ -34988,7 +35002,7 @@ code/await Ff (void) -> (vector&[1] int vec) -> void do
 end
 
 vector&[1] int vec;
-watching Ff() -> (vec) do
+watching Ff() -> (&vec) do
     escape vec[0];
 end
 escape 0;
@@ -35044,7 +35058,7 @@ end
 
 code/await Ff (var int v) -> (var& int x) -> void do
     var& int y;
-    watching Gg() -> (y) do
+    watching Gg() -> (&y) do
         x = &y;
         await FOREVER;
     end
@@ -35052,7 +35066,7 @@ end
 
 var& int x;
 var int x1;
-watching Ff(x1) -> (x) do
+watching Ff(x1) -> (&x) do
     escape x;
 end
 
@@ -35071,14 +35085,14 @@ code/await Gg (void) -> (var& int y) -> void do
 end
 
 code/await Ff (void) -> (var& int x) -> void do
-    watching Gg() -> (x) do
+    watching Gg() -> (&x) do
         await FOREVER;
     end
     await 1s;
 end
 
 var& int x;
-watching Ff() -> (x) do
+watching Ff() -> (&x) do
     escape x;
 end
 
@@ -35095,7 +35109,7 @@ code/await Ff (void) -> (var& int v) -> void do
 end
 
 var& int v;
-watching Ff() -> (v)
+watching Ff() -> (&v)
 do
     await FOREVER;
 end
@@ -35113,19 +35127,28 @@ code/await Gg (void) -> (var& int y) -> void do
 end
 
 code/await Ff (void) -> (var& int kkk) -> void do
-    watching Gg() -> (kkk) do
+    watching Gg() -> (&kkk) do
         await FOREVER;
     end
 end
 
 var& int xxx;
-watching Ff() -> (xxx) do
+watching Ff() -> (&xxx) do
     escape xxx;
 end
 
 escape 0;
 ]],
     run = 10,
+}
+Test { [[
+var& int x,y;
+watching Ff() -> (&x,y) do
+end
+
+escape 0;
+]],
+    parser = 'line 2 : after `,´ : expected `&´ or `_´ or `)´',
 }
 Test { [[
 code/await Gg (void) -> (var& int y) -> void do
@@ -35136,7 +35159,7 @@ end
 
 code/await Ff (void) -> (var& int x, var& int y) -> void do
     var& int a;
-    watching Gg() -> (a) do
+    watching Gg() -> (&a) do
         x = &a;
         y = &a;
         await FOREVER;
@@ -35144,7 +35167,7 @@ code/await Ff (void) -> (var& int x, var& int y) -> void do
 end
 
 var& int x,y;
-watching Ff() -> (x,y) do
+watching Ff() -> (&x,&y) do
     escape x+y;
 end
 
@@ -35161,9 +35184,9 @@ end
 
 code/await Ff (void) -> (var& int x) -> void do
     var& int a1;
-    watching Gg() -> (a1) do
+    watching Gg() -> (&a1) do
         var& int a2;
-        watching Gg() -> (a2) do
+        watching Gg() -> (&a2) do
             x = &a1;
             await FOREVER;
         end
@@ -35171,7 +35194,7 @@ code/await Ff (void) -> (var& int x) -> void do
 end
 
 var& int x;
-watching Ff() -> (x) do
+watching Ff() -> (&x) do
     escape x;
 end
 
@@ -35190,14 +35213,14 @@ end
 code/await Ff (void) -> (var& int x) -> void do
     nothing;
     var& int y;
-    watching Gg() -> (y) do
+    watching Gg() -> (&y) do
         x = &y;
         await FOREVER;
     end
 end
 
 var& int x;
-watching Ff() -> (x) do
+watching Ff() -> (&x) do
     escape x;
 end
 
@@ -35216,9 +35239,9 @@ end
 
 code/await Ff (void) -> (var& int x) -> void do
     var& int y1,y2,y3;
-    watching Gg(1) -> (y1) do
-        watching Gg(2) -> (y2) do
-            watching Gg(3) -> (y3) do
+    watching Gg(1) -> (&y1) do
+        watching Gg(2) -> (&y2) do
+            watching Gg(3) -> (&y3) do
                 var int v = y1+y2+y3;
                 x = &v;
                 await FOREVER;
@@ -35228,7 +35251,7 @@ code/await Ff (void) -> (var& int x) -> void do
 end
 
 var& int x;
-watching Ff() -> (x) do
+watching Ff() -> (&x) do
     escape x;
 end
 
@@ -35245,7 +35268,7 @@ end
 
 code/await Ff (void) -> (var& int x) -> void do
     var& int y1;
-    watching Gg(1) -> (y1) do
+    watching Gg(1) -> (&y1) do
         do
             var int v = y1;
             x = &v;
@@ -35269,9 +35292,9 @@ end
 
 code/await Ff (void) -> (var& int x) -> void do
     var& int y1,y2;
-    watching Gg(1) -> (y1) do
+    watching Gg(1) -> (&y1) do
         nothing;
-        watching Gg(2) -> (y2) do
+        watching Gg(2) -> (&y2) do
             var int v = y1+y2;
             x = &v;
             await FOREVER;
@@ -35280,7 +35303,7 @@ code/await Ff (void) -> (var& int x) -> void do
 end
 
 var& int x;
-watching Ff() -> (x) do
+watching Ff() -> (&x) do
     escape x;
 end
 
@@ -35299,9 +35322,9 @@ end
 
 code/await Ff (void) -> (var& int x) -> void do
     var& int y1,y2;
-    watching Gg(1) -> (y1) do
+    watching Gg(1) -> (&y1) do
         await 1s;
-        watching Gg(2) -> (y2) do
+        watching Gg(2) -> (&y2) do
             var int v = y1+y2;
             x = &v;
             await FOREVER;
@@ -35310,7 +35333,7 @@ code/await Ff (void) -> (var& int x) -> void do
 end
 
 var& int x;
-watching Ff() -> (x) do
+watching Ff() -> (&x) do
     escape x;
 end
 
@@ -35330,8 +35353,8 @@ end
 
 code/await Ff (void) -> (var& int x) -> void do
     var& int y1, y2;
-    watching Gg(1) -> (y1) do
-        watching Gg(2) -> (y2) do
+    watching Gg(1) -> (&y1) do
+        watching Gg(2) -> (&y2) do
             var int v = y1+y2;
             x = &v;
             await FOREVER;
@@ -35341,7 +35364,7 @@ code/await Ff (void) -> (var& int x) -> void do
 end
 
 var& int x;
-watching Ff() -> (x) do
+watching Ff() -> (&x) do
     escape x;
 end
 
@@ -35360,8 +35383,8 @@ end
 
 code/await Ff (void) -> (var& int x) -> void do
     var& int y1, y2;
-    watching Gg(1) -> (y1) do
-        watching Gg(2) -> (y2) do
+    watching Gg(1) -> (&y1) do
+        watching Gg(2) -> (&y2) do
             var int v = y1+y2;
             x = &v;
             await FOREVER;
@@ -35371,7 +35394,7 @@ code/await Ff (void) -> (var& int x) -> void do
 end
 
 var& int x;
-watching Ff() -> (x) do
+watching Ff() -> (&x) do
     escape x;
 end
 
@@ -35389,9 +35412,9 @@ end
 
 code/await Ff (void) -> (var& int x) -> void do
     var& int y1, y2, y3;
-    watching Gg(1) -> (y1)
-           , Gg(2) -> (y2)
-           , Gg(3) -> (y3)
+    watching Gg(1) -> (&y1)
+           , Gg(2) -> (&y2)
+           , Gg(3) -> (&y3)
     do
         var int v = y1+y2+y3;
         x = &v;
@@ -35400,7 +35423,7 @@ code/await Ff (void) -> (var& int x) -> void do
 end
 
 var& int x;
-watching Ff() -> (x) do
+watching Ff() -> (&x) do
     escape x;
 end
 
@@ -35431,7 +35454,7 @@ end
 
 event& int e;
 var int? ret =
-    watching Ff(10) -> (e) do
+    watching Ff(10) -> (&e) do
         emit e(100);
         escape 0;
     end;
@@ -35454,7 +35477,7 @@ end
 event& void e;
 var& int v;
 var int? ret =
-    watching Ff(10) -> (e,v) do
+    watching Ff(10) -> (&e,&v) do
         emit e;
         escape 0;
     end;
@@ -35514,9 +35537,9 @@ end
 
 var& int ctrl1, ctrl2;
 
-watching Ff(2) -> (ctrl1) do
+watching Ff(2) -> (&ctrl1) do
     watching Gg() do
-        watching Ff(1) -> (ctrl2) do
+        watching Ff(1) -> (&ctrl2) do
             escape ctrl1+ctrl2;
         end
     end
@@ -35540,9 +35563,9 @@ end
 
 var& int ctrl1, ctrl2;
 
-spawn Ff(1) -> (ctrl1);
+spawn Ff(1) -> (&ctrl1);
 spawn Gg();
-spawn Ff(2) -> (ctrl2);
+spawn Ff(2) -> (&ctrl2);
 
 escape ctrl1+ctrl2;
 ]],
@@ -35560,9 +35583,9 @@ end
 
 var& int ctrl1, ctrl2;
 
-spawn Ff(1) -> (ctrl1);
+spawn Ff(1) -> (&ctrl1);
 spawn Gg();
-spawn Ff(2) -> (ctrl2);
+spawn Ff(2) -> (&ctrl2);
 
 escape ctrl1+ctrl2;
 ]],
@@ -35580,7 +35603,7 @@ end
 var int ret = 0;
 var& int nn;
 var& int n;
-watching Ff(10) -> (n) do
+watching Ff(10) -> (&n) do
     ret = ret + n;
     nn = &n;
 end
@@ -35602,7 +35625,7 @@ code/await Gg (void) -> (var& int x) -> int
 do
     var& int xx;
     var int? ret =
-        watching Ff() -> (xx) do
+        watching Ff() -> (&xx) do
             x = &xx;
         end;
     escape ret!;
@@ -38085,7 +38108,7 @@ pool[] Ff ffs;
 var&?   int x;
 event&? int e;
 
-spawn Ff() in ffs -> (x,e);
+spawn Ff() in ffs -> (&x,&e);
 
 var int ret = 0;
 
@@ -38114,7 +38137,7 @@ end
 pool[] Ff ffs;
 
 var&? int x;
-spawn Ff() in ffs -> (x);
+spawn Ff() in ffs -> (&x);
 escape x!;
 ]],
     run = 10,
@@ -38462,7 +38485,7 @@ code/await Tx (var int v1)->(var&? int v2)->void do
 end
 
 var&? int v;
-spawn Tx(10) -> (v);
+spawn Tx(10) -> (&v);
 escape v!;
 ]],
     --asr = '7] runtime error: invalid tag',
@@ -38476,7 +38499,7 @@ code/await Tx (var int v1)->(var&? int v2)->void do
 end
 
 var&? int v;
-spawn Tx(10) -> (v);
+spawn Tx(10) -> (&v);
 await async do end
 escape v!;
 ]],
@@ -38560,7 +38583,7 @@ code/await Tx (void)->(event&? void e)->void do
 end
 
 event&? void e;
-spawn Tx() -> (e);
+spawn Tx() -> (&e);
 await e!;
 escape 1;
 ]],
@@ -38577,7 +38600,7 @@ code/await Tx (void)->(event&? void e)->void do
 end
 
 event&? void e;
-spawn Tx() -> (e);
+spawn Tx() -> (&e);
 await e!;
 escape 1;
 ]],
@@ -38619,11 +38642,11 @@ code/await Tx (void)->(var&? int x)->void do
 end
 
 var&? int x1;
-spawn Tx() -> (x1);
+spawn Tx() -> (&x1);
 await x1;
 
 var&? int x2;
-spawn Tx() -> (x2);
+spawn Tx() -> (&x2);
 await x2;
 
 escape 1;
@@ -38640,11 +38663,11 @@ code/await Tx (void)->(var&? int x)->void do
 end
 
 var&? int x1;
-spawn Tx() -> (x1);
+spawn Tx() -> (&x1);
 await x1;
 
 var&? int x2;
-spawn Tx() -> (x2);
+spawn Tx() -> (&x2);
 await x2;
 
 escape 1;
@@ -38661,12 +38684,12 @@ code/await Tx (void)->(var&? int x)->void do
 end
 
 var&? int x1;
-spawn Tx() -> (x1);
+spawn Tx() -> (&x1);
 spawn Tx();
 await x1;
 
 var&? int x2;
-spawn Tx() -> (x2);
+spawn Tx() -> (&x2);
 await x2;
 
 escape 1;
@@ -38705,7 +38728,7 @@ code/await Ux (event& void e, var bool only_await) -> void do
 end
 
 event& void e;
-spawn Tx() -> (e);
+spawn Tx() -> (&e);
 
 spawn Ux(&e, true);
 spawn Ux(&e, false);
@@ -41092,7 +41115,7 @@ code/await Points (void) -> (var& IPoints me) -> void do
 end
 
 var& IPoints points;
-watching Points() -> (points) do
+watching Points() -> (&points) do
     emit points.inc;
 end
 

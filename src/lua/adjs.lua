@@ -537,6 +537,9 @@ error'TODO'
                             watch)),
                     block))
     end,
+    _List_Var_Ref = function (me)
+        me.tag = 'List_Var'
+    end,
 
 -------------------------------------------------------------------------------
 

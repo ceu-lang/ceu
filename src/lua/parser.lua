@@ -608,7 +608,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') * V'Exp_Name' * V'_Emit_ps'
 
     , __watch = (V'Await_Ext' + V'Await_Int' + V'Await_Wclock' + V'Abs_Await')
-                    * OPT(KK'->' * PARENS(V'List_Var'))
+                    * OPT(KK'->' * PARENS(V'_List_Var_Ref'))
     , _Watching = K'watching'
                     * LIST(V'__watch')
                 * V'__Do'
@@ -644,10 +644,10 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , Abs_Spawn_Single = K'spawn' * V'__Abs_Cons_Code'
                             * (-KK'in') * Cc(false)
-                                * OPT(KK'->' * PARENS(V'List_Var'))
+                                * OPT(KK'->' * PARENS(V'_List_Var_Ref'))
     , Abs_Spawn_Pool   = K'spawn' * V'__Abs_Cons_Code'
                             * KK'in' * V'Exp_Name'
-                                * OPT(KK'->' * PARENS(V'List_Var'))
+                                * OPT(KK'->' * PARENS(V'_List_Var_Ref'))
 
     , __Abs_Cons_Code = V'__abs_mods' * V'Abs_Cons' -I(V'__id_data')
     , Abs_Cons   = V'ID_abs' * PARENS(OPT(V'Abslist'))
@@ -744,8 +744,9 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
 -- TODO: rename List_*
     , List_Name = LIST(V'Exp_Name' + V'ID_any')
-    , List_Var  = LIST(V'ID_int' + V'ID_any')
     , List_Exp  = LIST(V'__Exp')
+    , List_Var  = LIST(V'ID_int' + V'ID_any')
+    , _List_Var_Ref = LIST(KK'&'*V'ID_int' + V'ID_any')
 
  --<<<
 
