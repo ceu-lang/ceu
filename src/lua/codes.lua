@@ -1295,7 +1295,7 @@ do {
 
     Await_Pause = function (me)
         HALT(me, {
-            { evt =  '((tceu_evt){CEU_INPUT__PAUSE_BLOCK,{NULL}})' },
+            { evt =  '((tceu_evt){CEU_INPUT__PAUSE,{NULL}})' },
             { lbl = me.lbl_out.id },
             lbl = me.lbl_out.id,
         })

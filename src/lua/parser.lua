@@ -302,7 +302,6 @@ KEYS = P
 'pos' +
 'pool' +
 'plain' +
-'PAUSE' +
 'pause' +
 'par' +
 'output' +
@@ -599,7 +598,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , Await_Wclock = (V'WCLOCKK' + V'WCLOCKE')
 
     , Await_Forever = K'await' * K'FOREVER'
-    , Await_Pause   = K'PAUSE'
+    , Await_Pause   = K'pause'
 
     , _Emit_ps = OPT(V'__Exp' + PARENS(OPT(V'List_Exp')))
     , Emit_Wclock   = K'emit' * (V'WCLOCKK'+V'WCLOCKE')

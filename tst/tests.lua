@@ -21,11 +21,11 @@ par/or do
         with
             loop do
                 do
-                    var bool v = await PAUSE until v==true;
+                    var bool v = await pause until v==true;
                     ret = ret + 1;
                 end
                 do
-                    var bool v = await PAUSE until v==false;
+                    var bool v = await pause until v==false;
                     ret = ret + 2;
                 end
             end
