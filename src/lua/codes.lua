@@ -714,6 +714,7 @@ _ceu_mem->trails[]]..me.trails[1]..[[].evt.id     = CEU_INPUT__PAUSE_BLOCK;
 _ceu_mem->trails[]]..me.trails[1]..[[].pse_evt    = ]]..V(e)..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].pse_skip   = ]]..body.trails_n..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].pse_paused = 0;
+_ceu_mem->trails[]]..me.trails[1]..[[].pse_changed = 0;
 ]])
         CONC(me, body)
     end,

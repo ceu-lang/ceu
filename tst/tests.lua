@@ -8,6 +8,7 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+--[=====[
 Test { [[
 input int E;
 event bool e;
@@ -57,7 +58,6 @@ escape ret;
 }
 
 do return end -- OK
---[=====[
 ---]=====]
 
 ----------------------------------------------------------------------------
@@ -1642,14 +1642,14 @@ Test { [[await -1ms; escape 0;]],
     --ast = "line 1 : after `await´ : expected event",
     --parser = 'line 1 : after `1´ : expected `;´',
     --parser = 'line 1 : after `1´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `until´ or `;´',
-    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or name expression or `{´ or `async´ or `async/thread´ or `FOREVER´',
+    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or `pause´ or name expression or `{´ or `async´ or `async/thread´ or `FOREVER´',
 }
 
 Test { [[await 1; escape 0;]],
     parser = 'line 1 : after `1´ : expected `h´ or `min´ or `s´ or `ms´ or `us´',
 }
 Test { [[await -1; escape 0;]],
-    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or name expression or `{´ or `async´ or `async/thread´ or `FOREVER´',
+    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or `pause´ or name expression or `{´ or `async´ or `async/thread´ or `FOREVER´',
     --env = 'line 1 : event "?" is not declared',
 }
 
@@ -5976,6 +5976,7 @@ escape ret;
 }
 
 -- works with INPUT__STK, doesn't work with single-pass scheduler
+-- ceu_bcast_mark vs ceu_bcast_exec
 Test { [[
 event int a;
 var int ret = 0;
