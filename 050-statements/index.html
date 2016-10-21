@@ -103,6 +103,10 @@
                 
                     <li><a class="toctree-l4" href="#event-handling">Event Handling</a></li>
                 
+                    <li><a class="toctree-l4" href="#conditionals">Conditionals</a></li>
+                
+                    <li><a class="toctree-l4" href="#loops">Loops</a></li>
+                
             
             </ul>
         
@@ -222,7 +226,8 @@ end
 </code></pre>
 
 <h3 id="pre-do-end"><code>pre-do-end</code></h3>
-<p>A <code>pre-do-end</code> prepends its statements in the beginning of the program:</p>
+<p>The <code>pre-do-end</code> statement prepends its statements in the beginning of the
+program:</p>
 <pre><code class="ceu">Pre_Do ::= pre do
                Block
            end
@@ -234,12 +239,17 @@ and moved to the beginning of the top-level block, before all other statements.<
 <p>A declaration exposes a <a href="#TODO">storage entity</a> to the program.
 Its <a href="#TODO">scope</a> begins after the declaration and goes until the end of the
 enclosing <a href="#TODO">block</a>.</p>
-<p>See also <a href="#TODO">Storage Classes</a> for a general overview of storage entities.</p>
-<h3 id="variables">Variables</h3>
-<p>Variable declarations are as follows:</p>
-<pre><code class="ceu">Var ::= var [`&amp;´|`&amp;?´] Type LIST(ID_int [`=´ Set])
+<p>Céu supports variables, vectors, external events, internal events, and pools:</p>
+<pre><code class="ceu">Var    ::= var [`&amp;´|`&amp;?´] Type LIST(ID_int [`=´ Set])
+Vector ::= vector [`&amp;´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
+Ext    ::= input  (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
+        |  output (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
+Int    ::= event [`&amp;´|`&amp;?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Set])
+Pool   ::= pool [`&amp;´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
 </code></pre>
 
+<p>See also <a href="#TODO">Storage Classes</a> for an overview of storage entities.</p>
+<h3 id="variables">Variables</h3>
 <p>A variable has an associated <a href="#TODO">type</a> and can be optionally
 <a href="#TODO">initialized</a>.
 A single statement can declare multiple variables of the same type.
@@ -251,10 +261,6 @@ var&amp; int z = &amp;v;    // &quot;z&quot; is an alias to &quot;v&quot;
 </code></pre>
 
 <h3 id="vectors">Vectors</h3>
-<p>Vector declarations are as follows:</p>
-<pre><code class="ceu">Vector ::= vector [`&amp;´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
-</code></pre>
-
 <p>A vector has a dimension, an associated <a href="#TODO">type</a> and can be optionally
 <a href="#TODO">initialized</a>.
 A single statement can declare multiple vectors of the same dimension and type.
@@ -280,16 +286,11 @@ vector&amp;[]  int vs4 = &amp;vs1;  // &quot;vs4&quot; is an alias to &quot;vs1&
 </code></pre>
 
 <h3 id="events">Events</h3>
-<p>See also <a href="#TODO">Introduction</a> for a general overview of events.</p>
-<h4 id="external-events">External events</h4>
-<p>External event declarations are as follows:</p>
-<pre><code class="ceu">Ext ::= input  (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
-     |  output (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
-</code></pre>
-
-<p>A declaration includes the <a href="#TODO">type</a> of the value the event carries.
+<p>An event has a <a href="#TODO">type</a> for the value it carries when occurring.
 It can be also a list of types if the event communicates multiple values.
 A single statement can declare multiple events of the same type.</p>
+<p>See also <a href="#TODO">Introduction</a> for a general overview of events.</p>
+<h4 id="external-events">External events</h4>
 <p>Examples:</p>
 <pre><code class="ceu">input  void A,B;        // &quot;A&quot; and &quot;B&quot; are input events carrying no values
 output int  MY_EVT;     // &quot;MY_EVT&quot; is an output event carrying integer values
@@ -297,14 +298,8 @@ input (int,byte&amp;&amp;) BUF; // &quot;BUF&quot; is an input event carrying an
 </code></pre>
 
 <h3 id="internal-events">Internal events</h3>
-<p>Internal event declarations are as follows:</p>
-<pre><code class="ceu">Int ::= event [`&amp;´|`&amp;?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Set])
-</code></pre>
-
-<p>A declaration includes the <a href="#TODO">type</a> of the value the event carries.
-It can be also a list of types if the event communicates multiple values.
-A single statement can declare multiple events of the same type.
-Declarations can also be <a href="#TODO">aliases</a> or <a href="#TODO">option aliases</a>.
+<p>Declarations for internal events can also be <a href="#TODO">aliases</a> or
+<a href="#TODO">option aliases</a>.
 Only in this case they can contain an <a href="#TODO">initialization</a>.</p>
 <p>Examples:</p>
 <pre><code class="ceu">event  void a,b;        // &quot;a&quot; and &quot;b&quot; are internal events carrying no values
@@ -312,18 +307,17 @@ event&amp; void z = &amp;a;     // &quot;z&quot; is an alias to event &quot;a&qu
 event (int,int) c;      // &quot;c&quot; is a internal event carrying an &quot;(int,int)&quot; pair
 </code></pre>
 
+<h3 id="pools">Pools</h3>
+<p><code>TODO</code></p>
 <h2 id="event-handling">Event Handling</h2>
 <h3 id="await">Await</h3>
 <p>The <code>await</code> statement halts the running trail until the referred
 event occurs.
 The event can be an <a href="#TODO">external input event</a>, an <a href="#TODO">internal event</a>,
 a timer, or forever (i.e., never awake):</p>
-<pre><code class="ceu">Await ::= await (ID_ext | Name) [until Exp]
-       |  await (WCLOCKK|WCLOCKE)
-       |  await FOREVER
-
-WCLOCKK ::= [NUM h] [NUM min] [NUM s] [NUM ms] [NUM us]
-WCLOCKE ::= `(´ Exp `)´ (h|min|s|ms|us)
+<pre><code class="ceu">Await ::= await (ID_ext | Name) [until Exp]     /* events */
+       |  await (WCLOCKK|WCLOCKE)               /* timers */
+       |  await FOREVER                         /* forever */
 </code></pre>
 
 <p>Examples:</p>
@@ -340,15 +334,11 @@ await FOREVER;            // awaits forever
 optional <a href="#TODO">assignment</a>.</p>
 <h4 id="events_1">Events</h4>
 <p>The <code>await</code> statement for events halts the running trail until the referred
-<a href="#TODO">external input event</a> or  <a href="#TODO">internal event</a> occurs:</p>
-<pre><code class="ceu">Await ::= await (ID_ext | Name) [until Exp]
-       |  ...   // other awaits
-</code></pre>
-
+<a href="#TODO">external input event</a> or  <a href="#TODO">internal event</a> occurs.</p>
 <p>The <code>await</code> evaluates to a value of the type of the event.</p>
 <p>The optional clause <code>until</code> tests an additional condition required to awake.
 The condition can use the returned value from the <code>await</code>.
-It expands to the <code>loop</code> as follows:</p>
+It expands to a <a href="#TODO"><code>loop</code></a> as follows:</p>
 <pre><code class="ceu">loop do
     &lt;ret&gt; = await &lt;evt&gt;;
     if &lt;Exp&gt; then   // &lt;Exp&gt; can use &lt;ret&gt;
@@ -359,24 +349,17 @@ end
 
 <p>Examples:</p>
 <pre><code class="ceu">input int E;                    // &quot;E&quot; is an external input event carrying &quot;int&quot; values
-var int v = await E until v&gt;10; // assigns occurring values of &quot;E&quot; to &quot;v&quot;, awaking when &quot;v&gt;10&quot;
+var int v = await E until v&gt;10; // assigns occurring &quot;E&quot; to &quot;v&quot;, awaking when &quot;v&gt;10&quot;
 
 event (bool,int) e;             // &quot;e&quot; is an internal event carrying &quot;(bool,int)&quot; pairs
 var bool v1;
 var int  v2;
-(v1,v2) = await e;              // awakes on &quot;e&quot; and assigns its carrying values to &quot;v1&quot; and &quot;v2&quot;
+(v1,v2) = await e;              // awakes on &quot;e&quot; and assigns its values to &quot;v1&quot; and &quot;v2&quot;
 </code></pre>
 
 <h4 id="timers">Timers</h4>
 <p>The <code>await</code> statement for timers halts the running trail until the referred
-timer expires:</p>
-<pre><code class="ceu">Await ::= await (WCLOCKK|WCLOCKE)
-       |  ...   // other awaits
-
-WCLOCKK ::= [NUM h] [NUM min] [NUM s] [NUM ms] [NUM us]
-WCLOCKE ::= `(´ Exp `)´ (h|min|s|ms|us)
-</code></pre>
-
+timer expires.</p>
 <p><code>WCLOCKK</code> specifies a constant time expressed as a sequence of value/unit
 pairs.
 <code>WCLOCKE</code> specifies an expression in parenthesis followed by a single unit of
@@ -406,6 +389,228 @@ end
 </code></pre>
 
 <h3 id="emit">Emit</h3>
+<p>The <code>emit</code> statement broadcasts an event to the whole program.
+The event can be an <a href="#TODO">external event</a>, an <a href="#TODO">internal event</a>, or
+a timer:</p>
+<pre><code class="ceu">Emit ::= emit (ID_ext | Name) [`=&gt;´ (Exp | `(´ [LIST(Exp)] `)´)]
+      |  emit (WCLOCKK|WCLOCKE)
+</code></pre>
+
+<p>Examples:</p>
+<pre><code class="ceu">emit A;         // emits the external event `A` of type &quot;void&quot;
+emit a(1);      // emits the internal event `a` of type &quot;int&quot;
+
+emit 1s;        // emits the specified time
+emit (t)ms;     // emits the current value of the variable `t` in milliseconds
+</code></pre>
+
+<h4 id="events_2">Events</h4>
+<p>The <code>emit</code> statement for events expects a specific number of arguments matching
+the event type (unless the event is of type <code>void</code>).</p>
+<ul>
+<li>An <code>emit</code> to an external input or timer event can only occur inside
+  <a href="#TODO">asynchronous blocks</a>.</li>
+<li>An <code>emit</code> to an external output event is also an expression that evaluates
+  to a value of type <code>s32</code> (its meaning is <a href="#TODO">platform dependent</a>).</li>
+<li>An <code>emit</code> to an internal event starts a new <a href="#TODO">internal reaction</a>.</li>
+</ul>
+<p>Examples:</p>
+<pre><code class="ceu">input int I;
+async do
+    emit I(10);         // broadcasts &quot;I&quot; to the application itself, passing &quot;10&quot;
+end
+
+output void O;
+var int ret = emit O(); // outputs &quot;O&quot; to the environment and captures the result
+
+event (int,int) e;
+emit e(1,2);            // broadcasts &quot;e&quot; passing a pair of &quot;int&quot; values
+</code></pre>
+
+<h4 id="timers_1">Timers</h4>
+<p>The <code>emit</code> statement for timers expects an expression of time as described in
+<a href="#TODO">Await Timer</a>.</p>
+<p>Like input events, time can only be emitted inside <a href="#asynchronous-blocks">asynchronous 
+blocks</a>.</p>
+<p>Examples:</p>
+<pre><code class="ceu">async do
+    emit 1s;    // broadcasts &quot;1s&quot; to the application itself
+end
+</code></pre>
+
+<h2 id="conditionals">Conditionals</h2>
+<p>The <code>if-then-else</code> statement provides conditionals in Céu:</p>
+<pre><code class="ceu">If ::= if Exp then
+           Block
+       { else/if Exp then
+           Block }
+       [ else
+           Block ]
+       end
+</code></pre>
+
+<p>Each condition <code>Exp</code> is tested in sequence, first for the <code>if</code> clause and then
+for each of the optional <code>else/if</code> clauses.
+For the first condition that evaluates to <code>true</code>, the <code>Block</code> following it
+executes.
+If all conditions fail, the optional <code>else</code> clause executes.</p>
+<p>All conditions must evaluate to a value of type <a href="#TODO"><code>bool</code></a>, which is
+checked at compile time.</p>
+<h2 id="loops">Loops</h2>
+<p>Céu supports simple loops, numeric iterators, event iterators, and pool
+iterators:</p>
+<pre><code class="ceu">Loop ::=
+      /* simple loop */
+        loop [`/´Exp] do
+            Block
+        end
+
+      /* numeric iterator */
+      | loop [`/´Exp] Numeric do    /* Numeric ::= (see &quot;Numeric Iterators&quot;) */
+            Block
+        end
+
+      /* event iterator */
+      | every [(Name | `(´ LIST(Name|`_´) `)´) in] (ID_ext|Name|WCLOCKK|WCLOCKE) do
+            Block
+        end
+
+      /* pool iterator */
+      | loop [`/´Exp] [ `(´ LIST(Var) `)´ ] in Name do
+            Block
+        end
+
+Break    ::= break [`/´ID_int]
+Continue ::= continue [`/´ID_int]
+</code></pre>
+
+<p>The <code>Block</code> body of a loop executes an arbitrary number of times, depending on
+the conditions imposed by each kind of loop.</p>
+<p>Except for the <code>every</code> iterator, all loops support an optional
+<code>&grave;/&acute;Exp</code> to limit the maximum number of iterations and
+avoid <a href="#TODO">infinite execution</a>.
+The expression must be a constant evaluated at compile time.</p>
+<h3 id="break-and-continue"><code>break</code> and <code>continue</code></h3>
+<p>The <code>break</code> statement aborts the deepest enclosing loop.</p>
+<p>The <code>continue</code> statement aborts the body of the deepest enclosing loop and
+restarts in the next iteration.</p>
+<p>The optional <code>&grave;/&acute;ID_int</code> in both statements only applies
+to <a href="#TODO">numeric iterators</a>.</p>
+<h3 id="simple-loops">Simple Loops</h3>
+<p>A simple loop executes its body continually and forever.</p>
+<p>Examples:</p>
+<pre><code class="ceu">// blinks a LED with a frequency of 1s forever
+loop do
+    emit LED(1);
+    await 1s;
+    emit LED(0);
+    await 1s;
+end
+</code></pre>
+
+<pre><code class="ceu">loop do
+    loop do
+        if &lt;cnd-1&gt; then
+            break;      // aborts the loop at line 2 if &lt;cnd-1&gt; is satisfied
+        end
+    end
+    if &lt;cnd-2&gt; then
+        continue;       // restarts the loop at line 1 if &lt;cnd-2&gt; is satisfied
+    end
+end
+</code></pre>
+
+<h3 id="numeric-iterators">Numeric Iterators</h3>
+<p>The numeric loop modifies the value of a control variable on each iteration
+according to the specification of an optional interval as follows:</p>
+<pre><code class="ceu">Numeric ::= (`_´|ID_int) in [ (`[´ | `]´)
+                                  ( (     Exp `-&gt;´ (`_´|Exp))
+                                  | (`_´|Exp) `&lt;-´ Exp      ) )
+                              (`[´ | `]´) [`,´ Exp] ]
+</code></pre>
+
+<p>The control variable assumes the values specified in the interval, one by one,
+for each iteration of the loop body:</p>
+<ul>
+<li><strong>control variable:</strong>
+    <code>ID_int</code> is a variable of a <a href="#TODO">numeric type</a>.
+    Alternatively, the special anonymous identifier <code>_</code> can be used if the body
+    of the loop does not access the variable.
+    The control variable is marked as <code>read-only</code> and cannot be changed
+    explicitly.</li>
+<li><strong>interval:</strong>
+    Specifies a direction, endpoints with open or closed modifiers, and a step.<ul>
+<li><strong>direction</strong>:<ul>
+<li><code>-&gt;</code>: Starts from the endpoint <code>Exp</code> on the left increasing towards <code>Exp</code> on the right.</li>
+<li><code>&lt;-</code>: Starts from the endpoint <code>Exp</code> on the right decreasing towards <code>Exp</code> on the left.
+Typically, the value on the left should always be smaller or equal to
+the value on the right.</li>
+</ul>
+</li>
+<li><strong>endpoints</strong>:
+    <code>[Exp</code> and <code>Exp]</code> are closed intervals which include <code>Exp</code> as the
+    endpoints;
+    <code>]Exp</code> and <code>Exp[</code> are open intervals which exclude <code>Exp</code> as the
+    endpoints.
+    Alternatively, the finishing endpoint may be <code>_</code> which means that the
+    interval goes towards infinite.</li>
+<li><strong>step</strong>:
+    An optional positive number added or subtracted towards the limit.
+    If the step is omitted, it assumes the value <code>1</code>.
+    If the direction is <code>-&gt;</code>, the step is added, otherwise it is subtracted.
+If the interval is not specified, it assumes the default <code>[0 -&gt; _]</code>.</li>
+</ul>
+</li>
+</ul>
+<p>The numeric iterator executes as follows:</p>
+<ul>
+<li><strong>initialization:</strong>
+    The starting endpoint is assigned to the control variable.
+    If the starting enpoint is open, the control variable accumulates a step.</li>
+<li><strong>iteration:</strong><ol>
+<li><strong>limits test:</strong>
+    If the control variable crossed the finishing endpoint, the loop
+    terminates.</li>
+<li><strong>body execution:</strong>
+    The loop body executes.</li>
+<li><strong>step</strong>
+    Applies a step to the control variable. Goto step <code>1</code>.</li>
+</ol>
+</li>
+</ul>
+<p>The <code>break</code> and <code>continue</code> statements inside numeric iterators accept an
+optional modifier <code>&grave;/&acute;ID_int</code> to match the control
+variable of the enclosing loop to affect.</p>
+<p>Examples:</p>
+<pre><code class="ceu">// prints &quot;i=0&quot;, &quot;i=1&quot;, ...
+var int i;
+loop i do
+    _printf(&quot;i=%d\n&quot;, i);
+end
+</code></pre>
+
+<pre><code class="ceu">// awaits 1s and prints &quot;Hello World!&quot; 10 times
+loop _ in [0 -&gt; 10[ do
+    await 1s;
+    _printf(&quot;Hello World!\n&quot;);
+end
+</code></pre>
+
+<pre><code class="ceu">var int i;
+loop i do
+    var int j;
+    loop j do
+        if &lt;cnd-1&gt; then
+            continue/i;         // continues the loop at line 1
+        else/if &lt;cnd-2&gt; then
+            break/j;            // breaks the loop at line 4
+        end
+    end
+end
+</code></pre>
+
+<p><em>Note : the runtime asserts that the step is a positive number and that the control
+variable does not overflow.</em></p>
               
             </div>
           </div>
