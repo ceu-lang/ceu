@@ -10,6 +10,7 @@ end
 
 --[=====[
 ---]=====]
+
 Test { [[
 input int E;
 event bool e;
@@ -46,12 +47,15 @@ with
         emit E(0);      // 23
         emit E(0);      // 23
         emit 10s;       // 33
+        emit E(1);      // 34
+        emit E(0);      // 36
+        emit 10s;       // 46
     end
 end
 escape ret;
 ]],
     wrn = true,
-    run = 33,
+    run = 46,
 }
 
 Test { [[
@@ -66,12 +70,13 @@ par/or do
             end
         with
             do finalize with
-                ;
+                nothing;
             pause with
                 ret = ret + 1;
             resume with
                 ret = ret + 2;
             end
+            await FOREVER;
         end
     end
 with
@@ -91,12 +96,16 @@ with
         emit E(0);      // 23
         emit E(0);      // 23
         emit 10s;       // 33
+        emit E(1);      // 34
+        emit E(0);      // 36
+        emit 10s;       // 46
     end
 end
 escape ret;
 ]],
+    -- todo: this examples uses trails[4], trails[6], but not trails[5]
     wrn = true,
-    run = 33,
+    run = 46,
 }
 
 --do return end -- OK
@@ -1683,14 +1692,14 @@ Test { [[await -1ms; escape 0;]],
     --ast = "line 1 : after `await´ : expected event",
     --parser = 'line 1 : after `1´ : expected `;´',
     --parser = 'line 1 : after `1´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `until´ or `;´',
-    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or `pause´ or name expression or `{´ or `async´ or `async/thread´ or `FOREVER´',
+    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or name expression or `{´ or `pause´ or `resume´ or `async´ or `async/thread´ or `FOREVER´',
 }
 
 Test { [[await 1; escape 0;]],
     parser = 'line 1 : after `1´ : expected `h´ or `min´ or `s´ or `ms´ or `us´',
 }
 Test { [[await -1; escape 0;]],
-    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or `pause´ or name expression or `{´ or `async´ or `async/thread´ or `FOREVER´',
+    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or name expression or `{´ or `pause´ or `resume´ or `async´ or `async/thread´ or `FOREVER´',
     --env = 'line 1 : event "?" is not declared',
 }
 

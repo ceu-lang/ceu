@@ -63,7 +63,7 @@ F = {
             me.trails_n = me.trails_n + 1
         end
         if me.fins_n > 0 then
-            me.trails_n = me.trails_n + me.fins_n
+            me.trails_n = me.trails_n + 3*me.fins_n
         end
         me.trails_n = me.trails_n + #me.spawns
     end,
@@ -175,9 +175,10 @@ end
             or (pool and pool.has_trail) or (var and var.has_trail)
             or (evt and evt.has_trail)
         then
+            local n = (sub.tag=='Finalize' and 3) or 1
             for stmts in AST.iter() do
                 if stmts.tag == 'Stmts' then
-                    stmts._trails[1] = stmts._trails[1] + 1
+                    stmts._trails[1] = stmts._trails[1] + n
                 else
                     break
                 end

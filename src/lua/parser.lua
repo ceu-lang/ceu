@@ -429,15 +429,17 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , Stmt_Call = V'Abs_Call' + V'Exp_Call'
 
-    , __fin_stmt   = V'___fin_stmt' * V'__seqs'
-    , ___fin_stmt  = V'Nothing'
-                   + V'_Set'
-                   + V'Emit_Ext_emit' + V'Emit_Ext_call'
-                   + V'Stmt_Call'
-    , __finalize   = K'finalize' * (PARENS(V'List_Name') + Cc(false)) * K'with' *
-                     V'Block' *
-                   K'end'
-    , Finalize     = K'do' * OPT(V'__fin_stmt') * V'__finalize'
+    , __fin_stmt  = V'___fin_stmt' * V'__seqs'
+    , ___fin_stmt = V'Nothing'
+                  + V'_Set'
+                  + V'Emit_Ext_emit' + V'Emit_Ext_call'
+                  + V'Stmt_Call'
+    , __finalize  = K'finalize' * (PARENS(V'List_Name') + Cc(false)) * K'with' *
+                        V'Block' *
+                    OPT(K'pause'  * K'with' * V'Block') *
+                    OPT(K'resume' * K'with' * V'Block') *
+                    K'end'
+    , Finalize = K'do' * OPT(V'__fin_stmt') * V'__finalize'
 
     , _Var_set_fin = K'var' * KK'&?' * V'Type' * V'__ID_int'
                    * (KK'='-'==') * KK'&'
