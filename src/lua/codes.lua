@@ -1129,8 +1129,6 @@ _ceu_mem->trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
             local ID_ext = AST.get(Await,'Await_Ext', 1,'ID_ext')
             if ID_ext then
                 id = 'tceu_input_'..ID_ext.dcl.id
-            elseif AST.get(Await, 'Await_Pause') then
-                id = 'tceu_input_PAUSE'
             else
                 local Exp_Name = AST.asr(Await,'Await_Int', 1,'Exp_Name')
                 local sufix = TYPES.noc(TYPES.tostring(Exp_Name.info.dcl[2]))
@@ -1297,6 +1295,13 @@ do {
     Await_Pause = function (me)
         HALT(me, {
             { evt =  '((tceu_evt){CEU_INPUT__PAUSE,{NULL}})' },
+            { lbl = me.lbl_out.id },
+            lbl = me.lbl_out.id,
+        })
+    end,
+    Await_Resume = function (me)
+        HALT(me, {
+            { evt =  '((tceu_evt){CEU_INPUT__RESUME,{NULL}})' },
             { lbl = me.lbl_out.id },
             lbl = me.lbl_out.id,
         })

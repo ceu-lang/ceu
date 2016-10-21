@@ -165,6 +165,7 @@ enum {
     /* emitable */
     CEU_INPUT__CLEAR,           /* 5 */
     CEU_INPUT__PAUSE,
+    CEU_INPUT__RESUME,
     CEU_INPUT__ASYNC,
     CEU_INPUT__THREAD,
     CEU_INPUT__WCLOCK,
@@ -646,11 +647,19 @@ fprintf(stderr, "??? trlK=%d, stk=%d evt=%d\n", trlK, _stk.is_alive, trl->evt.id
 /* broadcast "pause" for this block */
 if (trl->pse_changed) {
     trl->pse_changed = 0;
-    tceu_evt_occ occ2 = { {CEU_INPUT__PAUSE,{NULL}}, occ->params,
-                          {range.mem,
-                           trlK+1, trlK+trl->pse_skip}
-                        };
-    ceu_bcast(&occ2, &_stk);
+    if (trl->pse_paused) {
+        tceu_evt_occ occ2 = { {CEU_INPUT__PAUSE,{NULL}}, occ->params,
+                              {range.mem,
+                               trlK+1, trlK+trl->pse_skip}
+                            };
+        ceu_bcast(&occ2, &_stk);
+    } else {
+        tceu_evt_occ occ2 = { {CEU_INPUT__RESUME,{NULL}}, occ->params,
+                              {range.mem,
+                               trlK+1, trlK+trl->pse_skip}
+                            };
+        ceu_bcast(&occ2, &_stk);
+    }
     if (!_stk.is_alive) {
         break;
     }

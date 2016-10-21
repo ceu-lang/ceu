@@ -9,6 +9,7 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+---]=====]
 Test { [[
 input int E;
 event bool e;
@@ -21,14 +22,10 @@ par/or do
             end
         with
             loop do
-                do
-                    var bool v = await pause until v==true;
-                    ret = ret + 1;
-                end
-                do
-                    var bool v = await pause until v==false;
-                    ret = ret + 2;
-                end
+                await pause;
+                ret = ret + 1;
+                await resume;
+                ret = ret + 2;
             end
         end
     end
@@ -57,8 +54,52 @@ escape ret;
     run = 33,
 }
 
-do return end -- OK
----]=====]
+Test { [[
+input int E;
+event bool e;
+var int ret = 0;
+par/or do
+    pause/if e do
+        par do
+            every 1s do
+                ret = ret + 1;
+            end
+        with
+            do finalize with
+                ;
+            pause with
+                ret = ret + 1;
+            resume with
+                ret = ret + 2;
+            end
+        end
+    end
+with
+    var int v;
+    every v in E do
+        emit e(v as bool);
+    end
+with
+    await async do
+        emit 10s;       // 10
+        emit E(0);      // 10
+        emit 10s;       // 20
+        emit E(1);      // 21
+        emit 10s;       // 21
+        emit E(1);      // 21
+        emit E(1);      // 21
+        emit E(0);      // 23
+        emit E(0);      // 23
+        emit 10s;       // 33
+    end
+end
+escape ret;
+]],
+    wrn = true,
+    run = 33,
+}
+
+--do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested

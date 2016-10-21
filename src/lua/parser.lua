@@ -295,6 +295,7 @@ KEYS = P
 'then' +
 'spawn' +
 'sizeof' +
+'resume' +
 'request' +
 'recursive' +
 'pure' +
@@ -590,7 +591,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , __Awaits_one  = K'await' * (V'Await_Wclock' + V'Abs_Await')
     , __Awaits_many = K'await' * V'Await_Until'
 
-    , Await_Until  = (V'Await_Ext' + V'Await_Pause' + V'Await_Int') *
+    , Await_Until  = (V'Await_Ext' + V'Await_Int') *
                         OPT(K'until'*V'__Exp')
 
     , Await_Ext    = V'ID_ext' -I(V'Abs_Await') -- TODO: rem
@@ -598,7 +599,8 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , Await_Wclock = (V'WCLOCKK' + V'WCLOCKE')
 
     , Await_Forever = K'await' * K'FOREVER'
-    , Await_Pause   = K'pause'
+    , Await_Pause   = K'await' * K'pause'
+    , Await_Resume  = K'await' * K'resume'
 
     , _Emit_ps = OPT(V'__Exp' + PARENS(OPT(V'List_Exp')))
     , Emit_Wclock   = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
@@ -851,6 +853,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                     + V'Deterministic'
                     + V'_Set'
                     + V'__Awaits_one' + V'__Awaits_many'
+                    + V'Await_Pause' + V'Await_Resume'
                     + V'Emit_Wclock'
                     + V'Emit_Ext_emit' + V'Emit_Ext_call' + V'Emit_Ext_req'
                     + V'Emit_Evt'
