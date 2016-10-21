@@ -414,7 +414,8 @@ A simple loop executes its body continually and forever.
 Examples:
 
 ```ceu
-loop do     // blinks a LED with a frequency of 1s forever
+// blinks a LED with a frequency of 1s forever
+loop do
     emit LED(1);
     await 1s;
     emit LED(0);
@@ -424,19 +425,14 @@ end
 
 ```ceu
 loop do
-    <...>
     loop do
-        <...>
         if <cnd-1> then
-            break;      // aborts the loop at line 3 if <cnd-1> is satisfied
+            break;      // aborts the loop at line 2 if <cnd-1> is satisfied
         end
-        <...>
     end
-    <...>
     if <cnd-2> then
         continue;       // restarts the loop at line 1 if <cnd-2> is satisfied
     end
-    <...>
 end
 ```
 
@@ -481,7 +477,7 @@ for each iteration of the loop body:
         If the direction is `->`, the step is added, otherwise it is subtracted.
     If the interval is not specified, it assumes the default `[0 -> _]`.
 
-The execution of the numeric iterator is as follows:
+The numeric iterator executes as follows:
 
 - **initialization:**
     The starting endpoint is assigned to the control variable.
@@ -495,12 +491,39 @@ The execution of the numeric iterator is as follows:
     3. **step**
         Applies a step to the control variable. Goto step `1`.
 
+The `break` and `continue` statements inside numeric iterators accept an
+optional modifier <code>&grave;/&acute;ID_int</code> to match the control
+variable of the enclosing loop to affect.
+
 Examples:
+
+```ceu
+// prints "i=0", "i=1", ...
+var int i;
+loop i do
+    _printf("i=%d\n", i);
+end
+```
+
+```ceu
+// awaits 1s and prints "Hello World!" 10 times
+loop _ in [0 -> 10[ do
+    await 1s;
+    _printf("Hello World!\n");
+end
+```
 
 ```ceu
 var int i;
 loop i do
-    _printf("i=%d\n", i);   // prints "i=0", "i=1", ...
+    var int j;
+    loop j do
+        if <cnd-1> then
+            continue/i;         // continues the loop at line 1
+        else/if <cnd-2> then
+            break/j;            // breaks the loop at line 4
+        end
+    end
 end
 ```
 
