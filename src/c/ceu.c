@@ -77,7 +77,7 @@ typedef struct tceu_trl {
                 };
             };
 
-            /* CEU_INPUT__PAUSE */
+            /* CEU_INPUT__PAUSE_BLOCK */
             struct {
                 tceu_evt  pse_evt;
                 tceu_ntrl pse_skip;
@@ -157,12 +157,13 @@ enum {
     /* non-emitable */
     CEU_INPUT__NONE = 0,
     CEU_INPUT__FINALIZE,
-    CEU_INPUT__PAUSE,
+    CEU_INPUT__PAUSE_BLOCK,
     CEU_INPUT__CODE,
     CEU_INPUT__CODE_POOL,
 
     /* emitable */
     CEU_INPUT__CLEAR,           /* 5 */
+    CEU_INPUT__PAUSE,
     CEU_INPUT__ASYNC,
     CEU_INPUT__THREAD,
     CEU_INPUT__WCLOCK,
@@ -206,6 +207,10 @@ static void* ceu_data_as (tceu_ndata* supers, tceu_ndata* me, tceu_ndata cmp,
 
 === CODES_MEMS ===
 === CODES_ARGS ===
+
+typedef struct tceu_input_PAUSE {
+    bool _1;
+} tceu_input_PAUSE;
 
 === EXTS_TYPES ===
 === EVTS_TYPES ===
@@ -484,7 +489,7 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
             }
 
             /* skip "paused" blocks || set "paused" block */
-            case CEU_INPUT__PAUSE: {
+            case CEU_INPUT__PAUSE_BLOCK: {
                 u8 was_paused = trl->pse_paused;
                 if (occ->evt.id==trl->pse_evt.id &&
                     (occ->evt.id<CEU_EVENT__MIN || occ->evt.mem==trl->pse_evt.mem))
@@ -635,7 +640,7 @@ fprintf(stderr, "??? trlK=%d, stk=%d evt=%d\n", trlK, _stk.is_alive, trl->evt.id
         }
 
         /* skip */
-        else if (trl->evt.id == CEU_INPUT__PAUSE) {
+        else if (trl->evt.id == CEU_INPUT__PAUSE_BLOCK) {
             /* only necessary to avoid INPUT__CODE propagation */
             if (occ->evt.id!=CEU_INPUT__CLEAR && trl->pse_paused) {
                 trlK += trl->pse_skip;

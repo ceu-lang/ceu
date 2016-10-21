@@ -85,6 +85,9 @@ F = {
     Await_Wclock = function (me)
         me.lbl_out = new{'Await_Wclock__OUT'}
     end,
+    Await_Pause = function (me)
+        me.lbl_out = new{'Await_PAUSE__OUT'}
+    end,
     Await_Ext = function (me)
         local ID_ext = unpack(me)
         me.lbl_out = new{'Await_'..ID_ext.dcl.id..'__OUT'}

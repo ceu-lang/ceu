@@ -313,6 +313,10 @@ F = {
         me.tp = ID_ext.dcl[2]
     end,
 
+    Await_Pause = function (me)
+        me.tp = AST.node('Typelist', me.ln, TYPES.new(me, 'bool'))
+    end,
+
     Await_Wclock = function (me)
         me.tp = TYPES.new(me, 'int')
     end,

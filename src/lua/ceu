@@ -33,7 +33,7 @@ SOFTWARE.
 PAK = {
     lua_exe = 'lua5.3',
     ceu_ver = '0.20',
-    ceu_git = '7a7a31e96d07c7c7297f25131de651692280e87f',
+    ceu_git = '64379fbe0d287f1db9ae0210984f812bb65c9df1',
     files = {
         ceu_c =
             [====[
@@ -322,7 +322,7 @@ typedef struct tceu_trl {
                 };
             };
 
-            /* CEU_INPUT__PAUSE */
+            /* CEU_INPUT__PAUSE_BLOCK */
             struct {
                 tceu_evt  pse_evt;
                 tceu_ntrl pse_skip;
@@ -402,12 +402,13 @@ enum {
     /* non-emitable */
     CEU_INPUT__NONE = 0,
     CEU_INPUT__FINALIZE,
-    CEU_INPUT__PAUSE,
+    CEU_INPUT__PAUSE_BLOCK,
     CEU_INPUT__CODE,
     CEU_INPUT__CODE_POOL,
 
     /* emitable */
     CEU_INPUT__CLEAR,           /* 5 */
+    CEU_INPUT__PAUSE,
     CEU_INPUT__ASYNC,
     CEU_INPUT__THREAD,
     CEU_INPUT__WCLOCK,
@@ -451,6 +452,10 @@ static void* ceu_data_as (tceu_ndata* supers, tceu_ndata* me, tceu_ndata cmp,
 
 === CODES_MEMS ===
 === CODES_ARGS ===
+
+typedef struct tceu_input_PAUSE {
+    bool _1;
+} tceu_input_PAUSE;
 
 === EXTS_TYPES ===
 === EVTS_TYPES ===
@@ -729,7 +734,7 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
             }
 
             /* skip "paused" blocks || set "paused" block */
-            case CEU_INPUT__PAUSE: {
+            case CEU_INPUT__PAUSE_BLOCK: {
                 u8 was_paused = trl->pse_paused;
                 if (occ->evt.id==trl->pse_evt.id &&
                     (occ->evt.id<CEU_EVENT__MIN || occ->evt.mem==trl->pse_evt.mem))
@@ -880,7 +885,7 @@ fprintf(stderr, "??? trlK=%d, stk=%d evt=%d\n", trlK, _stk.is_alive, trl->evt.id
         }
 
         /* skip */
-        else if (trl->evt.id == CEU_INPUT__PAUSE) {
+        else if (trl->evt.id == CEU_INPUT__PAUSE_BLOCK) {
             /* only necessary to avoid INPUT__CODE propagation */
             if (occ->evt.id!=CEU_INPUT__CLEAR && trl->pse_paused) {
                 trlK += trl->pse_skip;
@@ -2599,6 +2604,7 @@ KEYS = P
 'pos' +
 'pool' +
 'plain' +
+'PAUSE' +
 'pause' +
 'par' +
 'output' +
@@ -2887,13 +2893,15 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , __Awaits_one  = K'await' * (V'Await_Wclock' + V'Abs_Await')
     , __Awaits_many = K'await' * V'Await_Until'
 
-    , Await_Until  = (V'Await_Ext' + V'Await_Int') * OPT(K'until'*V'__Exp')
+    , Await_Until  = (V'Await_Ext' + V'Await_Pause' + V'Await_Int') *
+                        OPT(K'until'*V'__Exp')
 
     , Await_Ext    = V'ID_ext' -I(V'Abs_Await') -- TODO: rem
     , Await_Int    = V'Exp_Name' -I(V'Await_Wclock'+V'Abs_Await') -- TODO: rem
     , Await_Wclock = (V'WCLOCKK' + V'WCLOCKE')
 
     , Await_Forever = K'await' * K'FOREVER'
+    , Await_Pause   = K'PAUSE'
 
     , _Emit_ps = OPT(V'__Exp' + PARENS(OPT(V'List_Exp')))
     , Emit_Wclock   = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
@@ -4018,35 +4026,40 @@ error'TODO'
         end
         local lb, fr, dir, to, rb, step = unpack(range)
 
-        -- loop i in ]0 ...] do end
-        -- loop i in [0+1 ...] do end
-        if lb == ']' then
-            if fr.tag ~= 'ID_any' then
-                fr = node('Exp_+', me.ln, '+', fr, node('NUMBER',me.ln,1))
-            end
-        end
-
-        -- loop i in [... 10[ do end
-        -- loop i in [... 10-1] do end
-        if rb == '[' then
-            if to.tag ~= 'ID_any' then
-                to = node('Exp_-', me.ln, '-', to, node('NUMBER',me.ln,1))
-            end
-        end
-
         -- loop i in [...] do end
         -- loop i in [...], 1 do end
         if step == false then
             step = node('NUMBER', me.ln, 1)
         end
 
+        fr.__adj_step_mul = 0
+        to.__adj_step_mul = 0
+
         -- loop i in [0 <- 10], 1 do end
         -- loop i in [10 -> 1], -1 do end
         if dir == '<-' then
             fr, to = to, fr
             step = node('Exp_1-', me.ln, '-', step)
+
+            -- loop i in [... 10[ do end
+            -- loop i in [... 10-1] do end
+            if rb == '[' then
+                fr.__adj_step_mul = 1
+            end
+            if lb == ']' then
+                to.__adj_step_mul = 1
+            end
         else
             --step = node('Exp_1+', me.ln, '+', step)
+
+            -- loop i in ]0 ...] do end
+            -- loop i in [0+1 ...] do end
+            if lb == ']' then
+                fr.__adj_step_mul = 1
+            end
+            if rb == '[' then
+                to.__adj_step_mul = 1
+            end
         end
 
         local i_dcl = node('Nothing', me.ln)
@@ -4181,7 +4194,7 @@ error'TODO'
 
         local set = node('Set_Exp', me.ln,
                         fr,
-                        node('Ref', me.ln, 'escape', me))   -- see dcls.lua
+                        node('TODO', me.ln, 'escape', me))   -- see dcls.lua
         -- a = &b   (Set_Exp->Set_Alias)
         if fr and fr.tag=='Exp_1&' then
             set.tag = 'Set_Alias'
@@ -4249,7 +4262,7 @@ error'TODO'
         AST.insert(Set.__adjs_sets, #Set.__adjs_sets+1,
                     node('Set_Vec', me.ln,
                         me,                -- see dcls.lua
-                        node('Ref', me.ln, 'vec_cons', T)))
+                        node('TODO', me.ln, 'vec_cons', T)))
 
         return node('ID_any', me.ln)
     end,
@@ -5517,7 +5530,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             'invalid `continue´ : expected matching enclosing `loop´')
     end,
 
-    Ref__POS = function (me)
+    TODO__POS = function (me)
         local id = unpack(me)
         if id == 'escape' then
             local _, esc = unpack(me)
@@ -6758,6 +6771,10 @@ F = {
         me.tp = ID_ext.dcl[2]
     end,
 
+    Await_Pause = function (me)
+        me.tp = AST.node('Typelist', me.ln, TYPES.new(me, 'bool'))
+    end,
+
     Await_Wclock = function (me)
         me.tp = TYPES.new(me, 'int')
     end,
@@ -6887,6 +6904,22 @@ F = {
         local cnd = unpack(me)
         ASR(TYPES.check(cnd.info.tp,'bool'), me,
             'invalid `if´ condition : expected boolean type')
+    end,
+
+    Loop_Num = function (me)
+        local _, i, range = unpack(me)
+        local fr,_,to,step = unpack(range)
+        local i_tp, fr_tp, to_tp, s_tp = i.info.tp,
+                                         fr.info.tp,
+                                         (to.info and to.info.tp or step.info.tp),
+                                         step.info.tp
+        ASR(TYPES.is_num(i_tp), me, 'invalid `loop´ : expected numeric variable')
+        ASR(TYPES.contains(i_tp,fr_tp), me,
+            'invalid control variable : types mismatch : "'..TYPES.tostring(i_tp)..'" <= "'..TYPES.tostring(fr_tp)..'"')
+        ASR(TYPES.contains(i_tp,to_tp), me,
+            'invalid control variable : types mismatch : "'..TYPES.tostring(i_tp)..'" <= "'..TYPES.tostring(to_tp)..'"')
+        ASR(TYPES.contains(i_tp,s_tp), me,
+            'invalid control variable : types mismatch : "'..TYPES.tostring(i_tp)..'" <= "'..TYPES.tostring(s_tp)..'"')
     end,
 
     Loop_Pool = function (me)
@@ -8516,6 +8549,9 @@ F = {
     Await_Wclock = function (me)
         me.lbl_out = new{'Await_Wclock__OUT'}
     end,
+    Await_Pause = function (me)
+        me.lbl_out = new{'Await_PAUSE__OUT'}
+    end,
     Await_Ext = function (me)
         local ID_ext = unpack(me)
         me.lbl_out = new{'Await_'..ID_ext.dcl.id..'__OUT'}
@@ -9777,8 +9813,9 @@ end
         local max, i, range, body = unpack(me)
         local fr, dir, to, step = unpack(range)
         F.Loop(me)  -- max
+        CUR().mem = CUR().mem..TYPES.toc(fr.info.tp)..' __fr_'..me.n..';\n'
         if to.tag ~= 'ID_any' then
-            CUR().mem = CUR().mem..'int __lim_'..me.n..';\n'
+            CUR().mem = CUR().mem..TYPES.toc(i.info.tp)..' __lim_'..me.n..';\n'
         end
     end,
 
@@ -10669,7 +10706,7 @@ if (0) {
     Pause_If = function (me)
         local e, body = unpack(me)
         LINE(me, [[
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.id     = CEU_INPUT__PAUSE;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.id     = CEU_INPUT__PAUSE_BLOCK;
 _ceu_mem->trails[]]..me.trails[1]..[[].pse_evt    = ]]..V(e)..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].pse_skip   = ]]..body.trails_n..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].pse_paused = 0;
@@ -10796,7 +10833,6 @@ while (1) {
         local _, i, range, body = unpack(me)
         local fr, dir, to, step = unpack(range)
         local max = F.__loop_max(me)
-        local op = (dir=='->' and '>' or '<')
 
         -- check if step is positive (static)
         if step then
@@ -10810,10 +10846,6 @@ while (1) {
                     end
                     ASR(num>0, me,
                         'invalid `loop´ step : expected positive number : got "'..num..'"')
-                    if TYPES.is_int(i.info.tp) then
-                        ASR(num>=1, me,
-                        'invalid `loop´ step : expected positive number greater or equal to 1 : got "'..num..'"')
-                    end
                 end
             end
         end
@@ -10821,7 +10853,7 @@ while (1) {
 
         if to.tag ~= 'ID_any' then
             LINE(me, [[
-]]..CUR('__lim_'..me.n)..' = '..V(to)..[[;
+]]..CUR('__lim_'..me.n)..' = '..V(to)..' + ('..V(step)..'*'..to.__adj_step_mul..[[*-1);
 ]])
         end
 
@@ -10830,16 +10862,16 @@ while (1) {
 ]]..max.ini..[[
 ceu_callback_assert_msg(]]..sig..V(step)..[[> 0, "invalid `loop´ step : expected positive number");
 ]])
-        if TYPES.is_int(i.info.tp) then
-            LINE(me, [[
-ceu_callback_assert_msg(]]..sig..V(step)..[[>= 1, "invalid `loop´ step : expected positive number greater or equal to 1");
-]])
-        end
+        local op = (dir=='->' and '>' or '<')
         LINE(me, [[
-]]..V(i)..' = '..V(fr)..[[;
+]]..CUR('__fr_'..me.n)..' = '..V(fr)..[[;
+]]..V(i)..' = '..V(fr)..' + '..V(step)..' * '..fr.__adj_step_mul..[[;
+ceu_callback_assert_msg_ex(]]..V(i)..(op..'=')..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n)..[[,
+    "control variable overflow", __FILE__, __LINE__-3);
 while (1) {
 ]])
         if to.tag ~= 'ID_any' then
+            local op = (dir=='->' and '>' or '<')
             LINE(me, [[
     if (]]..V(i)..' '..op..' '..CUR('__lim_'..me.n)..[[) {
         break;
@@ -10855,6 +10887,8 @@ while (1) {
         F.__loop_async(me)
         LINE(me, [[
     ]]..V(i)..' = '..V(i)..' + '..V(step)..[[;
+    ceu_callback_assert_msg_ex(]]..V(i)..op..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n)..[[,
+        "control variable overflow", __FILE__, __LINE__-2);
     ]]..max.inc..[[
 }
 ]])
@@ -11090,6 +11124,8 @@ _ceu_mem->trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
             local ID_ext = AST.get(Await,'Await_Ext', 1,'ID_ext')
             if ID_ext then
                 id = 'tceu_input_'..ID_ext.dcl.id
+            elseif AST.get(Await, 'Await_Pause') then
+                id = 'tceu_input_PAUSE'
             else
                 local Exp_Name = AST.asr(Await,'Await_Int', 1,'Exp_Name')
                 local sufix = TYPES.noc(TYPES.tostring(Exp_Name.info.dcl[2]))
@@ -11252,6 +11288,14 @@ do {
     end,
 
     ---------------------------------------------------------------------------
+
+    Await_Pause = function (me)
+        HALT(me, {
+            { evt =  '((tceu_evt){CEU_INPUT__PAUSE_BLOCK,{NULL}})' },
+            { lbl = me.lbl_out.id },
+            lbl = me.lbl_out.id,
+        })
+    end,
 
     Await_Ext = function (me)
         local ID_ext = unpack(me)

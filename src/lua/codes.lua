@@ -710,7 +710,7 @@ if (0) {
     Pause_If = function (me)
         local e, body = unpack(me)
         LINE(me, [[
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.id     = CEU_INPUT__PAUSE;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.id     = CEU_INPUT__PAUSE_BLOCK;
 _ceu_mem->trails[]]..me.trails[1]..[[].pse_evt    = ]]..V(e)..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].pse_skip   = ]]..body.trails_n..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].pse_paused = 0;
@@ -1128,6 +1128,8 @@ _ceu_mem->trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
             local ID_ext = AST.get(Await,'Await_Ext', 1,'ID_ext')
             if ID_ext then
                 id = 'tceu_input_'..ID_ext.dcl.id
+            elseif AST.get(Await, 'Await_Pause') then
+                id = 'tceu_input_PAUSE'
             else
                 local Exp_Name = AST.asr(Await,'Await_Int', 1,'Exp_Name')
                 local sufix = TYPES.noc(TYPES.tostring(Exp_Name.info.dcl[2]))
@@ -1290,6 +1292,14 @@ do {
     end,
 
     ---------------------------------------------------------------------------
+
+    Await_Pause = function (me)
+        HALT(me, {
+            { evt =  '((tceu_evt){CEU_INPUT__PAUSE_BLOCK,{NULL}})' },
+            { lbl = me.lbl_out.id },
+            lbl = me.lbl_out.id,
+        })
+    end,
 
     Await_Ext = function (me)
         local ID_ext = unpack(me)
