@@ -81,8 +81,8 @@ typedef struct tceu_trl {
             struct {
                 tceu_evt  pse_evt;
                 tceu_ntrl pse_skip;
-                u8        pse_paused;
-u8        pse_changed;
+                u8        pse_paused  : 1;
+                u8        pse_changed : 1;
             };
         };
     };
@@ -496,7 +496,7 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                 if (occ->evt.id==trl->pse_evt.id &&
                     (occ->evt.id<CEU_EVENT__MIN || occ->evt.mem==trl->pse_evt.mem))
                 {
-trl->pse_changed = (*((u8*)occ->params) != trl->pse_paused);
+                    trl->pse_changed = (*((u8*)occ->params) != trl->pse_paused);
                     trl->pse_paused = *((u8*)occ->params);
                 }
                 /* don't skip if pausing now */
@@ -644,26 +644,26 @@ fprintf(stderr, "??? trlK=%d, stk=%d evt=%d\n", trlK, _stk.is_alive, trl->evt.id
 
         /* skip */
         else if (trl->evt.id == CEU_INPUT__PAUSE_BLOCK) {
-/* broadcast "pause" for this block */
-if (trl->pse_changed) {
-    trl->pse_changed = 0;
-    if (trl->pse_paused) {
-        tceu_evt_occ occ2 = { {CEU_INPUT__PAUSE,{NULL}}, occ->params,
-                              {range.mem,
-                               trlK+1, trlK+trl->pse_skip}
-                            };
-        ceu_bcast(&occ2, &_stk);
-    } else {
-        tceu_evt_occ occ2 = { {CEU_INPUT__RESUME,{NULL}}, occ->params,
-                              {range.mem,
-                               trlK+1, trlK+trl->pse_skip}
-                            };
-        ceu_bcast(&occ2, &_stk);
-    }
-    if (!_stk.is_alive) {
-        break;
-    }
-}
+            /* broadcast "pause" for this block */
+            if (trl->pse_changed) {
+                trl->pse_changed = 0;
+                if (trl->pse_paused) {
+                    tceu_evt_occ occ2 = { {CEU_INPUT__PAUSE,{NULL}}, occ->params,
+                                          {range.mem,
+                                           trlK+1, trlK+trl->pse_skip}
+                                        };
+                    ceu_bcast(&occ2, &_stk);
+                } else {
+                    tceu_evt_occ occ2 = { {CEU_INPUT__RESUME,{NULL}}, occ->params,
+                                          {range.mem,
+                                           trlK+1, trlK+trl->pse_skip}
+                                        };
+                    ceu_bcast(&occ2, &_stk);
+                }
+                if (!_stk.is_alive) {
+                    break;
+                }
+            }
             /* only necessary to avoid INPUT__CODE propagation */
             if (occ->evt.id!=CEU_INPUT__CLEAR && trl->pse_paused) {
                 trlK += trl->pse_skip;
