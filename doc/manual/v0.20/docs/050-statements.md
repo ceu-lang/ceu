@@ -174,13 +174,16 @@ Event Handling
 The `await` statement halts the running trail until the referred
 event occurs.
 The event can be an [external input event](#TODO), an [internal event](#TODO),
-a timer, or forever (i.e., never awake):
+a timer, a [pausing event](#TODO), or forever (i.e., never awake):
 
 ```ceu
 Await ::= await (ID_ext | Name) [until Exp]     /* events */
        |  await (WCLOCKK|WCLOCKE)               /* timers */
+       |  await (pause|resume)                  /* pausing events */
        |  await FOREVER                         /* forever */
 ```
+
+Pausing events are dicussed in [Pausing](#TODO).
 
 Examples:
 
@@ -527,5 +530,5 @@ loop i do
 end
 ```
 
-*Note : the runtime asserts that the step is a positive number and that the control
-variable does not overflow.*
+*Note : the runtime asserts that the step is a positive number and that the
+        control variable does not overflow.*

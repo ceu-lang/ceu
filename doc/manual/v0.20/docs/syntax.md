@@ -49,13 +49,13 @@ Stmt ::= nothing
       | await (ID_ext | Name) [until Exp]
       | await (WCLOCKK|WCLOCKE)
       //
-      | await FOREVER
+      | await (FOREVER | pause | resume)
 
       // Emit_Ext ::=
-      | emit ID_ext [`=>´ (Exp | `(´ [LIST(Exp)] `)´)]
+      | emit ID_ext [`(´ [LIST(Exp)] `)´]
       | emit (WCLOCKK|WCLOCKE)
       //
-      | emit Name [`=>´ (Exp | `(´ [LIST(Exp)] `)´)]
+      | emit Name [`(´ [LIST(Exp)] `)´]
 
   /* Conditional */
 
@@ -116,7 +116,7 @@ Stmt ::= nothing
 
       /* watching */
       // Watching ::=
-      | watching LIST((ID_ext|Name|WCLOCKK|WCLOCKE|Code) [`=>´ `(´ LIST(Var) `)´]) do
+      | watching LIST((ID_ext|Name|WCLOCKK|WCLOCKE|Code) [`->´ `(´ LIST(`&´ Var) `)´]) do
             Block
         end
 
@@ -153,10 +153,10 @@ Stmt ::= nothing
       /* Code */
 
       // Code_Tight ::=
-      | code/tight [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ `=>´ Type
+      | code/tight [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ `->´ Type
 
       // Code_Await ::=
-      | code/await [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ `=>´ [ `(´ Params `)´ `=>´ ] (Type | FOREVER)
+      | code/await [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ `->´ [ `(´ Params `)´ `->´ ] (Type | FOREVER)
         // where
             Params ::= void | LIST([dynamic] Class ID_int)
             Class ::= var [`&´|`&?´] [`/´hold] * Type
@@ -178,7 +178,7 @@ Stmt ::= nothing
       | await Mods Code
 
       // Spawn_Code ::=
-      | spawn Mods Code [in Name] [`=>´ `(´ LIST(Var) `)´]
+      | spawn Mods Code [in Name] [`->´ `(´ LIST(`&´ Var) `)´]
 
         // where
             Mods ::= [`/´dynamic | `/´static] [`/´recursive]
@@ -199,15 +199,14 @@ Stmt ::= nothing
       | call [`/´recursive] (Name | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
 
       /* finalization */
-      | do
-            Block
-        finalize `(´ LIST(Name) `)´ with
-            Block
-        end
-      | var `&?´ Type ID_int `=´ `&´ (Call_Nat | Call_Code)
-        finalize `(´ LIST(Name) `)´ with
-            Block
-        end
+      | do Block Finalize
+      | var `&?´ Type ID_int `=´ `&´ (Call_Nat | Call_Code) Finalize
+        // where
+            Finalize ::= finalize `(´ LIST(Name) `)´ with
+                             Block
+                         [ pause  with Block ]
+                         [ resume with Block ]
+                         end
 
   /* Lua integration */
 

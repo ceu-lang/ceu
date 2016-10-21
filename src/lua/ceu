@@ -33,7 +33,7 @@ SOFTWARE.
 PAK = {
     lua_exe = 'lua5.3',
     ceu_ver = '0.20',
-    ceu_git = '64379fbe0d287f1db9ae0210984f812bb65c9df1',
+    ceu_git = '0008f47730536406f2af4b783338b1db6511a5dc',
     files = {
         ceu_c =
             [====[
@@ -326,7 +326,8 @@ typedef struct tceu_trl {
             struct {
                 tceu_evt  pse_evt;
                 tceu_ntrl pse_skip;
-                u8        pse_paused;
+                u8        pse_paused  : 1;
+                u8        pse_changed : 1;
             };
         };
     };
@@ -409,6 +410,7 @@ enum {
     /* emitable */
     CEU_INPUT__CLEAR,           /* 5 */
     CEU_INPUT__PAUSE,
+    CEU_INPUT__RESUME,
     CEU_INPUT__ASYNC,
     CEU_INPUT__THREAD,
     CEU_INPUT__WCLOCK,
@@ -739,6 +741,7 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                 if (occ->evt.id==trl->pse_evt.id &&
                     (occ->evt.id<CEU_EVENT__MIN || occ->evt.mem==trl->pse_evt.mem))
                 {
+                    trl->pse_changed = (*((u8*)occ->params) != trl->pse_paused);
                     trl->pse_paused = *((u8*)occ->params);
                 }
                 /* don't skip if pausing now */
@@ -886,6 +889,26 @@ fprintf(stderr, "??? trlK=%d, stk=%d evt=%d\n", trlK, _stk.is_alive, trl->evt.id
 
         /* skip */
         else if (trl->evt.id == CEU_INPUT__PAUSE_BLOCK) {
+            /* broadcast "pause" for this block */
+            if (trl->pse_changed) {
+                trl->pse_changed = 0;
+                if (trl->pse_paused) {
+                    tceu_evt_occ occ2 = { {CEU_INPUT__PAUSE,{NULL}}, occ->params,
+                                          {range.mem,
+                                           trlK+1, trlK+trl->pse_skip}
+                                        };
+                    ceu_bcast(&occ2, &_stk);
+                } else {
+                    tceu_evt_occ occ2 = { {CEU_INPUT__RESUME,{NULL}}, occ->params,
+                                          {range.mem,
+                                           trlK+1, trlK+trl->pse_skip}
+                                        };
+                    ceu_bcast(&occ2, &_stk);
+                }
+                if (!_stk.is_alive) {
+                    break;
+                }
+            }
             /* only necessary to avoid INPUT__CODE propagation */
             if (occ->evt.id!=CEU_INPUT__CLEAR && trl->pse_paused) {
                 trlK += trl->pse_skip;
@@ -2597,6 +2620,7 @@ KEYS = P
 'then' +
 'spawn' +
 'sizeof' +
+'resume' +
 'request' +
 'recursive' +
 'pure' +
@@ -2604,7 +2628,6 @@ KEYS = P
 'pos' +
 'pool' +
 'plain' +
-'PAUSE' +
 'pause' +
 'par' +
 'output' +
@@ -2731,15 +2754,17 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , Stmt_Call = V'Abs_Call' + V'Exp_Call'
 
-    , __fin_stmt   = V'___fin_stmt' * V'__seqs'
-    , ___fin_stmt  = V'Nothing'
-                   + V'_Set'
-                   + V'Emit_Ext_emit' + V'Emit_Ext_call'
-                   + V'Stmt_Call'
-    , __finalize   = K'finalize' * (PARENS(V'List_Name') + Cc(false)) * K'with' *
-                     V'Block' *
-                   K'end'
-    , Finalize     = K'do' * OPT(V'__fin_stmt') * V'__finalize'
+    , __fin_stmt  = V'___fin_stmt' * V'__seqs'
+    , ___fin_stmt = V'Nothing'
+                  + V'_Set'
+                  + V'Emit_Ext_emit' + V'Emit_Ext_call'
+                  + V'Stmt_Call'
+    , __finalize  = K'finalize' * (PARENS(V'List_Name') + Cc(false)) * K'with' *
+                        V'Block' *
+                    OPT(K'pause'  * K'with' * V'Block') *
+                    OPT(K'resume' * K'with' * V'Block') *
+                    K'end'
+    , Finalize = K'do' * OPT(V'__fin_stmt') * V'__finalize'
 
     , _Var_set_fin = K'var' * KK'&?' * V'Type' * V'__ID_int'
                    * (KK'='-'==') * KK'&'
@@ -2893,7 +2918,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , __Awaits_one  = K'await' * (V'Await_Wclock' + V'Abs_Await')
     , __Awaits_many = K'await' * V'Await_Until'
 
-    , Await_Until  = (V'Await_Ext' + V'Await_Pause' + V'Await_Int') *
+    , Await_Until  = (V'Await_Ext' + V'Await_Int') *
                         OPT(K'until'*V'__Exp')
 
     , Await_Ext    = V'ID_ext' -I(V'Abs_Await') -- TODO: rem
@@ -2901,7 +2926,8 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , Await_Wclock = (V'WCLOCKK' + V'WCLOCKE')
 
     , Await_Forever = K'await' * K'FOREVER'
-    , Await_Pause   = K'PAUSE'
+    , Await_Pause   = K'await' * K'pause'
+    , Await_Resume  = K'await' * K'resume'
 
     , _Emit_ps = OPT(V'__Exp' + PARENS(OPT(V'List_Exp')))
     , Emit_Wclock   = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
@@ -3154,6 +3180,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                     + V'Deterministic'
                     + V'_Set'
                     + V'__Awaits_one' + V'__Awaits_many'
+                    + V'Await_Pause' + V'Await_Resume'
                     + V'Emit_Wclock'
                     + V'Emit_Ext_emit' + V'Emit_Ext_call' + V'Emit_Ext_req'
                     + V'Emit_Evt'
@@ -8303,7 +8330,7 @@ F = {
             me.trails_n = me.trails_n + 1
         end
         if me.fins_n > 0 then
-            me.trails_n = me.trails_n + me.fins_n
+            me.trails_n = me.trails_n + 3*me.fins_n
         end
         me.trails_n = me.trails_n + #me.spawns
     end,
@@ -8415,9 +8442,10 @@ end
             or (pool and pool.has_trail) or (var and var.has_trail)
             or (evt and evt.has_trail)
         then
+            local n = (sub.tag=='Finalize' and 3) or 1
             for stmts in AST.iter() do
                 if stmts.tag == 'Stmts' then
-                    stmts._trails[1] = stmts._trails[1] + 1
+                    stmts._trails[1] = stmts._trails[1] + n
                 else
                     break
                 end
@@ -8500,7 +8528,11 @@ F = {
     end,
 
     Finalize = function (me)
-        me.lbl_in = new{'Finalize__IN'}
+        me.lbl_in = {
+            new{'Finalize__IN'},
+            new{'Pause__IN'},
+            new{'Resume__IN'},
+        }
     end,
 
     Loop_Pool = function (me)
@@ -8550,7 +8582,10 @@ F = {
         me.lbl_out = new{'Await_Wclock__OUT'}
     end,
     Await_Pause = function (me)
-        me.lbl_out = new{'Await_PAUSE__OUT'}
+        me.lbl_out = new{'Await_Pause__OUT'}
+    end,
+    Await_Resume = function (me)
+        me.lbl_out = new{'Await_Resume__OUT'}
     end,
     Await_Ext = function (me)
         local ID_ext = unpack(me)
@@ -10682,19 +10717,42 @@ if (0) {
 
     ---------------------------------------------------------------------------
 
-    Finalize = function (me)
-        local now,_,later = unpack(me)
+    __fin = function (me, evt, inc, lbl)
         LINE(me, [[
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__FINALIZE;
-_ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_in.id..[[;
-_ceu_mem->trails[]]..me.trails[1]..[[].clr_range =
+_ceu_mem->trails[]]..(me.trails[1]+inc)..[[].evt.id = ]]..evt..[[;
+_ceu_mem->trails[]]..(me.trails[1]+inc)..[[].lbl    = ]]..me.lbl_in[lbl].id..[[;
+_ceu_mem->trails[]]..(me.trails[1]+inc)..[[].clr_range =
     (tceu_evt_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[2]..[[ };
+]])
+    end,
 
+    Finalize = function (me)
+        local now,_,fin,pse,res = unpack(me)
+        F.__fin(me, 'CEU_INPUT__FINALIZE', 0, 1)
+        if pse then
+            F.__fin(me, 'CEU_INPUT__PAUSE', 1, 2)
+        end
+        if res then
+            F.__fin(me, 'CEU_INPUT__RESUME', 2, 3)
+        end
+        LINE(me, [[
 if (0) {
 ]])
-        CASE(me, me.lbl_in)
-        CONC(me, later)
+        CASE(me, me.lbl_in[1])
+        CONC(me, fin)
         HALT(me)
+        if pse then
+            CASE(me, me.lbl_in[2])
+            CONC(me, pse)
+            F.__fin(me, 'CEU_INPUT__PAUSE', 1, 2)
+            HALT(me)
+        end
+        if res then
+            CASE(me, me.lbl_in[3])
+            CONC(me, res)
+            F.__fin(me, 'CEU_INPUT__RESUME', 2, 3)
+            HALT(me)
+        end
         LINE(me, [[
 }
 ]])
@@ -10710,6 +10768,7 @@ _ceu_mem->trails[]]..me.trails[1]..[[].evt.id     = CEU_INPUT__PAUSE_BLOCK;
 _ceu_mem->trails[]]..me.trails[1]..[[].pse_evt    = ]]..V(e)..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].pse_skip   = ]]..body.trails_n..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].pse_paused = 0;
+_ceu_mem->trails[]]..me.trails[1]..[[].pse_changed = 0;
 ]])
         CONC(me, body)
     end,
@@ -11124,8 +11183,6 @@ _ceu_mem->trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
             local ID_ext = AST.get(Await,'Await_Ext', 1,'ID_ext')
             if ID_ext then
                 id = 'tceu_input_'..ID_ext.dcl.id
-            elseif AST.get(Await, 'Await_Pause') then
-                id = 'tceu_input_PAUSE'
             else
                 local Exp_Name = AST.asr(Await,'Await_Int', 1,'Exp_Name')
                 local sufix = TYPES.noc(TYPES.tostring(Exp_Name.info.dcl[2]))
@@ -11291,7 +11348,14 @@ do {
 
     Await_Pause = function (me)
         HALT(me, {
-            { evt =  '((tceu_evt){CEU_INPUT__PAUSE_BLOCK,{NULL}})' },
+            { evt =  '((tceu_evt){CEU_INPUT__PAUSE,{NULL}})' },
+            { lbl = me.lbl_out.id },
+            lbl = me.lbl_out.id,
+        })
+    end,
+    Await_Resume = function (me)
+        HALT(me, {
+            { evt =  '((tceu_evt){CEU_INPUT__RESUME,{NULL}})' },
             { lbl = me.lbl_out.id },
             lbl = me.lbl_out.id,
         })
@@ -11514,6 +11578,7 @@ if (_ceu_p.thread->has_aborted) {
 
         local v = CUR('__thread_'..me.n)
 
+-- TODO: pause, resume
         -- finalize
         LINE(me, [[
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__FINALIZE;
