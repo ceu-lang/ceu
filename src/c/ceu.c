@@ -28,6 +28,9 @@
 #define S64_MAX   9223372036854775807
 #define U64_MAX   18446744073709551615
 
+#define CEU_SEQ_MAX (U16_MAX/2)
+/* TODO */
+
 typedef u16 tceu_nevt;   /* TODO */
 typedef u16 tceu_nseq;   /* TODO */
 typedef === TCEU_NTRL === tceu_ntrl;
@@ -166,12 +169,13 @@ enum {
     CEU_INPUT__CLEAR,           /* 5 */
     CEU_INPUT__PAUSE,
     CEU_INPUT__RESUME,
+CEU_INPUT__SEQ,
     CEU_INPUT__ASYNC,
     CEU_INPUT__THREAD,
     CEU_INPUT__WCLOCK,
     === EXTS_ENUM_INPUT ===
 
-    CEU_EVENT__MIN,
+CEU_EVENT__MIN,
     === EVTS_ENUM ===
 };
 
@@ -220,6 +224,7 @@ enum {
 
 typedef struct tceu_app {
     tceu_nseq seq;
+    tceu_nseq seq_base;
 
     /* WCLOCK */
     s32 wclk_late;
@@ -426,7 +431,10 @@ static void ceu_bcast (tceu_evt_occ* occ, tceu_stk* stk)
     tceu_trl* trl;
     tceu_evt_range range = occ->range;
 
+    ceu_callback_assert_msg(CEU_APP.seq-CEU_APP.seq_base < CEU_SEQ_MAX,
+                            "too many internal reactions");
     CEU_APP.seq++;
+
     tceu_stk _stk = { 1, stk, range }; /* maybe nested bcast aborts it */
 
     /* MARK TRAILS TO EXECUTE */
@@ -579,7 +587,7 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
             if (occ->evt.id==CEU_INPUT__PAUSE || occ->evt.id==CEU_INPUT__RESUME) {
                 goto _CEU_AWAKE_YES_;
             }
-            if (trl->seq > occ->seq) {
+            if (trl->seq-CEU_APP.seq_base > occ->seq-CEU_APP.seq_base) {
                 goto _CEU_AWAKE_NO_;
             }
             if (trl->evt.id > CEU_EVENT__MIN) {
@@ -611,6 +619,10 @@ fprintf(stderr, "break\n");
         }
 
 _CEU_AWAKE_NO_:
+        if ((trl->evt.id > CEU_INPUT__SEQ) && (trl->seq > CEU_APP.seq_base+CEU_SEQ_MAX)) {
+            trl->seq = CEU_APP.seq_base;
+        }
+
         if (trlK == trlF) {
             break;
         } else if (occ->evt.id == CEU_INPUT__CLEAR) {
@@ -634,6 +646,8 @@ fprintf(stderr, "<<< %d [%p] %d->%d\n", occ->evt.id, range.mem, range.trl0, rang
 
 CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params)
 {
+    CEU_APP.seq_base = CEU_APP.seq;
+
     tceu_evt_occ occ = { {evt_id,{NULL}}, CEU_APP.seq+1, evt_params,
                          {(tceu_code_mem*)&CEU_APP.root,
                           0, (tceu_ntrl)(CEU_APP.root.mem.trails_n-1)}
@@ -657,7 +671,9 @@ CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params)
 }
 
 CEU_API void ceu_start (void) {
-    CEU_APP.seq = 0;
+    CEU_APP.seq      = 0;
+    CEU_APP.seq_base = 0;
+
     CEU_APP.wclk_late = 0;
     CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;
     CEU_APP.wclk_min_cmp = CEU_WCLOCK_INACTIVE;
