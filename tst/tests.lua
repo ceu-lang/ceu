@@ -9,7 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
----]=====]
 
 Test { [[
 input int E;
@@ -109,6 +108,7 @@ escape ret;
 }
 
 --do return end -- OK
+---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -6309,8 +6309,8 @@ with
 end
 ]],
     _ana = {acc=true},
-    --run = 2,
-    run = 20,
+    run = 2,
+    --run = 20,
 }
 Test { [[
 input void OS_START;
@@ -6329,8 +6329,8 @@ with
 end
 ]],
     _ana = {acc=true},
-    --run = 2,
-    run = 1,
+    run = 2,
+    --run = 1,
 }
 
 -- the inner "emit e" is aborted and the outer "emit e"
@@ -6366,8 +6366,8 @@ escape ret;
     --_ana = {acc=3},
     _ana = {acc=true},
     --run = 6,
-    --run = 9,
-    run = 20,
+    run = 9,
+    --run = 20,
 }
 
 Test { [[
@@ -6401,8 +6401,8 @@ escape ret;
     --_ana = {acc=3},
     _ana = {acc=true},
     --run = 6,
-    --run = 9,
-    run = 4,
+    run = 9,
+    --run = 4,
 }
 
 -- "emit e" on the stack has to die
@@ -6547,8 +6547,8 @@ with
     escape a+b;
 end
 ]],
-    --run = 7,
-    run = 3,
+    run = 7,
+    --run = 3,
 }
 
 -- different semantics w/ longjmp
@@ -34325,16 +34325,39 @@ Test { [[
 code/await Ff (void) -> (var&? int x) -> void do
     var int v = 10;
     x = &v;
-
-    vector[] byte c = [1,2,3];
-
-    await async do end;
 end
-
 var&? int x;
 spawn Ff() -> (&x);
 await x;
+escape 1;
+]],
+    run = 1,
+}
 
+Test { [[
+code/await Ff (void) -> (var&? int x) -> void do
+    var int v = 10;
+    x = &v;
+    await async do end;
+end
+var&? int x;
+spawn Ff() -> (&x);
+await x;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> (var&? int x) -> void do
+    var int v = 10;
+    x = &v;
+    vector[] byte c = [1,2,3];
+    await async do end;
+end
+var&? int x;
+spawn Ff() -> (&x);
+await x;
 escape 1;
 ]],
     run = 1,
@@ -34598,7 +34621,7 @@ ret = ret + (x? as int) + 1;
 
 escape ret;
 ]],
-    run = { ['~>1s'] = 11 },
+    run = { ['~>1s'] = 12 },
 }
 
 Test { [[
@@ -34617,6 +34640,29 @@ ret = ret + (x? as int) + 1;
 escape ret;
 ]],
     run = { ['~>1s'] = 1 },
+}
+
+Test { [[
+code/await Ff (void) -> (var&? int x) -> void do
+    var int v = 10;
+    x = &v;
+    await 1s;
+end
+
+var int ret = 0;
+
+pool[] Ff fs;
+
+var&? int x;
+spawn Ff() in fs -> (&x);
+
+ret = x!;
+await x;
+ret = ret + (x? as int) + 1;
+
+escape ret;
+]],
+    run = { ['~>1s'] = 12 },
 }
 
 --<<< REACTIVE / VAR / OPT / ALIAS
@@ -39167,21 +39213,14 @@ escape _V;
 
 -- fails w/o ceu_sys_stack_clear_org
 Test { [[
-input void OS_START;
-
-code/await Ux (void)->void
-do
+code/await Ux (void)->void do
     await 1us;
 end
-
-code/await Tx (void)->void
-do
+code/await Tx (void)->void do
     await Ux();
 end
-
 do
     pool[] Tx ts;
-    spawn Tx() in ts;
     spawn Tx() in ts;
     await 1us;
 end
