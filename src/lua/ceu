@@ -33,7 +33,7 @@ SOFTWARE.
 PAK = {
     lua_exe = 'lua5.3',
     ceu_ver = '0.20',
-    ceu_git = '0008f47730536406f2af4b783338b1db6511a5dc',
+    ceu_git = '13c570238bd3f75d7382d5755aff471b7af31b6d',
     files = {
         ceu_c =
             [====[
@@ -273,7 +273,11 @@ void ceu_pool_free (tceu_pool* pool, byte* val) {
 #define S64_MAX   9223372036854775807
 #define U64_MAX   18446744073709551615
 
+#define CEU_SEQ_MAX (U16_MAX/2)
+/* TODO */
+
 typedef u16 tceu_nevt;   /* TODO */
+typedef u16 tceu_nseq;   /* TODO */
 typedef === TCEU_NTRL === tceu_ntrl;
 typedef === TCEU_NLBL === tceu_nlbl;
 
@@ -292,7 +296,6 @@ typedef struct tceu_evt {
     tceu_nevt id;
     union {
         void* mem;                              /* CEU_INPUT__CODE, CEU_EVENT__MIN */
-        struct tceu_evt_occ* awk;               /* OCCURRING */
         struct tceu_code_mem_dyn* pool_first;   /* CEU_INPUT__CODE_POOL */
     };
 } tceu_evt;
@@ -305,6 +308,7 @@ typedef struct tceu_evt_range {
 
 typedef struct tceu_evt_occ {
     tceu_evt       evt;
+    tceu_nseq      seq;
     void*          params;
     tceu_evt_range range;
 } tceu_evt_occ;
@@ -317,8 +321,8 @@ typedef struct tceu_trl {
             struct {
                 tceu_nlbl lbl;
                 union {
-                    /* CEU_INPUT__CLEAR */
-                    tceu_evt_range clr_range;
+                    tceu_nseq seq;              /* NORMAL */
+                    tceu_evt_range clr_range;   /* CEU_INPUT__CLEAR */
                 };
             };
 
@@ -326,8 +330,7 @@ typedef struct tceu_trl {
             struct {
                 tceu_evt  pse_evt;
                 tceu_ntrl pse_skip;
-                u8        pse_paused  : 1;
-                u8        pse_changed : 1;
+                u8        pse_paused;
             };
         };
     };
@@ -411,12 +414,13 @@ enum {
     CEU_INPUT__CLEAR,           /* 5 */
     CEU_INPUT__PAUSE,
     CEU_INPUT__RESUME,
+CEU_INPUT__SEQ,
     CEU_INPUT__ASYNC,
     CEU_INPUT__THREAD,
     CEU_INPUT__WCLOCK,
     === EXTS_ENUM_INPUT ===
 
-    CEU_EVENT__MIN,
+CEU_EVENT__MIN,
     === EVTS_ENUM ===
 };
 
@@ -455,10 +459,6 @@ static void* ceu_data_as (tceu_ndata* supers, tceu_ndata* me, tceu_ndata cmp,
 === CODES_MEMS ===
 === CODES_ARGS ===
 
-typedef struct tceu_input_PAUSE {
-    bool _1;
-} tceu_input_PAUSE;
-
 === EXTS_TYPES ===
 === EVTS_TYPES ===
 
@@ -468,6 +468,8 @@ enum {
 };
 
 typedef struct tceu_app {
+    tceu_nseq seq;
+    tceu_nseq seq_base;
 
     /* WCLOCK */
     s32 wclk_late;
@@ -663,25 +665,31 @@ static void ceu_lbl (tceu_evt_occ* _ceu_occ, tceu_stk* _ceu_stk,
     }
 }
 
-#if defined(_CEU_DEBUG_MARK) || defined (_CEU_DEBUG_EXEC)
-#define _CEU_DEBUG_MARK
-#define _CEU_DEBUG_EXEC
+#if defined(_CEU_DEBUG)
+#define _CEU_DEBUG
 static int xxx = 0;
 #endif
 
-static void ceu_bcast_mark (tceu_evt_occ* occ)
+static void ceu_bcast (tceu_evt_occ* occ, tceu_stk* stk)
 {
     tceu_ntrl trlK;
     tceu_trl* trl;
     tceu_evt_range range = occ->range;
 
+    ceu_callback_assert_msg(CEU_APP.seq-CEU_APP.seq_base < CEU_SEQ_MAX,
+                            "too many internal reactions");
+    CEU_APP.seq++;
+
+    tceu_stk _stk = { 1, stk, range }; /* maybe nested bcast aborts it */
+
     /* MARK TRAILS TO EXECUTE */
 
-#ifdef _CEU_DEBUG_MARK
+#ifdef _CEU_DEBUG
 for (int i=0; i<xxx; i++) {
     fprintf(stderr, " ");
 }
-fprintf(stderr, ">>> %d [%p] %d->%d\n", occ->evt.id, range.mem, range.trl0, range.trlF);
+fprintf(stderr, ">>> %d/%p [%p] %d->%d\n", occ->evt.id, occ->evt.mem,
+                                           range.mem, range.trl0, range.trlF);
 xxx += 4;
 #endif
 
@@ -700,7 +708,7 @@ xxx += 4;
         _ceu_tests_trails_visited_++;
 #endif
 
-#ifdef _CEU_DEBUG_MARK
+#ifdef _CEU_DEBUG
 for (int i=0; i<xxx; i++) {
     fprintf(stderr, " ");
 }
@@ -716,7 +724,10 @@ fprintf(stderr, "??? trlK=%d, evt=%d\n", trlK, trl->evt.id);
                 tceu_evt_range _range = { (tceu_code_mem*)trl->evt.mem,
                                           0, (tceu_ntrl)(((tceu_code_mem*)trl->evt.mem)->trails_n-1) };
                 occ->range = _range;
-                ceu_bcast_mark(occ);
+                ceu_bcast(occ, &_stk);
+                if (!_stk.is_alive) {
+                    goto _CEU_BREAK_;
+                }
                 break;
             }
             case CEU_INPUT__CODE_POOL: {
@@ -726,11 +737,15 @@ printf(">>> BCAST[%p]:\n", trl->pool_first);
 printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
 #endif
                 while (cur != trl->evt.pool_first) {
+                    tceu_code_mem_dyn* nxt = cur->nxt;
                     tceu_evt_range _range = { &cur->mem[0],
                                               0, (tceu_ntrl)((&cur->mem[0])->trails_n-1) };
                     occ->range = _range;
-                    ceu_bcast_mark(occ);
-                    cur = cur->nxt;
+                    ceu_bcast(occ, &_stk);
+                    if (!_stk.is_alive) {
+                        goto _CEU_BREAK_;
+                    }
+                    cur = nxt;
                 }
                 break;
             }
@@ -741,8 +756,26 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                 if (occ->evt.id==trl->pse_evt.id &&
                     (occ->evt.id<CEU_EVENT__MIN || occ->evt.mem==trl->pse_evt.mem))
                 {
-                    trl->pse_changed = (*((u8*)occ->params) != trl->pse_paused);
-                    trl->pse_paused = *((u8*)occ->params);
+                    if (*((u8*)occ->params) != trl->pse_paused) {
+                        trl->pse_paused = *((u8*)occ->params);
+
+                        if (trl->pse_paused) {
+                            tceu_evt_occ occ2 = { {CEU_INPUT__PAUSE,{NULL}}, CEU_APP.seq, occ->params,
+                                                  {range.mem,
+                                                   trlK+1, trlK+trl->pse_skip}
+                                                };
+                            ceu_bcast(&occ2, &_stk);
+                        } else {
+                            tceu_evt_occ occ2 = { {CEU_INPUT__RESUME,{NULL}}, CEU_APP.seq, occ->params,
+                                                  {range.mem,
+                                                   trlK+1, trlK+trl->pse_skip}
+                                                };
+                            ceu_bcast(&occ2, &_stk);
+                        }
+                        if (!_stk.is_alive) {
+                            goto _CEU_BREAK_;
+                        }
+                    }
                 }
                 /* don't skip if pausing now */
                 if (was_paused && occ->evt.id!=CEU_INPUT__CLEAR) {
@@ -774,8 +807,7 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                     /* FINALIZE awakes now on "mark" */
                     ceu_lbl(occ, NULL, range.mem, trlK, trl->lbl);
                 }
-                trl->evt.id  = CEU_INPUT__NONE;
-                trl->evt.awk = NULL;
+                trl->evt.id = CEU_INPUT__NONE;
 
             /* clear matches CLEAR? */
             } else if (trl->evt.id == CEU_INPUT__CLEAR) {
@@ -797,6 +829,12 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                 }
             }
         } else if (trl->evt.id == occ->evt.id) {
+            if (occ->evt.id==CEU_INPUT__PAUSE || occ->evt.id==CEU_INPUT__RESUME) {
+                goto _CEU_AWAKE_YES_;
+            }
+            if (trl->seq-CEU_APP.seq_base > occ->seq-CEU_APP.seq_base) {
+                goto _CEU_AWAKE_NO_;
+            }
             if (trl->evt.id > CEU_EVENT__MIN) {
                 if (trl->evt.mem == occ->evt.mem) {
                     goto _CEU_AWAKE_YES_;   /* internal event matches "mem" */
@@ -809,10 +847,27 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
         goto _CEU_AWAKE_NO_;
 
 _CEU_AWAKE_YES_:
-        trl->evt.id  = CEU_INPUT__NONE;
-        trl->evt.awk = occ;     /* awake only at this level again */
+#ifdef _CEU_DEBUG
+for (int i=0; i<xxx+4; i++) {
+    fprintf(stderr, " ");
+}
+fprintf(stderr, "+++ %d\n", trl->lbl);
+#endif
+
+        trl->evt.id = CEU_INPUT__NONE;
+        ceu_lbl(occ, &_stk, range.mem, trlK, trl->lbl);
+        if (!_stk.is_alive) {
+#ifdef _CEU_DEBUG
+fprintf(stderr, "break\n");
+#endif
+            goto _CEU_BREAK_;
+        }
 
 _CEU_AWAKE_NO_:
+        if ((trl->evt.id > CEU_INPUT__SEQ) && (trl->seq > CEU_APP.seq_base+CEU_SEQ_MAX)) {
+            trl->seq = CEU_APP.seq_base;
+        }
+
         if (trlK == trlF) {
             break;
         } else if (occ->evt.id == CEU_INPUT__CLEAR) {
@@ -821,138 +876,24 @@ _CEU_AWAKE_NO_:
             trlK++; trl++;
         }
     }
+_CEU_BREAK_:
 
     occ->range = range;
 
-#ifdef _CEU_DEBUG_MARK
+#ifdef _CEU_DEBUG
 xxx -= 4;
 for (int i=0; i<xxx; i++) {
     fprintf(stderr, " ");
 }
 fprintf(stderr, "<<< %d [%p] %d->%d\n", occ->evt.id, range.mem, range.trl0, range.trlF);
 #endif
-}
-
-static void ceu_bcast_exec (tceu_evt_occ* occ, tceu_stk* stk)
-{
-    tceu_ntrl trlK;
-    tceu_trl* trl;
-    tceu_evt_range range = occ->range;
-
-    tceu_stk _stk = { 1, stk, occ->range }; /* maybe nested bcast aborts it */
-
-#ifdef _CEU_DEBUG_EXEC
-for (int i=0; i<xxx; i++) {
-    fprintf(stderr, " ");
-}
-fprintf(stderr, ">>> %d [%p] %d->%d stk=%p\n", occ->evt.id, range.mem, range.trl0, range.trlF, &_stk);
-xxx += 4;
-#endif
-
-    /* EXECUTE TRAILS */
-
-    for (trlK=range.trl0, trl=&range.mem->trails[trlK];
-         trlK<=range.trlF;
-         trlK++, trl++)
-    {
-#ifdef CEU_TESTS
-        _ceu_tests_trails_visited_++;
-#endif
-
-#ifdef _CEU_DEBUG_EXEC
-for (int i=0; i<xxx; i++) {
-    fprintf(stderr, " ");
-}
-fprintf(stderr, "??? trlK=%d, stk=%d evt=%d\n", trlK, _stk.is_alive, trl->evt.id);
-#endif
-
-        /* propagate "occ" to nested "code" */
-        if (trl->evt.id == CEU_INPUT__CODE) {
-            tceu_evt_range range = { (tceu_code_mem*)trl->evt.mem, 0,
-                                     (tceu_ntrl)(((tceu_code_mem*)trl->evt.mem)->trails_n-1) };
-            occ->range = range;
-            ceu_bcast_exec(occ, &_stk);
-        } else if (trl->evt.id == CEU_INPUT__CODE_POOL) {
-/* TODO: inverse order for FINS */
-            tceu_code_mem_dyn* cur = trl->evt.pool_first->nxt;
-            while (cur != trl->evt.pool_first) {
-                tceu_code_mem_dyn* nxt = cur->nxt;
-                tceu_evt_range range = { &cur->mem[0], 0, (tceu_ntrl)((&cur->mem[0])->trails_n-1) };
-                occ->range = range;
-                ceu_bcast_exec(occ, &_stk);
-                if (!_stk.is_alive) {
-                    break;  /* bcast_2 killed myself */
-                }
-                cur = nxt;
-            }
-        }
-
-        /* skip */
-        else if (trl->evt.id == CEU_INPUT__PAUSE_BLOCK) {
-            /* broadcast "pause" for this block */
-            if (trl->pse_changed) {
-                trl->pse_changed = 0;
-                if (trl->pse_paused) {
-                    tceu_evt_occ occ2 = { {CEU_INPUT__PAUSE,{NULL}}, occ->params,
-                                          {range.mem,
-                                           trlK+1, trlK+trl->pse_skip}
-                                        };
-                    ceu_bcast(&occ2, &_stk);
-                } else {
-                    tceu_evt_occ occ2 = { {CEU_INPUT__RESUME,{NULL}}, occ->params,
-                                          {range.mem,
-                                           trlK+1, trlK+trl->pse_skip}
-                                        };
-                    ceu_bcast(&occ2, &_stk);
-                }
-                if (!_stk.is_alive) {
-                    break;
-                }
-            }
-            /* only necessary to avoid INPUT__CODE propagation */
-            if (occ->evt.id!=CEU_INPUT__CLEAR && trl->pse_paused) {
-                trlK += trl->pse_skip;
-                trl  += trl->pse_skip;
-            }
-
-        /* execute */
-        } else if (trl->evt.id==CEU_INPUT__NONE && trl->evt.awk==occ) {
-#ifdef _CEU_DEBUG_EXEC
-for (int i=0; i<xxx+4; i++) {
-    fprintf(stderr, " ");
-}
-fprintf(stderr, "+++ %d\n", trl->lbl);
-#endif
-            trl->evt.awk = NULL;
-            ceu_lbl(occ, &_stk, range.mem, trlK, trl->lbl);
-        }
-
-        if (!_stk.is_alive) {
-#ifdef _CEU_DEBUG_EXEC
-fprintf(stderr, "break\n");
-#endif
-            break;
-        }
-    }
-
-#ifdef _CEU_DEBUG_EXEC
-xxx -= 4;
-for (int i=0; i<xxx; i++) {
-    fprintf(stderr, " ");
-}
-fprintf(stderr, "<<< %d [%p] %d->%d\n", occ->evt.id, range.mem, range.trl0, range.trlF);
-#endif
-}
-
-static void ceu_bcast (tceu_evt_occ* occ, tceu_stk* stk)
-{
-    ceu_bcast_mark(occ);
-    ceu_bcast_exec(occ, stk);
 }
 
 CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params)
 {
-    tceu_evt_occ occ = { {evt_id,{NULL}}, evt_params,
+    CEU_APP.seq_base = CEU_APP.seq;
+
+    tceu_evt_occ occ = { {evt_id,{NULL}}, CEU_APP.seq+1, evt_params,
                          {(tceu_code_mem*)&CEU_APP.root,
                           0, (tceu_ntrl)(CEU_APP.root.mem.trails_n-1)}
                        };
@@ -975,6 +916,9 @@ CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params)
 }
 
 CEU_API void ceu_start (void) {
+    CEU_APP.seq      = 0;
+    CEU_APP.seq_base = 0;
+
     CEU_APP.wclk_late = 0;
     CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;
     CEU_APP.wclk_min_cmp = CEU_WCLOCK_INACTIVE;
@@ -2918,8 +2862,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , __Awaits_one  = K'await' * (V'Await_Wclock' + V'Abs_Await')
     , __Awaits_many = K'await' * V'Await_Until'
 
-    , Await_Until  = (V'Await_Ext' + V'Await_Int') *
-                        OPT(K'until'*V'__Exp')
+    , Await_Until  = (V'Await_Ext' + V'Await_Int') * OPT(K'until'*V'__Exp')
 
     , Await_Ext    = V'ID_ext' -I(V'Abs_Await') -- TODO: rem
     , Await_Int    = V'Exp_Name' -I(V'Await_Wclock'+V'Abs_Await') -- TODO: rem
@@ -3888,13 +3831,13 @@ error'TODO: luacov never executes this?'
     _Code_impl__PRE = function (me)
         local _,_,_,_,out,blk = unpack(me)
 
+        local stmts_old = AST.asr(blk,'Block', 1,'Stmts')
+        local stmts_new = node('Stmts', me.ln)
+        AST.set(blk, 1, stmts_new)
+
         local Type = AST.get(out,'Type')
         if Type then
             -- enclose "blk" with "_ret = do ... end"
-
-            local stmts_old = AST.asr(blk,'Block', 1,'Stmts')
-            local stmts_new = node('Stmts', me.ln)
-            AST.set(blk, 1, stmts_new)
 
             local ID_prim,mod = unpack(Type)
             local is_void = (ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod))
@@ -3914,6 +3857,7 @@ error'TODO: luacov never executes this?'
             end
         else
             -- ok
+            AST.set(stmts_new, 1, node('Block', me.ln, stmts_old))
         end
 
         local tag = string.match(me.tag,'(.*)_impl')
@@ -5032,6 +4976,7 @@ local function dcls_new (blk, me, can_cross)
                 F = WRN
             end
         end
+        me.__dcls_dup = true
         F(false, me, old and
             implicit..'declaration of "'..me.id..'" hides previous declaration'..
                 ' ('..old.ln[1]..' : line '..old.ln[2]..')')
@@ -8087,6 +8032,10 @@ local NO = {
         Await_Forever=true, Await_Ext=true, Await_Int=true, Await_Wclock=true,
         Abs_Await=true, Every=true, Finalize=true,
     },
+    Async = {
+        Await_Forever=true, Await_Ext=true, Await_Int=true, Await_Wclock=true,
+        Abs_Await=true, Every=true, Finalize=true,
+    },
 }
 
 F = {
@@ -9673,7 +9622,25 @@ if dcl.tag ~= 'Prim' then
 
             if dcl.tag=='Var' or dcl.tag=='Evt' then
                 dcl.id_ = dcl.id
-                if not AST.par(me,'Data') then
+
+                local ok = (not dcl.__dcls_dup)
+                if ok then
+                    local blk = AST.par(dcl, 'Block')
+                    blk = AST.par(blk,'Block') or blk
+                    if AST.par(me,'Data') then
+                        --ok = true
+                    elseif blk.__par.tag == 'ROOT' then
+                        --ok = true
+                    else
+                        blk = AST.par(blk,'Block') or blk
+                        if blk.__par.tag == 'Code' then
+                            --ok = true
+                        else
+                            ok = false
+                        end
+                    end
+                end
+                if not ok then
                     dcl.id_ = dcl.id_..'_'..dcl.n
                 end
             end
@@ -10082,7 +10049,7 @@ local function CLEAR (me)
     tceu_evt_range __ceu_range = { _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[ };
 
     /* HACK_8: _ceu_occ holds __ceu_ret */
-    tceu_evt_occ __ceu_occ = { {CEU_INPUT__CLEAR,{_ceu_occ}}, &__ceu_range,
+    tceu_evt_occ __ceu_occ = { {CEU_INPUT__CLEAR,{_ceu_occ}}, CEU_APP.seq+1, &__ceu_range,
                                {(tceu_code_mem*)&CEU_APP.root,
                                 0, (tceu_ntrl)(CEU_APP.root.mem.trails_n-1)}
                              };
@@ -10380,8 +10347,7 @@ if (0)
             if ID_int.tag~='ID_any' and ID_int.dcl.has_trail then
                 -- HACK_4
                 LINE(me, [[
-_ceu_mem->trails[]]..ID_int.dcl.trails[1]..[[].evt.id  = CEU_INPUT__NONE;
-_ceu_mem->trails[]]..ID_int.dcl.trails[1]..[[].evt.awk = NULL;
+_ceu_mem->trails[]]..ID_int.dcl.trails[1]..[[].evt.id = CEU_INPUT__NONE;
 ]]..V(ID_int.dcl)..[[.range.mem = (void*) &_ceu_mem->trails[]]..ID_int.dcl.trails[1]..[[];
 ]])
             end
@@ -10768,7 +10734,6 @@ _ceu_mem->trails[]]..me.trails[1]..[[].evt.id     = CEU_INPUT__PAUSE_BLOCK;
 _ceu_mem->trails[]]..me.trails[1]..[[].pse_evt    = ]]..V(e)..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].pse_skip   = ]]..body.trails_n..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].pse_paused = 0;
-_ceu_mem->trails[]]..me.trails[1]..[[].pse_changed = 0;
 ]])
         CONC(me, body)
     end,
@@ -10852,6 +10817,7 @@ ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
 ]])
             HALT(me, {
                 { ['evt.id'] = 'CEU_INPUT__ASYNC' },
+                { seq        = 'CEU_APP.seq+1' },
                 { lbl        = me.lbl_asy.id },
                 lbl = me.lbl_asy.id,
             })
@@ -11348,7 +11314,7 @@ do {
 
     Await_Pause = function (me)
         HALT(me, {
-            { evt =  '((tceu_evt){CEU_INPUT__PAUSE,{NULL}})' },
+            { evt = '((tceu_evt){CEU_INPUT__PAUSE,{NULL}})' },
             { lbl = me.lbl_out.id },
             lbl = me.lbl_out.id,
         })
@@ -11365,6 +11331,7 @@ do {
         local ID_ext = unpack(me)
         HALT(me, {
             { evt = V(ID_ext) },
+            { seq = 'CEU_APP.seq+1' },
             { lbl = me.lbl_out.id },
             lbl = me.lbl_out.id,
         })
@@ -11402,6 +11369,7 @@ ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..'.id, '..ps..[[).value.
             LINE(me, [[
 ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__ASYNC;
+_ceu_mem->trails[]]..me.trails[1]..[[].seq    = CEU_APP.seq+1;
 _ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
 ]])
             LINE(me, [[
@@ -11436,6 +11404,7 @@ if (]]..V(Exp_Name)..[[.alias != NULL) {
         else
             HALT(me, {
                 { evt = V(Exp_Name) },
+                { seq = 'CEU_APP.seq+1' },
                 { lbl = me.lbl_out.id },
                 lbl = me.lbl_out.id,
             })
@@ -11458,7 +11427,7 @@ if (]]..V(Exp_Name)..[[.alias != NULL) {
             ps = '&__ceu_ps'
         end
         LINE(me, [[
-    tceu_evt_occ __ceu_occ = { ]]..V(Exp_Name)..[[, &__ceu_ps,
+    tceu_evt_occ __ceu_occ = { ]]..V(Exp_Name)..[[, CEU_APP.seq+1, &__ceu_ps,
                                {(tceu_code_mem*)&CEU_APP.root,
                                 0, CEU_APP.root.mem.trails_n-1}
                              };
@@ -11485,6 +11454,7 @@ _CEU_HALT_]]..me.n..[[_:
 ]])
         HALT(me, {
             { ['evt.id'] = 'CEU_INPUT__WCLOCK' },
+            { seq        = 'CEU_APP.seq+1' },
             { lbl        = me.lbl_out.id },
             lbl = me.lbl_out.id,
         })
@@ -11516,6 +11486,7 @@ _CEU_HALT_]]..me.n..[[_:
 ]])
         HALT(me, {
             { ['evt.id'] = 'CEU_INPUT__ASYNC' },
+            { seq        = 'CEU_APP.seq+1' },
             { lbl        = me.lbl_out.id },
             lbl = me.lbl_out.id,
         })
@@ -11530,6 +11501,7 @@ ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
 ]])
         HALT(me, {
             { ['evt.id'] = 'CEU_INPUT__ASYNC' },
+            { seq        = 'CEU_APP.seq+1' },
             { lbl        = me.lbl_in.id },
             lbl = me.lbl_in.id,
         })

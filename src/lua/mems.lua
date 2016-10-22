@@ -401,7 +401,25 @@ if dcl.tag ~= 'Prim' then
 
             if dcl.tag=='Var' or dcl.tag=='Evt' then
                 dcl.id_ = dcl.id
-                if not AST.par(me,'Data') then
+
+                local ok = (not dcl.__dcls_dup)
+                if ok then
+                    local blk = AST.par(dcl, 'Block')
+                    blk = AST.par(blk,'Block') or blk
+                    if AST.par(me,'Data') then
+                        --ok = true
+                    elseif blk.__par.tag == 'ROOT' then
+                        --ok = true
+                    else
+                        blk = AST.par(blk,'Block') or blk
+                        if blk.__par.tag == 'Code' then
+                            --ok = true
+                        else
+                            ok = false
+                        end
+                    end
+                end
+                if not ok then
                     dcl.id_ = dcl.id_..'_'..dcl.n
                 end
             end

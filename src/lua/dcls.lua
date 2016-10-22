@@ -94,6 +94,7 @@ local function dcls_new (blk, me, can_cross)
                 F = WRN
             end
         end
+        me.__dcls_dup = true
         F(false, me, old and
             implicit..'declaration of "'..me.id..'" hides previous declaration'..
                 ' ('..old.ln[1]..' : line '..old.ln[2]..')')

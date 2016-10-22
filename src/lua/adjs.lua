@@ -170,13 +170,13 @@ error'TODO: luacov never executes this?'
     _Code_impl__PRE = function (me)
         local _,_,_,_,out,blk = unpack(me)
 
+        local stmts_old = AST.asr(blk,'Block', 1,'Stmts')
+        local stmts_new = node('Stmts', me.ln)
+        AST.set(blk, 1, stmts_new)
+
         local Type = AST.get(out,'Type')
         if Type then
             -- enclose "blk" with "_ret = do ... end"
-
-            local stmts_old = AST.asr(blk,'Block', 1,'Stmts')
-            local stmts_new = node('Stmts', me.ln)
-            AST.set(blk, 1, stmts_new)
 
             local ID_prim,mod = unpack(Type)
             local is_void = (ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod))
@@ -196,6 +196,7 @@ error'TODO: luacov never executes this?'
             end
         else
             -- ok
+            AST.set(stmts_new, 1, node('Block', me.ln, stmts_old))
         end
 
         local tag = string.match(me.tag,'(.*)_impl')

@@ -378,6 +378,92 @@ escape 1;
     run = 1,
 }
 
+-->> C FIELDS / DIRECT ACCESS / TCEU_MEM
+Test { [[
+native __ceu_mem, _tceu_code_mem_ROOT;
+var int xxx = 10;
+escape (__ceu_mem as _tceu_code_mem_ROOT&&):xxx;
+]],
+    run = 10,
+}
+
+Test { [[
+native __ceu_mem, _tceu_code_mem_ROOT;
+do/_
+    var int xxx = 10;
+    escape (__ceu_mem as _tceu_code_mem_ROOT&&):xxx;
+end
+]],
+    cc = '5:2: error: ‘tceu_code_mem_ROOT {aka struct tceu_code_mem_ROOT}’ has no member named ‘xxx’',
+}
+
+Test { [[
+par/and do
+    var int xxx = 10;
+with
+    var int xxx = 10;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native __ceu_mem, _tceu_code_mem_Ff;
+code/await Ff (void) -> int do
+    var int yyy = 10;
+    escape (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
+end
+var int v = await Ff();
+escape v;
+]],
+    run = 10,
+}
+
+Test { [[
+native __ceu_mem, _tceu_code_mem_Ff;
+code/await Ff (void) -> int do
+    do/_
+        var int yyy = 10;
+        escape (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
+    end
+end
+var int v = await Ff();
+escape v;
+]],
+    cc = '6:2: error: ‘tceu_code_mem_Ff {aka struct tceu_code_mem_Ff}’ has no member named ‘yyy’',
+}
+
+Test { [[
+native __ceu_mem, _tceu_code_mem_Ff;
+code/await Ff (void) -> FOREVER do
+    do/_
+        var int yyy = 10;
+        var int zzz = (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
+    end
+    await FOREVER;
+end
+spawn Ff();
+escape 10;
+]],
+    cc = '6:2: error: ‘tceu_code_mem_Ff {aka struct tceu_code_mem_Ff}’ has no member named ‘yyy’',
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    par do
+        var int yyy = 10;
+    with
+        var int yyy = 10;
+    end
+end
+spawn Ff();
+escape 10;
+]],
+    run = 10,
+}
+--<< C FIELDS / DIRECT ACCESS / TCEU_MEM
+
 --<<< NATIVE
 
 Test { [[var int a;]],
