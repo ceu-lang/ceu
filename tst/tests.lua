@@ -21727,7 +21727,7 @@ await async do
 end;
 escape 0;
 ]],
-    props='not permitted inside `async´'
+    props_ = 'line 2 : invalid `await´ : unexpected enclosing `async´',
 }
 Test { [[
 input int X;
@@ -42932,7 +42932,7 @@ await async (v) do
 end;
 escape v;
 ]],
-    props = 'line 3 : not permitted inside `async´',
+    props_ = 'line 3 : invalid `finalize´ : unexpected enclosing `async´',
     _opts = opts_thread,
 }
 Test { [[
