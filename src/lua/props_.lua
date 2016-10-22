@@ -7,6 +7,10 @@ local NO = {
         Await_Forever=true, Await_Ext=true, Await_Int=true, Await_Wclock=true,
         Abs_Await=true, Every=true, Finalize=true,
     },
+    Async = {
+        Await_Forever=true, Await_Ext=true, Await_Int=true, Await_Wclock=true,
+        Abs_Await=true, Every=true, Finalize=true,
+    },
 }
 
 F = {

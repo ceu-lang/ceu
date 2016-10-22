@@ -8,50 +8,6 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
-Test { [[
-input void A;
-par/and do
-    var int i;
-    loop i in [0->21845[ do
-        await A;
-    end
-with
-    await async do
-        var int i;
-        loop i in [0->21845[ do
-            emit A;
-        end
-    end
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native _CEU_SEQ_MAX;
-event void e;
-var int i;
-loop i in [0->_CEU_SEQ_MAX+1[ do
-    emit e;
-end
-escape 1;
-]],
-    wrn = true,
-    run = '18] runtime error: too many internal reactions',
-}
-
-Test { [[
-input void A;
-await async do
-    await A;
-end
-escape 1;
-]],
-    todo = true,
-    run = 1,
-}
-
 --[=====[
 do return end -- OK
 ---]=====]
@@ -1624,6 +1580,40 @@ Test { [[var int a; emit a(1); escape a;]],
     --env = 'line 1 : identifier "a" is not an event (/tmp/tmp.ceu : line 1)',
     --trig_wo = 1,
 }
+
+Test { [[
+input void A;
+par/and do
+    var int i;
+    loop i in [0->21845[ do
+        await A;
+    end
+with
+    await async do
+        var int i;
+        loop i in [0->21845[ do
+            emit A;
+        end
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native _CEU_SEQ_MAX;
+event void e;
+var int i;
+loop i in [0->_CEU_SEQ_MAX+1[ do
+    emit e;
+end
+escape 1;
+]],
+    wrn = true,
+    run = '18] runtime error: too many internal reactions',
+}
+
     -- WALL-CLOCK TIME / WCLOCK
 
 Test { [[
@@ -26603,6 +26593,16 @@ end
 escape 1;
 ]],
     run = 1,
+}
+
+Test { [[
+input void A;
+await async do
+    await A;
+end
+escape 1;
+]],
+    props_ = 'line 3 : invalid `await´ : unexpected enclosing `async´',
 }
 
 Test { [[
