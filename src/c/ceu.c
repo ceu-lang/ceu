@@ -82,8 +82,7 @@ typedef struct tceu_trl {
             struct {
                 tceu_evt  pse_evt;
                 tceu_ntrl pse_skip;
-                u8        pse_paused  : 1;
-                u8        pse_changed : 1;
+                u8        pse_paused;
             };
         };
     };
@@ -210,10 +209,6 @@ static void* ceu_data_as (tceu_ndata* supers, tceu_ndata* me, tceu_ndata cmp,
 
 === CODES_MEMS ===
 === CODES_ARGS ===
-
-typedef struct tceu_input_PAUSE {
-    bool _1;
-} tceu_input_PAUSE;
 
 === EXTS_TYPES ===
 === EVTS_TYPES ===
@@ -508,8 +503,26 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                 if (occ->evt.id==trl->pse_evt.id &&
                     (occ->evt.id<CEU_EVENT__MIN || occ->evt.mem==trl->pse_evt.mem))
                 {
-                    trl->pse_changed = (*((u8*)occ->params) != trl->pse_paused);
-                    trl->pse_paused = *((u8*)occ->params);
+                    if (*((u8*)occ->params) != trl->pse_paused) {
+                        trl->pse_paused = *((u8*)occ->params);
+
+                        if (trl->pse_paused) {
+                            tceu_evt_occ occ2 = { {CEU_INPUT__PAUSE,{NULL}}, CEU_APP.seq, occ->params,
+                                                  {range.mem,
+                                                   trlK+1, trlK+trl->pse_skip}
+                                                };
+                            ceu_bcast(&occ2, &_stk);
+                        } else {
+                            tceu_evt_occ occ2 = { {CEU_INPUT__RESUME,{NULL}}, CEU_APP.seq, occ->params,
+                                                  {range.mem,
+                                                   trlK+1, trlK+trl->pse_skip}
+                                                };
+                            ceu_bcast(&occ2, &_stk);
+                        }
+                        if (!_stk.is_alive) {
+                            goto _CEU_BREAK_;
+                        }
+                    }
                 }
                 /* don't skip if pausing now */
                 if (was_paused && occ->evt.id!=CEU_INPUT__CLEAR) {
@@ -563,6 +576,9 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                 }
             }
         } else if (trl->evt.id == occ->evt.id) {
+            if (occ->evt.id==CEU_INPUT__PAUSE || occ->evt.id==CEU_INPUT__RESUME) {
+                goto _CEU_AWAKE_YES_;
+            }
             if (trl->seq > occ->seq) {
                 goto _CEU_AWAKE_NO_;
             }

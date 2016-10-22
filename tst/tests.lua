@@ -9,105 +9,7 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
-
-Test { [[
-input int E;
-event bool e;
-var int ret = 0;
-par/or do
-    pause/if e do
-        par do
-            every 1s do
-                ret = ret + 1;
-            end
-        with
-            loop do
-                await pause;
-                ret = ret + 1;
-                await resume;
-                ret = ret + 2;
-            end
-        end
-    end
-with
-    var int v;
-    every v in E do
-        emit e(v as bool);
-    end
-with
-    await async do
-        emit 10s;       // 10
-        emit E(0);      // 10
-        emit 10s;       // 20
-        emit E(1);      // 21
-        emit 10s;       // 21
-        emit E(1);      // 21
-        emit E(1);      // 21
-        emit E(0);      // 23
-        emit E(0);      // 23
-        emit 10s;       // 33
-        emit E(1);      // 34
-        emit E(0);      // 36
-        emit 10s;       // 46
-    end
-end
-escape ret;
-]],
-    wrn = true,
-    run = 46,
-}
-
-Test { [[
-input int E;
-event bool e;
-var int ret = 0;
-par/or do
-    pause/if e do
-        par do
-            every 1s do
-                ret = ret + 1;
-            end
-        with
-            do finalize with
-                nothing;
-            pause with
-                ret = ret + 1;
-            resume with
-                ret = ret + 2;
-            end
-            await FOREVER;
-        end
-    end
-with
-    var int v;
-    every v in E do
-        emit e(v as bool);
-    end
-with
-    await async do
-        emit 10s;       // 10
-        emit E(0);      // 10
-        emit 10s;       // 20
-        emit E(1);      // 21
-        emit 10s;       // 21
-        emit E(1);      // 21
-        emit E(1);      // 21
-        emit E(0);      // 23
-        emit E(0);      // 23
-        emit 10s;       // 33
-        emit E(1);      // 34
-        emit E(0);      // 36
-        emit 10s;       // 46
-    end
-end
-escape ret;
-]],
-    -- todo: this examples uses trails[4], trails[6], but not trails[5]
-    wrn = true,
-    run = 46,
-}
-
---do return end -- OK
+do return end -- OK
 ---]=====]
 
 ----------------------------------------------------------------------------
@@ -27640,6 +27542,103 @@ end
 ]],
     _ana = {acc=true},
     run = {['~>2s']=-1},
+}
+
+Test { [[
+input int E;
+event bool e;
+var int ret = 0;
+par/or do
+    pause/if e do
+        par do
+            every 1s do
+                ret = ret + 1;
+            end
+        with
+            loop do
+                await pause;
+                ret = ret + 1;
+                await resume;
+                ret = ret + 2;
+            end
+        end
+    end
+with
+    var int v;
+    every v in E do
+        emit e(v as bool);
+    end
+with
+    await async do
+        emit 10s;       // 10
+        emit E(0);      // 10
+        emit 10s;       // 20
+        emit E(1);      // 21
+        emit 10s;       // 21
+        emit E(1);      // 21
+        emit E(1);      // 21
+        emit E(0);      // 23
+        emit E(0);      // 23
+        emit 10s;       // 33
+        emit E(1);      // 34
+        emit E(0);      // 36
+        emit 10s;       // 46
+    end
+end
+escape ret;
+]],
+    wrn = true,
+    run = 46,
+}
+
+Test { [[
+input int E;
+event bool e;
+var int ret = 0;
+par/or do
+    pause/if e do
+        par do
+            every 1s do
+                ret = ret + 1;
+            end
+        with
+            do finalize with
+                nothing;
+            pause with
+                ret = ret + 1;
+            resume with
+                ret = ret + 2;
+            end
+            await FOREVER;
+        end
+    end
+with
+    var int v;
+    every v in E do
+        emit e(v as bool);
+    end
+with
+    await async do
+        emit 10s;       // 10
+        emit E(0);      // 10
+        emit 10s;       // 20
+        emit E(1);      // 21
+        emit 10s;       // 21
+        emit E(1);      // 21
+        emit E(1);      // 21
+        emit E(0);      // 23
+        emit E(0);      // 23
+        emit 10s;       // 33
+        emit E(1);      // 34
+        emit E(0);      // 36
+        emit 10s;       // 46
+    end
+end
+escape ret;
+]],
+    -- todo: this examples uses trails[4], trails[6], but not trails[5]
+    wrn = true,
+    run = 46,
 }
 
 --<<< PAUSE
