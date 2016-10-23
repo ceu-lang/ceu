@@ -33,7 +33,7 @@ SOFTWARE.
 PAK = {
     lua_exe = 'lua5.3',
     ceu_ver = '0.20',
-    ceu_git = '13c570238bd3f75d7382d5755aff471b7af31b6d',
+    ceu_git = 'cdd2e9a063d3fe4399bdcfd49aadb774da454578',
     files = {
         ceu_c =
             [====[
@@ -5913,9 +5913,11 @@ F = {
         local _, e = unpack(me)
 
         -- ctx
-        INFO.asr_tag(e, {'Nat'}, 'invalid call')
+        INFO.asr_tag(e, {'Nat','Var'}, 'invalid call')
 
         -- tp
+        ASR(TYPES.is_nat(e.info.tp),
+            'invalid call : expected native type')
 
         -- info
         me.info = e.info
@@ -7608,7 +7610,7 @@ local function check_blk (to_blk, fr_blk)
     elseif Stmts and (
                 AST.get(Stmts,'',1,'Do', 2,'Block')==fr_blk -- code ... => ...
             or
-                Stmts.__par==fr_blk                         -- code ... => FOREVER
+                AST.get(Stmts,'',1,'Block')==fr_blk         -- code ... => FOREVER
             ) then
         return 'maybe'
     else
@@ -7624,8 +7626,13 @@ local function f2mod (f)
         local _,_,mod = unpack(Node)
         return mod
     else
-        local mod = unpack(AST.asr(Exp_Name.info.dcl,'Nat'))
-        return mod
+        local nat = AST.get(Exp_Name.info.dcl,'Nat')
+        if nat then
+            local mod = unpack(AST.asr(Exp_Name.info.dcl,'Nat'))
+            return mod
+        else
+            return nil
+        end
     end
 end
 

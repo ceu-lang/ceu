@@ -89,9 +89,11 @@ F = {
         local _, e = unpack(me)
 
         -- ctx
-        INFO.asr_tag(e, {'Nat'}, 'invalid call')
+        INFO.asr_tag(e, {'Nat','Var'}, 'invalid call')
 
         -- tp
+        ASR(TYPES.is_nat(e.info.tp),
+            'invalid call : expected native type')
 
         -- info
         me.info = e.info

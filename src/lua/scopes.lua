@@ -24,8 +24,13 @@ local function f2mod (f)
         local _,_,mod = unpack(Node)
         return mod
     else
-        local mod = unpack(AST.asr(Exp_Name.info.dcl,'Nat'))
-        return mod
+        local nat = AST.get(Exp_Name.info.dcl,'Nat')
+        if nat then
+            local mod = unpack(AST.asr(Exp_Name.info.dcl,'Nat'))
+            return mod
+        else
+            return nil
+        end
     end
 end
 

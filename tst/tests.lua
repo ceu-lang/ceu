@@ -9,6 +9,30 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+Test { [[
+code/await Ff (var int&& ptr) -> void do
+end
+var int v = 0;
+var int&& ptr = &&v;
+await Ff(ptr);
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+code/await Ff (var int&& ptr) -> void do
+end
+var int v = 0;
+var int&& ptr = &&v;
+spawn Ff(ptr);
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
 do return end -- OK
 ---]=====]
 
@@ -376,6 +400,16 @@ end
 escape 1;
 ]],
     run = 1,
+}
+
+Test { [[
+native _void;
+var _void&& p = _;
+var int x = p:get();
+escape 1;
+]],
+    wrn = true,
+    cc = '3:25: error: dereferencing ‘void *’ pointer',
 }
 
 -->> C FIELDS / DIRECT ACCESS / TCEU_MEM
@@ -18825,10 +18859,10 @@ do v(&&a);
 finalize with nothing; end;
 escape(a);
 ]],
-    exps = 'line 12 : invalid call : unexpected context for variable "v"',
+    --exps = 'line 12 : invalid call : unexpected context for variable "v"',
     --env = 'line 8 : native variable/function "_f" is not declared',
     --fin = 'line 8 : attribution to pointer with greater scope',
-    --fin = 'line 11 : unsafe access to pointer "v" across `await´',
+    inits = 'line 12 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:10)',
     --run = { ['~>1s']=10 },
 }
 
@@ -18852,10 +18886,10 @@ var int a=0;
 do v(&&a); finalize with nothing; end;
 escape(a);
 ]],
-    exps = 'line 12 : invalid call : unexpected context for variable "v"',
+    --exps = 'line 12 : invalid call : unexpected context for variable "v"',
     --env = 'line 8 : native variable/function "_f" is not declared',
     --fin = 'line 8 : attribution to pointer with greater scope',
-    --fin = 'line 11 : unsafe access to pointer "v" across `await´',
+    inits = 'line 12 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:10)',
 }
 Test { [[
 native _f;
@@ -18929,12 +18963,12 @@ end
 native _t;
 var _t v = _f;
 var int a=0;
-do v(&&a); finalize with nothing; end;
+do v(&&a); finalize (a) with nothing; end;
 escape(a);
 ]],
-    exps = 'line 11 : invalid call : unexpected context for variable "v"',
+    --exps = 'line 11 : invalid call : unexpected context for variable "v"',
     --env = 'line 8 : native variable/function "_f" is not declared',
-    --run = 10,
+    run = 10,
 }
 
 Test { [[
@@ -35838,6 +35872,28 @@ end
 escape 0;
 ]],
     inits = 'line 10 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:15)',
+}
+
+Test { [[
+native _void, _g;
+data Dd with
+    var& _void v;
+end
+code/await Ff (var _void&& p) -> (var& Dd d) -> FOREVER do
+    var&? _void v_ =
+        &_g()
+            finalize (v_) with
+            end;
+
+    var Dd d_ = val Dd(&v_!);
+    d = &d_;
+
+    await FOREVER;
+end
+escape 1;
+]],
+    wrn = true,
+    cc = '6:43: error: implicit declaration of function ‘g’',
 }
 
 Test { [[
