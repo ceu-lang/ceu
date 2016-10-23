@@ -8,7 +8,7 @@ local function check_blk (to_blk, fr_blk)
     elseif Stmts and (
                 AST.get(Stmts,'',1,'Do', 2,'Block')==fr_blk -- code ... => ...
             or
-                Stmts.__par==fr_blk                         -- code ... => FOREVER
+                AST.get(Stmts,'',1,'Block')==fr_blk         -- code ... => FOREVER
             ) then
         return 'maybe'
     else
