@@ -34,6 +34,16 @@ Stmt ::= nothing
             Block
         end
 
+      /* finalization */
+      | do Stmt Finalize
+      | var `&?´ Type ID_int `=´ `&´ (Call_Nat | Call_Code) Finalize
+        // where
+            Finalize ::= finalize `(´ LIST(Name) `)´ with
+                             Block
+                         [ pause  with Block ]
+                         [ resume with Block ]
+                         end
+
   /* Storage Classes */
 
       | var [`&´|`&?´] Type LIST(ID_int [`=´ Set])
@@ -97,12 +107,6 @@ Stmt ::= nothing
       |  break [`/´ID_int]
       |  continue [`/´ID_int]
 
-  /* Pause */
-
-      | pause/if (Name|ID_ext) do
-            Block
-        end
-
   /* Parallel Compositions */
 
       /* parallels */
@@ -116,12 +120,18 @@ Stmt ::= nothing
 
       /* watching */
       // Watching ::=
-      | watching LIST((ID_ext|Name|WCLOCKK|WCLOCKE|Code) [`->´ `(´ LIST(`&´ Var) `)´]) do
+      | watching LIST((ID_ext|Name|WCLOCKK|WCLOCKE|Code2) do
             Block
         end
 
       /* block spawn */
       | spawn do
+            Block
+        end
+
+  /* Pause */
+
+      | pause/if (Name|ID_ext) do
             Block
         end
 
@@ -172,17 +182,18 @@ Stmt ::= nothing
       /* code instantiation */
 
       // Call_Code ::=
-      | call  Mods Code
+      | call  Mods Code1
 
       // Await_Code ::=
-      | await Mods Code
+      | await Mods Code2
 
       // Spawn_Code ::=
-      | spawn Mods Code [in Name] [`->´ `(´ LIST(`&´ Var) `)´]
+      | spawn Mods Code2 [in Name]
 
         // where
             Mods ::= [`/´dynamic | `/´static] [`/´recursive]
-            Code ::= ID_abs `(´ [LIST(Exp)] `)´
+            Code1 ::= ID_abs `(´ [LIST(Exp)] `)´
+            Code2 ::= Code1 [`->´ `(´ LIST(`&´ Var) `)´])
 
   /* C integration */
 
@@ -197,16 +208,6 @@ Stmt ::= nothing
 
       // Call_Nat ::=
       | call [`/´recursive] (Name | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
-
-      /* finalization */
-      | do Block Finalize
-      | var `&?´ Type ID_int `=´ `&´ (Call_Nat | Call_Code) Finalize
-        // where
-            Finalize ::= finalize `(´ LIST(Name) `)´ with
-                             Block
-                         [ pause  with Block ]
-                         [ resume with Block ]
-                         end
 
   /* Lua integration */
 

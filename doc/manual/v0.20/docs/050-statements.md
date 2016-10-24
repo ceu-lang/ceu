@@ -65,6 +65,62 @@ Pre_Do ::= pre do
 All `pre-do-end` statements are concatenated together in the order they appear
 and moved to the beginning of the top-level block, before all other statements.
 
+### Finalization
+
+The `finalize` statement postpones the execution of its body to happen when its 
+associated block goes out of scope:
+
+```ceu
+Do_Finalize  ::= do Stmt Finalize
+Var_Finalize ::= var `&?´ Type ID_int `=´ `&´ (Call_Nat | Call_Code) Finalize
+
+Finalize ::= finalize `(´ LIST(Name) `)´ with
+                 Block
+             [ pause  with Block ]
+             [ resume with Block ]
+             end
+```
+
+#### Block
+
+Block finalization
+
+#### Variable
+
+The presence of the optional attribution clause determines which block to 
+associate with the `finalize`:
+
+1. The enclosing block, if the attribution is absent.
+2. The block of the variable being assigned, if the attribution is present.
+
+Example:
+
+<pre><code>
+<b>input int</b> A;
+<b>par/or do</b>
+    <b>var</b> _FILE* f;
+    <b>finalize</b>
+        f = _fopen("/tmp/test.txt");
+    <b>with</b>
+        _fclose(f);
+    <b>end</b>
+    <b>every</b> v <b>in</b> A <b>do</b>
+        fwrite(&v, ..., f);
+    <b>end</b>
+<b>with</b>
+    <b>await</b> 1s;
+<b>end</b>
+</code></pre>
+
+The program opens `f` and writes to it on every occurrence of `A`.
+The writing trail is aborted after one second, but the `finalize` safely closes
+the file, because it is associated to the block that declares `f`.
+
+The [static analysis](#static-analysis) of Céu enforces the use of `finalize` 
+for unsafe attributions.
+
+-------------------------------------------------------------------------------
+
 Declarations
 ------------
 
@@ -166,6 +222,10 @@ event (int,int) c;      // "c" is a internal event carrying an "(int,int)" pair
 
 `TODO`
 
+See also [Code Pools](#TODO) and [Data Pools](#TODO).
+
+-------------------------------------------------------------------------------
+
 Event Handling
 --------------
 
@@ -182,8 +242,6 @@ Await ::= await (ID_ext | Name) [until Exp]     /* events */
        |  await (pause|resume)                  /* pausing events */
        |  await FOREVER                         /* forever */
 ```
-
-Pausing events are dicussed in [Pausing](#TODO).
 
 Examples:
 
@@ -262,6 +320,10 @@ Refer to [[#Environment]] for information about storage types for *wall-clock*
 time.
 -->
 
+#### Pausing
+
+Pausing events are dicussed in [Pausing](#TODO).
+
 #### `FOREVER`
 
 The `await` statement for `FOREVER` halts the running trail forever.
@@ -280,7 +342,7 @@ The event can be an [external event](#TODO), an [internal event](#TODO), or
 a timer:
 
 ```ceu
-Emit ::= emit (ID_ext | Name) [`=>´ (Exp | `(´ [LIST(Exp)] `)´)]
+Emit ::= emit (ID_ext | Name) [`(´ [LIST(Exp)] `)´)]
       |  emit (WCLOCKK|WCLOCKE)
 ```
 
@@ -335,6 +397,8 @@ async do
     emit 1s;    // broadcasts "1s" to the application itself
 end
 ```
+
+-------------------------------------------------------------------------------
 
 Conditionals
 ------------
@@ -532,3 +596,70 @@ end
 
 *Note : the runtime asserts that the step is a positive number and that the
         control variable does not overflow.*
+
+### Pool Iterators
+
+Pool iterators are dicussed in [Code Pools](#TODO).
+
+-------------------------------------------------------------------------------
+
+Parallel Compositions
+---------------------
+
+The parallel statements `par/and`, `par/or`, and `par` split the running trail 
+in multiple others:
+
+```ceu
+Pars ::= (par | par/and | par/or) do
+             Block
+         with
+             Block
+         { with
+             Block }
+         end
+```
+
+They differ only on how trails rejoin and terminate the composition.
+
+See also [Parallel Compositions and Abortion](#TODO).
+
+### par
+
+The `par` statement never rejoins.
+
+Examples:
+
+```ceu
+input void KEY_DOWN;
+par do
+    every 1s do
+        <...>
+    end
+with
+    every KEY_DOWN do
+    end
+end
+```
+
+### par/and
+
+The `par/and` statement stands for *parallel-and* and rejoins when all trails 
+terminate.
+
+### par/or
+
+The `par/or` statement stands for *parallel-or* and rejoins when any of the 
+trails terminate, aborting all other trails.
+
+-------------------------------------------------------------------------------
+
+Pausing
+-------
+
+```ceu
+Pause_If ::= pause/if (Name|ID_ext) do
+                 Block
+             end
+
+Pause_Await ::= await (pause|resume)
+```
