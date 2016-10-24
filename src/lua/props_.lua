@@ -109,7 +109,7 @@ F = {
     --------------------------------------------------------------------------
 
     Code = function (me)
-        local mods,_,body = unpack(me)
+        local _,mods,_,body = unpack(me)
         if mods.dynamic and body then
             local Code_Pars = AST.asr(body,'', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
             for i, dcl in ipairs(Code_Pars) do
@@ -156,7 +156,7 @@ F = {
     Loop_Pool = function (me)
         local _,list,pool = unpack(me)
         local Code = AST.asr(pool.info.dcl,'Pool', 2,'Type', 1,'ID_abs').dcl
-        local ret = AST.get(Code,'Code', 3,'Block', 1,'Stmts',
+        local ret = AST.get(Code,'Code', 4,'Block', 1,'Stmts',
                                          1,'Stmts', 3,'', 2,'Type')
         me.yields = me.yields and ret
             -- if "=>FOREVER" counts as not yielding

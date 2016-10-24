@@ -101,7 +101,7 @@ F = {
 
     Abs_Call = function (me)
         local ID_abs = AST.asr(me,'', 2,'Abs_Cons', 1,'ID_abs')
-        local mods_dcl  = unpack(ID_abs.dcl)
+        local _,mods_dcl  = unpack(ID_abs.dcl)
         local mods_call = unpack(me)
 
         if mods_dcl.dynamic then
@@ -124,7 +124,7 @@ F = {
 
         -- info
         me.info = INFO.new(me, 'Val', nil,
-                    AST.copy(AST.asr(ID_abs.dcl,'Code', 3,'Block', 1,'Stmts',
+                    AST.copy(AST.asr(ID_abs.dcl,'Code', 4,'Block', 1,'Stmts',
                                                         1,'Stmts', 3,'',
                                                                     -- TODO: HACK_5
                                                         2,'Type')))
@@ -138,7 +138,7 @@ F = {
             me.vars = AST.asr(ID_abs.dcl,'Data', 3,'Block').dcls
             err_str = 'invalid constructor'
         else
-            me.vars = AST.asr(ID_abs.dcl,'Code', 3,'Block', 1,'Stmts',
+            me.vars = AST.asr(ID_abs.dcl,'Code', 4,'Block', 1,'Stmts',
                                                  1,'Stmts', 1,'Code_Pars')
             err_str = 'invalid call'
         end
@@ -146,7 +146,7 @@ F = {
 
         -- check if dyn call is actually static (with "as")
         me.id = ID_abs.dcl.id
-        local mods = (ID_abs.dcl.tag=='Code' and ID_abs.dcl[1])
+        local mods = (ID_abs.dcl.tag=='Code' and ID_abs.dcl[2])
         local is_dyn do
             if mods and mods.dynamic then
                 is_dyn = false

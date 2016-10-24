@@ -60,7 +60,7 @@ typedef struct tceu_code_mem_ROOT {
         me.mems = { me=me, mem='', watch='' }
     end,
     Code__POS = function (me)
-        local mods,id = unpack(me)
+        local _,mods,id = unpack(me)
 
         if me.is_dyn_base then
             me.dyns = {}
@@ -87,7 +87,7 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
     end,
 
     Code = function (me)
-        local mods, _, body = unpack(me)
+        local _, mods, _, body = unpack(me)
 
         if (not me.is_dyn_base) and ((not me.is_impl) or mods.dynamic) then
             me.mems.args = ''

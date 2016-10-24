@@ -168,7 +168,7 @@ error'TODO: luacov never executes this?'
     _Ext_Req_impl__PRE  = '_Code_impl__PRE',
     _Ext_Code_impl__PRE = '_Code_impl__PRE',
     _Code_impl__PRE = function (me)
-        local _,_,_,_,out,blk = unpack(me)
+        local _,_,_,_,_,out,blk = unpack(me)
 
         local stmts_old = AST.asr(blk,'Block', 1,'Stmts')
         local stmts_new = node('Stmts', me.ln)
@@ -204,7 +204,7 @@ error'TODO: luacov never executes this?'
     end,
 
     _Code__PRE = function (me)
-        local mods, id, ins, mid, out, blk, eoc = unpack(me)
+        local Y, mods, id, ins, mid, out, blk, eoc = unpack(me)
         mid = mid or AST.node('Code_Pars', me.ln)
 
         local Type = AST.get(out,'Type')
@@ -222,7 +222,7 @@ error'TODO: luacov never executes this?'
             out = node('Nothing', me.ln)
         end
 
-        local ret = node('Code', me.ln, mods, id,
+        local ret = node('Code', me.ln, Y, mods, id,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 node('Stmts', me.ln, ins, mid, out),
@@ -396,7 +396,7 @@ error'TODO'
     end,
 
     _Every__PRE = function (me)
-        local to, awt, body = unpack(me)
+        local to, awt, Y, body = unpack(me)
 
         --[[
         --      every a=EXT do ... end
@@ -423,6 +423,7 @@ error'TODO'
                         node('Stmts', me.ln,
                             dcls,
                             set_awt,
+                            Y,
                             body))))
     end,
 
@@ -486,7 +487,7 @@ error'TODO'
             --      fr
             --      to
 
-            assert(#set == 1, 'bug found')
+            assert(#set==1 or #set==2, 'bug found')
             set.tag = string.sub(set.tag,2)
             AST.set(set, 2, to)
 

@@ -1,27 +1,27 @@
 local yields = {
-    EOF              = true,
-    EOC              = true,
-    Par              = true,
-    Par_And          = true,
-    Par_Or           = true,
+    --EOF              = true,
+    --EOC              = true,
+    --Par              = true,
+    --Par_And          = true,
+    --Par_Or           = true,
     --Escape           = true,
     Break            = true,
-    Async            = true,
-    Async_Thread     = true,
+    --Async            = true,
+    --Async_Thread     = true,
     _Async_Isr       = true,
     Code             = true,
     Ext_Code         = true,
     Data             = true,
     Nat_Block        = true,
-    Await_Ext        = true,
-    Await_Int        = true,
-    Await_Wclock     = true,
-    Await_Forever    = true,
+    --Await_Ext        = true,
+    --Await_Int        = true,
+    --Await_Wclock     = true,
+    --Await_Forever    = true,
     Emit_ext_req     = true,
-    Emit_Evt         = true,
-    Abs_Await        = true,
-    Abs_Spawn_Single = true,
-    Abs_Spawn_Pool   = true,
+    --Emit_Evt         = true,
+    --Abs_Await        = true,
+    --Abs_Spawn_Single = true,
+    --Abs_Spawn_Pool   = true,
     Kill             = true,
 }
 
@@ -139,10 +139,13 @@ local function run_inits (par, i, Dcl, stop)
     end
 
     -- error: yielding statement
-    if yields[me.tag] or (is_loop(me) and is_alias) then
+    if (me.tag == 'Y') or (is_loop(me) and is_alias) then
+    --if yields[me.tag] or (is_loop(me) and is_alias) then
+        local tag = unpack(me)
         ASR(false, Dcl,
             'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
-            'reached `'..AST.tag2id[me.tag]..'´ '..
+            'reached yielding statement '..
+            --'reached `'..AST.tag2id[me.tag]..'´ '..
             '('..me.ln[1]..':'..me.ln[2]..')')
 
     -- error: access to Dcl
@@ -296,6 +299,7 @@ local function run_ptrs (par, i, Dcl, stop)
         return run_ptrs(par, i+1, Dcl, stop)
     end
 
+--[[
     if is_loop(me) and (me.tight ~= 'awaits') then
         -- ok, continue
 
@@ -307,9 +311,11 @@ local function run_ptrs (par, i, Dcl, stop)
         end
         local snd = AST.asr(me,'', 1,'Par_Or', 2,'Block')
         return run_ptrs(snd, 1, Dcl, stop)
+    elseif yields[me.tag] or (is_loop(me) and me.__par.tag~='Every') then
+]]
 
     -- yielding statement: stop?
-    elseif yields[me.tag] or (is_loop(me) and me.__par.tag~='Every') then
+    if me.tag == 'Y' then
         local set = AST.par(me,__is_set)
         local ok = false
         if set then
@@ -459,8 +465,9 @@ error'TODO: luacov never executes this?'
         if is_ptr then
             local yield = me.dcl.__run_ptrs_yield
             ASR(me.__run_ptrs_ok, me,
-                'invalid pointer access : crossed `'..
-                AST.tag2id[yield.tag]..'´ '..
+                'invalid pointer access : crossed '..
+                'yielding statement '..
+                --AST.tag2id[yield.tag]..'´ '..
                 '('..yield.ln[1]..':'..yield.ln[2]..')')
         end
     end,

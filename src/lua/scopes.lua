@@ -1,7 +1,7 @@
 --  NO: big = &&small
 local function check_blk (to_blk, fr_blk)
     local Code = AST.par(fr_blk,'Code')
-    local Stmts = Code and AST.get(Code,'',3,'Block',1,'Stmts',2,'Block',1,'Stmts')
+    local Stmts = Code and AST.get(Code,'',4,'Block',1,'Stmts',2,'Block',1,'Stmts')
     if AST.depth(to_blk) >= AST.depth(fr_blk) then
         assert(AST.is_par(fr_blk,to_blk), 'bug found')
         return true

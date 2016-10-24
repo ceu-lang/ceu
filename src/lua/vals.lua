@@ -91,7 +91,7 @@ F = {
     Abs_Call = function (me)
         local _, Abs_Cons = unpack(me)
         local ID_abs, _ = unpack(Abs_Cons)
-        local mods,_,Code_Pars = unpack(ID_abs.dcl)
+        local _,mods,_,Code_Pars = unpack(ID_abs.dcl)
         assert(mods.tight)
         if CEU.opts.ceu_features_lua then
             return [[

@@ -359,7 +359,7 @@ _ceu_mem->trails[]]..ID_int.dcl.trails[1]..[[].evt.id = CEU_INPUT__NONE;
     ---------------------------------------------------------------------------
 
     Code = function (me)
-        local mods,_,body = unpack(me)
+        local _,mods,_,body = unpack(me)
         if not me.is_impl then return end
         if me.is_dyn_base then return end
 
@@ -383,7 +383,7 @@ if (0)
         local args_Code_Pars = AST.asr(body,'', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
         if me.dyn_base then
             args_id = me.dyn_base.id
-            args_Code_Pars = AST.asr(me.dyn_base,'Code', 3,'Block', 1,'Stmts',
+            args_Code_Pars = AST.asr(me.dyn_base,'Code', 4,'Block', 1,'Stmts',
                                                          1,'Stmts', 1,'Code_Pars')
         end
 
@@ -633,7 +633,7 @@ if (0) {
 
         if list then
             CONC(me, list)
-            local mids = AST.asr(Code,'Code', 3,'Block', 1,'Stmts',
+            local mids = AST.asr(Code,'Code', 4,'Block', 1,'Stmts',
                                               1,'Stmts', 2,'Code_Pars')
             local ps = {}
             for i, arg in ipairs(list) do
@@ -762,7 +762,7 @@ ceu_callback_assert_msg(0, "reached end of `do´");
 
     Escape = function (me)
         local code = AST.par(me, 'Code')
-        local mods = code and unpack(code)
+        local mods = code and code[2]
         local evt do
             if code and mods.await then
                 -- HACK_8
@@ -1054,7 +1054,7 @@ if (! ]]..CUR('__and_'..me.n..'_'..i)..[[) {
         if to.info.dcl.id == '_ret' then
             local code = AST.par(me, 'Code')
             if code then
-                local mods = unpack(code)
+                local _,mods = unpack(code)
                 if mods.tight then
                     if code.dyn_base then
                         code = code.dyn_base
@@ -1497,7 +1497,7 @@ _CEU_HALT_]]..me.n..[[_:
     ---------------------------------------------------------------------------
 
     Async = function (me)
-        local _,blk = unpack(me)
+        local _,_,blk = unpack(me)
         LINE(me, [[
 ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
 ]])
@@ -1548,7 +1548,7 @@ if (_ceu_p.thread->has_aborted) {
     end,
 
     Async_Thread = function (me)
-        local _, blk = unpack(me)
+        local _,_, blk = unpack(me)
 
         local v = CUR('__thread_'..me.n)
 

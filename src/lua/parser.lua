@@ -360,14 +360,14 @@ local alphanum = m.R'az' + '_' + m.R'09'
 -- __Rule:  container for other rules, not in the AST
 -- __rule:  (local) container for other rules
 
-GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
+GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
 -->>> OK
 
+    , Y = C''     -- yielding point
+
     , __seqs = KK';' * KK(';',true)^0     -- "true": ignore as "expected"
     , Nothing = K'nothing'
-    , EOF = P''
-    , EOC = P''
 
 -- DO, BLOCK
 
@@ -375,7 +375,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     -- break/i
     -- continue/i
     , _Escape   = K'escape'   * ('/'*V'ID_int' + Cc(true)) * OPT(V'__Exp')
-    , Break    = K'break'    * OPT('/'*V'ID_int')
+    , Break    = K'break'    * OPT('/'*V'ID_int') * V'Y'
     , Continue = K'continue' * OPT('/'*V'ID_int')
 
     -- do/A ... end
@@ -394,11 +394,11 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                  V'Block' * (K'with' * V'Block')^1 *
                 K'end'
     , Par_And = K'par/and' * K'do' *
-                V'Block' * (K'with' * V'Block')^1 *
-               K'end'
+                    V'Block' * (K'with' * V'Block')^1 *
+                K'end'
     , Par_Or  = K'par/or' * K'do' *
-                V'Block' * (K'with' * V'Block')^1 *
-               K'end'
+                    V'Block' * (K'with' * V'Block')^1 *
+                K'end'
 
 -- FLOW CONTROL
 
@@ -450,9 +450,9 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
 -- ASYNCHRONOUS
 
-    , Async        = K'await' * K'async' * (-P'/thread'-'/isr') *
+    , Async        = K'await' * K'async' * (-P'/thread'-'/isr') * V'Y' *
                         OPT(PARENS(V'List_Var')) * V'__Do'
-    , Async_Thread = K'await' * K'async/thread' *
+    , Async_Thread = K'await' * K'async/thread' * V'Y' *
                         OPT(PARENS(V'List_Var')) * V'__Do'
     , _Async_Isr   = K'async/isr' * KK'[' * V'List_Exp' * KK']' *
                             OPT(PARENS(V'List_Var')) *
@@ -478,8 +478,8 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                         OPT(V'Code_Pars' * KK'->') *
                             (V'Type' + CK'FOREVER')
 
-    , _Code_proto = V'__code' * Cc(false)
-    , _Code_impl  = V'__code' * V'__Do' * V'EOC'
+    , _Code_proto = V'Y' * V'__code' * Cc(false)
+    , _Code_impl  = V'Y' * V'__code' * V'__Do' * V'Y'
 
     , _Spawn_Block = K'spawn' * V'__Do'
 
@@ -595,13 +595,13 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , Await_Until  = (V'Await_Ext' + V'Await_Int') * OPT(K'until'*V'__Exp')
 
-    , Await_Ext    = V'ID_ext' -I(V'Abs_Await') -- TODO: rem
-    , Await_Int    = V'Exp_Name' -I(V'Await_Wclock'+V'Abs_Await') -- TODO: rem
-    , Await_Wclock = (V'WCLOCKK' + V'WCLOCKE')
+    , Await_Ext    = V'ID_ext'   * V'Y' -I(V'Abs_Await')                 -- TODO: rem
+    , Await_Int    = V'Exp_Name' * V'Y' -I(V'Await_Wclock'+V'Abs_Await') -- TODO: rem
+    , Await_Wclock = (V'WCLOCKK' + V'WCLOCKE') * V'Y'
 
-    , Await_Forever = K'await' * K'FOREVER'
-    , Await_Pause   = K'await' * K'pause'
-    , Await_Resume  = K'await' * K'resume'
+    , Await_Forever = K'await' * K'FOREVER' * V'Y'
+    , Await_Pause   = K'await' * K'pause'   * V'Y'
+    , Await_Resume  = K'await' * K'resume'  * V'Y'
 
     , _Emit_ps = OPT(V'__Exp' + PARENS(OPT(V'List_Exp')))
     , Emit_Wclock   = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
@@ -610,7 +610,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , Emit_Ext_req  = K'request'                  * V'ID_ext' * V'_Emit_ps'
 * EE'TODO-PARSER: request'
 
-    , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') * V'Exp_Name' * V'_Emit_ps'
+    , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') * V'Exp_Name' * V'_Emit_ps' * V'Y'
 
     , __watch = (V'Await_Ext' + V'Await_Int' + V'Await_Wclock' + V'Abs_Await')
                     * OPT(KK'->' * PARENS(V'_List_Var_Ref'))
@@ -645,14 +645,14 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , Abs_Call  = K'call' * V'__Abs_Cons_Code'
     , Abs_Val   = CK'val' * V'Abs_Cons'
     , Abs_New   = CK'new' * V'Abs_Cons'
-    , Abs_Await = V'__Abs_Cons_Code'
+    , Abs_Await = V'__Abs_Cons_Code' * V'Y'
 
     , Abs_Spawn_Single = K'spawn' * V'__Abs_Cons_Code'
                             * (-KK'in') * Cc(false)
-                                * OPT(KK'->' * PARENS(V'_List_Var_Ref'))
+                                * OPT(KK'->' * PARENS(V'_List_Var_Ref')) * V'Y'
     , Abs_Spawn_Pool   = K'spawn' * V'__Abs_Cons_Code'
                             * KK'in' * V'Exp_Name'
-                                * OPT(KK'->' * PARENS(V'_List_Var_Ref'))
+                                * OPT(KK'->' * PARENS(V'_List_Var_Ref')) * V'Y'
 
     , __Abs_Cons_Code = V'__abs_mods' * V'Abs_Cons' -I(V'__id_data')
     , Abs_Cons   = V'ID_abs' * PARENS(OPT(V'Abslist'))
@@ -841,7 +841,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                  * (V'Nat_Block'+V'_Code_impl')^0 )
 
     , __Stmt_Last  = V'_Escape' + V'Break' + V'Continue' + V'Await_Forever'
-    , __Stmt_Last_Block = V'Par'
+    , __Stmt_Last_Block = V'Y' * V'Par'
     , __Stmt_Simple = V'Nothing'
                     + V'_Vars_set'  + V'_Vars'
                     + V'_Vecs_set'  + V'_Vecs'
@@ -872,7 +872,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
               + V'_Every'
               + V'_Spawn_Block'
               + V'Finalize'
-              + V'Par_Or' + V'Par_And' + V'_Watching'
+              + V'Y'*V'Par_Or' + V'Y'*V'Par_And' + V'_Watching'
               + V'Pause_If'
               + V'Async' + V'Async_Thread' + V'_Async_Isr' + V'Atomic'
               + V'_Dopre'

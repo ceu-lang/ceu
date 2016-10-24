@@ -15,11 +15,11 @@ local function iter_boundary (cur, id, can_cross)
                 -- async (a,b,c) do ... end
                 local can_cross2 = false
 
-                local varlist
+                local varlist,_
                 if c.tag == 'Async_Isr' then
                     _,varlist = unpack(c)
                 else
-                    varlist = unpack(c)
+                    _,varlist = unpack(c)
                 end
 
                 if varlist then
@@ -69,7 +69,7 @@ function DCLS.asr (me, blk_or_data, id, can_cross, err)
                 '" ('..data.ln[1]..':'..  data.ln[2]..')')
         else
             local par = AST.par(me,'Code')
-            if par and par[2]==id then
+            if par and par[3]==id then
                 return par
             else
                 ASR(false, me,
@@ -314,7 +314,7 @@ F = {
 
     Code_Pars = function (me)
         local Code = AST.asr(me,4,'Code')
-        local mods = unpack(Code)
+        local _,mods = unpack(Code)
 
         -- check types only
         do
@@ -360,7 +360,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
     -- detect "base" dynamic multimethod: create dummy copy with plain "id"
     Code__PRE = function (me)
-        local mods,id = unpack(me)
+        local _,mods,id = unpack(me)
         if not mods.dynamic then
             return  -- not dynamic code
         end
@@ -401,7 +401,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
     end,
 
     Code = function (me)
-        local mods1,id,body1 = unpack(me)
+        local _,mods1,id,body1 = unpack(me)
 
         ASR(not AST.par(me,'Code'), me,
             'invalid `code´ declaration : nesting is not allowed')
@@ -421,7 +421,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
         local old = DCLS.get(blk, me.id)
         if old then
-            local mods2,_,body2 = unpack(old)
+            local _,mods2,_,body2 = unpack(old)
             if me.is_impl then
                 ASR(not (old.is_impl or old.__impl), me,
                     'invalid `code´ declaration : body for "'..id..'" already exists')

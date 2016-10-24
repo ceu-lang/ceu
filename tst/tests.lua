@@ -9,30 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
-Test { [[
-code/await Ff (var int&& ptr) -> void do
-end
-var int v = 0;
-var int&& ptr = &&v;
-await Ff(ptr);
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-code/await Ff (var int&& ptr) -> void do
-end
-var int v = 0;
-var int&& ptr = &&v;
-spawn Ff(ptr);
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
 do return end -- OK
 ---]=====]
 
@@ -187,15 +163,6 @@ var ssize n = 10;
     end
 ]],
     run = 10,
-}
-
-Test { [[
-native _int;
-vector[10] _int x = _;
-escape sizeof(x) as int;
-]],
-    wrn = true,
-    run = 40,
 }
 
 Test { [[
@@ -412,92 +379,6 @@ escape 1;
     cc = '3:25: error: dereferencing ‘void *’ pointer',
 }
 
--->> C FIELDS / DIRECT ACCESS / TCEU_MEM
-Test { [[
-native __ceu_mem, _tceu_code_mem_ROOT;
-var int xxx = 10;
-escape (__ceu_mem as _tceu_code_mem_ROOT&&):xxx;
-]],
-    run = 10,
-}
-
-Test { [[
-native __ceu_mem, _tceu_code_mem_ROOT;
-do/_
-    var int xxx = 10;
-    escape (__ceu_mem as _tceu_code_mem_ROOT&&):xxx;
-end
-]],
-    cc = '5:2: error: ‘tceu_code_mem_ROOT {aka struct tceu_code_mem_ROOT}’ has no member named ‘xxx’',
-}
-
-Test { [[
-par/and do
-    var int xxx = 10;
-with
-    var int xxx = 10;
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native __ceu_mem, _tceu_code_mem_Ff;
-code/await Ff (void) -> int do
-    var int yyy = 10;
-    escape (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
-end
-var int v = await Ff();
-escape v;
-]],
-    run = 10,
-}
-
-Test { [[
-native __ceu_mem, _tceu_code_mem_Ff;
-code/await Ff (void) -> int do
-    do/_
-        var int yyy = 10;
-        escape (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
-    end
-end
-var int v = await Ff();
-escape v;
-]],
-    cc = '6:2: error: ‘tceu_code_mem_Ff {aka struct tceu_code_mem_Ff}’ has no member named ‘yyy’',
-}
-
-Test { [[
-native __ceu_mem, _tceu_code_mem_Ff;
-code/await Ff (void) -> FOREVER do
-    do/_
-        var int yyy = 10;
-        var int zzz = (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
-    end
-    await FOREVER;
-end
-spawn Ff();
-escape 10;
-]],
-    cc = '6:2: error: ‘tceu_code_mem_Ff {aka struct tceu_code_mem_Ff}’ has no member named ‘yyy’',
-}
-
-Test { [[
-code/await Ff (void) -> FOREVER do
-    par do
-        var int yyy = 10;
-    with
-        var int yyy = 10;
-    end
-end
-spawn Ff();
-escape 10;
-]],
-    run = 10,
-}
---<< C FIELDS / DIRECT ACCESS / TCEU_MEM
-
 --<<< NATIVE
 
 Test { [[var int a;]],
@@ -506,7 +387,8 @@ Test { [[var int a;]],
 
 Test { [[var int a;]],
     wrn = true,
-    inits = 'uninitialized variable "a" : reached `end of file´ (/tmp/tmp.ceu:1)',
+    inits = 'uninitialized variable "a" : reached yielding statement (/tmp/tmp.ceu:1)',
+    --inits = 'uninitialized variable "a" : reached `end of file´ (/tmp/tmp.ceu:1)',
 }
 
 Test { [[var int a=0;]],
@@ -1634,7 +1516,8 @@ with
 end
 escape ret;
 ]],
-    inits = 'line 2 : uninitialized variable "ret" : reached `par/or´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "ret" : reached `par/or´ (/tmp/tmp.ceu:3)',
+    inits = 'line 2 : uninitialized variable "ret" : reached yielding statement (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -1840,7 +1723,8 @@ await async (a) do
 end;
 escape a + 1;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached `async´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "a" : reached `async´ (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached yielding statement (/tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -1979,7 +1863,8 @@ with
 end
 escape ret;
 ]],
-    inits = 'line 1 : uninitialized variable "ret" : reached `par/or´ (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "ret" : reached yielding statement (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "ret" : reached `par/or´ (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "ret" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 
@@ -2735,7 +2620,8 @@ with
 end;
 escape a;
 ]],
-    inits = 'line 8 : uninitialized variable "a" : reached `par/or´ (/tmp/tmp.ceu:9)',
+    --inits = 'line 8 : uninitialized variable "a" : reached `par/or´ (/tmp/tmp.ceu:9)',
+    inits = 'line 8 : uninitialized variable "a" : reached yielding statement (/tmp/tmp.ceu:9)',
     --ref = 'line 8 : uninitialized variable "a" crossing compound statement (/tmp/tmp.ceu:9)',
 }
 
@@ -3105,7 +2991,8 @@ await A;
 b = 1;
 escape b;
 ]],
-    inits = 'line 2 : uninitialized variable "b" : reached `await´ (/tmp/tmp.ceu:3)',
+    inits = 'line 2 : uninitialized variable "b" : reached yielding statement (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "b" : reached `await´ (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -3125,7 +3012,8 @@ else
 end;
 escape b;
 ]],
-    inits = 'line 2 : uninitialized variable "b" : reached `await´ (/tmp/tmp.ceu:4)',
+    --inits = 'line 2 : uninitialized variable "b" : reached `await´ (/tmp/tmp.ceu:4)',
+    inits = 'line 2 : uninitialized variable "b" : reached yielding statement (/tmp/tmp.ceu:4)',
 }
 
 Test { [[
@@ -9507,7 +9395,8 @@ v1=2;
 v2=3;
 escape v1+v2;
 ]],
-    inits = 'line 1 : uninitialized variable "v1" : reached `par/or´ (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "v1" : reached yielding statement (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "v1" : reached `par/or´ (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "v1" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 Test { [[
@@ -13099,7 +12988,8 @@ with
     escape a;
 end;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached `par´ (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached yielding statement (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "a" : reached `par´ (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "a" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 Test { [[
@@ -15255,7 +15145,8 @@ with
 end;
 escape v;
 ]],
-    inits = 'line 1 : uninitialized variable "v" : reached `par/and´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "v" : reached `par/and´ (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:2)'
 }
 
@@ -15267,7 +15158,8 @@ with
 end;
 escape v;
 ]],
-    inits = 'line 1 : uninitialized variable "v" : reached `par/and´ (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "v" : reached `par/and´ (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 
@@ -15284,7 +15176,8 @@ end
 escape a;
 ]],
     wrn = true,
-    inits = 'line 1 : uninitialized variable "a" : reached `break´ (/tmp/tmp.ceu:6)',
+    --inits = 'line 1 : uninitialized variable "a" : reached `break´ (/tmp/tmp.ceu:6)',
+    inits = 'line 1 : uninitialized variable "a" : reached yielding statement (/tmp/tmp.ceu:6)',
     --inits = 'line 1 : uninitialized variable "a" : reached `loop´ (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "a" crossing compound statement (/tmp/tmp.ceu:2)',
 }
@@ -15297,7 +15190,8 @@ with
 end;
 escape v;
 ]],
-    inits = 'line 1 : uninitialized variable "v" : reached `par/or´ (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "v" : reached `par/or´ (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 
@@ -15323,7 +15217,8 @@ with
 end;
 ]],
     wrn = true,
-    inits = 'line 3 : uninitialized variable "v" : reached `par/or´ (/tmp/tmp.ceu:4)',
+    inits = 'line 3 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:4)',
+    --inits = 'line 3 : uninitialized variable "v" : reached `par/or´ (/tmp/tmp.ceu:4)',
     --ref = 'line 3 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:4)',
 }
 
@@ -16953,7 +16848,8 @@ event int a;
     v1 = await a;
     v2 = await a;
 ]],
-    inits = 'line 2 : uninitialized variable "v2" : reached `await´ (/tmp/tmp.ceu:3)',
+    inits = 'line 2 : uninitialized variable "v2" : reached yielding statement (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "v2" : reached `await´ (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -18451,7 +18347,8 @@ escape v;
     wrn = true,
     --ref = 'reference declaration and first binding cannot be separated by loops',
     --ref = 'line 2 : uninitialized variable "i" crossing compound statement (/tmp/tmp.ceu:3)',
-    inits = 'line 2 : uninitialized variable "i" : reached `loop´ (/tmp/tmp.ceu:3)',
+    inits = 'line 2 : uninitialized variable "i" : reached yielding statement (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "i" : reached `loop´ (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -18677,7 +18574,8 @@ var int&& ptr = &&v;
 await 1s;
 escape *ptr;
 ]],
-    inits = 'line 4 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
+    inits = 'line 4 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:3)',
+    --inits = 'line 4 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
     --fin = 'line 4 : unsafe access to pointer "ptr" across `await´',
 }
 
@@ -18689,7 +18587,7 @@ await 1s;
 var int&& c = a;
 escape 1;
 ]],
-    inits = 'line 5 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:4)',
+    inits = 'line 5 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:4)',
     --fin = 'line 5 : unsafe access to pointer "a" across `await´',
 }
 
@@ -18701,7 +18599,7 @@ await 1s;
 var int&& c = a;
 escape 1;
 ]],
-    inits = 'line 5 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:4)',
+    inits = 'line 5 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:4)',
     --fin = 'line 5 : unsafe access to pointer "a" across `await´',
 }
 
@@ -18715,7 +18613,8 @@ loop i in [0 -> 10[ do
 end
 escape v;
 ]],
-    inits = 'line 5 : invalid pointer access : crossed `loop´ (/tmp/tmp.ceu:4)',
+    run = { ['~>10s']=11 },
+    --inits = 'line 5 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:4)',
     --fin = 'line 4 : unsafe access to pointer "x" across `loop´ (/tmp/tmp.ceu : 3)',
 }
 
@@ -18862,7 +18761,8 @@ escape(a);
     --exps = 'line 12 : invalid call : unexpected context for variable "v"',
     --env = 'line 8 : native variable/function "_f" is not declared',
     --fin = 'line 8 : attribution to pointer with greater scope',
-    inits = 'line 12 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:10)',
+    --inits = 'line 12 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:10)',
+    inits = 'line 12 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:10)',
     --run = { ['~>1s']=10 },
 }
 
@@ -18889,7 +18789,8 @@ escape(a);
     --exps = 'line 12 : invalid call : unexpected context for variable "v"',
     --env = 'line 8 : native variable/function "_f" is not declared',
     --fin = 'line 8 : attribution to pointer with greater scope',
-    inits = 'line 12 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:10)',
+    --inits = 'line 12 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:10)',
+    inits = 'line 12 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:10)',
 }
 Test { [[
 native _f;
@@ -19052,7 +18953,8 @@ escape 10;
 ]],
     --loop = true,
     --fin = 'line 5 : invalid pointer "ptr"',
-    inits = 'line 6 : invalid pointer access : crossed `loop´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 6 : invalid pointer access : crossed `loop´ (/tmp/tmp.ceu:3)',
+    inits = 'line 6 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:4)',
 }
 
 Test { [[
@@ -20893,7 +20795,8 @@ var int&& v = await E;
 await E;
 escape *v;
 ]],
-    inits = 'line 4 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 4 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
+    inits = 'line 4 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:3)',
     --fin = 'line 4 : unsafe access to pointer "v" across `await´',
     --fin = 'line 3 : cannot `await´ again on this block',
     --run = 0,
@@ -20944,7 +20847,8 @@ escape 1;
     --fin = 'line 6 : attribution requires `finalize´',
     --fin = 'line 8 : pointer access across `await´',
     --fin = 'line 6 : attribution to pointer with greater scope',
-    inits = 'line 6 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:5)',
+    --inits = 'line 6 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:5)',
+    inits = 'line 6 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:5)',
     --scopes = 'line 6 : invalid pointer assignment : expected `finalize´',
 }
 
@@ -20978,7 +20882,8 @@ do/_
 end
 escape 1;
 ]],
-    inits = 'line 9 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:6)',
+    --inits = 'line 9 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:6)',
+    inits = 'line 9 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:6)',
     --fin = 'line 6 : call requires `finalize´',
 }
 
@@ -21003,7 +20908,8 @@ with
 end
 escape 0;
 ]],
-    inits = 'line 4 : invalid pointer access : crossed `par/or´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 4 : invalid pointer access : crossed `par/or´ (/tmp/tmp.ceu:2)',
+    inits = 'line 4 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:2)',
     --fin = 'line 8 : pointer access across `await´',
     --fin = 'line 6 : invalid block for pointer across `await´',
     --fin = 'line 6 : cannot `await´ again on this block',
@@ -21197,7 +21103,8 @@ do
 end
 escape ret + *p;
 ]],
-    inits = 'line 8 : invalid pointer access : crossed `par/and´ (/tmp/tmp.ceu:6)',
+    --inits = 'line 8 : invalid pointer access : crossed `par/and´ (/tmp/tmp.ceu:6)',
+    inits = 'line 8 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:6)',
     --adj = 'line 7 : invalid `finalize´',
     --fin = 'line 8 : attribution does not require `finalize´',
     --fin = 'line 8 : invalid block for awoken pointer "p"',
@@ -21209,7 +21116,8 @@ var int&& p = null;
 await async do end
 escape *p;
 ]],
-    inits = 'line 3 : invalid pointer access : crossed `async´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 3 : invalid pointer access : crossed `async´ (/tmp/tmp.ceu:2)',
+    inits = 'line 3 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:2)',
 }
 Test { [[
 var int ret = 0;
@@ -21223,7 +21131,8 @@ do
 end
 escape ret + *p;
 ]],
-    inits = 'line 6 : invalid pointer access : crossed `par/and´ (/tmp/tmp.ceu:5)',
+    --inits = 'line 6 : invalid pointer access : crossed `par/and´ (/tmp/tmp.ceu:5)',
+    inits = 'line 6 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:5)',
     --env = 'line 11 : wrong argument : cannot pass pointers',
     --fin = 'line 16 : unsafe access to pointer "p" across `async´ (/tmp/tmp.ceu : 11)',
     --fin = 'line 14 : unsafe access to pointer "p" across `par/and´',
@@ -22453,6 +22362,24 @@ escape ret;
 }
 
 Test { [[
+input int&& GO;
+var   int&& qu_;
+qu_ = await GO;
+]],
+    run = false,
+}
+
+Test { [[
+input int&& GO;
+var   int&& qu_;
+every qu_ in GO do
+    var int qu = * qu_;
+end
+]],
+    run = false,
+}
+
+Test { [[
 native _tceu_queue;
 input void&& E;
 input _tceu_queue&& GO;
@@ -22464,7 +22391,8 @@ every qu_ in GO do
     end
 end
 ]],
-    inits = 'line 7 : invalid pointer access : crossed `async´ (/tmp/tmp.ceu:7)',
+    --inits = 'line 7 : invalid pointer access : crossed `async´ (/tmp/tmp.ceu:7)',
+    inits = 'line 7 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:7)',
     --fin = 'line 5 : unsafe access to pointer "qu" across `async´',
     --_ana = { isForever=true },
     --run = 1,
@@ -23817,7 +23745,8 @@ end;
 a = null;
 escape 1;
 ]],
-    inits = 'line 7 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:4)',
+    --inits = 'line 7 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:4)',
+    inits = 'line 7 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:4)',
 }
 
 Test { [[
@@ -24268,6 +24197,15 @@ Test { [[native _u8; vector[2] _u8 v=_; escape (&&v==&&v) as int;]],
 }
 Test { [[native _u8; var _u8[2] v; escape &&v;]],
     parser = 'line 1 : after `_u8´ : expected type modifier or internal identifier',
+}
+
+Test { [[
+native _int;
+vector[10] _int x = _;
+escape sizeof(x) as int;
+]],
+    wrn = true,
+    run = 40,
 }
 
 Test { [[
@@ -25115,7 +25053,8 @@ end
 ]],
     wrn = true,
     --run = 1,
-    inits = 'line 5 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:4)',
+    --inits = 'line 5 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:4)',
+    inits = 'line 5 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:4)',
     --fin = 'line 7 : unsafe access to pointer "p1" across `await´',
 }
 
@@ -25154,7 +25093,8 @@ else
 end
 escape ret;
 ]],
-    inits = 'line 10 : invalid pointer access : crossed `emit´ (/tmp/tmp.ceu:9)',
+    --inits = 'line 10 : invalid pointer access : crossed `emit´ (/tmp/tmp.ceu:9)',
+    inits = 'line 10 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:9)',
     --fin = 'line 10 : unsafe access to pointer "x" across `emit´',
 }
 
@@ -26471,7 +26411,8 @@ await 1s;
 escape (ptr == null) as int;
 ]],
     wrn = true,
-    inits = 'line 4 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 4 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
+    inits = 'line 4 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:3)',
     --fin = 'line 4 : unsafe access to pointer "i" across `await´ (/tmp/tmp.ceu : 3)',
 }
 Test { [[
@@ -26483,7 +26424,8 @@ u = &&i[0];
 escape 1;
 ]],
     wrn = true,
-    inits = 'line 5 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 5 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
+    inits = 'line 5 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:3)',
     --fin = 'line 4 : unsafe access to pointer "i" across `await´ (/tmp/tmp.ceu : 3)',
 }
 Test { [[
@@ -29527,7 +29469,8 @@ loop do
 end
 escape v!;
 ]],
-    inits = 'line 2 : uninitialized variable "i" : reached `loop´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "i" : reached `loop´ (/tmp/tmp.ceu:3)',
+    inits = 'line 2 : uninitialized variable "i" : reached yielding statement (/tmp/tmp.ceu:3)',
     --ref = 'line 4 : invalid attribution : variable "i" is already bound',
 }
 Test { [[
@@ -30053,7 +29996,8 @@ every 1s do
 end
 escape 1;
 ]],
-    inits = 'line 2 : uninitialized variable "sfc" : reached `loop´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "sfc" : reached `loop´ (/tmp/tmp.ceu:3)',
+    inits = 'line 2 : uninitialized variable "sfc" : reached yielding statement (/tmp/tmp.ceu:3)',
     --inits = 'line 2 : uninitialized variable "sfc" : reached `await´ (/tmp/tmp.ceu:3)',
     --ref = 'line 4 : invalid attribution : variable "sfc" is already bound',
     --ref = 'line 4 : reference declaration and first binding cannot be separated by loops',
@@ -32410,7 +32354,8 @@ end
 escape 10;
 ]],
     wrn = true,
-    inits = 'line 2 : uninitialized variable "x" : reached `end of code´ (/tmp/tmp.ceu:5)',
+    --inits = 'line 2 : uninitialized variable "x" : reached `end of code´ (/tmp/tmp.ceu:5)',
+    inits = 'line 2 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:5)',
 }
 
 Test { [[
@@ -33131,7 +33076,8 @@ x = 1;
 escape x;
 ]],
     wrn = true,
-    inits = 'line 1 : uninitialized variable "x" : reached `code´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "x" : reached `code´ (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -33469,6 +33415,92 @@ escape _V;
 }
 
 --<< CODE / AWAIT / FINALIZE
+
+-->> C FIELDS / DIRECT ACCESS / TCEU_MEM
+Test { [[
+native __ceu_mem, _tceu_code_mem_ROOT;
+var int xxx = 10;
+escape (__ceu_mem as _tceu_code_mem_ROOT&&):xxx;
+]],
+    run = 10,
+}
+
+Test { [[
+native __ceu_mem, _tceu_code_mem_ROOT;
+do/_
+    var int xxx = 10;
+    escape (__ceu_mem as _tceu_code_mem_ROOT&&):xxx;
+end
+]],
+    cc = '5:2: error: ‘tceu_code_mem_ROOT {aka struct tceu_code_mem_ROOT}’ has no member named ‘xxx’',
+}
+
+Test { [[
+par/and do
+    var int xxx = 10;
+with
+    var int xxx = 10;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native __ceu_mem, _tceu_code_mem_Ff;
+code/await Ff (void) -> int do
+    var int yyy = 10;
+    escape (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
+end
+var int v = await Ff();
+escape v;
+]],
+    run = 10,
+}
+
+Test { [[
+native __ceu_mem, _tceu_code_mem_Ff;
+code/await Ff (void) -> int do
+    do/_
+        var int yyy = 10;
+        escape (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
+    end
+end
+var int v = await Ff();
+escape v;
+]],
+    cc = '6:2: error: ‘tceu_code_mem_Ff {aka struct tceu_code_mem_Ff}’ has no member named ‘yyy’',
+}
+
+Test { [[
+native __ceu_mem, _tceu_code_mem_Ff;
+code/await Ff (void) -> FOREVER do
+    do/_
+        var int yyy = 10;
+        var int zzz = (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
+    end
+    await FOREVER;
+end
+spawn Ff();
+escape 10;
+]],
+    cc = '6:2: error: ‘tceu_code_mem_Ff {aka struct tceu_code_mem_Ff}’ has no member named ‘yyy’',
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    par do
+        var int yyy = 10;
+    with
+        var int yyy = 10;
+    end
+end
+spawn Ff();
+escape 10;
+]],
+    run = 10,
+}
+--<< C FIELDS / DIRECT ACCESS / TCEU_MEM
 
 -->>> CODE / AWAIT
 
@@ -34055,6 +34087,30 @@ escape 1;
     run = { ['~>20s']=1 },
 }
 
+Test { [[
+code/await Ff (var int&& ptr) -> void do
+end
+var int v = 0;
+var int&& ptr = &&v;
+await Ff(ptr);
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+code/await Ff (var int&& ptr) -> void do
+end
+var int v = 0;
+var int&& ptr = &&v;
+spawn Ff(ptr);
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
 -->> CODE / ALIAS
 
 Test { [[
@@ -34108,7 +34164,9 @@ var int x;
 await Fx(&x);
 escape x;
 ]],
-    inits = 'line 4 : uninitialized variable "x" : reached `await´ (/tmp/tmp.ceu:5)',
+    --inits = 'line 4 : uninitialized variable "x" : reached `await´ (/tmp/tmp.ceu:5)',
+    inits = 'line 4 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:5)',
+    --inits = 'line 4 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:5)',
     --run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
     --mode = 'line 7 : cannot read field with mode `input´',
 }
@@ -34133,7 +34191,9 @@ var int x;
 await Fx(&x);
 escape x;
 ]],
-    inits = 'line 5 : uninitialized variable "x" : reached `await´ (/tmp/tmp.ceu:6)',
+    --inits = 'line 5 : uninitialized variable "x" : reached `await´ (/tmp/tmp.ceu:6)',
+    --inits = 'line 5 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:6)',
+    inits = 'line 5 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:6)',
     --run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
     --mode = 'line 7 : cannot read field with mode `input´',
 }
@@ -34661,7 +34721,8 @@ end
 ret = ret + (p? as int);
 escape ret;
 ]],
-    inits = 'line 2 : uninitialized variable "p" : reached `par/or´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "p" : reached `par/or´ (/tmp/tmp.ceu:3)',
+    inits = 'line 2 : uninitialized variable "p" : reached yielding statement (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -34952,7 +35013,8 @@ end
 
 escape y;
 ]],
-    props_ = 'line 15 : invalid access to internal identifier "y" : crossed `watching´ (/tmp/tmp.ceu:8)',
+    --props_ = 'line 15 : invalid access to internal identifier "y" : crossed `watching´ (/tmp/tmp.ceu:8)',
+    props_ = 'line 15 : invalid access to internal identifier "y" : crossed yielding statement (/tmp/tmp.ceu:8)',
 }
 
 Test { [[
@@ -35293,7 +35355,8 @@ end
 await 1s;
 escape ret;
 ]],
-    inits = 'line 4 : uninitialized variable "ret" : reached `par/or´ (/tmp/tmp.ceu:5)',
+    --inits = 'line 4 : uninitialized variable "ret" : reached `par/or´ (/tmp/tmp.ceu:5)',
+    inits = 'line 4 : uninitialized variable "ret" : reached yielding statement (/tmp/tmp.ceu:5)',
 }
 
 Test { [[
@@ -35491,7 +35554,8 @@ end
 escape 0;
 ]],
     wrn = true,
-    inits = 'line 1 : uninitialized vector "b" : reached `end of code´ (/tmp/tmp.ceu:7)',
+    --inits = 'line 1 : uninitialized vector "b" : reached `end of code´ (/tmp/tmp.ceu:7)',
+    inits = 'line 1 : uninitialized vector "b" : reached yielding statement (/tmp/tmp.ceu:7)',
 }
 
 Test { [[
@@ -35502,7 +35566,8 @@ watching 1s do
 end
 escape ret;
 ]],
-    inits = 'line 2 : uninitialized variable "x" : reached `par/or´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "x" : reached `par/or´ (/tmp/tmp.ceu:3)',
+    inits = 'line 2 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:3)',
     --inits = 'line 2 : uninitialized variable "x" : reached `watching´ (/tmp/tmp.ceu:3)',
     --inits = 'line 2 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:4)',
 }
@@ -35516,7 +35581,8 @@ end
 ret = x;
 escape ret;
 ]],
-    inits = 'line 2 : uninitialized variable "x" : reached `par/or´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "x" : reached `par/or´ (/tmp/tmp.ceu:3)',
+    inits = 'line 2 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:3)',
     --run = 10,
 }
 
@@ -35545,7 +35611,8 @@ escape 0;
 ]],
     wrn = true,
     --inits = 'line 16 : uninitialized variable "x1" : reached read access (/tmp/tmp.ceu:17)',
-    inits = 'line 16 : uninitialized variable "x1" : reached `par/or´ (/tmp/tmp.ceu:17)',
+    --inits = 'line 16 : uninitialized variable "x1" : reached `par/or´ (/tmp/tmp.ceu:17)',
+    inits = 'line 16 : uninitialized variable "x1" : reached yielding statement (/tmp/tmp.ceu:17)',
 }
 
 Test { [[
@@ -35569,7 +35636,8 @@ end
 
 escape 0;
 ]],
-    inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
+    inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
     --scopes = 'line 8 : invalid binding : incompatible scopes',
 }
 
@@ -35587,7 +35655,8 @@ end
 
 await 1s;
 ]],
-    inits = 'line 7 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:12)',
+    --inits = 'line 7 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:12)',
+    inits = 'line 7 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:12)',
 }
 
 Test { [[
@@ -35810,7 +35879,8 @@ end
 
 escape 0;
 ]],
-    inits = 'line 7 : uninitialized variable "x" : reached `await´ (/tmp/tmp.ceu:10)',
+    --inits = 'line 7 : uninitialized variable "x" : reached `await´ (/tmp/tmp.ceu:10)',
+    inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:10)',
     --run = 23,
     --scopes = 'line 12 : invalid binding : incompatible scopes',
 }
@@ -35871,7 +35941,8 @@ end
 
 escape 0;
 ]],
-    inits = 'line 10 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:15)',
+    --inits = 'line 10 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:15)',
+    inits = 'line 10 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:15)',
 }
 
 Test { [[
@@ -36103,7 +36174,8 @@ end
 
 escape nn;
 ]],
-    props_ = 'line 16 : invalid access to internal identifier "nn" : crossed `watching´ (/tmp/tmp.ceu:11)',
+    --props_ = 'line 16 : invalid access to internal identifier "nn" : crossed `watching´ (/tmp/tmp.ceu:11)',
+    props_ = 'line 16 : invalid access to internal identifier "nn" : crossed yielding statement (/tmp/tmp.ceu:11)',
 }
 
 Test { [[
@@ -37876,7 +37948,8 @@ end
 
 escape n+1;
 ]],
-    props_ = 'line 13 : invalid access to internal identifier "n" : crossed `loop´ (/tmp/tmp.ceu:10)',
+    --props_ = 'line 13 : invalid access to internal identifier "n" : crossed `loop´ (/tmp/tmp.ceu:10)',
+    props_ = 'line 13 : invalid access to internal identifier "n" : crossed yielding statement (/tmp/tmp.ceu:10)',
 }
 
 Test { [[
@@ -38037,7 +38110,8 @@ end
 escape nn;
 ]],
     --inits = 'line 8 : uninitialized variable "nn" : reached `loop´',
-    props_ = 'line 14 : invalid access to internal identifier "nn" : crossed `loop´ (/tmp/tmp.ceu:10)',
+    --props_ = 'line 14 : invalid access to internal identifier "nn" : crossed `loop´ (/tmp/tmp.ceu:10)',
+    props_ = 'line 14 : invalid access to internal identifier "nn" : crossed yielding statement (/tmp/tmp.ceu:10)',
 }
 
 Test { [[
@@ -38535,7 +38609,8 @@ if e2? then
 end
 escape 1;
 ]],
-    inits = 'line 1 : uninitialized event "e2" : reached `emit´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 1 : uninitialized event "e2" : reached `emit´ (/tmp/tmp.ceu:3)',
+    inits = 'line 1 : uninitialized event "e2" : reached yielding statement (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -41456,7 +41531,8 @@ await 1s;
 escape *dd.x;
 
 ]],
-    inits = 'line 8 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:7)',
+    --inits = 'line 8 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:7)',
+    inits = 'line 8 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:7)',
     --run = { ['~>1s']=1 },
 }
 
@@ -41474,7 +41550,8 @@ await 1s;
 escape *ee.dd.x;
 
 ]],
-    inits = 'line 11 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:10)',
+    --inits = 'line 11 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:10)',
+    inits = 'line 11 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:10)',
     --run = { ['~>1s']=1 },
 }
 
@@ -42169,7 +42246,8 @@ await async/thread (p) do
 end
 escape 1;
 ]],
-    inits = 'line 3 : invalid pointer access : crossed `async/thread´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 3 : invalid pointer access : crossed `async/thread´ (/tmp/tmp.ceu:3)',
+    inits = 'line 3 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:3)',
     --fin = 'line 3 : unsafe access to pointer "p" across `async/thread´',
     _opts = opts_thread,
 }

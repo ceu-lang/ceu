@@ -20,7 +20,7 @@ F = {
             MAX_all(me)
         end
 
-        if me.tag=='Code' and me[1].await then
+        if me.tag=='Code' and me[2].await then
             me.trails_n = me.trails_n + 1   -- TODO-NOW
         end
     end,
@@ -142,7 +142,7 @@ G = {
 -- TODO-NOW
 if me.tag == 'Block' then
     local Code = AST.get(AST.par(me,'Code'),'')
-    if Code and Code[1].await and AST.get(Code,'',3,'Block')==me then
+    if Code and Code[2].await and AST.get(Code,'',4,'Block')==me then
         me.trails[2] = me.trails[2] - 1
     end
 end
