@@ -727,4 +727,70 @@ pause/if e do               // pauses/resumes the nested body on each "e"
 end
 ```
 
+<!--
 *Note: The timeouts for timers remain frozen while paused.*
+-->
+
+Asynchronous Execution
+----------------------
+
+Asynchronous execution allow programs to execute time consuming computations 
+without interfering with the *synchronous side* of applications (i.e., all
+core language statements):
+
+```ceu
+Async  ::= await async [ `(´LIST(Var)`)´ ] do
+               Block
+           end
+
+Thread ::= await async/thread [ `(´LIST(Var)`)´ ] do
+               Block
+           end
+Atomic ::= atomic do
+               Block
+           end
+```
+
+Asynchronous blocks can contain [tight loops](#TODO) that keep the application
+reactive to incoming events.
+
+By default, asynchronous blocks do not shared variables with their enclosing
+scope.
+The optional list makes the listed variables visible to the block.
+
+### Asynchronous Blocks
+
+Asynchronous blocks (`async`) have deterministic execution with the rules as
+follows:
+
+1. Only executes if there are no pending input events.
+2. Yields control after every complete `loop` iteration.
+3. Cannot use any synchronous control statement:
+    parallel compositions, event handling, pausing, etc.
+4. Cannot nest other asynchronous statements.
+
+Examples:
+
+```ceu
+// calculates the factorial of some "v" if it doesn't take too long
+var int fat = 0;
+watching 1s do
+    await async (fat) do        // keeps "fat" visible
+        loop i in [1 -> v] do
+            <...>               // changes "fat"
+        end
+    end
+end
+```
+
+<!---
+The next example uses an `async` to execute a time-consuming computation, 
+keeping the synchronous side reactive.
+In a parallel trail, the program awaits one second to kill the computation if it takes too long:
+
+<!-
+A lower priority for `async` is fundamental to ensure that input events are 
+handled as fast as possible.
+->
+
+-->
