@@ -35611,9 +35611,9 @@ end
 escape 0;
 ]],
     wrn = true,
-    --inits = 'line 16 : uninitialized variable "x1" : reached read access (/tmp/tmp.ceu:17)',
+    inits = 'line 16 : uninitialized variable "x1" : reached read access (/tmp/tmp.ceu:17)',
     --inits = 'line 16 : uninitialized variable "x1" : reached `par/or´ (/tmp/tmp.ceu:17)',
-    inits = 'line 16 : uninitialized variable "x1" : reached yielding statement (/tmp/tmp.ceu:17)',
+    --inits = 'line 16 : uninitialized variable "x1" : reached yielding statement (/tmp/tmp.ceu:17)',
     --inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:9)',
 }
 
@@ -36176,8 +36176,8 @@ end
 
 escape nn;
 ]],
-    --props_ = 'line 16 : invalid access to internal identifier "nn" : crossed `watching´ (/tmp/tmp.ceu:11)',
-    props_ = 'line 16 : invalid access to internal identifier "nn" : crossed yielding statement (/tmp/tmp.ceu:11)',
+    props_ = 'line 16 : invalid access to internal identifier "nn" : crossed `watching´ (/tmp/tmp.ceu:11)',
+    --props_ = 'line 16 : invalid access to internal identifier "nn" : crossed yielding statement (/tmp/tmp.ceu:11)',
 }
 
 Test { [[

@@ -1,30 +1,3 @@
-local yields = {
-    --EOF              = true,
-    --EOC              = true,
-    --Par              = true,
-    --Par_And          = true,
-    --Par_Or           = true,
-    --Escape           = true,
-    Break            = true,
-    --Async            = true,
-    --Async_Thread     = true,
-    _Async_Isr       = true,
-    Code             = true,
-    Ext_Code         = true,
-    Data             = true,
-    Nat_Block        = true,
-    --Await_Ext        = true,
-    --Await_Int        = true,
-    --Await_Wclock     = true,
-    --Await_Forever    = true,
-    Emit_ext_req     = true,
-    --Emit_Evt         = true,
-    --Abs_Await        = true,
-    --Abs_Spawn_Single = true,
-    --Abs_Spawn_Pool   = true,
-    Kill             = true,
-}
-
 --local __detect_cycles = {}
 
 local function run_watch (par, i, stop)
@@ -128,7 +101,10 @@ local function run_inits (par, i, Dcl, stop)
         end
 
         if stmt then
+local Y = stmt[4]
+stmt[4] = nil
             local ok = run_inits(stmt, 1, Dcl)
+stmt[4] = Y
             ASR(ok, Dcl,
                 'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
                 'reached `'..AST.tag2id[me.tag]..'´ '..
@@ -139,7 +115,6 @@ local function run_inits (par, i, Dcl, stop)
 
     -- error: yielding statement
     if (me.tag == 'Y') or (is_loop(me) and is_alias) then
-    --if yields[me.tag] or (is_loop(me) and is_alias) then
         local tag = unpack(me)
         ASR(false, Dcl,
             'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
@@ -297,21 +272,6 @@ local function run_ptrs (par, i, Dcl, stop)
     elseif not AST.is_node(me) then
         return run_ptrs(par, i+1, Dcl, stop)
     end
-
---[[
-    if is_loop(me) and (me.tight ~= 'awaits') then
-        -- ok, continue
-
-    elseif me.tag == 'Watching' then
-        local awt = AST.get(me,'', 1,'Par_Or', 1,'Block', 1,'Stmts', 1,'Abs_Await')
-        if awt then
-            -- OK:  watching Code(<ptr>)
-            run_ptrs(awt, 1, Dcl, awt) -- mark ptr access as safe
-        end
-        local snd = AST.asr(me,'', 1,'Par_Or', 2,'Block')
-        return run_ptrs(snd, 1, Dcl, stop)
-    elseif yields[me.tag] or (is_loop(me) and me.__par.tag~='Every') then
-]]
 
     -- yielding statement: stop?
     if me.tag == 'Y' then

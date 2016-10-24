@@ -525,7 +525,7 @@ error'TODO'
                     node('Block', me.ln,
                         node('Stmts', me.ln,
                             node('_Watching', me.ln,
-                                unpack(me,3)))))
+                                unpack(me,2)))))
         end
 
         return node('Watching', me.ln,
