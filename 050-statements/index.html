@@ -111,6 +111,8 @@
                 
                     <li><a class="toctree-l4" href="#pausing_1">Pausing</a></li>
                 
+                    <li><a class="toctree-l4" href="#asynchronous-execution">Asynchronous Execution</a></li>
+                
             
             </ul>
         
@@ -764,7 +766,64 @@ pause/if e do               // pauses/resumes the nested body on each &quot;e&qu
 end
 </code></pre>
 
-<p><em>Note: The timeouts for timers remain frozen while paused.</em></p>
+<!--
+*Note: The timeouts for timers remain frozen while paused.*
+-->
+
+<h2 id="asynchronous-execution">Asynchronous Execution</h2>
+<p>Asynchronous execution allow programs to execute time consuming computations 
+without interfering with the <em>synchronous side</em> of applications (i.e., all
+core language statements):</p>
+<pre><code class="ceu">Async  ::= await async [ `(´LIST(Var)`)´ ] do
+               Block
+           end
+
+Thread ::= await async/thread [ `(´LIST(Var)`)´ ] do
+               Block
+           end
+Atomic ::= atomic do
+               Block
+           end
+</code></pre>
+
+<p>Asynchronous blocks can contain <a href="#TODO">tight loops</a> that keep the application
+reactive to incoming events.</p>
+<p>By default, asynchronous blocks do not shared variables with their enclosing
+scope.
+The optional list makes the listed variables visible to the block.</p>
+<h3 id="asynchronous-blocks">Asynchronous Blocks</h3>
+<p>Asynchronous blocks (<code>async</code>) have deterministic execution with the rules as
+follows:</p>
+<ol>
+<li>Only executes if there are no pending input events.</li>
+<li>Yields control after every complete <code>loop</code> iteration.</li>
+<li>Cannot use any synchronous control statement:
+    parallel compositions, event handling, pausing, etc.</li>
+<li>Cannot nest other asynchronous statements.</li>
+</ol>
+<p>Examples:</p>
+<pre><code class="ceu">// calculates the factorial of some &quot;v&quot; if it doesn't take too long
+var int fat = 0;
+watching 1s do
+    await async (fat) do        // keeps &quot;fat&quot; visible
+        loop i in [1 -&gt; v] do
+            &lt;...&gt;               // changes &quot;fat&quot;
+        end
+    end
+end
+</code></pre>
+
+<!---
+The next example uses an `async` to execute a time-consuming computation, 
+keeping the synchronous side reactive.
+In a parallel trail, the program awaits one second to kill the computation if it takes too long:
+
+<!-
+A lower priority for `async` is fundamental to ensure that input events are 
+handled as fast as possible.
+->
+
+-->
               
             </div>
           </div>
