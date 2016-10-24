@@ -103,9 +103,13 @@
                 
                     <li><a class="toctree-l4" href="#event-handling">Event Handling</a></li>
                 
-                    <li><a class="toctree-l4" href="#conditionals">Conditionals</a></li>
+                    <li><a class="toctree-l4" href="#conditional">Conditional</a></li>
                 
                     <li><a class="toctree-l4" href="#loops">Loops</a></li>
+                
+                    <li><a class="toctree-l4" href="#parallel-compositions">Parallel Compositions</a></li>
+                
+                    <li><a class="toctree-l4" href="#pausing_1">Pausing</a></li>
                 
             
             </ul>
@@ -235,6 +239,7 @@ program:</p>
 
 <p>All <code>pre-do-end</code> statements are concatenated together in the order they appear
 and moved to the beginning of the top-level block, before all other statements.</p>
+<hr />
 <h2 id="declarations">Declarations</h2>
 <p>A declaration exposes a <a href="#TODO">storage entity</a> to the program.
 Its <a href="#TODO">scope</a> begins after the declaration and goes until the end of the
@@ -309,14 +314,17 @@ event (int,int) c;      // &quot;c&quot; is a internal event carrying an &quot;(
 
 <h3 id="pools">Pools</h3>
 <p><code>TODO</code></p>
+<p>See also <a href="#TODO">Code Pools</a> and <a href="#TODO">Data Pools</a>.</p>
+<hr />
 <h2 id="event-handling">Event Handling</h2>
 <h3 id="await">Await</h3>
 <p>The <code>await</code> statement halts the running trail until the referred
 event occurs.
 The event can be an <a href="#TODO">external input event</a>, an <a href="#TODO">internal event</a>,
-a timer, or forever (i.e., never awake):</p>
+a timer, a <a href="#TODO">pausing event</a>, or forever (i.e., never awake):</p>
 <pre><code class="ceu">Await ::= await (ID_ext | Name) [until Exp]     /* events */
        |  await (WCLOCKK|WCLOCKE)               /* timers */
+       |  await (pause|resume)                  /* pausing events */
        |  await FOREVER                         /* forever */
 </code></pre>
 
@@ -380,6 +388,8 @@ Refer to [[#Environment]] for information about storage types for *wall-clock*
 time.
 -->
 
+<h4 id="pausing">Pausing</h4>
+<p>Pausing events are dicussed in <a href="#TODO">Pausing</a>.</p>
 <h4 id="forever"><code>FOREVER</code></h4>
 <p>The <code>await</code> statement for <code>FOREVER</code> halts the running trail forever.
 It cannot be used in assignments because it never evaluates to anything.</p>
@@ -392,7 +402,7 @@ end
 <p>The <code>emit</code> statement broadcasts an event to the whole program.
 The event can be an <a href="#TODO">external event</a>, an <a href="#TODO">internal event</a>, or
 a timer:</p>
-<pre><code class="ceu">Emit ::= emit (ID_ext | Name) [`=&gt;´ (Exp | `(´ [LIST(Exp)] `)´)]
+<pre><code class="ceu">Emit ::= emit (ID_ext | Name) [`(´ [LIST(Exp)] `)´)]
       |  emit (WCLOCKK|WCLOCKE)
 </code></pre>
 
@@ -438,7 +448,8 @@ blocks</a>.</p>
 end
 </code></pre>
 
-<h2 id="conditionals">Conditionals</h2>
+<hr />
+<h2 id="conditional">Conditional</h2>
 <p>The <code>if-then-else</code> statement provides conditionals in Céu:</p>
 <pre><code class="ceu">If ::= if Exp then
            Block
@@ -609,8 +620,151 @@ loop i do
 end
 </code></pre>
 
-<p><em>Note : the runtime asserts that the step is a positive number and that the control
-variable does not overflow.</em></p>
+<p><em>Note : the runtime asserts that the step is a positive number and that the
+        control variable does not overflow.</em></p>
+<h3 id="pool-iterators">Pool Iterators</h3>
+<p>Pool iterators are dicussed in <a href="#TODO">Code Pools</a>.</p>
+<hr />
+<h2 id="parallel-compositions">Parallel Compositions</h2>
+<p>The parallel statements <code>par/and</code>, <code>par/or</code>, and <code>par</code> split the running trail 
+in multiple others:</p>
+<pre><code class="ceu">Pars ::= (par | par/and | par/or) do
+             Block
+         with
+             Block
+         { with
+             Block }
+         end
+
+Watching ::= watching LIST(ID_ext|Name|WCLOCKK|WCLOCKE|Code2) do
+                 Block
+             end
+
+</code></pre>
+
+<p>They differ only on how trails rejoin and terminate the composition.</p>
+<p>The <code>watching</code> statement terminates when one of its listed events occur.</p>
+<p>See also <a href="#TODO">Parallel Compositions and Abortion</a>.</p>
+<h3 id="par">par</h3>
+<p>The <code>par</code> statement never rejoins.</p>
+<p>Examples:</p>
+<pre><code class="ceu">// reacts continuously to &quot;1s&quot; and &quot;KEY_PRESSED&quot; and never terminates
+input void KEY_PRESSED;
+par do
+    every 1s do
+        &lt;...&gt;           // does something every &quot;1s&quot;
+    end
+with
+    every KEY_PRESSED do
+        &lt;...&gt;           // does something every &quot;KEY_PRESSED&quot;
+    end
+end
+</code></pre>
+
+<h3 id="parand">par/and</h3>
+<p>The <code>par/and</code> statement stands for <em>parallel-and</em> and rejoins when all trails 
+terminate.</p>
+<p>Examples:</p>
+<pre><code class="ceu">// reacts once to &quot;1s&quot; and &quot;KEY_PRESSED&quot; and terminates
+input void KEY_PRESSED;
+par/and do
+    await 1s;
+    &lt;...&gt;               // does something after &quot;1s&quot;
+with
+    await KEY_PRESSED;
+    &lt;...&gt;               // does something after &quot;KEY_PRESSED&quot;
+end
+</code></pre>
+
+<h3 id="paror">par/or</h3>
+<p>The <code>par/or</code> statement stands for <em>parallel-or</em> and rejoins when any of the 
+trails terminate, aborting all other trails.</p>
+<p>Examples:</p>
+<pre><code class="ceu">// reacts once to `1s` or `KEY_PRESSED` and terminates
+input void KEY_PRESSED;
+par/or do
+    await 1s;
+    &lt;...&gt;               // does something after &quot;1s&quot;
+with
+    await KEY_PRESSED;
+    &lt;...&gt;               // does something after &quot;KEY_PRESSED&quot;
+end
+</code></pre>
+
+<h3 id="watching">watching</h3>
+<p>The <code>watching</code> statement accepts a list of events and terminates when any of
+the events occur.</p>
+<p>A <code>watching</code> expands to a <code>par/or</code> with <em>n+1</em> trails:
+one to await each of the listed events,
+and one for its body, i.e.:</p>
+<pre><code class="ceu">watching &lt;e1&gt;,&lt;e2&gt;,... do
+    &lt;body&gt;
+end
+</code></pre>
+
+<p>expands to</p>
+<pre><code class="ceu">par/or do
+    await &lt;e1&gt;;
+with
+    await &lt;e2&gt;;
+with
+    ...
+with
+    &lt;body&gt;
+end
+</code></pre>
+
+<p>Examples:</p>
+<pre><code class="ceu">// reacts continuously to &quot;KEY_PRESSED&quot; during &quot;1s&quot;
+input void KEY_PRESSED;
+watching 1s do
+    every KEY_PRESSED do
+        &lt;...&gt;           // does something every &quot;KEY_PRESSED&quot;
+    end
+end
+</code></pre>
+
+<hr />
+<h2 id="pausing_1">Pausing</h2>
+<p>The <code>pause/if</code> statement controls if its body should temporarily stop to react
+to events:</p>
+<pre><code class="ceu">Pause_If ::= pause/if (Name|ID_ext) do
+                 Block
+             end
+
+Pause_Await ::= await (pause|resume)
+</code></pre>
+
+<p>A <code>pause/if</code> determines a pausing event of type <code>bool</code> which, when emitted,
+toggles between pausing (<code>true</code>) and resuming (<code>false</code>) reactions for its body.</p>
+<p>When its body terminates, the whole <code>pause/if</code> terminates and proceeds to the
+statement in sequence.</p>
+<p>In transition points, the body can react to the special <code>pause</code> and <code>resume</code>
+events before the corresponding state applies.</p>
+<p><code>TODO: finalize/pause/resume</code></p>
+<p>Examples:</p>
+<pre><code class="ceu">event bool e;
+pause/if e do       // pauses/resumes the nested body on each &quot;e&quot;
+    every 1s do
+        &lt;...&gt;       // does something every &quot;1s&quot;
+    end
+end
+</code></pre>
+
+<pre><code class="ceu">event bool e;
+pause/if e do               // pauses/resumes the nested body on each &quot;e&quot;
+    &lt;...&gt;
+        loop do
+            await pause;
+            &lt;...&gt;           // does something before pausing
+            await resume;
+            &lt;...&gt;           // does something before resuming
+        end
+    &lt;...&gt;
+end
+</code></pre>
+
+<p><em>Note: The timeouts for timers remain frozen while paused.</em></p>
               
             </div>
           </div>

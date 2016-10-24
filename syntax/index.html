@@ -273,12 +273,6 @@ Stmt ::= nothing
       |  break [`/´ID_int]
       |  continue [`/´ID_int]
 
-  /* Pause */
-
-      | pause/if (Name|ID_ext) do
-            Block
-        end
-
   /* Parallel Compositions */
 
       /* parallels */
@@ -292,12 +286,18 @@ Stmt ::= nothing
 
       /* watching */
       // Watching ::=
-      | watching LIST((ID_ext|Name|WCLOCKK|WCLOCKE|Code) [`-&gt;´ `(´ LIST(`&amp;´ Var) `)´]) do
+      | watching LIST(ID_ext|Name|WCLOCKK|WCLOCKE|Code2) do
             Block
         end
 
       /* block spawn */
       | spawn do
+            Block
+        end
+
+  /* Pause */
+
+      | pause/if (Name|ID_ext) do
             Block
         end
 
@@ -348,17 +348,18 @@ Stmt ::= nothing
       /* code instantiation */
 
       // Call_Code ::=
-      | call  Mods Code
+      | call  Mods Code1
 
       // Await_Code ::=
-      | await Mods Code
+      | await Mods Code2
 
       // Spawn_Code ::=
-      | spawn Mods Code [in Name] [`-&gt;´ `(´ LIST(`&amp;´ Var) `)´]
+      | spawn Mods Code2 [in Name]
 
         // where
             Mods ::= [`/´dynamic | `/´static] [`/´recursive]
-            Code ::= ID_abs `(´ [LIST(Exp)] `)´
+            Code1 ::= ID_abs `(´ [LIST(Exp)] `)´
+            Code2 ::= Code1 [`-&gt;´ `(´ LIST(`&amp;´ Var) `)´])
 
   /* C integration */
 
@@ -375,7 +376,7 @@ Stmt ::= nothing
       | call [`/´recursive] (Name | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
 
       /* finalization */
-      | do Block Finalize
+      | do [Stmt] Finalize
       | var `&amp;?´ Type ID_int `=´ `&amp;´ (Call_Nat | Call_Code) Finalize
         // where
             Finalize ::= finalize `(´ LIST(Name) `)´ with
