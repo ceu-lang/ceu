@@ -34,16 +34,6 @@ Stmt ::= nothing
             Block
         end
 
-      /* finalization */
-      | do Stmt Finalize
-      | var `&?´ Type ID_int `=´ `&´ (Call_Nat | Call_Code) Finalize
-        // where
-            Finalize ::= finalize `(´ LIST(Name) `)´ with
-                             Block
-                         [ pause  with Block ]
-                         [ resume with Block ]
-                         end
-
   /* Storage Classes */
 
       | var [`&´|`&?´] Type LIST(ID_int [`=´ Set])
@@ -120,7 +110,7 @@ Stmt ::= nothing
 
       /* watching */
       // Watching ::=
-      | watching LIST((ID_ext|Name|WCLOCKK|WCLOCKE|Code2) do
+      | watching LIST(ID_ext|Name|WCLOCKK|WCLOCKE|Code2) do
             Block
         end
 
@@ -208,6 +198,16 @@ Stmt ::= nothing
 
       // Call_Nat ::=
       | call [`/´recursive] (Name | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
+
+      /* finalization */
+      | do [Stmt] Finalize
+      | var `&?´ Type ID_int `=´ `&´ (Call_Nat | Call_Code) Finalize
+        // where
+            Finalize ::= finalize `(´ LIST(Name) `)´ with
+                             Block
+                         [ pause  with Block ]
+                         [ resume with Block ]
+                         end
 
   /* Lua integration */
 

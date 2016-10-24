@@ -65,60 +65,6 @@ Pre_Do ::= pre do
 All `pre-do-end` statements are concatenated together in the order they appear
 and moved to the beginning of the top-level block, before all other statements.
 
-### Finalization
-
-The `finalize` statement postpones the execution of its body to happen when its 
-associated block goes out of scope:
-
-```ceu
-Do_Finalize  ::= do Stmt Finalize
-Var_Finalize ::= var `&?´ Type ID_int `=´ `&´ (Call_Nat | Call_Code) Finalize
-
-Finalize ::= finalize `(´ LIST(Name) `)´ with
-                 Block
-             [ pause  with Block ]
-             [ resume with Block ]
-             end
-```
-
-#### Block
-
-Block finalization
-
-#### Variable
-
-The presence of the optional attribution clause determines which block to 
-associate with the `finalize`:
-
-1. The enclosing block, if the attribution is absent.
-2. The block of the variable being assigned, if the attribution is present.
-
-Example:
-
-<pre><code>
-<b>input int</b> A;
-<b>par/or do</b>
-    <b>var</b> _FILE* f;
-    <b>finalize</b>
-        f = _fopen("/tmp/test.txt");
-    <b>with</b>
-        _fclose(f);
-    <b>end</b>
-    <b>every</b> v <b>in</b> A <b>do</b>
-        fwrite(&v, ..., f);
-    <b>end</b>
-<b>with</b>
-    <b>await</b> 1s;
-<b>end</b>
-</code></pre>
-
-The program opens `f` and writes to it on every occurrence of `A`.
-The writing trail is aborted after one second, but the `finalize` safely closes
-the file, because it is associated to the block that declares `f`.
-
-The [static analysis](#static-analysis) of Céu enforces the use of `finalize` 
-for unsafe attributions.
-
 -------------------------------------------------------------------------------
 
 Declarations
@@ -400,8 +346,8 @@ end
 
 -------------------------------------------------------------------------------
 
-Conditionals
-------------
+Conditional
+-----------
 
 The `if-then-else` statement provides conditionals in Céu:
 
@@ -617,9 +563,16 @@ Pars ::= (par | par/and | par/or) do
          { with
              Block }
          end
+
+Watching ::= watching LIST(ID_ext|Name|WCLOCKK|WCLOCKE|Code2) do
+                 Block
+             end
+
 ```
 
 They differ only on how trails rejoin and terminate the composition.
+
+The `watching` statement terminates when one of its listed events occur.
 
 See also [Parallel Compositions and Abortion](#TODO).
 
@@ -630,13 +583,15 @@ The `par` statement never rejoins.
 Examples:
 
 ```ceu
-input void KEY_DOWN;
+// reacts continuously to "1s" and "KEY_PRESSED" and never terminates
+input void KEY_PRESSED;
 par do
     every 1s do
-        <...>
+        <...>           // does something every "1s"
     end
 with
-    every KEY_DOWN do
+    every KEY_PRESSED do
+        <...>           // does something every "KEY_PRESSED"
     end
 end
 ```
@@ -646,15 +601,87 @@ end
 The `par/and` statement stands for *parallel-and* and rejoins when all trails 
 terminate.
 
+Examples:
+
+```ceu
+// reacts once to "1s" and "KEY_PRESSED" and terminates
+input void KEY_PRESSED;
+par/and do
+    await 1s;
+    <...>               // does something after "1s"
+with
+    await KEY_PRESSED;
+    <...>               // does something after "KEY_PRESSED"
+end
+```
+
 ### par/or
 
 The `par/or` statement stands for *parallel-or* and rejoins when any of the 
 trails terminate, aborting all other trails.
 
+Examples:
+
+```ceu
+// reacts once to `1s` or `KEY_PRESSED` and terminates
+input void KEY_PRESSED;
+par/or do
+    await 1s;
+    <...>               // does something after "1s"
+with
+    await KEY_PRESSED;
+    <...>               // does something after "KEY_PRESSED"
+end
+```
+
+### watching
+
+The `watching` statement accepts a list of events and terminates when any of
+the events occur.
+
+A `watching` expands to a `par/or` with *n+1* trails:
+one to await each of the listed events,
+and one for its body, i.e.:
+
+```ceu
+watching <e1>,<e2>,... do
+    <body>
+end
+```
+
+expands to
+
+```ceu
+par/or do
+    await <e1>;
+with
+    await <e2>;
+with
+    ...
+with
+    <body>
+end
+```
+
+Examples:
+
+```ceu
+// reacts continuously to "KEY_PRESSED" during "1s"
+input void KEY_PRESSED;
+watching 1s do
+    every KEY_PRESSED do
+        <...>           // does something every "KEY_PRESSED"
+    end
+end
+```
+
 -------------------------------------------------------------------------------
 
 Pausing
 -------
+
+The `pause/if` statement controls if its body should temporarily stop to react
+to events:
 
 ```ceu
 Pause_If ::= pause/if (Name|ID_ext) do
@@ -663,3 +690,41 @@ Pause_If ::= pause/if (Name|ID_ext) do
 
 Pause_Await ::= await (pause|resume)
 ```
+
+A `pause/if` determines a pausing event of type `bool` which, when emitted,
+toggles between pausing (`true`) and resuming (`false`) reactions for its body.
+
+When its body terminates, the whole `pause/if` terminates and proceeds to the
+statement in sequence.
+
+In transition points, the body can react to the special `pause` and `resume`
+events before the corresponding state applies.
+
+`TODO: finalize/pause/resume`
+
+Examples:
+
+```ceu
+event bool e;
+pause/if e do       // pauses/resumes the nested body on each "e"
+    every 1s do
+        <...>       // does something every "1s"
+    end
+end
+```
+
+```ceu
+event bool e;
+pause/if e do               // pauses/resumes the nested body on each "e"
+    <...>
+        loop do
+            await pause;
+            <...>           // does something before pausing
+            await resume;
+            <...>           // does something before resuming
+        end
+    <...>
+end
+```
+
+*Note: The timeouts for timers remain frozen while paused.*

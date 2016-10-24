@@ -33,7 +33,7 @@ SOFTWARE.
 PAK = {
     lua_exe = 'lua5.3',
     ceu_ver = '0.20',
-    ceu_git = 'cdd2e9a063d3fe4399bdcfd49aadb774da454578',
+    ceu_git = '7f3a29f0ef155fbd86a7004399007f3d317dba6f',
     files = {
         ceu_c =
             [====[
@@ -2629,14 +2629,14 @@ local alphanum = m.R'az' + '_' + m.R'09'
 -- __Rule:  container for other rules, not in the AST
 -- __rule:  (local) container for other rules
 
-GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
+GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
 -->>> OK
 
+    , Y = C''     -- yielding point
+
     , __seqs = KK';' * KK(';',true)^0     -- "true": ignore as "expected"
     , Nothing = K'nothing'
-    , EOF = P''
-    , EOC = P''
 
 -- DO, BLOCK
 
@@ -2644,7 +2644,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     -- break/i
     -- continue/i
     , _Escape   = K'escape'   * ('/'*V'ID_int' + Cc(true)) * OPT(V'__Exp')
-    , Break    = K'break'    * OPT('/'*V'ID_int')
+    , Break    = K'break'    * OPT('/'*V'ID_int') * V'Y'
     , Continue = K'continue' * OPT('/'*V'ID_int')
 
     -- do/A ... end
@@ -2663,11 +2663,11 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                  V'Block' * (K'with' * V'Block')^1 *
                 K'end'
     , Par_And = K'par/and' * K'do' *
-                V'Block' * (K'with' * V'Block')^1 *
-               K'end'
+                    V'Block' * (K'with' * V'Block')^1 *
+                K'end'
     , Par_Or  = K'par/or' * K'do' *
-                V'Block' * (K'with' * V'Block')^1 *
-               K'end'
+                    V'Block' * (K'with' * V'Block')^1 *
+                K'end'
 
 -- FLOW CONTROL
 
@@ -2719,9 +2719,9 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
 -- ASYNCHRONOUS
 
-    , Async        = K'await' * K'async' * (-P'/thread'-'/isr') *
+    , Async        = K'await' * K'async' * (-P'/thread'-'/isr') * V'Y' *
                         OPT(PARENS(V'List_Var')) * V'__Do'
-    , Async_Thread = K'await' * K'async/thread' *
+    , Async_Thread = K'await' * K'async/thread' * V'Y' *
                         OPT(PARENS(V'List_Var')) * V'__Do'
     , _Async_Isr   = K'async/isr' * KK'[' * V'List_Exp' * KK']' *
                             OPT(PARENS(V'List_Var')) *
@@ -2747,8 +2747,8 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                         OPT(V'Code_Pars' * KK'->') *
                             (V'Type' + CK'FOREVER')
 
-    , _Code_proto = V'__code' * Cc(false)
-    , _Code_impl  = V'__code' * V'__Do' * V'EOC'
+    , _Code_proto = V'Y' * V'__code' * Cc(false)
+    , _Code_impl  = V'Y' * V'__code' * V'__Do' * V'Y'
 
     , _Spawn_Block = K'spawn' * V'__Do'
 
@@ -2864,13 +2864,13 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , Await_Until  = (V'Await_Ext' + V'Await_Int') * OPT(K'until'*V'__Exp')
 
-    , Await_Ext    = V'ID_ext' -I(V'Abs_Await') -- TODO: rem
-    , Await_Int    = V'Exp_Name' -I(V'Await_Wclock'+V'Abs_Await') -- TODO: rem
-    , Await_Wclock = (V'WCLOCKK' + V'WCLOCKE')
+    , Await_Ext    = V'ID_ext'   * V'Y' -I(V'Abs_Await')                 -- TODO: rem
+    , Await_Int    = V'Exp_Name' * V'Y' -I(V'Await_Wclock'+V'Abs_Await') -- TODO: rem
+    , Await_Wclock = (V'WCLOCKK' + V'WCLOCKE') * V'Y'
 
-    , Await_Forever = K'await' * K'FOREVER'
-    , Await_Pause   = K'await' * K'pause'
-    , Await_Resume  = K'await' * K'resume'
+    , Await_Forever = K'await' * K'FOREVER' * V'Y'
+    , Await_Pause   = K'await' * K'pause'   * V'Y'
+    , Await_Resume  = K'await' * K'resume'  * V'Y'
 
     , _Emit_ps = OPT(V'__Exp' + PARENS(OPT(V'List_Exp')))
     , Emit_Wclock   = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
@@ -2879,10 +2879,9 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , Emit_Ext_req  = K'request'                  * V'ID_ext' * V'_Emit_ps'
 * EE'TODO-PARSER: request'
 
-    , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') * V'Exp_Name' * V'_Emit_ps'
+    , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') * V'Exp_Name' * V'_Emit_ps' * V'Y'
 
     , __watch = (V'Await_Ext' + V'Await_Int' + V'Await_Wclock' + V'Abs_Await')
-                    * OPT(KK'->' * PARENS(V'_List_Var_Ref'))
     , _Watching = K'watching'
                     * LIST(V'__watch')
                 * V'__Do'
@@ -2911,19 +2910,16 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , __abs_mods = Ct ( (Cg(K'/dynamic'*Cc'dynamic','dynamic') +
                          Cg(K'/static' *Cc'static', 'static'))^-1 *
                          Cg(K'/recursive'*Cc'recursive','recursive')^-1 )
-    , Abs_Call  = K'call' * V'__Abs_Cons_Code'
+    , Abs_Call  = K'call' * V'__abs_mods' * (V'Abs_Cons' -I(V'__id_data'))
     , Abs_Val   = CK'val' * V'Abs_Cons'
     , Abs_New   = CK'new' * V'Abs_Cons'
     , Abs_Await = V'__Abs_Cons_Code'
 
-    , Abs_Spawn_Single = K'spawn' * V'__Abs_Cons_Code'
-                            * (-KK'in') * Cc(false)
-                                * OPT(KK'->' * PARENS(V'_List_Var_Ref'))
-    , Abs_Spawn_Pool   = K'spawn' * V'__Abs_Cons_Code'
-                            * KK'in' * V'Exp_Name'
-                                * OPT(KK'->' * PARENS(V'_List_Var_Ref'))
+    , Abs_Spawn_Single = K'spawn' * V'__Abs_Cons_Code' * (-KK'in') * Cc(false)
+    , Abs_Spawn_Pool   = K'spawn' * V'__Abs_Cons_Code' * KK'in' * V'Exp_Name'
 
-    , __Abs_Cons_Code = V'__abs_mods' * V'Abs_Cons' -I(V'__id_data')
+    , __Abs_Cons_Code = V'__abs_mods' * (V'Abs_Cons' -I(V'__id_data')) *
+                            OPT(KK'->' * PARENS(V'_List_Var_Ref')) * V'Y'
     , Abs_Cons   = V'ID_abs' * PARENS(OPT(V'Abslist'))
     , Abslist    = LIST(V'__abs_item')^-1
     , __abs_item = (V'Abs_Cons' + V'Vec_Cons' + V'__Exp' + V'ID_any')
@@ -3110,7 +3106,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                  * (V'Nat_Block'+V'_Code_impl')^0 )
 
     , __Stmt_Last  = V'_Escape' + V'Break' + V'Continue' + V'Await_Forever'
-    , __Stmt_Last_Block = V'Par'
+    , __Stmt_Last_Block = V'Y' * V'Par'
     , __Stmt_Simple = V'Nothing'
                     + V'_Vars_set'  + V'_Vars'
                     + V'_Vecs_set'  + V'_Vecs'
@@ -3141,7 +3137,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
               + V'_Every'
               + V'_Spawn_Block'
               + V'Finalize'
-              + V'Par_Or' + V'Par_And' + V'_Watching'
+              + V'Y'*V'Par_Or' + V'Y'*V'Par_And' + V'_Watching'
               + V'Pause_If'
               + V'Async' + V'Async_Thread' + V'_Async_Isr' + V'Atomic'
               + V'_Dopre'
@@ -3829,7 +3825,7 @@ error'TODO: luacov never executes this?'
     _Ext_Req_impl__PRE  = '_Code_impl__PRE',
     _Ext_Code_impl__PRE = '_Code_impl__PRE',
     _Code_impl__PRE = function (me)
-        local _,_,_,_,out,blk = unpack(me)
+        local _,_,_,_,_,out,blk = unpack(me)
 
         local stmts_old = AST.asr(blk,'Block', 1,'Stmts')
         local stmts_new = node('Stmts', me.ln)
@@ -3865,7 +3861,7 @@ error'TODO: luacov never executes this?'
     end,
 
     _Code__PRE = function (me)
-        local mods, id, ins, mid, out, blk, eoc = unpack(me)
+        local Y, mods, id, ins, mid, out, blk, eoc = unpack(me)
         mid = mid or AST.node('Code_Pars', me.ln)
 
         local Type = AST.get(out,'Type')
@@ -3883,7 +3879,7 @@ error'TODO: luacov never executes this?'
             out = node('Nothing', me.ln)
         end
 
-        local ret = node('Code', me.ln, mods, id,
+        local ret = node('Code', me.ln, Y, mods, id,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 node('Stmts', me.ln, ins, mid, out),
@@ -4057,7 +4053,7 @@ error'TODO'
     end,
 
     _Every__PRE = function (me)
-        local to, awt, body = unpack(me)
+        local to, awt, Y, body = unpack(me)
 
         --[[
         --      every a=EXT do ... end
@@ -4084,6 +4080,7 @@ error'TODO'
                         node('Stmts', me.ln,
                             dcls,
                             set_awt,
+                            Y,
                             body))))
     end,
 
@@ -4147,7 +4144,7 @@ error'TODO'
             --      fr
             --      to
 
-            assert(#set == 1, 'bug found')
+            assert(#set==1 or #set==2, 'bug found')
             set.tag = string.sub(set.tag,2)
             AST.set(set, 2, to)
 
@@ -4177,24 +4174,15 @@ error'TODO'
     end,
 
     _Watching__PRE = function (me)
-        local watch, mid, block = unpack(me)
+        local watch, block = unpack(me)
 
         -- watching Ff()->(), Gg()->(), ...
         if block.tag ~= 'Block' then
-            return node('_Watching', me.ln, watch, mid,
+            return node('_Watching', me.ln, watch,
                     node('Block', me.ln,
                         node('Stmts', me.ln,
                             node('_Watching', me.ln,
-                                unpack(me,3)))))
-        end
-
-        if mid then
-            local Abs_Await = AST.get(watch,'Abs_Await') or
-                              AST.get(watch,'_Set', 2,'_Set_Await_one', 1,'Abs_Await')
-            ASR(Abs_Await, me, 'unexpected `->´')
-            local ID_abs = AST.asr(Abs_Await,'', 2,'Abs_Cons', 1,'ID_abs')
-            Abs_Await[#Abs_Await+1] = false  -- pool
-            AST.set(Abs_Await, #Abs_Await+1, mid)
+                                unpack(me,2)))))
         end
 
         return node('Watching', me.ln,
@@ -4897,11 +4885,11 @@ local function iter_boundary (cur, id, can_cross)
                 -- async (a,b,c) do ... end
                 local can_cross2 = false
 
-                local varlist
+                local varlist,_
                 if c.tag == 'Async_Isr' then
                     _,varlist = unpack(c)
                 else
-                    varlist = unpack(c)
+                    _,varlist = unpack(c)
                 end
 
                 if varlist then
@@ -4951,7 +4939,7 @@ function DCLS.asr (me, blk_or_data, id, can_cross, err)
                 '" ('..data.ln[1]..':'..  data.ln[2]..')')
         else
             local par = AST.par(me,'Code')
-            if par and par[2]==id then
+            if par and par[3]==id then
                 return par
             else
                 ASR(false, me,
@@ -5092,7 +5080,7 @@ F = {
         if ID.tag == 'ID_abs' then
             ASR(no_what and ID.dcl.tag~=no_what, tp,
                 'invalid declaration : unexpected context for `code´ "'..
-                    (ID.dcl.id or ID.dcl[2])..'"')
+                    (ID.dcl.id or ID.dcl[3])..'"')
         end
     end,
 
@@ -5196,7 +5184,7 @@ F = {
 
     Code_Pars = function (me)
         local Code = AST.asr(me,4,'Code')
-        local mods = unpack(Code)
+        local _,mods = unpack(Code)
 
         -- check types only
         do
@@ -5242,7 +5230,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
     -- detect "base" dynamic multimethod: create dummy copy with plain "id"
     Code__PRE = function (me)
-        local mods,id = unpack(me)
+        local _,mods,id = unpack(me)
         if not mods.dynamic then
             return  -- not dynamic code
         end
@@ -5263,7 +5251,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             return
         end
 
-        local proto_body = AST.asr(me,'', 3,'Block', 1,'Stmts')
+        local proto_body = AST.asr(me,'', 4,'Block', 1,'Stmts')
         local orig = proto_body[2]
         AST.set(proto_body, 2, AST.node('Stmts', me.ln))
         local new = AST.copy(me)
@@ -5283,7 +5271,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
     end,
 
     Code = function (me)
-        local mods1,id,body1 = unpack(me)
+        local _,mods1,id,body1 = unpack(me)
 
         ASR(not AST.par(me,'Code'), me,
             'invalid `code´ declaration : nesting is not allowed')
@@ -5303,7 +5291,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
         local old = DCLS.get(blk, me.id)
         if old then
-            local mods2,_,body2 = unpack(old)
+            local _,mods2,_,body2 = unpack(old)
             if me.is_impl then
                 ASR(not (old.is_impl or old.__impl), me,
                     'invalid `code´ declaration : body for "'..id..'" already exists')
@@ -5925,7 +5913,7 @@ F = {
 
     Abs_Call = function (me)
         local ID_abs = AST.asr(me,'', 2,'Abs_Cons', 1,'ID_abs')
-        local mods_dcl  = unpack(ID_abs.dcl)
+        local _,mods_dcl  = unpack(ID_abs.dcl)
         local mods_call = unpack(me)
 
         if mods_dcl.dynamic then
@@ -5948,7 +5936,7 @@ F = {
 
         -- info
         me.info = INFO.new(me, 'Val', nil,
-                    AST.copy(AST.asr(ID_abs.dcl,'Code', 3,'Block', 1,'Stmts',
+                    AST.copy(AST.asr(ID_abs.dcl,'Code', 4,'Block', 1,'Stmts',
                                                         1,'Stmts', 3,'',
                                                                     -- TODO: HACK_5
                                                         2,'Type')))
@@ -5962,7 +5950,7 @@ F = {
             me.vars = AST.asr(ID_abs.dcl,'Data', 3,'Block').dcls
             err_str = 'invalid constructor'
         else
-            me.vars = AST.asr(ID_abs.dcl,'Code', 3,'Block', 1,'Stmts',
+            me.vars = AST.asr(ID_abs.dcl,'Code', 4,'Block', 1,'Stmts',
                                                  1,'Stmts', 1,'Code_Pars')
             err_str = 'invalid call'
         end
@@ -5970,7 +5958,7 @@ F = {
 
         -- check if dyn call is actually static (with "as")
         me.id = ID_abs.dcl.id
-        local mods = (ID_abs.dcl.tag=='Code' and ID_abs.dcl[1])
+        local mods = (ID_abs.dcl.tag=='Code' and ID_abs.dcl[2])
         local is_dyn do
             if mods and mods.dynamic then
                 is_dyn = false
@@ -6564,7 +6552,7 @@ F = {
             else
                 local ID_abs = AST.asr(fr,'', 2,'Abs_Call', 2,'Abs_Cons',
                                               1,'ID_abs')
-                local tp = AST.asr(ID_abs.dcl,'Code', 3,'Block', 1,'Stmts',
+                local tp = AST.asr(ID_abs.dcl,'Code', 4,'Block', 1,'Stmts',
                                                       1,'Stmts', 3,'', 2,'Type')
                 EXPS.check_tp(me, to.info.tp, tp, 'invalid binding', true)
             end
@@ -6780,11 +6768,11 @@ F = {
     end,
 
     Abs_Spawn_Pool = function (me)
-        local mods_call,Abs_Cons,_,list = unpack(me)
+        local mods_call,Abs_Cons,list = unpack(me)
         local ID_abs = AST.asr(Abs_Cons,'Abs_Cons', 1,'ID_abs')
         me.__code = AST.asr(ID_abs.dcl,'Code')
 
-        local mods_dcl = unpack(me.__code)
+        local _,mods_dcl = unpack(me.__code)
         ASR(mods_dcl.await, me,
             'invalid `'..AST.tag2id[me.tag]..'´ : expected `code/await´ declaration '..
                 '('..me.__code.ln[1]..':'..me.__code.ln[2]..')')
@@ -6800,10 +6788,10 @@ F = {
 
         if list then
             local must_be_opt = (me.tag ~= 'Abs_Await') and
-                                 AST.get(me.__code,'', 3,'Block', 1,'Stmts',
+                                 AST.get(me.__code,'', 4,'Block', 1,'Stmts',
                                                        1,'Stmts', 3,'', 2,'Type')
 
-            local pars = AST.asr(me.__code,'', 3,'Block', 1,'Stmts',
+            local pars = AST.asr(me.__code,'', 4,'Block', 1,'Stmts',
                                                1,'Stmts', 2,'Code_Pars')
             F.__check_watching_list(me, pars, list, must_be_opt)
         end
@@ -6817,7 +6805,7 @@ F = {
 
     Abs_Await = function (me)
         F.Abs_Spawn_Single(me)
-        local ret = AST.get(me.__code,'', 3,'Block', 1,'Stmts',
+        local ret = AST.get(me.__code,'', 4,'Block', 1,'Stmts',
                                           1,'Stmts', 3,'', 2,'Type')
         me.tp = ret and AST.copy(ret)
 
@@ -6904,7 +6892,7 @@ F = {
 
         if list then
             local Code = AST.asr(pool.info.tp[1].dcl, 'Code')
-            local pars = AST.asr(Code,'', 3,'Block', 1,'Stmts',
+            local pars = AST.asr(Code,'', 4,'Block', 1,'Stmts',
                                           1,'Stmts', 2,'Code_Pars')
             F.__check_watching_list(me, pars, list)
         end
@@ -7042,33 +7030,6 @@ end
 
     
 do
-local yields = {
-    EOF              = true,
-    EOC              = true,
-    Par              = true,
-    Par_And          = true,
-    Par_Or           = true,
-    --Escape           = true,
-    Break            = true,
-    Async            = true,
-    Async_Thread     = true,
-    _Async_Isr       = true,
-    Code             = true,
-    Ext_Code         = true,
-    Data             = true,
-    Nat_Block        = true,
-    Await_Ext        = true,
-    Await_Int        = true,
-    Await_Wclock     = true,
-    Await_Forever    = true,
-    Emit_ext_req     = true,
-    Emit_Evt         = true,
-    Abs_Await        = true,
-    Abs_Spawn_Single = true,
-    Abs_Spawn_Pool   = true,
-    Kill             = true,
-}
-
 --local __detect_cycles = {}
 
 local function run_watch (par, i, stop)
@@ -7097,7 +7058,7 @@ local function run_watch (par, i, stop)
         end
     end
 
-    if yields[me.tag] then
+    if (me.tag == 'Y') then
         return false, me
 
     elseif me.tag == 'If' then
@@ -7162,8 +7123,7 @@ local function run_inits (par, i, Dcl, stop)
 
             local ok, yield = run_watch(me, #me+1, Dcl.blk)
             ASR(ok, me, yield and
-                'invalid binding : active scope reached yielding `'..
-                AST.tag2id[yield.tag]..'´ '..
+                'invalid binding : active scope reached yielding statement '..
                 '('..yield.ln[1]..':'..yield.ln[2]..')')
 
         elseif me.tag=='Abs_Await' or me.tag=='Abs_Spawn_Single'
@@ -7173,7 +7133,10 @@ local function run_inits (par, i, Dcl, stop)
         end
 
         if stmt then
+local Y = stmt[4]
+stmt[4] = nil
             local ok = run_inits(stmt, 1, Dcl)
+stmt[4] = Y
             ASR(ok, Dcl,
                 'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
                 'reached `'..AST.tag2id[me.tag]..'´ '..
@@ -7183,10 +7146,12 @@ local function run_inits (par, i, Dcl, stop)
     end
 
     -- error: yielding statement
-    if yields[me.tag] or (is_loop(me) and is_alias) then
+    if (me.tag == 'Y') or (is_loop(me) and is_alias) then
+        local tag = unpack(me)
         ASR(false, Dcl,
             'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
-            'reached `'..AST.tag2id[me.tag]..'´ '..
+            'reached yielding statement '..
+            --'reached `'..AST.tag2id[me.tag]..'´ '..
             '('..me.ln[1]..':'..me.ln[2]..')')
 
     -- error: access to Dcl
@@ -7340,20 +7305,8 @@ local function run_ptrs (par, i, Dcl, stop)
         return run_ptrs(par, i+1, Dcl, stop)
     end
 
-    if is_loop(me) and (me.tight ~= 'awaits') then
-        -- ok, continue
-
-    elseif me.tag == 'Watching' then
-        local awt = AST.get(me,'', 1,'Par_Or', 1,'Block', 1,'Stmts', 1,'Abs_Await')
-        if awt then
-            -- OK:  watching Code(<ptr>)
-            run_ptrs(awt, 1, Dcl, awt) -- mark ptr access as safe
-        end
-        local snd = AST.asr(me,'', 1,'Par_Or', 2,'Block')
-        return run_ptrs(snd, 1, Dcl, stop)
-
     -- yielding statement: stop?
-    elseif yields[me.tag] or (is_loop(me) and me.__par.tag~='Every') then
+    if me.tag == 'Y' then
         local set = AST.par(me,__is_set)
         local ok = false
         if set then
@@ -7503,8 +7456,9 @@ error'TODO: luacov never executes this?'
         if is_ptr then
             local yield = me.dcl.__run_ptrs_yield
             ASR(me.__run_ptrs_ok, me,
-                'invalid pointer access : crossed `'..
-                AST.tag2id[yield.tag]..'´ '..
+                'invalid pointer access : crossed '..
+                'yielding statement '..
+                --AST.tag2id[yield.tag]..'´ '..
                 '('..yield.ln[1]..':'..yield.ln[2]..')')
         end
     end,
@@ -7603,7 +7557,7 @@ do
 --  NO: big = &&small
 local function check_blk (to_blk, fr_blk)
     local Code = AST.par(fr_blk,'Code')
-    local Stmts = Code and AST.get(Code,'',3,'Block',1,'Stmts',2,'Block',1,'Stmts')
+    local Stmts = Code and AST.get(Code,'',4,'Block',1,'Stmts',2,'Block',1,'Stmts')
     if AST.depth(to_blk) >= AST.depth(fr_blk) then
         assert(AST.is_par(fr_blk,to_blk), 'bug found')
         return true
@@ -7981,7 +7935,7 @@ G = {
         if not me.is_impl then
             return
         end
-        local _, id = unpack(me)
+        local _,_,id = unpack(me)
         local blk = AST.par(me, 'Block')
         local old = DCLS.get(blk, id)
         impls[old] = true
@@ -7990,7 +7944,7 @@ G = {
     Abs_Call = function (me)
         local mods_call, Abs_Cons = unpack(me)
         local Code = AST.asr(Abs_Cons,'', 1,'ID_abs').dcl
-        local mods_dcl = unpack(Code)
+        local _,mods_dcl = unpack(Code)
 
         -- calling known Code
         if impls[Code] then
@@ -8017,7 +7971,7 @@ G = {
         local Par = AST.par(me,'Code')
         if Par and mods_call.recursive then
             -- Par must be '/recursive'
-            local mods_dcl = unpack(Par)
+            local _,mods_dcl = unpack(Par)
             ASR(mods_dcl.recursive, Par,
                 'invalid `code´ declaration : expected `/recursive´ : nested `call/recursive´ ('..me.ln[1]..':'..me.ln[2]..')')
         end
@@ -8141,7 +8095,7 @@ F = {
     --------------------------------------------------------------------------
 
     Code = function (me)
-        local mods,_,body = unpack(me)
+        local _,mods,_,body = unpack(me)
         if mods.dynamic and body then
             local Code_Pars = AST.asr(body,'', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
             for i, dcl in ipairs(Code_Pars) do
@@ -8188,7 +8142,7 @@ F = {
     Loop_Pool = function (me)
         local _,list,pool = unpack(me)
         local Code = AST.asr(pool.info.dcl,'Pool', 2,'Type', 1,'ID_abs').dcl
-        local ret = AST.get(Code,'Code', 3,'Block', 1,'Stmts',
+        local ret = AST.get(Code,'Code', 4,'Block', 1,'Stmts',
                                          1,'Stmts', 3,'', 2,'Type')
         me.yields = me.yields and ret
             -- if "=>FOREVER" counts as not yielding
@@ -8243,7 +8197,7 @@ F = {
             MAX_all(me)
         end
 
-        if me.tag=='Code' and me[1].await then
+        if me.tag=='Code' and me[2].await then
             me.trails_n = me.trails_n + 1   -- TODO-NOW
         end
     end,
@@ -8328,7 +8282,7 @@ F = {
     end,
 
     Async_Thread = function (me)
-        local _, body = unpack(me)
+        local body = unpack(me)
         me.trails_n = 1 + body.trails_n
     end,
 
@@ -8365,7 +8319,7 @@ G = {
 -- TODO-NOW
 if me.tag == 'Block' then
     local Code = AST.get(AST.par(me,'Code'),'')
-    if Code and Code[1].await and AST.get(Code,'',3,'Block')==me then
+    if Code and Code[2].await and AST.get(Code,'',4,'Block')==me then
         me.trails[2] = me.trails[2] - 1
     end
 end
@@ -8670,7 +8624,7 @@ F = {
     Abs_Call = function (me)
         local _, Abs_Cons = unpack(me)
         local ID_abs, _ = unpack(Abs_Cons)
-        local mods,_,Code_Pars = unpack(ID_abs.dcl)
+        local _,mods,_,Code_Pars = unpack(ID_abs.dcl)
         assert(mods.tight)
         if CEU.opts.ceu_features_lua then
             return [[
@@ -8707,7 +8661,7 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
             end
         end
 
-        local mods = (ID_abs.dcl.tag=='Code' and unpack(ID_abs.dcl))
+        local mods = (ID_abs.dcl.tag=='Code' and ID_abs.dcl[2])
 
         assert(#me.vars == #Abslist)
         for i=1, #me.vars do
@@ -9288,7 +9242,7 @@ typedef struct tceu_code_mem_ROOT {
         me.mems = { me=me, mem='', watch='' }
     end,
     Code__POS = function (me)
-        local mods,id = unpack(me)
+        local _,mods,id = unpack(me)
 
         if me.is_dyn_base then
             me.dyns = {}
@@ -9315,7 +9269,7 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
     end,
 
     Code = function (me)
-        local mods, _, body = unpack(me)
+        local _, mods, _, body = unpack(me)
 
         if (not me.is_dyn_base) and ((not me.is_impl) or mods.dynamic) then
             me.mems.args = ''
@@ -10364,7 +10318,7 @@ _ceu_mem->trails[]]..ID_int.dcl.trails[1]..[[].evt.id = CEU_INPUT__NONE;
     ---------------------------------------------------------------------------
 
     Code = function (me)
-        local mods,_,body = unpack(me)
+        local _,mods,_,body = unpack(me)
         if not me.is_impl then return end
         if me.is_dyn_base then return end
 
@@ -10388,7 +10342,7 @@ if (0)
         local args_Code_Pars = AST.asr(body,'', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
         if me.dyn_base then
             args_id = me.dyn_base.id
-            args_Code_Pars = AST.asr(me.dyn_base,'Code', 3,'Block', 1,'Stmts',
+            args_Code_Pars = AST.asr(me.dyn_base,'Code', 4,'Block', 1,'Stmts',
                                                          1,'Stmts', 1,'Code_Pars')
         end
 
@@ -10447,7 +10401,7 @@ CLEAR(me) -- TODO-NOW
     --------------------------------------------------------------------------
 
     __abs = function (me, mem, pak)
-        local _, Abs_Cons, _, mid = unpack(me)
+        local _, Abs_Cons, mid = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
 
         local ret = (mid and mid.code) or ''
@@ -10523,7 +10477,7 @@ if (!_ceu_stk->is_alive) {
     end,
 
     Abs_Spawn_Pool = function (me)
-        local _, Abs_Cons, pool = unpack(me)
+        local _, Abs_Cons, _, _, pool = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
         local alias,tp,_,dim = unpack(pool.info.dcl)
 
@@ -10638,7 +10592,7 @@ if (0) {
 
         if list then
             CONC(me, list)
-            local mids = AST.asr(Code,'Code', 3,'Block', 1,'Stmts',
+            local mids = AST.asr(Code,'Code', 4,'Block', 1,'Stmts',
                                               1,'Stmts', 2,'Code_Pars')
             local ps = {}
             for i, arg in ipairs(list) do
@@ -10767,7 +10721,7 @@ ceu_callback_assert_msg(0, "reached end of `do´");
 
     Escape = function (me)
         local code = AST.par(me, 'Code')
-        local mods = code and unpack(code)
+        local mods = code and code[2]
         local evt do
             if code and mods.await then
                 -- HACK_8
@@ -11059,7 +11013,7 @@ if (! ]]..CUR('__and_'..me.n..'_'..i)..[[) {
         if to.info.dcl.id == '_ret' then
             local code = AST.par(me, 'Code')
             if code then
-                local mods = unpack(code)
+                local _,mods = unpack(code)
                 if mods.tight then
                     if code.dyn_base then
                         code = code.dyn_base
@@ -11502,7 +11456,7 @@ _CEU_HALT_]]..me.n..[[_:
     ---------------------------------------------------------------------------
 
     Async = function (me)
-        local _,blk = unpack(me)
+        local _,_,blk = unpack(me)
         LINE(me, [[
 ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
 ]])
@@ -11553,7 +11507,7 @@ if (_ceu_p.thread->has_aborted) {
     end,
 
     Async_Thread = function (me)
-        local _, blk = unpack(me)
+        local _,_, blk = unpack(me)
 
         local v = CUR('__thread_'..me.n)
 
