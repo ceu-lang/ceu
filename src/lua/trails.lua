@@ -105,7 +105,7 @@ F = {
     end,
 
     Async_Thread = function (me)
-        local _, body = unpack(me)
+        local body = unpack(me)
         me.trails_n = 1 + body.trails_n
     end,
 

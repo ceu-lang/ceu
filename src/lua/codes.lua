@@ -442,7 +442,7 @@ CLEAR(me) -- TODO-NOW
     --------------------------------------------------------------------------
 
     __abs = function (me, mem, pak)
-        local _, Abs_Cons, _, mid = unpack(me)
+        local _, Abs_Cons, mid = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
 
         local ret = (mid and mid.code) or ''
@@ -518,7 +518,7 @@ if (!_ceu_stk->is_alive) {
     end,
 
     Abs_Spawn_Pool = function (me)
-        local _, Abs_Cons, pool = unpack(me)
+        local _, Abs_Cons, _, _, pool = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
         local alias,tp,_,dim = unpack(pool.info.dcl)
 

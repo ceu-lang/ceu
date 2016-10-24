@@ -31358,7 +31358,8 @@ var int e =
     end;
 escape 0;
 ]],
-    adjs = 'line 3 : unexpected `->´',
+    parser = 'line 3 : after `E´ : expected `,´ or `do´',
+    --adjs = 'line 3 : unexpected `->´',
 }
 
 Test { [[
@@ -33792,7 +33793,7 @@ Test { [[
 code/await Code (void)->void;
 await Code(1) until true;
 ]],
-    parser = 'line 2 : after `)´ : expected `;´',
+    parser = 'line 2 : after `)´ : expected `->´ or `;´',
 }
 Test { [[
 await 1s until true;
@@ -34488,7 +34489,7 @@ code/await Ff (void) -> (var& int x) -> void do
 end
 pool[] Ff ffs;
 var& int x;
-spawn Ff() in ffs -> (&x);
+spawn Ff() -> (&x) in ffs;
 escape 0;
 ]],
     stmts = 'line 7 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
@@ -34538,7 +34539,7 @@ code/await Ff (void) -> (var&? int x) -> void do
 end
 pool[] Ff ffs;
 var&? int x;
-spawn Ff() in ffs -> (&x);
+spawn Ff() -> (&x) in ffs;
 escape (x? as int) + 1;
 ]],
     run = 1,
@@ -34596,7 +34597,7 @@ end
 
 pool[] Ff ffs;
 var&? int x_;
-spawn Ff() in ffs -> (&x_);
+spawn Ff() -> (&x_) in ffs;
 
 await x_;
 
@@ -34626,7 +34627,7 @@ code/await Ff (void) -> (var& int x) -> FOREVER do
 end
 pool[] Ff ffs;
 var& int x;
-spawn Ff() in ffs -> (&x);
+spawn Ff() -> (&x) in ffs;
 escape x + 1;
 ]],
     run = 11,
@@ -34640,7 +34641,7 @@ code/await Ff (void) -> (var&? int x) -> void do
 end
 pool[] Ff ffs;
 var&? int x;
-spawn Ff() in ffs -> (&x);
+spawn Ff() -> (&x) in ffs;
 escape x! + 1;
 ]],
     run = 11,
@@ -34878,7 +34879,7 @@ var int ret = 0;
 pool[] Ff fs;
 
 var&? int x;
-spawn Ff() in fs -> (&x);
+spawn Ff() -> (&x) in fs;
 
 ret = x!;
 await x;
@@ -35013,8 +35014,8 @@ end
 
 escape y;
 ]],
-    --props_ = 'line 15 : invalid access to internal identifier "y" : crossed `watching´ (/tmp/tmp.ceu:8)',
-    props_ = 'line 15 : invalid access to internal identifier "y" : crossed yielding statement (/tmp/tmp.ceu:8)',
+    props_ = 'line 15 : invalid access to internal identifier "y" : crossed `watching´ (/tmp/tmp.ceu:8)',
+    --props_ = 'line 15 : invalid access to internal identifier "y" : crossed yielding statement (/tmp/tmp.ceu:8)',
 }
 
 Test { [[
@@ -35613,6 +35614,7 @@ escape 0;
     --inits = 'line 16 : uninitialized variable "x1" : reached read access (/tmp/tmp.ceu:17)',
     --inits = 'line 16 : uninitialized variable "x1" : reached `par/or´ (/tmp/tmp.ceu:17)',
     inits = 'line 16 : uninitialized variable "x1" : reached yielding statement (/tmp/tmp.ceu:17)',
+    --inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:9)',
 }
 
 Test { [[
@@ -37948,8 +37950,8 @@ end
 
 escape n+1;
 ]],
-    --props_ = 'line 13 : invalid access to internal identifier "n" : crossed `loop´ (/tmp/tmp.ceu:10)',
-    props_ = 'line 13 : invalid access to internal identifier "n" : crossed yielding statement (/tmp/tmp.ceu:10)',
+    props_ = 'line 13 : invalid access to internal identifier "n" : crossed `loop´ (/tmp/tmp.ceu:10)',
+    --props_ = 'line 13 : invalid access to internal identifier "n" : crossed yielding statement (/tmp/tmp.ceu:10)',
 }
 
 Test { [[
@@ -38110,8 +38112,8 @@ end
 escape nn;
 ]],
     --inits = 'line 8 : uninitialized variable "nn" : reached `loop´',
-    --props_ = 'line 14 : invalid access to internal identifier "nn" : crossed `loop´ (/tmp/tmp.ceu:10)',
-    props_ = 'line 14 : invalid access to internal identifier "nn" : crossed yielding statement (/tmp/tmp.ceu:10)',
+    props_ = 'line 14 : invalid access to internal identifier "nn" : crossed `loop´ (/tmp/tmp.ceu:10)',
+    --props_ = 'line 14 : invalid access to internal identifier "nn" : crossed yielding statement (/tmp/tmp.ceu:10)',
 }
 
 Test { [[
@@ -38610,7 +38612,8 @@ end
 escape 1;
 ]],
     --inits = 'line 1 : uninitialized event "e2" : reached `emit´ (/tmp/tmp.ceu:3)',
-    inits = 'line 1 : uninitialized event "e2" : reached yielding statement (/tmp/tmp.ceu:3)',
+    --inits = 'line 1 : uninitialized event "e2" : reached yielding statement (/tmp/tmp.ceu:3)',
+    inits = 'line 1 : uninitialized event "e2" : reached read access (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -38676,7 +38679,7 @@ pool[] Ff ffs;
 var&?   int x;
 event&? int e;
 
-spawn Ff() in ffs -> (&x,&e);
+spawn Ff() -> (&x,&e) in ffs;
 
 var int ret = 0;
 
@@ -38705,7 +38708,7 @@ end
 pool[] Ff ffs;
 
 var&? int x;
-spawn Ff() in ffs -> (&x);
+spawn Ff() -> (&x) in ffs;
 escape x!;
 ]],
     run = 10,
@@ -38883,7 +38886,7 @@ code/await Tx (void) -> void do end
 var bool ok1 = spawn Tx();
 escape 0;
 ]],
-    parser = 'line 2 : after `)´ : expected `in´',
+    parser = 'line 2 : after `)´ : expected `->´ or `in´',
 }
 Test { [[
 code/await Tx (void) -> void do end

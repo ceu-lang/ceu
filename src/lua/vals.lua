@@ -128,7 +128,7 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
             end
         end
 
-        local mods = (ID_abs.dcl.tag=='Code' and unpack(ID_abs.dcl))
+        local mods = (ID_abs.dcl.tag=='Code' and ID_abs.dcl[2])
 
         assert(#me.vars == #Abslist)
         for i=1, #me.vars do

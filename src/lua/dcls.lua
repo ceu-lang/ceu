@@ -210,7 +210,7 @@ F = {
         if ID.tag == 'ID_abs' then
             ASR(no_what and ID.dcl.tag~=no_what, tp,
                 'invalid declaration : unexpected context for `code´ "'..
-                    (ID.dcl.id or ID.dcl[2])..'"')
+                    (ID.dcl.id or ID.dcl[3])..'"')
         end
     end,
 
@@ -381,7 +381,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             return
         end
 
-        local proto_body = AST.asr(me,'', 3,'Block', 1,'Stmts')
+        local proto_body = AST.asr(me,'', 4,'Block', 1,'Stmts')
         local orig = proto_body[2]
         AST.set(proto_body, 2, AST.node('Stmts', me.ln))
         local new = AST.copy(me)

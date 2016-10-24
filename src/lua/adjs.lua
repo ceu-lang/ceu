@@ -517,24 +517,15 @@ error'TODO'
     end,
 
     _Watching__PRE = function (me)
-        local watch, mid, block = unpack(me)
+        local watch, block = unpack(me)
 
         -- watching Ff()->(), Gg()->(), ...
         if block.tag ~= 'Block' then
-            return node('_Watching', me.ln, watch, mid,
+            return node('_Watching', me.ln, watch,
                     node('Block', me.ln,
                         node('Stmts', me.ln,
                             node('_Watching', me.ln,
                                 unpack(me,3)))))
-        end
-
-        if mid then
-            local Abs_Await = AST.get(watch,'Abs_Await') or
-                              AST.get(watch,'_Set', 2,'_Set_Await_one', 1,'Abs_Await')
-            ASR(Abs_Await, me, 'unexpected `->´')
-            local ID_abs = AST.asr(Abs_Await,'', 2,'Abs_Cons', 1,'ID_abs')
-            Abs_Await[#Abs_Await+1] = false  -- pool
-            AST.set(Abs_Await, #Abs_Await+1, mid)
         end
 
         return node('Watching', me.ln,

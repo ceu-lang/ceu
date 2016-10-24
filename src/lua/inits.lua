@@ -53,7 +53,7 @@ local function run_watch (par, i, stop)
         end
     end
 
-    if yields[me.tag] then
+    if (me.tag == 'Y') then
         return false, me
 
     elseif me.tag == 'If' then
@@ -118,8 +118,7 @@ local function run_inits (par, i, Dcl, stop)
 
             local ok, yield = run_watch(me, #me+1, Dcl.blk)
             ASR(ok, me, yield and
-                'invalid binding : active scope reached yielding `'..
-                AST.tag2id[yield.tag]..'´ '..
+                'invalid binding : active scope reached yielding statement '..
                 '('..yield.ln[1]..':'..yield.ln[2]..')')
 
         elseif me.tag=='Abs_Await' or me.tag=='Abs_Spawn_Single'

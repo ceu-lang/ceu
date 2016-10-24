@@ -613,7 +613,6 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') * V'Exp_Name' * V'_Emit_ps' * V'Y'
 
     , __watch = (V'Await_Ext' + V'Await_Int' + V'Await_Wclock' + V'Abs_Await')
-                    * OPT(KK'->' * PARENS(V'_List_Var_Ref'))
     , _Watching = K'watching'
                     * LIST(V'__watch')
                 * V'__Do'
@@ -642,19 +641,16 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , __abs_mods = Ct ( (Cg(K'/dynamic'*Cc'dynamic','dynamic') +
                          Cg(K'/static' *Cc'static', 'static'))^-1 *
                          Cg(K'/recursive'*Cc'recursive','recursive')^-1 )
-    , Abs_Call  = K'call' * V'__Abs_Cons_Code'
+    , Abs_Call  = K'call' * V'__abs_mods' * (V'Abs_Cons' -I(V'__id_data'))
     , Abs_Val   = CK'val' * V'Abs_Cons'
     , Abs_New   = CK'new' * V'Abs_Cons'
-    , Abs_Await = V'__Abs_Cons_Code' * V'Y'
+    , Abs_Await = V'__Abs_Cons_Code'
 
-    , Abs_Spawn_Single = K'spawn' * V'__Abs_Cons_Code'
-                            * (-KK'in') * Cc(false)
-                                * OPT(KK'->' * PARENS(V'_List_Var_Ref')) * V'Y'
-    , Abs_Spawn_Pool   = K'spawn' * V'__Abs_Cons_Code'
-                            * KK'in' * V'Exp_Name'
-                                * OPT(KK'->' * PARENS(V'_List_Var_Ref')) * V'Y'
+    , Abs_Spawn_Single = K'spawn' * V'__Abs_Cons_Code' * (-KK'in') * Cc(false)
+    , Abs_Spawn_Pool   = K'spawn' * V'__Abs_Cons_Code' * KK'in' * V'Exp_Name'
 
-    , __Abs_Cons_Code = V'__abs_mods' * V'Abs_Cons' -I(V'__id_data')
+    , __Abs_Cons_Code = V'__abs_mods' * (V'Abs_Cons' -I(V'__id_data')) *
+                            OPT(KK'->' * PARENS(V'_List_Var_Ref')) * V'Y'
     , Abs_Cons   = V'ID_abs' * PARENS(OPT(V'Abslist'))
     , Abslist    = LIST(V'__abs_item')^-1
     , __abs_item = (V'Abs_Cons' + V'Vec_Cons' + V'__Exp' + V'ID_any')

@@ -348,7 +348,7 @@ F = {
     end,
 
     Abs_Spawn_Pool = function (me)
-        local mods_call,Abs_Cons,_,list = unpack(me)
+        local mods_call,Abs_Cons,list = unpack(me)
         local ID_abs = AST.asr(Abs_Cons,'Abs_Cons', 1,'ID_abs')
         me.__code = AST.asr(ID_abs.dcl,'Code')
 
