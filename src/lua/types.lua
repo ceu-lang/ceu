@@ -214,6 +214,7 @@ function TYPES.ID_plain (tp)
 end
 
 function TYPES.abs_dcl (tp,kind)
+    assert(kind, 'bug found')
     local ID = TYPES.ID_plain(tp)
     return ID and ID.dcl and ID.dcl.tag==kind and ID.dcl
 end

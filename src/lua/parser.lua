@@ -522,7 +522,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , __data       = K'data' * V'__ID_abs' * OPT(KK'is' * V'__Exp')
     , _Data_simple = V'__data'
     , _Data_block  = V'__data' * K'with' * (
-                        (V'_Vars'+V'_Vecs'+V'_Pools'+V'_Evts') *
+                        (V'_Vars_set'+V'_Vecs_set'+V'_Pools_set'+V'_Evts_set') *
                             V'__seqs'
                      )^1 * K'end'
 

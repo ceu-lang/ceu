@@ -214,8 +214,43 @@ F = {
         end
     end,
 
-    Var = function (me)
+    __F = function (id)
+        return {
+            Var__PRE = function (me)
+                return AST.node('Nothing', me.ln)
+            end,
+            Exp_Name__PRE = function (me)
+                if me.__handled and me.__handled[id] then
+                    return
+                end
+AST.dump(me)
+                local field = unpack(AST.asr(me,'', 1,'ID_int'))
+                local ret = AST.node('Exp_Name', me.ln,
+                                AST.node('Exp_.', me.ln, '.',
+                                    AST.node('ID_int',me.ln,id),
+                                    field))
+                ret.__handled = ret.__handled or {}
+                ret.__handled[id] = true
+                return ret
+            end,
+        }
+    end,
+
+    Var__POS = function (me)
         local alias,Type,id = unpack(me)
+
+        -- default constructor for "data"
+        local abs = TYPES.abs_dcl(Type,'Data')
+        if abs and (not alias) and (not me.__handled) then
+            me.__handled = true
+            local stmts = AST.copy( AST.asr(abs,'Data',3,'Block',1,'Stmts') )
+            stmts.__dcls_defaults = true
+DBG('>>>', me.ln[2], id)
+            AST.visit(F.__F(id), stmts)
+AST.dump(stmts)
+            return AST.node('Stmts', me.ln, me, stmts)
+        end
+
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
         F.__no_abs(Type, 'Code')

@@ -127,7 +127,8 @@ stmt[4] = Y
         if me.__par.tag == 'Do' then
             -- ok: do/a end
         elseif me.dcl == Dcl then
-            ASR(false, Dcl,
+            local is_default = AST.iter(function(n) return n.__dcls_defaults end)
+            ASR(is_default, Dcl,
                 'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
                 'reached read access '..
                 '('..me.ln[1]..':'..me.ln[2]..')')
