@@ -156,8 +156,8 @@ F = {
     Loop_Pool = function (me)
         local _,list,pool = unpack(me)
         local Code = AST.asr(pool.info.dcl,'Pool', 2,'Type', 1,'ID_abs').dcl
-        local ret = AST.get(Code,'Code', 4,'Block', 1,'Stmts',
-                                         1,'Stmts', 3,'', 2,'Type')
+        local ret = AST.get(Code,'Code', 4,'Block', 1,'Stmts', 1,'Stmts',
+                                         3,'Code_Ret', 1,'', 2,'Type')
         me.yields = me.yields and ret
             -- if "=>FOREVER" counts as not yielding
 

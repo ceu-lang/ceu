@@ -33,7 +33,7 @@ SOFTWARE.
 PAK = {
     lua_exe = 'lua5.3',
     ceu_ver = '0.20',
-    ceu_git = 'e3932e21877c4976ef14ef978aa6a25b9837fede',
+    ceu_git = '5e17b472a9c3168eb807ce1445660280ae264ee7',
     files = {
         ceu_c =
             [====[
@@ -2738,14 +2738,14 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                 (V'__ID_abs'-V'__id_data') *
                     V'Code_Pars' * KK'->' *
                         Cc(false) *
-                            V'Type'
+                            (#V'Type' * V'Code_Ret')
              + K'code' * Ct( Cg(K'/await'*Cc'await','await') *
                              Cg(K'/dynamic'*Cc'dynamic','dynamic')^-1 *
                              Cg(K'/recursive'*Cc'recursive','recursive')^-1 ) *
                 (V'__ID_abs'-V'__id_data') *
                     V'Code_Pars' * KK'->' *
                         OPT(V'Code_Pars' * KK'->') *
-                            (V'Type' + CK'FOREVER')
+                            V'Code_Ret'
 
     , _Code_proto = V'Y' * V'__code' * Cc(false)
     , _Code_impl  = V'Y' * V'__code' * V'__Do' * V'Y'
@@ -2785,6 +2785,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                     PARENS(P'void') +
                     PARENS(LIST(V'_Code_Pars_Item'))
                   )
+    , Code_Ret = (V'Type' + CK'FOREVER')
 
 -- DATA
 
@@ -3831,7 +3832,7 @@ error'TODO: luacov never executes this?'
         local stmts_new = node('Stmts', me.ln)
         AST.set(blk, 1, stmts_new)
 
-        local Type = AST.get(out,'Type')
+        local Type = AST.get(out,'Code_Ret', 1,'Type')
         if Type then
             -- enclose "blk" with "_ret = do ... end"
 
@@ -3864,15 +3865,15 @@ error'TODO: luacov never executes this?'
         local Y, mods, id, ins, mid, out, blk, eoc = unpack(me)
         mid = mid or AST.node('Code_Pars', me.ln)
 
-        local Type = AST.get(out,'Type')
+        local Type = AST.get(out,'Code_Ret', 1,'Type')
         if Type then
             local ID_prim,mod = unpack(Type)
             local is_void = (ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod))
             if is_void then
-                out = node('Var_', me.ln, false, AST.copy(out), '_ret')
+                out = node('Var_', me.ln, false, AST.copy(Type), '_ret')
                     -- TODO: HACK_5
             else
-                out = node('Var', me.ln, false, AST.copy(out), '_ret')
+                out = node('Var', me.ln, false, AST.copy(Type), '_ret')
             end
             out.is_implicit = true
         else
@@ -3882,7 +3883,10 @@ error'TODO: luacov never executes this?'
         local ret = node('Code', me.ln, Y, mods, id,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
-                                node('Stmts', me.ln, ins, mid, out),
+                                node('Stmts', me.ln,
+                                    ins,
+                                    mid,
+                                    node('Code_Ret', me.ln, out)),
                                 (blk or node('Stmts',me.ln)))),
                         eoc)
         ret.is_impl = (blk ~= false)
@@ -5090,6 +5094,10 @@ F = {
             Var__PRE = function (me)
                 return AST.node('Nothing', me.ln)
             end,
+            Vec__PRE  = 'Var__PRE',
+            Evt__PRE  = 'Var__PRE',
+            Pool__PRE = 'Var__PRE',
+
             Exp_Name__PRE = function (me)
                 if me.__handled and me.__handled[id] then
                     return
@@ -5125,7 +5133,9 @@ F = {
 
         -- default constructor for "data"
         local abs = TYPES.abs_dcl(Type,'Data')
-        if abs and (not alias) and (not me.__handled) and (not AST.par(me,'Code_Pars')) then
+        if abs and (not alias) and (not me.__handled) and
+           (not AST.par(me,'Code_Pars')) and (not AST.par(me,'Code_Ret'))
+        then
             me.__handled = true
             local stmts = AST.copy( AST.asr(abs,'Data',3,'Block',1,'Stmts') )
             stmts.__dcls_defaults = true
@@ -5984,9 +5994,9 @@ F = {
         -- info
         me.info = INFO.new(me, 'Val', nil,
                     AST.copy(AST.asr(ID_abs.dcl,'Code', 4,'Block', 1,'Stmts',
-                                                        1,'Stmts', 3,'',
+                                                        1,'Stmts', 3,'Code_Ret',
                                                                     -- TODO: HACK_5
-                                                        2,'Type')))
+                                                        1,'', 2,'Type')))
     end,
 
     Abs_Cons = function (me)
@@ -6600,7 +6610,7 @@ F = {
                 local ID_abs = AST.asr(fr,'', 2,'Abs_Call', 2,'Abs_Cons',
                                               1,'ID_abs')
                 local tp = AST.asr(ID_abs.dcl,'Code', 4,'Block', 1,'Stmts',
-                                                      1,'Stmts', 3,'', 2,'Type')
+                                                      1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
                 EXPS.check_tp(me, to.info.tp, tp, 'invalid binding', true)
             end
         else
@@ -6836,7 +6846,7 @@ F = {
         if list then
             local must_be_opt = (me.tag ~= 'Abs_Await') and
                                  AST.get(me.__code,'', 4,'Block', 1,'Stmts',
-                                                       1,'Stmts', 3,'', 2,'Type')
+                                                       1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
 
             local pars = AST.asr(me.__code,'', 4,'Block', 1,'Stmts',
                                                1,'Stmts', 2,'Code_Pars')
@@ -6853,7 +6863,7 @@ F = {
     Abs_Await = function (me)
         F.Abs_Spawn_Single(me)
         local ret = AST.get(me.__code,'', 4,'Block', 1,'Stmts',
-                                          1,'Stmts', 3,'', 2,'Type')
+                                          1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
         me.tp = ret and AST.copy(ret)
 
         local watch = AST.par(me, 'Watching')
@@ -8199,8 +8209,8 @@ F = {
     Loop_Pool = function (me)
         local _,list,pool = unpack(me)
         local Code = AST.asr(pool.info.dcl,'Pool', 2,'Type', 1,'ID_abs').dcl
-        local ret = AST.get(Code,'Code', 4,'Block', 1,'Stmts',
-                                         1,'Stmts', 3,'', 2,'Type')
+        local ret = AST.get(Code,'Code', 4,'Block', 1,'Stmts', 1,'Stmts',
+                                         3,'Code_Ret', 1,'', 2,'Type')
         me.yields = me.yields and ret
             -- if "=>FOREVER" counts as not yielding
 
@@ -9454,7 +9464,7 @@ static void CEU_CODE_WATCH_]]..me.id..[[ (tceu_code_mem* _ceu_mem,
 
         -- CEU_CODE_xxx
 
-        local Type = AST.get(body,'Block', 1,'Stmts', 1,'Stmts', 3,'', 2,'Type')
+        local Type = AST.get(body,'Block', 1,'Stmts', 1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
         if mods.tight then
             me.mems.wrapper = me.mems.wrapper .. [[
 static ]]..TYPES.toc(assert(Type))..[[ /* space */
@@ -10424,7 +10434,7 @@ if (0)
 
         CONC(me, body)
 
-        local Type = AST.get(body,'Block', 1,'Stmts', 1,'Stmts', 3,'', 2,'Type')
+        local Type = AST.get(body,'Block', 1,'Stmts', 1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
         if not Type then
             LINE(me, [[
 ceu_callback_assert_msg(0, "reached end of `code´");
