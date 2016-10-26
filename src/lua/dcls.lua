@@ -254,7 +254,9 @@ F = {
 
         -- default constructor for "data"
         local abs = TYPES.abs_dcl(Type,'Data')
-        if abs and (not alias) and (not me.__handled) and (not AST.par(me,'Code_Pars')) then
+        if abs and (not alias) and (not me.__handled) and
+           (not AST.par(me,'Code_Pars')) and (not AST.par(me,'Code_Ret'))
+        then
             me.__handled = true
             local stmts = AST.copy( AST.asr(abs,'Data',3,'Block',1,'Stmts') )
             stmts.__dcls_defaults = true

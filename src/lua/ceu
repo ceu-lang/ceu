@@ -5125,7 +5125,7 @@ F = {
 
         -- default constructor for "data"
         local abs = TYPES.abs_dcl(Type,'Data')
-        if abs and (not alias) and (not me.__handled) then
+        if abs and (not alias) and (not me.__handled) and (not AST.par(me,'Code_Pars')) then
             me.__handled = true
             local stmts = AST.copy( AST.asr(abs,'Data',3,'Block',1,'Stmts') )
             stmts.__dcls_defaults = true
@@ -5255,7 +5255,6 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         -- multi-methods: changes "me.id" on Code
         me.ids_dyn = ''
         for i, dcl in ipairs(me) do
-AST.dump(me)
             if dcl.mods.dynamic then
                 local is_alias,Type = unpack(dcl)
                 ASR(dcl.tag~='Evt' and Type[1].tag=='ID_abs' and

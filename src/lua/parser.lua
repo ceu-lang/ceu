@@ -469,14 +469,14 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                 (V'__ID_abs'-V'__id_data') *
                     V'Code_Pars' * KK'->' *
                         Cc(false) *
-                            V'Type'
+                            (#V'Type' * V'Code_Ret')
              + K'code' * Ct( Cg(K'/await'*Cc'await','await') *
                              Cg(K'/dynamic'*Cc'dynamic','dynamic')^-1 *
                              Cg(K'/recursive'*Cc'recursive','recursive')^-1 ) *
                 (V'__ID_abs'-V'__id_data') *
                     V'Code_Pars' * KK'->' *
                         OPT(V'Code_Pars' * KK'->') *
-                            (V'Type' + CK'FOREVER')
+                            V'Code_Ret'
 
     , _Code_proto = V'Y' * V'__code' * Cc(false)
     , _Code_impl  = V'Y' * V'__code' * V'__Do' * V'Y'
@@ -516,6 +516,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                     PARENS(P'void') +
                     PARENS(LIST(V'_Code_Pars_Item'))
                   )
+    , Code_Ret = (V'Type' + CK'FOREVER')
 
 -- DATA
 

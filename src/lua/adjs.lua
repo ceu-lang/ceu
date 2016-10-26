@@ -174,7 +174,7 @@ error'TODO: luacov never executes this?'
         local stmts_new = node('Stmts', me.ln)
         AST.set(blk, 1, stmts_new)
 
-        local Type = AST.get(out,'Type')
+        local Type = AST.get(out,'Code_Ret', 1,'Type')
         if Type then
             -- enclose "blk" with "_ret = do ... end"
 
@@ -207,15 +207,15 @@ error'TODO: luacov never executes this?'
         local Y, mods, id, ins, mid, out, blk, eoc = unpack(me)
         mid = mid or AST.node('Code_Pars', me.ln)
 
-        local Type = AST.get(out,'Type')
+        local Type = AST.get(out,'Code_Ret', 1,'Type')
         if Type then
             local ID_prim,mod = unpack(Type)
             local is_void = (ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod))
             if is_void then
-                out = node('Var_', me.ln, false, AST.copy(out), '_ret')
+                out = node('Var_', me.ln, false, AST.copy(Type), '_ret')
                     -- TODO: HACK_5
             else
-                out = node('Var', me.ln, false, AST.copy(out), '_ret')
+                out = node('Var', me.ln, false, AST.copy(Type), '_ret')
             end
             out.is_implicit = true
         else

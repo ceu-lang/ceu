@@ -10,6 +10,7 @@ end
 
 --[=====[
 do return end -- OK
+---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -37516,7 +37517,6 @@ escape (call/dynamic Ff(&b,&a,&a)) + (call/dynamic Ff(&b,&a,&b)) +
     run = 15,
 }
 
----]=====]
 Test { [[
 data Aa;
 data Bb with
