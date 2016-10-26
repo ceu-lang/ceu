@@ -123,9 +123,9 @@ F = {
         EXPS.check_tp(me, to.info.tp, fr.info.tp, 'invalid binding', true)
 
         local is_call = false
-        if fr[2].tag=='Exp_Call' or fr[2].tag=='Abs_Call' then
+        if fr[2].tag=='Nat_Call' or fr[2].tag=='Abs_Call' then
             is_call = true
-            if fr[2].tag == 'Exp_Call' then
+            if fr[2].tag == 'Nat_Call' then
                 assert(fr.info.dcl and fr.info.dcl.tag=='Nat')
                 ASR(TYPES.is_nat(to.info.tp), me,
                     'invalid binding : expected `native´ type')
@@ -531,7 +531,7 @@ F = {
         EXPS.check_tp(me, Typelist, ps.tp, 'invalid call')
     end,
 
-    Exp_Call = function (me)
+    Nat_Call = function (me)
         local _, e, ps = unpack(me)
 
         -- tp

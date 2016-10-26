@@ -83,7 +83,7 @@ F = {
 
 -- CALL
 
-    Exp_Call = function (me)
+    Nat_Call = function (me)
         local _, e, ps = unpack(me)
         return V(e)..'('..table.concat(V(ps),',')..')'
     end,
@@ -307,7 +307,7 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
         local dcl = e.info.dcl
         if dcl and dcl.tag == 'Evt' then
             return V(e)
-        elseif e.tag=='Exp_Call' or e.tag=='Abs_Call' then
+        elseif e.tag=='Nat_Call' or e.tag=='Abs_Call' then
             -- x = &_f();
             return V(e)
         elseif dcl[1] == '&?' then

@@ -49,7 +49,7 @@ F = {
                                 ID.dcl.tag=='Data' and ID.dcl.weaker~='plain'
 
         -- ptr = _f()
-        if fr.tag=='Exp_Call' and (to_ptr or to_nat) then
+        if fr.tag=='Nat_Call' and (to_ptr or to_nat) then
             local mod = f2mod(AST.asr(fr,'',2,'Exp_Name'))
             ASR(mod=='nohold' or mod=='pure' or mod=='plain', me,
                 'invalid assignment : expected binding for "'..fr.info.dcl.id..'"')
@@ -103,7 +103,7 @@ F = {
         local fr, to = unpack(me)
 
         local _, call = unpack(fr)
-        if (call.tag=='Exp_Call' or call.tag=='Abs_Call') then
+        if (call.tag=='Nat_Call' or call.tag=='Abs_Call') then
             ASR(to.info.dcl[1] == '&?', me,
                 'invalid binding : expected option alias `&?´ as destination : got "'
                 ..TYPES.tostring(to.info.tp)..'"')
@@ -148,7 +148,7 @@ F = {
         end
     end,
 
-    Exp_Call = function (me)
+    Nat_Call = function (me)
         local _,f,ps = unpack(me)
 
         -- ignore if "f" is "nohold" or "pure"

@@ -298,7 +298,7 @@ error'TODO'
         local max_chk = node('Nothing', me.ln)
         if max then
             max_chk = node('Stmt_Call', me.ln,
-                        node('Exp_Call', me.ln,
+                        node('Nat_Call', me.ln,
                             'call',
                             node('Exp_Name', me.ln,
                                 node('ID_nat', me.ln,
@@ -758,13 +758,13 @@ error'TODO'
 -------------------------------------------------------------------------------
 
     _Var_set_fin__PRE = function (me)
-        local Type, __ID_int, Exp_Call = unpack(me)
+        local Type, __ID_int, Nat_Call = unpack(me)
 
-        --  var & Type __ID_int = & Exp_Call finalize with ... end
+        --  var & Type __ID_int = & Nat_Call finalize with ... end
         -->>>
         --  var & Type __ID_int;
         --  do
-        --      ID_int = & Exp_Call;
+        --      ID_int = & Nat_Call;
         --  finalize with
         --      ...
         --  end
@@ -776,8 +776,8 @@ error'TODO'
                     __ID_int),
                 node('Finalize', me.ln,
                     node('Set_Alias', me.ln,
-                        node('Exp_1&', Exp_Call.ln, '&',
-                            Exp_Call),
+                        node('Exp_1&', Nat_Call.ln, '&',
+                            Nat_Call),
                         node('Exp_Name', Type.ln,
                             node('ID_int', Type.ln, __ID_int))),
                     unpack(me,4)))
@@ -807,7 +807,7 @@ error'TODO'
         end
         return ret
     end,
-    Exp_Call__PRE = function (me)
+    Nat_Call__PRE = function (me)
         local _,_, ps = unpack(me)
         if ps and ps.tag == 'List_Exp' then
             -- ok

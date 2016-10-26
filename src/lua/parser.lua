@@ -100,19 +100,19 @@ local T = {
     },
 
     {
-        '`do´ or `await´ or `%[´ or `call/recursive´ or `call´ or name expression or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `emit´ or `val´ or `new´ or `spawn´ or `_´ or `request´ or `watching´',
+        '`do´ or `await´ or `%[´ or `call´ or name expression or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `emit´ or `call/recursive´ or `val´ or `new´ or `spawn´ or `_´ or `request´ or `watching´',
         'expression'
     },
     {
-        '`call/recursive´ or `call´ or name expression or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `not´ or `%-´ or `%+´ or `~´ or `%$%$´',
+        '`call´ or name expression or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `not´ or `%-´ or `%+´ or `~´ or `%$%$´',
         'expression'
     },
     {
-        'name expression or `call/recursive´ or `call´ or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `not´ or `%-´ or `%+´ or `~´ or `%$%$´',
+        'name expression or `call´ or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `not´ or `%-´ or `%+´ or `~´ or `%$%$´',
         'expression'
     },
     {
-        '`not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `call/recursive´ or `call´ or name expression or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal',
+        '`not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `call´ or name expression or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal',
         'expression'
     },
 
@@ -427,7 +427,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                     (V'Await_Ext' + V'Await_Int' + V'Await_Wclock') *
                 V'__Do'
 
-    , Stmt_Call = V'Abs_Call' + V'Exp_Call'
+    , Stmt_Call = V'Abs_Call' + V'Nat_Call'
 
     , __fin_stmt  = V'___fin_stmt' * V'__seqs'
     , ___fin_stmt = V'Nothing'
@@ -443,7 +443,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     , _Var_set_fin = K'var' * KK'&?' * V'Type' * V'__ID_int'
                    * (KK'='-'==') * KK'&'
-                    * (V'Exp_Call' + V'Abs_Call')
+                    * (V'Nat_Call' + V'Abs_Call')
                      * V'__finalize'
 
     , Pause_If = K'pause/if' * (V'Exp_Name'+V'ID_ext') * V'__Do'
@@ -544,6 +544,9 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , Nat_Stmt = KK'{' * C(V'__nat') * KK'}'
     , _Nat_Exp = KK'{' * C(V'__nat') * KK'}'
     , __nat   = ((1-S'{}') + '{'*V'__nat'*'}')^0
+
+    , Nat_Call = (CK'call' + Cc'call') * (V'Exp_Name'+PARENS(V'__Exp')) *
+                                            PARENS(OPT(V'List_Exp'))
 
     -- Lua
 
@@ -800,11 +803,11 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , __11   = ( Cc('pre') *
                     ( CK'not'+(CKK'-'-'->')+CKK'+'+CKK'~'+CKK'$$' )
                )^0 * V'__12'
-    , __12   = V'Exp_Call'  -- TODO: ambiguous w/ PARENS,Name
+    , __12   = V'Nat_Call'  -- TODO: ambiguous w/ PARENS,Name
              + V'Abs_Call'
              + V'Exp_Name' * (Cc'pos' * (CKK'?' * Cc(false)))^-1
              + Cc('pre') * CKK'&&'       * V'Exp_Name'
-             + Cc('pre') * (CKK'&'-'&&') * (V'Exp_Call'+V'Exp_Name')
+             + Cc('pre') * (CKK'&'-'&&') * (V'Nat_Call'+V'Exp_Name')
              + PARENS(V'__Exp')
              + V'SIZEOF'
              + V'NULL' + V'NUMBER' + V'BOOL' + V'STRING'
@@ -822,10 +825,6 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , NULL   = CK'null'     -- TODO: the idea is to get rid of this
 
     , Outer   = K'outer'
-
-    , __exp_call = (CK'call/recursive' + CK'call' + Cc'call')
-    , Exp_Call = V'__exp_call' * (V'Exp_Name'+PARENS(V'__Exp')) *
-                                PARENS(OPT(V'List_Exp'))
 
 ---------
                 -- "Ct" as a special case to avoid "too many captures" (HACK_1)
