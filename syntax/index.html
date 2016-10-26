@@ -317,6 +317,40 @@ Stmt ::= nothing
             Block
         end
 
+  /* C integration */
+
+      | native [`/´(pure|const|nohold|plain)] `(´ List_Nat `)´
+        // where
+            List_Nat ::= LIST(ID_nat)
+      | native `/´(pre|pos) do
+            &lt;code definitions in C&gt;
+        end
+      | native `/´ end
+      | `{´ &lt;code in C&gt; `}´
+
+      // Call_Nat ::=
+      | [call] (Name | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
+
+      /* finalization */
+      | do [Stmt] Finalize
+      | var `&amp;?´ Type ID_int `=´ `&amp;´ (Call_Nat | Call_Code) Finalize
+        // where
+            Finalize ::= finalize `(´ LIST(Name) `)´ with
+                             Block
+                         [ pause  with Block ]
+                         [ resume with Block ]
+                         end
+
+  /* Lua integration */
+
+      // Lua ::=
+      | lua `[´ [Exp] `]´ do
+            Block
+        end
+      | `[´ {`=´} `[´
+            { &lt;code in Lua&gt; | `@´ Exp }
+        `]´ {`=´} `]´
+
   /* Abstractions */
 
       /* Data */
@@ -360,40 +394,6 @@ Stmt ::= nothing
             Mods ::= [`/´dynamic | `/´static] [`/´recursive]
             Code1 ::= ID_abs `(´ [LIST(Exp)] `)´
             Code2 ::= Code1 [`-&gt;´ `(´ LIST(`&amp;´ Var) `)´])
-
-  /* C integration */
-
-      | native [`/´(pure|const|nohold|plain)] `(´ List_Nat `)´
-        // where
-            List_Nat ::= LIST(ID_nat)
-      | native `/´(pre|pos) do
-            &lt;code definitions in C&gt;
-        end
-      | native `/´ end
-      | `{´ &lt;code in C&gt; `}´
-
-      // Call_Nat ::=
-      | call [`/´recursive] (Name | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
-
-      /* finalization */
-      | do [Stmt] Finalize
-      | var `&amp;?´ Type ID_int `=´ `&amp;´ (Call_Nat | Call_Code) Finalize
-        // where
-            Finalize ::= finalize `(´ LIST(Name) `)´ with
-                             Block
-                         [ pause  with Block ]
-                         [ resume with Block ]
-                         end
-
-  /* Lua integration */
-
-      // Lua ::=
-      | lua `[´ [Exp] `]´ do
-            Block
-        end
-      | `[´ {`=´} `[´
-            { &lt;code in Lua&gt; | `@´ Exp }
-        `]´ {`=´} `]´
 
   /* Assignments */
 
