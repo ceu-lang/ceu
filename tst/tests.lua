@@ -8,49 +8,8 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
-Test { [[
-data Dd with
-    var int x = 10;
-end
-var Dd ddd = _;
-escape ddd.x;
-]],
-    wrn = true,
-    run = 10,
-}
-
-Test { [[
-data Ee with
-    var int e = 10;
-end
-data Dd with
-    var Ee e1 = _;
-end
-var Dd d = _;
-escape d.e1.e;
-]],
-    run = 10,
-}
-do return end
-
-Test { [[
-data Ee with
-    var int e = 10;
-end
-data Dd with
-    var Ee e1 = _;
-    var Ee e2 = val Ee(_);
-    var Ee e3 = val Ee(100);
-end
-var Dd d = _;
-escape d.e1.e + d.e2.e + d.e3.e;
-]],
-    run = 120,
-}
-
-do return end -- OK
 --[=====[
----]=====]
+do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -37557,6 +37516,7 @@ escape (call/dynamic Ff(&b,&a,&a)) + (call/dynamic Ff(&b,&a,&b)) +
     run = 15,
 }
 
+---]=====]
 Test { [[
 data Aa;
 data Bb with
@@ -42109,6 +42069,49 @@ escape call Ff(&d);
     run = 4,
 }
 --<< DATA / VECTOR
+
+-->> DATA / DEFAULT / CONSTRUCTOR
+Test { [[
+data Dd with
+    var int x = 10;
+end
+var Dd ddd = _;
+escape ddd.x;
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+data Ee with
+    var int e = 10;
+end
+data Dd with
+    var Ee e1 = _;
+end
+var Dd d = _;
+escape d.e1.e;
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+data Ee with
+    var int e = 10;
+end
+data Dd with
+    var Ee e1 = _;
+    var Ee e2 = val Ee(_);
+    var Ee e3 = val Ee(100);
+end
+var Dd d = _;
+escape d.e1.e + d.e2.e + d.e3.e;
+]],
+    wrn = true,
+    run = 120,
+}
+--<< DATA / DEFAULT / CONSTRUCTOR
 
 -->>> ASYNCS // THREADS
 

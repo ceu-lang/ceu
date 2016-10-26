@@ -223,12 +223,25 @@ F = {
                 if me.__handled and me.__handled[id] then
                     return
                 end
-AST.dump(me)
-                local field = unpack(AST.asr(me,'', 1,'ID_int'))
-                local ret = AST.node('Exp_Name', me.ln,
-                                AST.node('Exp_.', me.ln, '.',
-                                    AST.node('ID_int',me.ln,id),
-                                    field))
+                local prv
+                local fst,_ = unpack(me)
+                while fst.tag == 'Exp_.' do
+                    prv = fst
+                    _,fst = unpack(fst)
+                end
+                assert(fst.tag == 'ID_int')
+
+                local field = unpack(fst)
+                local ret = AST.node('Exp_.', me.ln, '.',
+                                AST.node('ID_int',me.ln,id),
+                                field)
+                if prv then
+                    AST.set(prv, 2, ret)
+                else
+                    prv = ret
+                end
+
+                local ret = AST.node('Exp_Name', me.ln, prv)
                 ret.__handled = ret.__handled or {}
                 ret.__handled[id] = true
                 return ret
@@ -241,13 +254,11 @@ AST.dump(me)
 
         -- default constructor for "data"
         local abs = TYPES.abs_dcl(Type,'Data')
-        if abs and (not alias) and (not me.__handled) then
+        if abs and (not alias) and (not me.__handled) and (not AST.par(me,'Code_Pars')) then
             me.__handled = true
             local stmts = AST.copy( AST.asr(abs,'Data',3,'Block',1,'Stmts') )
             stmts.__dcls_defaults = true
-DBG('>>>', me.ln[2], id)
             AST.visit(F.__F(id), stmts)
-AST.dump(stmts)
             return AST.node('Stmts', me.ln, me, stmts)
         end
 
