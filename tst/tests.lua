@@ -8,6 +8,31 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+Test { [[
+native __ceu_mem, _tceu_code_mem_Ff;
+code/await Ff (var int xxx) -> int do
+    escape (__ceu_mem as _tceu_code_mem_Ff&&):xxx;
+end
+var int yyy = await Ff(10);
+escape yyy;
+]],
+    run = 10,
+}
+
+Test { [[
+native/plain _int_ptr;
+native/pure _X;
+native/pre do
+    typedef int* int_ptr;
+    ##define X(x) x
+end
+var int x = 10;
+var _int_ptr p = _X(&&x);
+escape *p;
+]],
+    run = 10,
+}
+
 --[=====[
 do return end -- OK
 ---]=====]
