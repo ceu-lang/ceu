@@ -20,7 +20,8 @@ Céu provides automatic memory management based on static lexical scopes (i.e.,
 no *free* or *delete*) and does not require runtime garbage collection.
 
 Céu integrates safely with C, and programs can define and make native calls
-seamlessly while avoiding memory leaks and dangling pointers.
+seamlessly while avoiding memory leaks and dangling pointers when dealing with
+external resources.
 
 Céu is [free software](#TODO).
 

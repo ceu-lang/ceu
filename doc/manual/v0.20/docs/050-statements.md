@@ -905,6 +905,16 @@ end
 C Integration
 -------------
 
+Céu integrates safely with C, and programs can define and make native calls
+seamlessly while avoiding memory leaks and dangling pointers when dealing with
+external resources.
+
+Céu provides [native declarations](#TODO) to import C symbols,
+[native blocks](#TODO) to define new code in C,
+[native statements](#TODO) to inline C statements,
+[native calls](#TODO) to call C functions,
+and [finalization](#TODO) to deal with C pointers safely:
+
 ```ceu
 Nat_Symbol ::= native [`/´(pure|const|nohold|plain)] `(´ List_Nat `)´
 Nat_Block  ::= native `/´(pre|pos) do
@@ -919,7 +929,7 @@ Nat_Call   ::= [call] (Name | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
 List_Nat ::= LIST(ID_nat)
 
 Finalization ::= do [Stmt] Finalize
-              | var `&?´ Type ID_int `=´ `&´ (Call_Nat | Call_Code) Finalize
+              |  var `&?´ Type ID_int `=´ `&´ (Call_Nat | Call_Code) Finalize
 Finalize ::= finalize `(´ LIST(Name) `)´ with
                  Block
              [ pause  with Block ]
@@ -927,19 +937,283 @@ Finalize ::= finalize `(´ LIST(Name) `)´ with
              end
 ```
 
-`TODO`
+<!--
+This way, programs should only resort to \C for asynchronous functionality, 
+such as non-blocking I/O, or simple \code{struct} accessors, but never for 
+control purposes.%
+\footnote{
+In \CEU, it is possible to restrict the available \C symbols as a compile-time 
+option.
+}
+-->
 
-### Declarations
+### Native Declarations
 
-#### Symbols
+In Céu, an [identifier](#TODO) prefixed with an underscore is considered a
+native symbol that is defined externally in C.
+However, all external symbols must be declared before their first use.
 
-#### Blocks
+Native declarations support four modifiers as follows:
 
-### Statements
+- `const`: declares the listed symbols as constants.
+    Constants can be used as [bounded limits](#TODO) in [vectors](#TODO),
+    [pools](#TODO), and [numeric loops](#TODO).
+    Also, constants cannot be [assigned](#TODO).
+- `plain`: declares the listed symbols as *plain* types, i.e., types (or
+    composite types) that do not contain pointers.
+    Value of plain types passed as arguments to functions do not require
+    [finalization](#TODO).
+- `nohold`: declares the listed symbols as *non-holding* functions, i.e.,
+    a function that does not retain received pointers as arguments after
+    returning.
+    Pointers passed to non-holding functions do not require
+    [finalization](#TODO).
+- `pure`: declares the listed symbols as pure functions.
+    In addition to the `nohold` properties, pure functions have no side
+    effects to take into account for the [safety checks](#TODO).
 
-### Calls
+Examples:
+
+```ceu
+// values
+native/const  _LOW, _HIGH;      // Arduino's "LOW" and "HIGH" are constants
+native        _errno;           // POSIX's "errno" is a global variable
+
+// types
+native/plain  _char;            // "char" is a "plain" type
+native        _SDL_PixelFormat; // SDL's "SDL_PixelFormat" is a type holding a pointer
+
+// functions
+native        _uv_read_start;   // Libuv's "uv_read_start" retains the received pointer
+native/nohold _free;            // POSIX's "free" receives a pointer but does not retain it
+native/pure   _strlen;          // POSIX's "strlen" is a "pure" function
+```
+
+### Native Blocks
+
+Native blocks allows programs to define new external symbols in C.
+
+The contents of native blocks is not parsed by Céu, but copied unchanged to the
+output in C depending on the modifier specified:
+
+- `pre`: code is placed before the declarations for the Céu program.
+    Symbols defined in `pre` blocks are visible to Céu.
+- `pos`: code is placed after the declarations for the Céu program.
+    Symbols defined by Céu are visible to `pos` blocks.
+
+Native blocks are copied in the order they appear in the source code.
+
+Since Céu uses the [C preprocessor](#TODO), `#` directives inside native blocks
+must use `##` directives to be considered only in the C compilation phase.
+
+Symbols defined in native blocks still need to be [declared](#TODO) for use in
+the program.
+
+Examples:
+
+```ceu
+native/plain _t;
+native/pre do
+    typedef int t;              // definition for "t" is placed before Céu declarations
+end
+var _t x = 10;                  // requires "t" to be already defined
+```
+
+```ceu
+input void A;                   // declaration for "A" is placed before "pos" blocks
+native _get_A_id;
+native/pos do
+    int get_A_id (void) {
+        return CEU_INPUT_A;     // requires "A" to be already declared
+    }
+end
+```
+
+```ceu
+native/nohold _printf;
+native/pre do
+    ##include <stdio.h>         // include the relevant header for "printf"
+end
+```
+
+### Native Statements
+
+### Native Calls
 
 ### Finalization
+
+<!--
+Esterel's \code{abort} and \CEU's \code{par/or} statements provide orthogonal 
+abortion of lines of execution, which is a distinctive feature of synchronous 
+languages in comparison to asynchronous languages~\cite{esterel.preemption}.
+%In contrast, traditional (asynchronous) multi-threaded languages cannot 
+%express thread termination safely~\cite{sync_async.threadsstop}.
+%
+However, aborting lines of execution that deal with external resources may lead 
+to inconsistencies.
+%is still error prone because they may end up in an inconsistent state.
+%
+For this reason, Esterel and \CEU provide a \code{finalize} construct to 
+unconditionally execute a series of statements even if the enclosing block is 
+aborted and does not terminate normally.
+
+\CEU also enforces the use of \code{finalize} for system calls that deal with
+pointers representing resources, as illustrated in the two examples of
+Figure~\ref{lst.fin.ceu}:
+%
+\begin{itemize}
+\item If \CEU \textbf{passes} a pointer to a system call (ln. \ax:5), the
+pointer represents a \textbf{local} resource (ln. \ax:2) that requires finalization
+(ln. \ax:7).
+\item If \CEU \textbf{receives} a pointer from a system call return (ln. \bx:4),
+the pointer represents an \textbf{external} resource (ln. \bx:2) that requires
+finalization (ln. \bx:6).
+\end{itemize}
+%
+\CEU tracks the interaction of system calls with pointers and requires 
+finalization clauses to accompany them.
+%
+In the example in Figure~\ref{lst.fin.ceu}.a, the local variable \code{msg} 
+(ln. 2) is an internal resource passed as a pointer to \code{\_send\_request} 
+(ln. 5), which is an asynchronous call that transmits the buffer in the 
+background.
+If the block aborts (ln. 11) before receiving an acknowledge from the 
+environment (ln. 9), the local \code{msg} goes out of scope and the external 
+transmission now holds a \emph{dangling pointer}.
+The finalization ensures that the transmission also aborts (ln. 7).
+%
+In the example in Figure~\ref{lst.fin.ceu}.b, the call to \code{\_fopen} (ln.  
+4) returns an external file resource as a pointer.
+If the block aborts (ln. 12) during the \code{await A} (ln. 9), the file 
+remains open as a \emph{memory leak}.
+The finalization ensures that the file closes properly (ln. 6).
+%
+In both cases, the code does not compile without the \code{finalize}
+construct.%
+\footnote{
+The compiler only forces the programmer to write the finalization clause, but
+cannot check if it actually handles the resource properly.
+}
+
+\begin{figure}
+\begin{minipage}[t]{0.48\linewidth}
+\begin{lstlisting}[numbers=left,xleftmargin=3.5em,mathescape=true]
+par/or do
+   var _buffer_t msg;
+   <...> // prepare msg
+   finalize
+      _send_request(&msg);
+   with
+      _send_cancel(&msg);
+   end
+   await SEND_ACK;
+with
+   <...>
+end
+.
+\end{lstlisting}
+\centering\small{\ax Local resource finalization}
+\end{minipage}
+%
+\begin{minipage}[t]{0.48\linewidth}
+\begin{lstlisting}[numbers=left,xleftmargin=3.5em]
+par/or do
+   var _FILE* f;
+   finalize
+      f = _fopen(...);
+   with
+      _fclose(f);
+   end
+   _fwrite(..., f);
+   await A;
+   _fwrite(..., f);
+with
+   <...>
+end
+\end{lstlisting}
+\centering\small{\bx External resource finalization}
+\end{minipage}
+%\rule{8.4cm}{0.37pt}
+\caption{
+\CEU enforces the use of finalization to prevent \emph{dangling pointers} for 
+local resources and \emph{memory leaks} for external resources.
+\label{lst.fin.ceu}
+}
+\end{figure}
+
+\begin{comment}
+
+In the example in Figure~\ref{lst.fin} in Esterel \ax and \CEU \bx, the calls 
+to \code{lock} and \code{unlock} represent accesses to an external resource.
+After we \code{lock} the resource (ln. \ax:4 and \bx:3), we perform some 
+operations in subsequent reactions to input \code{A} (ln.  \ax:5--8 and 
+\bx:7--10), and then we \code{unlock} the resource (ln.  \ax:10 and \bx:5).
+Note that if the aborting input \code{B} (ln. \ax:12 and \bx:12) occurs after 
+the \code{lock} but before the reactions to \code{A}, we still want to call 
+\code{unlock} to safely release the resource.
+%
+In Esterel and \CEU, the finalize clause (ln. \ax:10 and \bx:5) executes
+automatically if the enclosing block (ln. \ax:3--1 and \bx:3--10) is
+externally aborted (ln. \ax:12 and \bx:12).
+
+\begin{figure}
+\begin{minipage}[t]{0.48\linewidth}
+\begin{lstlisting}[numbers=left,xleftmargin=3.5em,mathescape=true]
+input A, B;
+abort
+    finalize
+        call lock();
+        await A;
+        <...>;      // do something
+        await A;
+        <...>;      // do something
+    with
+        call unlock();
+    end
+when B
+.
+\end{lstlisting}
+\centering\small{\ax Esterel}
+\end{minipage}
+%
+\begin{minipage}[t]{0.48\linewidth}
+\begin{lstlisting}[numbers=left,xleftmargin=3.5em]
+input void A, B;
+par/or do
+    _lock();
+    finalize with
+        _unlock();  // defer execution
+    end
+    await A;
+    <...>;          // do something
+    await A;
+    <...>;          // do something
+with
+    await B;
+end
+\end{lstlisting}
+\centering\small{\bx \CEU}
+\end{minipage}
+%\rule{8.4cm}{0.37pt}
+\caption{
+Finalization in Esterel and \CEU: after the call to \code{lock}, both languages 
+guarantee to call \code{unlock} if the enclosing block aborts when \code{B} 
+occurs.
+\label{lst.fin}
+}
+\end{figure}
+
+Note that the illustrative example in Figure~\ref{lst.fin} does not manipulate 
+pointers (i.e., the resource is a \emph{singleton}).
+That case is an example of a bad and unsafe API to expose to \CEU because the 
+compiler will not enforce the use of finalization.
+%
+%TODO-no: @nohold
+%Note also that \CEU environments rely on \C libraries that only provide 
+%asynchronous I/O and non-blocking functions~\cite{ceu.sensys13}.
+
+\end{comment}
+-->
 
 -------------------------------------------------------------------------------
 

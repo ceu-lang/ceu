@@ -65,7 +65,7 @@ ID_type  ::= ( ID_nat | ID_abs                              // types
              | int   | uint  | ssize | usize )
 ```
 
-Declarations for `code` and `data` [TODO-abstractions] create new [types] which can
+Declarations for [`code` and `data`](#TODO) create new [types](#TODO) which can
 be used as type identifiers.
 
 Examples:
@@ -94,7 +94,9 @@ Integer values can be written in decimal and hexadecimal bases:
 
 * Decimals are written *as is*.
 * Hexadecimals are prefixed with <tt>0x</tt>.
+<!--
 * `TODO: "0b---", "0o---"`
+-->
 
 Examples:
 
