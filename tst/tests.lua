@@ -8,31 +8,6 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
-Test { [[
-native __ceu_mem, _tceu_code_mem_Ff;
-code/await Ff (var int xxx) -> int do
-    escape (__ceu_mem as _tceu_code_mem_Ff&&):xxx;
-end
-var int yyy = await Ff(10);
-escape yyy;
-]],
-    run = 10,
-}
-
-Test { [[
-native/plain _int_ptr;
-native/pure _X;
-native/pre do
-    typedef int* int_ptr;
-    ##define X(x) x
-end
-var int x = 10;
-var _int_ptr p = _X(&&x);
-escape *p;
-]],
-    run = 10,
-}
-
 --[=====[
 do return end -- OK
 ---]=====]
@@ -24633,6 +24608,20 @@ escape v[0] + p[1];
     run = 3,
 }
 
+Test { [[
+native/plain _int_ptr;
+native/pure _X;
+native/pre do
+    typedef int* int_ptr;
+    ##define X(x) x
+end
+var int x = 10;
+var _int_ptr p = _X(&&x);
+escape *p;
+]],
+    run = 10,
+}
+
 --<<< NATIVE/POINTERS/VECTORS
 
     -- NATIVE C FUNCS BLOCK RAW
@@ -33511,6 +33500,18 @@ spawn Ff();
 escape 10;
 ]],
     cc = '6:2: error: ‘tceu_code_mem_Ff {aka struct tceu_code_mem_Ff}’ has no member named ‘yyy’',
+}
+
+Test { [[
+native __ceu_mem, _tceu_code_mem_Ff;
+code/await Ff (var int xxx) -> int do
+    escape (__ceu_mem as _tceu_code_mem_Ff&&):xxx;
+end
+var int yyy = await Ff(10);
+escape yyy;
+]],
+    wrn = true,
+    run = 10,
 }
 
 Test { [[

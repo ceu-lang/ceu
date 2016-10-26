@@ -408,6 +408,8 @@ if dcl.tag ~= 'Prim' then
                     blk = AST.par(blk,'Block') or blk
                     if AST.par(me,'Data') then
                         --ok = true
+                    elseif AST.par(me,'Code') then
+                        --ok = true
                     elseif blk.__par.tag == 'ROOT' then
                         --ok = true
                     else

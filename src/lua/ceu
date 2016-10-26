@@ -33,7 +33,7 @@ SOFTWARE.
 PAK = {
     lua_exe = 'lua5.3',
     ceu_ver = '0.20',
-    ceu_git = '5e17b472a9c3168eb807ce1445660280ae264ee7',
+    ceu_git = 'bb46865ddf3728ed4ef055d5bdce5c71813c6572',
     files = {
         ceu_c =
             [====[
@@ -5799,8 +5799,8 @@ DBG'TODO: type annotation'
         -- tp
         local _,mod = unpack(e.info.tp)
         local is_ptr = TYPES.check(e.info.tp,'&&')
-        local is_nat_ptr = TYPES.is_nat_not_plain(e.info.tp)
-        ASR(is_ptr or is_nat_ptr, me,
+        local is_nat = TYPES.is_nat(e.info.tp)
+        ASR(is_ptr or is_nat, me,
             'invalid operand to `'..op..'´ : expected pointer type : got "'..
             TYPES.tostring(e.info.tp)..'"')
 
@@ -9656,6 +9656,8 @@ if dcl.tag ~= 'Prim' then
                     local blk = AST.par(dcl, 'Block')
                     blk = AST.par(blk,'Block') or blk
                     if AST.par(me,'Data') then
+                        --ok = true
+                    elseif AST.par(me,'Code') then
                         --ok = true
                     elseif blk.__par.tag == 'ROOT' then
                         --ok = true
