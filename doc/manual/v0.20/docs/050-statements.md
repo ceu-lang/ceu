@@ -731,6 +731,8 @@ end
 *Note: The timeouts for timers remain frozen while paused.*
 -->
 
+-------------------------------------------------------------------------------
+
 Asynchronous Execution
 ----------------------
 
@@ -857,6 +859,9 @@ watching 1s do
 end
 ```
 
+Asynchronous threads are non deterministic and require explicit synchronization
+on accesses to variables to avoid race conditions.
+
 #### Atomic Blocks
 
 Atomic blocks provide mutual exclusion among threads and the synchronous
@@ -894,3 +899,24 @@ with
     end
 end
 ```
+
+-------------------------------------------------------------------------------
+
+C Integration
+-------------
+
+`TODO`
+
+-------------------------------------------------------------------------------
+
+Lua Integration
+---------------
+
+`TODO`
+
+-------------------------------------------------------------------------------
+
+Abstractions
+------------
+
+`TODO`
