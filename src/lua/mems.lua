@@ -215,7 +215,7 @@ static void CEU_CODE_WATCH_]]..me.id..[[ (tceu_code_mem* _ceu_mem,
 
         -- CEU_CODE_xxx
 
-        local Type = AST.get(body,'Block', 1,'Stmts', 1,'Stmts', 3,'', 2,'Type')
+        local Type = AST.get(body,'Block', 1,'Stmts', 1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
         if mods.tight then
             me.mems.wrapper = me.mems.wrapper .. [[
 static ]]..TYPES.toc(assert(Type))..[[ /* space */

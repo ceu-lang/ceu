@@ -225,7 +225,10 @@ error'TODO: luacov never executes this?'
         local ret = node('Code', me.ln, Y, mods, id,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
-                                node('Stmts', me.ln, ins, mid, out),
+                                node('Stmts', me.ln,
+                                    ins,
+                                    mid,
+                                    node('Code_Ret', me.ln, out)),
                                 (blk or node('Stmts',me.ln)))),
                         eoc)
         ret.is_impl = (blk ~= false)

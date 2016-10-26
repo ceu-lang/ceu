@@ -133,7 +133,7 @@ F = {
                 local ID_abs = AST.asr(fr,'', 2,'Abs_Call', 2,'Abs_Cons',
                                               1,'ID_abs')
                 local tp = AST.asr(ID_abs.dcl,'Code', 4,'Block', 1,'Stmts',
-                                                      1,'Stmts', 3,'', 2,'Type')
+                                                      1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
                 EXPS.check_tp(me, to.info.tp, tp, 'invalid binding', true)
             end
         else
@@ -369,7 +369,7 @@ F = {
         if list then
             local must_be_opt = (me.tag ~= 'Abs_Await') and
                                  AST.get(me.__code,'', 4,'Block', 1,'Stmts',
-                                                       1,'Stmts', 3,'', 2,'Type')
+                                                       1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
 
             local pars = AST.asr(me.__code,'', 4,'Block', 1,'Stmts',
                                                1,'Stmts', 2,'Code_Pars')
@@ -386,7 +386,7 @@ F = {
     Abs_Await = function (me)
         F.Abs_Spawn_Single(me)
         local ret = AST.get(me.__code,'', 4,'Block', 1,'Stmts',
-                                          1,'Stmts', 3,'', 2,'Type')
+                                          1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
         me.tp = ret and AST.copy(ret)
 
         local watch = AST.par(me, 'Watching')

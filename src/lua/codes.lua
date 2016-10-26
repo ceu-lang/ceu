@@ -408,7 +408,7 @@ if (0)
 
         CONC(me, body)
 
-        local Type = AST.get(body,'Block', 1,'Stmts', 1,'Stmts', 3,'', 2,'Type')
+        local Type = AST.get(body,'Block', 1,'Stmts', 1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
         if not Type then
             LINE(me, [[
 ceu_callback_assert_msg(0, "reached end of `code´");

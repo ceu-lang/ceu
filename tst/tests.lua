@@ -40964,6 +40964,20 @@ Test { [[
 data Aa with
     var int a;
 end
+data Aa.Bb with
+    var int b = 20;
+end
+var Aa.Bb b = _;
+escape b.b;
+]],
+    wrn = true,
+    run = 20,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
 
 code/tight Ff (var& Aa a) -> int do
     escape a.a;

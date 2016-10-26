@@ -125,9 +125,9 @@ F = {
         -- info
         me.info = INFO.new(me, 'Val', nil,
                     AST.copy(AST.asr(ID_abs.dcl,'Code', 4,'Block', 1,'Stmts',
-                                                        1,'Stmts', 3,'',
+                                                        1,'Stmts', 3,'Code_Ret',
                                                                     -- TODO: HACK_5
-                                                        2,'Type')))
+                                                        1,'', 2,'Type')))
     end,
 
     Abs_Cons = function (me)

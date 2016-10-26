@@ -219,6 +219,10 @@ F = {
             Var__PRE = function (me)
                 return AST.node('Nothing', me.ln)
             end,
+            Vec__PRE  = 'Var__PRE',
+            Evt__PRE  = 'Var__PRE',
+            Pool__PRE = 'Var__PRE',
+
             Exp_Name__PRE = function (me)
                 if me.__handled and me.__handled[id] then
                     return
