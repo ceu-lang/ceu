@@ -735,8 +735,8 @@ Asynchronous Execution
 ----------------------
 
 Asynchronous execution allow programs to execute time consuming computations 
-without interfering with the *synchronous side* of applications (i.e., all
-core language statements):
+without interfering with the responsiveness of the  *synchronous side* of
+applications (i.e., all core language statements):
 
 ```ceu
 Async  ::= await async [ `(´LIST(Var)`)´ ] do
@@ -751,8 +751,14 @@ Atomic ::= atomic do
            end
 ```
 
-Asynchronous blocks can contain [tight loops](#TODO) that keep the application
-reactive to incoming events.
+The program awaits the termination of the asynchronous body to proceed to the
+statement in sequence.
+
+Asynchronous blocks can contain [tight loops](#TODO) but which keep the
+application reactive to incoming events.
+However, they do not support nesting of asynchronous statements, and do not
+support synchronous control statements (i.e., parallel compositions, event
+handling, pausing, etc.).
 
 By default, asynchronous blocks do not shared variables with their enclosing
 scope.
@@ -760,14 +766,16 @@ The optional list of variables makes them visible to the block.
 
 ### Asynchronous Blocks
 
-Asynchronous blocks (`async`) have deterministic execution with the rules as
-follows:
+Asynchronous blocks (`async`) preserve deterministic execution with the rules
+as follows:
 
-1. Execute only if there are no pending input events.
-2. Yield control after every complete `loop` iteration.
-3. Do not support synchronous control statements:
-    parallel compositions, event handling, pausing, etc.
-4. Do not support nesting of other asynchronous statements.
+1. Resume execution whenever the synchronous side is idle.
+2. Yield control to the synchronous side on every complete `loop` iteration.
+3. Yield control to the synchronous side on every `emit`.
+4. Execute atomically and to completion unless rules `2` and `3` apply.
+
+This rules imply that `async` blocks and the synchronous side never run at the
+same time with real parallelism.
 
 Examples:
 
@@ -788,9 +796,9 @@ end
 
 #### Simulation
 
-An `async` is allowed to emit [input events](#TODO) and the [passage 
-of time](#TODO) towards the synchronous side, providing a way to test programs
-in the language itself.
+An `async` block can emit [input events](#TODO) and the
+[passage of time](#TODO) towards the synchronous side, providing a way to test
+programs in the language itself.
 Every time an `async` emits an event, it suspends until the synchronous side
 reacts to the event (see [`rule 1`](#TODO) above).
 
@@ -823,4 +831,66 @@ end
 // The example prints the message `v = <v+i>` exactly 103 times.
 ```
 
+### Asynchronous Threads
 
+Asynchronous threads (`async/thread`) provide real parallelism for applications
+in Céu.
+Once an `async/thread` starts, it runs completely detached from the synchronous
+side.
+However, they are still ruled by the synchronous side and are also subject to
+abortion.
+
+Examples:
+
+```ceu
+// calculates the factorial of some "v" if it doesn't take too long
+var u64  v   = <...>;
+var u64  fat = 1;
+var bool ok  = false;
+watching 1s do
+    await async/thread (v,fat) do   // keeps "v" and "fat" visible
+        loop i in [1 -> v] do       // reads from "v"
+            fat = fat * i;          // writes to "fat"
+        end
+    end
+    ok = true;                      // completed within "1s"
+end
+```
+
+#### Atomic Blocks
+
+Atomic blocks provide mutual exclusion among threads and the synchronous
+side of application.
+Once an atomic block starts to execute, no other atomic block in the program
+starts.
+
+Examples:
+
+```ceu
+// A "race" between two threads: one incrementing, the other decrementing "count".
+
+var s64 count = 0;                              // "count" is a shared variable
+par do
+    every 1s do
+        atomic do
+            _printf("count = %d\n", count);     // prints current value of "count" every "1s"
+        end
+    end
+with
+    await async/thread (count) do
+        loop do
+            atomic do
+                count = count - 1;              // decrements "count" as fast as possible
+            end
+        end
+    end
+with
+    await async/thread (count) do
+        loop do
+            atomic do
+                count = count + 1;              // increments "count" as fast as possible
+            end
+        end
+    end
+end
+```
