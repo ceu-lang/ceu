@@ -379,6 +379,63 @@ escape 1;
     cc = '3:25: error: dereferencing ‘void *’ pointer',
 }
 
+Test { [[
+native _t;
+native/pre do
+    typedef int t;
+end
+var _t x = 10;
+escape x;
+]],
+    run = 10,
+}
+
+Test { [[
+native _t;
+native/pos do
+    typedef int t;
+end
+var _t x = 10;
+escape x;
+]],
+    cc = '5:1: error: unknown type name ‘t’',
+}
+
+Test { [[
+input void A;
+native _get_A_id;
+native/pre do
+    int get_A_id (void) {
+        return CEU_INPUT_A;
+    }
+end
+escape _get_A_id();
+]],
+    wrn = true,
+    cc = '16: error: ‘CEU_INPUT_A’ undeclared (first use in this function)',
+}
+
+Test { [[
+input void A;
+native _get_A_id;
+native/pos do
+    int get_A_id (void) {
+        return CEU_INPUT_A;
+    }
+end
+escape _get_A_id();
+]],
+    wrn = true,
+    run = 12,
+}
+
+Test { [[
+native _V, _f;
+escape _f(_V);
+]],
+    cc = '2:23: error: ‘V’ undeclared (first use in this function)',
+}
+
 --<<< NATIVE
 
 Test { [[var int a;]],
