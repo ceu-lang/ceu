@@ -756,41 +756,71 @@ reactive to incoming events.
 
 By default, asynchronous blocks do not shared variables with their enclosing
 scope.
-The optional list makes the listed variables visible to the block.
+The optional list of variables makes them visible to the block.
 
 ### Asynchronous Blocks
 
 Asynchronous blocks (`async`) have deterministic execution with the rules as
 follows:
 
-1. Only executes if there are no pending input events.
-2. Yields control after every complete `loop` iteration.
-3. Cannot use any synchronous control statement:
+1. Execute only if there are no pending input events.
+2. Yield control after every complete `loop` iteration.
+3. Do not support synchronous control statements:
     parallel compositions, event handling, pausing, etc.
-4. Cannot nest other asynchronous statements.
+4. Do not support nesting of other asynchronous statements.
 
 Examples:
 
 ```ceu
 // calculates the factorial of some "v" if it doesn't take too long
-var int fat = 0;
+var u64  v   = <...>;
+var u64  fat = 1;
+var bool ok  = false;
 watching 1s do
-    await async (fat) do        // keeps "fat" visible
-        loop i in [1 -> v] do
-            <...>               // changes "fat"
+    await async (v,fat) do      // keeps "v" and "fat" visible
+        loop i in [1 -> v] do   // reads from "v"
+            fat = fat * i;      // writes to "fat"
         end
     end
+    ok = true;                  // completed within "1s"
 end
 ```
 
-<!---
-The next example uses an `async` to execute a time-consuming computation, 
-keeping the synchronous side reactive.
-In a parallel trail, the program awaits one second to kill the computation if it takes too long:
+#### Simulation
 
-<!-
-A lower priority for `async` is fundamental to ensure that input events are 
-handled as fast as possible.
-->
+An `async` is allowed to emit [input events](#TODO) and the [passage 
+of time](#TODO) towards the synchronous side, providing a way to test programs
+in the language itself.
+Every time an `async` emits an event, it suspends until the synchronous side
+reacts to the event (see [`rule 1`](#TODO) above).
 
--->
+Examples:
+
+```ceu
+input int A;
+
+// tests a program with a simulation in parallel
+par do
+
+    // original program
+    var int v = await A;
+    loop i in [0 -> _[ do
+        await 10ms;
+        _printf("v = %d\n", v+i);
+    end
+
+with
+
+    // input simulation
+    async do
+        emit A(0);      // initial value for "v"
+        emit 1s35ms;    // the loop in the original program executes 103 times
+    end
+    escape 0;
+
+end
+
+// The example prints the message `v = <v+i>` exactly 103 times.
+```
+
+
