@@ -33,7 +33,7 @@ SOFTWARE.
 PAK = {
     lua_exe = 'lua5.3',
     ceu_ver = '0.20',
-    ceu_git = 'bb46865ddf3728ed4ef055d5bdce5c71813c6572',
+    ceu_git = 'dc306e19fec7999d3aa791f068ab9f30441acf1a',
     files = {
         ceu_c =
             [====[
@@ -9653,17 +9653,17 @@ if dcl.tag ~= 'Prim' then
 
                 local ok = (not dcl.__dcls_dup)
                 if ok then
-                    local blk = AST.par(dcl, 'Block')
-                    blk = AST.par(blk,'Block') or blk
+                    local blk1 = AST.par(dcl, 'Block')
+                    local blk2 = AST.par(blk1,'Block') or blk1
                     if AST.par(me,'Data') then
                         --ok = true
-                    elseif AST.par(me,'Code') then
+                    elseif blk1.__par.tag == 'Code' then
                         --ok = true
-                    elseif blk.__par.tag == 'ROOT' then
+                    elseif blk2.__par.tag == 'ROOT' then
                         --ok = true
                     else
-                        blk = AST.par(blk,'Block') or blk
-                        if blk.__par.tag == 'Code' then
+                        local blk3 = AST.par(blk2,'Block') or blk2
+                        if blk3.__par.tag == 'Code' then
                             --ok = true
                         else
                             ok = false

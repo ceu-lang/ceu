@@ -33517,6 +33517,20 @@ escape yyy;
 Test { [[
 code/await Ff (void) -> FOREVER do
     par do
+        var int e=_;
+    with
+        var int e=_;
+    end
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    par do
         var int yyy = 10;
     with
         var int yyy = 10;
