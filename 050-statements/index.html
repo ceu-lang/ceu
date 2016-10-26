@@ -772,8 +772,8 @@ end
 
 <h2 id="asynchronous-execution">Asynchronous Execution</h2>
 <p>Asynchronous execution allow programs to execute time consuming computations 
-without interfering with the <em>synchronous side</em> of applications (i.e., all
-core language statements):</p>
+without interfering with the responsiveness of the  <em>synchronous side</em> of
+applications (i.e., all core language statements):</p>
 <pre><code class="ceu">Async  ::= await async [ `(´LIST(Var)`)´ ] do
                Block
            end
@@ -786,44 +786,130 @@ Atomic ::= atomic do
            end
 </code></pre>
 
-<p>Asynchronous blocks can contain <a href="#TODO">tight loops</a> that keep the application
-reactive to incoming events.</p>
+<p>The program awaits the termination of the asynchronous body to proceed to the
+statement in sequence.</p>
+<p>Asynchronous blocks can contain <a href="#TODO">tight loops</a> but which keep the
+application reactive to incoming events.
+However, they do not support nesting of asynchronous statements, and do not
+support synchronous control statements (i.e., parallel compositions, event
+handling, pausing, etc.).</p>
 <p>By default, asynchronous blocks do not shared variables with their enclosing
 scope.
-The optional list makes the listed variables visible to the block.</p>
+The optional list of variables makes them visible to the block.</p>
 <h3 id="asynchronous-blocks">Asynchronous Blocks</h3>
-<p>Asynchronous blocks (<code>async</code>) have deterministic execution with the rules as
-follows:</p>
+<p>Asynchronous blocks (<code>async</code>) preserve deterministic execution with the rules
+as follows:</p>
 <ol>
-<li>Only executes if there are no pending input events.</li>
-<li>Yields control after every complete <code>loop</code> iteration.</li>
-<li>Cannot use any synchronous control statement:
-    parallel compositions, event handling, pausing, etc.</li>
-<li>Cannot nest other asynchronous statements.</li>
+<li>Resume execution whenever the synchronous side is idle.</li>
+<li>Yield control to the synchronous side on every complete <code>loop</code> iteration.</li>
+<li>Yield control to the synchronous side on every <code>emit</code>.</li>
+<li>Execute atomically and to completion unless rules <code>2</code> and <code>3</code> apply.</li>
 </ol>
+<p>This rules imply that <code>async</code> blocks and the synchronous side never run at the
+same time with real parallelism.</p>
 <p>Examples:</p>
 <pre><code class="ceu">// calculates the factorial of some &quot;v&quot; if it doesn't take too long
-var int fat = 0;
+var u64  v   = &lt;...&gt;;
+var u64  fat = 1;
+var bool ok  = false;
 watching 1s do
-    await async (fat) do        // keeps &quot;fat&quot; visible
-        loop i in [1 -&gt; v] do
-            &lt;...&gt;               // changes &quot;fat&quot;
+    await async (v,fat) do      // keeps &quot;v&quot; and &quot;fat&quot; visible
+        loop i in [1 -&gt; v] do   // reads from &quot;v&quot;
+            fat = fat * i;      // writes to &quot;fat&quot;
+        end
+    end
+    ok = true;                  // completed within &quot;1s&quot;
+end
+</code></pre>
+
+<h4 id="simulation">Simulation</h4>
+<p>An <code>async</code> block can emit <a href="#TODO">input events</a> and the
+<a href="#TODO">passage of time</a> towards the synchronous side, providing a way to test
+programs in the language itself.
+Every time an <code>async</code> emits an event, it suspends until the synchronous side
+reacts to the event (see <a href="#TODO"><code>rule 1</code></a> above).</p>
+<p>Examples:</p>
+<pre><code class="ceu">input int A;
+
+// tests a program with a simulation in parallel
+par do
+
+    // original program
+    var int v = await A;
+    loop i in [0 -&gt; _[ do
+        await 10ms;
+        _printf(&quot;v = %d\n&quot;, v+i);
+    end
+
+with
+
+    // input simulation
+    async do
+        emit A(0);      // initial value for &quot;v&quot;
+        emit 1s35ms;    // the loop in the original program executes 103 times
+    end
+    escape 0;
+
+end
+
+// The example prints the message `v = &lt;v+i&gt;` exactly 103 times.
+</code></pre>
+
+<h3 id="asynchronous-threads">Asynchronous Threads</h3>
+<p>Asynchronous threads (<code>async/thread</code>) provide real parallelism for applications
+in Céu.
+Once an <code>async/thread</code> starts, it runs completely detached from the synchronous
+side.
+However, they are still ruled by the synchronous side and are also subject to
+abortion.</p>
+<p>Examples:</p>
+<pre><code class="ceu">// calculates the factorial of some &quot;v&quot; if it doesn't take too long
+var u64  v   = &lt;...&gt;;
+var u64  fat = 1;
+var bool ok  = false;
+watching 1s do
+    await async/thread (v,fat) do   // keeps &quot;v&quot; and &quot;fat&quot; visible
+        loop i in [1 -&gt; v] do       // reads from &quot;v&quot;
+            fat = fat * i;          // writes to &quot;fat&quot;
+        end
+    end
+    ok = true;                      // completed within &quot;1s&quot;
+end
+</code></pre>
+
+<h4 id="atomic-blocks">Atomic Blocks</h4>
+<p>Atomic blocks provide mutual exclusion among threads and the synchronous
+side of application.
+Once an atomic block starts to execute, no other atomic block in the program
+starts.</p>
+<p>Examples:</p>
+<pre><code class="ceu">// A &quot;race&quot; between two threads: one incrementing, the other decrementing &quot;count&quot;.
+
+var s64 count = 0;                              // &quot;count&quot; is a shared variable
+par do
+    every 1s do
+        atomic do
+            _printf(&quot;count = %d\n&quot;, count);     // prints current value of &quot;count&quot; every &quot;1s&quot;
+        end
+    end
+with
+    await async/thread (count) do
+        loop do
+            atomic do
+                count = count - 1;              // decrements &quot;count&quot; as fast as possible
+            end
+        end
+    end
+with
+    await async/thread (count) do
+        loop do
+            atomic do
+                count = count + 1;              // increments &quot;count&quot; as fast as possible
+            end
         end
     end
 end
 </code></pre>
-
-<!---
-The next example uses an `async` to execute a time-consuming computation, 
-keeping the synchronous side reactive.
-In a parallel trail, the program awaits one second to kill the computation if it takes too long:
-
-<!-
-A lower priority for `async` is fundamental to ensure that input events are 
-handled as fast as possible.
-->
-
--->
               
             </div>
           </div>
