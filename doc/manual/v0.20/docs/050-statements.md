@@ -905,7 +905,41 @@ end
 C Integration
 -------------
 
+```ceu
+Nat_Symbol ::= native [`/´(pure|const|nohold|plain)] `(´ List_Nat `)´
+Nat_Block  ::= native `/´(pre|pos) do
+                   <code definitions in C>
+               end
+Nat_End    ::= native `/´ end
+
+Nat_Stmts  ::= `{´ <code in C> `}´
+
+Nat_Call   ::= [call] (Name | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
+
+List_Nat ::= LIST(ID_nat)
+
+Finalization ::= do [Stmt] Finalize
+              | var `&?´ Type ID_int `=´ `&´ (Call_Nat | Call_Code) Finalize
+Finalize ::= finalize `(´ LIST(Name) `)´ with
+                 Block
+             [ pause  with Block ]
+             [ resume with Block ]
+             end
+```
+
 `TODO`
+
+### Declarations
+
+#### Symbols
+
+#### Blocks
+
+### Statements
+
+### Calls
+
+### Finalization
 
 -------------------------------------------------------------------------------
 

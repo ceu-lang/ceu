@@ -153,7 +153,7 @@ Stmt ::= nothing
       | `{´ <code in C> `}´
 
       // Call_Nat ::=
-      | call [`/´recursive] (Name | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
+      | [call] (Name | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
 
       /* finalization */
       | do [Stmt] Finalize
