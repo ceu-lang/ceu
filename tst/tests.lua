@@ -43378,6 +43378,41 @@ escape _V;
     _opts = opts_thread,
 }
 
+Test { [[
+atomic do
+    escape 1;
+end
+]],
+    props_ = 'line 1 : `async/thread´ support is disabled',
+}
+
+-- TODO: no escape
+Test { [[
+atomic do
+    escape 1;
+end
+]],
+    _opts = {
+        ceu = true,
+        ceu_features_thread = 'true',
+    },
+    todo = 'no escape',
+}
+
+Test { [[
+var int ret = 0;
+atomic do
+    ret = 1;
+end
+escape ret;
+]],
+    _opts = {
+        ceu = true,
+        ceu_features_thread = 'true',
+    },
+    run = 1,
+}
+
 --<<< ASYNCS / THREADS
 
 -->>> CEU_FEATURES_*

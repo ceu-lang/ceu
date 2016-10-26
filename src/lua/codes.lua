@@ -1539,11 +1539,9 @@ if (_ceu_p.thread->has_aborted) {
 ]])
         else
             DBG('TODO-ATOMIC-ISR')
---[[
-            LINE(me, 'ceu_out_isr_off();')
-            CONC(me)
-            LINE(me, 'ceu_out_isr_on();')
-]]
+            --LINE(me, 'ceu_out_isr_off();')
+            CONC_ALL(me)
+            --LINE(me, 'ceu_out_isr_on();')
         end
     end,
 
