@@ -1055,6 +1055,23 @@ var int v = 10;
 
 ### Native Calls
 
+Names and expressions that evaluate to a [native type](#TODO) can be called
+from Céu.
+
+Examples:
+
+```ceu
+// all expressions evaluate to a native type and can be called
+
+_printf("Hello World!\n");
+
+var _t f = <...>;
+f();
+
+var _s s = <...>;
+s.f();
+```
+
 ### Finalization
 
 <!--
