@@ -1079,52 +1079,73 @@ var _s s = <...>;
 s.f();
 ```
 
+`TODO: pointer return`
+
 ### Finalization
 
-Esterel's \code{abort} and \CEU's \code{par/or} statements provide orthogonal 
-abortion of lines of execution, which is a distinctive feature of synchronous 
-languages in comparison to asynchronous languages~\cite{esterel.preemption}.
-%In contrast, traditional (asynchronous) multi-threaded languages cannot 
-%express thread termination safely~\cite{sync_async.threadsstop}.
-%
-However, aborting lines of execution that deal with external resources may lead 
-to inconsistencies.
-%is still error prone because they may end up in an inconsistent state.
-%
-For this reason, Esterel and \CEU provide a \code{finalize} construct to 
-unconditionally execute a series of statements even if the enclosing block is 
-aborted and does not terminate normally.
+The finalization statement unconditionally executes a series of statements when
+its corresponding enclosing block terminates, even if aborted abrubtly.
 
-\CEU also enforces the use of \code{finalize} for system calls that deal with
-pointers representing resources, as illustrated in the two examples of
-Figure~\ref{lst.fin.ceu}:
-%
-\begin{itemize}
-\item If \CEU \textbf{passes} a pointer to a system call (ln. \ax:5), the
-pointer represents a \textbf{local} resource (ln. \ax:2) that requires finalization
-(ln. \ax:7).
-\item If \CEU \textbf{receives} a pointer from a system call return (ln. \bx:4),
-the pointer represents an \textbf{external} resource (ln. \bx:2) that requires
-finalization (ln. \bx:6).
-\end{itemize}
-%
-\CEU tracks the interaction of system calls with pointers and requires 
+Céu also enforces the use of finalization for native calls that deal with
+pointers representing resources:
+
+- If Céu **passes** a pointer to a native call, the pointer represents a
+  **local** resource that requires finalization.
+- If Céu **receives** a pointer from a native call return, the pointer
+  represents an **external** resource that requires finalization.
+
+Céu tracks the interaction of native calls with pointers and requires 
 finalization clauses to accompany them.
-%
-In the example in Figure~\ref{lst.fin.ceu}.a, the local variable \code{msg} 
-(ln. 2) is an internal resource passed as a pointer to \code{\_send\_request} 
-(ln. 5), which is an asynchronous call that transmits the buffer in the 
-background.
-If the block aborts (ln. 11) before receiving an acknowledge from the 
-environment (ln. 9), the local \code{msg} goes out of scope and the external 
-transmission now holds a \emph{dangling pointer}.
-The finalization ensures that the transmission also aborts (ln. 7).
-%
-In the example in Figure~\ref{lst.fin.ceu}.b, the call to \code{\_fopen} (ln.  
-4) returns an external file resource as a pointer.
-If the block aborts (ln. 12) during the \code{await A} (ln. 9), the file 
-remains open as a \emph{memory leak}.
-The finalization ensures that the file closes properly (ln. 6).
+
+`TODO: block rules`
+
+Examples:
+
+```ceu
+// Local resource finalization
+
+watching <...> do
+    var _buffer_t msg;
+    <...>                       // prepares msg
+    do
+        _send_request(&msg);
+    finalize with
+        _send_cancel(&msg);
+    end
+    await SEND_ACK;
+end
+```
+
+In the example above, the local variable `msg` is an internal resource passed
+as a pointer to `_send_request`, which is an asynchronous call that transmits
+the buffer in the background.
+If the enclosing `watching` aborts before awaking from the `await SEND_ACK`
+acknowledging the completion, the local `msg` goes out of scope and the
+external transmission now holds a *dangling pointer*.
+The finalization ensures that the transmission also aborts with the
+`_send_cancel`.
+
+```ceu
+// External resource finalization
+
+watching <...> do
+    var&? _FILE f = _fopen(<...>)
+                        finalize with
+                            _fclose(f);
+                        end;
+    _fwrite(..., f);
+    await A;
+    _fwrite(..., f);
+end
+```
+
+In the example above, the call to `_fopen` returns an external file resource as
+a pointer.
+If the enclosing `watching` aborts during the `await A`, the file remains open
+as a *memory leak*.
+The finalization ensures that the file closes properly with the `_fclose`.
+
+<!--
 %
 In both cases, the code does not compile without the \code{finalize}
 construct.%
@@ -1133,124 +1154,13 @@ The compiler only forces the programmer to write the finalization clause, but
 cannot check if it actually handles the resource properly.
 }
 
-\begin{figure}
-\begin{minipage}[t]{0.48\linewidth}
-\begin{lstlisting}[numbers=left,xleftmargin=3.5em,mathescape=true]
-par/or do
-   var _buffer_t msg;
-   <...> // prepare msg
-   finalize
-      _send_request(&msg);
-   with
-      _send_cancel(&msg);
-   end
-   await SEND_ACK;
-with
-   <...>
-end
-.
-\end{lstlisting}
-\centering\small{\ax Local resource finalization}
-\end{minipage}
-%
-\begin{minipage}[t]{0.48\linewidth}
-\begin{lstlisting}[numbers=left,xleftmargin=3.5em]
-par/or do
-   var _FILE* f;
-   finalize
-      f = _fopen(...);
-   with
-      _fclose(f);
-   end
-   _fwrite(..., f);
-   await A;
-   _fwrite(..., f);
-with
-   <...>
-end
-\end{lstlisting}
-\centering\small{\bx External resource finalization}
-\end{minipage}
-%\rule{8.4cm}{0.37pt}
 \caption{
 \CEU enforces the use of finalization to prevent \emph{dangling pointers} for 
 local resources and \emph{memory leaks} for external resources.
 \label{lst.fin.ceu}
 }
 \end{figure}
-
-\begin{comment}
-
-In the example in Figure~\ref{lst.fin} in Esterel \ax and \CEU \bx, the calls 
-to \code{lock} and \code{unlock} represent accesses to an external resource.
-After we \code{lock} the resource (ln. \ax:4 and \bx:3), we perform some 
-operations in subsequent reactions to input \code{A} (ln.  \ax:5--8 and 
-\bx:7--10), and then we \code{unlock} the resource (ln.  \ax:10 and \bx:5).
-Note that if the aborting input \code{B} (ln. \ax:12 and \bx:12) occurs after 
-the \code{lock} but before the reactions to \code{A}, we still want to call 
-\code{unlock} to safely release the resource.
-%
-In Esterel and \CEU, the finalize clause (ln. \ax:10 and \bx:5) executes
-automatically if the enclosing block (ln. \ax:3--1 and \bx:3--10) is
-externally aborted (ln. \ax:12 and \bx:12).
-
-\begin{figure}
-\begin{minipage}[t]{0.48\linewidth}
-\begin{lstlisting}[numbers=left,xleftmargin=3.5em,mathescape=true]
-input A, B;
-abort
-    finalize
-        call lock();
-        await A;
-        <...>;      // do something
-        await A;
-        <...>;      // do something
-    with
-        call unlock();
-    end
-when B
-.
-\end{lstlisting}
-\centering\small{\ax Esterel}
-\end{minipage}
-%
-\begin{minipage}[t]{0.48\linewidth}
-\begin{lstlisting}[numbers=left,xleftmargin=3.5em]
-input void A, B;
-par/or do
-    _lock();
-    finalize with
-        _unlock();  // defer execution
-    end
-    await A;
-    <...>;          // do something
-    await A;
-    <...>;          // do something
-with
-    await B;
-end
-\end{lstlisting}
-\centering\small{\bx \CEU}
-\end{minipage}
-%\rule{8.4cm}{0.37pt}
-\caption{
-Finalization in Esterel and \CEU: after the call to \code{lock}, both languages 
-guarantee to call \code{unlock} if the enclosing block aborts when \code{B} 
-occurs.
-\label{lst.fin}
-}
-\end{figure}
-
-Note that the illustrative example in Figure~\ref{lst.fin} does not manipulate 
-pointers (i.e., the resource is a \emph{singleton}).
-That case is an example of a bad and unsafe API to expose to \CEU because the 
-compiler will not enforce the use of finalization.
-%
-%TODO-no: @nohold
-%Note also that \CEU environments rely on \C libraries that only provide 
-%asynchronous I/O and non-blocking functions~\cite{ceu.sensys13}.
-
-\end{comment}
+-->
 
 -------------------------------------------------------------------------------
 
