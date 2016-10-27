@@ -157,7 +157,15 @@ memset(&_ceu_mem->trails, 0, ]]..AST.root.trails_n..[[*sizeof(tceu_trl));
         CODES.native[pre_pos] = CODES.native[pre_pos]..code..'\n'
     end,
     Nat_Stmt = function (me)
-        LINE(me, unpack(me))
+        local ret = ''
+        for _, str in ipairs(me) do
+            local exp = AST.get(str,'')
+            if exp then
+                str = V(exp)
+            end
+            ret = ret .. str
+        end
+        LINE(me, ret)
     end,
 
     If = function (me)

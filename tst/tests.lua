@@ -26016,6 +26016,37 @@ escape i;
     run = 10,
 }
 
+-->> NATIVE / RAW / INTERPOLATION
+
+Test { [[
+native _V;
+native/pre do
+    int V = 10;
+end
+var int v = 100;
+{
+    V += @v;
+};
+escape _V;
+]],
+    run = 110,
+}
+Test { [[
+native _V;
+native/pre do
+    int V = 10;
+end
+var int v = 100;
+{
+    V += @v;
+};
+escape _V + {@v};
+]],
+    run = 210,
+}
+
+--<< NATIVE / RAW / INTERPOLATION
+
     -- STRINGS
 
 Test { [[

@@ -541,9 +541,9 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                 ( C(V'_C') + C((P(1)-(S'\t\n\r '*'end'*P';'^0*'\n'))^0) ) *
              x* K'end'
 
-    , Nat_Stmt = KK'{' * C(V'__nat') * KK'}'
-    , _Nat_Exp = KK'{' * C(V'__nat') * KK'}'
-    , __nat   = ((1-S'{}') + '{'*V'__nat'*'}')^0
+    , Nat_Stmt = KK'{' * (C(V'__nat') + V'__exp')^0 * KK'}'
+    , _Nat_Exp = KK'{' * (C(V'__nat') + V'__exp')^0 * KK'}'
+    , __nat   = ((1-S'{}'-V'__exp') + '{'*V'__nat'*'}')^1
 
     , Nat_Call = (CK'call' + Cc'call') * (V'Exp_Name'+PARENS(V'__Exp')) *
                                             PARENS(OPT(V'List_Exp'))
@@ -552,12 +552,13 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     , _Lua_Do  = K'lua' * V'__Dim' * V'__Do'
     , _Lua     = KK'[' * m.Cg(P'='^0,'lua') * KK('[',nil,true) *
-                 ( V'__luaext' + C((P(1)-V'__luaext'-V'__luacmp')^1) )^0
+                 ( V'__exp' + C((P(1)-V'__exp'-V'__luacmp')^1) )^0
                   * (V'__luacl'/function()end) *x
-    , __luaext = P'@' * V'__Exp'
     , __luacl  = ']' * C(P'='^0) * KK']'
     , __luacmp = m.Cmt(V'__luacl' * m.Cb'lua',
                     function (s,i,a,b) return a == b end)
+
+    , __exp = P'@' * V'__Exp'
 
 -- VARS, VECTORS, POOLS, VTS, EXTS
 

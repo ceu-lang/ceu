@@ -232,7 +232,16 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
         local v1,v2 = unpack(me)
         if v1 == '_{}' then
             -- { nat }
-            return v2
+            local ret = ''
+            for i=2, #me do
+                local str = me[i]
+                local exp = AST.get(str,'')
+                if exp then
+                    str = V(exp)
+                end
+                ret = ret .. str
+            end
+            return ret
         else
             -- _nat
             return string.sub(v1, 2)
