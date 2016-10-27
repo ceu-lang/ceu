@@ -541,9 +541,10 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                 ( C(V'_C') + C((P(1)-(S'\t\n\r '*'end'*P';'^0*'\n'))^0) ) *
              x* K'end'
 
-    , Nat_Stmt = KK'{' * (C(V'__nat') + V'__exp')^0 * KK'}'
-    , _Nat_Exp = KK'{' * (C(V'__nat') + V'__exp')^0 * KK'}'
-    , __nat   = ((1-S'{}'-V'__exp') + '{'*V'__nat'*'}')^1
+    , Nat_Stmt = KK'{' * V'__nat1' * KK'}'
+    , _Nat_Exp = KK'{' * V'__nat1' * KK'}'
+    , __nat1   = (V'__nat2' + C'{'*V'__nat1'*C'}')^0
+    , __nat2   = C((1-S'{}'-V'__exp')^1) + V'__exp'
 
     , Nat_Call = (CK'call' + Cc'call') * (V'Exp_Name'+PARENS(V'__Exp')) *
                                             PARENS(OPT(V'List_Exp'))
