@@ -861,6 +861,28 @@ escape x;
 }
 
 Test { [[
+var void&& ptr = _;
+
+native/nohold _free1;
+_free1(ptr);
+
+native/nohold _free2;
+(_free2 as /nohold)(ptr);
+
+native/pure _strchr1;
+var void&& found1 = _strchr1(ptr);
+
+native _strchr2;
+var _char&& found2 = (_strchr2 as /pure)(ptr);
+
+native _tp, _f;
+var _tp v = _f() as /plain;
+]],
+    wrn = true,
+    cc = '16:1: error: unknown type name ‘tp’',
+}
+
+Test { [[
 native/pos do
     ##ifndef CEU_EXTS
     ##error bug found

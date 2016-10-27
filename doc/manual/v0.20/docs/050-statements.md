@@ -976,8 +976,9 @@ Native declarations support four modifiers as follows:
     Pointers passed to non-holding functions do not require
     [finalization](#TODO).
 - `pure`: declares the listed symbols as pure functions.
-    In addition to the `nohold` properties, pure functions have no side
-    effects to take into account for the [safety checks](#TODO).
+    In addition to the `nohold` properties, pure functions never allocate
+    resources that require [finalization](#TODO) and have no side effects to
+    take into account for the [safety checks](#TODO).
 
 Examples:
 
@@ -1065,6 +1066,9 @@ var int v = 10;
 Names and expressions that evaluate to a [native type](#TODO) can be called
 from Céu.
 
+If a call passes or returns pointers, it may require an accompanying
+[finalization statement](#TODO).
+
 Examples:
 
 ```ceu
@@ -1088,7 +1092,7 @@ The finalization statement unconditionally executes a series of
 terminates, even if aborted abruptly.
 
 Céu tracks the interaction of native calls with pointers and requires 
-finalization clauses to accompany them:
+`finalize` clauses to accompany them:
 
 - If Céu **passes** a pointer to a native call, the pointer represents a
   **local** resource that requires finalization.
@@ -1098,7 +1102,7 @@ finalization clauses to accompany them:
   Finalization executes when the block of the receiving pointer goes out of
   scope.
 
-Examples:
+In both cases, the program does not compile without the `finalize` statement.
 
 ```ceu
 // Local resource finalization
@@ -1120,7 +1124,7 @@ the buffer in the background.
 If the enclosing `watching` aborts before awaking from the `await SEND_ACK`,
 the local `msg` goes out of scope and the external transmission now holds a
 *dangling pointer*.
-The finalization ensures that `_send_cancel` also aborts the transmission.
+The `finalize` ensures that `_send_cancel` also aborts the transmission.
 
 ```ceu
 // External resource finalization
@@ -1138,24 +1142,41 @@ In the example above, the call to `_fopen` returns an external file resource as
 a pointer.
 If the enclosing `watching` aborts before awaking from the `await A`, the file
 remains open as a *memory leak*.
-The finalization ensures that `_fclose` closes the file properly.
+The `finalize` ensures that `_fclose` closes the file properly.
 
-<!--
-%
-In both cases, the code does not compile without the \code{finalize}
-construct.%
-\footnote{
-The compiler only forces the programmer to write the finalization clause, but
-cannot check if it actually handles the resource properly.
-}
+*Note: the compiler only forces the programmer to write finalization clauses,
+       but cannot check if they handle the resource properly.*
 
-\caption{
-\CEU enforces the use of finalization to prevent \emph{dangling pointers} for 
-local resources and \emph{memory leaks} for external resources.
-\label{lst.fin.ceu}
-}
-\end{figure}
--->
+[Declaration modifiers](#TODO) and [typecasts](#TODO) may suppress the
+requirement for finalization:
+
+- `nohold` modifiers or `/nohold` typecasts make passing pointers safe.
+- `pure`   modifiers or `/pure`   typecasts make passing pointers and returning
+                                  pointers safe
+- `/plain` typecasts make returns safe
+
+Examples:
+
+```ceu
+// "_free" does not retain "ptr"
+native/nohold _free;
+_free(ptr);
+// or
+(_free as /nohold)(ptr);
+```
+
+```ceu
+// "_strchr" does retain "ptr" or allocates resources
+native/pure _strchr;
+var _char&& found = _strchr(ptr);
+// or
+var _char&& found = (_strchr as /pure)(ptr);
+```
+
+```ceu
+// "_f" returns a non-pointer type
+var _tp v = _f() as /plain;
+```
 
 -------------------------------------------------------------------------------
 
