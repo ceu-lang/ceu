@@ -195,7 +195,7 @@ Examples:
 await A;                  // awaits the input event `A`
 await a;                  // awaits the internal event `a`
 
-await 10min3s5ms100us;    // awaits the specified time
+await 1min10s30ms100us;   // awaits the specified time
 await (t)ms;              // awaits the current value of the variable `t` in milliseconds
 
 await FOREVER;            // awaits forever
@@ -247,19 +247,26 @@ pairs.
 time.
 
 The `await` evaluates to a value of type `s32` and is the
-*residual delta time (dt)* measured in microseconds.
-Is is the difference between the actual elapsed time and the requested time.
+*residual delta time (`dt`)* measured in microseconds.
+It is the difference between the actual elapsed time and the requested time.
+
+If a program awaits timers in sequence (or in a `loop`), the residual `dt` from
+the preceding timer is reduced from the timer in sequence.
 
 Examples:
 
 ```ceu
 var int t = <...>;
-await (t)ms;                            // awakes after "t" milliseconds
-
-var int dt = await 1min10s30ms100us;    // if 1min10s31ms000us elapses, then dt=900
+await (t)ms;                // awakes after "t" milliseconds
 ```
 
-*Note: The residual **dt** is always greater than or equal to 0.*
+```ceu
+var int dt = await 100us;   // if 1ms elapses,  1000>100, dt=900us
+await 100us;                // timer is expired, 900>100, dt=800us
+await 1ms;                  // timer only awaits 200us (1000-800)
+```
+
+*Note: The residual `dt` is always greater than or equal to 0.*
 
 <!--
 Refer to [[#Environment]] for information about storage types for *wall-clock*
@@ -1074,7 +1081,6 @@ s.f();
 
 ### Finalization
 
-<!--
 Esterel's \code{abort} and \CEU's \code{par/or} statements provide orthogonal 
 abortion of lines of execution, which is a distinctive feature of synchronous 
 languages in comparison to asynchronous languages~\cite{esterel.preemption}.
@@ -1245,7 +1251,6 @@ compiler will not enforce the use of finalization.
 %asynchronous I/O and non-blocking functions~\cite{ceu.sensys13}.
 
 \end{comment}
--->
 
 -------------------------------------------------------------------------------
 
