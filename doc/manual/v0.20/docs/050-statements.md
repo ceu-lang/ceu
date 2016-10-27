@@ -905,6 +905,10 @@ end
 C Integration
 -------------
 
+The [compiler of Céu](#TODO) generates as output a program in C, which is
+embedded in a host program also in C, which is further compiled to the final
+binary program.
+
 Céu integrates safely with C, and programs can define and make native calls
 seamlessly while avoiding memory leaks and dangling pointers when dealing with
 external resources.
@@ -922,7 +926,7 @@ Nat_Block  ::= native `/´(pre|pos) do
                end
 Nat_End    ::= native `/´ end
 
-Nat_Stmts  ::= `{´ <code in C> `}´
+Nat_Stmts  ::= `{´ {<code in C> | `@´ Exp} `}´
 
 Nat_Call   ::= [call] (Name | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
 
@@ -937,15 +941,11 @@ Finalize ::= finalize `(´ LIST(Name) `)´ with
              end
 ```
 
-<!--
-This way, programs should only resort to \C for asynchronous functionality, 
-such as non-blocking I/O, or simple \code{struct} accessors, but never for 
-control purposes.%
-\footnote{
-In \CEU, it is possible to restrict the available \C symbols as a compile-time 
-option.
-}
--->
+Native calls and statements transfer the control of the CPU to inlined code in
+C, losing the guarantees of the [synchronous model](#TODO).
+For this reason, programs should only resort to C for asynchronous
+functionality, such as non-blocking I/O, or simple `struct` accessors, but
+never for control purposes.
 
 ### Native Declarations
 
@@ -1037,6 +1037,21 @@ end
 ```
 
 ### Native Statements
+
+The contents of native statements in between `{` and `}` are inlined in the
+output in C.
+
+Native statements support interpolation of expressions in Céu which are
+expanded in the generated output in C when preceded by a `@`.
+
+Examples:
+
+```ceu
+var int v = 10;
+{
+    printf("v = %d\n", @v);     // prints "v = 10"
+};
+```
 
 ### Native Calls
 

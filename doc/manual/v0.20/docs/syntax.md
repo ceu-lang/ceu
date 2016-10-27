@@ -150,7 +150,7 @@ Stmt ::= nothing
             <code definitions in C>
         end
       | native `/´ end
-      | `{´ <code in C> `}´
+      | `{´ {<code in C> | `@´ Exp} `}´
 
       // Call_Nat ::=
       | [call] (Name | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
@@ -172,7 +172,7 @@ Stmt ::= nothing
             Block
         end
       | `[´ {`=´} `[´
-            { <code in Lua> | `@´ Exp }
+            { {<code in Lua> | `@´ Exp} }
         `]´ {`=´} `]´
 
   /* Abstractions */
