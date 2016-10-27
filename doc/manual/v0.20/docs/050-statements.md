@@ -1083,27 +1083,25 @@ s.f();
 
 ### Finalization
 
-The finalization statement unconditionally executes a series of statements when
-its corresponding enclosing block terminates, even if aborted abrubtly.
+The finalization statement unconditionally executes a series of
+[non-yielding statements](#TODO) when its corresponding enclosing block
+terminates, even if aborted abruptly.
 
-Céu also enforces the use of finalization for native calls that deal with
-pointers representing resources:
+Céu tracks the interaction of native calls with pointers and requires 
+finalization clauses to accompany them:
 
 - If Céu **passes** a pointer to a native call, the pointer represents a
   **local** resource that requires finalization.
+  Finalization executes when the block of the local resource goes out of scope.
 - If Céu **receives** a pointer from a native call return, the pointer
   represents an **external** resource that requires finalization.
-
-Céu tracks the interaction of native calls with pointers and requires 
-finalization clauses to accompany them.
-
-`TODO: block rules`
+  Finalization executes when the block of the receiving pointer goes out of
+  scope.
 
 Examples:
 
 ```ceu
 // Local resource finalization
-
 watching <...> do
     var _buffer_t msg;
     <...>                       // prepares msg
@@ -1112,27 +1110,24 @@ watching <...> do
     finalize with
         _send_cancel(&msg);
     end
-    await SEND_ACK;
+    await SEND_ACK;             // transmission is complete
 end
 ```
 
 In the example above, the local variable `msg` is an internal resource passed
 as a pointer to `_send_request`, which is an asynchronous call that transmits
 the buffer in the background.
-If the enclosing `watching` aborts before awaking from the `await SEND_ACK`
-acknowledging the completion, the local `msg` goes out of scope and the
-external transmission now holds a *dangling pointer*.
-The finalization ensures that the transmission also aborts with the
-`_send_cancel`.
+If the enclosing `watching` aborts before awaking from the `await SEND_ACK`,
+the local `msg` goes out of scope and the external transmission now holds a
+*dangling pointer*.
+The finalization ensures that `_send_cancel` also aborts the transmission.
 
 ```ceu
 // External resource finalization
-
 watching <...> do
-    var&? _FILE f = _fopen(<...>)
-                        finalize with
-                            _fclose(f);
-                        end;
+    var&? _FILE f = _fopen(<...>) finalize with
+                        _fclose(f);
+                    end;
     _fwrite(..., f);
     await A;
     _fwrite(..., f);
@@ -1141,9 +1136,9 @@ end
 
 In the example above, the call to `_fopen` returns an external file resource as
 a pointer.
-If the enclosing `watching` aborts during the `await A`, the file remains open
-as a *memory leak*.
-The finalization ensures that the file closes properly with the `_fclose`.
+If the enclosing `watching` aborts before awaking from the `await A`, the file
+remains open as a *memory leak*.
+The finalization ensures that `_fclose` closes the file properly.
 
 <!--
 %
