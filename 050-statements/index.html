@@ -984,8 +984,9 @@ However, all external symbols must be declared before their first use.</p>
     Pointers passed to non-holding functions do not require
     <a href="#TODO">finalization</a>.</li>
 <li><code>pure</code>: declares the listed symbols as pure functions.
-    In addition to the <code>nohold</code> properties, pure functions have no side
-    effects to take into account for the <a href="#TODO">safety checks</a>.</li>
+    In addition to the <code>nohold</code> properties, pure functions never allocate
+    resources that require <a href="#TODO">finalization</a> and have no side effects to
+    take into account for the <a href="#TODO">safety checks</a>.</li>
 </ul>
 <p>Examples:</p>
 <pre><code class="ceu">// values
@@ -1055,6 +1056,8 @@ expanded in the generated output in C when preceded by a <code>@</code>.</p>
 <h3 id="native-calls">Native Calls</h3>
 <p>Names and expressions that evaluate to a <a href="#TODO">native type</a> can be called
 from Céu.</p>
+<p>If a call passes or returns pointers, it may require an accompanying
+<a href="#TODO">finalization statement</a>.</p>
 <p>Examples:</p>
 <pre><code class="ceu">// all expressions evaluate to a native type and can be called
 
@@ -1073,7 +1076,7 @@ s.f();
 <a href="#TODO">non-yielding statements</a> when its corresponding enclosing block
 terminates, even if aborted abruptly.</p>
 <p>Céu tracks the interaction of native calls with pointers and requires 
-finalization clauses to accompany them:</p>
+<code>finalize</code> clauses to accompany them:</p>
 <ul>
 <li>If Céu <strong>passes</strong> a pointer to a native call, the pointer represents a
   <strong>local</strong> resource that requires finalization.
@@ -1083,7 +1086,7 @@ finalization clauses to accompany them:</p>
   Finalization executes when the block of the receiving pointer goes out of
   scope.</li>
 </ul>
-<p>Examples:</p>
+<p>In both cases, the program does not compile without the <code>finalize</code> statement.</p>
 <pre><code class="ceu">// Local resource finalization
 watching &lt;...&gt; do
     var _buffer_t msg;
@@ -1103,7 +1106,7 @@ the buffer in the background.
 If the enclosing <code>watching</code> aborts before awaking from the <code>await SEND_ACK</code>,
 the local <code>msg</code> goes out of scope and the external transmission now holds a
 <em>dangling pointer</em>.
-The finalization ensures that <code>_send_cancel</code> also aborts the transmission.</p>
+The <code>finalize</code> ensures that <code>_send_cancel</code> also aborts the transmission.</p>
 <pre><code class="ceu">// External resource finalization
 watching &lt;...&gt; do
     var&amp;? _FILE f = _fopen(&lt;...&gt;) finalize with
@@ -1119,23 +1122,35 @@ end
 a pointer.
 If the enclosing <code>watching</code> aborts before awaking from the <code>await A</code>, the file
 remains open as a <em>memory leak</em>.
-The finalization ensures that <code>_fclose</code> closes the file properly.</p>
-<!--
-%
-In both cases, the code does not compile without the \code{finalize}
-construct.%
-\footnote{
-The compiler only forces the programmer to write the finalization clause, but
-cannot check if it actually handles the resource properly.
-}
+The <code>finalize</code> ensures that <code>_fclose</code> closes the file properly.</p>
+<p><em>Note: the compiler only forces the programmer to write finalization clauses,
+       but cannot check if they handle the resource properly.</em></p>
+<p><a href="#TODO">Declaration modifiers</a> and <a href="#TODO">typecasts</a> may suppress the
+requirement for finalization:</p>
+<ul>
+<li><code>nohold</code> modifiers or <code>/nohold</code> typecasts make passing pointers safe.</li>
+<li><code>pure</code>   modifiers or <code>/pure</code>   typecasts make passing pointers and returning
+                                  pointers safe</li>
+<li><code>/plain</code> typecasts make returns safe</li>
+</ul>
+<p>Examples:</p>
+<pre><code class="ceu">// &quot;_free&quot; does not retain &quot;ptr&quot;
+native/nohold _free;
+_free(ptr);
+// or
+(_free as /nohold)(ptr);
+</code></pre>
 
-\caption{
-\CEU enforces the use of finalization to prevent \emph{dangling pointers} for 
-local resources and \emph{memory leaks} for external resources.
-\label{lst.fin.ceu}
-}
-\end{figure}
--->
+<pre><code class="ceu">// &quot;_strchr&quot; does retain &quot;ptr&quot; or allocates resources
+native/pure _strchr;
+var _char&amp;&amp; found = _strchr(ptr);
+// or
+var _char&amp;&amp; found = (_strchr as /pure)(ptr);
+</code></pre>
+
+<pre><code class="ceu">// &quot;_f&quot; returns a non-pointer type
+var _tp v = _f() as /plain;
+</code></pre>
 
 <hr />
 <h2 id="lua-integration">Lua Integration</h2>
