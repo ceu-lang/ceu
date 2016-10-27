@@ -209,7 +209,7 @@ F = {
         local ID = unpack(tp)
         if ID.tag == 'ID_abs' then
             ASR(no_what and ID.dcl.tag~=no_what, tp,
-                'invalid declaration : unexpected context for `code´ "'..
+                'invalid declaration : unexpected context for `'..AST.tag2id[ID.dcl.tag]..'´ "'..
                     (ID.dcl.id or ID.dcl[3])..'"')
         end
     end,

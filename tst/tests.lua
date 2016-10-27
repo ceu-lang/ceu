@@ -40527,6 +40527,16 @@ escape 1;
     dcls = 'line 3 : abstraction "SDL_Rect" is not declared',
 }
 
+Test { [[
+data Dd with
+    var int x;
+end
+event Dd e;
+escape 1;
+]],
+    dcls = 'line 4 : invalid declaration : unexpected context for `data´ "Dd"',
+}
+
 -->>> DATA / HIERARCHY / SUB-DATA / SUB-TYPES
 
 Test { [[
