@@ -949,7 +949,7 @@ escape a && b;
 Test { [[
 native _ISPOINTER, _MINDIST, _TILESHIFT;
 
-                            if (_ISPOINTER(check) && ((check:x+_MINDIST) >> 
+                            if (_ISPOINTER(check) && ((check:x+_MINDIST) >>
                                 _TILESHIFT) == tilex ) then
                                 escape 0;
 end
@@ -41522,7 +41522,7 @@ data Tx;
 event Tx a;
 escape 0;
 ]],
-    dcls = 'line 2 : invalid declaration : unexpected context for `code´ "Tx"',
+    dcls = 'line 2 : invalid declaration : unexpected context for `data´ "Tx"',
     --dcls = 'line 2 : invalid event type : must be primitive',
 }
 
@@ -41780,7 +41780,7 @@ end
 var int cur = 0;
 event void inc;
 
-var IPoints me_ = val IPoints(&cur,&inc);   
+var IPoints me_ = val IPoints(&cur,&inc);
 
 escape 1;
 ]],
@@ -41797,7 +41797,7 @@ code/await Points (void) -> (var& IPoints me) -> void do
     var int cur = 0;
     event void inc;
 
-    var IPoints me_ = val IPoints(&cur,&inc);   
+    var IPoints me_ = val IPoints(&cur,&inc);
     me = &me_;
 end
 
@@ -42189,6 +42189,37 @@ escape call Ff(&d);
     wrn = true,
     run = 4,
 }
+
+Test { [[
+data Bb with
+    vector [] byte v;
+end
+data Aa with
+    var Bb b;
+end
+var Aa d = _;
+d.b = val Bb([1,2,3]);
+escape $d.b.v as int;
+]],
+    wrn = true,
+    run = 3,
+}
+
+Test { [[
+data Data with
+   vector [] byte v;
+end
+var Data d = _;
+code/tight Ff (void)->int do
+    outer.d = val Data([1,2,3]);
+    escape $outer.d.v as int;
+end
+escape (call Ff ());
+]],
+    wrn = true,
+    run = 3,
+}
+
 --<< DATA / VECTOR
 
 -->> DATA / DEFAULT / CONSTRUCTOR

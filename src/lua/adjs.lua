@@ -550,24 +550,36 @@ error'TODO'
             return
         end
 
+-->> TODO: join
         local T = { }
+        do
+            local old = me
+            local new = AST.par(me, 'Abs_Cons')
 
-        local old = me
-        local new = AST.par(me, 'Abs_Cons')
-
-        while new do
-            assert(AST.asr(new,'', 2,'Abslist', old.__i,'') == old)
-            table.insert(T, 1, old.__i)
-            old = new
-            new = AST.par(new, 'Abs_Cons')
+            while new do
+                assert(AST.asr(new,'', 2,'Abslist', old.__i,'') == old)
+                table.insert(T, 1, old.__i)
+                old = new
+                new = AST.par(new, 'Abs_Cons')
+            end
         end
+--|| TODO: join
+        local exp
+        do
+            local base = AST.asr(Set,'', 2,'Exp_Name', 1,'')
+            local ret = AST.copy(base)
+            for _, idx in ipairs(T) do
+                ret = AST.node('Exp_.', me.ln, '.', ret, idx)
+            end
+            exp = AST.node('Exp_Name', me.ln, ret)
+        end
+--<< TODO: join
 
         Set.__adjs_sets = Set.__adjs_sets or node('Stmts', me.ln)
-
         AST.insert(Set.__adjs_sets, #Set.__adjs_sets+1,
                     node('Set_Vec', me.ln,
                         me,                -- see dcls.lua
-                        node('TODO', me.ln, 'vec_cons', T)))
+                        exp))
 
         return node('ID_any', me.ln)
     end,

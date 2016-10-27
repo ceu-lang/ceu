@@ -710,26 +710,6 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
                 set.tag = 'Nothing'
                 return AST.node('Nothing', me.ln)
             end
-        elseif id == 'vec_cons' then
-            local _, T = unpack(me)
-            local ID_int = AST.asr(me.__par.__par.__par,'Stmts',
-                                   1,'Set_Abs_Val', 2,'Exp_Name', 1,'ID_int')
-            local abs = TYPES.abs_dcl(ID_int.dcl[2], 'Data')
-            ASR(abs, me, 'invalid constructor : TODO')
-            local vars = AST.asr(abs,'Data', 3,'Block').dcls
-
-            local ret = AST.copy(ID_int)
-            for i, I in ipairs(T) do
-                local _,tp,id = unpack(vars[I])
-                ret = AST.node('Exp_.', me.ln, '.', ret, id)
-                if i < #T then
-                    local abs = TYPES.abs_dcl(tp, 'Data')
-                    ASR(abs, me, 'invalid constructor : TODO')
-                    vars = AST.asr(abs,'Data', 3,'Block').dcls
-                end
-            end
-
-            return AST.node('Exp_Name', me.ln, ret)
         else
             error'bug found'
         end

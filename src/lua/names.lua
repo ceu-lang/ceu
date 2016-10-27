@@ -197,6 +197,15 @@ DBG'TODO: type annotation'
     ['Exp_.'] = function (me)
         local _, e, member = unpack(me)
 
+        if type(member) == 'number' then
+            local abs = TYPES.abs_dcl(e.info.dcl[2], 'Data')
+            ASR(abs, me, 'invalid constructor : TODO')
+            local vars = AST.asr(abs,'Data', 3,'Block').dcls
+            local _,_,id = unpack(vars[member])
+            member = id
+            me[3] = id
+        end
+
         if e.tag == 'Outer' then
             F.ID_int(me)
             me.info.id = 'outer.'..member
