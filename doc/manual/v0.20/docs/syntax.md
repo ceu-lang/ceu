@@ -179,7 +179,6 @@ Stmt ::= nothing
 
       /* Data */
 
-      | data ID_abs [is Exp]
       | data ID_abs [is Exp] [ with
                                 { <var|vector|pool|event declaration> `;´ {`;´} }
                                end ]
@@ -241,11 +240,11 @@ Stmt ::= nothing
 /* Identifiers */
 
 ID       ::= [a-zA-Z0-9_]+
-ID_int   ::= ID         // beginning with lowercase
-ID_ext   ::= ID         // all in uppercase, not beginning with digit
-ID_abs   ::= ID         // beginning with uppercase, containining at least one lowercase)
-ID_field ::= ID         // not beginning with digit
-ID_nat   ::= ID         // beginning with underscore
+ID_int   ::= ID             // ID beginning with lowercase
+ID_ext   ::= ID             // ID all in uppercase, not beginning with digit
+ID_abs   ::= ID {`.´ ID}    // IDs beginning with uppercase, containining at least one lowercase)
+ID_field ::= ID             // ID not beginning with digit
+ID_nat   ::= ID             // ID beginning with underscore
 ID_type  ::= ( ID_nat | ID_abs
              | void  | bool  | byte
              | f32   | f64   | float

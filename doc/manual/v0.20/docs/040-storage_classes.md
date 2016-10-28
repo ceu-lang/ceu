@@ -13,6 +13,7 @@ Examples:
 var       int    v;     // "v" is a variable of type "int"
 vector[9] byte   buf;   // "buf" is a vector with at most 9 values of type "byte"
 input     void&& A;     // "A" is an external event that carries values of type "void&&"
+event     bool   e;     // "e" is an internal event that carries values of type "bool"
 pool[]    Anim   anims; // "anims" is a dynamic "pool" for instances of type "Anim"
 ```
 

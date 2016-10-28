@@ -51,12 +51,12 @@ Programs have an implicit enclosing `do-end` that assigns to a
 Examples:
 
 ```ceu
-do/a
-    do/_
-        do
-            escape;     // matches line 3
+do
+    do/a
+        do/_
+            escape;     // matches line 1
         end
-        escape/a;       // matches line 1
+        escape/a;       // matches line 2
     end
 end
 ```
@@ -1350,7 +1350,12 @@ end
 Abstractions
 ------------
 
-`TODO`
+Céu provides `data` and `code` abstractions to encapsulate [storage](#TODO) and
+[statements](#TODO), respectively.
+
+### Data Abstractions
+
+### Code Abstractions
 
 -------------------------------------------------------------------------------
 

@@ -46,18 +46,21 @@ variable names):
 Identifiers
 -----------
 
-Céu uses identifiers to refer to *types*, *variables*, *vectors*, *pools*,
-*internal events*, *external events*, *code abstractions*, *data abstractions*,
-*fields*, *native symbols*, and *block labels*.
+Céu uses identifiers to refer to *types* (`ID_type`), *variables* (`ID_int`),
+*vectors* (`ID_int`), *pools* (`ID_int`), *internal events* (`ID_int`),
+*external events* (`ID_ext`), *code abstractions* (`ID_abs`),
+*data abstractions* (`ID_abs`), *fields* (`ID_field`),
+*native symbols* (`ID_nat`), and *block labels* (`ID_int`).
 
 ```ceu
 ID       ::= [a-z, A-Z, 0-9, _]+
-ID_int   ::= ID (first is lowercase)                        // variables, vectors, pools, internal events, and block labels
-ID_ext   ::= ID (all in uppercase, first is not digit)      // external events
-ID_abs   ::= ID (first is uppercase, contains lowercase)    // data and code abstractions
-ID_field ::= ID (first is not digit)                        // fields
-ID_nat   ::= ID (first is underscore)                       // native symbols
-ID_type  ::= ( ID_nat | ID_abs                              // types
+ID_int   ::= ID             // ID beginning with lowercase
+ID_ext   ::= ID             // ID all in uppercase, not beginning with digit
+ID_abs   ::= ID {`.´ ID}    // IDs beginning with uppercase, containining at least one lowercase)
+ID_field ::= ID             // ID not beginning with digit
+ID_nat   ::= ID             // ID beginning with underscore
+
+ID_type  ::= ( ID_nat | ID_abs
              | void  | bool  | byte
              | f32   | f64   | float
              | s8    | s16   | s32   | s64
