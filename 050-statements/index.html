@@ -927,9 +927,6 @@ end
 
 <hr />
 <h2 id="c-integration">C Integration</h2>
-<p>The <a href="#TODO">compiler of Céu</a> generates as output a program in C, which is
-embedded in a host program also in C, which is further compiled to the final
-binary program.</p>
 <p>Céu integrates safely with C, and programs can define and make native calls
 seamlessly while avoiding memory leaks and dangling pointers when dealing with
 external resources.</p>
@@ -1005,6 +1002,9 @@ native/pure   _strlen;          // POSIX's &quot;strlen&quot; is a &quot;pure&qu
 
 <h3 id="native-blocks">Native Blocks</h3>
 <p>Native blocks allows programs to define new external symbols in C.</p>
+<p>The <a href="#TODO">compiler of Céu</a> generates as output a program in C, which is
+embedded in a host program also in C, which is further compiled to the final
+binary program.</p>
 <p>The contents of native blocks is not parsed by Céu, but copied unchanged to the
 output in C depending on the modifier specified:</p>
 <ul>
@@ -1043,14 +1043,18 @@ end
 
 <h3 id="native-statements">Native Statements</h3>
 <p>The contents of native statements in between <code>{</code> and <code>}</code> are inlined in the
-output in C.</p>
+program.</p>
 <p>Native statements support interpolation of expressions in Céu which are
-expanded in the generated output in C when preceded by a <code>@</code>.</p>
+expanded when preceded by a <code>@</code>.</p>
 <p>Examples:</p>
-<pre><code class="ceu">var int v = 10;
+<pre><code class="ceu">var int v_ceu = 10;
 {
-    printf(&quot;v = %d\n&quot;, @v);     // prints &quot;v = 10&quot;
-};
+    int v_c = @v_ceu * 2;       // yields 20
+}
+v_ceu = { v_c + @v_ceu };       // yields 30
+{
+    printf(&quot;%d\n&quot;, @v_ceu);     // prints 30
+}
 </code></pre>
 
 <h3 id="native-calls">Native Calls</h3>
@@ -1154,7 +1158,69 @@ var _tp v = _f() as /plain;
 
 <hr />
 <h2 id="lua-integration">Lua Integration</h2>
-<p><code>TODO</code></p>
+<p>Céu also integrates with Lua, providing <a href="#TODO">lua states</a> to delimit the
+effects of <a href="#TODO">lua statements</a> which can be inlined in programs:</p>
+<pre><code class="ceu">Lua_State ::= lua `[´ [Exp] `]´ do
+                 Block
+              end
+Lua_Stmts ::= `[´ {`=´} `[´
+                  { {&lt;code in Lua&gt; | `@´ Exp} }
+              `]´ {`=´} `]´
+</code></pre>
+
+<p>Lua statements transfer the control of the CPU to Lua, losing the guarantees of
+the <a href="#TODO">synchronous model</a>.
+Like <a href="#TODO">native statements</a>, programs should only resort to Lua for
+asynchronous functionality, such as non-blocking I/O, or simple <code>struct</code>
+accessors, but never for control purposes.</p>
+<h3 id="lua-statements">Lua Statements</h3>
+<p>The contents of lua statements in between <code>[[</code> and <code>]]</code> are inlined in the
+program.</p>
+<p>Like <a href="#TODO">native statements</a>, lua statements support interpolation of
+expressions in Céu which are expanded when preceded by a <code>@</code>.</p>
+<p>Examples:</p>
+<pre><code class="ceu">var int v_ceu = 10;
+[[
+    v_lua = @v_ceu * 2          -- yields 20
+]]
+v_ceu = [[ v_lua + @v_ceu ]];   // yields 30
+[[
+    print(@v_ceu)               -- prints 30
+]]
+</code></pre>
+
+<p>Lua statements only affect the <a href="#TODO">lua state</a> in which they are embedded.</p>
+<h3 id="lua-states">Lua States</h3>
+<p>A lua state creates a separate environment for its embedded
+<a href="#TODO">lua statements</a>.</p>
+<p>Programs have an implicit enclosing <em>global lua state</em> which all orphan
+statements apply.</p>
+<p>Examples:</p>
+<pre><code class="ceu">// &quot;v&quot; is not shared between the two statements
+par do
+    // global lua state
+    [[ v = 0 ]];
+    var int v = 0;
+    every 1s do
+        [[print('Lua 1', v, @v) ]];
+        v = v + 1;
+        [[ v = v + 1 ]];
+    end
+with
+    // local lua state
+    lua[] do
+        [[ v = 0 ]];
+        var int v = 0;
+        every 1s do
+            [[print('Lua 2', v, @v) ]];
+            v = v + 1;
+            [[ v = v + 1 ]];
+        end
+    end
+end
+</code></pre>
+
+<p><code>TODO: dynamic scope</code></p>
 <hr />
 <h2 id="abstractions">Abstractions</h2>
 <p><code>TODO</code></p>
