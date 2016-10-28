@@ -950,6 +950,8 @@ For this reason, programs should only resort to C for asynchronous
 functionality, such as non-blocking I/O, or simple `struct` accessors, but
 never for control purposes.
 
+`TODO: Nat_End`
+
 ### Native Declarations
 
 In Céu, an [identifier](#TODO) prefixed with an underscore is considered a
@@ -1136,9 +1138,9 @@ watching <...> do
     var&? _FILE f = _fopen(<...>) finalize with
                         _fclose(f);
                     end;
-    _fwrite(..., f);
+    _fwrite(<...>, f);
     await A;
-    _fwrite(..., f);
+    _fwrite(<...>, f);
 end
 ```
 
@@ -1150,6 +1152,8 @@ The `finalize` ensures that `_fclose` closes the file properly.
 
 *Note: the compiler only forces the programmer to write finalization clauses,
        but cannot check if they handle the resource properly.*
+
+`TODO: &?`
 
 [Declaration modifiers](#TODO) and [typecasts](#TODO) may suppress the
 requirement for finalization:
@@ -1269,5 +1273,12 @@ end
 
 Abstractions
 ------------
+
+`TODO`
+
+-------------------------------------------------------------------------------
+
+Assignments
+-----------
 
 `TODO`
