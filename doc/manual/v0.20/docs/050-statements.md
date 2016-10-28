@@ -1343,17 +1343,23 @@ with
 end
 ```
 
-`TODO: dynamic scope`
+`TODO: dynamic scope, assignment, [dim]`
 
 -------------------------------------------------------------------------------
 
 Abstractions
 ------------
 
-Céu provides `data` and `code` abstractions to encapsulate [storage](#TODO) and
+Céu supports `data` and `code` abstractions to encapsulate [storage](#TODO) and
 [statements](#TODO), respectively.
 
 ### Data Abstractions
+
+```ceu
+Data ::= data ID_abs [is Exp] [ with
+             { <var|vector|pool|event declaration> `;´ {`;´} }
+         end ]
+```
 
 ### Code Abstractions
 

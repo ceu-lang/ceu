@@ -180,8 +180,8 @@ Stmt ::= nothing
       /* Data */
 
       | data ID_abs [is Exp] [ with
-                                { <var|vector|pool|event declaration> `;´ {`;´} }
-                               end ]
+            { <var|vector|pool|event declaration> `;´ {`;´} }
+        end ]
 
       /* Code */
 
