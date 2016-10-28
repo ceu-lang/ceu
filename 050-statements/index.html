@@ -119,6 +119,8 @@
                 
                     <li><a class="toctree-l4" href="#abstractions">Abstractions</a></li>
                 
+                    <li><a class="toctree-l4" href="#assignments">Assignments</a></li>
+                
             
             </ul>
         
@@ -262,7 +264,7 @@ Pool   ::= pool [`&amp;´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
 </code></pre>
 
 <p>See also <a href="#TODO">Storage Classes</a> for an overview of storage entities.</p>
-<h3 id="variables">Variables</h3>
+<h3 id="variable">Variable</h3>
 <p>A variable has an associated <a href="#TODO">type</a> and can be optionally
 <a href="#TODO">initialized</a>.
 A single statement can declare multiple variables of the same type.
@@ -273,7 +275,7 @@ var  int a=0, b=3;  // &quot;a&quot; and &quot;b&quot; are integer variables ini
 var&amp; int z = &amp;v;    // &quot;z&quot; is an alias to &quot;v&quot;
 </code></pre>
 
-<h3 id="vectors">Vectors</h3>
+<h3 id="vector">Vector</h3>
 <p>A vector has a dimension, an associated <a href="#TODO">type</a> and can be optionally
 <a href="#TODO">initialized</a>.
 A single statement can declare multiple vectors of the same dimension and type.
@@ -298,19 +300,19 @@ vector[]   int vs3 = [];    // &quot;vs3&quot; is an unbounded vector
 vector&amp;[]  int vs4 = &amp;vs1;  // &quot;vs4&quot; is an alias to &quot;vs1&quot;
 </code></pre>
 
-<h3 id="events">Events</h3>
+<h3 id="event">Event</h3>
 <p>An event has a <a href="#TODO">type</a> for the value it carries when occurring.
 It can be also a list of types if the event communicates multiple values.
 A single statement can declare multiple events of the same type.</p>
 <p>See also <a href="#TODO">Introduction</a> for a general overview of events.</p>
-<h4 id="external-events">External events</h4>
+<h4 id="external-event">External Event</h4>
 <p>Examples:</p>
 <pre><code class="ceu">input  void A,B;        // &quot;A&quot; and &quot;B&quot; are input events carrying no values
 output int  MY_EVT;     // &quot;MY_EVT&quot; is an output event carrying integer values
 input (int,byte&amp;&amp;) BUF; // &quot;BUF&quot; is an input event carrying an &quot;(int,byte&amp;&amp;)&quot; pair
 </code></pre>
 
-<h3 id="internal-events">Internal events</h3>
+<h3 id="internal-event">Internal Event</h3>
 <p>Declarations for internal events can also be <a href="#TODO">aliases</a> or
 <a href="#TODO">option aliases</a>.
 Only in this case they can contain an <a href="#TODO">initialization</a>.</p>
@@ -320,7 +322,7 @@ event&amp; void z = &amp;a;     // &quot;z&quot; is an alias to event &quot;a&qu
 event (int,int) c;      // &quot;c&quot; is a internal event carrying an &quot;(int,int)&quot; pair
 </code></pre>
 
-<h3 id="pools">Pools</h3>
+<h3 id="pool">Pool</h3>
 <p><code>TODO</code></p>
 <p>See also <a href="#TODO">Code Pools</a> and <a href="#TODO">Data Pools</a>.</p>
 <hr />
@@ -348,7 +350,7 @@ await FOREVER;            // awaits forever
 
 <p>An <code>await</code> evaluates to zero or more values which can be captured with an
 optional <a href="#TODO">assignment</a>.</p>
-<h4 id="events_1">Events</h4>
+<h4 id="event_1">Event</h4>
 <p>The <code>await</code> statement for events halts the running trail until the referred
 <a href="#TODO">external input event</a> or  <a href="#TODO">internal event</a> occurs.</p>
 <p>The <code>await</code> evaluates to a value of the type of the event.</p>
@@ -373,7 +375,7 @@ var int  v2;
 (v1,v2) = await e;              // awakes on &quot;e&quot; and assigns its values to &quot;v1&quot; and &quot;v2&quot;
 </code></pre>
 
-<h4 id="timers">Timers</h4>
+<h4 id="timer">Timer</h4>
 <p>The <code>await</code> statement for timers halts the running trail until the referred
 timer expires.</p>
 <p><code>WCLOCKK</code> specifies a constant time expressed as a sequence of value/unit
@@ -427,7 +429,7 @@ emit 1s;        // emits the specified time
 emit (t)ms;     // emits the current value of the variable `t` in milliseconds
 </code></pre>
 
-<h4 id="events_2">Events</h4>
+<h4 id="events">Events</h4>
 <p>The <code>emit</code> statement for events expects a specific number of arguments matching
 the event type (unless the event is of type <code>void</code>).</p>
 <ul>
@@ -450,7 +452,7 @@ event (int,int) e;
 emit e(1,2);            // broadcasts &quot;e&quot; passing a pair of &quot;int&quot; values
 </code></pre>
 
-<h4 id="timers_1">Timers</h4>
+<h4 id="timer_1">Timer</h4>
 <p>The <code>emit</code> statement for timers expects an expression of time as described in
 <a href="#TODO">Await Timer</a>.</p>
 <p>Like input events, time can only be emitted inside <a href="#asynchronous-blocks">asynchronous 
@@ -520,7 +522,7 @@ The expression must be a constant evaluated at compile time.</p>
 restarts in the next iteration.</p>
 <p>The optional <code>&grave;/&acute;ID_int</code> in both statements only applies
 to <a href="#TODO">numeric iterators</a>.</p>
-<h3 id="simple-loops">Simple Loops</h3>
+<h3 id="simple-loop">Simple Loop</h3>
 <p>A simple loop executes its body continually and forever.</p>
 <p>Examples:</p>
 <pre><code class="ceu">// blinks a LED with a frequency of 1s forever
@@ -544,7 +546,7 @@ end
 end
 </code></pre>
 
-<h3 id="numeric-iterators">Numeric Iterators</h3>
+<h3 id="numeric-iterator">Numeric Iterator</h3>
 <p>The numeric loop modifies the value of a control variable on each iteration
 according to the specification of an optional interval as follows:</p>
 <pre><code class="ceu">Numeric ::= (`_´|ID_int) in [ (`[´ | `]´)
@@ -635,8 +637,47 @@ end
 
 <p><em>Note : the runtime asserts that the step is a positive number and that the
         control variable does not overflow.</em></p>
-<h3 id="pool-iterators">Pool Iterators</h3>
-<p>Pool iterators are dicussed in <a href="#TODO">Code Pools</a>.</p>
+<h3 id="event-iterator">Event Iterator</h3>
+<p>The <code>every</code> statement iterates over an event continuously and executes its
+body whenever the event occurs.</p>
+<p>The event can be an <a href="#TODO">external or internal event</a> or a <a href="#TODO">timer</a>.</p>
+<p>The optional assignment to a variable (or list of variables) stores the
+carrying value(s) of the event.</p>
+<p>An <code>every</code> expands to a <code>loop</code> as illustrated below:</p>
+<pre><code class="ceu">every &lt;vars&gt; in &lt;event&gt; do
+    &lt;body&gt;
+end
+</code></pre>
+
+<p>is equivalent to</p>
+<pre><code class="ceu">loop do
+    &lt;vars&gt; = await &lt;event&gt;;
+    &lt;body&gt;
+end
+</code></pre>
+
+<p>However, the body of an <code>every</code> cannot contain awaiting statements, ensuring
+that no occurrences of the specified event are ever missed.</p>
+<p>Examples:</p>
+<pre><code class="ceu">every 1s do
+    _printf(&quot;Hello World!\n&quot;);      // prints the &quot;Hello World!&quot; message on every second
+end
+</code></pre>
+
+<pre><code class="ceu">event (bool,int) e;
+var bool cnd;
+var int  v;
+every (cnd,v) in e do
+    if not cnd then
+        break;                      // terminates when the received &quot;cnd&quot; is false
+    else
+        _printf(&quot;v = %d\n&quot;, v);     // prints the received &quot;v&quot; otherwise
+    end
+end
+</code></pre>
+
+<h3 id="pool-iterator">Pool Iterator</h3>
+<p>Pool iterator is discussed in <a href="#TODO">Code Pools</a>.</p>
 <hr />
 <h2 id="parallel-compositions">Parallel Compositions</h2>
 <p>The parallel statements <code>par/and</code>, <code>par/or</code>, and <code>par</code> split the running trail 
@@ -808,9 +849,9 @@ handling, pausing, etc.).</p>
 <p>By default, asynchronous blocks do not shared variables with their enclosing
 scope.
 The optional list of variables makes them visible to the block.</p>
-<h3 id="asynchronous-blocks">Asynchronous Blocks</h3>
-<p>Asynchronous blocks (<code>async</code>) preserve deterministic execution with the rules
-as follows:</p>
+<h3 id="asynchronous-block">Asynchronous Block</h3>
+<p>The asynchronous block (<code>async</code>) preserves deterministic execution with the
+rules as follows:</p>
 <ol>
 <li>Resume execution whenever the synchronous side is idle.</li>
 <li>Yield control to the synchronous side on every complete <code>loop</code> iteration.</li>
@@ -867,7 +908,7 @@ end
 // The example prints the message `v = &lt;v+i&gt;` exactly 103 times.
 </code></pre>
 
-<h3 id="asynchronous-threads">Asynchronous Threads</h3>
+<h3 id="asynchronous-thread">Asynchronous Thread</h3>
 <p>Asynchronous threads (<code>async/thread</code>) provide real parallelism for applications
 in Céu.
 Once an <code>async/thread</code> starts, it runs completely detached from the synchronous
@@ -891,7 +932,7 @@ end
 
 <p>Asynchronous threads are non deterministic and require explicit synchronization
 on accesses to variables to avoid race conditions.</p>
-<h4 id="atomic-blocks">Atomic Blocks</h4>
+<h4 id="atomic-block">Atomic Block</h4>
 <p>Atomic blocks provide mutual exclusion among threads and the synchronous
 side of application.
 Once an atomic block starts to execute, no other atomic block in the program
@@ -961,7 +1002,8 @@ C, losing the guarantees of the <a href="#TODO">synchronous model</a>.
 For this reason, programs should only resort to C for asynchronous
 functionality, such as non-blocking I/O, or simple <code>struct</code> accessors, but
 never for control purposes.</p>
-<h3 id="native-declarations">Native Declarations</h3>
+<p><code>TODO: Nat_End</code></p>
+<h3 id="native-declaration">Native Declaration</h3>
 <p>In Céu, an <a href="#TODO">identifier</a> prefixed with an underscore is considered a
 native symbol that is defined externally in C.
 However, all external symbols must be declared before their first use.</p>
@@ -1000,7 +1042,7 @@ native/nohold _free;            // POSIX's &quot;free&quot; receives a pointer b
 native/pure   _strlen;          // POSIX's &quot;strlen&quot; is a &quot;pure&quot; function
 </code></pre>
 
-<h3 id="native-blocks">Native Blocks</h3>
+<h3 id="native-block">Native Block</h3>
 <p>Native blocks allows programs to define new external symbols in C.</p>
 <p>The <a href="#TODO">compiler of Céu</a> generates as output a program in C, which is
 embedded in a host program also in C, which is further compiled to the final
@@ -1041,7 +1083,7 @@ native/pre do
 end
 </code></pre>
 
-<h3 id="native-statements">Native Statements</h3>
+<h3 id="native-statement">Native Statement</h3>
 <p>The contents of native statements in between <code>{</code> and <code>}</code> are inlined in the
 program.</p>
 <p>Native statements support interpolation of expressions in Céu which are
@@ -1057,7 +1099,7 @@ v_ceu = { v_c + @v_ceu };       // yields 30
 }
 </code></pre>
 
-<h3 id="native-calls">Native Calls</h3>
+<h3 id="native-call">Native Call</h3>
 <p>Names and expressions that evaluate to a <a href="#TODO">native type</a> can be called
 from Céu.</p>
 <p>If a call passes or returns pointers, it may require an accompanying
@@ -1116,9 +1158,9 @@ watching &lt;...&gt; do
     var&amp;? _FILE f = _fopen(&lt;...&gt;) finalize with
                         _fclose(f);
                     end;
-    _fwrite(..., f);
+    _fwrite(&lt;...&gt;, f);
     await A;
-    _fwrite(..., f);
+    _fwrite(&lt;...&gt;, f);
 end
 </code></pre>
 
@@ -1129,6 +1171,7 @@ remains open as a <em>memory leak</em>.
 The <code>finalize</code> ensures that <code>_fclose</code> closes the file properly.</p>
 <p><em>Note: the compiler only forces the programmer to write finalization clauses,
        but cannot check if they handle the resource properly.</em></p>
+<p><code>TODO: &amp;?</code></p>
 <p><a href="#TODO">Declaration modifiers</a> and <a href="#TODO">typecasts</a> may suppress the
 requirement for finalization:</p>
 <ul>
@@ -1173,7 +1216,7 @@ the <a href="#TODO">synchronous model</a>.
 Like <a href="#TODO">native statements</a>, programs should only resort to Lua for
 asynchronous functionality, such as non-blocking I/O, or simple <code>struct</code>
 accessors, but never for control purposes.</p>
-<h3 id="lua-statements">Lua Statements</h3>
+<h3 id="lua-statement">Lua Statement</h3>
 <p>The contents of lua statements in between <code>[[</code> and <code>]]</code> are inlined in the
 program.</p>
 <p>Like <a href="#TODO">native statements</a>, lua statements support interpolation of
@@ -1190,7 +1233,7 @@ v_ceu = [[ v_lua + @v_ceu ]];   // yields 30
 </code></pre>
 
 <p>Lua statements only affect the <a href="#TODO">lua state</a> in which they are embedded.</p>
-<h3 id="lua-states">Lua States</h3>
+<h3 id="lua-state">Lua State</h3>
 <p>A lua state creates a separate environment for its embedded
 <a href="#TODO">lua statements</a>.</p>
 <p>Programs have an implicit enclosing <em>global lua state</em> which all orphan
@@ -1223,6 +1266,9 @@ end
 <p><code>TODO: dynamic scope</code></p>
 <hr />
 <h2 id="abstractions">Abstractions</h2>
+<p><code>TODO</code></p>
+<hr />
+<h2 id="assignments">Assignments</h2>
 <p><code>TODO</code></p>
               
             </div>
