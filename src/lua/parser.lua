@@ -860,7 +860,6 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 -- TODO: remove class/interface
 + I((K'class'+K'interface'+K'traverse')) * EE'TODO-PARSER: class/interface'
                     + V'Stmt_Call'
-                    + V'Nat_Stmt'
 
     , __Stmt_Block = V'_Code_impl' + V'_Ext_Code_impl' + V'_Ext_Req_impl'
               + V'_Data_block'
@@ -874,6 +873,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
               + V'Pause_If'
               + V'Async' + V'Async_Thread' + V'_Async_Isr' + V'Atomic'
               + V'_Dopre'
+              + V'Nat_Stmt'
               + V'_Lua' + V'_Lua_Do'
               + V'_Var_set_fin'
 

@@ -9,6 +9,20 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+Test { [=[
+[[
+    v_lua = @(2 * 2)
+ -- ola
+]]
+escape 1;
+]=],
+    _opts = {
+        ceu = true,
+        ceu_features_lua = 'true',
+    },
+    run = 1,
+}
+
 do return end -- OK
 ---]=====]
 
@@ -40206,6 +40220,32 @@ end
 ]=],
     run = 2,
     _opts = opts_lua,
+}
+
+Test { [=[
+var int v_ceu = 10;
+{
+    int v_c = @v_ceu * 2;       // yields 20
+}
+v_ceu = { v_c + @v_ceu };       // yields 30
+{
+    //printf("%d\n", @v_ceu);     // prints "v = 10"
+}
+
+[[
+    v_lua = @v_ceu * 2 
+]]
+v_ceu = [[ v_lua + @v_ceu ]];
+[[
+    --print(@v_ceu)
+]]
+escape v_ceu;
+]=],
+    _opts = {
+        ceu = true,
+        ceu_features_lua = 'true',
+    },
+    run = 90,
 }
 
 --<<< LUA
