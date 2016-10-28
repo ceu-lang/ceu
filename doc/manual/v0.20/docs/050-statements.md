@@ -550,9 +550,60 @@ end
 *Note : the runtime asserts that the step is a positive number and that the
         control variable does not overflow.*
 
+### Event Iterator
+
+The `every` statement iterates over an event continuously and executes its
+body whenever the event occurs.
+
+The event can be an [external or internal event](#TODO) or a [timer](#TODO).
+
+The optional assignment to a variable (or list of variables) stores the
+carrying value(s) of the event.
+
+An `every` expands to a `loop` as illustrated below:
+
+```ceu
+every <vars> in <event> do
+    <body>
+end
+```
+
+is equivalent to
+
+```ceu
+loop do
+    <vars> = await <event>;
+    <body>
+end
+```
+
+However, the body of an `every` cannot contain awaiting statements, ensuring
+that no occurrences of the specified event are ever missed.
+
+Examples:
+
+```ceu
+every 1s do
+    _printf("Hello World!\n");      // prints the "Hello World!" message on every second
+end
+```
+
+```ceu
+event (bool,int) e;
+var bool cnd;
+var int  v;
+every (cnd,v) in e do
+    if not cnd then
+        break;                      // terminates when the received "cnd" is false
+    else
+        _printf("v = %d\n", v);     // prints the received "v" otherwise
+    end
+end
+```
+
 ### Pool Iterator
 
-Pool iterators are dicussed in [Code Pools](#TODO).
+Pool iterator is discussed in [Code Pools](#TODO).
 
 -------------------------------------------------------------------------------
 
