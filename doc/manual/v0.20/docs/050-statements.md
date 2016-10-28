@@ -87,7 +87,7 @@ Pool   ::= pool [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
 
 See also [Storage Classes](#TODO) for an overview of storage entities.
 
-### Variables
+### Variable
 
 A variable has an associated [type](#TODO) and can be optionally
 [initialized](#TODO).
@@ -102,7 +102,7 @@ var  int a=0, b=3;  // "a" and "b" are integer variables initialized to 0 and 3
 var& int z = &v;    // "z" is an alias to "v"
 ```
 
-### Vectors
+### Vector
 
 A vector has a dimension, an associated [type](#TODO) and can be optionally
 [initialized](#TODO).
@@ -132,7 +132,7 @@ vector[]   int vs3 = [];    // "vs3" is an unbounded vector
 vector&[]  int vs4 = &vs1;  // "vs4" is an alias to "vs1"
 ```
 
-### Events
+### Event
 
 An event has a [type](#TODO) for the value it carries when occurring.
 It can be also a list of types if the event communicates multiple values.
@@ -140,7 +140,7 @@ A single statement can declare multiple events of the same type.
 
 See also [Introduction](#TODO) for a general overview of events.
 
-#### External events
+#### External Event
 
 Examples:
 
@@ -150,7 +150,7 @@ output int  MY_EVT;     // "MY_EVT" is an output event carrying integer values
 input (int,byte&&) BUF; // "BUF" is an input event carrying an "(int,byte&&)" pair
 ```
 
-### Internal events
+### Internal Event
 
 Declarations for internal events can also be [aliases](#TODO) or
 [option aliases](#TODO).
@@ -164,7 +164,7 @@ event& void z = &a;     // "z" is an alias to event "a"
 event (int,int) c;      // "c" is a internal event carrying an "(int,int)" pair
 ```
 
-### Pools
+### Pool
 
 `TODO`
 
@@ -204,7 +204,7 @@ await FOREVER;            // awaits forever
 An `await` evaluates to zero or more values which can be captured with an
 optional [assignment](#TODO).
 
-#### Events
+#### Event
 
 The `await` statement for events halts the running trail until the referred
 [external input event](#TODO) or  [internal event](#TODO) occurs.
@@ -236,7 +236,7 @@ var int  v2;
 (v1,v2) = await e;              // awakes on "e" and assigns its values to "v1" and "v2"
 ```
 
-#### Timers
+#### Timer
 
 The `await` statement for timers halts the running trail until the referred
 timer expires.
@@ -335,7 +335,7 @@ event (int,int) e;
 emit e(1,2);            // broadcasts "e" passing a pair of "int" values
 ```
 
-#### Timers
+#### Timer
 
 The `emit` statement for timers expects an expression of time as described in
 [Await Timer](#TODO).
@@ -427,7 +427,7 @@ restarts in the next iteration.
 The optional <code>&grave;/&acute;ID_int</code> in both statements only applies
 to [numeric iterators](#TODO).
 
-### Simple Loops
+### Simple Loop
 
 A simple loop executes its body continually and forever.
 
@@ -456,7 +456,7 @@ loop do
 end
 ```
 
-### Numeric Iterators
+### Numeric Iterator
 
 The numeric loop modifies the value of a control variable on each iteration
 according to the specification of an optional interval as follows:
@@ -550,7 +550,7 @@ end
 *Note : the runtime asserts that the step is a positive number and that the
         control variable does not overflow.*
 
-### Pool Iterators
+### Pool Iterator
 
 Pool iterators are dicussed in [Code Pools](#TODO).
 
@@ -773,10 +773,10 @@ By default, asynchronous blocks do not shared variables with their enclosing
 scope.
 The optional list of variables makes them visible to the block.
 
-### Asynchronous Blocks
+### Asynchronous Block
 
-Asynchronous blocks (`async`) preserve deterministic execution with the rules
-as follows:
+The asynchronous block (`async`) preserves deterministic execution with the
+rules as follows:
 
 1. Resume execution whenever the synchronous side is idle.
 2. Yield control to the synchronous side on every complete `loop` iteration.
@@ -840,7 +840,7 @@ end
 // The example prints the message `v = <v+i>` exactly 103 times.
 ```
 
-### Asynchronous Threads
+### Asynchronous Thread
 
 Asynchronous threads (`async/thread`) provide real parallelism for applications
 in Céu.
@@ -869,7 +869,7 @@ end
 Asynchronous threads are non deterministic and require explicit synchronization
 on accesses to variables to avoid race conditions.
 
-#### Atomic Blocks
+#### Atomic Block
 
 Atomic blocks provide mutual exclusion among threads and the synchronous
 side of application.
@@ -952,7 +952,7 @@ never for control purposes.
 
 `TODO: Nat_End`
 
-### Native Declarations
+### Native Declaration
 
 In Céu, an [identifier](#TODO) prefixed with an underscore is considered a
 native symbol that is defined externally in C.
@@ -995,7 +995,7 @@ native/nohold _free;            // POSIX's "free" receives a pointer but does no
 native/pure   _strlen;          // POSIX's "strlen" is a "pure" function
 ```
 
-### Native Blocks
+### Native Block
 
 Native blocks allows programs to define new external symbols in C.
 
@@ -1046,7 +1046,7 @@ native/pre do
 end
 ```
 
-### Native Statements
+### Native Statement
 
 The contents of native statements in between `{` and `}` are inlined in the
 program.
@@ -1067,7 +1067,7 @@ v_ceu = { v_c + @v_ceu };       // yields 30
 }
 ```
 
-### Native Calls
+### Native Call
 
 Names and expressions that evaluate to a [native type](#TODO) can be called
 from Céu.
@@ -1209,7 +1209,7 @@ Like [native statements](#TODO), programs should only resort to Lua for
 asynchronous functionality, such as non-blocking I/O, or simple `struct`
 accessors, but never for control purposes.
 
-### Lua Statements
+### Lua Statement
 
 The contents of lua statements in between `[[` and `]]` are inlined in the
 program.
@@ -1232,7 +1232,7 @@ v_ceu = [[ v_lua + @v_ceu ]];   // yields 30
 
 Lua statements only affect the [lua state](#TODO) in which they are embedded.
 
-### Lua States
+### Lua State
 
 A lua state creates a separate environment for its embedded
 [lua statements](#TODO).
