@@ -35,10 +35,20 @@ Do ::= do [`/´ (`_´|ID_int)]
 Escape ::= escape [`/´ID_int] [Exp]
 ```
 
-A `do-end` supports the identifier `_` which is guaranteed not to match any
-`escape` statement.
+`do-end` supports the neutral identifier `_` which is guaranteed not to match
+any `escape` statement.
 
-Example:
+A `do-end` can be [assigned](#TODO) to a variable whose type must be matched
+by nested `escape` statements.
+The whole block evaluates to the value of a reached `escape`.
+If the variable is of [option type](#TODO), the `do-end` is allowed to
+terminate without an `escape`, otherwise it raises a runtime error.
+
+Programs have an implicit enclosing `do-end` that assigns to a
+*program status variable* of type `int` whose meaning is
+[platform dependent](#TODO).
+
+Examples:
 
 ```ceu
 do/a
@@ -49,6 +59,21 @@ do/a
         escape/a;       // matches line 1
     end
 end
+```
+
+```ceu
+var int? v =
+    do
+        if <cnd> then
+            escape 10;  // assigns 10 to "v"
+        else
+            nothing;    // "v" remains unassigned
+        end
+    end;
+```
+
+```ceu
+escape 0;               // program terminates with a status value of 0
 ```
 
 ### `pre-do-end`
