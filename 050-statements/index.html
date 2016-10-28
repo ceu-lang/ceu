@@ -136,7 +136,7 @@
           
             <li>
     <li class="toctree-l1 ">
-        <a class="" href="../070-static_analysis/">Static Analysis</a>
+        <a class="" href="../070-static_checks/">Static Checks</a>
         
     </li>
 <li>
@@ -1284,12 +1284,17 @@ with
 end
 </code></pre>
 
-<p><code>TODO: dynamic scope</code></p>
+<p><code>TODO: dynamic scope, assignment, [dim]</code></p>
 <hr />
 <h2 id="abstractions">Abstractions</h2>
-<p>Céu provides <code>data</code> and <code>code</code> abstractions to encapsulate <a href="#TODO">storage</a> and
+<p>Céu supports <code>data</code> and <code>code</code> abstractions to encapsulate <a href="#TODO">storage</a> and
 <a href="#TODO">statements</a>, respectively.</p>
 <h3 id="data-abstractions">Data Abstractions</h3>
+<pre><code class="ceu">Data ::= data ID_abs [is Exp] [ with
+             { &lt;var|vector|pool|event declaration&gt; `;´ {`;´} }
+         end ]
+</code></pre>
+
 <h3 id="code-abstractions">Code Abstractions</h3>
 <hr />
 <h2 id="assignments">Assignments</h2>

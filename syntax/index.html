@@ -105,7 +105,7 @@
           
             <li>
     <li class="toctree-l1 ">
-        <a class="" href="../070-static_analysis/">Static Analysis</a>
+        <a class="" href="../070-static_checks/">Static Checks</a>
         
     </li>
 <li>
@@ -356,8 +356,8 @@ Stmt ::= nothing
       /* Data */
 
       | data ID_abs [is Exp] [ with
-                                { &lt;var|vector|pool|event declaration&gt; `;´ {`;´} }
-                               end ]
+            { &lt;var|vector|pool|event declaration&gt; `;´ {`;´} }
+        end ]
 
       /* Code */
 
