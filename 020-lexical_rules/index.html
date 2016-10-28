@@ -225,16 +225,19 @@ variable names):</p>
 </code></pre>
 
 <h2 id="identifiers">Identifiers</h2>
-<p>Céu uses identifiers to refer to <em>types</em>, <em>variables</em>, <em>vectors</em>, <em>pools</em>,
-<em>internal events</em>, <em>external events</em>, <em>code abstractions</em>, <em>data abstractions</em>,
-<em>fields</em>, <em>native symbols</em>, and <em>block labels</em>.</p>
+<p>Céu uses identifiers to refer to <em>types</em> (<code>ID_type</code>), <em>variables</em> (<code>ID_int</code>),
+<em>vectors</em> (<code>ID_int</code>), <em>pools</em> (<code>ID_int</code>), <em>internal events</em> (<code>ID_int</code>),
+<em>external events</em> (<code>ID_ext</code>), <em>code abstractions</em> (<code>ID_abs</code>),
+<em>data abstractions</em> (<code>ID_abs</code>), <em>fields</em> (<code>ID_field</code>),
+<em>native symbols</em> (<code>ID_nat</code>), and <em>block labels</em> (<code>ID_int</code>).</p>
 <pre><code class="ceu">ID       ::= [a-z, A-Z, 0-9, _]+
-ID_int   ::= ID (first is lowercase)                        // variables, vectors, pools, internal events, and block labels
-ID_ext   ::= ID (all in uppercase, first is not digit)      // external events
-ID_abs   ::= ID (first is uppercase, contains lowercase)    // data and code abstractions
-ID_field ::= ID (first is not digit)                        // fields
-ID_nat   ::= ID (first is underscore)                       // native symbols
-ID_type  ::= ( ID_nat | ID_abs                              // types
+ID_int   ::= ID             // ID beginning with lowercase
+ID_ext   ::= ID             // ID all in uppercase, not beginning with digit
+ID_abs   ::= ID {`.´ ID}    // IDs beginning with uppercase, containining at least one lowercase)
+ID_field ::= ID             // ID not beginning with digit
+ID_nat   ::= ID             // ID beginning with underscore
+
+ID_type  ::= ( ID_nat | ID_abs
              | void  | bool  | byte
              | f32   | f64   | float
              | s8    | s16   | s32   | s64

@@ -226,17 +226,38 @@ identifier:</p>
 Escape ::= escape [`/´ID_int] [Exp]
 </code></pre>
 
-<p>A <code>do-end</code> supports the identifier <code>_</code> which is guaranteed not to match any
-<code>escape</code> statement.</p>
-<p>Example:</p>
-<pre><code class="ceu">do/a
-    do/_
-        do
-            escape;     // matches line 3
+<p><code>do-end</code> supports the neutral identifier <code>_</code> which is guaranteed not to match
+any <code>escape</code> statement.</p>
+<p>A <code>do-end</code> can be <a href="#TODO">assigned</a> to a variable whose type must be matched
+by nested <code>escape</code> statements.
+The whole block evaluates to the value of a reached <code>escape</code>.
+If the variable is of <a href="#TODO">option type</a>, the <code>do-end</code> is allowed to
+terminate without an <code>escape</code>, otherwise it raises a runtime error.</p>
+<p>Programs have an implicit enclosing <code>do-end</code> that assigns to a
+<em>program status variable</em> of type <code>int</code> whose meaning is
+<a href="#TODO">platform dependent</a>.</p>
+<p>Examples:</p>
+<pre><code class="ceu">do
+    do/a
+        do/_
+            escape;     // matches line 1
         end
-        escape/a;       // matches line 1
+        escape/a;       // matches line 2
     end
 end
+</code></pre>
+
+<pre><code class="ceu">var int? v =
+    do
+        if &lt;cnd&gt; then
+            escape 10;  // assigns 10 to &quot;v&quot;
+        else
+            nothing;    // &quot;v&quot; remains unassigned
+        end
+    end;
+</code></pre>
+
+<pre><code class="ceu">escape 0;               // program terminates with a status value of 0
 </code></pre>
 
 <h3 id="pre-do-end"><code>pre-do-end</code></h3>
@@ -1266,7 +1287,10 @@ end
 <p><code>TODO: dynamic scope</code></p>
 <hr />
 <h2 id="abstractions">Abstractions</h2>
-<p><code>TODO</code></p>
+<p>Céu provides <code>data</code> and <code>code</code> abstractions to encapsulate <a href="#TODO">storage</a> and
+<a href="#TODO">statements</a>, respectively.</p>
+<h3 id="data-abstractions">Data Abstractions</h3>
+<h3 id="code-abstractions">Code Abstractions</h3>
 <hr />
 <h2 id="assignments">Assignments</h2>
 <p><code>TODO</code></p>
