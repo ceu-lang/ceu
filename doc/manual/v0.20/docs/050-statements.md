@@ -912,10 +912,6 @@ end
 C Integration
 -------------
 
-The [compiler of Céu](#TODO) generates as output a program in C, which is
-embedded in a host program also in C, which is further compiled to the final
-binary program.
-
 Céu integrates safely with C, and programs can define and make native calls
 seamlessly while avoiding memory leaks and dangling pointers when dealing with
 external resources.
@@ -1001,6 +997,10 @@ native/pure   _strlen;          // POSIX's "strlen" is a "pure" function
 
 Native blocks allows programs to define new external symbols in C.
 
+The [compiler of Céu](#TODO) generates as output a program in C, which is
+embedded in a host program also in C, which is further compiled to the final
+binary program.
+
 The contents of native blocks is not parsed by Céu, but copied unchanged to the
 output in C depending on the modifier specified:
 
@@ -1047,18 +1047,22 @@ end
 ### Native Statements
 
 The contents of native statements in between `{` and `}` are inlined in the
-output in C.
+program.
 
 Native statements support interpolation of expressions in Céu which are
-expanded in the generated output in C when preceded by a `@`.
+expanded when preceded by a `@`.
 
 Examples:
 
 ```ceu
-var int v = 10;
+var int v_ceu = 10;
 {
-    printf("v = %d\n", @v);     // prints "v = 10"
-};
+    int v_c = @v_ceu * 2;       // yields 20
+}
+v_ceu = { v_c + @v_ceu };       // yields 30
+{
+    printf("%d\n", @v_ceu);     // prints 30
+}
 ```
 
 ### Native Calls
@@ -1183,7 +1187,83 @@ var _tp v = _f() as /plain;
 Lua Integration
 ---------------
 
-`TODO`
+Céu also integrates with Lua, providing [lua states](#TODO) to delimit the
+effects of [lua statements](#TODO) which can be inlined in programs:
+
+```ceu
+Lua_State ::= lua `[´ [Exp] `]´ do
+                 Block
+              end
+Lua_Stmts ::= `[´ {`=´} `[´
+                  { {<code in Lua> | `@´ Exp} }
+              `]´ {`=´} `]´
+```
+
+Lua statements transfer the control of the CPU to Lua, losing the guarantees of
+the [synchronous model](#TODO).
+Like [native statements](#TODO), programs should only resort to Lua for
+asynchronous functionality, such as non-blocking I/O, or simple `struct`
+accessors, but never for control purposes.
+
+### Lua Statements
+
+The contents of lua statements in between `[[` and `]]` are inlined in the
+program.
+
+Like [native statements](#TODO), lua statements support interpolation of
+expressions in Céu which are expanded when preceded by a `@`.
+
+Examples:
+
+```ceu
+var int v_ceu = 10;
+[[
+    v_lua = @v_ceu * 2          -- yields 20
+]]
+v_ceu = [[ v_lua + @v_ceu ]];   // yields 30
+[[
+    print(@v_ceu)               -- prints 30
+]]
+```
+
+Lua statements only affect the [lua state](#TODO) in which they are embedded.
+
+### Lua States
+
+A lua state creates a separate environment for its embedded
+[lua statements](#TODO).
+
+Programs have an implicit enclosing *global lua state* which all orphan
+statements apply.
+
+Examples:
+
+```ceu
+// "v" is not shared between the two statements
+par do
+    // global lua state
+    [[ v = 0 ]];
+    var int v = 0;
+    every 1s do
+        [[print('Lua 1', v, @v) ]];
+        v = v + 1;
+        [[ v = v + 1 ]];
+    end
+with
+    // local lua state
+    lua[] do
+        [[ v = 0 ]];
+        var int v = 0;
+        every 1s do
+            [[print('Lua 2', v, @v) ]];
+            v = v + 1;
+            [[ v = v + 1 ]];
+        end
+    end
+end
+```
+
+`TODO: dynamic scope`
 
 -------------------------------------------------------------------------------
 
