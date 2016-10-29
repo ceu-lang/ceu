@@ -40440,7 +40440,7 @@ escape 1;
 Test { [[
 data OptNIL.;
 ]],
-    parser = 'line 1 : after `OptNIL´ : expected `is´ or `;´ or `with´',
+    parser = 'line 1 : after `OptNIL´ : expected `as´ or `;´ or `with´',
     --parser = 'line 1 : after `is´ : expected abstraction identifier',
 }
 
@@ -40448,7 +40448,7 @@ Test { [[
 data OptNIL. with
 end
 ]],
-    parser = 'line 1 : after `OptNIL´ : expected `is´ or `;´ or `with´',
+    parser = 'line 1 : after `OptNIL´ : expected `as´ or `;´ or `with´',
     --parser = 'line 1 : after `is´ : expected abstraction identifier',
 }
 
@@ -41260,7 +41260,7 @@ var& Xx xxx  = &x_;
 escape xxx as int;
 ]],
     wrn = true,
-    props_ = 'line 1 : invalid `is´ declaration : expected `data´ hierarchy',
+    props_ = 'line 1 : invalid `as´ declaration : expected `data´ hierarchy',
 }
 
 Test { [[
@@ -41271,7 +41271,7 @@ var& Xx xxx  = &x_;
 escape xxx as int;
 ]],
     wrn = true,
-    props_ = 'line 2 : invalid `data´ declaration : missing `is´',
+    props_ = 'line 2 : invalid `data´ declaration : missing `as´',
 }
 
 Test { [[
@@ -41282,7 +41282,7 @@ var& Xx xxx  = &x_;
 escape xxx as int;
 ]],
     wrn = true,
-    props_ = 'line 1 : invalid `data´ declaration : missing `is´',
+    props_ = 'line 1 : invalid `data´ declaration : missing `as´',
 }
 
 Test { [[
@@ -41411,6 +41411,28 @@ escape (y as int);
 ]],
     wrn = true,
     run = 1,
+}
+
+Test { [[
+data Dd as 0;
+escape 1;
+]],
+    wrn = true,
+    props_ = 'line 1 : invalid `as´ declaration : expected `data´ hierarchy',
+}
+Test { [[
+data Dd as nothing;
+escape 1;
+]],
+    wrn = true,
+    props_ = 'line 1 : invalid `as´ declaration : expected `data´ hierarchy',
+}
+Test { [[
+data Dd as nothing;
+var Dd d;
+escape 1;
+]],
+    dcls = 'line 2 : invalid declaration : cannot instantiate `data´ "Dd"',
 }
 
 --<< DATA / HIER / ENUM

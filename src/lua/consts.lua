@@ -102,9 +102,9 @@ F = {
     end,
 
     Data = function (me)
-        local _, enum = unpack(me)
-        if enum then
-            ASR(enum.is_const=='int' or enum.is_const==true, enum,
+        local _, num = unpack(me)
+        if num and num~='nothing' then
+            ASR(num.is_const=='int' or num.is_const==true, num,
                 'invalid `data´ declaration : after `is´ : expected integer constant')
         end
     end,

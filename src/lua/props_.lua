@@ -126,7 +126,7 @@ F = {
 
     __check = function (me)
         local _,num = unpack(me)
-        ASR(num, me, 'invalid `data´ declaration : missing `is´')
+        ASR(num, me, 'invalid `data´ declaration : missing `as´')
         for _, sub in ipairs(me.hier.down) do
             F.__check(sub)
         end
@@ -135,7 +135,7 @@ F = {
     Data = function (me)
         local _,num = unpack(me)
         if num then
-            ASR(me.hier, me, 'invalid `is´ declaration : expected `data´ hierarchy')
+            ASR(me.hier, me, 'invalid `as´ declaration : expected `data´ hierarchy')
             F.__check(DCLS.base(me))
         end
     end,

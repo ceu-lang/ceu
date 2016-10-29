@@ -290,6 +290,16 @@ F = {
             ASR(alias, me,
                 'invalid declaration : variable cannot be of type `void´') 
         end
+
+        -- NO: instantiate "nothing" data
+        --  data Dd as nothing;
+        --  var Dd d;
+        local abs = TYPES.abs_dcl(Type,'Data')
+        if abs and (not alias) and (not TYPES.check(Type,'&&')) then
+            local _, num = unpack(abs)
+            ASR(num ~= 'nothing', me,
+                'invalid declaration : cannot instantiate `data´ "'..abs.id..'"')
+        end
     end,
 
     Vec = function (me)

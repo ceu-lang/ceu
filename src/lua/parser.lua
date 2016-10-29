@@ -520,7 +520,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
 -- DATA
 
-    , __data       = K'data' * V'__ID_abs' * OPT(KK'as' * V'__Exp')
+    , __data       = K'data' * V'__ID_abs' * OPT(KK'as' * (V'__Exp'+CK'nothing'))
     , _Data_simple = V'__data'
     , _Data_block  = V'__data' * K'with' * (
                         (V'_Vars_set'+V'_Vecs_set'+V'_Pools_set'+V'_Evts_set') *
