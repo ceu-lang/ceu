@@ -117,9 +117,11 @@
                 
                     <li><a class="toctree-l4" href="#lua-integration">Lua Integration</a></li>
                 
-                    <li><a class="toctree-l4" href="#abstractions">Abstractions</a></li>
+                    <li><a class="toctree-l4" href="#data-and-code-abstractions">Data and Code Abstractions</a></li>
                 
                     <li><a class="toctree-l4" href="#assignments">Assignments</a></li>
+                
+                    <li><a class="toctree-l4" href="#synchronous-control-statements">Synchronous Control Statements</a></li>
                 
             
             </ul>
@@ -677,8 +679,9 @@ end
 end
 </code></pre>
 
-<p>However, the body of an <code>every</code> cannot contain awaiting statements, ensuring
-that no occurrences of the specified event are ever missed.</p>
+<p>However, the body of an <code>every</code> cannot contain special
+<a href="#TODO">synchronous control statements</a>, ensuring that no occurrences of the
+specified event are ever missed.</p>
 <p>Examples:</p>
 <pre><code class="ceu">every 1s do
     _printf(&quot;Hello World!\n&quot;);      // prints the &quot;Hello World!&quot; message on every second
@@ -862,14 +865,16 @@ Atomic ::= atomic do
 
 <p>The program awaits the termination of the asynchronous body to proceed to the
 statement in sequence.</p>
-<p>Asynchronous blocks can contain <a href="#TODO">tight loops</a> but which keep the
+<p>Asynchronous bodies can contain <a href="#TODO">tight loops</a> but which keep the
 application reactive to incoming events.
 However, they do not support nesting of asynchronous statements, and do not
 support synchronous control statements (i.e., parallel compositions, event
 handling, pausing, etc.).</p>
-<p>By default, asynchronous blocks do not shared variables with their enclosing
+<p>By default, asynchronous bodies do not shared variables with their enclosing
 scope.
 The optional list of variables makes them visible to the block.</p>
+<p>Asynchronous bodies cannot contain special
+<a href="#TODO">synchronous control statements</a>.</p>
 <h3 id="asynchronous-block">Asynchronous Block</h3>
 <p>The asynchronous block (<code>async</code>) preserves deterministic execution with the
 rules as follows:</p>
@@ -1139,9 +1144,8 @@ s.f();
 
 <p><code>TODO: pointer return</code></p>
 <h3 id="finalization">Finalization</h3>
-<p>The finalization statement unconditionally executes a series of
-<a href="#TODO">non-yielding statements</a> when its corresponding enclosing block
-terminates, even if aborted abruptly.</p>
+<p>The finalization statement unconditionally executes a series of statements when
+its corresponding enclosing block terminates, even if aborted abruptly.</p>
 <p>Céu tracks the interaction of native calls with pointers and requires 
 <code>finalize</code> clauses to accompany them:</p>
 <ul>
@@ -1154,6 +1158,8 @@ terminates, even if aborted abruptly.</p>
   scope.</li>
 </ul>
 <p>In both cases, the program does not compile without the <code>finalize</code> statement.</p>
+<p>A <code>finalize</code> cannot contain special <a href="#TODO">synchronous control statements</a>.</p>
+<p>Examples:</p>
 <pre><code class="ceu">// Local resource finalization
 watching &lt;...&gt; do
     var _buffer_t msg;
@@ -1286,19 +1292,87 @@ end
 
 <p><code>TODO: dynamic scope, assignment, [dim]</code></p>
 <hr />
-<h2 id="abstractions">Abstractions</h2>
-<p>Céu supports <code>data</code> and <code>code</code> abstractions to encapsulate <a href="#TODO">storage</a> and
-<a href="#TODO">statements</a>, respectively.</p>
-<h3 id="data-abstractions">Data Abstractions</h3>
-<pre><code class="ceu">Data ::= data ID_abs [is Exp] [ with
-             { &lt;var|vector|pool|event declaration&gt; `;´ {`;´} }
+<h2 id="data-and-code-abstractions">Data and Code Abstractions</h2>
+<p>Céu supports reuse with <code>data</code> declarations to define new types, and <code>code</code>
+declarations to define new subprograms.</p>
+<h3 id="data-abstraction">Data Abstraction</h3>
+<p>The <code>data</code> declaration creates a new data type:</p>
+<pre><code class="ceu">Data ::= data ID_abs [as (nothing|Exp)] [ with
+             { &lt;var_set|vector_set|pool_set|event_set&gt; `;´ {`;´} }
          end ]
 </code></pre>
 
-<h3 id="code-abstractions">Code Abstractions</h3>
+<p>A declaration may include fields through <a href="#TODO">storage declarations</a> which
+are included in the <code>data</code> type and are publicly accessible.
+Field declarations may assign default values for uninitialized instances.</p>
+<p>Data types can form hierarchies using dots (<code>.</code>) in identifiers:</p>
+<ul>
+<li>An identifier like <code>A</code> makes <code>A</code> a base type.</li>
+<li>An identifier like <code>A.B</code> makes <code>A.B</code> a subtype of its supertype <code>A</code>.</li>
+</ul>
+<p>A subtype inherits all fields from its supertype.</p>
+<p>The optional <code>as</code> modifier expects <code>nothing</code> or a constant expression of type
+<code>int</code>:</p>
+<ul>
+<li><code>nothing</code>: the <code>data</code> cannot be instantiated.</li>
+<li>constant expression: typecasting a value of the type to <code>int</code> evaluates to
+                       the specified expression.</li>
+</ul>
+<p>Variables of the exact same type can be copied.
+The rules for assignments from a subtype to a supertype are as follows:</p>
+<ul>
+<li><a href="#TODO">Copy assignments</a> for pointers is allowed.</li>
+<li><a href="#TODO">Copy assignments</a> for plain values is not allowed.</li>
+<li><a href="#TODO">Binding assignment</a> is allowed.</li>
+</ul>
+<p>Examples:</p>
+<pre><code class="ceu">data Rect with
+    var int x, y, h, w;
+    var int z = 0;
+end
+var Rect r1 = val Rect(10,10, 100,100, _);  // &quot;r1.z&quot; defaults to 0
+var Rect r2 = r1;                           // copies all fields of &quot;r1&quot; to &quot;r2&quot;
+</code></pre>
+
+<pre><code class="ceu">data Direction       as nothing;    // &quot;Direction&quot; is a base type and cannot be intantiated
+data Direction.Right as  1;         // &quot;Direction.Right&quot; is a subtype of &quot;Direction&quot;
+data Direction.Left  as -1;         // &quot;Direction.Left&quot;  is a subtype of &quot;Direction&quot;
+var&amp; Direction dir = &lt;...&gt;;         // receives one of Right/Left
+escape (dir as int);                // returns 1 or -1
+</code></pre>
+
+<h3 id="code-abstraction">Code Abstraction</h3>
+<p>The <code>code/tight</code> and <code>code/await</code> declarations create new subprograms:</p>
+<pre><code class="ceu">Code_Tight ::= code/tight [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ `-&gt;´ Type
+Code_Await ::= code/await [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ [ `-&gt;´ `(´ Params `)´ ] `-&gt;´ (Type | FOREVER)
+
+Code_Impl ::= (Code_Tight | Code_Await) do
+                  Block
+              end
+
+Params ::= void | LIST([dynamic] Class ID_int)
+Class ::= var [`&amp;´|`&amp;?´] [`/´hold] * Type
+       |  vector `&amp;´ `[´ [Exp] `]´ Type
+       |  pool `&amp;´ `[´ [Exp] `]´ Type
+       |  event [`&amp;´|`&amp;?´] (Type | `(´LIST(Type)`)´)
+</code></pre>
+
+<p>A <code>code/tight</code> is a subprogram that .</p>
 <hr />
 <h2 id="assignments">Assignments</h2>
 <p><code>TODO</code></p>
+<h2 id="synchronous-control-statements">Synchronous Control Statements</h2>
+<p>The <em>synchronous control statements</em>
+<code>await</code>, <code>spawn</code>, <code>emit</code> (internal events), <code>every</code>, <code>finalize</code>, <code>pause/if</code>,
+<code>par</code>, <code>par/and</code>, <code>par/or</code>, and <code>watching</code>
+cannot appear in
+<a href="#TODO">event iterators</a>,
+<a href="#TODO">pool iterators</a>,
+<a href="#TODO">asynchronous execution</a>,
+<a href="#TODO">finalization</a>,
+and
+<a href="#TODO">tight code abstractions</a>.</p>
+<p>As an exception, an <code>every</code> can <code>emit</code> internal events.</p>
               
             </div>
           </div>
