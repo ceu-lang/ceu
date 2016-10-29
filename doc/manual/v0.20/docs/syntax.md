@@ -179,7 +179,7 @@ Stmt ::= nothing
 
       /* Data */
 
-      | data ID_abs [is Exp] [ with
+      | data ID_abs [as (nothing|Exp)] [ with
             { <var|vector|pool|event declaration> `;´ {`;´} }
         end ]
 
@@ -189,7 +189,7 @@ Stmt ::= nothing
       | code/tight [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ `->´ Type
 
       // Code_Await ::=
-      | code/await [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ `->´ [ `(´ Params `)´ `->´ ] (Type | FOREVER)
+      | code/await [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ [ `->´ `(´ Params `)´ ] `->´ (Type | FOREVER)
         // where
             Params ::= void | LIST([dynamic] Class ID_int)
             Class ::= var [`&´|`&?´] [`/´hold] * Type

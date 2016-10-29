@@ -1347,21 +1347,63 @@ end
 
 -------------------------------------------------------------------------------
 
-Abstractions
-------------
+Data and Code
+-------------
 
-Céu supports `data` and `code` abstractions to encapsulate [storage](#TODO) and
-[statements](#TODO), respectively.
+Céu supports `data` and `code` declarations to define new types and subprograms
+respectively.
 
 ### Data Abstractions
 
+The `data` declaration creates a new data type:
+
 ```ceu
-Data ::= data ID_abs [is Exp] [ with
+Data ::= data ID_abs [as (nothing|Exp)] [ with
              { <var|vector|pool|event declaration> `;´ {`;´} }
          end ]
 ```
 
+A declaration may include fields through [storage declarations](#TODO) which
+are included in the `data` type and are publicly accessible.
+
+Data types can form hierarchies using dots (`.`) in identifiers:
+
+- An identifier like `A` makes `A` a base type.
+- An identifier like `A.B` makes `A.B` a subtype of `A`.
+
+A subtype inherits all fields from its supertype.
+
+The optional `as` modifier expects an constant expression of type `int`.
+Typecasting a value of the type to `int` evaluates to the specified expression.
+
+Examples:
+
+```ceu
+data Direction       as  0;     // "Direction" is the base type
+data Direction.Right as  1;     // "Direction.Right" and "Direction.Left" are subtypes
+data Direction.Left  as -1;     // or "Direction"
+```
+
+- hierarchical + inheritance + subtyping
+
+- dynamic and static dispatching (see code)
+
 ### Code Abstractions
+
+```ceu
+Code_Tight ::= code/tight [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ `->´ Type
+Code_Await ::= code/await [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ [ `->´ `(´ Params `)´ ] `->´ (Type | FOREVER)
+
+Code_Impl ::= (Code_Tight | Code_Await) do
+                  Block
+              end
+
+Params ::= void | LIST([dynamic] Class ID_int)
+Class ::= var [`&´|`&?´] [`/´hold] * Type
+       |  vector `&´ `[´ [Exp] `]´ Type
+       |  pool `&´ `[´ [Exp] `]´ Type
+       |  event [`&´|`&?´] (Type | `(´LIST(Type)`)´)
+```
 
 -------------------------------------------------------------------------------
 
