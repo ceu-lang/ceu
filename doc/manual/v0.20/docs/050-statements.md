@@ -602,8 +602,9 @@ loop do
 end
 ```
 
-However, the body of an `every` cannot contain awaiting statements, ensuring
-that no occurrences of the specified event are ever missed.
+However, the body of an `every` cannot contain special
+[synchronous control statements](#TODO), ensuring that no occurrences of the
+specified event are ever missed.
 
 Examples:
 
@@ -839,15 +840,18 @@ Atomic ::= atomic do
 The program awaits the termination of the asynchronous body to proceed to the
 statement in sequence.
 
-Asynchronous blocks can contain [tight loops](#TODO) but which keep the
+Asynchronous bodies can contain [tight loops](#TODO) but which keep the
 application reactive to incoming events.
 However, they do not support nesting of asynchronous statements, and do not
 support synchronous control statements (i.e., parallel compositions, event
 handling, pausing, etc.).
 
-By default, asynchronous blocks do not shared variables with their enclosing
+By default, asynchronous bodies do not shared variables with their enclosing
 scope.
 The optional list of variables makes them visible to the block.
+
+Asynchronous bodies cannot contain special
+[synchronous control statements](#TODO).
 
 ### Asynchronous Block
 
@@ -1169,9 +1173,8 @@ s.f();
 
 ### Finalization
 
-The finalization statement unconditionally executes a series of
-[non-yielding statements](#TODO) when its corresponding enclosing block
-terminates, even if aborted abruptly.
+The finalization statement unconditionally executes a series of statements when
+its corresponding enclosing block terminates, even if aborted abruptly.
 
 Céu tracks the interaction of native calls with pointers and requires 
 `finalize` clauses to accompany them:
@@ -1185,6 +1188,10 @@ Céu tracks the interaction of native calls with pointers and requires
   scope.
 
 In both cases, the program does not compile without the `finalize` statement.
+
+A `finalize` cannot contain special [synchronous control statements](#TODO).
+
+Examples:
 
 ```ceu
 // Local resource finalization
@@ -1350,8 +1357,8 @@ end
 Data and Code Abstractions
 --------------------------
 
-Céu supports `data` and `code` declarations to define new types and subprograms
-respectively.
+Céu supports reuse with `data` declarations to define new types, and `code`
+declarations to define new subprograms.
 
 ### Data Abstraction
 
@@ -1362,8 +1369,6 @@ Data ::= data ID_abs [as (nothing|Exp)] [ with
              { <var_set|vector_set|pool_set|event_set> `;´ {`;´} }
          end ]
 ```
-
-#### Declaration
 
 A declaration may include fields through [storage declarations](#TODO) which
 are included in the `data` type and are publicly accessible.
@@ -1411,6 +1416,8 @@ escape (dir as int);                // returns 1 or -1
 
 ### Code Abstraction
 
+The `code/tight` and `code/await` declarations create new subprograms:
+
 ```ceu
 Code_Tight ::= code/tight [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ `->´ Type
 Code_Await ::= code/await [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ [ `->´ `(´ Params `)´ ] `->´ (Type | FOREVER)
@@ -1426,9 +1433,27 @@ Class ::= var [`&´|`&?´] [`/´hold] * Type
        |  event [`&´|`&?´] (Type | `(´LIST(Type)`)´)
 ```
 
+A `code/tight` is a subprogram that .
+
 -------------------------------------------------------------------------------
 
 Assignments
 -----------
 
 `TODO`
+
+Synchronous Control Statements
+------------------------------
+
+The *synchronous control statements*
+`await`, `spawn`, `emit` (internal events), `every`, `finalize`, `pause/if`,
+`par`, `par/and`, `par/or`, and `watching`
+cannot appear in
+[event iterators](#TODO),
+[pool iterators](#TODO),
+[asynchronous execution](#TODO),
+[finalization](#TODO),
+and
+[tight code abstractions](#TODO).
+
+As an exception, an `every` can `emit` internal events.
