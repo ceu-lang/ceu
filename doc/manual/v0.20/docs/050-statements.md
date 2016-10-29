@@ -1347,48 +1347,69 @@ end
 
 -------------------------------------------------------------------------------
 
-Data and Code
--------------
+Data and Code Abstractions
+--------------------------
 
 Céu supports `data` and `code` declarations to define new types and subprograms
 respectively.
 
-### Data Abstractions
+### Data Abstraction
 
 The `data` declaration creates a new data type:
 
 ```ceu
 Data ::= data ID_abs [as (nothing|Exp)] [ with
-             { <var|vector|pool|event declaration> `;´ {`;´} }
+             { <var_set|vector_set|pool_set|event_set> `;´ {`;´} }
          end ]
 ```
 
+#### Declaration
+
 A declaration may include fields through [storage declarations](#TODO) which
 are included in the `data` type and are publicly accessible.
+Field declarations may assign default values for uninitialized instances.
 
 Data types can form hierarchies using dots (`.`) in identifiers:
 
 - An identifier like `A` makes `A` a base type.
-- An identifier like `A.B` makes `A.B` a subtype of `A`.
+- An identifier like `A.B` makes `A.B` a subtype of its supertype `A`.
 
 A subtype inherits all fields from its supertype.
 
-The optional `as` modifier expects an constant expression of type `int`.
-Typecasting a value of the type to `int` evaluates to the specified expression.
+The optional `as` modifier expects `nothing` or a constant expression of type
+`int`:
+
+- `nothing`: the `data` cannot be instantiated.
+- constant expression: typecasting a value of the type to `int` evaluates to
+                       the specified expression.
+
+Variables of the exact same type can be copied.
+The rules for assignments from a subtype to a supertype are as follows:
+
+- [Copy assignments](#TODO) for pointers is allowed.
+- [Copy assignments](#TODO) for plain values is not allowed.
+- [Binding assignment](#TODO) is allowed.
 
 Examples:
 
 ```ceu
-data Direction       as  0;     // "Direction" is the base type
-data Direction.Right as  1;     // "Direction.Right" and "Direction.Left" are subtypes
-data Direction.Left  as -1;     // or "Direction"
+data Rect with
+    var int x, y, h, w;
+    var int z = 0;
+end
+var Rect r1 = val Rect(10,10, 100,100, _);  // "r1.z" defaults to 0
+var Rect r2 = r1;                           // copies all fields of "r1" to "r2"
 ```
 
-- hierarchical + inheritance + subtyping
+```ceu
+data Direction       as nothing;    // "Direction" is a base type and cannot be intantiated
+data Direction.Right as  1;         // "Direction.Right" is a subtype of "Direction"
+data Direction.Left  as -1;         // "Direction.Left"  is a subtype of "Direction"
+var& Direction dir = <...>;         // receives one of Right/Left
+escape (dir as int);                // returns 1 or -1
+```
 
-- dynamic and static dispatching (see code)
-
-### Code Abstractions
+### Code Abstraction
 
 ```ceu
 Code_Tight ::= code/tight [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ `->´ Type
