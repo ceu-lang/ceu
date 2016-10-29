@@ -37949,6 +37949,55 @@ escape ret;
     wrn = true,
     run = 15,
 }
+
+Test { [[
+code/tight Ff (var int x) -> void do
+end
+code/tight Ff (var int x) -> void do
+end
+escape 1;
+]],
+    wrn = true,
+    dcls = 'line 3 : invalid `code´ declaration : body for "Ff" already exists',
+}
+
+Test { [[
+data Dd;
+code/tight/dynamic Ff (dynamic var& Dd d) -> void do
+end
+code/tight Ff (var int x) -> void do
+end
+escape 1;
+]],
+    wrn = true,
+    dcls = 'line 4 : invalid `code´ declaration : body for "Ff" already exists',
+}
+
+Test { [[
+data Dd;
+code/tight/dynamic Ff (dynamic var& Dd d) -> void do
+end
+code/tight/dynamic Ff (dynamic var& Dd d) -> void do
+end
+escape 1;
+]],
+    wrn = true,
+    dcls = 'line 4 : invalid `code´ declaration : body for "Ff" already exists',
+}
+
+Test { [[
+data Dd;
+data Ee;
+code/tight/dynamic Ff (dynamic var& Dd d) -> void do
+end
+code/tight/dynamic Ff (dynamic var& Ee d) -> void do
+end
+escape 1;
+]],
+    wrn = true,
+    props_ = 'line 3 : invalid `dynamic´ declaration : parameter #1 : expected `data´ in hierarchy',
+}
+
 --<< CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
 
 -->> CODE / AWAIT / RECURSIVE
