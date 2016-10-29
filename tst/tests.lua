@@ -41243,8 +41243,8 @@ escape 1;
 }
 
 Test { [[
-data Xx is 1;
-data Yy is 1;
+data Xx as 1;
+data Yy as 1;
 var  Xx x_ = _;
 var& Xx x  = &x_;
 escape (x as Yy) as int;
@@ -41254,7 +41254,7 @@ escape (x as Yy) as int;
 }
 
 Test { [[
-data Xx is 1;
+data Xx as 1;
 var  Xx x_ = val Xx();
 var& Xx xxx  = &x_;
 escape xxx as int;
@@ -41264,7 +41264,7 @@ escape xxx as int;
 }
 
 Test { [[
-data Xx is 1;
+data Xx as 1;
 data Xx.Yy;
 var  Xx x_ = val Xx();
 var& Xx xxx  = &x_;
@@ -41276,7 +41276,7 @@ escape xxx as int;
 
 Test { [[
 data Xx;
-data Xx.Yy is 1;
+data Xx.Yy as 1;
 var  Xx x_ = val Xx();
 var& Xx xxx  = &x_;
 escape xxx as int;
@@ -41286,8 +41286,8 @@ escape xxx as int;
 }
 
 Test { [[
-data Xx is 1;
-data Xx.Yy is 2;
+data Xx as 1;
+data Xx.Yy as 2;
 var  Xx x_ = val Xx();
 var& Xx xxx  = &x_;
 escape xxx as int;
@@ -41297,8 +41297,8 @@ escape xxx as int;
 }
 
 Test { [[
-data Xx is 1;
-data Xx.Yy is 1;
+data Xx as 1;
+data Xx.Yy as 1;
 var  Xx x = val Xx();
 escape x as int;
 ]],
@@ -41308,7 +41308,7 @@ escape x as int;
 
 Test { [[
 var int a = 0;
-data Xx is a;
+data Xx as a;
 var Xx x = _;
 escape x as int;
 ]],
@@ -41325,9 +41325,9 @@ native/pre do
     };
 end
 
-data Xx is 0;
-data Xx.Left  is _LEFT;
-data Xx.Right is _RIGHT;
+data Xx as 0;
+data Xx.Left  as _LEFT;
+data Xx.Right as _RIGHT;
 
 var Xx x1 = val Xx.Left();
 var Xx x2 = val Xx.Right();
@@ -41338,8 +41338,8 @@ escape (x1 as int) + (x2 as int);
 }
 
 Test { [[
-data Xx is 0;
-data Xx.Yy is 1;
+data Xx as 0;
+data Xx.Yy as 1;
 
 code/tight Ff (var int x) -> int do
     escape 111;
@@ -41353,8 +41353,8 @@ escape rrr;
 }
 
 Test { [[
-data Xx is 0;
-data Xx.Yy is 1;
+data Xx as 0;
+data Xx.Yy as 1;
 
 code/tight Ff (var Xx x) -> int do
     escape x as int;
@@ -41367,8 +41367,8 @@ escape rrr;
 }
 
 Test { [[
-data Xx is -1;
-data Xx.Yy is 0;
+data Xx as -1;
+data Xx.Yy as 0;
 var Xx x = val Xx();
 escape ((x as int) == -1) as int;
 ]],
@@ -41377,9 +41377,9 @@ escape ((x as int) == -1) as int;
 }
 
 Test { [[
-data Direction is 0;
-data Direction.Right is  1;
-data Direction.Left is -1;
+data Direction as 0;
+data Direction.Right as  1;
+data Direction.Left as -1;
 var Direction.Right x = _;
 var Direction y = x;
 escape (y as int);
@@ -41390,9 +41390,9 @@ escape (y as int);
 }
 
 Test { [[
-data Direction is 0;
-data Direction.Right is  1;
-data Direction.Left is -1;
+data Direction as 0;
+data Direction.Right as  1;
+data Direction.Left as -1;
 var Direction.Right xxx = val Direction.Right();
 var Direction.Right yyy = xxx;
 escape (yyy as int);
@@ -41402,9 +41402,9 @@ escape (yyy as int);
 }
 
 Test { [[
-data Direction is 0;
-data Direction.Right is  1;
-data Direction.Left is -1;
+data Direction as 0;
+data Direction.Right as  1;
+data Direction.Left as -1;
 var Direction.Right x = val Direction.Right();
 var& Direction y = &x;
 escape (y as int);
