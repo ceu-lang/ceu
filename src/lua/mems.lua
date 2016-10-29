@@ -169,7 +169,8 @@ tceu_pool_pak]]..ptr..' '..id2..[[;
                 if dcl.mods.dynamic then
                     local _,Type,id = unpack(dcl)
                     local data = AST.asr(Type,'',1,'ID_abs')
-                    assert(data.dcl.hier and (not data.dcl.hier.up))
+                    ASR(data.dcl.hier and (not data.dcl.hier.up), me,
+                        'invalid `code´ declaration : missing base case')
                     me.mems.args = me.mems.args .. [[
 tceu_ndata _data_]]..i..[[;     /* force multimethod arg data id */
 ]]

@@ -37998,6 +37998,47 @@ escape 1;
     props_ = 'line 3 : invalid `dynamic´ declaration : parameter #1 : expected `data´ in hierarchy',
 }
 
+Test { [[
+data Dd;
+data Dd.Ee;
+code/tight/dynamic Ff (dynamic var& Dd a, dynamic var& Dd b) -> void do
+end
+code/tight/dynamic Ff (dynamic var& Dd a, dynamic var& Dd.Ee b) -> void do
+end
+code/tight/dynamic Ff (dynamic var& Dd.Ee a, dynamic var& Dd b) -> void do
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Dd;
+data Dd.Ee;
+code/tight/dynamic Ff (dynamic var& Dd.Ee b) -> void do
+end
+code/tight/dynamic Ff (dynamic var& Dd b) -> void do
+end
+escape 1;
+]],
+    wrn = true,
+    mems = 'line 3 : invalid `code´ declaration : missing base case',
+}
+
+Test { [[
+data Dd;
+data Dd.Ee;
+code/tight/dynamic Ff (dynamic var& Dd a, dynamic var& Dd.Ee b) -> void do
+end
+code/tight/dynamic Ff (dynamic var& Dd.Ee a, dynamic var& Dd b) -> void do
+end
+escape 1;
+]],
+    wrn = true,
+    mems = 'line 3 : invalid `code´ declaration : missing base case',
+}
+
 --<< CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
 
 -->> CODE / AWAIT / RECURSIVE
