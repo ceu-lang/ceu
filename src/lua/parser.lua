@@ -70,7 +70,7 @@ local T = {
     },
 
     {
-        '`dynamic´ or `vector´ or `pool´ or `event´ or `var´',
+        '`vector´ or `pool´ or `event´ or `dynamic´ or `var´',
         '`vector´ or `pool´ or `event´ or `var´',
     },
     {
@@ -475,7 +475,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                              Cg(K'/recursive'*Cc'recursive','recursive')^-1 ) *
                 (V'__ID_abs'-V'__id_data') *
                     V'Code_Pars' * KK'->' *
-                        OPT(V'Code_Pars' * KK'->') *
+                        OPT(V'_Code_Pars_Init' * KK'->') *
                             V'Code_Ret'
 
     , _Code_proto = V'Y' * V'__code' * Cc(false)
@@ -505,16 +505,26 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     -- (var& int, var/nohold void&&)
     -- (var& int v, var/nohold void&& ptr)
-    , __typepars_pre = CK'vector' * CKK'&' * V'__Dim' * V'Type'
-                     + CK'pool'   * CKK'&' * V'__Dim' * V'Type'
-                     + CK'event'  * OPT(V'__ALS') * Cc(false) * (PARENS(V'Typelist') + V'Type')
-                     + CK'var'    * OPT(V'__ALS') * OPT(KK'/'*CK'hold') * V'Type'
-    , _Code_Pars_Item  = Ct( Cg(K'dynamic','dynamic')^-1 )
-                            * V'__typepars_pre' * OPT(V'__ID_int')
+    , __typepars = Cc{} * CK'vector' * CKK'&' * V'__Dim' * V'Type'
+                 + Cc{} * CK'pool'   * CKK'&' * V'__Dim' * V'Type'
+                 + Cc{} * CK'event'  * CKK'&' * Cc(false) * (PARENS(V'Typelist') + V'Type')
+                 + Ct(Cg(K'dynamic','dynamic')^-1)
+                        * CK'var'    * OPT(CKK'&') * OPT(KK'/'*CK'hold') * V'Type'
+    , _Code_Pars_Item  = V'__typepars' * OPT(V'__ID_int')
+
+    , __typepars_init = Cc{} * CK'vector' * CKK'&' * V'__Dim' * V'Type'
+                      + Cc{} * CK'pool'   * CKK'&' * V'__Dim' * V'Type'
+                      + Cc{} * CK'event'  * (V'__ALS') * Cc(false) * (PARENS(V'Typelist') + V'Type')
+                      + Cc{} * CK'var'    * (V'__ALS') * Cc(false) * V'Type'
+    , _Code_Pars_Init_Item = V'__typepars_init' * OPT(V'__ID_int')
 
     , Code_Pars = #KK'(' * (
                     PARENS(P'void') +
                     PARENS(LIST(V'_Code_Pars_Item'))
+                  )
+    , _Code_Pars_Init = #KK'(' * (
+                    PARENS(P'void') +
+                    PARENS(LIST(V'_Code_Pars_Init_Item'))
                   )
     , Code_Ret = (V'Type' + CK'FOREVER')
 

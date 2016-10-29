@@ -235,6 +235,10 @@ error'TODO: luacov never executes this?'
         return ret
     end,
 
+    _Code_Pars_Init__PRE = function (me)
+        me.tag = 'Code_Pars'
+        return F.Code_Pars__PRE(me)
+    end,
     Code_Pars__PRE = function (me)
         local Code = AST.par(me,'Code')
 
@@ -247,7 +251,7 @@ error'TODO: luacov never executes this?'
             if v == 'void' then
 error'TODO'
             else
-                AST.asr(v,'_Code_Pars_Item')
+                assert(AST.get(v,'_Code_Pars_Item') or AST.get(v,'_Code_Pars_Init_Item'))
                 local mods,pre,is_alias = unpack(v)
                 local _,dim,hold,tp,id
                 local dcl

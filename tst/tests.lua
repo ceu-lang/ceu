@@ -35442,7 +35442,8 @@ end
 
 escape 0;
 ]],
-    dcls = 'line 1 : invalid `code´ declaration : `watching´ parameter #1 : expected `&´',
+    --dcls = 'line 1 : invalid `code´ declaration : `watching´ parameter #1 : expected `&´',
+    parser = 'line 1 : after `var´ : expected `&?´ or `&´',
 }
 Test { [[
 code/await Ff (void) -> (var& int x) -> void do

@@ -388,6 +388,7 @@ F = {
         end
 
         -- check if all mid's are "&" aliases
+--[[
         if AST.asr(me,1,'Stmts')[2] == me then
             for i, dcl in ipairs(me) do
                 local is_alias, Type = unpack(dcl)
@@ -396,6 +397,7 @@ F = {
 assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             end
         end
+]]
 
         -- multi-methods: changes "me.id" on Code
         me.ids_dyn = ''
