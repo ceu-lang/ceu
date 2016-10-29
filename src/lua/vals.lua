@@ -445,8 +445,8 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
         if plain and plain.dcl and plain.dcl.tag=='Data'
             and TYPES.check(Type,'int')
         then
-
-            return '(CEU_DATA_NUMS_'..plain.dcl.id_..'['..V(e)..'._enum])'
+            local base = DCLS.base(plain.dcl)
+            return '(CEU_DATA_NUMS_'..base.id_..'['..V(e)..'._enum])'
         end
 
         local ret do

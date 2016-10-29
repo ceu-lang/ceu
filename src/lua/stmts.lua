@@ -31,6 +31,23 @@ F = {
             ASR(not TYPES.check(fr.info.tp,'?'), me,
                 'invalid assignment : expected operator `!´')
         end
+
+        -- abs vs abs
+        local to_abs = TYPES.abs_dcl(to.info.tp, 'Data')
+        if to_abs then
+            local is_alias = unpack(to.info)
+            if not is_alias then
+                local fr_abs = TYPES.abs_dcl(fr.info.tp, 'Data')
+                local is_alias = unpack(fr.info)
+                assert(not is_alias)
+
+                ASR(TYPES.is_equal(to.info.tp, fr.info.tp), me,
+                    'invalid assignment : `data´ copy : expected same `data´')
+
+                --ASR(to_abs.weaker=='plain', me,
+                    --'invalid assignment : `data´ copy : expected plain `data´')
+            end
+        end
     end,
 
     __set_vec = function (fr, to_info)

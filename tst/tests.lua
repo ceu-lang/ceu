@@ -9,20 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
-Test { [=[
-[[
-    v_lua = @(2 * 2)
- -- ola
-]]
-escape 1;
-]=],
-    _opts = {
-        ceu = true,
-        ceu_features_lua = 'true',
-    },
-    run = 1,
-}
-
 do return end -- OK
 ---]=====]
 
@@ -41385,6 +41371,43 @@ data Xx is -1;
 data Xx.Yy is 0;
 var Xx x = val Xx();
 escape ((x as int) == -1) as int;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Direction is 0;
+data Direction.Right is  1;
+data Direction.Left is -1;
+var Direction.Right x = _;
+var Direction y = x;
+escape (y as int);
+]],
+    wrn = true,
+    run = 1,
+    stmts = 'line 5 : invalid assignment : `data´ copy : expected same `data´',
+}
+
+Test { [[
+data Direction is 0;
+data Direction.Right is  1;
+data Direction.Left is -1;
+var Direction.Right xxx = val Direction.Right();
+var Direction.Right yyy = xxx;
+escape (yyy as int);
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Direction is 0;
+data Direction.Right is  1;
+data Direction.Left is -1;
+var Direction.Right x = val Direction.Right();
+var& Direction y = &x;
+escape (y as int);
 ]],
     wrn = true,
     run = 1,
