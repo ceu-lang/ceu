@@ -21853,7 +21853,8 @@ await async do
     end;
 end;
 ]],
-    props='not permitted inside `async´'
+    props_ = 'line 2 : invalid `async´ : unexpected enclosing `async´',
+    --props='not permitted inside `async´'
 }
 Test { [[
 await async do
@@ -21862,7 +21863,8 @@ await async do
     end;
 end;
 ]],
-    props='not permitted inside `async´'
+    props_ = 'line 2 : invalid `par/or´ : unexpected enclosing `async´',
+    --props='not permitted inside `async´'
 }
 
 Test { [[
@@ -22483,6 +22485,22 @@ native/plain _tceu_queue;
 input _tceu_queue&& GO;
 var _tceu_queue&& qu_;
 every qu_ in GO do
+    var _tceu_queue qu = * qu_;
+    await async(qu) do
+        emit E(qu.param.ptr);
+    end
+end
+]],
+    props_ = 'line 7 : invalid `async´ : unexpected enclosing `every´',
+}
+
+Test { [[
+input void&& E;
+native/plain _tceu_queue;
+input _tceu_queue&& GO;
+loop do
+    var _tceu_queue&& qu_;
+    qu_ = await GO;
     var _tceu_queue qu = * qu_;
     await async(qu) do
         emit E(qu.param.ptr);
@@ -26831,7 +26849,8 @@ await async do
     end
 end
 ]],
-    props = "line 3 : not permitted inside `async´",
+    props_ = 'line 3 : invalid `par/or´ : unexpected enclosing `async´',
+    --props = "line 3 : not permitted inside `async´",
 }
 Test { [[
 await async do
@@ -26844,7 +26863,8 @@ await async do
     end
 end
 ]],
-    props = "line 4 : not permitted inside `async´",
+    props_ = 'line 4 : invalid `par/and´ : unexpected enclosing `async´',
+    --props = "line 4 : not permitted inside `async´",
 }
 Test { [[
 await async do
@@ -26855,7 +26875,8 @@ await async do
     end
 end
 ]],
-    props = "line 2 : not permitted inside `async´",
+    props_ = 'line 2 : invalid `par´ : unexpected enclosing `async´',
+    --props = "line 2 : not permitted inside `async´",
 }
 
 -- DFA
@@ -30209,7 +30230,8 @@ do
     end
 end
 ]],
-    props = "line 7 : not permitted inside `finalize´",
+    props_ = 'line 7 : invalid `await´ : unexpected enclosing `finalize´',
+    --props = "line 7 : not permitted inside `finalize´",
 }
 
 Test { [[
@@ -30223,7 +30245,8 @@ do
     end
 end
 ]],
-    props = "line 7 : not permitted inside `finalize´",
+    props_ = 'line 6 : invalid `async´ : unexpected enclosing `finalize´',
+    --props = "line 7 : not permitted inside `finalize´",
 }
 
 Test { [[
@@ -32081,7 +32104,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    props = 'line 3 : not permitted inside `function´',
+    props_ = 'line 4 : invalid `await´ : unexpected enclosing `code´',
+    --props = 'line 3 : not permitted inside `function´',
 }
 
 Test { [[

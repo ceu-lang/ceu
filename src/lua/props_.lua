@@ -1,16 +1,18 @@
+local sync = {
+    Await_Forever=true, Await_Ext=true, Await_Int=true, Await_Wclock=true,
+    Abs_Spawn=true, Abs_Await=true,
+    Emit_Int=true,
+    Every=true, Finalize=true, Pause_If=true,
+    Par=true, Par_And=true, Par_Or=true, Watching=true,
+    Async=true, Async_Thread=true,
+}
+
 local NO = {
-    Every = {
-        Await_Forever=true, Await_Ext=true, Await_Int=true, Await_Wclock=true,
-        Abs_Await=true, Every=true, Finalize=true,
-    },
-    Loop_Pool = {
-        Await_Forever=true, Await_Ext=true, Await_Int=true, Await_Wclock=true,
-        Abs_Await=true, Every=true, Finalize=true,
-    },
-    Async = {
-        Await_Forever=true, Await_Ext=true, Await_Int=true, Await_Wclock=true,
-        Abs_Await=true, Every=true, Finalize=true,
-    },
+    Every     = sync,
+    Loop_Pool = sync,
+    Async     = sync,
+    Finalize  = sync,
+    Code      = sync,   -- only code/tight
 }
 
 F = {
@@ -23,6 +25,13 @@ F = {
                     local _,Await = unpack(AST.asr(par,'', 1,'Loop', 2,'Block', 1,'Stmts'))
                     if AST.is_par(Await,me) then
                         return -- ok
+                    end
+                elseif par.tag == 'Code' then
+                    local _, mods = unpack(par)
+                    if mods.await then
+                        return -- ok
+                    elseif me.tag == 'Finalize' then
+                        return -- ok (empty finalizer)
                     end
                 end
                 ASR(false, me,
