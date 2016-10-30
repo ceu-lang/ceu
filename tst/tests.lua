@@ -38039,6 +38039,48 @@ escape 1;
     mems = 'line 3 : invalid `code´ declaration : missing base case',
 }
 
+Test { [[
+data Media as nothing;
+data Media.Audio as 1;
+data Media.Video as 1;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Media as nothing;
+data Media.Audio;
+data Media.Video;
+
+code/await/dynamic Play (dynamic var& Media.Audio media) -> void do end
+code/await/dynamic Play (dynamic var& Media.Video media) -> void do end
+
+var Media.Audio m = val Media.Audio();
+await/dynamic Play(&m);
+]],
+    wrn = true,
+    mems = 'line 5 : invalid `code´ declaration : missing base case',
+}
+
+Test { [[
+data Media as nothing;
+data Media.Audio as 1;
+data Media.Video as 1;
+
+code/await/dynamic Play (dynamic var& Media media) -> void do end
+code/await/dynamic Play (dynamic var& Media.Audio media) -> void do end
+code/await/dynamic Play (dynamic var& Media.Video media) -> void do end
+
+var Media.Audio m = val Media.Audio();
+await/dynamic Play(&m);
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
 --<< CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
 
 -->> CODE / AWAIT / RECURSIVE

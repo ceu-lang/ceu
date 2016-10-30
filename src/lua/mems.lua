@@ -738,7 +738,7 @@ local function ids_supers_enums (dcl)
 ]]
     end
 
-    if num then
+    if num and num~='nothing' then
         t.nums = t.nums .. [[
     ]]..V(num)..[[,
 ]]

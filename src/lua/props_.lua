@@ -145,7 +145,9 @@ F = {
         local _,num = unpack(me)
         if num then
             ASR(me.hier, me, 'invalid `as´ declaration : expected `data´ hierarchy')
-            F.__check(DCLS.base(me))
+            if num ~= 'nothing' then
+                F.__check(DCLS.base(me))
+            end
         end
     end,
 
