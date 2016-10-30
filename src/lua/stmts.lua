@@ -41,8 +41,9 @@ F = {
                 local is_alias = unpack(fr.info)
                 assert(not is_alias)
 
-                ASR(TYPES.is_equal(to.info.tp, fr.info.tp), me,
-                    'invalid assignment : `data´ copy : expected same `data´')
+                EXPS.check_tp(me, to.info.tp, fr.info.tp, 'invalid assignment')
+                ASR(to_abs.n_vars == fr_abs.n_vars, me,
+                    'invalid assignment : `data´ copy : unmatching fields')
 
                 --ASR(to_abs.weaker=='plain', me,
                     --'invalid assignment : `data´ copy : expected plain `data´')

@@ -41535,15 +41535,16 @@ escape ((x as int) == -1) as int;
 
 Test { [[
 data Direction as 0;
-data Direction.Right as  1;
-data Direction.Left as -1;
-var Direction.Right x = _;
-var Direction y = x;
-escape (y as int);
+data Direction.Right as 10;
+data Direction.Left as 20;
+var Direction.Right x = val Direction.Right();
+var Direction y1 = val Direction.Left();
+var Direction y2 = x;
+escape (y1 as int) + (y2 as int);
 ]],
     wrn = true,
-    run = 1,
-    stmts = 'line 5 : invalid assignment : `data´ copy : expected same `data´',
+    run = 30,
+    --stmts = 'line 5 : invalid assignment : `data´ copy : expected same `data´',
 }
 
 Test { [[

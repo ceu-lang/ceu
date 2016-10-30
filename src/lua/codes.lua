@@ -101,6 +101,28 @@ function SET (me, to, fr, fr_ok, fr_ctx)
         fr_val = cast..V(fr,fr_ctx)
     end
 
+    -- Base <- Super
+    do
+        local to_abs = TYPES.abs_dcl(to.info.tp, 'Data')
+        local is_alias = unpack(to.info)
+        if to_abs and (not is_alias) then
+            local fr_id = AST.get(fr,'Abs_Cons', 1,'ID_abs')
+            if fr_id then
+                --  var Base x = Super(...);    // same fields
+                -- to
+                --  var Base x = Base(...);     // same fields
+                local fr_id = unpack(fr_id)
+                local to_id = unpack(AST.asr(fr,'Abs_Cons', 1,'ID_abs'))
+                fr_val = string.gsub(fr_val,fr_id,to_id)
+            else
+                --  var Base x = y;
+                -- to
+                --  var Base x = *((Base*)y)
+                fr_val = '(*('..TYPES.toc(to.info.tp)..'*)&'..fr_val..')'
+            end
+        end
+    end
+
     if TYPES.check(to.info.tp,'?') and (not (fr.info and TYPES.check(fr.info.tp,'?'))) then
         LINE(me, [[
 ]]..V(to)..[[.is_set = 1;

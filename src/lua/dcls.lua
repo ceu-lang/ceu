@@ -534,6 +534,8 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         me.id = id
         local par = AST.par(me, 'Block')
 
+        me.n_vars = #AST.asr(me,'', 3,'Block', 1,'Stmts')
+
         -- check "super" path
         local super,_ = string.match(me.id, '(.*)%.(.*)')
         if super then
