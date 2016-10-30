@@ -1396,6 +1396,28 @@ The optional `as` modifier expects `nothing` or a constant expression of type
 - *constant expression*: typecasting a value of the type to `int` evaluates to
                          the specified expression.
 
+A new *static value* is created with the `data` name followed by a list of
+arguments matching its fields in the contexts as follows:
+
+- Prefixed by `val` in an [assignment](#TODO) to a variable.
+- As an argument to a [`code` instantiation](#TODO).
+- Nested as an argument in a `data` creation.
+
+`TODO: new, recursive types`
+
+In all cases, the arguments are copied to an explicit destination with static
+storage.
+The destination must be a plain declaration, and not an alias or pointer.
+
+Variables of the exact same type can be copied in [assignments](#TODO).
+The rules for assignments from a subtype to a supertype are as follows:
+
+- [Copy assignments](#TODO) for plain values is only allowed if the subtype
+                            is the same size as the supertype (i.e., no extra
+                            fields).
+- [Copy assignments](#TODO) for pointers is allowed.
+- [Binding assignment](#TODO) is allowed.
+
 Examples:
 
 ```ceu
@@ -1407,27 +1429,24 @@ var Rect r = val Rect(10,10, 100,100, _);  // "r.z" defaults to 0
 ```
 
 ```ceu
-data Direction       as nothing;    // "Direction" is a base type and cannot be intantiated
-data Direction.Right as  1;         // "Direction.Right" is a subtype of "Direction"
-data Direction.Left  as -1;         // "Direction.Left"  is a subtype of "Direction"
-var& Direction dir = <...>;         // receives one of "Direction.Right" or "Direction.Left"
-escape (dir as int);                // returns 1 or -1
+data Dir       as nothing;  // "Dir" is a base type and cannot be intantiated
+data Dir.Right as  1;       // "Dir.Right" is a subtype of "Dir"
+data Dir.Left  as -1;       // "Dir.Left"  is a subtype of "Dir"
+var  Dir dir = <...>;       // receives one of "Dir.Right" or "Dir.Left"
+escape (dir as int);        // returns 1 or -1
 ```
-
-#### Data Constructor
-
-Variables of the exact same type can be copied.
-The rules for assignments from a subtype to a supertype are as follows:
-
-- [Copy assignments](#TODO) for pointers is allowed.
-- [Copy assignments](#TODO) for plain values is not allowed.
-- [Binding assignment](#TODO) is allowed.
 
 ```ceu
-var Rect r2 = r1;   // copies all fields from "r1" to "r2"
+data Object with
+    var Rect rect;
+    var Dir  dir;
+end
+var Object o1 = val Object(Rect(0,0,10,10,_), Dir.Right());
 ```
 
-`TODO: new, recursive types`
+```ceu
+var Object o2 = o1;         // makes a deep copy of all fields from "o1" to "o2"
+```
 
 ### Code Abstraction
 
