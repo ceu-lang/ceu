@@ -127,12 +127,12 @@ Stmt ::= nothing
 
   /* Asynchronous Execution */
 
-      | await async [ `(´LIST(Var)`)´ ] do
+      | await async [ `(´ LIST(Var) `)´ ] do
             Block
         end
 
       // Async_Thread ::=
-      | await async/thread [ `(´LIST(Var)`)´ ] do
+      | await async/thread [ `(´ LIST(Var) `)´ ] do
             Block
         end
 
@@ -189,13 +189,18 @@ Stmt ::= nothing
       | code/tight [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ `->´ Type
 
       // Code_Await ::=
-      | code/await [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ [ `->´ `(´ Params `)´ ] `->´ (Type | FOREVER)
+      | code/await [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ [ `->´ `(´ Inits `)´ ] `->´ (Type | FOREVER)
         // where
-            Params ::= void | LIST([dynamic] Class ID_int)
-            Class ::= var [`&´|`&?´] [`/´hold] * Type
-                   |  vector `&´ `[´ [Exp] `]´ Type
-                   |  pool `&´ `[´ [Exp] `]´ Type
-                   |  event [`&´|`&?´] (Type | `(´LIST(Type)`)´)
+            Params ::= void | LIST(Class [ID_int])
+            Class ::= [dynamic] var    [`&´] [`/´hold] * Type
+                   |            vector `&´ `[´ [Exp] `]´ Type
+                   |            pool   `&´ `[´ [Exp] `]´ Type
+                   |            event  `&´ (Type | `(´ LIST(Type) `)´)
+            Inits ::= void | LIST(Class [ID_int])
+            Class ::= var    (`&´|`&?`) * Type
+                   |  vector (`&´|`&?`) `[´ [Exp] `]´ Type
+                   |  pool   (`&´|`&?`) `[´ [Exp] `]´ Type
+                   |  event  (`&´|`&?`) (Type | `(´ LIST(Type) `)´)
 
       /* code implementation */
       | (Code_Tight | Code_Await) do
@@ -215,7 +220,7 @@ Stmt ::= nothing
 
         // where
             Mods ::= [`/´dynamic | `/´static] [`/´recursive]
-            Code1 ::= ID_abs `(´ [LIST(Exp)] `)´
+            Code1 ::= ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
             Code2 ::= Code1 [`->´ `(´ LIST(`&´ Var) `)´])
 
   /* Assignments */
@@ -227,15 +232,15 @@ Stmt ::= nothing
                     | Watching
                     | Async_Thread
                     | Do
-                    | Data
+                    | Data_Cons
                     | Await_Code
                     | Spawn_Code
                     | Lua
-                    | Vector
+                    | Vec_Cons
                     | `_´
                     | Exp )
-            Data ::= (val|new) ID_abs `(´ LIST(Exp) `)´ 
-            Vector ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua | `[´ [LIST(Exp)] `]´) }
+            Data_Cons ::= (val|new) ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
+            Vec_Cons  ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua | `[´ [LIST(Exp)] `]´) }
 
 /* Identifiers */
 

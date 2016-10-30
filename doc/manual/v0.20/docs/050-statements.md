@@ -102,12 +102,14 @@ enclosing [block](#TODO).
 Céu supports variables, vectors, external events, internal events, and pools:
 
 ```ceu
-Var    ::= var [`&´|`&?´] Type LIST(ID_int [`=´ Set])
-Vector ::= vector [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
-Ext    ::= input  (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
-        |  output (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
-Int    ::= event [`&´|`&?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Set])
-Pool   ::= pool [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
+Var  ::= var [`&´|`&?´] Type LIST(ID_int [`=´ Set])
+Vec  ::= vector [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
+Ext  ::= input  (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
+      |  output (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
+Int  ::= event [`&´|`&?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Set])
+Pool ::= pool [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
+
+Vec_Cons ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua | `[´ [LIST(Exp)] `]´) }
 ```
 
 See also [Storage Classes](#TODO) for an overview of storage entities.
@@ -156,6 +158,10 @@ vector[n]  int vs2 = [];    // "vs2" is a dynamic vector of 10 elements max
 vector[]   int vs3 = [];    // "vs3" is an unbounded vector
 vector&[]  int vs4 = &vs1;  // "vs4" is an alias to "vs1"
 ```
+
+#### Vector Constructor
+
+`TODO`
 
 ### Event
 
@@ -1368,6 +1374,8 @@ The `data` declaration creates a new data type:
 Data ::= data ID_abs [as (nothing|Exp)] [ with
              { <var_set|vector_set|pool_set|event_set> `;´ {`;´} }
          end ]
+
+Data_Cons ::= (val|new) ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
 ```
 
 A declaration may include fields through [storage declarations](#TODO) which
@@ -1385,15 +1393,8 @@ The optional `as` modifier expects `nothing` or a constant expression of type
 `int`:
 
 - `nothing`: the `data` cannot be instantiated.
-- constant expression: typecasting a value of the type to `int` evaluates to
-                       the specified expression.
-
-Variables of the exact same type can be copied.
-The rules for assignments from a subtype to a supertype are as follows:
-
-- [Copy assignments](#TODO) for pointers is allowed.
-- [Copy assignments](#TODO) for plain values is not allowed.
-- [Binding assignment](#TODO) is allowed.
+- *constant expression*: typecasting a value of the type to `int` evaluates to
+                         the specified expression.
 
 Examples:
 
@@ -1402,38 +1403,113 @@ data Rect with
     var int x, y, h, w;
     var int z = 0;
 end
-var Rect r1 = val Rect(10,10, 100,100, _);  // "r1.z" defaults to 0
-var Rect r2 = r1;                           // copies all fields of "r1" to "r2"
+var Rect r = val Rect(10,10, 100,100, _);  // "r.z" defaults to 0
 ```
 
 ```ceu
 data Direction       as nothing;    // "Direction" is a base type and cannot be intantiated
 data Direction.Right as  1;         // "Direction.Right" is a subtype of "Direction"
 data Direction.Left  as -1;         // "Direction.Left"  is a subtype of "Direction"
-var& Direction dir = <...>;         // receives one of Right/Left
+var& Direction dir = <...>;         // receives one of "Direction.Right" or "Direction.Left"
 escape (dir as int);                // returns 1 or -1
 ```
+
+#### Data Constructor
+
+Variables of the exact same type can be copied.
+The rules for assignments from a subtype to a supertype are as follows:
+
+- [Copy assignments](#TODO) for pointers is allowed.
+- [Copy assignments](#TODO) for plain values is not allowed.
+- [Binding assignment](#TODO) is allowed.
+
+```ceu
+var Rect r2 = r1;   // copies all fields from "r1" to "r2"
+```
+
+`TODO: new, recursive types`
 
 ### Code Abstraction
 
 The `code/tight` and `code/await` declarations create new subprograms:
 
 ```ceu
-Code_Tight ::= code/tight [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ `->´ Type
-Code_Await ::= code/await [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ [ `->´ `(´ Params `)´ ] `->´ (Type | FOREVER)
+Code_Tight ::= code/tight Mods ID_abs `(´ Params `)´ `->´ Type
+Code_Await ::= code/await Mods ID_abs `(´ Params `)´ [`->´ `(´ Inits `)´] `->´ (Type | FOREVER)
 
 Code_Impl ::= (Code_Tight | Code_Await) do
                   Block
               end
 
-Params ::= void | LIST([dynamic] Class ID_int)
-Class ::= var [`&´|`&?´] [`/´hold] * Type
-       |  vector `&´ `[´ [Exp] `]´ Type
-       |  pool `&´ `[´ [Exp] `]´ Type
-       |  event [`&´|`&?´] (Type | `(´LIST(Type)`)´)
+Mods ::= [`/´dynamic] [`/´recursive]
+
+Params ::= void | LIST(Class [ID_int])
+Class  ::= [dynamic] var   [`&´] [`/´hold] * Type
+        |            vector `&´ `[´ [Exp] `]´ Type
+        |            pool   `&´ `[´ [Exp] `]´ Type
+        |            event  `&´ (Type | `(´ LIST(Type) `)´)
+
+Inits ::= void | LIST(Class [ID_int])
+Class ::= var    (`&´|`&?`) * Type
+       |  vector (`&´|`&?`) `[´ [Exp] `]´ Type
+       |  pool   (`&´|`&?`) `[´ [Exp] `]´ Type
+       |  event  (`&´|`&?`) (Type | `(´ LIST(Type) `)´)
 ```
 
-A `code/tight` is a subprogram that .
+A `code/tight` is a subprogram that cannot contain
+[synchronous control statements](#TODO) and is guaranteed to terminate
+immediately in the current [internal reaction](#TODO).
+
+A `code/await` is a subprogram with no restrictions.
+
+#### Parameters and Return
+
+- initialization returns
+
+#### Dynamic Dispatching
+
+Céu supports dynamic code dispatching based on multiple parameters.
+
+The `/dynamic` modifier specifies that the code is dynamically dispatched.
+A dynamic code must have at least one `dynamic` parameter.
+Also, all dynamic parameters must be pointers or aliases to a
+[data type](#TODO) in some hierarchy.
+
+A dynamic declaration requires other compatible dynamic declarations with the
+same name, modifiers, parameters, and return type.
+The exceptions are the `dynamic` parameters, which must be in the same
+hierarchy of their corresponding parameters in other declarations.
+
+To determine which declaration to execute during runtime, the actual argument
+is checked against the first formal `dynamic` parameter of each declaration.
+The declaration with the most specific type matching the argument wins.
+In the case of a tie, the next dynamic parameter is checked.
+
+A *catchall* declaration with the most general dynamic types must always be
+provided.
+
+Examples:
+
+```ceu
+data Media as nothing;
+data Media.Audio with <...> end
+data Media.Video with <...> end
+
+code/await/dynamic Play (dynamic var& Media media) -> void do
+    _assert(0);             // never dispatched
+end
+code/await/dynamic Play (dynamic var& Media.Audio media) -> void do
+    <...>                   // plays an audio
+end
+code/await/dynamic Play (dynamic var& Media.Video media) -> void do
+    <...>                   // plays a video
+end
+
+var& Media m = <...>;       // receives one of "Media.Audio" or "Media.Video"
+await/dynamic Play(&m);     // dispatches the appropriate subprogram to play the media
+```
+
+#### Code Instantiation
 
 -------------------------------------------------------------------------------
 
@@ -1456,4 +1532,5 @@ cannot appear in
 and
 [tight code abstractions](#TODO).
 
-As an exception, an `every` can `emit` internal events.
+As exceptions, an `every` can `emit` internal events, and a `code/tight` can
+contain empty `finalize` statements.
