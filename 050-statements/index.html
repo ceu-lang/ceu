@@ -278,12 +278,14 @@ and moved to the beginning of the top-level block, before all other statements.<
 Its <a href="#TODO">scope</a> begins after the declaration and goes until the end of the
 enclosing <a href="#TODO">block</a>.</p>
 <p>Céu supports variables, vectors, external events, internal events, and pools:</p>
-<pre><code class="ceu">Var    ::= var [`&amp;´|`&amp;?´] Type LIST(ID_int [`=´ Set])
-Vector ::= vector [`&amp;´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
-Ext    ::= input  (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
-        |  output (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
-Int    ::= event [`&amp;´|`&amp;?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Set])
-Pool   ::= pool [`&amp;´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
+<pre><code class="ceu">Var  ::= var [`&amp;´|`&amp;?´] Type LIST(ID_int [`=´ Set])
+Vec  ::= vector [`&amp;´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
+Ext  ::= input  (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
+      |  output (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
+Int  ::= event [`&amp;´|`&amp;?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Set])
+Pool ::= pool [`&amp;´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
+
+Vec_Cons ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua | `[´ [LIST(Exp)] `]´) }
 </code></pre>
 
 <p>See also <a href="#TODO">Storage Classes</a> for an overview of storage entities.</p>
@@ -323,6 +325,8 @@ vector[]   int vs3 = [];    // &quot;vs3&quot; is an unbounded vector
 vector&amp;[]  int vs4 = &amp;vs1;  // &quot;vs4&quot; is an alias to &quot;vs1&quot;
 </code></pre>
 
+<h4 id="vector-constructor">Vector Constructor</h4>
+<p><code>TODO</code></p>
 <h3 id="event">Event</h3>
 <p>An event has a <a href="#TODO">type</a> for the value it carries when occurring.
 It can be also a list of types if the event communicates multiple values.
@@ -1300,6 +1304,8 @@ declarations to define new subprograms.</p>
 <pre><code class="ceu">Data ::= data ID_abs [as (nothing|Exp)] [ with
              { &lt;var_set|vector_set|pool_set|event_set&gt; `;´ {`;´} }
          end ]
+
+Data_Cons ::= (val|new) ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
 </code></pre>
 
 <p>A declaration may include fields through <a href="#TODO">storage declarations</a> which
@@ -1315,14 +1321,27 @@ Field declarations may assign default values for uninitialized instances.</p>
 <code>int</code>:</p>
 <ul>
 <li><code>nothing</code>: the <code>data</code> cannot be instantiated.</li>
-<li>constant expression: typecasting a value of the type to <code>int</code> evaluates to
-                       the specified expression.</li>
+<li><em>constant expression</em>: typecasting a value of the type to <code>int</code> evaluates to
+                         the specified expression.</li>
 </ul>
-<p>Variables of the exact same type can be copied.
+<p>A new <em>static value</em> is created with the <code>data</code> name followed by a list of
+arguments matching its fields in the contexts as follows:</p>
+<ul>
+<li>Prefixed by <code>val</code> in an <a href="#TODO">assignment</a> to a variable.</li>
+<li>As an argument to a <a href="#TODO"><code>code</code> instantiation</a>.</li>
+<li>Nested as an argument in a <code>data</code> creation.</li>
+</ul>
+<p><code>TODO: new, recursive types</code></p>
+<p>In all cases, the arguments are copied to an explicit destination with static
+storage.
+The destination must be a plain declaration, and not an alias or pointer.</p>
+<p>Variables of the exact same type can be copied in <a href="#TODO">assignments</a>.
 The rules for assignments from a subtype to a supertype are as follows:</p>
 <ul>
+<li><a href="#TODO">Copy assignments</a> for plain values is only allowed if the subtype
+                            is the same size as the supertype (i.e., no extra
+                            fields).</li>
 <li><a href="#TODO">Copy assignments</a> for pointers is allowed.</li>
-<li><a href="#TODO">Copy assignments</a> for plain values is not allowed.</li>
 <li><a href="#TODO">Binding assignment</a> is allowed.</li>
 </ul>
 <p>Examples:</p>
@@ -1330,34 +1349,94 @@ The rules for assignments from a subtype to a supertype are as follows:</p>
     var int x, y, h, w;
     var int z = 0;
 end
-var Rect r1 = val Rect(10,10, 100,100, _);  // &quot;r1.z&quot; defaults to 0
-var Rect r2 = r1;                           // copies all fields of &quot;r1&quot; to &quot;r2&quot;
+var Rect r = val Rect(10,10, 100,100, _);  // &quot;r.z&quot; defaults to 0
 </code></pre>
 
-<pre><code class="ceu">data Direction       as nothing;    // &quot;Direction&quot; is a base type and cannot be intantiated
-data Direction.Right as  1;         // &quot;Direction.Right&quot; is a subtype of &quot;Direction&quot;
-data Direction.Left  as -1;         // &quot;Direction.Left&quot;  is a subtype of &quot;Direction&quot;
-var&amp; Direction dir = &lt;...&gt;;         // receives one of Right/Left
-escape (dir as int);                // returns 1 or -1
+<pre><code class="ceu">data Dir       as nothing;  // &quot;Dir&quot; is a base type and cannot be intantiated
+data Dir.Right as  1;       // &quot;Dir.Right&quot; is a subtype of &quot;Dir&quot;
+data Dir.Left  as -1;       // &quot;Dir.Left&quot;  is a subtype of &quot;Dir&quot;
+var  Dir dir = &lt;...&gt;;       // receives one of &quot;Dir.Right&quot; or &quot;Dir.Left&quot;
+escape (dir as int);        // returns 1 or -1
+</code></pre>
+
+<pre><code class="ceu">data Object with
+    var Rect rect;
+    var Dir  dir;
+end
+var Object o1 = val Object(Rect(0,0,10,10,_), Dir.Right());
+</code></pre>
+
+<pre><code class="ceu">var Object o2 = o1;         // makes a deep copy of all fields from &quot;o1&quot; to &quot;o2&quot;
 </code></pre>
 
 <h3 id="code-abstraction">Code Abstraction</h3>
 <p>The <code>code/tight</code> and <code>code/await</code> declarations create new subprograms:</p>
-<pre><code class="ceu">Code_Tight ::= code/tight [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ `-&gt;´ Type
-Code_Await ::= code/await [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ [ `-&gt;´ `(´ Params `)´ ] `-&gt;´ (Type | FOREVER)
+<pre><code class="ceu">Code_Tight ::= code/tight Mods ID_abs `(´ Params `)´ `-&gt;´ Type
+Code_Await ::= code/await Mods ID_abs `(´ Params `)´ [`-&gt;´ `(´ Inits `)´] `-&gt;´ (Type | FOREVER)
 
 Code_Impl ::= (Code_Tight | Code_Await) do
                   Block
               end
 
-Params ::= void | LIST([dynamic] Class ID_int)
-Class ::= var [`&amp;´|`&amp;?´] [`/´hold] * Type
-       |  vector `&amp;´ `[´ [Exp] `]´ Type
-       |  pool `&amp;´ `[´ [Exp] `]´ Type
-       |  event [`&amp;´|`&amp;?´] (Type | `(´LIST(Type)`)´)
+Mods ::= [`/´dynamic] [`/´recursive]
+
+Params ::= void | LIST(Class [ID_int])
+Class  ::= [dynamic] var   [`&amp;´] [`/´hold] * Type
+        |            vector `&amp;´ `[´ [Exp] `]´ Type
+        |            pool   `&amp;´ `[´ [Exp] `]´ Type
+        |            event  `&amp;´ (Type | `(´ LIST(Type) `)´)
+
+Inits ::= void | LIST(Class [ID_int])
+Class ::= var    (`&amp;´|`&amp;?`) * Type
+       |  vector (`&amp;´|`&amp;?`) `[´ [Exp] `]´ Type
+       |  pool   (`&amp;´|`&amp;?`) `[´ [Exp] `]´ Type
+       |  event  (`&amp;´|`&amp;?`) (Type | `(´ LIST(Type) `)´)
 </code></pre>
 
-<p>A <code>code/tight</code> is a subprogram that .</p>
+<p>A <code>code/tight</code> is a subprogram that cannot contain
+<a href="#TODO">synchronous control statements</a> and is guaranteed to terminate
+immediately in the current <a href="#TODO">internal reaction</a>.</p>
+<p>A <code>code/await</code> is a subprogram with no restrictions.</p>
+<h4 id="parameters-and-return">Parameters and Return</h4>
+<ul>
+<li>initialization returns</li>
+</ul>
+<h4 id="dynamic-dispatching">Dynamic Dispatching</h4>
+<p>Céu supports dynamic code dispatching based on multiple parameters.</p>
+<p>The <code>/dynamic</code> modifier specifies that the code is dynamically dispatched.
+A dynamic code must have at least one <code>dynamic</code> parameter.
+Also, all dynamic parameters must be pointers or aliases to a
+<a href="#TODO">data type</a> in some hierarchy.</p>
+<p>A dynamic declaration requires other compatible dynamic declarations with the
+same name, modifiers, parameters, and return type.
+The exceptions are the <code>dynamic</code> parameters, which must be in the same
+hierarchy of their corresponding parameters in other declarations.</p>
+<p>To determine which declaration to execute during runtime, the actual argument
+is checked against the first formal <code>dynamic</code> parameter of each declaration.
+The declaration with the most specific type matching the argument wins.
+In the case of a tie, the next dynamic parameter is checked.</p>
+<p>A <em>catchall</em> declaration with the most general dynamic types must always be
+provided.</p>
+<p>Examples:</p>
+<pre><code class="ceu">data Media as nothing;
+data Media.Audio with &lt;...&gt; end
+data Media.Video with &lt;...&gt; end
+
+code/await/dynamic Play (dynamic var&amp; Media media) -&gt; void do
+    _assert(0);             // never dispatched
+end
+code/await/dynamic Play (dynamic var&amp; Media.Audio media) -&gt; void do
+    &lt;...&gt;                   // plays an audio
+end
+code/await/dynamic Play (dynamic var&amp; Media.Video media) -&gt; void do
+    &lt;...&gt;                   // plays a video
+end
+
+var&amp; Media m = &lt;...&gt;;       // receives one of &quot;Media.Audio&quot; or &quot;Media.Video&quot;
+await/dynamic Play(&amp;m);     // dispatches the appropriate subprogram to play the media
+</code></pre>
+
+<h4 id="code-instantiation">Code Instantiation</h4>
 <hr />
 <h2 id="assignments">Assignments</h2>
 <p><code>TODO</code></p>
@@ -1372,7 +1451,8 @@ cannot appear in
 <a href="#TODO">finalization</a>,
 and
 <a href="#TODO">tight code abstractions</a>.</p>
-<p>As an exception, an <code>every</code> can <code>emit</code> internal events.</p>
+<p>As exceptions, an <code>every</code> can <code>emit</code> internal events, and a <code>code/tight</code> can
+contain empty <code>finalize</code> statements.</p>
               
             </div>
           </div>
