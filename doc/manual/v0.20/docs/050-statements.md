@@ -1378,7 +1378,7 @@ Data ::= data ID_abs [as (nothing|Exp)] [ with
 Data_Cons ::= (val|new) ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
 ```
 
-A declaration may include fields through [storage declarations](#TODO) which
+A declaration may include fields with [storage declarations](#TODO) which
 are included in the `data` type and are publicly accessible.
 Field declarations may assign default values for uninitialized instances.
 
@@ -1402,8 +1402,6 @@ arguments matching its fields in the contexts as follows:
 - Prefixed by `val` in an [assignment](#TODO) to a variable.
 - As an argument to a [`code` instantiation](#TODO).
 - Nested as an argument in a `data` creation.
-
-`TODO: new, recursive types`
 
 In all cases, the arguments are copied to an explicit destination with static
 storage.
@@ -1448,9 +1446,12 @@ var Object o1 = val Object(Rect(0,0,10,10,_), Dir.Right());
 var Object o2 = o1;         // makes a deep copy of all fields from "o1" to "o2"
 ```
 
+`TODO: new, recursive types`
+
 ### Code Abstraction
 
-The `code/tight` and `code/await` declarations create new subprograms:
+The `code/tight` and `code/await` declarations create new subprograms that can
+be invoked from arbitrary points in programs:
 
 ```ceu
 Code_Tight ::= code/tight Mods ID_abs `(´ Params `)´ `->´ Type
@@ -1479,11 +1480,60 @@ A `code/tight` is a subprogram that cannot contain
 [synchronous control statements](#TODO) and is guaranteed to terminate
 immediately in the current [internal reaction](#TODO).
 
-A `code/await` is a subprogram with no restrictions.
+A `code/await` is a subprogram with no restrictions, e.g., it can manipulate
+events and use parallel compositions.
+
+A *declaration* only specifies a prototype without an implementation.
+A *definition* also specifies an implementation with a block of code.
+
+Examples:
+
+```ceu
+code/tight Absolute (var int v) -> int do
+    if v > 0 then
+        escape  v;
+    else
+        escape -v;
+    end
+end
+var int abs = Absolute(-10);        // yields 10
+```
+
+```ceu
+code/await Hello_World (void) -> FOREVER do
+    every 1s do
+        _printf("Hello World!\n");  // prints "Hello World!" every second
+    end
+end
+await Hello_World();                // never awakes
+```
+
+`TODO: recursive`
 
 #### Parameters and Return
 
-- initialization returns
+Code abstractions specify a list of input parameters in between `(` and `)`.
+Each parameter specifies a [storage class](#TODO) with modifiers, a type and
+an identifier (optional in declarations).
+A `void` list specifies that the code has no parameters.
+
+Code abstractions also specify an output return type.
+A `code/await` may use `FOREVER` to indicate that the code never returns.
+
+A `code/await` may also specify an optional *initialization return list*, which
+represents local resources created in the outermost scope of the code that are
+exported to the calling context while the code executes.
+
+`TODO: &, &?`
+
+`TODO: initialization, export`
+
+A [code invocation](#TODO) must match the list of parameters, initialization
+list, and return value.
+
+Examples:
+
+`TODO`
 
 #### Dynamic Dispatching
 
