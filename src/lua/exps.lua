@@ -206,6 +206,7 @@ error'TODO: remove below'
         end
 
         me.info = INFO.new(me, 'Val', nil, ID_abs[1])
+        me.info.tp[1].dcl = ID_abs.dcl
     end,
 
 -- BIND

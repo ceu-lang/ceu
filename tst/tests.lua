@@ -40763,6 +40763,24 @@ escape t.x;
 }
 
 Test { [[
+data Tx with
+    var int x;
+end
+data Tx.Ux;
+
+code/tight Fx (void)->Tx.Ux do
+    var Tx.Ux t = val Tx.Ux(10);
+    escape t;
+end
+
+var Tx t = call Fx();
+escape t.x;
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
 data Ee;
 var int x = 0;
 var Ee e = val x;
@@ -41541,6 +41559,20 @@ var Direction.Right x = val Direction.Right();
 var Direction y1 = val Direction.Left();
 var Direction y2 = x;
 escape (y1 as int) + (y2 as int);
+]],
+    wrn = true,
+    run = 30,
+    --stmts = 'line 5 : invalid assignment : `data´ copy : expected same `data´',
+}
+
+Test { [[
+data Direction as 0;
+data Direction.Right as 10;
+data Direction.Left as 20;
+var Direction.Right x = val Direction.Right();
+var Direction y1 = val Direction.Left();
+var Direction? y2 = x;
+escape (y1 as int) + (y2! as int);
 ]],
     wrn = true,
     run = 30,

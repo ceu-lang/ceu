@@ -89,6 +89,8 @@ end
 
 function SET (me, to, fr, fr_ok, fr_ctx)
     local fr_val = fr
+    local to_val = V(to)
+
     if not fr_ok then
         -- var Ee.Xx ex = ...;
         -- var&& Ee = &&ex;
@@ -101,38 +103,37 @@ function SET (me, to, fr, fr_ok, fr_ctx)
         fr_val = cast..V(fr,fr_ctx)
     end
 
+    local to_is_opt = TYPES.check(to.info.tp,'?')
+    if to_is_opt then
+        to_val = '('..to_val..'.value)'
+    end
+
     -- Base <- Super
     do
-        local to_abs = TYPES.abs_dcl(to.info.tp, 'Data')
+        local to_tp = to.info.tp
+        if to_is_opt then
+            to_tp = TYPES.pop(to.info.tp,'?')
+        end
+        local to_abs = TYPES.abs_dcl(to_tp, 'Data')
         local is_alias = unpack(to.info)
         if to_abs and (not is_alias) then
-            local fr_id = AST.get(fr,'Abs_Cons', 1,'ID_abs')
-            if fr_id then
-                --  var Base x = Super(...);    // same fields
-                -- to
-                --  var Base x = Base(...);     // same fields
-                local fr_id = unpack(fr_id)
-                local to_id = unpack(AST.asr(fr,'Abs_Cons', 1,'ID_abs'))
-                fr_val = string.gsub(fr_val,fr_id,to_id)
-            else
-                --  var Base x = y;
-                -- to
-                --  var Base x = *((Base*)y)
-                fr_val = '(*('..TYPES.toc(to.info.tp)..'*)&'..fr_val..')'
-            end
+            --  var Super y;
+            --  var Base  x;
+            --  x = y;
+            -- to
+            --  *((Super*) x) = u;
+            to_val = '(*('..TYPES.toc(fr.info.tp)..'*)&'..to_val..')'
         end
     end
 
     if TYPES.check(to.info.tp,'?') and (not (fr.info and TYPES.check(fr.info.tp,'?'))) then
         LINE(me, [[
 ]]..V(to)..[[.is_set = 1;
-]]..V(to)..'.value  = '..fr_val..[[;
-]])
-    else
-        LINE(me, [[
-]]..V(to)..' = '..fr_val..[[;
 ]])
     end
+    LINE(me, [[
+]]..to_val..' = '..fr_val..[[;
+]])
 end
 
 function LUA (me)
@@ -1202,10 +1203,7 @@ _ceu_mem->trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
     Set_Abs_Val = function (me)
         local fr, to = unpack(me)
         local _,Abs_Cons = unpack(fr)
-
-        -- typecast: "val Xx = val Xx.Yy();"
-        local to_tp = TYPES.toc(TYPES.pop(to.info.tp,'?'))
-        SET(me, to, Abs_Cons, nil, {to_tp=to_tp, to_val=V(to)})
+        SET(me, to, Abs_Cons, nil, {to_val=V(to)})
     end,
 
     Set_Vec = function (me)
