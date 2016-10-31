@@ -103,6 +103,7 @@ function SET (me, to, fr, fr_ok, fr_ctx)
         fr_val = cast..V(fr,fr_ctx)
     end
 
+    local fr_is_opt = fr.info and TYPES.check(fr.info.tp,'?')
     local to_is_opt = TYPES.check(to.info.tp,'?')
     if to_is_opt then
         to_val = '('..to_val..'.value)'
@@ -126,10 +127,19 @@ function SET (me, to, fr, fr_ok, fr_ctx)
         end
     end
 
-    if TYPES.check(to.info.tp,'?') and (not (fr.info and TYPES.check(fr.info.tp,'?'))) then
-        LINE(me, [[
+    if to_is_opt then
+        if fr_is_opt then
+            LINE(me, [[
+]]..V(to)..[[.is_set = ]]..fr_val..[[.is_set;
+]])
+        else
+            LINE(me, [[
 ]]..V(to)..[[.is_set = 1;
 ]])
+        end
+    end
+    if fr_is_opt then
+        fr_val = '('..fr_val..'.value)'
     end
     LINE(me, [[
 ]]..to_val..' = '..fr_val..[[;
