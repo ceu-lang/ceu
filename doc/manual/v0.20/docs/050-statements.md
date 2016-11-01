@@ -608,7 +608,7 @@ loop do
 end
 ```
 
-However, the body of an `every` cannot contain special
+However, the body of an `every` cannot contain
 [synchronous control statements](#TODO), ensuring that no occurrences of the
 specified event are ever missed.
 
@@ -849,15 +849,12 @@ statement in sequence.
 Asynchronous bodies can contain [tight loops](#TODO) but which keep the
 application reactive to incoming events.
 However, they do not support nesting of asynchronous statements, and do not
-support synchronous control statements (i.e., parallel compositions, event
-handling, pausing, etc.).
+support [synchronous control statements](#TODO) (i.e., parallel compositions,
+event handling, pausing, etc.).
 
 By default, asynchronous bodies do not shared variables with their enclosing
 scope.
 The optional list of variables makes them visible to the block.
-
-Asynchronous bodies cannot contain special
-[synchronous control statements](#TODO).
 
 ### Asynchronous Block
 
@@ -1195,7 +1192,7 @@ Céu tracks the interaction of native calls with pointers and requires
 
 In both cases, the program does not compile without the `finalize` statement.
 
-A `finalize` cannot contain special [synchronous control statements](#TODO).
+A `finalize` cannot contain [synchronous control statements](#TODO).
 
 Examples:
 
@@ -1451,7 +1448,7 @@ var Object o2 = o1;         // makes a deep copy of all fields from "o1" to "o2"
 ### Code Abstraction
 
 The `code/tight` and `code/await` declarations create new subprograms that can
-be invoked from arbitrary points in programs:
+be [invoked](#TODO) from arbitrary points in programs:
 
 ```ceu
 Code_Tight ::= code/tight Mods ID_abs `(´ Params `)´ `->´ Type
@@ -1510,7 +1507,7 @@ await Hello_World();                // never awakes
 
 `TODO: recursive`
 
-#### Parameters and Return
+#### Parameters, Initialization, and Return
 
 Code abstractions specify a list of input parameters in between `(` and `)`.
 Each parameter specifies a [storage class](#TODO) with modifiers, a type and
@@ -1521,19 +1518,36 @@ Code abstractions also specify an output return type.
 A `code/await` may use `FOREVER` to indicate that the code never returns.
 
 A `code/await` may also specify an optional *initialization return list*, which
-represents local resources created in the outermost scope of the code that are
-exported to the calling context while the code executes.
+represents local resources created in the outermost scope of its body.
+These resources are exported and bound to aliases in the invoking context which
+may access them while the code executes:
 
-`TODO: &, &?`
+- The invoker passes a list of unbound aliases to the code.
+- The code [binds](#TODO) the aliases to the local resources before any
+  [synchronous control statement](#TODO) executes.
 
-`TODO: initialization, export`
-
-A [code invocation](#TODO) must match the list of parameters, initialization
-list, and return value.
+If the code does not terminate (i.e., return type is `FOREVER`), the
+initialization list specifies normal `&` aliases.
+Otherwise, since the code may terminate and deallocated the resource, the list
+must specify option `&?` aliases.
 
 Examples:
 
-`TODO`
+```ceu
+// "Open" abstracts
+code/await Open (var _char&& path) -> (var& _FILE res) -> FOREVER do
+    var&? _FILE res_ = _fopen(path, <...>)      // allocates resource
+                        finalize with
+                            _fclose(res_!);     // releases resource
+                        end;
+    res = &res_!;                               // exports resource to invoker
+    await FOREVER;
+end
+
+var& _FILE res;                                 // declares resource
+spawn Open(<...>) -> (&res);                    // initiliazes resource
+<...>                                           // uses resource
+```
 
 #### Dynamic Dispatching
 
@@ -1578,7 +1592,10 @@ var& Media m = <...>;       // receives one of "Media.Audio" or "Media.Video"
 await/dynamic Play(&m);     // dispatches the appropriate subprogram to play the media
 ```
 
-#### Code Instantiation
+#### Code Invocation
+
+A [code invocation](#TODO) must match the declaration of the list of
+parameters, initialization list, and return value.
 
 -------------------------------------------------------------------------------
 
