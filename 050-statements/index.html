@@ -683,7 +683,7 @@ end
 end
 </code></pre>
 
-<p>However, the body of an <code>every</code> cannot contain special
+<p>However, the body of an <code>every</code> cannot contain
 <a href="#TODO">synchronous control statements</a>, ensuring that no occurrences of the
 specified event are ever missed.</p>
 <p>Examples:</p>
@@ -872,13 +872,11 @@ statement in sequence.</p>
 <p>Asynchronous bodies can contain <a href="#TODO">tight loops</a> but which keep the
 application reactive to incoming events.
 However, they do not support nesting of asynchronous statements, and do not
-support synchronous control statements (i.e., parallel compositions, event
-handling, pausing, etc.).</p>
+support <a href="#TODO">synchronous control statements</a> (i.e., parallel compositions,
+event handling, pausing, etc.).</p>
 <p>By default, asynchronous bodies do not shared variables with their enclosing
 scope.
 The optional list of variables makes them visible to the block.</p>
-<p>Asynchronous bodies cannot contain special
-<a href="#TODO">synchronous control statements</a>.</p>
 <h3 id="asynchronous-block">Asynchronous Block</h3>
 <p>The asynchronous block (<code>async</code>) preserves deterministic execution with the
 rules as follows:</p>
@@ -1162,7 +1160,7 @@ its corresponding enclosing block terminates, even if aborted abruptly.</p>
   scope.</li>
 </ul>
 <p>In both cases, the program does not compile without the <code>finalize</code> statement.</p>
-<p>A <code>finalize</code> cannot contain special <a href="#TODO">synchronous control statements</a>.</p>
+<p>A <code>finalize</code> cannot contain <a href="#TODO">synchronous control statements</a>.</p>
 <p>Examples:</p>
 <pre><code class="ceu">// Local resource finalization
 watching &lt;...&gt; do
@@ -1371,7 +1369,7 @@ var Object o1 = val Object(Rect(0,0,10,10,_), Dir.Right());
 <p><code>TODO: new, recursive types</code></p>
 <h3 id="code-abstraction">Code Abstraction</h3>
 <p>The <code>code/tight</code> and <code>code/await</code> declarations create new subprograms that can
-be invoked from arbitrary points in programs:</p>
+be <a href="#TODO">invoked</a> from arbitrary points in programs:</p>
 <pre><code class="ceu">Code_Tight ::= code/tight Mods ID_abs `(´ Params `)´ `-&gt;´ Type
 Code_Await ::= code/await Mods ID_abs `(´ Params `)´ [`-&gt;´ `(´ Inits `)´] `-&gt;´ (Type | FOREVER)
 
@@ -1421,7 +1419,7 @@ await Hello_World();                // never awakes
 </code></pre>
 
 <p><code>TODO: recursive</code></p>
-<h4 id="parameters-and-return">Parameters and Return</h4>
+<h4 id="parameters-initialization-and-return">Parameters, Initialization, and Return</h4>
 <p>Code abstractions specify a list of input parameters in between <code>(</code> and <code>)</code>.
 Each parameter specifies a <a href="#TODO">storage class</a> with modifiers, a type and
 an identifier (optional in declarations).
@@ -1429,14 +1427,34 @@ A <code>void</code> list specifies that the code has no parameters.</p>
 <p>Code abstractions also specify an output return type.
 A <code>code/await</code> may use <code>FOREVER</code> to indicate that the code never returns.</p>
 <p>A <code>code/await</code> may also specify an optional <em>initialization return list</em>, which
-represents local resources created in the outermost scope of the code that are
-exported to the calling context while the code executes.</p>
-<p><code>TODO: &amp;, &amp;?</code></p>
-<p><code>TODO: initialization, export</code></p>
-<p>A <a href="#TODO">code invocation</a> must match the list of parameters, initialization
-list, and return value.</p>
+represents local resources created in the outermost scope of its body.
+These resources are exported and bound to aliases in the invoking context which
+may access them while the code executes:</p>
+<ul>
+<li>The invoker passes a list of unbound aliases to the code.</li>
+<li>The code <a href="#TODO">binds</a> the aliases to the local resources before any
+  <a href="#TODO">synchronous control statement</a> executes.</li>
+</ul>
+<p>If the code does not terminate (i.e., return type is <code>FOREVER</code>), the
+initialization list specifies normal <code>&amp;</code> aliases.
+Otherwise, since the code may terminate and deallocated the resource, the list
+must specify option <code>&amp;?</code> aliases.</p>
 <p>Examples:</p>
-<p><code>TODO</code></p>
+<pre><code class="ceu">// &quot;Open&quot; abstracts
+code/await Open (var _char&amp;&amp; path) -&gt; (var&amp; _FILE res) -&gt; FOREVER do
+    var&amp;? _FILE res_ = _fopen(path, &lt;...&gt;)      // allocates resource
+                        finalize with
+                            _fclose(res_!);     // releases resource
+                        end;
+    res = &amp;res_!;                               // exports resource to invoker
+    await FOREVER;
+end
+
+var&amp; _FILE res;                                 // declares resource
+spawn Open(&lt;...&gt;) -&gt; (&amp;res);                    // initiliazes resource
+&lt;...&gt;                                           // uses resource
+</code></pre>
+
 <h4 id="dynamic-dispatching">Dynamic Dispatching</h4>
 <p>Céu supports dynamic code dispatching based on multiple parameters.</p>
 <p>The <code>/dynamic</code> modifier specifies that the code is dynamically dispatched.
@@ -1472,7 +1490,9 @@ var&amp; Media m = &lt;...&gt;;       // receives one of &quot;Media.Audio&quot;
 await/dynamic Play(&amp;m);     // dispatches the appropriate subprogram to play the media
 </code></pre>
 
-<h4 id="code-instantiation">Code Instantiation</h4>
+<h4 id="code-invocation">Code Invocation</h4>
+<p>A <a href="#TODO">code invocation</a> must match the declaration of the list of
+parameters, initialization list, and return value.</p>
 <hr />
 <h2 id="assignments">Assignments</h2>
 <p><code>TODO</code></p>
