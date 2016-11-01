@@ -654,7 +654,7 @@ Pars ::= (par | par/and | par/or) do
              Block }
          end
 
-Watching ::= watching LIST(ID_ext|Name|WCLOCKK|WCLOCKE|Code2) do
+Watching ::= watching LIST(ID_ext|Name|WCLOCKK|WCLOCKE|Code_Cons_Init) do
                  Block
              end
 
@@ -1368,10 +1368,12 @@ declarations to define new subprograms.
 The `data` declaration creates a new data type:
 
 ```ceu
+// declaration
 Data ::= data ID_abs [as (nothing|Exp)] [ with
              { <var_set|vector_set|pool_set|event_set> `;´ {`;´} }
          end ]
 
+// constructor
 Data_Cons ::= (val|new) ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
 ```
 
@@ -1451,9 +1453,11 @@ The `code/tight` and `code/await` declarations create new subprograms that can
 be [invoked](#TODO) from arbitrary points in programs:
 
 ```ceu
+// prototype declaration
 Code_Tight ::= code/tight Mods ID_abs `(´ Params `)´ `->´ Type
 Code_Await ::= code/await Mods ID_abs `(´ Params `)´ [`->´ `(´ Inits `)´] `->´ (Type | FOREVER)
 
+// full declaration
 Code_Impl ::= (Code_Tight | Code_Await) do
                   Block
               end
@@ -1471,6 +1475,15 @@ Class ::= var    (`&´|`&?`) * Type
        |  vector (`&´|`&?`) `[´ [Exp] `]´ Type
        |  pool   (`&´|`&?`) `[´ [Exp] `]´ Type
        |  event  (`&´|`&?`) (Type | `(´ LIST(Type) `)´)
+
+// invocation
+Code_Call  ::= call  Mods Code_Cons
+Code_Await ::= await Mods Code_Cons_Init
+Code_Spawn ::= spawn Mods Code_Cons_Init [in Name]
+
+Mods ::= [`/´dynamic | `/´static] [`/´recursive]
+Code_Cons      ::= ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
+Code_Cons_Init ::= Code_Cons [`->´ `(´ LIST(`&´ Var) `)´])
 ```
 
 A `code/tight` is a subprogram that cannot contain
@@ -1480,20 +1493,24 @@ immediately in the current [internal reaction](#TODO).
 A `code/await` is a subprogram with no restrictions, e.g., it can manipulate
 events and use parallel compositions.
 
-A *declaration* only specifies a prototype without an implementation.
-A *definition* also specifies an implementation with a block of code.
+A *prototype declaration* specifies the interface paramenters of the
+abstraction which code invocations must match.
+A *full declaration* (a.k.a. *definition*) also specifies an implementation
+with a block of code.
+An *invocation* specifies the name of the code abstraction and arguments
+matching its declaration.
 
 Examples:
 
 ```ceu
-code/tight Absolute (var int v) -> int do
-    if v > 0 then
+code/tight Absolute (var int v) -> int do   // declares the prototype for "Absolute"
+    if v > 0 then                           // implements the behavior
         escape  v;
     else
         escape -v;
     end
 end
-var int abs = Absolute(-10);        // yields 10
+var int abs = call Absolute(-10);           // invokes "Absolute" (yields 10)
 ```
 
 ```ceu
@@ -1507,7 +1524,7 @@ await Hello_World();                // never awakes
 
 `TODO: recursive`
 
-#### Parameters, Initialization, and Return
+#### Code Declaration
 
 Code abstractions specify a list of input parameters in between `(` and `)`.
 Each parameter specifies a [storage class](#TODO) with modifiers, a type and
@@ -1536,24 +1553,27 @@ Examples:
 ```ceu
 // "Open" abstracts
 code/await Open (var _char&& path) -> (var& _FILE res) -> FOREVER do
-    var&? _FILE res_ = _fopen(path, <...>)      // allocates resource
-                        finalize with
-                            _fclose(res_!);     // releases resource
-                        end;
-    res = &res_!;                               // exports resource to invoker
+    var&? _FILE res_ = _fopen(path, <...>)  // allocates resource
+                       finalize with
+                           _fclose(res_!);  // releases resource
+                       end;
+    res = &res_!;                           // exports resource to invoker
     await FOREVER;
 end
 
-var& _FILE res;                                 // declares resource
-spawn Open(<...>) -> (&res);                    // initiliazes resource
-<...>                                           // uses resource
+var& _FILE res;                             // declares resource
+spawn Open(<...>) -> (&res);                // initiliazes resource
+<...>                                       // uses resource
 ```
+
+#### Code Invocation
 
 #### Dynamic Dispatching
 
 Céu supports dynamic code dispatching based on multiple parameters.
 
-The `/dynamic` modifier specifies that the code is dynamically dispatched.
+The `/dynamic` modifier in a declaration specifies that the code is dynamically
+dispatched.
 A dynamic code must have at least one `dynamic` parameter.
 Also, all dynamic parameters must be pointers or aliases to a
 [data type](#TODO) in some hierarchy.
@@ -1591,11 +1611,6 @@ end
 var& Media m = <...>;       // receives one of "Media.Audio" or "Media.Video"
 await/dynamic Play(&m);     // dispatches the appropriate subprogram to play the media
 ```
-
-#### Code Invocation
-
-A [code invocation](#TODO) must match the declaration of the list of
-parameters, initialization list, and return value.
 
 -------------------------------------------------------------------------------
 
