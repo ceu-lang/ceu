@@ -57,7 +57,8 @@ F = {
         -- ctx
         for _, e in ipairs(fr) do
             if e.tag=='Vec_Tup' or e.tag=='STRING' or
-               e.tag=='Exp_as'  or e.tag=='Lua'
+               e.tag=='Exp_as'  or e.tag=='Lua' or
+               AST.get(e,'Exp_Name',1,'Exp_as')
             then
                 -- ok
             else
@@ -82,7 +83,7 @@ F = {
                 EXPS.check_tp(fr, to_info.tp, tp,
                     'invalid constructor : item #'..i)
             elseif e.tag == 'Lua' then
-            elseif e.tag == 'Exp_as' then
+            elseif e.tag=='Exp_as' or AST.get(e,'Exp_Name',1,'Exp_as') then
             else
                 assert(e.info and e.info.tag == 'Vec')
                 EXPS.check_tp(fr, to_info.tp, e.info.tp,

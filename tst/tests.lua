@@ -9,6 +9,101 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+Test { [[
+data Dd with
+    var int v=10;
+end
+code/tight Ff (var Dd d) -> int do
+    escape d.v;
+end
+escape call Ff(Dd(10));
+]],
+    run = 10,
+}
+Test { [[
+data Dd with
+    var int v=10;
+end
+code/tight Ff (var Dd d) -> int do
+    escape d.v;
+end
+escape call Ff(Dd(_));
+]],
+    run = 10,
+}
+do return end
+
+Test { [[
+data Direction as 0;
+data Direction.Right as 10;
+
+code/tight Ff (var Direction dir) -> int do
+    escape 1;
+end
+
+var Direction.Right x1 = val Direction.Right();
+
+escape (call Ff(x1));
+]],
+    wrn = true,
+    run = 110,
+}
+
+Test { [[
+//data Direction as nothing;
+data Direction as 0;
+data Direction.Right as 10;
+data Direction.Left as 20;
+
+code/tight/dynamic Ff (dynamic var Direction dir) -> int do
+    escape 1;
+end
+
+code/tight/dynamic Ff (dynamic var Direction.Right dir) -> int do
+    escape 10;
+end
+
+code/tight/dynamic Ff (dynamic var Direction.Left dir) -> int do
+    escape 100;
+end
+
+var Direction.Right x1 = val Direction.Right();
+var Direction y1 = val Direction.Left();
+var Direction y2 = val Direction();
+
+escape (call/dynamic Ff(x1)) + (call/dynamic Ff(y1)) + (call/dynamic Ff(y2));
+]],
+    wrn = true,
+    run = 110,
+}
+
+Test { [[
+data Direction as nothing;
+//data Direction as 0;
+data Direction.Right as 10;
+data Direction.Left as 20;
+
+code/tight/dynamic Ff (dynamic var Direction dir) -> int do
+    escape 1;
+end
+
+code/tight/dynamic Ff (dynamic var Direction.Right dir) -> int do
+    escape 10;
+end
+
+code/tight/dynamic Ff (dynamic var Direction.Left dir) -> int do
+    escape 100;
+end
+
+var Direction.Right x1 = val Direction.Right();
+var Direction y1 = val Direction.Left();
+var Direction y2 = val Direction();
+
+escape (call Ff(x1)) + (call Ff(y1)) + (call Ff(y2));
+]],
+    run = 110,
+}
+
 do return end -- OK
 ---]=====]
 
@@ -29211,6 +29306,35 @@ end
 escape 1;
 ]],
     run = { ['~>20s']=1 },
+}
+
+Test { [[
+native/pre do
+    typedef char* char_ptr;
+end
+native _char_ptr, _char;
+native/pure _strlen;
+var _char_ptr x = "oioi";
+var _char&& y = x;
+vector[] byte str = [] .. (x as _char&&) .. (y as _char&&);
+escape _strlen(&&str[0] as _char&&);
+]],
+    run = 8,
+}
+
+Test { [[
+native/pre do
+    ##define ID(x) x
+    typedef char* char_ptr;
+end
+native/pure _ID, _strlen;
+native _char_ptr, _char;
+var _char_ptr x = "oioi";
+var _char&& y = x;
+vector[] byte str = [] .. (_ID(x) as _char&&) .. (_ID(y) as _char&&);
+escape _strlen(&&str[0] as _char&&);
+]],
+    run = 8,
 }
 
 -->> VECTOR / ALIAS

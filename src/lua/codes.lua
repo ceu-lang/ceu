@@ -1241,8 +1241,23 @@ _ceu_mem->trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
                 end
             end
 
+            -- vec1 = .."string"
+            if fr.info and TYPES.check(fr.info.tp, '_char', '&&') then
+                LINE(me, [[
+    {
+        char* __ceu_str = ]]..V(fr)..[[;
+        usize __ceu_len = strlen(__ceu_str);
+        ceu_vector_setlen(&]]..V(to)..', ('..V(to)..[[.len + __ceu_len), 1);
+        ceu_vector_buf_set(&]]..V(to)..[[,
+                           __ceu_nxt,
+                           __ceu_str,
+                           __ceu_len);
+        __ceu_nxt += __ceu_len;
+    }
+]])
+
             -- vec1 = ..vec2
-            if fr.tag == 'Exp_Name' then
+            elseif fr.tag == 'Exp_Name' then
                 if i > 1 then
                     -- NO:
                     -- vector&[] v2 = &v1;
@@ -1304,21 +1319,6 @@ _ceu_mem->trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
     }
 ]])
                 LINE(me, fr.code_after)
-
-            -- vec1 = .."string"
-            elseif TYPES.check(fr.info.tp, '_char', '&&') then
-                LINE(me, [[
-    {
-        char* __ceu_str = ]]..V(fr)..[[;
-        usize __ceu_len = strlen(__ceu_str);
-        ceu_vector_setlen(&]]..V(to)..', ('..V(to)..[[.len + __ceu_len), 1);
-        ceu_vector_buf_set(&]]..V(to)..[[,
-                           __ceu_nxt,
-                           __ceu_str,
-                           __ceu_len);
-        __ceu_nxt += __ceu_len;
-    }
-]])
             else
                 error'bug found'
             end
