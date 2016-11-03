@@ -259,13 +259,26 @@ F = {
         -- default constructor for "data"
         local abs = TYPES.abs_dcl(Type,'Data')
         if abs and (not alias) and (not me.__handled) and
-           (not AST.par(me,'Code_Pars')) and (not AST.par(me,'Code_Ret'))
+           --(not AST.par(me,'Code_Pars')) and
+           (not AST.par(me,'Code_Ret'))
         then
             me.__handled = true
-            local stmts = AST.copy( AST.asr(abs,'Data',3,'Block',1,'Stmts') )
-            stmts.__dcls_defaults = true
-            AST.visit(F.__F(id), stmts)
-            return AST.node('Stmts', me.ln, me, stmts)
+            local sets = AST.copy( AST.asr(abs,'Data',3,'Block',1,'Stmts') )
+            sets.__dcls_defaults = true
+            AST.visit(F.__F(id), sets)
+            if AST.par(me,'Code_Pars') then
+                local stmts = AST.get(AST.par(me,'Code'),'',
+                                        4,'Block', 1,'Stmts', 2,'Block',
+                                        1,'Stmts', 1,'Do', 2,'Block', 1,'Stmts')
+                if stmts then
+                    table.insert(stmts, 1, {})
+                    AST.set(stmts, 1, sets)
+                else
+                    -- code/dynamic?
+                end
+            else
+                return AST.node('Stmts', me.ln, me, sets)
+            end
         end
 
         me.id = id

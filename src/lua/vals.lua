@@ -194,7 +194,8 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
                     local ctx = {}
                     if val.tag == 'Abs_Cons' then
                         -- typecast: "val Xx = val Xx.Yy();"
-                        ctx.to_tp  = TYPES.toc(var_tp)
+                        --ctx.to_tp  = TYPES.toc(var_tp)
+                        ctx.to_tp  = TYPES.toc(val.info.tp)
                         if to_val then  -- only set for Set_Abs_Val ("data")
                             ctx.to_val = '('..to_val..'.'..var_id..')'
                         end

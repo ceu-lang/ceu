@@ -454,17 +454,17 @@ if (0)
                 end
 ]]
                 local is_alias2,Type2,_ = unpack(args_Code_Pars[i])
-local tpc
-if dcl.tag == 'Vec' then
-    tpc = 'tceu_vector'
-elseif dcl.tag == 'Event' then
-    error'oi'
-elseif dcl.tag == 'Pool' then
-    tpc = 'tceu_pool'
-else
-    tpc = TYPES.toc(Type1)
-end
-                local cast = '*('..tpc..(is_alias2 and '*' or '')..'*)'
+                local tpc
+                if dcl.tag == 'Vec' then
+                    tpc = 'tceu_vector*'
+                elseif dcl.tag == 'Evt' then
+                    tpc = 'tceu_evt'
+                elseif dcl.tag == 'Pool' then
+                    tpc = 'tceu_pool_pak*'
+                else
+                    tpc = TYPES.toc(Type1)..'*'
+                end
+                local cast = '*('..tpc..(is_alias2 and '*' or '')..')'
 
 -- TODO: unify-01
                 LINE(me, [[

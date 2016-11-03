@@ -33,6 +33,7 @@ escape call Ff(Dd(_));
 }
 
 do return end -- OK
+---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -42762,10 +42763,56 @@ escape d.e1.e + d.e2.e + d.e3.e;
     wrn = true,
     run = 120,
 }
+
+Test { [[
+data Dd with
+    var int x = 10;
+end
+
+code/tight Ff (var Dd d) -> int do
+    escape d.x;
+end
+
+escape call Ff(Dd(_));
+]],
+    run = 10,
+}
+Test { [[
+data Dd with
+    var int x = 10;
+end
+
+code/tight Ff (var Dd d) -> int do
+    escape d.x;
+end
+
+escape call Ff(_);
+]],
+    run = 10,
+}
+Test { [[
+data Dd with
+    var int x = 10;
+end
+var Dd d = _;
+escape d.x;
+]],
+    wrn = true,
+    run = 10,
+}
+Test { [[
+data Dd with
+    var int x = 10;
+end
+var Dd d = val Dd(_);
+escape d.x;
+]],
+    run = 10,
+}
+
 --<< DATA / DEFAULT / CONSTRUCTOR
 
 -->>> ASYNCS // THREADS
----]=====]
 
 local opts_thread = {
     ceu = true,
