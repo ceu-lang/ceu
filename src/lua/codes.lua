@@ -1649,6 +1649,9 @@ if (]]..v..[[ != NULL)
 {
     ]]..v..[[->nxt = CEU_APP.threads_head;
     CEU_APP.threads_head = ]]..v..[[;
+    if (CEU_APP.cur_ == &CEU_APP.threads_head) {
+        CEU_APP.cur_ = &]]..v..[[->nxt;           /* TODO: HACK_6 "gc" mutable iterator */
+    }
 
     ]]..v..[[->has_started    = 0;
     ]]..v..[[->has_terminated = 0;

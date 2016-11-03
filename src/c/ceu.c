@@ -235,6 +235,7 @@ typedef struct tceu_app {
 #ifdef CEU_FEATURES_THREAD
     CEU_THREADS_MUTEX_T threads_mutex;
     tceu_threads_data*  threads_head;   /* linked list of threads alive */
+    tceu_threads_data** cur_;           /* TODO: HACK_6 "gc" mutable iterator */
 #endif
 
     tceu_code_mem_ROOT root;
@@ -370,8 +371,8 @@ static void ceu_lbl (tceu_evt_occ* _ceu_occ, tceu_stk* _ceu_stk,
 #ifdef CEU_FEATURES_THREAD
 int ceu_threads_gc (int force_join) {
     int n_alive = 0;
-    tceu_threads_data** head_ = &CEU_APP.threads_head;
-    tceu_threads_data*  head  = *head_;
+    CEU_APP.cur_ = &CEU_APP.threads_head;
+    tceu_threads_data*  head  = *CEU_APP.cur_;
     while (head != NULL) {
         tceu_threads_data** nxt_ = &head->nxt;
         if (head->has_terminated || head->has_aborted)
@@ -392,8 +393,8 @@ int ceu_threads_gc (int force_join) {
                     has_joined = CEU_THREADS_JOIN_TRY(head->id);
                 }
                 if (has_joined) {
-                    *head_ = head->nxt;
-                    nxt_ = head_;
+                    *CEU_APP.cur_ = head->nxt;
+                    nxt_ = CEU_APP.cur_;
                     ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, head, 0);
                 }
             }
@@ -402,8 +403,8 @@ int ceu_threads_gc (int force_join) {
         {
             n_alive++;
         }
-        head_ = nxt_;
-        head  = *head_;
+        CEU_APP.cur_ = nxt_;
+        head  = *CEU_APP.cur_;
     }
     return n_alive;
 }
