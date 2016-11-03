@@ -33,7 +33,6 @@ escape call Ff(Dd(_));
 }
 
 do return end -- OK
----]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -42766,6 +42765,7 @@ escape d.e1.e + d.e2.e + d.e3.e;
 --<< DATA / DEFAULT / CONSTRUCTOR
 
 -->>> ASYNCS // THREADS
+---]=====]
 
 local opts_thread = {
     ceu = true,
@@ -42821,6 +42821,143 @@ end
 escape ret;
 ]],
     run = 11,
+    _opts = opts_thread,
+}
+
+Test { [[
+await async/thread do
+end
+await async/thread do
+end
+escape 1;
+]],
+    run = 1,
+    _opts = opts_thread,
+}
+Test { [[
+await async/thread do
+end
+await async do end
+await async/thread do
+end
+escape 1;
+]],
+    run = 1,
+    _opts = opts_thread,
+}
+Test { [[
+await async/thread do
+end
+par/and do
+    await async/thread do
+    end
+with
+    await async/thread do
+    end
+end
+escape 1;
+]],
+    run = 1,
+    _opts = opts_thread,
+}
+Test { [[
+par/and do
+    await async/thread do
+    end
+with
+    await async/thread do
+    end
+end
+await async/thread do
+end
+escape 1;
+]],
+    run = 1,
+    _opts = opts_thread,
+}
+Test { [[
+par/and do
+    await async/thread do
+    end
+with
+    await async/thread do
+    end
+end
+par/and do
+    await async/thread do
+    end
+with
+    await async/thread do
+    end
+end
+par/and do
+    await async/thread do
+    end
+with
+    await async/thread do
+    end
+end
+escape 1;
+]],
+    run = 1,
+    _opts = opts_thread,
+}
+Test { [[
+par/or do
+    await async/thread do
+    end
+with
+    await async/thread do
+    end
+end
+par/and do
+    await async/thread do
+    end
+with
+    await async/thread do
+    end
+end
+par/or do
+    await async/thread do
+    end
+with
+    await async/thread do
+    end
+end
+escape 1;
+]],
+    run = 1,
+    _opts = opts_thread,
+}
+Test { [[
+native _usleep;
+par/or do
+    await async/thread do
+        _usleep(100);
+    end
+with
+    await async/thread do
+    end
+end
+par/and do
+    await async/thread do
+        _usleep(100);
+    end
+with
+    await async/thread do
+    end
+end
+par/or do
+    await async/thread do
+    end
+with
+    await async/thread do
+        _usleep(100);
+    end
+end
+escape 1;
+]],
+    run = 1,
     _opts = opts_thread,
 }
 
