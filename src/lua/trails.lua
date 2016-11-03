@@ -171,7 +171,6 @@ end
         local evt   = AST.get(sub, 'Evt')
 
         if sub.tag=='Finalize' or spawn
-            or (sub.tag == 'Async_Thread')
             or (pool and pool.has_trail) or (var and var.has_trail)
             or (evt and evt.has_trail)
         then
