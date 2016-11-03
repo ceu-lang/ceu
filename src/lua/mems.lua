@@ -26,6 +26,7 @@ MEMS = {
         mems  = '',
         hiers = '',
         bases = {},
+        casts = {},     -- see code.lua
     },
     opts = {
         -- avoids duplications

@@ -31,78 +31,6 @@ escape call Ff(Dd(_));
 ]],
     run = 10,
 }
-do return end
-
-Test { [[
-data Direction as 0;
-data Direction.Right as 10;
-
-code/tight Ff (var Direction dir) -> int do
-    escape 1;
-end
-
-var Direction.Right x1 = val Direction.Right();
-
-escape (call Ff(x1));
-]],
-    wrn = true,
-    run = 110,
-}
-
-Test { [[
-//data Direction as nothing;
-data Direction as 0;
-data Direction.Right as 10;
-data Direction.Left as 20;
-
-code/tight/dynamic Ff (dynamic var Direction dir) -> int do
-    escape 1;
-end
-
-code/tight/dynamic Ff (dynamic var Direction.Right dir) -> int do
-    escape 10;
-end
-
-code/tight/dynamic Ff (dynamic var Direction.Left dir) -> int do
-    escape 100;
-end
-
-var Direction.Right x1 = val Direction.Right();
-var Direction y1 = val Direction.Left();
-var Direction y2 = val Direction();
-
-escape (call/dynamic Ff(x1)) + (call/dynamic Ff(y1)) + (call/dynamic Ff(y2));
-]],
-    wrn = true,
-    run = 110,
-}
-
-Test { [[
-data Direction as nothing;
-//data Direction as 0;
-data Direction.Right as 10;
-data Direction.Left as 20;
-
-code/tight/dynamic Ff (dynamic var Direction dir) -> int do
-    escape 1;
-end
-
-code/tight/dynamic Ff (dynamic var Direction.Right dir) -> int do
-    escape 10;
-end
-
-code/tight/dynamic Ff (dynamic var Direction.Left dir) -> int do
-    escape 100;
-end
-
-var Direction.Right x1 = val Direction.Right();
-var Direction y1 = val Direction.Left();
-var Direction y2 = val Direction();
-
-escape (call Ff(x1)) + (call Ff(y1)) + (call Ff(y2));
-]],
-    run = 110,
-}
 
 do return end -- OK
 ---]=====]
@@ -37764,7 +37692,9 @@ var int v2 = await/dynamic Ff(&a,33);
 
 escape v1 + v2;
 ]],
-    dcls = 'line 5 : invalid `dynamic´ declaration : parameter #2 : unexpected plain `data´',
+    props_ = 'line 5 : invalid `dynamic´ declaration : parameter #2 : expected `data´ in hierarchy',
+    --run = 1,
+    --dcls = 'line 5 : invalid `dynamic´ declaration : parameter #2 : unexpected plain `data´',
 }
 
 Test { [[
@@ -37877,7 +37807,9 @@ end
 
 escape 1;
 ]],
-    dcls = 'line 7 : invalid `dynamic´ declaration : parameter #2 : unexpected plain `data´',
+    wrn = true,
+    props_ = 'line 7 : invalid `dynamic´ declaration : parameter #2 : expected `data´ in hierarchy',
+    --dcls = 'line 7 : invalid `dynamic´ declaration : parameter #2 : unexpected plain `data´',
 }
 
 Test { [[
@@ -41746,7 +41678,93 @@ data Dd as nothing;
 var Dd d;
 escape 1;
 ]],
-    dcls = 'line 2 : invalid declaration : cannot instantiate `data´ "Dd"',
+    wrn = true,
+    --run = 1,
+    props_ = 'line 1 : invalid `as´ declaration : expected `data´ hierarchy',
+    --dcls = 'line 2 : invalid declaration : cannot instantiate `data´ "Dd"',
+}
+
+Test { [[
+data Direction as 0;
+data Direction.Right as 10;
+
+code/tight Ff (var Direction dir) -> int do
+    escape dir as int;
+end
+
+var Direction.Right x1 = val Direction.Right();
+
+escape (call Ff(x1));
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+//data Direction as nothing;
+data Direction as 0;
+data Direction.Right as 10;
+data Direction.Left as 20;
+
+code/tight/dynamic Ff (dynamic var Direction dir) -> int do
+    escape 1;
+end
+
+code/tight/dynamic Ff (dynamic var Direction.Right dir) -> int do
+    escape 10;
+end
+
+code/tight/dynamic Ff (dynamic var Direction.Left dir) -> int do
+    escape 100;
+end
+
+var Direction.Right x1 = val Direction.Right();
+var Direction y1 = val Direction.Left();
+var Direction y2 = val Direction();
+
+escape (call/dynamic Ff(x1)) + (call/dynamic Ff(y1)) + (call/dynamic Ff(y2));
+]],
+    wrn = true,
+    run = 111,
+}
+
+Test { [[
+data Direction as nothing;
+data Direction.Right as 10;
+data Direction.Left as 20;
+var Direction y = val Direction();
+escape 1;
+]],
+    wrn = true,
+    stmts = 'line 4 : invalid constructor : cannot instantiate `data´ "Direction"',
+}
+
+Test { [[
+data Direction as nothing;
+//data Direction as 0;
+data Direction.Right as 10;
+data Direction.Left as 20;
+
+code/tight/dynamic Ff (dynamic var Direction dir) -> int do
+    escape 1;
+end
+
+code/tight/dynamic Ff (dynamic var Direction.Right dir) -> int do
+    escape 10;
+end
+
+code/tight/dynamic Ff (dynamic var Direction.Left dir) -> int do
+    escape 100;
+end
+
+var Direction.Right x1 = val Direction.Right();
+var Direction y1 = val Direction.Left();
+var Direction y2 = val Direction();
+
+escape (call/dynamic Ff(x1)) + (call/dynamic Ff(y1)) + (call/dynamic Ff(y2));
+]],
+    wrn = true,
+    stmts = 'line 20 : invalid constructor : cannot instantiate `data´ "Direction"',
 }
 
 --<< DATA / HIER / ENUM

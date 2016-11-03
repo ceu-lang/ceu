@@ -228,6 +228,13 @@ F = {
         -- tp
         EXPS.check_tp(me, to.info.tp, Abs_Cons.info.tp, 'invalid constructor')
 
+        -- NO: instantiate "nothing" data
+        --  data Dd as nothing;
+        --  var Dd d = val Dd();
+        local _, num = unpack(ID_abs.dcl)
+        ASR(num ~= 'nothing', me,
+            'invalid constructor : cannot instantiate `data´ "'..ID_abs.dcl.id..'"')
+
         -- exact match on constructor
         local to_str = TYPES.tostring(to.info.tp)
         local fr_str = TYPES.tostring(Abs_Cons.info.tp)

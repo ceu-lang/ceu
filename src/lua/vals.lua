@@ -145,20 +145,25 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
             -- Ff(&ex)
             local cast = ''
             if var_tp.tag=='Type' and var_tp[1].tag=='ID_abs' and var_tp[1].dcl.tag=='Data' then
+                local op = '->'
                 if TYPES.check(var_tp,'&&') then
                     cast = '('..TYPES.toc(var_tp)..')'
                 elseif var_is_alias then
                     cast = '('..TYPES.toc(var_tp)..'*)'
+                else
+                    op = '.'
                 end
 
                 if mods and mods.dynamic and var_tp[1].dcl.hier then
                     if val.tag == 'Exp_as' then
                         ps[#ps+1] = '._data_'..i..' = CEU_DATA_'..val.info.tp[1].dcl.id
                     else
-                        ps[#ps+1] = '._data_'..i..' = '..V(val,ctx)..'->_enum'
+                        ps[#ps+1] = '._data_'..i..' = '..V(val,ctx)..op..'_enum'
                     end
                 end
             end
+
+            local var_is_opt = TYPES.check(var_tp,'?')
 
             if TYPES.check(var_tp,'?') and (not var_is_alias) and
                (not (val.info and TYPES.check(val.info.tp,'?')))
@@ -194,7 +199,41 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
                             ctx.to_val = '('..to_val..'.'..var_id..')'
                         end
                     end
-                    ps[#ps+1] = '.'..var_id..' = '..cast..V(val,ctx)
+
+                    local val_val = V(val,ctx)
+
+                    -- Base <- Super
+-- TODO: unify-01
+                    do
+                        local var_tp = var_tp
+                        if var_is_opt then
+                            var_tp = TYPES.pop(var_tp,'?')
+                        end
+                        local to_abs = TYPES.abs_dcl(var_tp, 'Data')
+                        if to_abs and (not var_is_alias) then
+                            --  var Super y;
+                            --  var Base  x;
+                            --  x = y;
+                            -- to
+                            --  x = Base(y)
+                            local name = 'CEU_'..TYPES.toc(val.info.tp)..'__TO__'..TYPES.toc(var_tp)
+                            val_val = name..'('..val_val..')'
+
+                            if not MEMS.datas.casts[name] then
+                                MEMS.datas.casts[name] = true
+                                MEMS.datas.casts[#MEMS.datas.casts+1] = [[
+]]..TYPES.toc(var_tp)..' '..name..[[ (]]..TYPES.toc(val.info.tp)..[[ x)
+{
+    return (*(]]..TYPES.toc(var_tp)..[[*)&x);
+}
+]]
+                            end
+                        else
+                            val_val = cast..val_val
+                        end
+                    end
+
+                    ps[#ps+1] = '.'..var_id..' = '..val_val
                 end
             end
         end

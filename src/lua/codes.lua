@@ -109,6 +109,7 @@ function SET (me, to, fr, fr_ok, fr_ctx)
         to_val = '('..to_val..'.value)'
     end
 
+-- TODO: unify-01
     -- Base <- Super
     do
         local to_tp = to.info.tp
@@ -122,8 +123,19 @@ function SET (me, to, fr, fr_ok, fr_ctx)
             --  var Base  x;
             --  x = y;
             -- to
-            --  *((Super*) x) = u;
-            to_val = '(*('..TYPES.toc(fr.info.tp)..'*)&'..to_val..')'
+            --  x = Base(y)
+            local name = 'CEU_'..TYPES.toc(fr.info.tp)..'__TO__'..TYPES.toc(to_tp)
+            fr_val = name..'('..fr_val..')'
+
+            if not MEMS.datas.casts[name] then
+                MEMS.datas.casts[name] = true
+                MEMS.datas.casts[#MEMS.datas.casts+1] = [[
+]]..TYPES.toc(to_tp)..' '..name..[[ (]]..TYPES.toc(fr.info.tp)..[[ x)
+{
+    return (*(]]..TYPES.toc(to_tp)..[[*)&x);
+}
+]]
+            end
         end
     end
 
@@ -432,6 +444,7 @@ if (0)
             if dcl.is_param then
                 local _,Type1,_ = unpack(dcl)
 
+--[[
                 local cast = ''
                 if me.dyn_base then
                     local is_alias2,Type2,_ = unpack(args_Code_Pars[i])
@@ -439,10 +452,25 @@ if (0)
                         cast = '('..TYPES.toc(Type1)..(is_alias2 and '*' or '')..')'
                     end
                 end
+]]
+                local is_alias2,Type2,_ = unpack(args_Code_Pars[i])
+local tpc
+if dcl.tag == 'Vec' then
+    tpc = 'tceu_vector'
+elseif dcl.tag == 'Event' then
+    error'oi'
+elseif dcl.tag == 'Pool' then
+    tpc = 'tceu_pool'
+else
+    tpc = TYPES.toc(Type1)
+end
+                local cast = '*('..tpc..(is_alias2 and '*' or '')..'*)'
 
+-- TODO: unify-01
                 LINE(me, [[
 ]]..V(dcl,{is_bind=true})..[[ =
-    ]]..cast..[[((tceu_code_args_]]..args_id..[[*)_ceu_occ)->_]]..i..[[;
+    /*]]..cast..[[((tceu_code_args_]]..args_id..[[*)_ceu_occ)->_]]..i..[[;*/
+    ]]..cast..[[(&((tceu_code_args_]]..args_id..[[*)_ceu_occ)->_]]..i..[[);
 ]])
             end
         end
@@ -1879,6 +1907,7 @@ local c = SUB(c, '=== EXTS_DEFINES_INPUT_OUTPUT ===', MEMS.exts.defines_input_ou
 local c = SUB(c, '=== EVTS_ENUM ===',        MEMS.evts.enum)
 local c = SUB(c, '=== DATAS_HIERS ===',      MEMS.datas.hiers)
 local c = SUB(c, '=== DATAS_MEMS ===',       MEMS.datas.mems)
+local c = SUB(c, '=== DATAS_MEMS_CASTS ===', table.concat(MEMS.datas.casts,'\n'))
 local c = SUB(c, '=== EXTS_ENUM_OUTPUT ===', MEMS.exts.enum_output)
 local c = SUB(c, '=== TCEU_NTRL ===',        TYPES.n2uint(AST.root.trails_n))
 local c = SUB(c, '=== TCEU_NLBL ===',        TYPES.n2uint(#LABELS.list))
