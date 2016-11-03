@@ -9,29 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
-Test { [[
-data Dd with
-    var int v=10;
-end
-code/tight Ff (var Dd d) -> int do
-    escape d.v;
-end
-escape call Ff(Dd(10));
-]],
-    run = 10,
-}
-Test { [[
-data Dd with
-    var int v=10;
-end
-code/tight Ff (var Dd d) -> int do
-    escape d.v;
-end
-escape call Ff(Dd(_));
-]],
-    run = 10,
-}
-
 do return end -- OK
 ---]=====]
 
@@ -42806,6 +42783,29 @@ data Dd with
 end
 var Dd d = val Dd(_);
 escape d.x;
+]],
+    run = 10,
+}
+
+Test { [[
+data Dd with
+    var int v=10;
+end
+code/tight Ff (var Dd d) -> int do
+    escape d.v;
+end
+escape call Ff(Dd(10));
+]],
+    run = 10,
+}
+Test { [[
+data Dd with
+    var int v=10;
+end
+code/tight Ff (var Dd d) -> int do
+    escape d.v;
+end
+escape call Ff(Dd(_));
 ]],
     run = 10,
 }
