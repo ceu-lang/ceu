@@ -662,6 +662,8 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , Abs_Val   = CK'val' * V'Abs_Cons'
     , Abs_New   = CK'new' * V'Abs_Cons'
     , Abs_Await = V'__Abs_Cons_Code'
+        -- TODO: "await Abs_Await" should not accept "-> (...)"
+        --       but "watching Abs_Await" does
 
     , Abs_Spawn_Single = K'spawn' * V'__Abs_Cons_Code' * (-KK'in') * Cc(false)
     , Abs_Spawn_Pool   = K'spawn' * V'__Abs_Cons_Code' * KK'in' * V'Exp_Name'

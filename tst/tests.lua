@@ -32916,6 +32916,20 @@ escape call/recursive Fx(5);
     run = 120,
 }
 
+Test { [[
+code/tight/recursive Fat (var int v) -> int;
+code/tight/recursive Fat (var int v) -> int do  // "Fat" is a recursive code
+    if v > 1 then
+        escape v * (call/recursive Fat(v-1));
+    else
+        escape 1;
+    end
+end
+escape (call/recursive Fat(10) == 3628800) as int;
+]],
+    run = 1,
+}
+
 --<<< RECURSIVE
 
 -->> VECTOR / CODE
