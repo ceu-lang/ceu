@@ -92,6 +92,14 @@ F = {
         end
     end,
 
+    Pool = function (me)
+        local _,_,_,dim = unpack(me)
+        if dim == '[]' then
+            return
+        end
+        ASR(dim.is_const, me, 'not implemented : dynamic limit for pools')
+    end,
+
     Loop_Num = 'Loop',
     Loop = function (me)
         local max = unpack(me)

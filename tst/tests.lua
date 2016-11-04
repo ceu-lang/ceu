@@ -34797,6 +34797,20 @@ code/await Ff (void) -> (var&? int x) -> void do
     var int v = 10;
     x = &v;
 end
+var int n = 0;
+pool[n] Ff ffs;
+var&? int x;
+spawn Ff() -> (&x) in ffs;
+escape (x? as int) + 1;
+]],
+    consts = 'line 6 : not implemented : dynamic limit for pools',
+}
+
+Test { [[
+code/await Ff (void) -> (var&? int x) -> void do
+    var int v = 10;
+    x = &v;
+end
 var&? int x;
 spawn Ff() -> (&x);
 await x;
