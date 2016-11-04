@@ -66,7 +66,7 @@ Vectors
 
 In Céu, a vector is a dynamic and contiguous collection of elements of the same
 type.
-A vector [declaration](#TODO) specifies its type and maximum number of
+A vector [declaration](#TODO) specifies its type and the maximum number of
 elements (possibly unlimited).
 The current size of a vector is dynamic and can be accessed through the
 [operator `$`](#TODO).
@@ -161,8 +161,8 @@ A pool is a dynamic container to hold running [code abstractions](#TODO).
 A pool [declaration](#TODO) specifies the type of the abstraction and maximum
 number of concurrent instances (possibly unlimited).
 Individual elements of a pool can only be accessed through [iterators](#TODO).
-New elements are created with `spawn` and are removed automatically when and
-only the code execution terminates.
+New elements are created with [`spawn`](#TODO) and are removed automatically
+when and only the code execution terminates.
 
 Example:
 
@@ -178,6 +178,8 @@ end
 
 When a pool declaration goes out of scope, all running code abstractions are
 automatically aborted.
+
+`TODO: data`
 
 References
 ----------

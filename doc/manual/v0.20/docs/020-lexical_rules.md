@@ -28,19 +28,25 @@ variable names):
 
     pos             pre             pure            recursive       request         
 
-    resume          sizeof          spawn           then            thread
+    resume          sizeof          spawn           static          then
 
-    tight           traverse        true            until           val
 
-    var             vector          watching        with            bool
+    thread          tight           traverse        true            until
 
-    byte            f32             f64             float           int
 
-    s16             s32             s64             s8              ssize
+    val             var             vector          watching        with
 
-    u16             u32             u64             u8              uint
 
-    usize           void
+    bool            byte            f32             f64             float
+
+
+    int             s16             s32             s64             s8
+
+
+    ssize           u16             u32             u64             u8
+
+
+    uint            usize           void
 ```
 
 Identifiers

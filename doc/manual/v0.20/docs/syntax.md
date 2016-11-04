@@ -213,7 +213,7 @@ Stmt ::= nothing
       | call  Mods Code_Cons
 
       // Code_Await ::=
-      | await Mods Code_Cons_Init
+      | await Mods Code_Cons
 
       // Code_Spawn ::=
       | spawn Mods Code_Cons_Init [in Name]
