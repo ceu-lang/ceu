@@ -116,8 +116,8 @@ See also [Storage Classes](#TODO) for an overview of storage entities.
 
 ### Variable
 
-A variable has an associated [type](#TODO) and can be optionally
-[initialized](#TODO).
+A [variable](#TODO) declaration has an associated [type](#TODO) and can be
+optionally [initialized](#TODO).
 A single statement can declare multiple variables of the same type.
 Declarations can also be [aliases](#TODO) or [option aliases](#TODO).
 
@@ -131,8 +131,8 @@ var& int z = &v;    // "z" is an alias to "v"
 
 ### Vector
 
-A vector has a dimension, an associated [type](#TODO) and can be optionally
-[initialized](#TODO).
+A [vector](#TODO) declaration has a dimension, an associated [type](#TODO) and
+can be optionally [initialized](#TODO).
 A single statement can declare multiple vectors of the same dimension and type.
 Declarations can also be [aliases](#TODO).
 
@@ -165,7 +165,7 @@ vector&[]  int vs4 = &vs1;  // "vs4" is an alias to "vs1"
 
 ### Event
 
-An event has a [type](#TODO) for the value it carries when occurring.
+An [event](#TODO) has a [type](#TODO) for the value it carries when occurring.
 It can be also a list of types if the event communicates multiple values.
 A single statement can declare multiple events of the same type.
 
@@ -197,9 +197,37 @@ event (int,int) c;      // "c" is a internal event carrying an "(int,int)" pair
 
 ### Pool
 
-`TODO`
+A [pool](#TODO) has a dimension, an associated [type](#TODO) and can be
+optionally [initialized](#TODO).
+A single statement can declare multiple pools of the same dimension and type.
+Declarations can also be [aliases](#TODO).
 
-See also [Code Pools](#TODO) and [Data Pools](#TODO).
+The expression between the brackets specifies the dimension of the pool with
+the options that follow:
+
+- *constant expression*: Maximum number of elements is fixed and space is
+                         statically pre-allocated.
+- *variable expression*: Maximum number of elements is fixed but space is
+                         dynamically allocated.
+                         The expression is evaulated once at declaration time.
+- *omitted*: Maximum number of elements is unbounded and space is dynamically
+             allocated.
+
+The space for dynamic pools grow and shrink automatically.
+
+Examples:
+
+```ceu
+var int n = 10;
+vector[10] int vs1 = [];    // "vs1" is a static vector of 10 elements max
+vector[n]  int vs2 = [];    // "vs2" is a dynamic vector of 10 elements max
+vector[]   int vs3 = [];    // "vs3" is an unbounded vector
+vector&[]  int vs4 = &vs1;  // "vs4" is an alias to "vs1"
+```
+
+See also [Code Invocation](#TODO).
+
+`TODO: data`
 
 -------------------------------------------------------------------------------
 
@@ -1445,7 +1473,7 @@ var Object o1 = val Object(Rect(0,0,10,10,_), Dir.Right());
 var Object o2 = o1;         // makes a deep copy of all fields from "o1" to "o2"
 ```
 
-`TODO: new, recursive types`
+`TODO: new, pool, recursive types`
 
 ### Code Abstraction
 
@@ -1487,18 +1515,23 @@ Code_Cons_Init ::= Code_Cons [`->´ `(´ LIST(`&´ Var) `)´])
 ```
 
 A `code/tight` is a subprogram that cannot contain
-[synchronous control statements](#TODO) and is guaranteed to terminate
-immediately in the current [internal reaction](#TODO).
+[synchronous control statements](#TODO) and runs to completion in the current
+[internal reaction](#TODO).
 
-A `code/await` is a subprogram with no restrictions, e.g., it can manipulate
-events and use parallel compositions.
+A `code/await` is a subprogram with no restrictions (e.g., it can manipulate
+events and use parallel compositions) and its execution may outlive multiple
+reactions.
 
-A *prototype declaration* specifies the interface paramenters of the
-abstraction which code invocations must match.
+A *prototype declaration* specifies the interface parameters of the
+abstraction which code invocations must satisfy.
 A *full declaration* (a.k.a. *definition*) also specifies an implementation
 with a block of code.
 An *invocation* specifies the name of the code abstraction and arguments
 matching its declaration.
+
+To support recursive abstractions, a code invocation can appear before the
+implementation is known, but after the prototype declaration.
+In this case, the declaration must use the modifier `recursive`.
 
 Examples:
 
@@ -1522,7 +1555,19 @@ end
 await Hello_World();                // never awakes
 ```
 
-`TODO: recursive`
+```ceu
+code/tight/recursive Fat (var int v) -> int;    // "Fat" is a recursive code
+code/tight/recursive Fat (var int v) -> int do
+    if v > 1 then
+        escape v * (call/recursive Fat(v-1));   // recursive invocation before full declaration
+    else
+        escape 1;
+    end
+end
+var int fat = call/recursive Fat(10);           // invokes "Fat" (yields 3628800)
+```
+
+`TODO: hold`
 
 #### Code Declaration
 
@@ -1567,6 +1612,34 @@ spawn Open(<...>) -> (&res);                // initiliazes resource
 ```
 
 #### Code Invocation
+
+A `code/tight` is invoked with a `call` followed by the abstraction name and
+list of arguments.
+A `code/await` is invoked with an `await` or `spawn` followed by the
+abstraction name and list of arguments.
+
+The list of arguments must satisfy the list of parameters in the
+[code declaration](#TODO).
+
+The `call` and `await` invocations suspend the ongoing computation and transfer
+the execution control to the code abstraction.
+The invoking point only resumes after the abstraction terminates.
+The `spawn` invocation also suspends and transfers control to the code
+abstraction.
+However, when the abstraction becomes idle (or terminates), the invoking point
+resumes.
+This allows the invocation point and the abstraction to execute concurrently.
+
+The `spawn` invocation accepts an optional list of aliases matching the
+[initialization list](#TODO) in the code abstraction.
+These aliases are bound to local resources in the code and can be accessed
+from the invocation point.
+
+The `spawn` invocation also accepts an optional [pool](#TODO).
+
+receives an optional initialization list and an optional pool.
+
+Code abstractions are invoked with the `call`, `await` and `spawn`
 
 #### Dynamic Dispatching
 
