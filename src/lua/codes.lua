@@ -1763,6 +1763,7 @@ if (lua_isnumber(]]..LUA(me)..[[,-1)) {
         LINE(me, lua.code_after)
     end,
 
+    Set_Lua_Do = CONC_ALL,
     Lua_Do = CONC_ALL,
     Lua_Do_Open = function (me)
         local n = unpack(me)

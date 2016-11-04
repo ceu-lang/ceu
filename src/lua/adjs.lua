@@ -836,6 +836,13 @@ error'TODO: luacov never executes this?'
         end
     end,
 
+    Set_Lua_Do__PRE = function (me)
+        local _,to = unpack(me)
+        if to.tag == 'Exp_Name' then
+            AST.set(me, 2, node('List_Name', to.ln, to))
+        end
+    end,
+
     Set_Await_many__PRE = function (me)
         local _,var,_ = unpack(me)
         if var.tag == 'Exp_Name' then

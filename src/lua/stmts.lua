@@ -196,6 +196,26 @@ F = {
         end
     end,
 
+    Set_Lua_Do = function (me)
+        local fr, to = unpack(me)
+        fr = AST.asr(fr,'Block', 1,'Stmts', 3,'Lua_Do')
+
+        -- ctx
+        if to[1] and to[1].tag~='ID_any' then
+            INFO.asr_tag(to[1], {'Var'}, 'invalid assignment')
+        end
+        if to[2] and to[2].tag~='ID_any' then
+            INFO.asr_tag(to[2], {'Vec'}, 'invalid assignment')
+        end
+
+        -- tp
+        EXPS.check_tp(me, to.tp, fr.tp, 'invalid assignment')
+    end,
+    Lua_Do = function (me)
+        me.tp = AST.node('Typelist', me.ln, TYPES.new(me,'bool'))
+    end,
+
+
     Set_Lua = function (me)
         local _,to = unpack(me)
         INFO.asr_tag(to, {'Nat','Var'}, 'invalid Lua assignment')

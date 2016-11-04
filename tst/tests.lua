@@ -8,8 +8,33 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
---[=====[
+Test { [=[
+var bool err;
+err = lua[] do
+    [[error 'oi']];
+end;
+escape err as int;
+]=],
+    _opts = {
+        ceu = true,
+        ceu_features_lua = 'true',
+    },
+    run = 1,
+}
+
+Test { [=[
+var bool err;
+vector[] byte msg;
+(err, msg) = lua[] do
+    [[error 'oi']];
+end;
+escape 1;
+]=],
+    run = 1,
+}
+
 do return end -- OK
+--[=====[
 ---]=====]
 
 ----------------------------------------------------------------------------

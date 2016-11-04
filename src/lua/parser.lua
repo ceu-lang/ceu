@@ -697,7 +697,8 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
         + V'_Set_Any'
         + V'_Set_Exp'
 
-    , __sets_many = V'_Set_Emit_Ext_req' + V'_Set_Await_many' + V'_Set_Watching'
+    , __sets_many = V'_Set_Emit_Ext_req' + V'_Set_Await_many'
+                  + V'_Set_Watching'     + V'_Set_Lua_Do'
 
     -- after `=´
 
