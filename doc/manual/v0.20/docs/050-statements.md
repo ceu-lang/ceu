@@ -109,7 +109,7 @@ Ext  ::= input  (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
 Int  ::= event [`&´|`&?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Cons])
 Pool ::= pool [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Cons])
 
-Vec_Cons ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua | `[´ [LIST(Exp)] `]´) }
+Vec_Cons ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´) }
 ```
 
 See also [Storage Classes](#TODO) for an overview of storage entities.
@@ -1303,8 +1303,8 @@ var _tp v = _f() as /plain;
 Lua Integration
 ---------------
 
-Céu also integrates with Lua, providing [lua states](#TODO) to delimit the
-effects of [lua statements](#TODO) which can be inlined in programs:
+Céu also integrates with Lua, providing [Lua states](#TODO) to delimit the
+effects of [Lua statements](#TODO) which can be inlined in programs:
 
 ```ceu
 Lua_State ::= lua `[´ [Exp] `]´ do
@@ -1323,11 +1323,16 @@ accessors, but never for control purposes.
 
 ### Lua Statement
 
-The contents of lua statements in between `[[` and `]]` are inlined in the
+The contents of Lua statements in between `[[` and `]]` are inlined in the
 program.
 
-Like [native statements](#TODO), lua statements support interpolation of
+Like [native statements](#TODO), Lua statements support interpolation of
 expressions in Céu which are expanded when preceded by a `@`.
+
+Lua statements only affect the [Lua state](#TODO) in which they are embedded.
+
+If a Lua statement is used in an [assignment](#TODO), it is evaluated as an
+expression that must satisfy the destination.
 
 Examples:
 
@@ -1342,14 +1347,12 @@ v_ceu = [[ v_lua + @v_ceu ]];   // yields 30
 ]]
 ```
 
-Lua statements only affect the [lua state](#TODO) in which they are embedded.
-
 ### Lua State
 
-A lua state creates a separate environment for its embedded
-[lua statements](#TODO).
+A Lua state creates a separate environment for its embedded
+[Lua statements](#TODO).
 
-Programs have an implicit enclosing *global lua state* which all orphan
+Programs have an implicit enclosing *global Lua state* which all orphan
 statements apply.
 
 Examples:
@@ -1357,7 +1360,7 @@ Examples:
 ```ceu
 // "v" is not shared between the two statements
 par do
-    // global lua state
+    // global Lua state
     [[ v = 0 ]];
     var int v = 0;
     every 1s do
@@ -1366,7 +1369,7 @@ par do
         [[ v = v + 1 ]];
     end
 with
-    // local lua state
+    // local Lua state
     lua[] do
         [[ v = 0 ]];
         var int v = 0;
@@ -1379,7 +1382,7 @@ with
 end
 ```
 
-`TODO: dynamic scope, assignment, [dim]`
+`TODO: dynamic scope, assignment/error, [dim]`
 
 -------------------------------------------------------------------------------
 
@@ -1588,7 +1591,10 @@ The list of arguments must satisfy the list of parameters in the
 
 The `call` and `await` invocations suspend the ongoing computation and transfer
 the execution control to the code abstraction.
-The invoking point only resumes after the abstraction terminates.
+The invoking point only resumes after the abstraction terminates and evaluates
+to a value of the [return type](#TODO) which can be captured with an optional
+[assignment](#TODO).
+
 The `spawn` invocation also suspends and transfers control to the code
 abstraction.
 However, when the abstraction becomes idle (or terminates), the invoking point
@@ -1602,7 +1608,9 @@ from the invocation point.
 
 The `spawn` invocation also accepts an optional [pool](#TODO) which provides
 storage and scope for invoked abstractions.
-If the pool has no space left, the invocation fails and evaluates to `false`.
+In this case, the invocation evaluates to a boolean that indicates if the pool
+has space to execute the code.
+The result can be captured with an optional [assignment](#TODO).
 If the pool goes out of scope, all invoked abstractions invoked at that pool
 are aborted.
 If the `spawn` omits the pool, the invocation always succeed and has the same
@@ -1668,7 +1676,8 @@ Cons ::= ( Do
          | Emit_Ext
          | Watching
          | Async_Thread
-         | Lua
+         | Lua_State
+         | Lua_Stmts
          | Code_Await
          | Code_Spawn
          | Vec_Cons
@@ -1676,13 +1685,27 @@ Cons ::= ( Do
          | `_´
          | Exp )
 
-Vec_Cons  ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua | `[´ [LIST(Exp)] `]´) }
+Vec_Cons  ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´) }
 Data_Cons ::= (val|new) ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
 ```
 
 ### Vector Constructor
 
 `TODO:`
+
+### Lua Assignment
+
+A [Lua statement](#TODO) evaluates to an expression that either satisfies the
+destination or generates a runtime error.
+The list that follows specifies the *Céu destination* and expected
+*Lua source*:
+
+- a `var` `bool`              expects a `boolean`
+- a [numeric](#TODO) `var`    expects a `number`
+- a pointer `var`             expects a `lightuserdata`
+- a `vector` `byte`           expects a `string`
+
+`TODO: lua state captures errors`
 
 ### Data Constructor
 
@@ -1717,6 +1740,8 @@ var Object o1 = val Object(Rect(0,0,10,10,_), Dir.Right());
 ```ceu
 var Object o2 = o1;         // makes a deep copy of all fields from "o1" to "o2"
 ```
+
+-------------------------------------------------------------------------------
 
 Synchronous Control Statements
 ------------------------------

@@ -167,10 +167,11 @@ Stmt ::= nothing
 
   /* Lua integration */
 
-      // Lua ::=
+      // Lua_State ::=
       | lua `[´ [Exp] `]´ do
             Block
         end
+      // Lua_Stmts ::=
       | `[´ {`=´} `[´
             { {<code in Lua> | `@´ Exp} }
         `]´ {`=´} `]´
@@ -232,7 +233,8 @@ Stmt ::= nothing
                      | Watching
                      | Async_Thread
                      | Await
-                     | Lua
+                     | Lua_State
+                     | Lua_Stmts
                      | Code_Await
                      | Code_Spawn
                      | Vec_Cons
@@ -240,7 +242,7 @@ Stmt ::= nothing
                      | `_´
                      | Exp )
             Data_Cons ::= (val|new) ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
-            Vec_Cons  ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua | `[´ [LIST(Exp)] `]´) }
+            Vec_Cons  ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´) }
 
 /* Identifiers */
 
