@@ -293,6 +293,7 @@ KEYS = P
 'tight' +
 'thread' +
 'then' +
+'static' +
 'spawn' +
 'sizeof' +
 'resume' +
