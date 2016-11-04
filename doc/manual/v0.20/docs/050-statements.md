@@ -135,19 +135,8 @@ A [vector](#TODO) declaration has a dimension, an associated [type](#TODO) and
 can be optionally [initialized](#TODO).
 A single statement can declare multiple vectors of the same dimension and type.
 Declarations can also be [aliases](#TODO).
-
-The expression between the brackets specifies the dimension of the vector with
-the options that follow:
-
-- *constant expression*: Maximum number of elements is fixed and space is
-                         statically pre-allocated.
-- *variable expression*: Maximum number of elements is fixed but space is
-                         dynamically allocated.
-                         The expression is evaulated once at declaration time.
-- *omitted*: Maximum number of elements is unbounded and space is dynamically
-             allocated.
-
-The space for dynamic vectors grow and shrink automatically.
+The expression between the brackets specifies the [dimension](#TODO) of the
+vector.
 
 Examples:
 
@@ -159,9 +148,7 @@ vector[]   int vs3 = [];    // "vs3" is an unbounded vector
 vector&[]  int vs4 = &vs1;  // "vs4" is an alias to "vs1"
 ```
 
-#### Vector Constructor
-
-`TODO`
+`TODO: constructor`
 
 ### Event
 
@@ -201,9 +188,25 @@ A [pool](#TODO) has a dimension, an associated [type](#TODO) and can be
 optionally [initialized](#TODO).
 A single statement can declare multiple pools of the same dimension and type.
 Declarations can also be [aliases](#TODO).
+The expression between the brackets specifies the [dimension](#TODO) of the
+pool.
 
-The expression between the brackets specifies the dimension of the pool with
-the options that follow:
+Examples:
+
+```ceu
+code/await Play (...) do ... end
+pool[10] Play plays;        // "plays" is a static pool of 10 elements max
+pool&[]  Play a = &plays;   // "a" is an alias to "plays"
+```
+
+See also [Code Invocation](#TODO).
+
+`TODO: data`
+
+### Dimension
+
+A declaration for [vector](#TODO) or [pool](#TODO) requires an expression
+between brackets to specify its [dimension](#TODO) as follows:
 
 - *constant expression*: Maximum number of elements is fixed and space is
                          statically pre-allocated.
@@ -213,21 +216,7 @@ the options that follow:
 - *omitted*: Maximum number of elements is unbounded and space is dynamically
              allocated.
 
-The space for dynamic pools grow and shrink automatically.
-
-Examples:
-
-```ceu
-var int n = 10;
-vector[10] int vs1 = [];    // "vs1" is a static vector of 10 elements max
-vector[n]  int vs2 = [];    // "vs2" is a dynamic vector of 10 elements max
-vector[]   int vs3 = [];    // "vs3" is an unbounded vector
-vector&[]  int vs4 = &vs1;  // "vs4" is an alias to "vs1"
-```
-
-See also [Code Invocation](#TODO).
-
-`TODO: data`
+The space for dynamic dimensions grow and shrink automatically.
 
 -------------------------------------------------------------------------------
 
