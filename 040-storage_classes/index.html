@@ -240,7 +240,7 @@ escape v;       // read access (yields 2)
 <h2 id="vectors">Vectors</h2>
 <p>In Céu, a vector is a dynamic and contiguous collection of elements of the same
 type.
-A vector <a href="#TODO">declaration</a> specifies its type and maximum number of
+A vector <a href="#TODO">declaration</a> specifies its type and the maximum number of
 elements (possibly unlimited).
 The current size of a vector is dynamic and can be accessed through the
 <a href="#TODO">operator <code>$</code></a>.
@@ -311,8 +311,8 @@ trails in a program.</p>
 A pool <a href="#TODO">declaration</a> specifies the type of the abstraction and maximum
 number of concurrent instances (possibly unlimited).
 Individual elements of a pool can only be accessed through <a href="#TODO">iterators</a>.
-New elements are created with <code>spawn</code> and are removed automatically when and
-only the code execution terminates.</p>
+New elements are created with <a href="#TODO"><code>spawn</code></a> and are removed automatically
+when and only the code execution terminates.</p>
 <p>Example:</p>
 <pre><code class="ceu">code/await Anim (void) =&gt; void do       // defines a code abstraction
     ...
@@ -325,6 +325,7 @@ end
 
 <p>When a pool declaration goes out of scope, all running code abstractions are
 automatically aborted.</p>
+<p><code>TODO: data</code></p>
 <h2 id="references">References</h2>
 <p>Céu supports <em>aliases</em> and <em>pointers</em> as references to entities
 (a.k.a. as <em>strong</em> and <em>weak</em> references, respectively).</p>

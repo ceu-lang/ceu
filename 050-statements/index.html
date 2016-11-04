@@ -290,8 +290,8 @@ Vec_Cons ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua | `[´ [LIST(Exp)]
 
 <p>See also <a href="#TODO">Storage Classes</a> for an overview of storage entities.</p>
 <h3 id="variable">Variable</h3>
-<p>A variable has an associated <a href="#TODO">type</a> and can be optionally
-<a href="#TODO">initialized</a>.
+<p>A <a href="#TODO">variable</a> declaration has an associated <a href="#TODO">type</a> and can be
+optionally <a href="#TODO">initialized</a>.
 A single statement can declare multiple variables of the same type.
 Declarations can also be <a href="#TODO">aliases</a> or <a href="#TODO">option aliases</a>.</p>
 <p>Examples:</p>
@@ -301,22 +301,12 @@ var&amp; int z = &amp;v;    // &quot;z&quot; is an alias to &quot;v&quot;
 </code></pre>
 
 <h3 id="vector">Vector</h3>
-<p>A vector has a dimension, an associated <a href="#TODO">type</a> and can be optionally
-<a href="#TODO">initialized</a>.
+<p>A <a href="#TODO">vector</a> declaration has a dimension, an associated <a href="#TODO">type</a> and
+can be optionally <a href="#TODO">initialized</a>.
 A single statement can declare multiple vectors of the same dimension and type.
-Declarations can also be <a href="#TODO">aliases</a>.</p>
-<p>The expression between the brackets specifies the dimension of the vector with
-the options that follow:</p>
-<ul>
-<li><em>constant expression</em>: Maximum number of elements is fixed and space is
-                         statically pre-allocated.</li>
-<li><em>variable expression</em>: Maximum number of elements is fixed but space is
-                         dynamically allocated.
-                         The expression is evaulated once at declaration time.</li>
-<li><em>omitted</em>: Maximum number of elements is unbounded and space is dynamically
-             allocated.</li>
-</ul>
-<p>The space for dynamic vectors grow and shrink automatically.</p>
+Declarations can also be <a href="#TODO">aliases</a>.
+The expression between the brackets specifies the <a href="#TODO">dimension</a> of the
+vector.</p>
 <p>Examples:</p>
 <pre><code class="ceu">var int n = 10;
 vector[10] int vs1 = [];    // &quot;vs1&quot; is a static vector of 10 elements max
@@ -325,10 +315,9 @@ vector[]   int vs3 = [];    // &quot;vs3&quot; is an unbounded vector
 vector&amp;[]  int vs4 = &amp;vs1;  // &quot;vs4&quot; is an alias to &quot;vs1&quot;
 </code></pre>
 
-<h4 id="vector-constructor">Vector Constructor</h4>
-<p><code>TODO</code></p>
+<p><code>TODO: constructor</code></p>
 <h3 id="event">Event</h3>
-<p>An event has a <a href="#TODO">type</a> for the value it carries when occurring.
+<p>An <a href="#TODO">event</a> has a <a href="#TODO">type</a> for the value it carries when occurring.
 It can be also a list of types if the event communicates multiple values.
 A single statement can declare multiple events of the same type.</p>
 <p>See also <a href="#TODO">Introduction</a> for a general overview of events.</p>
@@ -350,8 +339,33 @@ event (int,int) c;      // &quot;c&quot; is a internal event carrying an &quot;(
 </code></pre>
 
 <h3 id="pool">Pool</h3>
-<p><code>TODO</code></p>
-<p>See also <a href="#TODO">Code Pools</a> and <a href="#TODO">Data Pools</a>.</p>
+<p>A <a href="#TODO">pool</a> has a dimension, an associated <a href="#TODO">type</a> and can be
+optionally <a href="#TODO">initialized</a>.
+A single statement can declare multiple pools of the same dimension and type.
+Declarations can also be <a href="#TODO">aliases</a>.
+The expression between the brackets specifies the <a href="#TODO">dimension</a> of the
+pool.</p>
+<p>Examples:</p>
+<pre><code class="ceu">code/await Play (...) do ... end
+pool[10] Play plays;        // &quot;plays&quot; is a static pool of 10 elements max
+pool&amp;[]  Play a = &amp;plays;   // &quot;a&quot; is an alias to &quot;plays&quot;
+</code></pre>
+
+<p>See also <a href="#TODO">Code Invocation</a>.</p>
+<p><code>TODO: data</code></p>
+<h3 id="dimension">Dimension</h3>
+<p>A declaration for <a href="#TODO">vector</a> or <a href="#TODO">pool</a> requires an expression
+between brackets to specify its <a href="#TODO">dimension</a> as follows:</p>
+<ul>
+<li><em>constant expression</em>: Maximum number of elements is fixed and space is
+                         statically pre-allocated.</li>
+<li><em>variable expression</em>: Maximum number of elements is fixed but space is
+                         dynamically allocated.
+                         The expression is evaulated once at declaration time.</li>
+<li><em>omitted</em>: Maximum number of elements is unbounded and space is dynamically
+             allocated.</li>
+</ul>
+<p>The space for dynamic dimensions grow and shrink automatically.</p>
 <hr />
 <h2 id="event-handling">Event Handling</h2>
 <h3 id="await">Await</h3>
@@ -718,7 +732,7 @@ in multiple others:</p>
              Block }
          end
 
-Watching ::= watching LIST(ID_ext|Name|WCLOCKK|WCLOCKE|Code2) do
+Watching ::= watching LIST(ID_ext|Name|WCLOCKK|WCLOCKE|Code_Cons_Init) do
                  Block
              end
 
@@ -1299,10 +1313,12 @@ end
 declarations to define new subprograms.</p>
 <h3 id="data-abstraction">Data Abstraction</h3>
 <p>The <code>data</code> declaration creates a new data type:</p>
-<pre><code class="ceu">Data ::= data ID_abs [as (nothing|Exp)] [ with
+<pre><code class="ceu">// declaration
+Data ::= data ID_abs [as (nothing|Exp)] [ with
              { &lt;var_set|vector_set|pool_set|event_set&gt; `;´ {`;´} }
          end ]
 
+// constructor
 Data_Cons ::= (val|new) ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
 </code></pre>
 
@@ -1366,13 +1382,15 @@ var Object o1 = val Object(Rect(0,0,10,10,_), Dir.Right());
 <pre><code class="ceu">var Object o2 = o1;         // makes a deep copy of all fields from &quot;o1&quot; to &quot;o2&quot;
 </code></pre>
 
-<p><code>TODO: new, recursive types</code></p>
+<p><code>TODO: new, pool, recursive types</code></p>
 <h3 id="code-abstraction">Code Abstraction</h3>
 <p>The <code>code/tight</code> and <code>code/await</code> declarations create new subprograms that can
 be <a href="#TODO">invoked</a> from arbitrary points in programs:</p>
-<pre><code class="ceu">Code_Tight ::= code/tight Mods ID_abs `(´ Params `)´ `-&gt;´ Type
+<pre><code class="ceu">// prototype declaration
+Code_Tight ::= code/tight Mods ID_abs `(´ Params `)´ `-&gt;´ Type
 Code_Await ::= code/await Mods ID_abs `(´ Params `)´ [`-&gt;´ `(´ Inits `)´] `-&gt;´ (Type | FOREVER)
 
+// full declaration
 Code_Impl ::= (Code_Tight | Code_Await) do
                   Block
               end
@@ -1390,24 +1408,41 @@ Class ::= var    (`&amp;´|`&amp;?`) * Type
        |  vector (`&amp;´|`&amp;?`) `[´ [Exp] `]´ Type
        |  pool   (`&amp;´|`&amp;?`) `[´ [Exp] `]´ Type
        |  event  (`&amp;´|`&amp;?`) (Type | `(´ LIST(Type) `)´)
+
+// invocation
+Code_Call  ::= call  Mods Code_Cons
+Code_Await ::= await Mods Code_Cons_Init
+Code_Spawn ::= spawn Mods Code_Cons_Init [in Name]
+
+Mods ::= [`/´dynamic | `/´static] [`/´recursive]
+Code_Cons      ::= ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
+Code_Cons_Init ::= Code_Cons [`-&gt;´ `(´ LIST(`&amp;´ Var) `)´])
 </code></pre>
 
 <p>A <code>code/tight</code> is a subprogram that cannot contain
-<a href="#TODO">synchronous control statements</a> and is guaranteed to terminate
-immediately in the current <a href="#TODO">internal reaction</a>.</p>
-<p>A <code>code/await</code> is a subprogram with no restrictions, e.g., it can manipulate
-events and use parallel compositions.</p>
-<p>A <em>declaration</em> only specifies a prototype without an implementation.
-A <em>definition</em> also specifies an implementation with a block of code.</p>
+<a href="#TODO">synchronous control statements</a> and runs to completion in the current
+<a href="#TODO">internal reaction</a>.</p>
+<p>A <code>code/await</code> is a subprogram with no restrictions (e.g., it can manipulate
+events and use parallel compositions) and its execution may outlive multiple
+reactions.</p>
+<p>A <em>prototype declaration</em> specifies the interface parameters of the
+abstraction which code invocations must satisfy.
+A <em>full declaration</em> (a.k.a. <em>definition</em>) also specifies an implementation
+with a block of code.
+An <em>invocation</em> specifies the name of the code abstraction and arguments
+matching its declaration.</p>
+<p>To support recursive abstractions, a code invocation can appear before the
+implementation is known, but after the prototype declaration.
+In this case, the declaration must use the modifier <code>recursive</code>.</p>
 <p>Examples:</p>
-<pre><code class="ceu">code/tight Absolute (var int v) -&gt; int do
-    if v &gt; 0 then
+<pre><code class="ceu">code/tight Absolute (var int v) -&gt; int do   // declares the prototype for &quot;Absolute&quot;
+    if v &gt; 0 then                           // implements the behavior
         escape  v;
     else
         escape -v;
     end
 end
-var int abs = Absolute(-10);        // yields 10
+var int abs = call Absolute(-10);           // invokes &quot;Absolute&quot; (yields 10)
 </code></pre>
 
 <pre><code class="ceu">code/await Hello_World (void) -&gt; FOREVER do
@@ -1418,8 +1453,19 @@ end
 await Hello_World();                // never awakes
 </code></pre>
 
-<p><code>TODO: recursive</code></p>
-<h4 id="parameters-initialization-and-return">Parameters, Initialization, and Return</h4>
+<pre><code class="ceu">code/tight/recursive Fat (var int v) -&gt; int;    // &quot;Fat&quot; is a recursive code
+code/tight/recursive Fat (var int v) -&gt; int do
+    if v &gt; 1 then
+        escape v * (call/recursive Fat(v-1));   // recursive invocation before full declaration
+    else
+        escape 1;
+    end
+end
+var int fat = call/recursive Fat(10);           // invokes &quot;Fat&quot; (yields 3628800)
+</code></pre>
+
+<p><code>TODO: hold</code></p>
+<h4 id="code-declaration">Code Declaration</h4>
 <p>Code abstractions specify a list of input parameters in between <code>(</code> and <code>)</code>.
 Each parameter specifies a <a href="#TODO">storage class</a> with modifiers, a type and
 an identifier (optional in declarations).
@@ -1442,22 +1488,45 @@ must specify option <code>&amp;?</code> aliases.</p>
 <p>Examples:</p>
 <pre><code class="ceu">// &quot;Open&quot; abstracts
 code/await Open (var _char&amp;&amp; path) -&gt; (var&amp; _FILE res) -&gt; FOREVER do
-    var&amp;? _FILE res_ = _fopen(path, &lt;...&gt;)      // allocates resource
-                        finalize with
-                            _fclose(res_!);     // releases resource
-                        end;
-    res = &amp;res_!;                               // exports resource to invoker
+    var&amp;? _FILE res_ = _fopen(path, &lt;...&gt;)  // allocates resource
+                       finalize with
+                           _fclose(res_!);  // releases resource
+                       end;
+    res = &amp;res_!;                           // exports resource to invoker
     await FOREVER;
 end
 
-var&amp; _FILE res;                                 // declares resource
-spawn Open(&lt;...&gt;) -&gt; (&amp;res);                    // initiliazes resource
-&lt;...&gt;                                           // uses resource
+var&amp; _FILE res;                             // declares resource
+spawn Open(&lt;...&gt;) -&gt; (&amp;res);                // initiliazes resource
+&lt;...&gt;                                       // uses resource
 </code></pre>
 
+<h4 id="code-invocation">Code Invocation</h4>
+<p>A <code>code/tight</code> is invoked with a <code>call</code> followed by the abstraction name and
+list of arguments.
+A <code>code/await</code> is invoked with an <code>await</code> or <code>spawn</code> followed by the
+abstraction name and list of arguments.</p>
+<p>The list of arguments must satisfy the list of parameters in the
+<a href="#TODO">code declaration</a>.</p>
+<p>The <code>call</code> and <code>await</code> invocations suspend the ongoing computation and transfer
+the execution control to the code abstraction.
+The invoking point only resumes after the abstraction terminates.
+The <code>spawn</code> invocation also suspends and transfers control to the code
+abstraction.
+However, when the abstraction becomes idle (or terminates), the invoking point
+resumes.
+This allows the invocation point and the abstraction to execute concurrently.</p>
+<p>The <code>spawn</code> invocation accepts an optional list of aliases matching the
+<a href="#TODO">initialization list</a> in the code abstraction.
+These aliases are bound to local resources in the code and can be accessed
+from the invocation point.</p>
+<p>The <code>spawn</code> invocation also accepts an optional <a href="#TODO">pool</a>.</p>
+<p>receives an optional initialization list and an optional pool.</p>
+<p>Code abstractions are invoked with the <code>call</code>, <code>await</code> and <code>spawn</code></p>
 <h4 id="dynamic-dispatching">Dynamic Dispatching</h4>
 <p>Céu supports dynamic code dispatching based on multiple parameters.</p>
-<p>The <code>/dynamic</code> modifier specifies that the code is dynamically dispatched.
+<p>The <code>/dynamic</code> modifier in a declaration specifies that the code is dynamically
+dispatched.
 A dynamic code must have at least one <code>dynamic</code> parameter.
 Also, all dynamic parameters must be pointers or aliases to a
 <a href="#TODO">data type</a> in some hierarchy.</p>
@@ -1490,9 +1559,6 @@ var&amp; Media m = &lt;...&gt;;       // receives one of &quot;Media.Audio&quot;
 await/dynamic Play(&amp;m);     // dispatches the appropriate subprogram to play the media
 </code></pre>
 
-<h4 id="code-invocation">Code Invocation</h4>
-<p>A <a href="#TODO">code invocation</a> must match the declaration of the list of
-parameters, initialization list, and return value.</p>
 <hr />
 <h2 id="assignments">Assignments</h2>
 <p><code>TODO</code></p>

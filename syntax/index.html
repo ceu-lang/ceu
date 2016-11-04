@@ -286,7 +286,7 @@ Stmt ::= nothing
 
       /* watching */
       // Watching ::=
-      | watching LIST(ID_ext|Name|WCLOCKK|WCLOCKE|Code2) do
+      | watching LIST(ID_ext|Name|WCLOCKK|WCLOCKE|Code_Cons_Init) do
             Block
         end
 
@@ -328,12 +328,12 @@ Stmt ::= nothing
       | native `/´ end
       | `{´ {&lt;code in C&gt; | `@´ Exp} `}´
 
-      // Call_Nat ::=
+      // Nat_Call ::=
       | [call] (Name | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
 
       /* finalization */
       | do [Stmt] Finalize
-      | var `&amp;?´ Type ID_int `=´ `&amp;´ (Call_Nat | Call_Code) Finalize
+      | var `&amp;?´ Type ID_int `=´ `&amp;´ (Nat_Call | Code_Call) Finalize
         // where
             Finalize ::= finalize `(´ LIST(Name) `)´ with
                              Block
@@ -383,21 +383,21 @@ Stmt ::= nothing
             Block
         end
 
-      /* code instantiation */
+      /* code invocation */
 
-      // Call_Code ::=
-      | call  Mods Code1
+      // Code_Call ::=
+      | call  Mods Code_Cons
 
-      // Await_Code ::=
-      | await Mods Code2
+      // Code_Await ::=
+      | await Mods Code_Cons
 
-      // Spawn_Code ::=
-      | spawn Mods Code2 [in Name]
+      // Code_Spawn ::=
+      | spawn Mods Code_Cons_Init [in Name]
 
         // where
             Mods ::= [`/´dynamic | `/´static] [`/´recursive]
-            Code1 ::= ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
-            Code2 ::= Code1 [`-&gt;´ `(´ LIST(`&amp;´ Var) `)´])
+            Code_Cons      ::= ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
+            Code_Cons_Init ::= Code_Cons [`-&gt;´ `(´ LIST(`&amp;´ Var) `)´])
 
   /* Assignments */
 
@@ -409,8 +409,8 @@ Stmt ::= nothing
                     | Async_Thread
                     | Do
                     | Data_Cons
-                    | Await_Code
-                    | Spawn_Code
+                    | Code_Await
+                    | Code_Spawn
                     | Lua
                     | Vec_Cons
                     | `_´
@@ -457,8 +457,8 @@ Exp  ::= Prim (combined with the &quot;Operator Precedence&quot; below)
 Prim ::= `(´ Exp `)´
       |  `&amp;&amp;´ Name
       |  Name [`?´]
-      |  `&amp;´ (Call_Nat | Name)
-      |  Call_Nat | Call_Code
+      |  `&amp;´ (Nat_Call | Name)
+      |  Nat_Call | Code_Call
       |  sizeof `(´ (Type|Exp) `)´
       |  NUM | STR | null | true | false
 
