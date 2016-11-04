@@ -36,10 +36,10 @@ Stmt ::= nothing
 
   /* Storage Classes */
 
-      | var [`&´|`&?´] Type LIST(ID_int [`=´ Set])
-      | vector [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
-      | pool [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
-      | event [`&´|`&?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Set])
+      | var [`&´|`&?´] Type LIST(ID_int [`=´ Cons])
+      | vector [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Cons])
+      | pool [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Cons])
+      | event [`&´|`&?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Cons])
       | input (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
       | output (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
 
@@ -225,20 +225,20 @@ Stmt ::= nothing
 
   /* Assignments */
 
-      | (Name | `(´ LIST(Name|`_´) `)´) `=´ Set
+      | (Name | `(´ LIST(Name|`_´) `)´) `=´ Cons
         // where
-            Set ::= ( Await
-                    | Emit_Ext
-                    | Watching
-                    | Async_Thread
-                    | Do
-                    | Data_Cons
-                    | Code_Await
-                    | Code_Spawn
-                    | Lua
-                    | Vec_Cons
-                    | `_´
-                    | Exp )
+            Cons ::= ( Do
+                     | Emit_Ext
+                     | Watching
+                     | Async_Thread
+                     | Await
+                     | Lua
+                     | Code_Await
+                     | Code_Spawn
+                     | Vec_Cons
+                     | Data_Cons
+                     | `_´
+                     | Exp )
             Data_Cons ::= (val|new) ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
             Vec_Cons  ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua | `[´ [LIST(Exp)] `]´) }
 

@@ -102,12 +102,12 @@ enclosing [block](#TODO).
 Céu supports variables, vectors, external events, internal events, and pools:
 
 ```ceu
-Var  ::= var [`&´|`&?´] Type LIST(ID_int [`=´ Set])
-Vec  ::= vector [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
+Var  ::= var [`&´|`&?´] Type LIST(ID_int [`=´ Cons])
+Vec  ::= vector [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Cons])
 Ext  ::= input  (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
       |  output (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
-Int  ::= event [`&´|`&?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Set])
-Pool ::= pool [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
+Int  ::= event [`&´|`&?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Cons])
+Pool ::= pool [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Cons])
 
 Vec_Cons ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua | `[´ [LIST(Exp)] `]´) }
 ```
@@ -148,7 +148,7 @@ vector[]   int vs3 = [];    // "vs3" is an unbounded vector
 vector&[]  int vs4 = &vs1;  // "vs4" is an alias to "vs1"
 ```
 
-`TODO: constructor`
+See also [vector constructor](#TODO).
 
 ### Event
 
@@ -365,7 +365,8 @@ the event type (unless the event is of type `void`).
 - An `emit` to an external input or timer event can only occur inside
   [asynchronous blocks](#TODO).
 - An `emit` to an external output event is also an expression that evaluates
-  to a value of type `s32` (its meaning is [platform dependent](#TODO)).
+  to a value of type `s32` and can be captured with an optional
+  [assignment](#TODO) (its meaning is [platform dependent](#TODO)).
 - An `emit` to an internal event starts a new [internal reaction](#TODO).
 
 Examples:
@@ -680,6 +681,8 @@ Watching ::= watching LIST(ID_ext|Name|WCLOCKK|WCLOCKE|Code_Cons_Init) do
 They differ only on how trails rejoin and terminate the composition.
 
 The `watching` statement terminates when one of its listed events occur.
+It evaluates to what the terminating event evaluates which can be captured with
+an optional [assignment](#TODO).
 
 See also [Parallel Compositions and Abortion](#TODO).
 
@@ -781,6 +784,8 @@ watching 1s do
     end
 end
 ```
+
+`TODO: watching <code>`
 
 -------------------------------------------------------------------------------
 
@@ -949,6 +954,13 @@ side.
 However, they are still ruled by the synchronous side and are also subject to
 abortion.
 
+An `async/thread` evaluates to a boolean value which indicates whether it
+started successfully.
+The value can be captured with an optional [assignment](#TODO).
+
+Asynchronous threads are non deterministic and require explicit synchronization
+on accesses to variables to avoid race conditions.
+
 Examples:
 
 ```ceu
@@ -965,9 +977,6 @@ watching 1s do
     ok = true;                      // completed within "1s"
 end
 ```
-
-Asynchronous threads are non deterministic and require explicit synchronization
-on accesses to variables to avoid race conditions.
 
 #### Atomic Block
 
@@ -1189,7 +1198,7 @@ var _s s = <...>;
 s.f();
 ```
 
-`TODO: pointer return`
+`TODO: ex. pointer return`
 
 ### Finalization
 
@@ -1374,29 +1383,26 @@ end
 
 -------------------------------------------------------------------------------
 
-Data and Code Abstractions
---------------------------
+Abstractions
+------------
 
 Céu supports reuse with `data` declarations to define new types, and `code`
 declarations to define new subprograms.
 
-### Data Abstraction
+### Data
 
 The `data` declaration creates a new data type:
 
 ```ceu
-// declaration
 Data ::= data ID_abs [as (nothing|Exp)] [ with
              { <var_set|vector_set|pool_set|event_set> `;´ {`;´} }
          end ]
-
-// constructor
-Data_Cons ::= (val|new) ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
 ```
 
 A declaration may include fields with [storage declarations](#TODO) which
 are included in the `data` type and are publicly accessible.
-Field declarations may assign default values for uninitialized instances.
+Field declarations may [assign](#TODO) default values for uninitialized
+instances.
 
 Data types can form hierarchies using dots (`.`) in identifiers:
 
@@ -1411,26 +1417,6 @@ The optional `as` modifier expects `nothing` or a constant expression of type
 - `nothing`: the `data` cannot be instantiated.
 - *constant expression*: typecasting a value of the type to `int` evaluates to
                          the specified expression.
-
-A new *static value* is created with the `data` name followed by a list of
-arguments matching its fields in the contexts as follows:
-
-- Prefixed by `val` in an [assignment](#TODO) to a variable.
-- As an argument to a [`code` instantiation](#TODO).
-- Nested as an argument in a `data` creation.
-
-In all cases, the arguments are copied to an explicit destination with static
-storage.
-The destination must be a plain declaration, and not an alias or pointer.
-
-Variables of the exact same type can be copied in [assignments](#TODO).
-The rules for assignments from a subtype to a supertype are as follows:
-
-- [Copy assignments](#TODO) for plain values is only allowed if the subtype
-                            is the same size as the supertype (i.e., no extra
-                            fields).
-- [Copy assignments](#TODO) for pointers is allowed.
-- [Binding assignment](#TODO) is allowed.
 
 Examples:
 
@@ -1450,21 +1436,11 @@ var  Dir dir = <...>;       // receives one of "Dir.Right" or "Dir.Left"
 escape (dir as int);        // returns 1 or -1
 ```
 
-```ceu
-data Object with
-    var Rect rect;
-    var Dir  dir;
-end
-var Object o1 = val Object(Rect(0,0,10,10,_), Dir.Right());
-```
-
-```ceu
-var Object o2 = o1;         // makes a deep copy of all fields from "o1" to "o2"
-```
+See also [data constructor](#TODO).
 
 `TODO: new, pool, recursive types`
 
-### Code Abstraction
+### Code
 
 The `code/tight` and `code/await` declarations create new subprograms that can
 be [invoked](#TODO) from arbitrary points in programs:
@@ -1624,11 +1600,14 @@ The `spawn` invocation accepts an optional list of aliases matching the
 These aliases are bound to local resources in the code and can be accessed
 from the invocation point.
 
-The `spawn` invocation also accepts an optional [pool](#TODO).
-
-receives an optional initialization list and an optional pool.
-
-Code abstractions are invoked with the `call`, `await` and `spawn`
+The `spawn` invocation also accepts an optional [pool](#TODO) which provides
+storage and scope for invoked abstractions.
+If the pool has no space left, the invocation fails and evaluates to `false`.
+If the pool goes out of scope, all invoked abstractions invoked at that pool
+are aborted.
+If the `spawn` omits the pool, the invocation always succeed and has the same
+scope as the invoking point: when the enclosing block terminates, the invoked
+code is aborted.
 
 #### Dynamic Dispatching
 
@@ -1679,7 +1658,65 @@ await/dynamic Play(&m);     // dispatches the appropriate subprogram to play the
 Assignments
 -----------
 
-`TODO`
+`TODO: copy vs binding`
+
+```ceu
+Set ::= (Name | `(´ LIST(Name|`_´) `)´) `=´ Cons
+
+Cons ::= ( Do
+         | Await
+         | Emit_Ext
+         | Watching
+         | Async_Thread
+         | Lua
+         | Code_Await
+         | Code_Spawn
+         | Vec_Cons
+         | Data_Cons
+         | `_´
+         | Exp )
+
+Vec_Cons  ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua | `[´ [LIST(Exp)] `]´) }
+Data_Cons ::= (val|new) ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
+```
+
+### Vector Constructor
+
+`TODO:`
+
+### Data Constructor
+
+A new *static value* is created with the `data` name followed by a list of
+arguments matching its fields in the contexts as follows:
+
+- Prefixed by `val` in an [assignment](#TODO) to a variable.
+- As an argument to a [`code` instantiation](#TODO).
+- Nested as an argument in a `data` creation.
+
+In all cases, the arguments are copied to an explicit destination with static
+storage.
+The destination must be a plain declaration, and not an alias or pointer.
+
+Variables of the exact same type can be copied in [assignments](#TODO).
+The rules for assignments from a subtype to a supertype are as follows:
+
+- [Copy assignments](#TODO) for plain values is only allowed if the subtype
+                            is the same size as the supertype (i.e., no extra
+                            fields).
+- [Copy assignments](#TODO) for pointers is allowed.
+- [Binding assignment](#TODO) is allowed.
+
+```ceu
+data Object with
+    var Rect rect;
+    var Dir  dir;
+end
+var Object o1 = val Object(Rect(0,0,10,10,_), Dir.Right());
+```
+
+```ceu
+var Object o2 = o1;         // makes a deep copy of all fields from "o1" to "o2"
+```
 
 Synchronous Control Statements
 ------------------------------
