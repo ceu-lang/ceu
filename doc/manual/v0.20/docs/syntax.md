@@ -211,18 +211,18 @@ Stmt ::= nothing
       /* code invocation */
 
       // Code_Call ::=
-      | call  Mods Code_Cons
+      | call  Mods Abs_Cons
 
       // Code_Await ::=
-      | await Mods Code_Cons
+      | await Mods Abs_Cons
 
       // Code_Spawn ::=
       | spawn Mods Code_Cons_Init [in Name]
 
         // where
             Mods ::= [`/´dynamic | `/´static] [`/´recursive]
-            Code_Cons      ::= ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
-            Code_Cons_Init ::= Code_Cons [`->´ `(´ LIST(`&´ Var) `)´])
+            Abs_Cons ::= ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
+            Code_Cons_Init ::= Abs_Cons [`->´ `(´ LIST(`&´ Var) `)´])
 
   /* Assignments */
 
@@ -241,8 +241,8 @@ Stmt ::= nothing
                      | Data_Cons
                      | `_´
                      | Exp )
-            Data_Cons ::= (val|new) ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
             Vec_Cons  ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´) }
+            Data_Cons ::= (val|new) Abs_Cons
 
 /* Identifiers */
 

@@ -150,7 +150,9 @@ vector[]   int vs3 = [];    // "vs3" is an unbounded vector
 vector&[]  int vs4 = &vs1;  // "vs4" is an alias to "vs1"
 ```
 
-See also [vector constructor](#TODO).
+#### Vector Constructor
+
+`TODO:` See also [vector constructor](#TODO).
 
 ### Event
 
@@ -219,6 +221,38 @@ between brackets to specify its [dimension](#TODO) as follows:
              allocated.
 
 The space for dynamic dimensions grow and shrink automatically.
+
+-------------------------------------------------------------------------------
+
+Assignments
+-----------
+
+An assignment evaluates the statement or expression at the right side of the
+symbol `=` and mutates the name(s) at the left side:
+
+```ceu
+Set ::= (Name | `(´ LIST(Name|`_´) `)´) `=´ Cons
+
+Cons ::= ( Do
+         | Await
+         | Emit_Ext
+         | Watching
+         | Async_Thread
+         | Lua_State
+         | Lua_Stmts
+         | Code_Await
+         | Code_Spawn
+         | Vec_Cons
+         | Data_Cons
+         | `_´
+         | Exp )
+```
+
+`TODO:`
+
+A *copying assignment* ...
+
+A *binding assignment* ...
 
 -------------------------------------------------------------------------------
 
@@ -787,8 +821,6 @@ watching 1s do
 end
 ```
 
-`TODO: watching <code>`
-
 -------------------------------------------------------------------------------
 
 Pausing
@@ -1264,10 +1296,12 @@ If the enclosing `watching` aborts before awaking from the `await A`, the file
 remains open as a *memory leak*.
 The `finalize` ensures that `_fclose` closes the file properly.
 
+A resource assignment requires a [binding](#TODO) to an option `&?`
+[alias](#TODO).
+If the external call returns `NULL`, the binding is not set.
+
 *Note: the compiler only forces the programmer to write finalization clauses,
        but cannot check if they handle the resource properly.*
-
-`TODO: &?`
 
 [Declaration modifiers](#TODO) and [typecasts](#TODO) may suppress the
 requirement for finalization:
@@ -1334,7 +1368,16 @@ expressions in Céu which are expanded when preceded by a `@`.
 Lua statements only affect the [Lua state](#TODO) in which they are embedded.
 
 If a Lua statement is used in an [assignment](#TODO), it is evaluated as an
-expression that must satisfy the destination.
+expression that either satisfies the destination or generates a runtime error.
+The list that follows specifies the *Céu destination* and expected
+*Lua source*:
+
+- a `var` `bool`              expects a `boolean`
+- a [numeric](#TODO) `var`    expects a `number`
+- a pointer `var`             expects a `lightuserdata`
+- a `vector` `byte`           expects a `string`
+
+`TODO: lua state captures errors`
 
 Examples:
 
@@ -1403,6 +1446,9 @@ The `data` declaration creates a new data type:
 Data ::= data ID_abs [as (nothing|Exp)] [ with
              { <var_set|vector_set|pool_set|event_set> `;´ {`;´} }
          end ]
+
+Data_Cons ::= (val|new) Abs_Cons
+Abs_Cons  ::= ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
 ```
 
 A declaration may include fields with [storage declarations](#TODO) which
@@ -1442,9 +1488,41 @@ var  Dir dir = <...>;       // receives one of "Dir.Right" or "Dir.Left"
 escape (dir as int);        // returns 1 or -1
 ```
 
-See also [data constructor](#TODO).
-
 `TODO: new, pool, recursive types`
+
+#### Data Constructor
+
+A new *static value* is created with the `data` name followed by a list of
+arguments matching its fields in the contexts as follows:
+
+- Prefixed by `val` in an [assignment](#TODO) to a variable.
+- As an argument to a [`code` instantiation](#TODO).
+- Nested as an argument in a `data` creation.
+
+In all cases, the arguments are copied to an explicit destination with static
+storage.
+The destination must be a plain declaration, and not an alias or pointer.
+
+Variables of the exact same type can be copied in [assignments](#TODO).
+The rules for assignments from a subtype to a supertype are as follows:
+
+- [Copy assignments](#TODO) for plain values is only allowed if the subtype
+                            is the same size as the supertype (i.e., no extra
+                            fields).
+- [Copy assignments](#TODO) for pointers is allowed.
+- [Binding assignment](#TODO) is allowed.
+
+```ceu
+data Object with
+    var Rect rect;
+    var Dir  dir;
+end
+var Object o1 = val Object(Rect(0,0,10,10,_), Dir.Right());
+```
+
+```ceu
+var Object o2 = o1;         // makes a deep copy of all fields from "o1" to "o2"
+```
 
 ### Code
 
@@ -1476,13 +1554,12 @@ Class ::= var    (`&´|`&?`) * Type
        |  event  (`&´|`&?`) (Type | `(´ LIST(Type) `)´)
 
 // invocation
-Code_Call  ::= call  Mods Code_Cons
+Code_Call  ::= call  Mods Abs_Cons
 Code_Await ::= await Mods Code_Cons_Init
 Code_Spawn ::= spawn Mods Code_Cons_Init [in Name]
 
 Mods ::= [`/´dynamic | `/´static] [`/´recursive]
-Code_Cons      ::= ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
-Code_Cons_Init ::= Code_Cons [`->´ `(´ LIST(`&´ Var) `)´])
+Code_Cons_Init ::= Abs_Cons [`->´ `(´ LIST(`&´ Var) `)´])
 ```
 
 A `code/tight` is a subprogram that cannot contain
@@ -1662,86 +1739,6 @@ end
 
 var& Media m = <...>;       // receives one of "Media.Audio" or "Media.Video"
 await/dynamic Play(&m);     // dispatches the appropriate subprogram to play the media
-```
-
--------------------------------------------------------------------------------
-
-Assignments
------------
-
-`TODO: copy vs binding`
-
-```ceu
-Set ::= (Name | `(´ LIST(Name|`_´) `)´) `=´ Cons
-
-Cons ::= ( Do
-         | Await
-         | Emit_Ext
-         | Watching
-         | Async_Thread
-         | Lua_State
-         | Lua_Stmts
-         | Code_Await
-         | Code_Spawn
-         | Vec_Cons
-         | Data_Cons
-         | `_´
-         | Exp )
-
-Vec_Cons  ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´) }
-Data_Cons ::= (val|new) ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
-```
-
-### Vector Constructor
-
-`TODO:`
-
-### Lua Assignment
-
-A [Lua statement](#TODO) evaluates to an expression that either satisfies the
-destination or generates a runtime error.
-The list that follows specifies the *Céu destination* and expected
-*Lua source*:
-
-- a `var` `bool`              expects a `boolean`
-- a [numeric](#TODO) `var`    expects a `number`
-- a pointer `var`             expects a `lightuserdata`
-- a `vector` `byte`           expects a `string`
-
-`TODO: lua state captures errors`
-
-### Data Constructor
-
-A new *static value* is created with the `data` name followed by a list of
-arguments matching its fields in the contexts as follows:
-
-- Prefixed by `val` in an [assignment](#TODO) to a variable.
-- As an argument to a [`code` instantiation](#TODO).
-- Nested as an argument in a `data` creation.
-
-In all cases, the arguments are copied to an explicit destination with static
-storage.
-The destination must be a plain declaration, and not an alias or pointer.
-
-Variables of the exact same type can be copied in [assignments](#TODO).
-The rules for assignments from a subtype to a supertype are as follows:
-
-- [Copy assignments](#TODO) for plain values is only allowed if the subtype
-                            is the same size as the supertype (i.e., no extra
-                            fields).
-- [Copy assignments](#TODO) for pointers is allowed.
-- [Binding assignment](#TODO) is allowed.
-
-```ceu
-data Object with
-    var Rect rect;
-    var Dir  dir;
-end
-var Object o1 = val Object(Rect(0,0,10,10,_), Dir.Right());
-```
-
-```ceu
-var Object o2 = o1;         // makes a deep copy of all fields from "o1" to "o2"
 ```
 
 -------------------------------------------------------------------------------
