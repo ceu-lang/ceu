@@ -314,7 +314,7 @@ if (args->_]]..idx..[[ != NULL) {
     ---------------------------------------------------------------------------
 
     Data__PRE = function (me)
-        me.id_ = TYPES.noc(me.id)
+        me.id_ = TYPES.noc(me.id_)
         me.mems = {
             mem  = '',
             hier = nil, -- only for base class

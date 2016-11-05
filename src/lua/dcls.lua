@@ -561,6 +561,13 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
         me.n_vars = #AST.asr(me,'', 3,'Block', 1,'Stmts')
         dcls_new(par, me)
+
+        me.id_ = me.id
+        local blk1 = AST.par(me, 'Block')
+        local blk2 = AST.par(blk1,'Block') or blk1
+        if blk2.__par.tag ~= 'ROOT' then
+            me.id_ = me.id..'_'..me.n
+        end
     end,
 
     Data = function (me)

@@ -32849,45 +32849,6 @@ escape (call/recursive Fat(10) == 3628800) as int;
 
 --<<< RECURSIVE
 
--->> CODE / SCOPE
-
-Test { [[
-do/_
-    code/tight Ff (void) -> int do
-        escape 10;
-    end
-end
-do/_
-    code/tight Ff (void) -> int do
-        escape 100;
-    end
-    escape call Ff();
-end
-]],
-    wrn = true,
-    run = 100,
-}
-
-Test { [[
-do/_
-    code/await Ff (void) -> int do
-        escape 10;
-    end
-end
-do/_
-    code/await Ff (void) -> int do
-        escape 100;
-    end
-    var int ret = await Ff();
-    escape ret;
-end
-]],
-    wrn = true,
-    run = 100,
-}
-
---<< CODE / SCOPE
-
 -->> VECTOR / CODE
 
 Test { [[
@@ -42941,6 +42902,65 @@ escape call Ff(Dd(_));
 }
 
 --<< DATA / DEFAULT / CONSTRUCTOR
+
+-->> DATA / CODE / SCOPE
+
+Test { [[
+do/_
+    data Dd with
+        var int x = 0;
+    end
+end
+do/_
+    data Dd with
+        var int x = 100;
+    end
+    var Dd d = _;
+    escape d.x;
+end
+]],
+    wrn = true,
+    run = 100,
+}
+
+Test { [[
+do/_
+    code/tight Ff (void) -> int do
+        escape 10;
+    end
+end
+do/_
+    code/tight Ff (void) -> int do
+        escape 100;
+    end
+    escape call Ff();
+end
+]],
+    wrn = true,
+    run = 100,
+}
+
+Test { [[
+do/_
+    code/await Ff (void) -> int do
+        escape 10;
+    end
+end
+do/_
+    code/await Ff (void) -> int do
+        escape 100;
+    end
+    var int ret = await Ff();
+    escape ret;
+end
+]],
+    wrn = true,
+    run = 100,
+}
+
+--<< DATA / CODE / SCOPE
+
+--<<< DATA
 
 -->>> ASYNCS // THREADS
 

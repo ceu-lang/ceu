@@ -24,7 +24,7 @@ end
 
 local function types_id (tp)
     local ID = unpack(tp)
-    if ID.dcl and ID.dcl.tag=='Code' then
+    if ID.dcl and (ID.dcl.tag=='Code' or ID.dcl.tag=='Data') then
         return ID.dcl.id_
     else
         local id = unpack(ID)
