@@ -101,6 +101,8 @@
                 
                     <li><a class="toctree-l4" href="#declarations">Declarations</a></li>
                 
+                    <li><a class="toctree-l4" href="#assignments">Assignments</a></li>
+                
                     <li><a class="toctree-l4" href="#event-handling">Event Handling</a></li>
                 
                     <li><a class="toctree-l4" href="#conditional">Conditional</a></li>
@@ -117,9 +119,7 @@
                 
                     <li><a class="toctree-l4" href="#lua-integration">Lua Integration</a></li>
                 
-                    <li><a class="toctree-l4" href="#data-and-code-abstractions">Data and Code Abstractions</a></li>
-                
-                    <li><a class="toctree-l4" href="#assignments">Assignments</a></li>
+                    <li><a class="toctree-l4" href="#abstractions">Abstractions</a></li>
                 
                     <li><a class="toctree-l4" href="#synchronous-control-statements">Synchronous Control Statements</a></li>
                 
@@ -213,8 +213,11 @@ Block   ::= {Stmt `;´} {`;´}
 <p><em>Note: statements terminated with the <code>end</code> keyword do not require a
 terminating semicolon.</em></p>
 <h2 id="blocks">Blocks</h2>
-<p>A <code>Block</code> creates a new scope for <a href="#TODO">storage entities</a> which are visible
-only for statements inside the block.</p>
+<p>A <code>Block</code> creates a new lexical scope for
+<a href="#TODO">storage entities</a>
+and
+<a href="#TODO">abstractions</a>,
+which are visible only for statements inside the block.</p>
 <p>Compound statements (e.g. <em>do-end</em>, <em>if-then-else</em>, <em>loops</em>, etc.) create new
 blocks and can be nested to an arbitrary level.</p>
 <h3 id="do-end-and-escape"><code>do-end</code> and <code>escape</code></h3>
@@ -275,17 +278,16 @@ and moved to the beginning of the top-level block, before all other statements.<
 <hr />
 <h2 id="declarations">Declarations</h2>
 <p>A declaration exposes a <a href="#TODO">storage entity</a> to the program.
-Its <a href="#TODO">scope</a> begins after the declaration and goes until the end of the
-enclosing <a href="#TODO">block</a>.</p>
+Declarations have <a href="#TODO">lexical scope</a>.</p>
 <p>Céu supports variables, vectors, external events, internal events, and pools:</p>
-<pre><code class="ceu">Var  ::= var [`&amp;´|`&amp;?´] Type LIST(ID_int [`=´ Set])
-Vec  ::= vector [`&amp;´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
+<pre><code class="ceu">Var  ::= var [`&amp;´|`&amp;?´] Type LIST(ID_int [`=´ Cons])
+Vec  ::= vector [`&amp;´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Cons])
 Ext  ::= input  (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
       |  output (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
-Int  ::= event [`&amp;´|`&amp;?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Set])
-Pool ::= pool [`&amp;´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
+Int  ::= event [`&amp;´|`&amp;?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Cons])
+Pool ::= pool [`&amp;´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Cons])
 
-Vec_Cons ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua | `[´ [LIST(Exp)] `]´) }
+Vec_Cons ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´) }
 </code></pre>
 
 <p>See also <a href="#TODO">Storage Classes</a> for an overview of storage entities.</p>
@@ -315,7 +317,8 @@ vector[]   int vs3 = [];    // &quot;vs3&quot; is an unbounded vector
 vector&amp;[]  int vs4 = &amp;vs1;  // &quot;vs4&quot; is an alias to &quot;vs1&quot;
 </code></pre>
 
-<p><code>TODO: constructor</code></p>
+<h4 id="vector-constructor">Vector Constructor</h4>
+<p><code>TODO:</code> See also <a href="#TODO">vector constructor</a>.</p>
 <h3 id="event">Event</h3>
 <p>An <a href="#TODO">event</a> has a <a href="#TODO">type</a> for the value it carries when occurring.
 It can be also a list of types if the event communicates multiple values.
@@ -366,6 +369,30 @@ between brackets to specify its <a href="#TODO">dimension</a> as follows:</p>
              allocated.</li>
 </ul>
 <p>The space for dynamic dimensions grow and shrink automatically.</p>
+<hr />
+<h2 id="assignments">Assignments</h2>
+<p>An assignment evaluates the statement or expression at the right side of the
+symbol <code>=</code> and mutates the name(s) at the left side:</p>
+<pre><code class="ceu">Set ::= (Name | `(´ LIST(Name|`_´) `)´) `=´ Cons
+
+Cons ::= ( Do
+         | Await
+         | Emit_Ext
+         | Watching
+         | Async_Thread
+         | Lua_State
+         | Lua_Stmts
+         | Code_Await
+         | Code_Spawn
+         | Vec_Cons
+         | Data_Cons
+         | `_´
+         | Exp )
+</code></pre>
+
+<p><code>TODO:</code></p>
+<p>A <em>copying assignment</em> ...</p>
+<p>A <em>binding assignment</em> ...</p>
 <hr />
 <h2 id="event-handling">Event Handling</h2>
 <h3 id="await">Await</h3>
@@ -477,7 +504,8 @@ the event type (unless the event is of type <code>void</code>).</p>
 <li>An <code>emit</code> to an external input or timer event can only occur inside
   <a href="#TODO">asynchronous blocks</a>.</li>
 <li>An <code>emit</code> to an external output event is also an expression that evaluates
-  to a value of type <code>s32</code> (its meaning is <a href="#TODO">platform dependent</a>).</li>
+  to a value of type <code>s32</code> and can be captured with an optional
+  <a href="#TODO">assignment</a> (its meaning is <a href="#TODO">platform dependent</a>).</li>
 <li>An <code>emit</code> to an internal event starts a new <a href="#TODO">internal reaction</a>.</li>
 </ul>
 <p>Examples:</p>
@@ -739,7 +767,9 @@ Watching ::= watching LIST(ID_ext|Name|WCLOCKK|WCLOCKE|Code_Cons_Init) do
 </code></pre>
 
 <p>They differ only on how trails rejoin and terminate the composition.</p>
-<p>The <code>watching</code> statement terminates when one of its listed events occur.</p>
+<p>The <code>watching</code> statement terminates when one of its listed events occur.
+It evaluates to what the terminating event evaluates which can be captured with
+an optional <a href="#TODO">assignment</a>.</p>
 <p>See also <a href="#TODO">Parallel Compositions and Abortion</a>.</p>
 <h3 id="par">par</h3>
 <p>The <code>par</code> statement never rejoins.</p>
@@ -957,6 +987,11 @@ Once an <code>async/thread</code> starts, it runs completely detached from the s
 side.
 However, they are still ruled by the synchronous side and are also subject to
 abortion.</p>
+<p>An <code>async/thread</code> evaluates to a boolean value which indicates whether it
+started successfully.
+The value can be captured with an optional <a href="#TODO">assignment</a>.</p>
+<p>Asynchronous threads are non deterministic and require explicit synchronization
+on accesses to variables to avoid race conditions.</p>
 <p>Examples:</p>
 <pre><code class="ceu">// calculates the factorial of some &quot;v&quot; if it doesn't take too long
 var u64  v   = &lt;...&gt;;
@@ -972,8 +1007,6 @@ watching 1s do
 end
 </code></pre>
 
-<p>Asynchronous threads are non deterministic and require explicit synchronization
-on accesses to variables to avoid race conditions.</p>
 <h4 id="atomic-block">Atomic Block</h4>
 <p>Atomic blocks provide mutual exclusion among threads and the synchronous
 side of application.
@@ -1158,7 +1191,7 @@ var _s s = &lt;...&gt;;
 s.f();
 </code></pre>
 
-<p><code>TODO: pointer return</code></p>
+<p><code>TODO: ex. pointer return</code></p>
 <h3 id="finalization">Finalization</h3>
 <p>The finalization statement unconditionally executes a series of statements when
 its corresponding enclosing block terminates, even if aborted abruptly.</p>
@@ -1212,9 +1245,11 @@ a pointer.
 If the enclosing <code>watching</code> aborts before awaking from the <code>await A</code>, the file
 remains open as a <em>memory leak</em>.
 The <code>finalize</code> ensures that <code>_fclose</code> closes the file properly.</p>
+<p>A resource assignment requires a <a href="#TODO">binding</a> to an option <code>&amp;?</code>
+<a href="#TODO">alias</a>.
+If the external call returns <code>NULL</code>, the binding is not set.</p>
 <p><em>Note: the compiler only forces the programmer to write finalization clauses,
        but cannot check if they handle the resource properly.</em></p>
-<p><code>TODO: &amp;?</code></p>
 <p><a href="#TODO">Declaration modifiers</a> and <a href="#TODO">typecasts</a> may suppress the
 requirement for finalization:</p>
 <ul>
@@ -1244,8 +1279,8 @@ var _tp v = _f() as /plain;
 
 <hr />
 <h2 id="lua-integration">Lua Integration</h2>
-<p>Céu also integrates with Lua, providing <a href="#TODO">lua states</a> to delimit the
-effects of <a href="#TODO">lua statements</a> which can be inlined in programs:</p>
+<p>Céu also integrates with Lua, providing <a href="#TODO">Lua states</a> to delimit the
+effects of <a href="#TODO">Lua statements</a> which can be inlined in programs:</p>
 <pre><code class="ceu">Lua_State ::= lua `[´ [Exp] `]´ do
                  Block
               end
@@ -1260,10 +1295,22 @@ Like <a href="#TODO">native statements</a>, programs should only resort to Lua f
 asynchronous functionality, such as non-blocking I/O, or simple <code>struct</code>
 accessors, but never for control purposes.</p>
 <h3 id="lua-statement">Lua Statement</h3>
-<p>The contents of lua statements in between <code>[[</code> and <code>]]</code> are inlined in the
+<p>The contents of Lua statements in between <code>[[</code> and <code>]]</code> are inlined in the
 program.</p>
-<p>Like <a href="#TODO">native statements</a>, lua statements support interpolation of
+<p>Like <a href="#TODO">native statements</a>, Lua statements support interpolation of
 expressions in Céu which are expanded when preceded by a <code>@</code>.</p>
+<p>Lua statements only affect the <a href="#TODO">Lua state</a> in which they are embedded.</p>
+<p>If a Lua statement is used in an <a href="#TODO">assignment</a>, it is evaluated as an
+expression that either satisfies the destination or generates a runtime error.
+The list that follows specifies the <em>Céu destination</em> and expected
+<em>Lua source</em>:</p>
+<ul>
+<li>a <code>var</code> <code>bool</code>              expects a <code>boolean</code></li>
+<li>a <a href="#TODO">numeric</a> <code>var</code>    expects a <code>number</code></li>
+<li>a pointer <code>var</code>             expects a <code>lightuserdata</code></li>
+<li>a <code>vector</code> <code>byte</code>           expects a <code>string</code></li>
+</ul>
+<p><code>TODO: lua state captures errors</code></p>
 <p>Examples:</p>
 <pre><code class="ceu">var int v_ceu = 10;
 [[
@@ -1275,16 +1322,15 @@ v_ceu = [[ v_lua + @v_ceu ]];   // yields 30
 ]]
 </code></pre>
 
-<p>Lua statements only affect the <a href="#TODO">lua state</a> in which they are embedded.</p>
 <h3 id="lua-state">Lua State</h3>
-<p>A lua state creates a separate environment for its embedded
-<a href="#TODO">lua statements</a>.</p>
-<p>Programs have an implicit enclosing <em>global lua state</em> which all orphan
+<p>A Lua state creates a separate environment for its embedded
+<a href="#TODO">Lua statements</a>.</p>
+<p>Programs have an implicit enclosing <em>global Lua state</em> which all orphan
 statements apply.</p>
 <p>Examples:</p>
 <pre><code class="ceu">// &quot;v&quot; is not shared between the two statements
 par do
-    // global lua state
+    // global Lua state
     [[ v = 0 ]];
     var int v = 0;
     every 1s do
@@ -1293,7 +1339,7 @@ par do
         [[ v = v + 1 ]];
     end
 with
-    // local lua state
+    // local Lua state
     lua[] do
         [[ v = 0 ]];
         var int v = 0;
@@ -1306,25 +1352,26 @@ with
 end
 </code></pre>
 
-<p><code>TODO: dynamic scope, assignment, [dim]</code></p>
+<p><code>TODO: dynamic scope, assignment/error, [dim]</code></p>
 <hr />
-<h2 id="data-and-code-abstractions">Data and Code Abstractions</h2>
+<h2 id="abstractions">Abstractions</h2>
 <p>Céu supports reuse with <code>data</code> declarations to define new types, and <code>code</code>
-declarations to define new subprograms.</p>
-<h3 id="data-abstraction">Data Abstraction</h3>
+declarations to define new subprograms.
+Declarations have <a href="#TODO">lexical scope</a>.</p>
+<h3 id="data">Data</h3>
 <p>The <code>data</code> declaration creates a new data type:</p>
-<pre><code class="ceu">// declaration
-Data ::= data ID_abs [as (nothing|Exp)] [ with
+<pre><code class="ceu">Data ::= data ID_abs [as (nothing|Exp)] [ with
              { &lt;var_set|vector_set|pool_set|event_set&gt; `;´ {`;´} }
          end ]
 
-// constructor
-Data_Cons ::= (val|new) ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
+Data_Cons ::= (val|new) Abs_Cons
+Abs_Cons  ::= ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
 </code></pre>
 
 <p>A declaration may include fields with <a href="#TODO">storage declarations</a> which
 are included in the <code>data</code> type and are publicly accessible.
-Field declarations may assign default values for uninitialized instances.</p>
+Field declarations may <a href="#TODO">assign</a> default values for uninitialized
+instances.</p>
 <p>Data types can form hierarchies using dots (<code>.</code>) in identifiers:</p>
 <ul>
 <li>An identifier like <code>A</code> makes <code>A</code> a base type.</li>
@@ -1338,6 +1385,23 @@ Field declarations may assign default values for uninitialized instances.</p>
 <li><em>constant expression</em>: typecasting a value of the type to <code>int</code> evaluates to
                          the specified expression.</li>
 </ul>
+<p>Examples:</p>
+<pre><code class="ceu">data Rect with
+    var int x, y, h, w;
+    var int z = 0;
+end
+var Rect r = val Rect(10,10, 100,100, _);  // &quot;r.z&quot; defaults to 0
+</code></pre>
+
+<pre><code class="ceu">data Dir       as nothing;  // &quot;Dir&quot; is a base type and cannot be intantiated
+data Dir.Right as  1;       // &quot;Dir.Right&quot; is a subtype of &quot;Dir&quot;
+data Dir.Left  as -1;       // &quot;Dir.Left&quot;  is a subtype of &quot;Dir&quot;
+var  Dir dir = &lt;...&gt;;       // receives one of &quot;Dir.Right&quot; or &quot;Dir.Left&quot;
+escape (dir as int);        // returns 1 or -1
+</code></pre>
+
+<p><code>TODO: new, pool, recursive types</code></p>
+<h4 id="data-constructor">Data Constructor</h4>
 <p>A new <em>static value</em> is created with the <code>data</code> name followed by a list of
 arguments matching its fields in the contexts as follows:</p>
 <ul>
@@ -1357,21 +1421,6 @@ The rules for assignments from a subtype to a supertype are as follows:</p>
 <li><a href="#TODO">Copy assignments</a> for pointers is allowed.</li>
 <li><a href="#TODO">Binding assignment</a> is allowed.</li>
 </ul>
-<p>Examples:</p>
-<pre><code class="ceu">data Rect with
-    var int x, y, h, w;
-    var int z = 0;
-end
-var Rect r = val Rect(10,10, 100,100, _);  // &quot;r.z&quot; defaults to 0
-</code></pre>
-
-<pre><code class="ceu">data Dir       as nothing;  // &quot;Dir&quot; is a base type and cannot be intantiated
-data Dir.Right as  1;       // &quot;Dir.Right&quot; is a subtype of &quot;Dir&quot;
-data Dir.Left  as -1;       // &quot;Dir.Left&quot;  is a subtype of &quot;Dir&quot;
-var  Dir dir = &lt;...&gt;;       // receives one of &quot;Dir.Right&quot; or &quot;Dir.Left&quot;
-escape (dir as int);        // returns 1 or -1
-</code></pre>
-
 <pre><code class="ceu">data Object with
     var Rect rect;
     var Dir  dir;
@@ -1382,8 +1431,7 @@ var Object o1 = val Object(Rect(0,0,10,10,_), Dir.Right());
 <pre><code class="ceu">var Object o2 = o1;         // makes a deep copy of all fields from &quot;o1&quot; to &quot;o2&quot;
 </code></pre>
 
-<p><code>TODO: new, pool, recursive types</code></p>
-<h3 id="code-abstraction">Code Abstraction</h3>
+<h3 id="code">Code</h3>
 <p>The <code>code/tight</code> and <code>code/await</code> declarations create new subprograms that can
 be <a href="#TODO">invoked</a> from arbitrary points in programs:</p>
 <pre><code class="ceu">// prototype declaration
@@ -1410,13 +1458,12 @@ Class ::= var    (`&amp;´|`&amp;?`) * Type
        |  event  (`&amp;´|`&amp;?`) (Type | `(´ LIST(Type) `)´)
 
 // invocation
-Code_Call  ::= call  Mods Code_Cons
+Code_Call  ::= call  Mods Abs_Cons
 Code_Await ::= await Mods Code_Cons_Init
 Code_Spawn ::= spawn Mods Code_Cons_Init [in Name]
 
 Mods ::= [`/´dynamic | `/´static] [`/´recursive]
-Code_Cons      ::= ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
-Code_Cons_Init ::= Code_Cons [`-&gt;´ `(´ LIST(`&amp;´ Var) `)´])
+Code_Cons_Init ::= Abs_Cons [`-&gt;´ `(´ LIST(`&amp;´ Var) `)´])
 </code></pre>
 
 <p>A <code>code/tight</code> is a subprogram that cannot contain
@@ -1510,8 +1557,10 @@ abstraction name and list of arguments.</p>
 <a href="#TODO">code declaration</a>.</p>
 <p>The <code>call</code> and <code>await</code> invocations suspend the ongoing computation and transfer
 the execution control to the code abstraction.
-The invoking point only resumes after the abstraction terminates.
-The <code>spawn</code> invocation also suspends and transfers control to the code
+The invoking point only resumes after the abstraction terminates and evaluates
+to a value of the <a href="#TODO">return type</a> which can be captured with an optional
+<a href="#TODO">assignment</a>.</p>
+<p>The <code>spawn</code> invocation also suspends and transfers control to the code
 abstraction.
 However, when the abstraction becomes idle (or terminates), the invoking point
 resumes.
@@ -1520,9 +1569,16 @@ This allows the invocation point and the abstraction to execute concurrently.</p
 <a href="#TODO">initialization list</a> in the code abstraction.
 These aliases are bound to local resources in the code and can be accessed
 from the invocation point.</p>
-<p>The <code>spawn</code> invocation also accepts an optional <a href="#TODO">pool</a>.</p>
-<p>receives an optional initialization list and an optional pool.</p>
-<p>Code abstractions are invoked with the <code>call</code>, <code>await</code> and <code>spawn</code></p>
+<p>The <code>spawn</code> invocation also accepts an optional <a href="#TODO">pool</a> which provides
+storage and scope for invoked abstractions.
+In this case, the invocation evaluates to a boolean that indicates if the pool
+has space to execute the code.
+The result can be captured with an optional <a href="#TODO">assignment</a>.
+If the pool goes out of scope, all invoked abstractions invoked at that pool
+are aborted.
+If the <code>spawn</code> omits the pool, the invocation always succeed and has the same
+scope as the invoking point: when the enclosing block terminates, the invoked
+code is aborted.</p>
 <h4 id="dynamic-dispatching">Dynamic Dispatching</h4>
 <p>Céu supports dynamic code dispatching based on multiple parameters.</p>
 <p>The <code>/dynamic</code> modifier in a declaration specifies that the code is dynamically
@@ -1560,8 +1616,6 @@ await/dynamic Play(&amp;m);     // dispatches the appropriate subprogram to play
 </code></pre>
 
 <hr />
-<h2 id="assignments">Assignments</h2>
-<p><code>TODO</code></p>
 <h2 id="synchronous-control-statements">Synchronous Control Statements</h2>
 <p>The <em>synchronous control statements</em>
 <code>await</code>, <code>spawn</code>, <code>emit</code> (internal events), <code>every</code>, <code>finalize</code>, <code>pause/if</code>,
