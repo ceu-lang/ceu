@@ -28,7 +28,7 @@
 #define S64_MAX   9223372036854775807
 #define U64_MAX   18446744073709551615
 
-#define CEU_SEQ_MAX (U16_MAX/2)
+#define CEU_SEQ_MAX U16_MAX
 /* TODO */
 
 typedef u16 tceu_nevt;   /* TODO */
@@ -433,7 +433,7 @@ static void ceu_bcast (tceu_evt_occ* occ, tceu_stk* stk)
     tceu_trl* trl;
     tceu_evt_range range = occ->range;
 
-    ceu_callback_assert_msg(CEU_APP.seq-CEU_APP.seq_base < CEU_SEQ_MAX,
+    ceu_callback_assert_msg(((tceu_nseq)(CEU_APP.seq+1)) != CEU_APP.seq_base,
                             "too many internal reactions");
     CEU_APP.seq++;
 
@@ -445,7 +445,7 @@ static void ceu_bcast (tceu_evt_occ* occ, tceu_stk* stk)
 for (int i=0; i<xxx; i++) {
     fprintf(stderr, " ");
 }
-fprintf(stderr, ">>> %d/%p [%p] %d->%d\n", occ->evt.id, occ->evt.mem,
+fprintf(stderr, ">>> %d/%p, SEQ=%d [%p] %d->%d\n", occ->evt.id, occ->evt.mem, occ->seq,
                                            range.mem, range.trl0, range.trlF);
 xxx += 4;
 #endif
@@ -469,7 +469,7 @@ xxx += 4;
 for (int i=0; i<xxx; i++) {
     fprintf(stderr, " ");
 }
-fprintf(stderr, "??? trlK=%d, evt=%d\n", trlK, trl->evt.id);
+fprintf(stderr, "??? trlK=%d, evt=%d, seq=%d\n", trlK, trl->evt.id, trl->seq);
 #endif
 
         /* special trails: propagate, skip paused */
@@ -519,13 +519,13 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                         if (trl->pse_paused) {
                             tceu_evt_occ occ2 = { {CEU_INPUT__PAUSE,{NULL}}, CEU_APP.seq, occ->params,
                                                   {range.mem,
-                                                   trlK+1, trlK+trl->pse_skip}
+                                                   (tceu_ntrl)(trlK+1), (tceu_ntrl)(trlK+trl->pse_skip)}
                                                 };
                             ceu_bcast(&occ2, &_stk);
                         } else {
                             tceu_evt_occ occ2 = { {CEU_INPUT__RESUME,{NULL}}, CEU_APP.seq, occ->params,
                                                   {range.mem,
-                                                   trlK+1, trlK+trl->pse_skip}
+                                                   (tceu_ntrl)(trlK+1), (tceu_ntrl)(trlK+trl->pse_skip)}
                                                 };
                             ceu_bcast(&occ2, &_stk);
                         }
@@ -589,7 +589,8 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
             if (occ->evt.id==CEU_INPUT__PAUSE || occ->evt.id==CEU_INPUT__RESUME) {
                 goto _CEU_AWAKE_YES_;
             }
-            if (trl->seq-CEU_APP.seq_base > occ->seq-CEU_APP.seq_base) {
+            if (((tceu_nseq)(trl->seq-CEU_APP.seq_base)) >
+                ((tceu_nseq)(occ->seq-CEU_APP.seq_base))) {
                 goto _CEU_AWAKE_NO_;
             }
             if (trl->evt.id > CEU_EVENT__MIN) {
@@ -621,7 +622,7 @@ fprintf(stderr, "break\n");
         }
 
 _CEU_AWAKE_NO_:
-        if ((trl->evt.id > CEU_INPUT__SEQ) && (trl->seq > CEU_APP.seq_base+CEU_SEQ_MAX)) {
+        if ((trl->evt.id > CEU_INPUT__SEQ) && (occ->seq == ((tceu_nseq)(CEU_APP.seq_base+0)))) {
             trl->seq = CEU_APP.seq_base;
         }
 
@@ -649,6 +650,20 @@ fprintf(stderr, "<<< %d [%p] %d->%d\n", occ->evt.id, range.mem, range.trl0, rang
 CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params)
 {
     CEU_APP.seq_base = CEU_APP.seq;
+
+/* TODO: remove this extra bcast to reset seqs */
+#if 1
+{
+    tceu_evt_occ occ = { {CEU_INPUT__NONE,{NULL}}, CEU_APP.seq, evt_params,
+                         {(tceu_code_mem*)&CEU_APP.root,
+                          0, (tceu_ntrl)(CEU_APP.root.mem.trails_n-1)}
+                       };
+    tceu_stk stk = { 1, NULL,
+                     { (tceu_code_mem*)&CEU_APP.root,
+                       0, (tceu_ntrl)(CEU_APP.root.mem.trails_n-1) } };
+    ceu_bcast(&occ, &stk);
+}
+#endif
 
     tceu_evt_occ occ = { {evt_id,{NULL}}, CEU_APP.seq+1, evt_params,
                          {(tceu_code_mem*)&CEU_APP.root,
