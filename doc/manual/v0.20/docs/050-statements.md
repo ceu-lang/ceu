@@ -15,8 +15,11 @@ terminating semicolon.*
 Blocks
 ------
 
-A `Block` creates a new scope for [storage entities](#TODO) which are visible
-only for statements inside the block.
+A `Block` creates a new lexical scope for
+[storage entities](#TODO)
+and
+[abstractions](#TODO),
+which are visible only for statements inside the block.
 
 Compound statements (e.g. *do-end*, *if-then-else*, *loops*, etc.) create new
 blocks and can be nested to an arbitrary level.
@@ -96,8 +99,7 @@ Declarations
 ------------
 
 A declaration exposes a [storage entity](#TODO) to the program.
-Its [scope](#TODO) begins after the declaration and goes until the end of the
-enclosing [block](#TODO).
+Declarations have [lexical scope](#TODO).
 
 Céu supports variables, vectors, external events, internal events, and pools:
 
@@ -1391,6 +1393,7 @@ Abstractions
 
 Céu supports reuse with `data` declarations to define new types, and `code`
 declarations to define new subprograms.
+Declarations have [lexical scope](#TODO).
 
 ### Data
 
