@@ -9,41 +9,58 @@ end
 ----------------------------------------------------------------------------
 
 Test { [[
-do/_
-    code/tight Ff (void) -> int do
-        escape 10;
-    end
+par/or do
+with
 end
-do/_
-    code/tight Ff (void) -> int do
-        escape 100;
-    end
-    escape call Ff();
+//await async do end;
+code/await Ff (void)->FOREVER do
+    await FOREVER;
 end
+spawn Ff();
+escape 1;
 ]],
-    wrn = true,
-    run = 100,
+    run = 1,
 }
+--[=====[
+do return end
 
 Test { [[
-do/_
-    code/await Ff (void) -> int do
-        escape 10;
-    end
+data Dd with
+    var int? x;
 end
-do/_
-    code/await Ff (void) -> int do
-        escape 100;
-    end
-    var int ret = await Ff();
-    escape ret;
-end
+var int? x = 10;
+var Dd d = val Dd(x);
+escape d.x!;
 ]],
-    wrn = true,
-    run = 100,
+    run = 10,
+}
+Test { [[
+data Dd with
+    var int x;
+end
+data Ee with
+    var Dd? d;
+end
+var Dd d = val Dd(10);
+var Ee e = val Ee(d);
+escape e.d!.x;
+]],
+    run = 10,
+}
+Test { [[
+data Dd with
+    var int x;
+end
+data Ee with
+    var Dd? d;
+end
+var Dd? d = val Dd(10);
+var Ee  e = val Ee(d);
+escape e.d!.x;
+]],
+    run = 10,
 }
 
---[=====[
 do return end -- OK
 ---]=====]
 
@@ -32966,6 +32983,45 @@ escape (call/recursive Fat(10) == 3628800) as int;
 }
 
 --<<< RECURSIVE
+
+-->> CODE / SCOPE
+
+Test { [[
+do/_
+    code/tight Ff (void) -> int do
+        escape 10;
+    end
+end
+do/_
+    code/tight Ff (void) -> int do
+        escape 100;
+    end
+    escape call Ff();
+end
+]],
+    wrn = true,
+    run = 100,
+}
+
+Test { [[
+do/_
+    code/await Ff (void) -> int do
+        escape 10;
+    end
+end
+do/_
+    code/await Ff (void) -> int do
+        escape 100;
+    end
+    var int ret = await Ff();
+    escape ret;
+end
+]],
+    wrn = true,
+    run = 100,
+}
+
+--<< CODE / SCOPE
 
 -->> VECTOR / CODE
 

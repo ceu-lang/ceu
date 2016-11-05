@@ -574,6 +574,7 @@ ceu_stack_clear(_ceu_stk, _ceu_mem,
 
     Abs_Spawn_Single = function (me)
         LINE(me, [[
+_ceu_stk->is_alive = 1;
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id  = CEU_INPUT__CODE;
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.mem = (tceu_code_mem*) &]]..CUR('__mem_'..me.n)..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].lbl     = CEU_LABEL_NONE;  /* no awake in spawn */
