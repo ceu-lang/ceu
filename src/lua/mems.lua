@@ -72,15 +72,15 @@ typedef struct tceu_code_mem_ROOT {
             end
             if mods.dynamic then
                 local t = me.dyn_base.dyns
-                t[#t+1] = me.id
+                t[#t+1] = me.id_
             end
 
             me.mems.mem = [[
-typedef struct tceu_code_mem_]]..me.id..[[ {
+typedef struct tceu_code_mem_]]..me.id_..[[ {
     tceu_code_mem mem;
     tceu_trl      trails[]]..me.trails_n..[[];
     ]]..me.mems.mem..[[
-} tceu_code_mem_]]..me.id..[[;
+} tceu_code_mem_]]..me.id_..[[;
 ]]
         end
 
@@ -97,7 +97,7 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
         end
 
         -- args
-        me.mems.args = 'typedef struct tceu_code_args_'..me.id..' {\n'
+        me.mems.args = 'typedef struct tceu_code_args_'..me.id_..' {\n'
 
         for i,dcl in ipairs(body.dcls) do
             local alias,Type,id2,dim = unpack(dcl)
@@ -200,15 +200,15 @@ tceu_nlbl lbl = multis
             multis.code = multis.code..';\n'
         end
 
-        me.mems.args = me.mems.args..'} tceu_code_args_'..me.id..';\n'
+        me.mems.args = me.mems.args..'} tceu_code_args_'..me.id_..';\n'
 
         me.mems.wrapper = ''
 
         -- CEU_CODE_WATCH_xxx
         if me.mems.watch ~= '' then
             me.mems.wrapper = me.mems.wrapper .. [[
-static void CEU_CODE_WATCH_]]..me.id..[[ (tceu_code_mem* _ceu_mem,
-                                          tceu_code_args_]]..me.id..[[* args)
+static void CEU_CODE_WATCH_]]..me.id_..[[ (tceu_code_mem* _ceu_mem,
+                                           tceu_code_args_]]..me.id_..[[* args)
 {
     ]]..me.mems.watch..[[
 }
@@ -221,14 +221,14 @@ static void CEU_CODE_WATCH_]]..me.id..[[ (tceu_code_mem* _ceu_mem,
         if mods.tight then
             me.mems.wrapper = me.mems.wrapper .. [[
 static ]]..TYPES.toc(assert(Type))..[[ /* space */
-CEU_CODE_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
-                        tceu_code_args_]]..me.id..[[ ps
+CEU_CODE_]]..me.id_..[[ (tceu_stk* stk, tceu_ntrl trlK,
+                         tceu_code_args_]]..me.id_..[[ ps
 #ifdef CEU_FEATURES_LUA
                         , lua_State* lua
 #endif
                        )
 {
-    tceu_code_mem_]]..me.id..[[ mem;
+    tceu_code_mem_]]..me.id_..[[ mem;
 #ifdef CEU_FEATURES_LUA
     mem.mem.lua = lua;
 #endif
@@ -253,8 +253,8 @@ CEU_CODE_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
 ]]
         else
             me.mems.wrapper = me.mems.wrapper .. [[
-static void CEU_CODE_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
-                                       tceu_code_args_]]..me.id..[[ ps,
+static void CEU_CODE_]]..me.id_..[[ (tceu_stk* stk, tceu_ntrl trlK,
+                                       tceu_code_args_]]..me.id_..[[ ps,
                                        tceu_code_mem* mem)
 {
 ]]
@@ -274,7 +274,7 @@ static void CEU_CODE_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
 ]]
             if me.mems.watch ~= '' then
                 me.mems.wrapper = me.mems.wrapper .. [[
-    CEU_CODE_WATCH_]]..me.id..[[(mem, &ps);
+    CEU_CODE_WATCH_]]..me.id_..[[(mem, &ps);
 ]]
             end
             me.mems.wrapper = me.mems.wrapper .. [[
@@ -386,7 +386,7 @@ static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
 
         for _, spw in ipairs(me.spawns) do
             local _,Abs_Cons = unpack(spw)
-            mem[#mem+1] = 'tceu_code_mem_'..Abs_Cons.id..' __mem_'..spw.n..';\n'
+            mem[#mem+1] = 'tceu_code_mem_'..Abs_Cons.id_..' __mem_'..spw.n..';/**/\n'
         end
 
         for _, dcl in ipairs(me.dcls) do
@@ -555,7 +555,7 @@ end
 
     Abs_Await = function (me)
         local _,Abs_Cons = unpack(me)
-        CUR().mem = CUR().mem..'tceu_code_mem_'..Abs_Cons.id..' __mem_'..me.n..';\n'
+        CUR().mem = CUR().mem..'tceu_code_mem_'..Abs_Cons.id_..' __mem_'..me.n..';/*2*/\n'
     end,
 
     ---------------------------------------------------------------------------
@@ -710,7 +710,7 @@ typedef union {
 ]]
         end
         MEMS.codes.mems = MEMS.codes.mems..[[
-} tceu_code_mem_]]..code.me.dyn_base.id..[[;
+} tceu_code_mem_]]..code.me.dyn_base.id_..[[;
 ]]
     end
 end

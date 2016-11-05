@@ -75,7 +75,7 @@ function get (Code, ret, goleft)
         dyn = cur.left.dyn..dyn
         cur = cur.left
     end
-    dyn = Code.id..dyn
+    dyn = Code.id_..dyn
 
     local dcl = DCLS.get(AST.par(Code,'Block'), dyn)
     if dcl then
@@ -137,7 +137,7 @@ end
 function dump3 (Code, ret, spc)
     spc = spc or ''
     if #ret == 0 then
-        return spc..'CEU_LABEL_Code_'..get(Code,ret,true).id..',\n'
+        return spc..'CEU_LABEL_Code_'..get(Code,ret,true).id_..',\n'
     else
         local str = ''
         for i, t in ipairs(ret) do

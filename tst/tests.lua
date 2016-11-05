@@ -8,6 +8,41 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+Test { [[
+do/_
+    code/tight Ff (void) -> int do
+        escape 10;
+    end
+end
+do/_
+    code/tight Ff (void) -> int do
+        escape 100;
+    end
+    escape call Ff();
+end
+]],
+    wrn = true,
+    run = 100,
+}
+
+Test { [[
+do/_
+    code/await Ff (void) -> int do
+        escape 10;
+    end
+end
+do/_
+    code/await Ff (void) -> int do
+        escape 100;
+    end
+    var int ret = await Ff();
+    escape ret;
+end
+]],
+    wrn = true,
+    run = 100,
+}
+
 --[=====[
 do return end -- OK
 ---]=====]

@@ -526,6 +526,13 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         end
         me.is_used = (old and old.is_used)
                         or (mods1.dynamic and (not me.is_dyn_base))
+
+        me.id_ = me.id
+        local blk1 = AST.par(me, 'Block')
+        local blk2 = AST.par(blk1,'Block') or blk1
+        if blk2.__par.tag ~= 'ROOT' then
+            me.id_ = me.id..'_'..me.n
+        end
     end,
 
     Data__PRE = function (me)

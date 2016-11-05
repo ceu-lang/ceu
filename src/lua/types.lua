@@ -24,8 +24,12 @@ end
 
 local function types_id (tp)
     local ID = unpack(tp)
-    local id = unpack(ID)
-    return id
+    if ID.dcl and ID.dcl.tag=='Code' then
+        return ID.dcl.id_
+    else
+        local id = unpack(ID)
+        return id
+    end
 end
 
 function TYPES.tostring (tp)

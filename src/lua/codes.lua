@@ -432,10 +432,10 @@ if (0)
 ]])
         end
 
-        local args_id        = me.id
+        local args_id        = me.id_
         local args_Code_Pars = AST.asr(body,'', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
         if me.dyn_base then
-            args_id = me.dyn_base.id
+            args_id = me.dyn_base.id_
             args_Code_Pars = AST.asr(me.dyn_base,'Code', 4,'Block', 1,'Stmts',
                                                          1,'Stmts', 1,'Code_Pars')
         end
@@ -518,7 +518,7 @@ CLEAR(me) -- TODO-NOW
 
         ret = ret .. [[
 {
-    tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons,{mid=mid})..[[;
+    tceu_code_args_]]..ID_abs.dcl.id_..[[ __ceu_ps = ]]..V(Abs_Cons,{mid=mid})..[[;
 
     ]]..mem..[[->pak    = ]]..pak..[[;
     ]]..mem..[[->up_mem = ]]..((pak=='NULL' and '_ceu_mem')   or (pak..'->up_mem'))..[[;
@@ -531,7 +531,7 @@ CLEAR(me) -- TODO-NOW
         end
         ret = ret .. [[
     tceu_stk __ceu_stk  = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
-    CEU_CODE_]]..ID_abs.dcl.id..[[(&__ceu_stk, 0, __ceu_ps,
+    CEU_CODE_]]..ID_abs.dcl.id_..[[(&__ceu_stk, 0, __ceu_ps,
                                    (tceu_code_mem*)]]..mem..[[);
     if (!__ceu_stk.is_alive) {
         return;
@@ -546,8 +546,8 @@ CLEAR(me) -- TODO-NOW
                 if ID_int.tag~='ID_any' and ID_int.dcl.is_mid_idx then
                     local Code = AST.par(me,'Code')
                     ret = ret .. [[
-if (((tceu_code_args_]]..Code.id..[[*)_ceu_occ)->_]]..ID_int.dcl.is_mid_idx..[[ != NULL) {
-    *(((tceu_code_args_]]..Code.id..[[*)_ceu_occ)->_]]..ID_int.dcl.is_mid_idx..[[) = ]]..V(ID_int, {is_bind=true})..[[;
+if (((tceu_code_args_]]..Code.id_..[[*)_ceu_occ)->_]]..ID_int.dcl.is_mid_idx..[[ != NULL) {
+    *(((tceu_code_args_]]..Code.id_..[[*)_ceu_occ)->_]]..ID_int.dcl.is_mid_idx..[[) = ]]..V(ID_int, {is_bind=true})..[[;
 }
 ]]
                 end
@@ -712,8 +712,8 @@ if (0) {
                 end
             end
             LINE(me, [[
-        tceu_code_args_]]..Code.id..[[ __ceu_ps = { ]]..table.concat(ps,',').. [[};
-        CEU_CODE_WATCH_]]..Code.id..[[(]]..cur..[[->mem, &__ceu_ps);
+        tceu_code_args_]]..Code.id_..[[ __ceu_ps = { ]]..table.concat(ps,',').. [[};
+        CEU_CODE_WATCH_]]..Code.id_..[[(]]..cur..[[->mem, &__ceu_ps);
 ]])
         end
 
@@ -1129,7 +1129,7 @@ if (! ]]..CUR('__and_'..me.n..'_'..i)..[[) {
                         code = code.dyn_base
                     end
                     LINE(me, [[
-((tceu_code_args_]]..code.id..[[*) _ceu_occ)->_ret = ]]..V(fr)..[[;
+((tceu_code_args_]]..code.id_..[[*) _ceu_occ)->_ret = ]]..V(fr)..[[;
 ]])
                 else
                     LINE(me, [[

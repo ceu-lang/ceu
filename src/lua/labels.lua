@@ -57,7 +57,7 @@ F = {
     Loop_Num = 'Loop',
 
     Code = function (me)
-        me.lbl_in = new{'Code_'..me.id, true}
+        me.lbl_in = new{'Code_'..me.id_, true}
     end,
 
     Evt = 'Var',

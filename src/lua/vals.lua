@@ -10,7 +10,7 @@ function CUR (field, ctx)
     local Code = AST.iter'Code'()
     local data do
         if Code and (not ctx.is_outer) then
-            data = '(*((tceu_code_mem_'..Code.id..'*)_ceu_mem))'
+            data = '(*((tceu_code_mem_'..Code.id_..'*)_ceu_mem))'
         else
             data = 'CEU_APP.root'
         end
@@ -95,13 +95,13 @@ F = {
         assert(mods.tight)
         if CEU.opts.ceu_features_lua then
             return [[
-CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
-                            ]]..V(Abs_Cons)..[[, ]]..LUA(me)..[[)
+CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
+                             ]]..V(Abs_Cons)..[[, ]]..LUA(me)..[[)
 ]]
         else
             return [[
-CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
-                            ]]..V(Abs_Cons)..[[)
+CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
+                             ]]..V(Abs_Cons)..[[)
 ]]
         end
     end,
@@ -113,7 +113,7 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
             if ID_abs.dcl.tag == 'Data' then
                 id_struct = 'tceu_data_'..ID_abs.dcl.id_
             else
-                id_struct = 'tceu_code_args_'..ID_abs.dcl.id
+                id_struct = 'tceu_code_args_'..ID_abs.dcl.id_
             end
             if ctx.to_tp then
                 id_struct = ctx.to_tp
