@@ -8,61 +8,9 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
-Test { [[
-par/or do
-with
-end
-//await async do end;
-code/await Ff (void)->FOREVER do
-    await FOREVER;
-end
-spawn Ff();
-escape 1;
-]],
-    run = 1,
-}
 --[=====[
-do return end
-
-Test { [[
-data Dd with
-    var int? x;
-end
-var int? x = 10;
-var Dd d = val Dd(x);
-escape d.x!;
-]],
-    run = 10,
-}
-Test { [[
-data Dd with
-    var int x;
-end
-data Ee with
-    var Dd? d;
-end
-var Dd d = val Dd(10);
-var Ee e = val Ee(d);
-escape e.d!.x;
-]],
-    run = 10,
-}
-Test { [[
-data Dd with
-    var int x;
-end
-data Ee with
-    var Dd? d;
-end
-var Dd? d = val Dd(10);
-var Ee  e = val Ee(d);
-escape e.d!.x;
-]],
-    run = 10,
-}
-
 do return end -- OK
----]=====]
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -31508,89 +31456,6 @@ escape a;
 
 --<< OPTION / NATIVE
 
--->> OPTION / DATA
-
-Test { [[
-data Dd with
-    var int x;
-end
-
-var Dd d = val Dd(10);
-
-var Dd? d1, d2;
-
-d2 = d;
-
-var int ret = 0;
-
-if d1? then
-    ret = ret + d1!.x;
-else
-    ret = ret + 1;
-end
-
-if d2? then
-    ret = ret + d2!.x;
-else
-    ret = ret + 1;
-end
-
-escape ret;
-]],
-    run = 11,
-}
-
-Test { [[
-data Dd with
-    var& int? x;
-end
-
-var int? x1;
-var int? x2;
-
-var Dd d1 = val Dd(&x1);
-var Dd d2 = val Dd(&x2);
-
-x2 = 10;
-
-escape (d1.x? as int) + d2.x! + 1;
-]],
-    run = 11,
-}
-
--- exemplos de atribuicao a data com valor "?"
-Test { [[
-data Dd with
-    var int? x;
-end
-var int? y;
-var int? z;
-z = y;
-var Dd d = val Dd(y);
-escape (d.x? as int) + 1;
-]],
-    run = 1,
-}
-Test { [[
-data Ee with
-    var int x;
-end
-data Dd with
-    var Ee? e;
-end
-var Dd d = _;
-
-d.e = val Ee(10);
-var int c = 0;
-
-escape d.e!.x;
-]],
-    wrn = true,
-    run = 10,
-}
-
---<< OPTION / DATA
-
 -- TODO: SKIP-01
 
 --<<< OPTION TYPES
@@ -33595,140 +33460,6 @@ escape ret;
 
 --<<< CODE / TIGHT / FUNCTIONS
 
--->> CODE / AWAIT / FINALIZE
-
-Test { [[
-native _V;
-native/pre do
-    int V = 0;
-end
-code/await Ff (void)->void do
-    do finalize with
-        _V = _V + 1;
-    end
-    await FOREVER;
-end
-watching 1s do
-    do finalize with
-        _V = _V * 2;
-    end
-    await Ff();
-end
-await 1s;
-escape _V;
-]],
-    run = { ['~>2s']=2 },
-}
-
-Test { [[
-native _V;
-native/pre do
-    int V = 1;
-end
-code/await Ff (void)->void do
-    do finalize with
-        _V = _V * 2;
-    end
-    await FOREVER;
-end
-do
-    spawn Ff();
-    do finalize with
-        _V = _V + 1;
-    end
-    await 1s;
-end
-await 1s;
-escape _V;
-]],
-    run = { ['~>2s']=4 },
-}
-
-Test { [[
-native _V;
-native/pre do
-    int V = 1;
-end
-code/await Gg (void)->void do
-    do finalize with
-        _V = _V * 2;
-    end
-    await FOREVER;
-end
-code/await Ff (void)->void do
-    do finalize with
-        _V = _V + 2;
-    end
-    await Gg();
-end
-watching 1s do
-    do finalize with
-        _V = _V * 3;
-    end
-    await Ff();
-    do finalize with
-        _V = _V + 1;
-    end
-end
-escape _V;
-]],
-    run = { ['~>1s']=12 },
-}
-
-Test { [[
-native _V;
-native/pre do
-    int V = 1;
-end
-code/await Gg (void)->void do
-    do finalize with
-        _V = _V * 2;
-    end
-    await FOREVER;
-end
-code/await Ff (void)->void do
-    do finalize with
-        _V = _V + 2;
-    end
-    await Gg();
-end
-watching 1s do
-    do finalize with
-        _V = _V * 3;
-    end
-    spawn Ff();
-    do finalize with
-        _V = _V + 1;
-    end
-    await FOREVER;
-end
-escape _V;
-]],
-    run = { ['~>1s']=18 },
-}
-
-Test { [[
-native _V;
-native/pre do
-    int V = 1;
-end
-code/await Ff (void)->void do
-    do finalize with
-        _V = _V * 2;
-    end
-    _V = _V + 1;
-    await FOREVER;
-end
-do
-    spawn Ff();
-end
-escape _V;
-]],
-    run = 4;
-}
-
---<< CODE / AWAIT / FINALIZE
-
 -->> C FIELDS / DIRECT ACCESS / TCEU_MEM
 Test { [[
 native __ceu_mem, _tceu_code_mem_ROOT;
@@ -34447,6 +34178,20 @@ spawn Ff(ptr);
 escape 1;
 ]],
     wrn = true,
+    run = 1,
+}
+
+Test { [[
+par/or do
+with
+end
+//await async do end;
+code/await Ff (void)->FOREVER do
+    await FOREVER;
+end
+spawn Ff();
+escape 1;
+]],
     run = 1,
 }
 
@@ -38235,6 +37980,140 @@ escape 1;
 
 --<< CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
 
+-->> CODE / AWAIT / FINALIZE
+
+Test { [[
+native _V;
+native/pre do
+    int V = 0;
+end
+code/await Ff (void)->void do
+    do finalize with
+        _V = _V + 1;
+    end
+    await FOREVER;
+end
+watching 1s do
+    do finalize with
+        _V = _V * 2;
+    end
+    await Ff();
+end
+await 1s;
+escape _V;
+]],
+    run = { ['~>2s']=2 },
+}
+
+Test { [[
+native _V;
+native/pre do
+    int V = 1;
+end
+code/await Ff (void)->void do
+    do finalize with
+        _V = _V * 2;
+    end
+    await FOREVER;
+end
+do
+    spawn Ff();
+    do finalize with
+        _V = _V + 1;
+    end
+    await 1s;
+end
+await 1s;
+escape _V;
+]],
+    run = { ['~>2s']=4 },
+}
+
+Test { [[
+native _V;
+native/pre do
+    int V = 1;
+end
+code/await Gg (void)->void do
+    do finalize with
+        _V = _V * 2;
+    end
+    await FOREVER;
+end
+code/await Ff (void)->void do
+    do finalize with
+        _V = _V + 2;
+    end
+    await Gg();
+end
+watching 1s do
+    do finalize with
+        _V = _V * 3;
+    end
+    await Ff();
+    do finalize with
+        _V = _V + 1;
+    end
+end
+escape _V;
+]],
+    run = { ['~>1s']=12 },
+}
+
+Test { [[
+native _V;
+native/pre do
+    int V = 1;
+end
+code/await Gg (void)->void do
+    do finalize with
+        _V = _V * 2;
+    end
+    await FOREVER;
+end
+code/await Ff (void)->void do
+    do finalize with
+        _V = _V + 2;
+    end
+    await Gg();
+end
+watching 1s do
+    do finalize with
+        _V = _V * 3;
+    end
+    spawn Ff();
+    do finalize with
+        _V = _V + 1;
+    end
+    await FOREVER;
+end
+escape _V;
+]],
+    run = { ['~>1s']=18 },
+}
+
+Test { [[
+native _V;
+native/pre do
+    int V = 1;
+end
+code/await Ff (void)->void do
+    do finalize with
+        _V = _V * 2;
+    end
+    _V = _V + 1;
+    await FOREVER;
+end
+do
+    spawn Ff();
+end
+escape _V;
+]],
+    run = 4;
+}
+
+--<< CODE / AWAIT / FINALIZE
+
 -->> CODE / AWAIT / RECURSIVE
 
 Test { [[
@@ -41556,6 +41435,138 @@ escape (call Ff(&&b));
 ]],
     run = 10,
 }
+
+-->> OPTION / DATA
+
+Test { [[
+data Dd with
+    var int x;
+end
+
+var Dd d = val Dd(10);
+
+var Dd? d1, d2;
+
+d2 = d;
+
+var int ret = 0;
+
+if d1? then
+    ret = ret + d1!.x;
+else
+    ret = ret + 1;
+end
+
+if d2? then
+    ret = ret + d2!.x;
+else
+    ret = ret + 1;
+end
+
+escape ret;
+]],
+    run = 11,
+}
+
+Test { [[
+data Dd with
+    var& int? x;
+end
+
+var int? x1;
+var int? x2;
+
+var Dd d1 = val Dd(&x1);
+var Dd d2 = val Dd(&x2);
+
+x2 = 10;
+
+escape (d1.x? as int) + d2.x! + 1;
+]],
+    run = 11,
+}
+
+-- exemplos de atribuicao a data com valor "?"
+Test { [[
+data Dd with
+    var int? x;
+end
+var int? y;
+var int? z;
+z = y;
+var Dd d = val Dd(y);
+escape (d.x? as int) + 1;
+]],
+    run = 1,
+}
+Test { [[
+data Ee with
+    var int x;
+end
+data Dd with
+    var Ee? e;
+end
+var Dd d = _;
+
+d.e = val Ee(10);
+var int c = 0;
+
+escape d.e!.x;
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+data Dd with
+    var int? x;
+end
+var int? x = 10;
+var Dd d = val Dd(x);
+escape d.x!;
+]],
+    run = 10,
+}
+Test { [[
+data Dd with
+    var int x;
+end
+data Ee with
+    var Dd? d;
+end
+var Dd d = val Dd(10);
+var Ee e = val Ee(d);
+escape e.d!.x;
+]],
+    run = 10,
+}
+Test { [[
+data Dd with
+    var int x;
+end
+data Ee with
+    var Dd? d;
+end
+var Ee e = val Ee(Dd(10));
+escape e.d!.x;
+]],
+    run = 10,
+}
+Test { [[
+data Dd with
+    var int x;
+end
+data Ee with
+    var Dd? d1;
+end
+var Dd? d2 = val Dd(10);
+var Ee  e = val Ee(d2);
+escape e.d1!.x;
+]],
+    run = 10,
+}
+
+--<< OPTION / DATA
 
 -->> DATA / HIER / ENUM
 

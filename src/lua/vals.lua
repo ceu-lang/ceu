@@ -208,7 +208,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
                     do
                         local var_tp = var_tp
                         if var_is_opt then
-                            var_tp = TYPES.pop(var_tp,'?')
+                            --var_tp = TYPES.pop(var_tp,'?')
                         end
                         local to_abs = TYPES.abs_dcl(var_tp, 'Data')
                         if to_abs and (not var_is_alias) then
