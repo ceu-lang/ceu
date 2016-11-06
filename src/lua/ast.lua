@@ -328,6 +328,7 @@ end
         ' (ln='..me.ln[2]..' n='..me.n..' d='..AST.depth(me)..
                            --' d='..(me.__depth or 0)..
                            --' p='..(me.__par and me.__par.n or '')..
+                           ' trl='..me.trails_n..
                            ') '..ks)
 --DBG'---'
 --DBG(me.xxx)

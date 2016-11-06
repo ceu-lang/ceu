@@ -1436,19 +1436,26 @@ ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..'.id, '..ps..[[).value.
 }
 ]])
         else
-            LINE(me, [[
+            if AST.par(me, 'Async') then
+                LINE(me, [[
 ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__ASYNC;
 _ceu_mem->trails[]]..me.trails[1]..[[].seq    = CEU_APP.seq+1;
 _ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
 ]])
+            else
+                assert(AST.par(me, 'Async_Isr'))
+            end
+
             LINE(me, [[
     ceu_input(]]..V(ID_ext)..'.id, '..ps..[[);
 }
 ]])
-            HALT(me, {
-                lbl = me.lbl_out.id,
-            })
+            if AST.par(me, 'Async') then
+                HALT(me, {
+                    lbl = me.lbl_out.id,
+                })
+            end
         end
     end,
 
@@ -1697,7 +1704,7 @@ static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
     Async_Isr = function (me)
     -- ISR: include "ceu_out_isr(id)"
 
-        local exps, vars, blk = unpack(me)
+        local exps, vars, _, blk = unpack(me)
 
         local args = {}
         for _, arg in ipairs(exps) do
@@ -1710,7 +1717,7 @@ static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
         LINE(me, [[
 {
     int __ceu_args[] = { ]]..args..[[ };
-    ceu_callback_ptr_ptr(CEU_CALLBACK_ISR_ATTACH, CEU_ISR_]]..me.n..[[, &__ceu_args);
+    ceu_callback_ptr_ptr(CEU_CALLBACK_ISR_ATTACH, (void*)CEU_ISR_]]..me.n..[[, &__ceu_args);
 }
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__FINALIZE;
 _ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_fin.id..[[;
@@ -1721,7 +1728,7 @@ if (0) {
         CASE(me, me.lbl_fin)
         LINE(me, [[{
     int __ceu_args[] = { ]]..args..[[ };
-    ceu_callback_ptr_ptr(CEU_CALLBACK_ISR_DETACH, CEU_ISR_]]..me.n..[[, &__ceu_args);
+    ceu_callback_ptr_ptr(CEU_CALLBACK_ISR_DETACH, (void*)CEU_ISR_]]..me.n..[[, &__ceu_args);
 }]])
         HALT(me)
         LINE(me, [[
@@ -1735,9 +1742,7 @@ if (0) {
 ]]
 
         CODES.isrs = CODES.isrs .. [[
-void CEU_ISR_]]..me.n..[[ (void)
-{
-    tceu_stk* _ceu_stk = NULL;
+void CEU_ISR_]]..me.n..[[ (void) {
     ]]..blk.code..[[
 }
 ]]

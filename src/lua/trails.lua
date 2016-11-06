@@ -108,6 +108,9 @@ F = {
         local body = unpack(me)
         me.trails_n = 1 + body.trails_n
     end,
+    Async_Isr = function (me)
+        me.trails_n = 2
+    end,
 
     If = function (me)
         local c, t, f = unpack(me)

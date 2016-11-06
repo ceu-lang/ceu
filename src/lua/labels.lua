@@ -109,7 +109,11 @@ F = {
     end,
     Emit_Ext_emit = function (me)
         local ID_ext = unpack(me)
-        me.lbl_out = new{'Emit_Ext_emit'..ID_ext.dcl.id..'__OUT'}
+        local inout = unpack(ID_ext.dcl)
+        if inout=='input' and AST.par(me,'Async_Isr') then
+            return
+        end
+        me.lbl_out = new{'Emit_Ext_emit__'..ID_ext.dcl.id..'__OUT'}
     end,
 
     Async = function (me)
