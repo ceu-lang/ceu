@@ -121,6 +121,10 @@ F = {
         me.lbl_abt = new{'Async_Thread__ABT'}
         me.lbl_out = new{'Async_Thread__OUT'}
     end,
+
+    Async_Isr = function (me)
+        me.lbl_fin = new{'Async_Isr__FIN'}
+    end,
 }
 
 AST.visit(F)

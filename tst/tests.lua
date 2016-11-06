@@ -44315,7 +44315,7 @@ atomic do
     escape 1;
 end
 ]],
-    props_ = 'line 1 : `async/thread´ support is disabled',
+    props_ = 'line 1 : `atomic´ support is disabled: enable `--ceu-features-thread´ or `--ceu-features-isr´',
 }
 
 -- TODO: no escape
@@ -44345,7 +44345,853 @@ escape ret;
     run = 1,
 }
 
+Test { [[
+code/tight Fx (void)->int do
+    escape 2;
+end
+var int v = call Fx();
+par/or do
+    await async/thread do
+        call Fx();
+    end
+with
+end
+escape v;
+]],
+    --isr = 'line 7 : call breaks the static check for `atomic´ sections',
+    dcls = 'line 6 : abstraction inside `async´ : not implemented',
+    run = 2,
+    _opts = { ceu_features_thread='true' },
+}
+
 --<<< ASYNCS / THREADS
+
+-->>> ASYNCS / ISR / ATOMIC
+
+PRE_ISR = [[
+native/pre do
+    ##define ceu_out_isr_on()
+    ##define ceu_out_isr_off()
+    int V;
+    void ceu_sys_isr_attach (void* f, int v) {
+        V = V + v;
+    }
+    void ceu_sys_isr_detach (void* f, int v) {
+        V = V * v;
+    }
+    ##define ceu_out_isr_attach ceu_sys_isr_attach
+    ##define ceu_out_isr_detach ceu_sys_isr_detach
+end
+
+
+
+
+
+
+]]
+
+Test { [[
+atomic do
+    await 1s;
+end
+escape 1;
+]],
+    props = 'line 2 : not permitted inside `atomic´',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+atomic do
+    par/or do
+        nothing;
+    with
+        nothing;
+    end
+end
+escape 1;
+]],
+    props = 'line 2 : not permitted inside `atomic´',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+output void O;
+atomic do
+    emit O;
+end
+escape 1;
+]],
+    props = 'line 3 : not permitted inside `atomic´',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+native/pos do
+    void f (void){}
+end
+atomic do
+native _f;
+    _f();
+end
+escape 1;
+]],
+    run = 1,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+code/tight Fx (void)->void do end
+atomic do
+    call Fx();
+end
+escape 1;
+]],
+    run = 1,
+    --props = 'line 4 : not permitted inside `atomic´',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+atomic do
+    loop do
+    end
+end
+escape 1;
+]],
+    props = 'line 3 : not permitted inside `atomic´',
+    wrn = true,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+loop do
+    atomic do
+        break;
+    end
+end
+escape 1;
+]],
+    props = 'line 3 : not permitted inside `atomic´',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+par/or do
+    async/isr [20] do
+    end
+with
+end
+escape 1;
+]],
+    parser = 'line 1 : after `do´ : expected `nothing´ or `var´ or `vector´',
+    --adj = 'line 2 : `async/isr´ must be followed by `await FOREVER´',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+par/or do
+    spawn async/isr [20] do
+    end
+    await FOREVER;
+with
+end
+escape 1;
+]],
+    run = 1,
+    --cc = 'error: implicit declaration of function ‘ceu_out_isr_attach’',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+native/pre do
+    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
+    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+        tceu_callback_ret ret;
+        ret.is_handled = 0;
+        return ret;
+    }
+end
+par/or do
+    spawn async/isr [1] do
+    end
+    await FOREVER;
+with
+end
+escape 1;
+]],
+    run = 1,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+native/pre do
+    int V = 1;
+    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
+    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+        tceu_callback_ret ret = {.is_handled=1};
+        int* args = (int*) p2.ptr;
+        switch (cmd) {
+            case CEU_CALLBACK_ISR_ATTACH:
+                V = V + args[0] + args[1];
+                break;
+            case CEU_CALLBACK_ISR_DETACH:
+                V = V * args[0] - args[1];
+                break;
+            default:
+                ret.is_handled = 0;
+        }
+        return ret;
+    }
+end
+par/or do
+do
+    spawn async/isr [3,4] do
+    end
+    await FOREVER;
+end             // TODO: forcing finalize out_isr(null)
+with
+end
+native _V;
+escape _V;
+]],
+    run = 20,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+native/pre do
+    int V = 1;
+    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
+    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+        tceu_callback_ret ret = {.is_handled=1};
+        int* args = (int*) p2.ptr;
+        switch (cmd) {
+            case CEU_CALLBACK_ISR_ATTACH:
+                V = V + args[0];
+                break;
+            case CEU_CALLBACK_ISR_DETACH:
+                V = V * args[0];
+                break;
+            default:
+                ret.is_handled = 0;
+        }
+        return ret;
+    }
+end
+par/or do
+    do
+        spawn async/isr [3] do
+        end
+        await FOREVER;
+    end             // TODO: forcing finalize out_isr(null)
+with
+end
+native _V;
+escape _V;
+]],
+    run = 12,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+vector[10] int v = [1];
+v[0] = 2;
+par/or do
+    spawn async/isr [20] (v) do
+        v[0] = 1;
+    end
+    await FOREVER;
+with
+end
+escape v[0];
+]],
+    run = 2,
+    --isr = 'line 2 : access to "v" must be atomic',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+vector[10] int v;
+atomic do
+    v[0] = 2;
+end
+par/or do
+    spawn async/isr [20] (v) do
+        v[0] = 1;
+    end
+    await FOREVER;
+with
+end
+atomic do
+    escape v[0];
+end
+]],
+    props = 'line 13 : not permitted inside `atomic´',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+native/pre do
+    int V = 1;
+    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
+    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+        tceu_callback_ret ret = {.is_handled=1};
+        int* args = (int*) p2.ptr;
+        switch (cmd) {
+            case CEU_CALLBACK_ISR_ATTACH:
+                V = V + args[0];
+                break;
+            case CEU_CALLBACK_ISR_DETACH:
+                V = V * args[0];
+                break;
+            default:
+                ret.is_handled = 0;
+        }
+        return ret;
+    }
+end
+vector[10] int v = [];
+atomic do
+    v = v .. [2];
+end
+par do
+    spawn async/isr [20] (v) do
+        v[0] = 1;
+    end
+    await FOREVER;
+with
+    var int ret;
+    atomic do
+        ret = v[0];
+    end
+    escape ret;
+end
+]],
+    _ana = {acc=1},
+    run = 2,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+spawn async/isr [20] do
+    atomic do
+native _f;
+        _f();
+    end
+end
+await FOREVER;
+]],
+    props = 'line 2 : not permitted inside `async/isr´',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+var int x = 0;
+
+atomic do
+    x = 1;
+end
+par/or do
+    spawn async/isr [20] do
+        x = 0;
+    end
+    await FOREVER;
+with
+end
+escape x;
+]],
+    dcls = 'line 8 : internal identifier "x" is not declared',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+native/pre do
+    int V = 1;
+    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
+    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+        tceu_callback_ret ret = {.is_handled=1};
+        int* args = (int*) p2.ptr;
+        switch (cmd) {
+            case CEU_CALLBACK_ISR_ATTACH:
+                V = V + args[0];
+                break;
+            case CEU_CALLBACK_ISR_DETACH:
+                V = V * args[0];
+                break;
+            default:
+                ret.is_handled = 0;
+        }
+        return ret;
+    }
+end
+
+var int x = 0;
+
+atomic do
+    x = 1;
+end
+par/or do
+    spawn async/isr [20] (x) do
+        x = 0;
+    end
+    await FOREVER;
+with
+end
+escape x;
+]],
+    run = 1,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+var int v = 2;
+par/or do
+    spawn async/isr[20] (v) do
+        v = 1;
+    end
+    await FOREVER;
+with
+end
+escape v;
+]],
+    run = 2,
+    --isr = 'line 1 : access to "v" must be atomic',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+var int&& v = null;
+    spawn async/isr[20] (v) do
+        *v = 1;
+    end
+    await FOREVER;
+]],
+    inits = 'line 22 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:21)',
+    --isr = 'line 4 : pointer access breaks the static check for `atomic´ sections',
+    --run = 1,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+var int&& v = null;
+par/or do
+    spawn async/isr[20] (v) do
+        *v = 1;
+    end
+    await FOREVER;
+with
+end
+escape 1;
+]],
+    inits = 'line 22 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:21)',
+    --inits = 'line 23 : invalid pointer access : crossed `par/or´ (/tmp/tmp.ceu:22)',
+    --isr = 'line 4 : pointer access breaks the static check for `atomic´ sections',
+    --run = 1,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+code/tight Fx (void)->int do
+    escape 2;
+end
+var int v = call Fx();
+par/or do
+    spawn async/isr [20] do
+        call Fx();
+    end
+    await FOREVER;
+with
+end
+escape v;
+]],
+    --isr = 'line 7 : call breaks the static check for `atomic´ sections',
+    run = 2,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+native/pos do
+    int f (void) { return 2; }
+end
+native _f;
+var int v = _f();
+par/or do
+    spawn async/isr [20] do
+        _f();
+    end
+    await FOREVER;
+with
+end
+escape v;
+]],
+    run = 2,
+    --wrn = true,
+    --isr = 'line 1 : access to "_f" must be atomic',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+native/pure _f;
+native/pre do
+    int f (void) {
+        return 2;
+    }
+end
+
+var int v = _f();
+par/or do
+    spawn async/isr [20] do
+        _f();
+    end
+    await FOREVER;
+with
+end
+escape v;
+]],
+    run = 2,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+var int v;
+v = 2;
+par/or do
+    spawn async/isr [20] (v) do
+        v = 1;
+    end
+    await FOREVER;
+with
+end
+escape v;
+]],
+    --isr = 'line 2 : access to "v" must be atomic',
+    run = 2,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+var int v;
+atomic do
+    v = 2;
+end
+par/or do
+    spawn async/isr [20] (v) do
+        v = 1;
+    end
+    await FOREVER;
+with
+end
+escape v;
+]],
+    run = 2,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+var int v;
+atomic do
+    v = 2;
+end
+par do
+    spawn async/isr [20] (v) do
+        v = 1;
+        v = 1;
+    end
+    await FOREVER;
+with
+    var int ret;
+    atomic do
+        ret = v;
+    end
+    escape ret;
+end
+]],
+    _ana = {acc=2},
+    run = 2,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+var int v;
+atomic do
+    v = 2;
+end
+par/or do
+    spawn async/isr [20] (v) do
+        v = 1;
+    end
+    await FOREVER;
+with
+end
+escape v;
+]],
+    --isr = 'line 12 : access to "v" must be atomic',
+    props = 'line 27 : not permitted inside `async/isr´',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+var int v;
+var int&& p;
+atomic do
+    v = 2;
+    p = &&v;
+end
+par/or do
+    spawn async/isr [20](v) do
+        v = 1;
+    end
+    await FOREVER;
+with
+end
+escape 1;
+]],
+    --isr = 'line 5 : reference access breaks the static check for `atomic´ sections',
+    run = 1,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+vector[10] int v;
+var int&& p;
+atomic do
+    p = &&v[0];
+end
+par/or do
+    spawn async/isr [20] do
+        //this.v[1] = 1;
+    end
+    await FOREVER;
+with
+end
+escape 1;
+]],
+    run = 1,
+    --exps = 'line 4 : invalid operand to `&&´ : unexpected context for vector "v"',
+    --env = 'line 4 : types mismatch (`int&&´ <= `int[]&&´)',
+    --env = 'line 4 : invalid operand to unary "&&"',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+par/or do
+    spawn async/isr [1] do
+        emit A;
+    end
+    await FOREVER;
+with
+end
+escape 1;
+]],
+    dcls = 'line 3 : external identifier "A" is not declared',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+input int A;
+par/or do
+    spawn async/isr [] do
+        emit A;
+    end
+    await FOREVER;
+with
+end
+escape 1;
+]],
+    --adj = 'line 3 : missing ISR identifier',
+    parser = 'line 3 : after `[´ : expected expression',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+input int A;
+par/or do
+    spawn async/isr [1] do
+        emit A;
+    end
+    await FOREVER;
+with
+end
+escape 1;
+]],
+    stmts = 'line 4 : invalid `emit´ : types mismatch : "(int)" <= "()"',
+    --env = ' line 4 : arity mismatch',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+input int A;
+par/or do
+    spawn async/isr [1] do
+        var int x = 111;
+        emit A(1);
+        x = 222;
+    end
+    await FOREVER;
+with
+end
+escape 1;
+]],
+    run = 1,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+native/pre do
+    int V = 0;
+    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
+    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+        tceu_callback_ret ret = {.is_handled=1};
+        int* args = (int*) p2.ptr;
+        switch (cmd) {
+            case CEU_CALLBACK_ISR_ATTACH:
+                V = V + args[0];
+                break;
+            case CEU_CALLBACK_ISR_DETACH:
+                V = V - args[0];
+                break;
+            default:
+                ret.is_handled = 0;
+        }
+        return ret;
+    }
+end
+native _ceu_dbg_assert;
+native _V;
+par/or do
+    _ceu_dbg_assert(_V==0);
+    spawn async/isr [1] do
+    end
+    await FOREVER;
+with
+    _ceu_dbg_assert(_V==1);
+    await 1s;
+    _ceu_dbg_assert(_V==1);
+end             // TODO: forcing finalize out_isr(null)
+_ceu_dbg_assert(_V==0);
+escape _V+1;
+]],
+    run = { ['~>1s']=1 },
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+native _digitalRead, _digitalWrite;
+input int PIN02;
+par/or do
+    spawn async/isr [1] do
+        emit PIN02(_digitalRead(2));
+    end
+    await FOREVER;
+with
+    _digitalWrite(13, 1);
+end
+escape 1;
+]],
+    --_ana = {acc=1},
+    todo = 'acc',
+    acc = 'line 8 : access to symbol "_digitalWrite" must be atomic (vs symbol `_digitalRead´ (/tmp/tmp.ceu:4))',
+    run = 1,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+input int PIN02;
+native _digitalWrite;
+par/or do
+    var int i = 0;
+    spawn async/isr [1] do
+        emit PIN02(i);
+    end
+    await FOREVER;
+with
+    _digitalWrite(13, 1);
+end
+escape 1;
+]],
+    dcls = 'line 6 : internal identifier "i" is not declared',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+native _digitalWrite;
+input int PIN02;
+par/or do
+    var int i = 0;
+    spawn async/isr [1] (i) do
+        emit PIN02(i);
+    end
+    await FOREVER;
+with
+    _digitalWrite(13, 1);
+end
+escape 1;
+]],
+    cc = '10:1: error: implicit declaration of function ‘digitalWrite’',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+var int i = 0;
+par/or do
+    spawn async/isr [1] (i) do
+        i = 2;
+    end
+    await FOREVER;
+with
+    i = 1;
+end
+escape 1;
+]],
+    todo = 'acc',
+    acc = 'line 9 : access to symbol "i" must be atomic (vs variable/event `i´ (/tmp/tmp.ceu:5))',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+input int PIN02;
+var int i = 0;
+par/or do
+    spawn async/isr [1] (i) do
+        i = 2;
+    end
+    await FOREVER;
+with
+    atomic do
+        i = 1;
+    end
+end
+escape 1;
+]],
+    wrn = true,
+    _ana = {acc=1},
+    run = 1,
+    --cc = '#error "Missing definition for macro',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+code/tight Fx (void)->int do
+    escape 2;
+end
+var int v = call Fx();
+par/or do
+    spawn async/isr[20] do
+        call Fx();
+    end
+    await FOREVER;
+with
+end
+escape v;
+]],
+    --wrn = true,
+    --isr = 'line 4 : access to "Fx" must be atomic',
+    run = 2,
+    _opts = { ceu_features_isr='true' },
+    dcls = 'line 6 : abstraction inside `async´ : not implemented',
+}
+
+--<<< ASYNCS / ISR / ATOMIC
 
 -->>> CEU_FEATURES_*
 

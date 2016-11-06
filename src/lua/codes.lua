@@ -1,6 +1,7 @@
 CODES = {
     native  = { pre='', pos='' },
     threads = '',
+    isrs    = '',
 }
 
 local function LINE_DIRECTIVE (me)
@@ -1589,29 +1590,6 @@ ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
         SET(me, to, chk, true)
     end,
 
-    Atomic = function (me)
-        local thread = AST.par(me, 'Async_Thread')
-        if thread then
-            LINE(me, [[
-CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
-if (_ceu_p.thread->has_aborted) {
-    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
-    goto ]]..thread.lbl_abt.id..[[;   /* exit if ended from "sync" */
-} else {                              /* othrewise, execute block */
-]])
-            CONC_ALL(me)
-            LINE(me, [[
-    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
-}
-]])
-        else
-            DBG('TODO-ATOMIC-ISR')
-            --LINE(me, 'ceu_out_isr_off();')
-            CONC_ALL(me)
-            --LINE(me, 'ceu_out_isr_on();')
-        end
-    end,
-
     Async_Thread = function (me)
         local _,_, blk = unpack(me)
 
@@ -1714,6 +1692,77 @@ static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
     CEU_THREADS_RETURN(NULL);
 }
 ]]
+    end,
+
+    Async_Isr = function (me)
+    -- ISR: include "ceu_out_isr(id)"
+
+        local exps, vars, blk = unpack(me)
+
+        local args = {}
+        for _, arg in ipairs(exps) do
+            args[#args+1] = V(arg)
+        end
+        args = table.concat(args,',')
+
+-- TODO: pause, resume
+        -- finalize
+        LINE(me, [[
+{
+    int __ceu_args[] = { ]]..args..[[ };
+    ceu_callback_ptr_ptr(CEU_CALLBACK_ISR_ATTACH, CEU_ISR_]]..me.n..[[, &__ceu_args);
+}
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__FINALIZE;
+_ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_fin.id..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].clr_range =
+    (tceu_evt_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[2]..[[ };
+if (0) {
+]])
+        CASE(me, me.lbl_fin)
+        LINE(me, [[{
+    int __ceu_args[] = { ]]..args..[[ };
+    ceu_callback_ptr_ptr(CEU_CALLBACK_ISR_DETACH, CEU_ISR_]]..me.n..[[, &__ceu_args);
+}]])
+        HALT(me)
+        LINE(me, [[
+}
+]])
+
+
+--[[
+        local code = string.gsub(blk.code, '_ceu_org', '((tceu_org*)CEU_APP.data)')
+        code = string.gsub(code, '_ceu_app', '(&CEU_APP)')
+]]
+
+        CODES.isrs = CODES.isrs .. [[
+void CEU_ISR_]]..me.n..[[ (void)
+{
+    tceu_stk* _ceu_stk = NULL;
+    ]]..blk.code..[[
+}
+]]
+    end,
+
+    Atomic = function (me)
+        local thread = AST.par(me, 'Async_Thread')
+        if thread then
+            LINE(me, [[
+CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
+if (_ceu_p.thread->has_aborted) {
+    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+    goto ]]..thread.lbl_abt.id..[[;   /* exit if ended from "sync" */
+} else {                              /* othrewise, execute block */
+]])
+            CONC_ALL(me)
+            LINE(me, [[
+    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+}
+]])
+        else
+            LINE(me, 'ceu_callback_num_void(CEU_CALLBACK_ISR_ENABLE, 0);')
+            CONC_ALL(me)
+            LINE(me, 'ceu_callback_num_void(CEU_CALLBACK_ISR_ENABLE, 1);')
+        end
     end,
 
     ---------------------------------------------------------------------------
@@ -1921,6 +1970,7 @@ local c = SUB(c, '=== EXTS_TYPES ===',       MEMS.exts.types)
 local c = SUB(c, '=== EVTS_TYPES ===',       MEMS.evts.types)
 local c = SUB(c, '=== LABELS ===',           labels)
 local c = SUB(c, '=== NATIVE_POS ===',       CODES.native.pos)
+local c = SUB(c, '=== ISRS ===',             CODES.isrs)
 local c = SUB(c, '=== THREADS ===',          CODES.threads)
 local c = SUB(c, '=== CODES_WRAPPERS ===',   MEMS.codes.wrappers)
 local c = SUB(c, '=== CODES ===',            AST.root.code)

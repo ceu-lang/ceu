@@ -598,23 +598,6 @@ error'TODO'
 
 -------------------------------------------------------------------------------
 
---[=[
-    _Async_Thread__PRE = function (me)
-        me.tag = 'Async_Thread'
-        return node('Stmts', me.ln,
-                me,
-                node('Async', me.ln,
-                    node('VarList', me.ln),
-                    node('Block', me.ln, node('Stmts', me.ln))))
-                    --[[ HACK_2:
-                    -- Include <async do end> after it to enforce terminating
-                    -- from the main program.
-                    --]]
-    end,
-]=]
-
--------------------------------------------------------------------------------
-
     _Lua_Do__PRE = function (me)
         me.tag = 'Lua_Do'
         return node('Block', me.ln,

@@ -47,6 +47,9 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg
 #define ceu_callback_ptr_num(cmd,p1,p2)                 \
         ceu_callback(cmd, (tceu_callback_arg){.ptr=p1}, \
                           (tceu_callback_arg){.num=p2})
+#define ceu_callback_ptr_ptr(cmd,p1,p2)                 \
+        ceu_callback(cmd, (tceu_callback_arg){.ptr=p1}, \
+                          (tceu_callback_arg){.ptr=p2})
 #define ceu_callback_ptr_size(cmd,p1,p2)                \
         ceu_callback(cmd, (tceu_callback_arg){.ptr=p1}, \
                           (tceu_callback_arg){.size=p2})
@@ -79,6 +82,9 @@ enum {
     CEU_CALLBACK_TERMINATING,
     CEU_CALLBACK_ASYNC_PENDING,
     CEU_CALLBACK_THREAD_TERMINATING,
+    CEU_CALLBACK_ISR_ENABLE,
+    CEU_CALLBACK_ISR_ATTACH,
+    CEU_CALLBACK_ISR_DETACH,
     CEU_CALLBACK_WCLOCK_MIN,
     CEU_CALLBACK_OUTPUT,
     CEU_CALLBACK_REALLOC,

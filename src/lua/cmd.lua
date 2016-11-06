@@ -29,6 +29,7 @@ Options:
 
     --ceu-features-lua=BOOL         enable `lua´ support
     --ceu-features-thread=BOOL      enable `async/thread´ support
+    --ceu-features-isr=BOOL         enable `async/isr´ support
 
     --ceu-err-unused=OPT            effect for unused identifier: error|warning|pass
     --ceu-err-unused-native=OPT                unused native identifier
@@ -127,6 +128,7 @@ do
         ceu_line_directives = { toboolean, 'true'  },
         ceu_features_lua    = { toboolean, 'false' },
         ceu_features_thread = { toboolean, 'false' },
+        ceu_features_isr    = { toboolean, 'false' },
 
         env_output          = { tostring,  '-'     },
     }

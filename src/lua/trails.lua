@@ -169,8 +169,9 @@ end
         local pool  = AST.get(sub, 'Pool')
         local var   = AST.get(sub, 'Var')
         local evt   = AST.get(sub, 'Evt')
+        local isr   = AST.get(sub, 'Async_Isr')
 
-        if sub.tag=='Finalize' or spawn
+        if sub.tag=='Finalize' or spawn or isr
             or (pool and pool.has_trail) or (var and var.has_trail)
             or (evt and evt.has_trail)
         then
