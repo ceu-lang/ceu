@@ -42901,6 +42901,46 @@ escape call Ff(Dd(_));
     run = 10,
 }
 
+Test { [[
+native/const
+    _CONSTANT,
+;
+native/pre do
+    ##define CONSTANT 10
+end
+
+data Object with
+  var int c = _CONSTANT;
+end
+
+var Object a = _;
+
+escape a.c;
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+native/const
+    _CONSTANT,
+;
+native/pre do
+    ##define CONSTANT 10
+end
+
+data Object with
+  var int c = _CONSTANT+10;
+end
+
+var Object a = _;
+
+escape a.c;
+]],
+    wrn = true,
+    run = 20,
+}
+
 --<< DATA / DEFAULT / CONSTRUCTOR
 
 -->> DATA / CODE / SCOPE
@@ -44804,6 +44844,7 @@ with
 end
 escape v;
 ]],
+    dcls = 'line 25 : abstraction inside `async´ : not implemented',
     --isr = 'line 7 : call breaks the static check for `atomic´ sections',
     run = 2,
     _opts = { ceu_features_isr='true' },
@@ -45188,7 +45229,7 @@ escape v;
     --isr = 'line 4 : access to "Fx" must be atomic',
     run = 2,
     _opts = { ceu_features_isr='true' },
-    dcls = 'line 6 : abstraction inside `async´ : not implemented',
+    dcls = 'line 25 : abstraction inside `async´ : not implemented',
 }
 
 --<<< ASYNCS / ISR / ATOMIC

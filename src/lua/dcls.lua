@@ -229,9 +229,14 @@ F = {
             Pool__PRE = 'Var__PRE',
 
             Exp_Name__PRE = function (me)
+                local set = assert(AST.par(me,'Set_Exp') or AST.par(me,'Set_Any') or AST.par(me,'Set_Abs_Val'))
+                if set[2] ~= me then
+                    return  -- skip if not "to"
+                end
                 if me.__handled and me.__handled[id] then
                     return
                 end
+
                 local prv
                 local fst,_ = unpack(me)
                 while fst.tag == 'Exp_.' do
