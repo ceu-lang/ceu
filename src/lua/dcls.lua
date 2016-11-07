@@ -281,8 +281,7 @@ F = {
                                         4,'Block', 1,'Stmts', 2,'Block',
                                         1,'Stmts', 1,'Do', 2,'Block', 1,'Stmts')
                 if stmts then
-                    table.insert(stmts, 1, {})
-                    AST.set(stmts, 1, sets)
+                    AST.insert(stmts, 1, sets)
                 else
                     -- code/dynamic?
                 end

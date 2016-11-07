@@ -196,7 +196,11 @@ error'TODO: luacov never executes this?'
             end
         else
             -- ok
-            AST.set(stmts_new, 1, node('Block', me.ln, stmts_old))
+            AST.set(stmts_new, 1,
+                        node('Do', me.ln,
+                            node('ID_any', me.ln),
+                            node('Block', me.ln,
+                                stmts_old)))
         end
 
         local tag = string.match(me.tag,'(.*)_impl')

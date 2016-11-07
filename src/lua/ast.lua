@@ -318,21 +318,18 @@ end
 --
     --ks = me.ns.trails..' / '..tostring(me.needs_clr)
     local me_str  = string.gsub(tostring(me),       'table: ', '')
---assert(me==AST.root or (me.__par and me.__i))
     local par_str = string.gsub(tostring(me.__par), 'table: ', '')
     DBG(string.rep(' ',spc)..me.tag..
         ' |'..me_str..'/'..par_str..'['..tostring(me.__i)..']|'..
 --[[
         '')
 ]]
-        ' (ln='..me.ln[2]..' n='..me.n..' d='..AST.depth(me)..
-                           --' d='..(me.__depth or 0)..
-                           --' p='..(me.__par and me.__par.n or '')..
-                           ' trl='..me.trails_n..
+        ' (ln='..me.ln[2]..' n='..me.n..
+                           ' p='..(me.__par and me.__par.n or '')..
+                           ' trl='..(me.trails_n or '?')..
+                           ' i='..(me.__i or '?')..
+                           ' d='..AST.depth(me)..
                            ') '..ks)
---DBG'---'
---DBG(me.xxx)
---DBG'---'
     for i, sub in ipairs(me) do
         if AST.is_node(sub) then
             AST.dump(sub, spc+2, lvl and lvl-1)
