@@ -8,40 +8,18 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
---[=====[
 Test { [[
-code/await ThreadFail (void) -> FOREVER do
-    do finalize with
-        _printf("ThreadFail is over!\n");
-    end
-
-    loop do
-        await 1ms;
-
-        await async/thread do
-            _printf("Thread will sleep now...\n");
-            _sleep(2);
-            _printf("Thread woke up.\n");
-        end
+await async do
+    loop _ in [0 -> 50[ do
+        emit 100ms;
     end
 end
-
-par/or do
-    await ThreadFail();
-with
-    _printf("Test starts!\n");
-    await 3s;
-    _printf("Test is over\n");
-end
-
-_printf("Done!\n");
-
-escape 0;
+escape 1;
 ]],
     run = 1,
 }
-do return end
 
+--[=====[
 -- spawn/finalize => par/or
 Test { [[
 native _CEU_APP;

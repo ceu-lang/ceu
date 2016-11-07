@@ -15,7 +15,9 @@ local function iter_boundary (cur, id, can_cross)
                 -- async (a,b,c) do ... end
                 local can_cross2 = false
 
-                if string.sub(id,1,1) == string.upper(string.sub(id,1,1)) then
+                if string.sub(id,1,1) == string.upper(string.sub(id,1,1))
+                    and string.sub(id,1,1) ~= '_'
+                then
                     ASR(false, cur, 'abstraction inside `async´ : not implemented') -- TODO: ID_abs is ok
                     can_cross2 = true
                 end
