@@ -115,6 +115,8 @@ error'TODO: luacov never executes this?'
         end
     end,
 
+-------------------------------------------------------------------------------
+
     _Spawn_Block__PRE = function (me)
         local blk = unpack(me)
 
@@ -145,6 +147,25 @@ error'TODO: luacov never executes this?'
         return ret
     end,
 
+    _Async_Isr__PRE = function (me)
+        me.tag = 'Async_Isr'
+
+        -- all statements after myself
+        local par_stmts = AST.asr(me.__par, 'Stmts')
+        local cnt_stmts = { unpack(par_stmts, me.__i+1) }
+        for i=me.__i, #par_stmts do
+            par_stmts[i] = nil
+        end
+
+        return node('Par_Or', me.ln,
+                node('Block', me.ln,
+                    node('Stmts', me.ln,
+                        me,
+                        node('Await_Forever', me.ln))),
+                node('Block', me.ln,
+                    node('Stmts', me.ln,
+                        unpack(cnt_stmts))))
+    end,
 
 -------------------------------------------------------------------------------
 

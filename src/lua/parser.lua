@@ -455,7 +455,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                         OPT(PARENS(V'List_Var')) * V'__Do'
     , Async_Thread = K'await' * K'async/thread' * V'Y' *
                         OPT(PARENS(V'List_Var')) * V'__Do'
-    , Async_Isr    = K'spawn' * K'async/isr' * KK'[' * V'List_Exp' * KK']' *
+    , _Async_Isr   = K'spawn' * K'async/isr' * KK'[' * V'List_Exp' * KK']' *
                         OPT(PARENS(V'List_Var')) * V'Y' *
                      V'__Do'
     , Atomic  = K'atomic' * V'__Do'
@@ -884,7 +884,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
               + V'Finalize'
               + V'Y'*V'Par_Or' + V'Y'*V'Par_And' + V'_Watching'
               + V'Pause_If'
-              + V'Async' + V'Async_Thread' + V'Async_Isr' + V'Atomic'
+              + V'Async' + V'Async_Thread' + V'_Async_Isr' + V'Atomic'
               + V'_Dopre'
               + V'Nat_Stmt'
               + V'_Lua' + V'_Lua_Do'

@@ -108,9 +108,6 @@ F = {
         local body = unpack(me)
         me.trails_n = 1 + body.trails_n
     end,
-    Async_Isr = function (me)
-        me.trails_n = 2
-    end,
 
     If = function (me)
         local c, t, f = unpack(me)
@@ -172,9 +169,8 @@ end
         local pool  = AST.get(sub, 'Pool')
         local var   = AST.get(sub, 'Var')
         local evt   = AST.get(sub, 'Evt')
-        local isr   = AST.get(sub, 'Async_Isr')
 
-        if sub.tag=='Finalize' or spawn or isr
+        if sub.tag=='Finalize' or spawn
             or (pool and pool.has_trail) or (var and var.has_trail)
             or (evt and evt.has_trail)
         then
