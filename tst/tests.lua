@@ -12,6 +12,7 @@ end
 
 --[=====[
 --do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -33415,7 +33416,26 @@ escape 0;
     stmts = 'line 4 : invalid binding : types mismatch : "_void" <= "void"',
 }
 
---]=====]
+Test { [[
+native _V, _void, _f;
+native/pre do
+    int V;
+    void* f (int x) {
+        return NULL;
+    }
+end
+
+do
+    var&? _void ptr = & _f(true)
+            finalize (ptr) with
+                _V = 2;
+            end;
+    _V = 1;
+end
+escape _V;
+]],
+    run = 2,
+}
 Test { [[
 native _void, _f;
 native/pre do
@@ -33452,7 +33472,6 @@ escape ret;
 ]],
     run = 7,
 }
-do return end
 
 Test { [[
 native _V, _void;

@@ -351,6 +351,9 @@ local function from_to (old, new, t)
     if new and new~=old then
         new.__par = t[1]
         new.__i   = t[2]
+        if new.__par then
+            new.__par[new.__i] = new
+        end
         return true, new
     else
         return false, old

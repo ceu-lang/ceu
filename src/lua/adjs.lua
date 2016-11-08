@@ -152,7 +152,7 @@ error'TODO: luacov never executes this?'
     end,
 
     _Finalize__PRE = function (me)
-        local now,list,fin,pse,res = unpack(me)
+        local now,list,fin,pse,res,depth = unpack(me)
 
         local t = {}
         if #AST.asr(fin,'Block',1,'Stmts') > 0 then
@@ -174,6 +174,10 @@ error'TODO: luacov never executes this?'
             x = unpack(t)
         else
             x = node('Par', me.ln, unpack(t))
+        end
+
+        for i=1,(depth or 0) do
+            me = me.__par   -- depth: number of Stmts to skip
         end
         return F._SPAWN(me, node('Finalize',me.ln,now,list,x))
     end,
@@ -644,7 +648,9 @@ error'TODO'
                         false,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
-                                node('Lua_Do_Close', me.ln, me.n)))),
+                                node('Lua_Do_Close', me.ln, me.n))),
+                        false,
+                        false),
                     me))
     end,
 
@@ -804,6 +810,7 @@ error'TODO'
         --      ...
         --  end
 
+        me[#me+1] = 1   -- finalize depth: skip Stmts below
         return node('Stmts', me.ln,
                 node('Var', me.ln,
                     '&?',
