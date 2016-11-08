@@ -117,9 +117,7 @@ error'TODO: luacov never executes this?'
 
 -------------------------------------------------------------------------------
 
-    _Spawn_Block__PRE = function (me)
-        local blk = unpack(me)
-
+    _SPAWN = function (me)
         -- all statements after myself
         local par_stmts = AST.asr(me.__par, 'Stmts')
         local cnt_stmts = { unpack(par_stmts, me.__i+1) }
@@ -127,65 +125,30 @@ error'TODO: luacov never executes this?'
             par_stmts[i] = nil
         end
 
-        local awaitN = node('Await_Forever', me.ln)
--- TODO
-        awaitN.__adj_no_not_reachable_warning = true
+        return node('Par_Or', me.ln,
+                node('Block', me.ln,
+                    node('Stmts', me.ln,
+                        me,
+                        node('Await_Forever', me.ln))),
+                node('Block', me.ln,
+                    node('Stmts', me.ln,
+                        unpack(cnt_stmts))))
+    end,
 
-        local orig = AST.asr(blk,'Block', 1,'Stmts')
--- TODO
-        orig.__adj_is_spawnanon = true
-        orig.ln = me.ln
-        AST.set(blk, 1, node('Stmts', me.ln, blk[1], awaitN))
-
-        local ret = node('Par_Or', me.ln,
-                        blk,
-                        node('Block', me.ln,
-                            node('Stmts', me.ln,
-                                unpack(cnt_stmts))))
--- TODO
-        ret.__adj_no_should_terminate_warning = true
-        return ret
+    _Spawn_Block__PRE = function (me)
+        me.tag = 'Stmts'
+        return F._SPAWN(me)
     end,
 
     _Abs_Spawn_Single__PRE = function (me)
         me.tag = 'Abs_Await'
         me.__adjs_is_spawn = true
-
-        -- all statements after myself
-        local par_stmts = AST.asr(me.__par, 'Stmts')
-        local cnt_stmts = { unpack(par_stmts, me.__i+1) }
-        for i=me.__i, #par_stmts do
-            par_stmts[i] = nil
-        end
-
-        return node('Par_Or', me.ln,
-                node('Block', me.ln,
-                    node('Stmts', me.ln,
-                        me,
-                        node('Await_Forever', me.ln))),
-                node('Block', me.ln,
-                    node('Stmts', me.ln,
-                        unpack(cnt_stmts))))
+        return F._SPAWN(me)
     end,
 
     _Async_Isr__PRE = function (me)
         me.tag = 'Async_Isr'
-
-        -- all statements after myself
-        local par_stmts = AST.asr(me.__par, 'Stmts')
-        local cnt_stmts = { unpack(par_stmts, me.__i+1) }
-        for i=me.__i, #par_stmts do
-            par_stmts[i] = nil
-        end
-
-        return node('Par_Or', me.ln,
-                node('Block', me.ln,
-                    node('Stmts', me.ln,
-                        me,
-                        node('Await_Forever', me.ln))),
-                node('Block', me.ln,
-                    node('Stmts', me.ln,
-                        unpack(cnt_stmts))))
+        return F._SPAWN(me)
     end,
 
 -------------------------------------------------------------------------------
