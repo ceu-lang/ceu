@@ -160,11 +160,10 @@ end
         local var   = AST.get(sub, 'Var')
         local evt   = AST.get(sub, 'Evt')
 
-        if sub.tag=='Finalize'
-            or (pool and pool.has_trail) or (var and var.has_trail)
+        if (pool and pool.has_trail) or (var and var.has_trail)
             or (evt and evt.has_trail)
         then
-            local n = (sub.tag=='Finalize' and 3) or 1
+            local n = 1
             for stmts in AST.iter() do
                 if stmts.tag == 'Stmts' then
                     stmts._trails[1] = stmts._trails[1] + n

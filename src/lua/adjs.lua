@@ -117,7 +117,7 @@ error'TODO: luacov never executes this?'
 
 -------------------------------------------------------------------------------
 
-    _SPAWN = function (me)
+    _SPAWN = function (me, spawn)
         -- all statements after myself
         local par_stmts = AST.asr(me.__par, 'Stmts')
         local cnt_stmts = { unpack(par_stmts, me.__i+1) }
@@ -128,7 +128,7 @@ error'TODO: luacov never executes this?'
         return node('Par_Or', me.ln,
                 node('Block', me.ln,
                     node('Stmts', me.ln,
-                        me,
+                        spawn or me,
                         node('Await_Forever', me.ln))),
                 node('Block', me.ln,
                     node('Stmts', me.ln,
@@ -149,6 +149,33 @@ error'TODO: luacov never executes this?'
     _Async_Isr__PRE = function (me)
         me.tag = 'Async_Isr'
         return F._SPAWN(me)
+    end,
+
+    _Finalize__PRE = function (me)
+        local now,list,fin,pse,res = unpack(me)
+
+        local t = {}
+        if #AST.asr(fin,'Block',1,'Stmts') > 0 then
+            t[#t+1] = node('Finalize_Case', me.ln, 'CEU_INPUT__FINALIZE', fin)
+        end
+        if pse then
+            t[#t+1] = node('Finalize_Case', me.ln, 'CEU_INPUT__PAUSE', pse)
+        end
+        if res then
+            t[#t+1] = node('Finalize_Case', me.ln, 'CEU_INPUT__RESUME', res)
+        end
+
+        if #t == 0 then
+            return node('Finalize',me.ln,now,list)
+        end
+
+        local x
+        if #t == 1 then
+            x = unpack(t)
+        else
+            x = node('Par', me.ln, unpack(t))
+        end
+        return F._SPAWN(me, node('Finalize',me.ln,now,list,x))
     end,
 
 -------------------------------------------------------------------------------
@@ -612,7 +639,7 @@ error'TODO'
         return node('Block', me.ln,
                 node('Stmts', me.ln,
                     node('Lua_Do_Open', me.ln, me.n),
-                    node('Finalize', me.ln,
+                    node('_Finalize', me.ln,
                         false,
                         false,
                         node('Block', me.ln,
@@ -782,7 +809,7 @@ error'TODO'
                     '&?',
                     Type,
                     __ID_int),
-                node('Finalize', me.ln,
+                node('_Finalize', me.ln,
                     node('Set_Alias', me.ln,
                         node('Exp_1&', Nat_Call.ln, '&',
                             Nat_Call),

@@ -34,10 +34,21 @@ F = {
                         return -- ok (empty finalizer)
                     end
                 end
-                ASR(false, me,
-                    'invalid `'..AST.tag2id[me.tag]..
-                    '´ : unexpected enclosing `'..AST.tag2id[par.tag]..'´')
+                if AST.get(par,'Finalize',3,'Par') == me then
+                    -- ok
+                else
+                    ASR(false, me,
+                        'invalid `'..AST.tag2id[me.tag]..
+                        '´ : unexpected enclosing `'..AST.tag2id[par.tag]..'´')
+                end
             end
+        end
+    end,
+
+    Finalize__PRE = function (me)
+        local par = AST.get(me,'', 3,'Par')
+        if par then
+            par.__enclosing_ok = true
         end
     end,
 

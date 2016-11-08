@@ -440,7 +440,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                     OPT(K'pause'  * K'with' * V'Block') *
                     OPT(K'resume' * K'with' * V'Block') *
                     K'end'
-    , Finalize = K'do' * OPT(V'__fin_stmt') * V'__finalize'
+    , _Finalize = K'do' * OPT(V'__fin_stmt') * V'__finalize'
 
     , _Var_set_fin = K'var' * KK'&?' * V'Type' * V'__ID_int'
                    * (KK'='-'==') * KK'&'
@@ -881,7 +881,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
               + V'Loop' + V'_Loop_Num' + V'Loop_Pool'
               + V'_Every'
               + V'_Spawn_Block'
-              + V'Finalize'
+              + V'_Finalize'
               + V'Y'*V'Par_Or' + V'Y'*V'Par_And' + V'_Watching'
               + V'Pause_If'
               + V'Async' + V'Async_Thread' + V'_Async_Isr' + V'Atomic'

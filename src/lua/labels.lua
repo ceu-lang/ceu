@@ -35,12 +35,8 @@ F = {
         end
     end,
 
-    Finalize = function (me)
-        me.lbl_in = {
-            new{'Finalize__IN'},
-            new{'Pause__IN'},
-            new{'Resume__IN'},
-        }
+    Finalize_Case = function (me)
+        me.lbl_in = new{'Finalize_Case__IN'}
     end,
 
     Loop_Pool = function (me)

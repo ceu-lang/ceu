@@ -12,7 +12,6 @@ end
 
 --[=====[
 --do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -18630,16 +18629,16 @@ end
 }
 
 Test { [[
-var int&& a = null;
+var int&& aaa = null;
 do
-    var int&& b = null;
+    var int&& bbb = null;
     do
-        a = b;
-    finalize (b) with
-        a = (&&a as int&&);
+        aaa = bbb;
+    finalize (bbb) with
+        aaa = (&&aaa as int&&);
     end
 end
-escape (a==(&&a as int&&)) as int;
+escape (aaa==(&&aaa as int&&)) as int;
 ]],
     run = 1,
 }
@@ -18775,7 +18774,7 @@ escape v;
 Test { [[
 loop do
     do
-    var int&& a;
+        var int&& a;
         var int&& b = null;
         do a = b;
         finalize (a) with
@@ -18784,7 +18783,28 @@ loop do
     end
 end
 ]],
+    wrn = true,
     scopes = 'line 5 : invalid `finalize´ : nothing to finalize',
+    --loop = 'line 1 : tight loop', -- TODO: par/and
+    --props = "line 8 : not permitted inside `finalize´",
+    --fin = 'line 6 : attribution does not require `finalize´',
+    --fin = 'line 6 : attribution to pointer with greater scope',
+}
+
+Test { [[
+loop do
+    do
+        var int&& a;
+        var int&& b = null;
+        do a = b;
+        finalize (a) with
+            do break; end;
+        end
+    end
+end
+]],
+    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    --scopes = 'line 5 : invalid `finalize´ : nothing to finalize',
     --loop = 'line 1 : tight loop', -- TODO: par/and
     --props = "line 8 : not permitted inside `finalize´",
     --fin = 'line 6 : attribution does not require `finalize´',
@@ -18807,6 +18827,26 @@ end
     --loop = 'line 1 : tight loop', -- TODO: par/and
     --props = "line 8 : not permitted inside `finalize´",
     --fin = 'line 6 : attribution does not require `finalize´',
+    --scopes = 'line 5 : invalid `finalize´ : nothing to finalize',
+    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+}
+Test { [[
+loop do
+    do
+    var int&& a;
+        var int&& b = null;
+        do
+            a = b;
+        finalize (a) with
+            do break; end;
+        end
+    end
+end
+]],
+    --loop = 'line 1 : tight loop', -- TODO: par/and
+    --props = "line 8 : not permitted inside `finalize´",
+    --fin = 'line 6 : attribution does not require `finalize´',
+    wrn = true,
     scopes = 'line 5 : invalid `finalize´ : nothing to finalize',
 }
 
@@ -21559,6 +21599,7 @@ loop do
 end
 escape 1;
 ]],
+    wrn = true,
     props_ = 'line 3 : invalid `break´ : unexpected enclosing `finalize´',
     --props = 'line 3 : not permitted inside `finalize´',
 }
@@ -33374,6 +33415,7 @@ escape 0;
     stmts = 'line 4 : invalid binding : types mismatch : "_void" <= "void"',
 }
 
+--]=====]
 Test { [[
 native _void, _f;
 native/pre do
@@ -33410,6 +33452,7 @@ escape ret;
 ]],
     run = 7,
 }
+do return end
 
 Test { [[
 native _V, _void;

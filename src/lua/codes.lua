@@ -741,48 +741,29 @@ if (0) {
 
     ---------------------------------------------------------------------------
 
-    __fin = function (me, evt, inc, lbl)
+    __fin = function (me, evt)
         LINE(me, [[
-_ceu_mem->trails[]]..(me.trails[1]+inc)..[[].evt.id = ]]..evt..[[;
-_ceu_mem->trails[]]..(me.trails[1]+inc)..[[].lbl    = ]]..me.lbl_in[lbl].id..[[;
-_ceu_mem->trails[]]..(me.trails[1]+inc)..[[].clr_range =
+_ceu_mem->trails[]]..(me.trails[1])..[[].evt.id    = ]]..evt..[[;
+_ceu_mem->trails[]]..(me.trails[1])..[[].lbl       = ]]..me.lbl_in.id..[[;
+_ceu_mem->trails[]]..(me.trails[1])..[[].clr_range =
     (tceu_evt_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[2]..[[ };
 ]])
     end,
 
-    Finalize = function (me)
-        local now,_,fin,pse,res = unpack(me)
-        F.__fin(me, 'CEU_INPUT__FINALIZE', 0, 1)
-        if pse then
-            F.__fin(me, 'CEU_INPUT__PAUSE', 1, 2)
-        end
-        if res then
-            F.__fin(me, 'CEU_INPUT__RESUME', 2, 3)
-        end
+    Finalize = CONC_ALL,
+    Finalize_Case = function (me)
+        local case, blk = unpack(me)
+        F.__fin(me, case)
         LINE(me, [[
 if (0) {
 ]])
-        CASE(me, me.lbl_in[1])
-        CONC(me, fin)
+        CASE(me, me.lbl_in)
+        CONC(me, blk)
+        F.__fin(me, case)
         HALT(me)
-        if pse then
-            CASE(me, me.lbl_in[2])
-            CONC(me, pse)
-            F.__fin(me, 'CEU_INPUT__PAUSE', 1, 2)
-            HALT(me)
-        end
-        if res then
-            CASE(me, me.lbl_in[3])
-            CONC(me, res)
-            F.__fin(me, 'CEU_INPUT__RESUME', 2, 3)
-            HALT(me)
-        end
         LINE(me, [[
 }
 ]])
-        if now then
-            CONC(me, now)
-        end
     end,
 
     Pause_If = function (me)

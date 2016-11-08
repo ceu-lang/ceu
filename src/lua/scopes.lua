@@ -197,7 +197,7 @@ F = {
         me.fins_n = 0
     end,
     Finalize = function (me)
-        local Stmt, List_Name, Block = unpack(me)
+        local Stmt, List_Name = unpack(me)
         if not Stmt then
             ASR(List_Name==false, me,
                 'invalid `finalize´ : unexpected `varlist´')
