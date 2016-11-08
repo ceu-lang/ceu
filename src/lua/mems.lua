@@ -384,11 +384,6 @@ static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
     Block__PRE = function (me)
         local mem = {}
 
-        for _, spw in ipairs(me.spawns) do
-            local _,Abs_Cons = unpack(spw)
-            mem[#mem+1] = 'tceu_code_mem_'..Abs_Cons.id_..' __mem_'..spw.n..';/**/\n'
-        end
-
         for _, dcl in ipairs(me.dcls) do
 if dcl.tag ~= 'Prim' then
             local alias, Type = unpack(dcl)

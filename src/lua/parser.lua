@@ -665,8 +665,8 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
         -- TODO: "await Abs_Await" should not accept "-> (...)"
         --       but "watching Abs_Await" does
 
-    , Abs_Spawn_Single = K'spawn' * V'__Abs_Cons_Code' * (-KK'in') * Cc(false)
-    , Abs_Spawn_Pool   = K'spawn' * V'__Abs_Cons_Code' * KK'in' * V'Exp_Name'
+    , _Abs_Spawn_Single = K'spawn' * V'__Abs_Cons_Code' * (-KK'in') * Cc(false)
+    , Abs_Spawn_Pool    = K'spawn' * V'__Abs_Cons_Code' * KK'in' * V'Exp_Name'
 
     , __Abs_Cons_Code = V'__abs_mods' * (V'Abs_Cons' -I(V'__id_data')) *
                             OPT(KK'->' * PARENS(V'_List_Var_Ref')) * V'Y'
@@ -869,7 +869,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                     + V'Emit_Wclock'
                     + V'Emit_Ext_emit' + V'Emit_Ext_call' + V'Emit_Ext_req'
                     + V'Emit_Evt'
-                    + V'Abs_Spawn_Single' + V'Abs_Spawn_Pool' + V'Kill'
+                    + V'_Abs_Spawn_Single' + V'Abs_Spawn_Pool' + V'Kill'
 -- TODO: remove class/interface
 + I((K'class'+K'interface'+K'traverse')) * EE'TODO-PARSER: class/interface'
                     + V'Stmt_Call'

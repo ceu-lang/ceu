@@ -25,9 +25,6 @@ F = {
         end
     end,
 
-    Block__PRE = function (me)
-        me.spawns = {}
-    end,
     Block = function (me)
         MAX_all(me)
 
@@ -65,7 +62,6 @@ F = {
         if me.fins_n > 0 then
             me.trails_n = me.trails_n + 3*me.fins_n
         end
-        me.trails_n = me.trails_n + #me.spawns
     end,
 
     Vec = function (me)
@@ -85,11 +81,6 @@ F = {
         if not (is_alias or dim~='[]') then
             AST.par(me,'Block').has_fin = true
         end
-    end,
-
-    Abs_Spawn_Single = function (me)
-        local blk = AST.par(me,'Block')
-        blk.spawns[#blk.spawns+1] = me
     end,
 
     Loop_Pool = function (me)
@@ -165,12 +156,11 @@ end
 
         sub.trails = { unpack(me._trails) }
 
-        local spawn = AST.get(sub, 'Abs_Spawn_Single')
         local pool  = AST.get(sub, 'Pool')
         local var   = AST.get(sub, 'Var')
         local evt   = AST.get(sub, 'Evt')
 
-        if sub.tag=='Finalize' or spawn
+        if sub.tag=='Finalize'
             or (pool and pool.has_trail) or (var and var.has_trail)
             or (evt and evt.has_trail)
         then

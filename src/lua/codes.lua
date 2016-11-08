@@ -573,21 +573,6 @@ ceu_stack_clear(_ceu_stk, _ceu_mem,
 ]])
     end,
 
-    Abs_Spawn_Single = function (me)
-        LINE(me, [[
-_ceu_stk->is_alive = 1;
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.id  = CEU_INPUT__CODE;
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.mem = (tceu_code_mem*) &]]..CUR('__mem_'..me.n)..[[;
-_ceu_mem->trails[]]..me.trails[1]..[[].lbl     = CEU_LABEL_NONE;  /* no awake in spawn */
-]])
-        LINE(me, F.__abs(me, '(&'..CUR(' __mem_'..me.n)..'.mem)', 'NULL'))
-        LINE(me, [[
-if (!_ceu_stk->is_alive) {
-    return;
-}
-]])
-    end,
-
     Abs_Spawn_Pool = function (me)
         local _, Abs_Cons, _, _, pool = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
@@ -824,9 +809,7 @@ ceu_callback_assert_msg(0, "reached end of `do´");
         end
         CASE(me, me.lbl_out)
 
-        if me.has_escape and (me.trails_n>1 or blk.needs_clear)
-        or #blk.spawns > 0
-        then
+        if me.has_escape and (me.trails_n>1 or blk.needs_clear) then
             CLEAR(me)
         end
     end,

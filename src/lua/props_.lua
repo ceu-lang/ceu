@@ -153,7 +153,6 @@ F = {
 
     --------------------------------------------------------------------------
 
-    Abs_Spawn_Single = '_in_loop_pool',
     Abs_Spawn_Pool   = '_in_loop_pool',
     Emit_Evt         = '_in_loop_pool',
     _in_loop_pool = function (me)

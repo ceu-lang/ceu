@@ -393,7 +393,7 @@ F = {
         end
 
         if list then
-            local must_be_opt = (me.tag ~= 'Abs_Await') and
+            local must_be_opt = (me.tag~='Abs_Await' or me.__adjs_is_spawn) and
                                  AST.get(me.__code,'', 4,'Block', 1,'Stmts',
                                                        1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
 
@@ -403,14 +403,12 @@ F = {
         end
     end,
 
-    Abs_Spawn_Single = function (me)
+    Abs_Await = function (me)
         F.Abs_Spawn_Pool(me)
+
         ASR(AST.par(me,'Code') ~= me.__code, me,
             'invalid `'..AST.tag2id[me.tag]..'´ : unexpected recursive invocation')
-     end,
 
-    Abs_Await = function (me)
-        F.Abs_Spawn_Single(me)
         local ret = AST.get(me.__code,'', 4,'Block', 1,'Stmts',
                                           1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
         me.tp = ret and AST.copy(ret)

@@ -94,8 +94,7 @@ local function run_inits (par, i, Dcl, stop)
                 'invalid binding : active scope reached yielding statement '..
                 '('..yield.ln[1]..':'..yield.ln[2]..')')
 
-        elseif me.tag=='Abs_Await' or me.tag=='Abs_Spawn_Single'
-                                   or me.tag=='Abs_Spawn_Pool'
+        elseif me.tag=='Abs_Await' or me.tag=='Abs_Spawn_Pool'
         then
             stmt = me
         end
@@ -467,7 +466,7 @@ error'TODO: luacov never executes this?'
             inits..')')
     end,
     List_Var = function (me)
-        if not (AST.par(me,'Abs_Await') or AST.par(me,'Abs_Spawn_Single')) then
+        if not AST.par(me,'Abs_Await') then
             return  -- only in watching
         end
 

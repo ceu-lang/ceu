@@ -8,59 +8,10 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
-Test { [[
-await async do
-    loop _ in [0 -> 50[ do
-        emit 100ms;
-    end
-end
-escape 1;
-]],
-    run = 1,
-}
+-- spawn/finalize => par/or
 
 --[=====[
--- spawn/finalize => par/or
-Test { [[
-native _CEU_APP;
-spawn do
-end
-escape _CEU_APP.root.mem.trails_n;
-]],
-    run = 2,
-}
-Test { [[
-native _CEU_APP;
-spawn async/isr [1] do
-end
-escape _CEU_APP.root.mem.trails_n;
-]],
-    _opts = { ceu_features_isr='true' },
-    run = 2,
-}
-Test { [[
-native _CEU_APP;
-do finalize with
-end
-spawn do
-end
-escape _CEU_APP.root.mem.trails_n;
-]],
-    run = 3,
-}
-Test { [[
-native _CEU_APP;
-spawn async/isr [1] do
-end
-spawn do
-end
-escape _CEU_APP.root.mem.trails_n;
-]],
-    _opts = { ceu_features_isr='true' },
-    run = 3,
-}
-
-do return end -- OK
+--do return end -- OK
 --]=====]
 
 ----------------------------------------------------------------------------
@@ -1603,6 +1554,17 @@ escape 10;
 }
 
 Test { [[
+await async do
+    loop _ in [0 -> 50[ do
+        emit 100ms;
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
 input int A;
 var int v;
 v = await A until 1;
@@ -2604,6 +2566,24 @@ escape ret;
     run = 1,
 }
 
+Test { [[
+native _CEU_APP;
+spawn do
+end
+escape _CEU_APP.root.mem.trails_n;
+]],
+    run = 2,
+}
+Test { [[
+native _CEU_APP;
+do finalize with
+end
+spawn do
+end
+escape _CEU_APP.root.mem.trails_n;
+]],
+    run = 5,
+}
 --<<< SPAWN / BLOCK
 
 Test { [[
@@ -33981,7 +33961,7 @@ end
 escape 0;
 ]],
     wrn = true,
-    stmts = 'line 2 : invalid `spawn´ : unexpected recursive invocation',
+    stmts = 'line 2 : invalid `await´ : unexpected recursive invocation',
     --dcls = 'line 2 : abstraction "Tx" is not declared',
 }
 
@@ -34421,8 +34401,9 @@ every 1s do
 end
 escape 0;
 ]],
+    props_ = 'line 4 : invalid `await´ : unexpected enclosing `every´',
     --props_ = 'line 4 : invalid `spawn´ : unexpected enclosing `every´',
-    run = { ['~>1s']=1 },
+    --run = { ['~>1s']=1 },
 }
 
 Test { [[
@@ -37534,7 +37515,7 @@ var Aa a = val Aa(1);
 spawn Ff(&a,22);
 escape 0;
 ]],
-    stmts = 'line 20 : invalid `spawn´ : expected `/dynamic´ or `/static´ modifier',
+    stmts = 'line 20 : invalid `await´ : expected `/dynamic´ or `/static´ modifier',
 }
 
 Test { [[
@@ -39682,7 +39663,7 @@ end
 escape 10;
 ]],
     wrn = true,
-    stmts = 'line 2 : invalid `spawn´ : unexpected recursive invocation',
+    stmts = 'line 2 : invalid `await´ : unexpected recursive invocation',
 }
 
 Test { [[
@@ -45441,6 +45422,26 @@ escape v;
     dcls = 'line 25 : abstraction inside `async´ : not implemented',
 }
 
+Test { [[
+native _CEU_APP;
+spawn async/isr [1] do
+end
+escape _CEU_APP.root.mem.trails_n;
+]],
+    _opts = { ceu_features_isr='true' },
+    run = 2,
+}
+Test { [[
+native _CEU_APP;
+spawn async/isr [1] do
+end
+spawn do
+end
+escape _CEU_APP.root.mem.trails_n;
+]],
+    _opts = { ceu_features_isr='true' },
+    run = 3,
+}
 --<<< ASYNCS / ISR / ATOMIC
 
 -->>> CEU_FEATURES_*
