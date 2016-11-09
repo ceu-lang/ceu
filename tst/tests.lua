@@ -11,7 +11,61 @@ end
 -- spawn/finalize => par/or
 
 --[=====[
---do return end -- OK
+-- XXX-02
+Test { [[
+data Aa;
+data Aa.Bb;
+code/await/dynamic Ff (dynamic var& Aa v1) -> void;
+var Aa a = val Aa();
+pool[10] Ff ffs;
+spawn/dynamic Ff(&a) in ffs;
+escape 1;
+]],
+    wrn = true,
+    run = 15,
+}
+
+-- XXX-01
+Test { [[
+native _V;
+native/pure _f;
+native/nohold _ceu_dbg_assert;
+native/pos do
+    ##define f(x) x
+    void* V;
+end
+
+data Ii;
+
+code/await Cloud (void) -> (var& Ii i) -> FOREVER do
+    var Ii i_ = val Ii();
+    i = &i_;
+    await FOREVER;
+end
+
+pool[] Cloud clouds;
+spawn Cloud() in clouds;
+spawn Cloud() in clouds;
+
+code/await Collides (void) -> void do end
+
+code/await Collisions (void) -> void do
+    var& Ii cloud1;
+    loop (cloud1) in outer.clouds do
+        var& Ii cloud2;
+        loop (cloud2) in outer.clouds do
+            _V = _f(&&cloud1);
+            spawn Collides();
+            _ceu_dbg_assert(_V == &&cloud1);
+        end
+    end
+end
+await Collisions();
+escape 1;
+]],
+    run = 1,
+}
+do return end -- OK
 --]=====]
 
 ----------------------------------------------------------------------------
@@ -157,24 +211,6 @@ Test { [[escape 1<2>3;]],
 Test { [[escape (((1<2) as int)<3) as int;]], run=1 }
 
 Test { [[
-var ssize n = 10;
-    if n == 0 then
-        escape 0;
-    else
-        escape n as int;
-    end
-]],
-    run = 10,
-}
-
-Test { [[
-var uint x = 1.5;
-escape x + 0.5;
-]],
-    exps = 'line 2 : invalid operands to `+´ : incompatible numeric types : "uint" vs "float"',
-}
-
-Test { [[
 escape 0x1 + 0X1 + 001;
 ]],
     run = 3,
@@ -197,6 +233,13 @@ escape 1.;
 ]],
     stmts = 'line 1 : invalid `escape´ : types mismatch : "int" <= "float"',
     --run = 1,
+}
+
+Test { [[
+var int x = 1;
+escape x;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -232,6 +275,24 @@ var byte x = 255;
 escape ( x + (0.5 as byte) )as int;
 ]],
     run = 255,
+}
+
+Test { [[
+var ssize n = 10;
+    if n == 0 then
+        escape 0;
+    else
+        escape n as int;
+    end
+]],
+    run = 10,
+}
+
+Test { [[
+var uint x = 1.5;
+escape x + 0.5;
+]],
+    exps = 'line 2 : invalid operands to `+´ : incompatible numeric types : "uint" vs "float"',
 }
 
 Test { [[
@@ -29122,7 +29183,7 @@ vector[_N] _u8 xxx = _;
 escape 1;
 ]],
     wrn = true,
-    cc = '6:5: error: variably modified ‘xxx_53’ at file scope',
+    cc = '6:5: error: variably modified ‘xxx_62’ at file scope',
 }
 
 Test { [[
@@ -29484,7 +29545,7 @@ vector[-_X] int vvs;
 vector&[-_X] int iis = &vvs;
 escape 1;
 ]],
-    cc = '5:5: error: size of array ‘vvs_56_buf’ is negative',
+    cc = '5:5: error: size of array ‘vvs_63_buf’ is negative',
 }
 
 Test { [[
@@ -34621,6 +34682,14 @@ escape 0;
 }
 
 Test { [[
+code/await Ff (void) -> void do
+end
+pool[] Ff ffs;
+]],
+    dcls = 'line 3 : pool "ffs" declared but not used',
+}
+
+Test { [[
 code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
@@ -36585,6 +36654,15 @@ escape a;
 }
 
 Test { [[
+code/await Tx (void)->void do end
+pool[1] Tx ts;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
 code/await Tx (var& int aaa)->void do
     await 1s;
     aaa = 5;
@@ -38020,6 +38098,23 @@ escape ret;
     wrn = true,
     run = 15,
 }
+
+-- XXX-02
+
+Test { [[
+data Aa;
+data Aa.Bb;
+code/await/dynamic Ff (dynamic var& Aa v1) -> void;
+var Aa a = val Aa();
+pool[10] Ff ffs;
+code/await/dynamic Ff (dynamic var& Aa v1) -> void do end;
+spawn/dynamic Ff(&a) in ffs;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
 Test { [[
 data Aa;
 data Aa.Bb;
@@ -39382,45 +39477,7 @@ escape _V;
     run = 2,
 }
 
-Test { [[
-native _V;
-native/pure _f;
-native/nohold _ceu_dbg_assert;
-native/pos do
-    ##define f(x) x
-    void* V;
-end
-
-data Ii;
-
-code/await Cloud (void) -> (var& Ii i) -> FOREVER do
-    var Ii i_ = val Ii();
-    i = &i_;
-    await FOREVER;
-end
-
-pool[] Cloud clouds;
-spawn Cloud() in clouds;
-spawn Cloud() in clouds;
-
-code/await Collides (void) -> void do end
-
-code/await Collisions (void) -> void do
-    var& Ii cloud1;
-    loop (cloud1) in outer.clouds do
-        var& Ii cloud2;
-        loop (cloud2) in outer.clouds do
-            _V = _f(&&cloud1);
-            spawn Collides();
-            _ceu_dbg_assert(_V == &&cloud1);
-        end
-    end
-end
-await Collisions();
-escape 1;
-]],
-    run = 1,
-}
+-- XXX-01
 
 Test { [[
 native _ceu_dbg_assert;

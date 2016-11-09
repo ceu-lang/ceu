@@ -126,13 +126,11 @@ error'TODO: luacov never executes this?'
         end
 
         return node('Par_Or', me.ln,
-                node('Block', me.ln,
-                    node('Stmts', me.ln,
-                        spawn or me,
-                        node('Await_Forever', me.ln))),
-                node('Block', me.ln,
-                    node('Stmts', me.ln,
-                        unpack(cnt_stmts))))
+                node('Stmts', me.ln,
+                    spawn or me,
+                    node('Await_Forever', me.ln)),
+                node('Stmts', me.ln,
+                    unpack(cnt_stmts)))
     end,
 
     _Spawn_Block__PRE = function (me)
@@ -717,6 +715,9 @@ error'TODO'
             if tag=='Pool' or tag=='Vec' then
                 AST.set(ret, #ret+1,
                         node(tag, me.ln, is_alias, AST.copy(tp), id, AST.copy(dim)))
+                if tag=='Pool' and (not is_alias) then
+                    ret = F._SPAWN(me.__par,ret)
+                end
             else
                 AST.set(ret, #ret+1,
                         node(tag, me.ln, is_alias, AST.copy(tp), id))
@@ -768,10 +769,10 @@ error'TODO'
 
             if tag=='Pool' or tag=='Vec' then
                 AST.set(ret, #ret+1,
-                        node(tag, me.ln, is_alias, AST.copy(tp), id, AST.copy(dim)))
+                        node('_'..tag..'s', me.ln, is_alias, AST.copy(dim), AST.copy(tp), id))
             else
                 AST.set(ret, #ret+1,
-                        node(tag, me.ln, is_alias, AST.copy(tp), id))
+                        node('_'..tag..'s', me.ln, is_alias, AST.copy(tp), id))
             end
 
             if set then

@@ -46,13 +46,6 @@ F = {
                     dcl.has_trail = true
                     me.trails_n = me.trails_n + 1
                 end
-
-            -- +1 for each pool
-            elseif dcl.tag == 'Pool' then
-                if (not alias) and Type[1].dcl.tag=='Code' then
-                    dcl.has_trail = true
-                    me.trails_n = me.trails_n + 1
-                end
             end
         end
 
@@ -156,12 +149,10 @@ end
 
         sub.trails = { unpack(me._trails) }
 
-        local pool  = AST.get(sub, 'Pool')
         local var   = AST.get(sub, 'Var')
         local evt   = AST.get(sub, 'Evt')
 
-        if (pool and pool.has_trail) or (var and var.has_trail)
-            or (evt and evt.has_trail)
+        if (var and var.has_trail) or (evt and evt.has_trail)
         then
             local n = 1
             for stmts in AST.iter() do

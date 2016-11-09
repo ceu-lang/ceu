@@ -83,20 +83,16 @@ function get (Code, ret, goleft)
     end
 
     if ret.up then
---DBG'up'
         dcl = get(Code, ret.up, false)
         if dcl then
             return dcl
         end
     end
---DBG('>>>', dyn)
 
     if goleft then
---DBG'left'
         local idxs = { ret.idx }
         local left = assert(ret.left)
         while not left.up do
---DBG('>>>', left.id, left, left.left)
             left = assert(left.left)
             idxs[#idxs+1] = 1
         end
@@ -104,9 +100,7 @@ function get (Code, ret, goleft)
         for i=#idxs,1,-1 do
             t = t[ idxs[i] ]
         end
---DBG'---'
         dcl = get(Code, t, true)
---DBG'<<<'
         return assert(dcl)
     end
 end

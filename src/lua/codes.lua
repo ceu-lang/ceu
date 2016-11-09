@@ -345,8 +345,8 @@ ceu_vector_setmax(&]]..V(me)..', '..V(dim)..[[, 1);
     end,
 
     Pool = function (me)
-        local _, tp, _, dim = unpack(me)
-        if not me.has_trail then
+        local is_alias, tp, _, dim = unpack(me)
+        if is_alias then
             return
         end
         LINE(me, [[
