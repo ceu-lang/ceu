@@ -163,10 +163,9 @@ error'TODO: luacov never executes this?'
             t[#t+1] = node('Finalize_Case', me.ln, 'CEU_INPUT__RESUME', res)
         end
 
--- TODO: no SPAWN if no finalize
-        --if #t == 0 then
-            --return node('Finalize',me.ln,now,list)
-        --end
+        if #t == 0 then
+            return node('Finalize',me.ln,now,list)
+        end
 
         local x
         if #t <= 1 then
@@ -698,41 +697,54 @@ error'TODO'
     --      -> multiple declarations with single ids
 
     __dcls__PRE = function (me)
-        local is_alias, dim, tp
+        local alias, dim, tp
         local tag = string.sub(me.tag,2,-2)
         local idx do
             if tag=='Pool' or tag=='Vec' then
                 idx = 3
-                is_alias, dim, tp = unpack(me)
+                alias, dim, tp = unpack(me)
             else
                 idx = 2
-                is_alias, tp = unpack(me)
+                alias, tp = unpack(me)
             end
         end
 
         local ids = { unpack(me, idx+1) }
         local ret = node('Stmts', me.ln)
-        for _,id in ipairs(ids) do
+        for i,id in ipairs(ids) do
             if tag=='Pool' or tag=='Vec' then
                 AST.set(ret, #ret+1,
-                        node(tag, me.ln, is_alias, AST.copy(tp), id, AST.copy(dim)))
+                        node(tag, me.ln, alias, AST.copy(tp), id, AST.copy(dim)))
             else
                 AST.set(ret, #ret+1,
-                        node(tag, me.ln, is_alias, AST.copy(tp), id))
+                        node(tag, me.ln, alias, AST.copy(tp), id))
             end
-        end
 
-        if tag=='Var' or tag=='Pool' or tag=='Vec' or tag=='Evt' then
-            AST.set(ret, #ret+1,
-                node('_Finalize', me.ln,
-                    false,
-                    false,
-                    node('Block', me.ln,
-                        node('Stmts', me.ln,
-                            node('Nothing', me.ln))),
-                    false,
-                    false,
-                    1))     -- skip Stmts above (ret)
+            if tag=='Pool' and (not alias) then
+                AST.set(ret, #ret, F._SPAWN(me.__par,ret[#ret]))
+                if dim == '[]' then
+                    AST.set(ret, #ret+1,
+                        node('_Finalize', me.ln,
+                            false,
+                            false,
+                            node('Block', me.ln,
+                                node('Stmts', me.ln,
+                                    node('Finalize_Pool', me.ln, id))),
+                            false,
+                            false,
+                            i))  -- skip Stmts above (ret)
+                end
+            elseif (tag=='Var' or tag=='Evt') and alias=='&?'
+                    and (tp[1].tag~='ID_nat' or tp[2]~=nil) -- TODO: TYPES.is_nat
+            then
+                if #me.__par == 1 then
+                    AST.set(ret, #ret+1,
+                        F._SPAWN(me.__par, node('Await_Alias',me.ln,id)))
+                else
+                    AST.set(ret, #ret+1,
+                        F._SPAWN(me, node('Await_Alias',me.ln,id)))
+                end
+            end
         end
 
         return ret
@@ -824,8 +836,6 @@ error'TODO'
         --  end
 
         me[#me+1] = 1   -- finalize depth: skip Stmts below
-local par = me.__par
-AST.dump(par)
         local ret = node('Stmts', me.ln,
                         node('Var', me.ln,
                             '&?',
@@ -839,7 +849,6 @@ AST.dump(par)
                                     node('ID_int', Type.ln, __ID_int))),
                             unpack(me,4)))
         ret = F._SPAWN(me,ret)
-AST.dump(par)
         return ret
     end,
 

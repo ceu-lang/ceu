@@ -37,7 +37,8 @@ F = {
                 if AST.get(par,'Finalize',3,'Par') == me then
                     -- ok
                 else
-                    ASR(false, me,
+                    local paror = AST.par(me,'Par_Or')
+                    ASR(paror and paror.__props_ok, me,
                         'invalid `'..AST.tag2id[me.tag]..
                         '´ : unexpected enclosing `'..AST.tag2id[par.tag]..'´')
                 end
@@ -45,12 +46,11 @@ F = {
         end
     end,
 
-    Finalize__PRE = function (me)
-        local par = AST.get(me,'', 3,'Par')
-        if par then
-            par.__enclosing_ok = true
-        end
+    Await_Alias = function (me)
+        AST.asr(AST.par(me,'Par_Or'),'').__props_ok = true
     end,
+
+    --------------------------------------------------------------------------
 
     Emit_Wclock = function (me)
         ASR(AST.par(me,'Async') or AST.par(me,'Isr'), me,

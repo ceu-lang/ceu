@@ -66,6 +66,7 @@ escape 1;
     run = 1,
 }
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -2643,6 +2644,17 @@ end
 escape _CEU_APP.root.mem.trails_n;
 ]],
     run = 2,
+}
+Test { [[
+native _CEU_APP;
+do finalize with
+    nothing;
+end
+spawn do
+end
+escape _CEU_APP.root.mem.trails_n;
+]],
+    run = 3,
 }
 --<<< SPAWN / BLOCK
 
@@ -19261,7 +19273,6 @@ escape ret;
     run = { ['~>OS_START; ~>10s; ~>OS_STOP']=9 },
 }
 
---]=====]
 Test { [[
 native _void, _alloc, _hold;
 var&? _void tcp = &_alloc(1)
@@ -19273,7 +19284,6 @@ escape 0;
 ]],
     scopes = 'line 5 : invalid `call´ : expected `finalize´ for variable "tcp"',
 }
-do return end
 
 Test { [[
 native _V, _void_ptr, _alloc, _hold;
@@ -19305,13 +19315,11 @@ do
             finalize (tcp) with
                 _dealloc(tcp!);
             end;
-/*
     do
         _hold(tcp!);
     finalize (tcp) with
         _unhold(tcp!);
     end
-*/
 end
 
 escape _V;
@@ -34735,9 +34743,9 @@ code/await Ff (void) -> (var&? int x) -> void do
     x = &v;
     await 1s;
 end
-var&? int x;
-spawn Ff() -> (&x);
-escape x! + 1;
+var&? int zzz;
+spawn Ff() -> (&zzz);
+escape zzz! + 1;
 ]],
     run = 11,
 }
@@ -34783,9 +34791,9 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var&? int yyy) -> void do
     var int v = 10;
-    x = &v;
+    yyy = &v;
     await async do end;
 end
 var&? int x;
@@ -36595,6 +36603,29 @@ escape ret;
 -- TODO: SKIP-02
 
 -->>> CODE / AWAIT / SPAWN
+
+Test { [[
+code/await Tx (void)->void do
+end
+do
+    pool[1] Tx ts;
+    spawn Tx() in ts;
+end
+escape 5;
+]],
+    run = 5,
+}
+Test { [[
+code/await Tx (void)->void do
+end
+do
+    pool[] Tx ts;
+    spawn Tx() in ts;
+end
+escape 5;
+]],
+    run = 5,
+}
 
 Test { [[
 code/await Tx (var& int a)->int do

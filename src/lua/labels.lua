@@ -29,14 +29,11 @@ F = {
         me.lbl_out = new{'Do__OUT'}
     end,
 
-    Block = function (me)
-        if me.has_fin then
-            me.lbl_fin = new{'Block__FIN'}
-        end
-    end,
-
     Finalize_Case = function (me)
         me.lbl_in = new{'Finalize_Case__IN'}
+    end,
+    Await_Alias = function (me)
+        me.lbl = new{'Await_Alias'}
     end,
 
     Loop_Pool = function (me)
@@ -54,13 +51,6 @@ F = {
 
     Code = function (me)
         me.lbl_in = new{'Code_'..me.id_, true}
-    end,
-
-    Evt = 'Var',
-    Var = function (me)
-        if me.has_trail then
-            me.lbl = new{'Var_'..me.id}
-        end
     end,
 
     ---------------------------------------------------------------------------

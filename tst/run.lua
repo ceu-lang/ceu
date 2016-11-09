@@ -280,8 +280,8 @@ end
     if not check(T,'parser') then return end
     --dofile 'ast.lua'
     if not check(T,'ast')    then return end
---AST.dump(AST.root)
     if not check(T,'adjs')   then return end
+--AST.dump(AST.root)
     dofile(DIR..'types.lua')
     if not check(T,'dcls')   then return end
     if not check(T,'names')  then return end
@@ -626,20 +626,12 @@ stats = {
 (./run.lua: 612.12s 32908k)
 
 stats = {
-    count  = 2957,
-    trails = 5488,
-    bytes  = 45935896,
-    visits = 371358,
+    count  = 2966,
+    trails = 4928,
+    bytes  = 46241336,
+    visits = 374482,
 }
-(./run.lua: 633.99s 34224k)
-
-stats = {
-    count  = 2963,
-    trails = 5619,
-    bytes  = 46141856,
-    visits = 393489,
-}
-(./run.lua: 640.20s 32180k)
+(./run.lua: 640.11s 31720k)
 
 -------------------------------------------------------------------------------
 

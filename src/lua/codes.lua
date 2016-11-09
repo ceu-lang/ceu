@@ -225,7 +225,12 @@ if (]]..V(c)..[[) {
 ]])
     end,
 
-    Block = CONC_ALL,
+    Block = function (me)
+        CONC_ALL(me)
+        if me.needs_clear then
+            CLEAR(me)
+        end
+    end,
     Block__PRE = function (me, par,base)
         par = par or me
         me.code_fin = ''
@@ -277,6 +282,7 @@ ceu_vector_init(&]]..V(dcl,ctx)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
         end
 
         -- free vectors/pools
+--[=[
         if me.has_fin then
             if me == par then
                 LINE(me, [[
@@ -299,17 +305,6 @@ if (0) {
 ]]
                     end
                 elseif dcl.tag=='Pool' and (not (is_alias or dim~='[]')) then
-                    fin = fin..[[
-    ceu_dbg_assert(]]..V(dcl,ctx)..[[.pool.queue == NULL);
-    {
-        tceu_code_mem_dyn* __ceu_cur = ]]..V(dcl,ctx)..[[.first.nxt;
-        while (__ceu_cur != &]]..V(dcl,ctx)..[[.first) {
-            tceu_code_mem_dyn* __ceu_nxt = __ceu_cur->nxt;
-            ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, __ceu_cur, 0);
-            __ceu_cur = __ceu_nxt;
-        }
-    }
-]]
                 end
             end
             me.code_fin = fin
@@ -322,6 +317,7 @@ if (0) {
 ]])
             end
         end
+]=]
     end,
 
     Vec = function (me)
@@ -371,25 +367,41 @@ _ceu_mem->trails[]]..me.trails[1]..[[].evt.pool_first = &]]..V(me)..[[.first;
 ]])
     end,
 
-    Evt = 'Var',
-    Var = function (me)
-        local alias, tp, _, dim = unpack(me)
-        if me.has_trail then
-            LINE(me, [[
-]]..V(me)..[[.alias = NULL;
-]])
-        end
-    end,
-    XXX = function (me)
-        local id = unpack(me)
+    Finalize_Pool = function (me)
+        local dcl = DCLS.get(AST.par(me,'Block'),unpack(me))
         LINE(me, [[
-]]..V(id)..[[.alias = NULL;   /* set it to null when alias goes out of scope */
+ceu_dbg_assert(]]..V(dcl,ctx)..[[.pool.queue == NULL);
+{
+    tceu_code_mem_dyn* __ceu_cur = ]]..V(dcl,ctx)..[[.first.nxt;
+    while (__ceu_cur != &]]..V(dcl,ctx)..[[.first) {
+        tceu_code_mem_dyn* __ceu_nxt = __ceu_cur->nxt;
+        ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, __ceu_cur, 0);
+        __ceu_cur = __ceu_nxt;
+    }
+}
+]])
+    end,
+    Await_Alias = function (me)
+        local dcl = DCLS.get(AST.par(me,'Block'),unpack(me))
+        -- HACK_4
+        LINE(me, [[
+]]..V(dcl)..[[.alias = NULL;
+_ceu_mem->trails[]]..me.trails[1]..[[].lbl = ]]..me.lbl.id..[[;
+/* do not enter from outside */
+if (0)
+{
+]])
+        CASE(me, me.lbl)
+        LINE(me, [[
+    ]]..V(dcl)..[[.alias = NULL;   /* set it to null when alias goes out of scope */
+    return;
+}
 ]])
     end,
 
     List_Var = function (me)
         for _,ID_int in ipairs(me) do
-            if ID_int.tag~='ID_any' and ID_int.dcl.has_trail then
+            if ID_int.tag~='ID_any' and ID_int.dcl[1]=='&?' then
                 -- HACK_4
                 LINE(me, [[
 _ceu_mem->trails[]]..ID_int.dcl.trails[1]..[[].evt.id = CEU_INPUT__NONE;
@@ -732,9 +744,9 @@ if (0) {
 
     __fin = function (me, evt)
         LINE(me, [[
-_ceu_mem->trails[]]..(me.trails[1])..[[].evt.id    = ]]..evt..[[;
-_ceu_mem->trails[]]..(me.trails[1])..[[].lbl       = ]]..me.lbl_in.id..[[;
-_ceu_mem->trails[]]..(me.trails[1])..[[].clr_range =
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.id    = ]]..evt..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_in.id..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].clr_range =
     (tceu_evt_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[2]..[[ };
 ]])
     end,
