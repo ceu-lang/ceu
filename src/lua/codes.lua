@@ -280,44 +280,6 @@ ceu_vector_init(&]]..V(dcl,ctx)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
                 end
             end
         end
-
-        -- free vectors/pools
---[=[
-        if me.has_fin then
-            if me == par then
-                LINE(me, [[
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__FINALIZE;
-_ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_fin.id..[[;
-
-if (0) {
-]])
-                CASE(me, me.lbl_fin)
-                LINE(me, me.code_fin)   -- all nested "data"
-            end
-
-            local fin = ''
-            for _, dcl in ipairs(me.dcls) do
-                local is_alias,tp,_,dim = unpack(dcl)
-                if dcl.tag=='Vec' and (not TYPES.is_nat(TYPES.get(tp,1))) then
-                    if not (is_alias or dim.is_const) then
-                        fin = fin..[[
-    ceu_vector_setmax(&]]..V(dcl,ctx)..[[, 0, 0);
-]]
-                    end
-                elseif dcl.tag=='Pool' and (not (is_alias or dim~='[]')) then
-                end
-            end
-            me.code_fin = fin
-
-            if me == par then
-                LINE(me, fin)
-                LINE(me, [[
-    return;
-}
-]])
-            end
-        end
-]=]
     end,
 
     Vec = function (me)
@@ -364,6 +326,13 @@ ceu_pool_init(&]]..V(me)..'.pool, '..V(dim)..[[,
         LINE(me, [[
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id         = CEU_INPUT__CODE_POOL;
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.pool_first = &]]..V(me)..[[.first;
+]])
+    end,
+
+    Finalize_Vec = function (me)
+        local dcl = DCLS.get(AST.par(me,'Block'),unpack(me))
+        LINE(me, [[
+ceu_vector_setmax(&]]..V(dcl,ctx)..[[, 0, 0);
 ]])
     end,
 

@@ -720,7 +720,7 @@ error'TODO'
                         node(tag, me.ln, alias, AST.copy(tp), id))
             end
 
-            if tag=='Pool' and (not alias) then
+            if (tag=='Pool' or tag=='Vec') and (not alias) then
                 AST.set(ret, #ret, F._SPAWN(me.__par,ret[#ret]))
                 if dim == '[]' then
                     AST.set(ret, #ret+1,
@@ -729,7 +729,7 @@ error'TODO'
                             false,
                             node('Block', me.ln,
                                 node('Stmts', me.ln,
-                                    node('Finalize_Pool', me.ln, id))),
+                                    node('Finalize_'..tag, me.ln, id))),
                             false,
                             false,
                             i))  -- skip Stmts above (ret)
