@@ -66,7 +66,6 @@ escape 1;
     run = 1,
 }
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -2643,7 +2642,7 @@ spawn do
 end
 escape _CEU_APP.root.mem.trails_n;
 ]],
-    run = 5,
+    run = 2,
 }
 --<<< SPAWN / BLOCK
 
@@ -19262,6 +19261,7 @@ escape ret;
     run = { ['~>OS_START; ~>10s; ~>OS_STOP']=9 },
 }
 
+--]=====]
 Test { [[
 native _void, _alloc, _hold;
 var&? _void tcp = &_alloc(1)
@@ -19273,6 +19273,7 @@ escape 0;
 ]],
     scopes = 'line 5 : invalid `call´ : expected `finalize´ for variable "tcp"',
 }
+do return end
 
 Test { [[
 native _V, _void_ptr, _alloc, _hold;
@@ -19304,11 +19305,13 @@ do
             finalize (tcp) with
                 _dealloc(tcp!);
             end;
+/*
     do
         _hold(tcp!);
     finalize (tcp) with
         _unhold(tcp!);
     end
+*/
 end
 
 escape _V;
@@ -19666,11 +19669,11 @@ escape x;
 }
 
 Test { [[
-var&? int x = do
+var&? int xxx = do
     var int y = 10;
     escape &y;
 end;
-escape (x? as int) + 1;
+escape (xxx? as int) + 1;
 ]],
     run = 1,
 }
@@ -29183,7 +29186,7 @@ vector[_N] _u8 xxx = _;
 escape 1;
 ]],
     wrn = true,
-    cc = '6:5: error: variably modified ‘xxx_62’ at file scope',
+    cc = '6:5: error: variably modified ‘xxx',
 }
 
 Test { [[
@@ -29545,7 +29548,7 @@ vector[-_X] int vvs;
 vector&[-_X] int iis = &vvs;
 escape 1;
 ]],
-    cc = '5:5: error: size of array ‘vvs_63_buf’ is negative',
+    cc = '5:5: error: size of array ‘vvs_',
 }
 
 Test { [[

@@ -582,24 +582,13 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     , _Vars_set  = K'var' * OPT(V'__ALS') * V'Type' *
                     LIST(V'__vars_set')
-    , _Vars      = K'var' * OPT(V'__ALS') * V'Type' *
-                    LIST(V'__ID_int')
-
     , _Vecs_set  = K'vector' * OPT(CKK'&') * V'__Dim' * V'Type' *
                     LIST(V'__vars_set')
                         -- TODO: only vec constr
-    , _Vecs      = K'vector' * OPT(CKK'&') * V'__Dim' * V'Type' *
-                    LIST(V'__ID_int')
-
     , _Pools_set = K'pool' * OPT(CKK'&') * V'__Dim' * V'Type' *
                     LIST(V'__vars_set')
-    , _Pools     = K'pool' * OPT(CKK'&') * V'__Dim' * V'Type' *
-                    LIST(V'__ID_int')
-
     , _Evts_set  = K'event' * OPT(V'__ALS') * (PARENS(V'Typelist')+V'Type') *
                     LIST(V'__vars_set')
-    , _Evts      = K'event' * OPT(V'__ALS') * (PARENS(V'Typelist')+V'Type') *
-                    LIST(V'__ID_int')
 
     , _Exts      = (CK'input'+CK'output') * (PARENS(V'Typelist')+V'Type') *
                     LIST(V'__ID_ext')

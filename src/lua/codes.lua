@@ -225,12 +225,7 @@ if (]]..V(c)..[[) {
 ]])
     end,
 
-    Block = function (me)
-        CONC_ALL(me)
-        if me.needs_clear or me.has_fin then
-            CLEAR(me)
-        end
-    end,
+    Block = CONC_ALL,
     Block__PRE = function (me, par,base)
         par = par or me
         me.code_fin = ''
@@ -379,22 +374,16 @@ _ceu_mem->trails[]]..me.trails[1]..[[].evt.pool_first = &]]..V(me)..[[.first;
     Evt = 'Var',
     Var = function (me)
         local alias, tp, _, dim = unpack(me)
-        if not me.has_trail then
-            return
-        end
-        LINE(me, [[
+        if me.has_trail then
+            LINE(me, [[
 ]]..V(me)..[[.alias = NULL;
-_ceu_mem->trails[]]..me.trails[1]..[[].lbl = ]]..me.lbl.id..[[;
-
-/* do not enter from outside */
-if (0)
-{
 ]])
-        CASE(me, me.lbl)
+        end
+    end,
+    XXX = function (me)
+        local id = unpack(me)
         LINE(me, [[
-    ]]..V(me)..[[.alias = NULL;   /* set it to null when alias goes out of scope */
-    return;
-}
+]]..V(id)..[[.alias = NULL;   /* set it to null when alias goes out of scope */
 ]])
     end,
 

@@ -355,6 +355,49 @@ F = {
         dcls_new(AST.par(me,'Block'), me)
     end,
 
+-------------------------------------------------------------------------------
+
+    Var__PRE = function (me)
+if me.__ok then
+    return
+else
+    me.__ok = true
+end
+if AST.par(me,'Code_Pars') then
+    return
+end
+        local alias,tp,id = unpack(me)
+        local paror = AST.get(me.__par,'Stmts', 2,'Par_Or')
+
+        if me.tag=='Pool' and (not alias) then
+            -- ok
+        elseif (me.tag=='Var' or me.tag=='Evt') and alias=='&?' then
+            -- ok
+            if not TYPES.is_nat(tp) then
+error'oi'
+                local fin = AST.asr(paror,'Par_Or', 1,'Stmts', 1,'Finalize',
+                                    3,'Finalize_Case', 2,'Block', 1,'Stmts')
+                AST.asr(fin,'', 1,'Nothing')
+                AST.set(fin, 1,
+                    AST.node('XXX', me.ln,
+                        AST.node('ID_int', me.ln, id)))
+me.has_trail = true
+            end
+        else
+            if paror then
+                paror.tag = 'Stmts'
+                local stmts = AST.asr(paror,'', 1,'Stmts')
+                AST.asr(stmts,'', 1,'Finalize').tag      = 'Nothing'
+                AST.asr(stmts,'', 2,'Await_Forever').tag = 'Nothing'
+            end
+        end
+    end,
+    Vec__PRE  = 'Var__PRE',
+    Evt__PRE  = 'Var__PRE',
+    Pool__PRE = 'Var__PRE',
+
+-------------------------------------------------------------------------------
+
     -- NATIVE
 
     Nat_End = function (me)

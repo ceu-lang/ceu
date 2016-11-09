@@ -46,7 +46,7 @@ F = {
                             '_ceu_callback_assert_msg'))
         nats[3].is_predefined = true
 
-        local ret = node('Var', me.ln,
+        local ret = node('_Vars', me.ln,
                         false,
                         node('Type', me.ln,
                             node('ID_prim', me.ln, 'int')),
@@ -163,12 +163,13 @@ error'TODO: luacov never executes this?'
             t[#t+1] = node('Finalize_Case', me.ln, 'CEU_INPUT__RESUME', res)
         end
 
-        if #t == 0 then
-            return node('Finalize',me.ln,now,list)
-        end
+-- TODO: no SPAWN if no finalize
+        --if #t == 0 then
+            --return node('Finalize',me.ln,now,list)
+        --end
 
         local x
-        if #t == 1 then
+        if #t <= 1 then
             x = unpack(t)
         else
             x = node('Par', me.ln, unpack(t))
@@ -251,7 +252,7 @@ error'TODO: luacov never executes this?'
             local is_void = (ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod))
             if is_void then
                 out = node('Var_', me.ln, false, AST.copy(Type), '_ret')
-                    -- TODO: HACK_5
+                    -- TODO: HACK_5 (Var_)
             else
                 out = node('Var', me.ln, false, AST.copy(Type), '_ret')
             end
@@ -421,7 +422,7 @@ error'TODO'
         if AST.is_node(i) then
             AST.asr(i, 'ID_any')
             i = '__i_'..me.n    -- invent an ID not referenceable
-            i_dcl = node('Var', me.ln,
+            i_dcl = node('_Vars', me.ln,
                         false,
                         node('Type', me.ln,
                             node('ID_prim', me.ln, 'int')),
@@ -715,14 +716,25 @@ error'TODO'
             if tag=='Pool' or tag=='Vec' then
                 AST.set(ret, #ret+1,
                         node(tag, me.ln, is_alias, AST.copy(tp), id, AST.copy(dim)))
-                if tag=='Pool' and (not is_alias) then
-                    ret = F._SPAWN(me.__par,ret)
-                end
             else
                 AST.set(ret, #ret+1,
                         node(tag, me.ln, is_alias, AST.copy(tp), id))
             end
         end
+
+        if tag=='Var' or tag=='Pool' or tag=='Vec' or tag=='Evt' then
+            AST.set(ret, #ret+1,
+                node('_Finalize', me.ln,
+                    false,
+                    false,
+                    node('Block', me.ln,
+                        node('Stmts', me.ln,
+                            node('Nothing', me.ln))),
+                    false,
+                    false,
+                    1))     -- skip Stmts above (ret)
+        end
+
         return ret
     end,
     _Vars__PRE = '__dcls__PRE',
@@ -812,18 +824,23 @@ error'TODO'
         --  end
 
         me[#me+1] = 1   -- finalize depth: skip Stmts below
-        return node('Stmts', me.ln,
-                node('Var', me.ln,
-                    '&?',
-                    Type,
-                    __ID_int),
-                node('_Finalize', me.ln,
-                    node('Set_Alias', me.ln,
-                        node('Exp_1&', Nat_Call.ln, '&',
-                            Nat_Call),
-                        node('Exp_Name', Type.ln,
-                            node('ID_int', Type.ln, __ID_int))),
-                    unpack(me,4)))
+local par = me.__par
+AST.dump(par)
+        local ret = node('Stmts', me.ln,
+                        node('Var', me.ln,
+                            '&?',
+                            Type,
+                            __ID_int),
+                        node('_Finalize', me.ln,
+                            node('Set_Alias', me.ln,
+                                node('Exp_1&', Nat_Call.ln, '&',
+                                    Nat_Call),
+                                node('Exp_Name', Type.ln,
+                                    node('ID_int', Type.ln, __ID_int))),
+                            unpack(me,4)))
+        ret = F._SPAWN(me,ret)
+AST.dump(par)
+        return ret
     end,
 
 -------------------------------------------------------------------------------

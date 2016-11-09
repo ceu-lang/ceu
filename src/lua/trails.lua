@@ -25,57 +25,6 @@ F = {
         end
     end,
 
-    Block = function (me)
-        MAX_all(me)
-
-        for _, dcl in ipairs(me.dcls) do
-            local alias, Type = unpack(dcl)
-
-            local abs = AST.get(Type,'Type') and TYPES.abs_dcl(Type,'Data')
-            if dcl.tag=='Var' and abs then
-                me.has_fin = me.has_fin or abs.has_fin
-                local data = AST.par(me,'Data')
-                if data then
-                    data.has_fin = me.has_fin
-                end
-            end
-
-            -- +1 for each "var/event&? ..."
-            if (alias == '&?') and (not (dcl.tag=='Var' and TYPES.is_nat(Type))) then
-                if not AST.par(dcl, 'Code_Pars') then
-                    dcl.has_trail = true
-                    me.trails_n = me.trails_n + 1
-                end
-            end
-        end
-
-        if me.has_fin then
-            me.trails_n = me.trails_n + 1
-        end
-        if me.fins_n > 0 then
-            me.trails_n = me.trails_n + 3*me.fins_n
-        end
-    end,
-
-    Vec = function (me)
-        local is_alias, tp, _, dim = unpack(me)
-        if (not TYPES.is_nat(TYPES.get(tp,1))) then
-            if not (is_alias or dim.is_const) then
-                AST.par(me,'Block').has_fin = true
-                local data = AST.par(me,'Data')
-                if data then
-                    data.has_fin = true
-                end
-            end
-        end
-    end,
-    Pool = function (me)
-        local is_alias, _, _, dim = unpack(me)
-        if not (is_alias or dim~='[]') then
-            AST.par(me,'Block').has_fin = true
-        end
-    end,
-
     Loop_Pool = function (me)
         local _, _, _, body = unpack(me)
         if me.yields then
@@ -130,39 +79,6 @@ if me.tag == 'Block' then
         me.trails[2] = me.trails[2] - 1
     end
 end
-    end,
-
-    Node__POS = function (me)
-        --DBG(me.ln[2], me.tag, unpack(me.trails))
-    end,
-
-    Stmts__BEF = function (me, sub, i)
-        if i == 1 then
-            me._trails = { unpack(me.trails) }
-            if me.__par.tag=='Block' and me.__par.has_fin then
-                me._trails[1] = me._trails[1]+1
-            end
-        end
-        if sub.tag == 'Code' then
-            return
-        end
-
-        sub.trails = { unpack(me._trails) }
-
-        local var   = AST.get(sub, 'Var')
-        local evt   = AST.get(sub, 'Evt')
-
-        if (var and var.has_trail) or (evt and evt.has_trail)
-        then
-            local n = 1
-            for stmts in AST.iter() do
-                if stmts.tag == 'Stmts' then
-                    stmts._trails[1] = stmts._trails[1] + n
-                else
-                    break
-                end
-            end
-        end
     end,
 
     Loop_Pool__PRE = function (me)
