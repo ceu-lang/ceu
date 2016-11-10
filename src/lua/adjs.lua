@@ -721,9 +721,14 @@ error'TODO'
             end
 
             if (tag=='Pool' or tag=='Vec') and (not alias) then
-                AST.set(ret, #ret, F._SPAWN(me.__par,ret[#ret]))
+                --AST.set(ret, #ret, F._SPAWN(me,ret[#ret]))
+                local par = me
+                if tag == 'Pool' then
+                    AST.set(ret, #ret, F._SPAWN(me.__par,ret[#ret]))
+                    par = ret
+                end
                 if dim == '[]' then
-                    AST.set(ret, #ret+1,
+                    AST.set(par, #ret+1,
                         node('_Finalize', me.ln,
                             false,
                             false,
