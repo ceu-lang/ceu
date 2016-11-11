@@ -54,7 +54,11 @@ function DCLS.get (blk, id, can_cross)
     for blk in iter_boundary(blk,id,can_cross) do
         local dcl = blk.dcls[id]
         if dcl then
-            dcl.is_used = true
+            if AST.iter'Finalize_Vec'() or AST.iter'Finalize_Pool'() then
+                -- not used
+            else
+                dcl.is_used = true
+            end
             return dcl
         end
     end
@@ -231,8 +235,19 @@ F = {
             Pool__PRE = 'Var__PRE',
 
             Exp_Name__PRE = function (me)
-                local set = assert(AST.par(me,'Set_Exp') or AST.par(me,'Set_Any') or AST.par(me,'Set_Abs_Val'))
-                if set[2] ~= me then
+                local set = AST.par(me,'Set_Exp') or AST.par(me,'Set_Any') or
+                            AST.par(me,'Set_Abs_Val')
+                local fin = AST.par(me,'Finalize')
+                assert(set or fin)
+                local Exp_Name do
+                    if set then
+                        Exp_Name = AST.asr(set,'',2,'Exp_Name')
+                    else
+                        Exp_Name = AST.asr(fin,'', 3,'Finalize_Case', 2,'Block',
+                                            1,'Stmts', 1,'Finalize_Vec', 1,'Exp_Name')
+                    end
+                end
+                if Exp_Name ~= me then
                     return  -- skip if not "to"
                 end
                 if me.__handled and me.__handled[id] then
@@ -280,7 +295,7 @@ F = {
             AST.visit(F.__F(id), sets)
             if AST.par(me,'Code_Pars') then
                 local stmts = AST.get(AST.par(me,'Code'),'',
-                                        4,'Block', 1,'Stmts', 2,'Block',
+                                        4,'Block', 1,'Stmts', 4,'Block',
                                         1,'Stmts', 1,'Do', 2,'Block', 1,'Stmts')
                 if stmts then
                     AST.insert(stmts, 1, sets)
@@ -391,7 +406,7 @@ F = {
     -- CODE / DATA
 
     Code_Pars = function (me)
-        local Code = AST.asr(me,4,'Code')
+        local Code = AST.asr(me,3,'Code')
         local _,mods = unpack(Code)
 
         -- check types only
@@ -458,10 +473,10 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         end
 
         local proto_body = AST.asr(me,'', 4,'Block', 1,'Stmts')
-        local orig = proto_body[2]
-        AST.set(proto_body, 2, AST.node('Stmts', me.ln))
+        local orig = proto_body[4]
+        AST.set(proto_body, 4, AST.node('Stmts', me.ln))
         local new = AST.copy(me)
-        AST.set(proto_body, 2, orig)
+        AST.set(proto_body, 4, orig)
 
         -- "base" method with plain "id"
         new.id = id
@@ -471,9 +486,10 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         return s
     end,
 
-    __proto_ignore = function (id1, id2)
-        return (type(id1)=='string' and string.sub(id1,1,6)=='_anon_')
-            or (type(id2)=='string' and string.sub(id2,1,6)=='_anon_')
+    __proto_ignore = function (n1, n2)
+        return (type(n1)=='string' and string.sub(n1,1,6)=='_anon_')
+            or (type(n2)=='string' and string.sub(n2,1,6)=='_anon_')
+            or (AST.get(n1,'Block') and n2==nil)
     end,
 
     Code = function (me)
@@ -486,7 +502,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
         if not me.is_dyn_base then
             if mods1.dynamic and me.is_impl then
-                local ins1 = AST.asr(body1,'Block', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
+                local ins1 = AST.asr(body1,'Block', 1,'Stmts', 1,'Code_Pars')
                 me.id = id..ins1.ids_dyn
                 me.dyn_base = DCLS.asr(me,blk,id)
                 me.dyn_base.dyn_last = me
@@ -505,8 +521,8 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             end
 
             -- compare ins
-            local proto1 = AST.asr(body1,'Block',1,'Stmts',1,'Stmts')
-            local proto2 = AST.asr(body2,'Block',1,'Stmts',1,'Stmts')
+            local proto1 = AST.asr(body1,'Block',1,'Stmts')
+            local proto2 = AST.asr(body2,'Block',1,'Stmts')
             local ok = AST.is_equal(proto1, proto2, F.__proto_ignore)
 
             -- compare mods

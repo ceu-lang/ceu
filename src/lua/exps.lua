@@ -124,7 +124,7 @@ F = {
 
         -- info
         me.info = INFO.new(me, 'Val', nil,
-                    AST.copy(AST.asr(ID_abs.dcl,'Code', 4,'Block', 1,'Stmts',
+                    AST.copy(AST.asr(ID_abs.dcl,'Code', 4,'Block',
                                                         1,'Stmts', 3,'Code_Ret',
                                                                     -- TODO: HACK_5
                                                         1,'', 2,'Type')))
@@ -138,8 +138,7 @@ F = {
             me.vars = AST.asr(ID_abs.dcl,'Data', 3,'Block').dcls
             err_str = 'invalid constructor'
         else
-            me.vars = AST.asr(ID_abs.dcl,'Code', 4,'Block', 1,'Stmts',
-                                                 1,'Stmts', 1,'Code_Pars')
+            me.vars = AST.asr(ID_abs.dcl,'Code', 4,'Block', 1,'Stmts', 1,'Code_Pars')
             err_str = 'invalid call'
         end
         ASR(#me.vars == #Abslist, me, err_str..' : expected '..#me.vars..' argument(s)')

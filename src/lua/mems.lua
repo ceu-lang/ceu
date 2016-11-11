@@ -165,7 +165,7 @@ tceu_pool_pak]]..ptr..' '..id2..[[;
 
         local multis = {}
         if mods.dynamic then
-            local Code_Pars = AST.asr(body,'', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
+            local Code_Pars = AST.asr(body,'', 1,'Stmts', 1,'Code_Pars')
             for i, dcl in ipairs(Code_Pars) do
                 if dcl.mods.dynamic then
                     local _,Type,id = unpack(dcl)
@@ -217,7 +217,7 @@ static void CEU_CODE_WATCH_]]..me.id_..[[ (tceu_code_mem* _ceu_mem,
 
         -- CEU_CODE_xxx
 
-        local Type = AST.get(body,'Block', 1,'Stmts', 1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
+        local Type = AST.get(body,'Block', 1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
         if mods.tight then
             me.mems.wrapper = me.mems.wrapper .. [[
 static ]]..TYPES.toc(assert(Type))..[[ /* space */

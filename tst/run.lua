@@ -3,7 +3,7 @@
 TESTS = {
     --cmd = true,
     --luacov = 'lua5.3 -lluacov'
-    --valgrind = true,
+    valgrind = true,
 --REENTRANT = true
 --COMPLETE = true
     stats = {
@@ -281,9 +281,9 @@ end
     --dofile 'ast.lua'
     if not check(T,'ast')    then return end
     if not check(T,'adjs')   then return end
---AST.dump(AST.root)
     dofile(DIR..'types.lua')
     if not check(T,'dcls')   then return end
+--AST.dump(AST.root)
     if not check(T,'names')  then return end
     if not check(T,'exps')   then return end
 --do return end
@@ -618,20 +618,12 @@ stats = {
 
 -- extra clean-up seq
 stats = {
-    count  = 2898,
-    trails = 5429,
-    bytes  = 45012440,
-    visits = 371045,
+    count  = 2968,
+    trails = 4987,
+    bytes  = 46285792,
+    visits = 374850,
 }
-(./run.lua: 612.12s 32908k)
-
-stats = {
-    count  = 2966,
-    trails = 4928,
-    bytes  = 46241336,
-    visits = 374482,
-}
-(./run.lua: 640.11s 31720k)
+(./run.lua: 619.16s 31156k)
 
 -------------------------------------------------------------------------------
 

@@ -1,14 +1,14 @@
 --  NO: big = &&small
 local function check_blk (to_blk, fr_blk)
     local Code = AST.par(fr_blk,'Code')
-    local Stmts = Code and AST.get(Code,'',4,'Block',1,'Stmts',2,'Block',1,'Stmts')
+    local Stmts = Code and AST.get(Code,'',4,'Block',1,'Stmts',4,'Block',1,'Stmts')
     if AST.depth(to_blk) >= AST.depth(fr_blk) then
         assert(AST.is_par(fr_blk,to_blk), 'bug found')
         return true
     elseif Stmts and (
-                AST.get(Stmts,'',1,'Do', 2,'Block')==fr_blk -- code ... => ...
+                AST.get(Stmts,'',1,'Do', 2,'Block')==fr_blk -- code ... -> ...
             or
-                AST.get(Stmts,'',1,'Block')==fr_blk         -- code ... => FOREVER
+                AST.get(Stmts,'',1,'Block')==fr_blk         -- code ... -> FOREVER
             ) then
         return 'maybe'
     else
@@ -79,7 +79,8 @@ F = {
                 end
             end 
             if not ok then
-                if AST.get(me.__par,'Stmts', 2,'Escape') then
+                local stmts = AST.get(me,1,'Stmts')
+                if stmts and AST.get(stmts,'', #stmts,'Escape') and stmts[#stmts-1]==me then
                     ASR(false, me, 'invalid `escape´ : incompatible scopes')
                 elseif fr_data_ptr then
                     ASR(false, me,

@@ -125,7 +125,7 @@ function AST.is_equal (n1, n2, ignore)
     elseif n1 == n2 then
         return true
     elseif AST.is_node(n1) and AST.is_node(n2) then
-        if n1.tag==n2.tag and #n1==#n2 then
+        if n1.tag == n2.tag then
             for i, v in ipairs(n1) do
                 if not AST.is_equal(n1[i],n2[i],ignore) then
                     return false
@@ -368,14 +368,16 @@ local function visit_aux (F, me, I)
     local t   = { me.__par, me.__i }
 
     if F.Node__PRE then
-        chg, me = from_to(me, F.Node__PRE(me), t)
-        if chg then
+        local ret, dont = F.Node__PRE(me)
+        chg, me = from_to(me, ret, t)
+        if chg and (not dont) then
             return visit_aux(F, me)
         end
     end
     if pre then
-        chg, me = from_to(me, pre(me), t)
-        if chg then
+        local ret, dont = pre(me)
+        chg, me = from_to(me, ret, t)
+        if chg and (not dont) then
             return visit_aux(F, me)
         end
     end
@@ -400,14 +402,16 @@ local function visit_aux (F, me, I)
     STACK[#STACK] = nil
 
     if pos then
-        chg, me = from_to(me, pos(me), t)
-        if chg then
+        local ret, dont = pos(me)
+        chg, me = from_to(me, ret, t)
+        if chg and (not dont) then
             return visit_aux(F, me)
         end
     end
      if F.Node__POS then
-        chg, me = from_to(me, F.Node__POS(me), t)
-        if chg then
+        local ret, dont = F.Node__POS(me)
+        chg, me = from_to(me, ret, t)
+        if chg and (not dont) then
             return visit_aux(F, me)
         end
     end

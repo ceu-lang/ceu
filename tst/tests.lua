@@ -2568,6 +2568,15 @@ escape ptr == null;
 }
 Test { [[
 var u8&& ptr = do
+    await 1s;
+    escape null;
+end;
+escape 1;
+]],
+    run = {['~>1s']=1},
+}
+Test { [[
+var u8&& ptr = do
     par do
         //_idle();
         await FOREVER;

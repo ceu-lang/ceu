@@ -6,7 +6,7 @@ F = {
         local fr, to = unpack(me)
 
         local err do
-            if AST.get(me.__par,'Stmts', 2,'Escape') then
+            if AST.get(me.__par,'Stmts', me.__i+1,'Escape') then
                 err = 'invalid `escape´'
             else
                 err = 'invalid assignment'
@@ -151,8 +151,7 @@ F = {
             else
                 local ID_abs = AST.asr(fr,'', 2,'Abs_Call', 2,'Abs_Cons',
                                               1,'ID_abs')
-                local tp = AST.asr(ID_abs.dcl,'Code', 4,'Block', 1,'Stmts',
-                                                      1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
+                local tp = AST.asr(ID_abs.dcl,'Code', 4,'Block', 1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
                 EXPS.check_tp(me, to.info.tp, tp, 'invalid binding', true)
             end
         else
@@ -394,11 +393,10 @@ F = {
 
         if list then
             local must_be_opt = (me.tag~='Abs_Await' or me.__adjs_is_spawn) and
-                                 AST.get(me.__code,'', 4,'Block', 1,'Stmts',
+                                 AST.get(me.__code,'', 4,'Block',
                                                        1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
 
-            local pars = AST.asr(me.__code,'', 4,'Block', 1,'Stmts',
-                                               1,'Stmts', 2,'Code_Pars')
+            local pars = AST.asr(me.__code,'', 4,'Block', 1,'Stmts', 2,'Code_Pars')
             F.__check_watching_list(me, pars, list, must_be_opt)
         end
     end,
@@ -409,7 +407,7 @@ F = {
         ASR(AST.par(me,'Code') ~= me.__code, me,
             'invalid `'..AST.tag2id[me.tag]..'´ : unexpected recursive invocation')
 
-        local ret = AST.get(me.__code,'', 4,'Block', 1,'Stmts',
+        local ret = AST.get(me.__code,'', 4,'Block',
                                           1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
         me.tp = ret and AST.copy(ret)
 
@@ -496,8 +494,7 @@ F = {
 
         if list then
             local Code = AST.asr(pool.info.tp[1].dcl, 'Code')
-            local pars = AST.asr(Code,'', 4,'Block', 1,'Stmts',
-                                          1,'Stmts', 2,'Code_Pars')
+            local pars = AST.asr(Code,'', 4,'Block', 1,'Stmts', 2,'Code_Pars')
             F.__check_watching_list(me, pars, list)
         end
     end,

@@ -330,19 +330,19 @@ _ceu_mem->trails[]]..me.trails[1]..[[].evt.pool_first = &]]..V(me)..[[.first;
     end,
 
     Finalize_Vec = function (me)
-        local dcl = DCLS.get(AST.par(me,'Block'),unpack(me))
+        local id = unpack(me)
         LINE(me, [[
-ceu_vector_setmax(&]]..V(dcl,ctx)..[[, 0, 0);
+ceu_vector_setmax(&]]..V(id,ctx)..[[, 0, 0);
 ]])
     end,
 
     Finalize_Pool = function (me)
-        local dcl = DCLS.get(AST.par(me,'Block'),unpack(me))
+        local id = unpack(me)
         LINE(me, [[
-ceu_dbg_assert(]]..V(dcl,ctx)..[[.pool.queue == NULL);
+ceu_dbg_assert(]]..V(id,ctx)..[[.pool.queue == NULL);
 {
-    tceu_code_mem_dyn* __ceu_cur = ]]..V(dcl,ctx)..[[.first.nxt;
-    while (__ceu_cur != &]]..V(dcl,ctx)..[[.first) {
+    tceu_code_mem_dyn* __ceu_cur = ]]..V(id,ctx)..[[.first.nxt;
+    while (__ceu_cur != &]]..V(id,ctx)..[[.first) {
         tceu_code_mem_dyn* __ceu_nxt = __ceu_cur->nxt;
         ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, __ceu_cur, 0);
         __ceu_cur = __ceu_nxt;
@@ -351,10 +351,10 @@ ceu_dbg_assert(]]..V(dcl,ctx)..[[.pool.queue == NULL);
 ]])
     end,
     Await_Alias = function (me)
-        local dcl = DCLS.get(AST.par(me,'Block'),unpack(me))
+        local id = unpack(me)
         -- HACK_4
         LINE(me, [[
-]]..V(dcl)..[[.alias = NULL;
+]]..V(id)..[[.alias = NULL;
 _ceu_mem->trails[]]..me.trails[1]..[[].lbl = ]]..me.lbl.id..[[;
 /* do not enter from outside */
 if (0)
@@ -362,7 +362,7 @@ if (0)
 ]])
         CASE(me, me.lbl)
         LINE(me, [[
-    ]]..V(dcl)..[[.alias = NULL;   /* set it to null when alias goes out of scope */
+    ]]..V(id)..[[.alias = NULL;   /* set it to null when alias goes out of scope */
     return;
 }
 ]])
@@ -404,11 +404,10 @@ if (0)
         end
 
         local args_id        = me.id_
-        local args_Code_Pars = AST.asr(body,'', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
+        local args_Code_Pars = AST.asr(body,'', 1,'Stmts', 1,'Code_Pars')
         if me.dyn_base then
             args_id = me.dyn_base.id_
-            args_Code_Pars = AST.asr(me.dyn_base,'Code', 4,'Block', 1,'Stmts',
-                                                         1,'Stmts', 1,'Code_Pars')
+            args_Code_Pars = AST.asr(me.dyn_base,'Code', 4,'Block', 1,'Stmts', 1,'Code_Pars')
         end
 
         for i,dcl in ipairs(body.dcls) do
@@ -448,7 +447,7 @@ if (0)
 
         CONC(me, body)
 
-        local Type = AST.get(body,'Block', 1,'Stmts', 1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
+        local Type = AST.get(body,'Block', 1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
         if not Type then
             LINE(me, [[
 ceu_callback_assert_msg(0, "reached end of `code´");
@@ -659,8 +658,7 @@ if (0) {
 
         if list then
             CONC(me, list)
-            local mids = AST.asr(Code,'Code', 4,'Block', 1,'Stmts',
-                                              1,'Stmts', 2,'Code_Pars')
+            local mids = AST.asr(Code,'Code', 4,'Block', 1,'Stmts', 2,'Code_Pars')
             local ps = {}
             for i, arg in ipairs(list) do
                 if arg.tag ~= 'ID_any' then

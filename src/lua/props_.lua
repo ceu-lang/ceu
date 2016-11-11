@@ -22,7 +22,7 @@ F = {
             if par and t[me.tag] then
                 local sub = par
                 if par.tag == 'Every' then
-                    local _,Await = unpack(AST.asr(par,'', 1,'Loop', 2,'Block', 1,'Stmts'))
+                    local Await = unpack(AST.asr(par,'', 1,'Loop', 2,'Block', 1,'Stmts'))
                     if AST.is_par(Await,me) then
                         return -- ok
                     end
@@ -131,7 +131,7 @@ F = {
     Code = function (me)
         local _,mods,_,body = unpack(me)
         if mods.dynamic and body then
-            local Code_Pars = AST.asr(body,'', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
+            local Code_Pars = AST.asr(body,'', 1,'Stmts', 1,'Code_Pars')
             for i, dcl in ipairs(Code_Pars) do
                 if dcl.mods.dynamic then
                     local _,Type,id = unpack(dcl)
@@ -177,7 +177,7 @@ F = {
     Loop_Pool = function (me)
         local _,list,pool = unpack(me)
         local Code = AST.asr(pool.info.dcl,'Pool', 2,'Type', 1,'ID_abs').dcl
-        local ret = AST.get(Code,'Code', 4,'Block', 1,'Stmts', 1,'Stmts',
+        local ret = AST.get(Code,'Code', 4,'Block', 1,'Stmts',
                                          3,'Code_Ret', 1,'', 2,'Type')
         me.yields = me.yields and ret
             -- if "=>FOREVER" counts as not yielding

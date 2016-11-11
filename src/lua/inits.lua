@@ -136,7 +136,10 @@ stmt[4] = Y
                     stmts = AST.par(stmts, 'Stmts')
                 end
             end
-            ASR(is_default, Dcl,
+            --local stmts = AST.par('Stmts')
+            --local is_default = stmts and stmts.__dcls_defaults
+            local ok = AST.par(me, 'Await_Alias')
+            ASR(is_default or ok, Dcl,
                 'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
                 'reached read access '..
                 '('..me.ln[1]..':'..me.ln[2]..')')
@@ -382,25 +385,14 @@ F = {
         end
 
         if is_ptr then
-            local stmts = AST.get(me,2,'Stmts') or AST.asr(me,1,'Stmts')
-            local Var,Do = unpack(stmts)
-            if me==Var and Do and Do.tag=='Do' and
-               AST.asr(Do,'',3,'Exp_Name').dcl==me
-            then
-                -- start "run_ptrs" after the "do"
-                --  var int x = do ... end;
-error'TODO: luacov never executes this?'
-                run_ptrs(Do, 3, me)
-            else
-                run_ptrs(me, #me+1, me)
-            end
+            run_ptrs(me, #me+1, me)
         end
     end,
 
     -- skiped by run_ptrs with tag=='Do'
     Stmts__PRE = function (me)
-        local Set_Exp, Escape = unpack(me)
-        if #me==2 and Set_Exp.tag=='Set_Exp' and Escape.tag=='Escape' then
+        local Set_Exp, Escape = unpack(me, #me-1)
+        if #me>=2 and Set_Exp.tag=='Set_Exp' and Escape.tag=='Escape' then
             local ID_int = AST.get(Set_Exp,'', 2,'Exp_Name', 1,'ID_int')
             if ID_int then
                 ID_int.__run_ptrs_ok = true

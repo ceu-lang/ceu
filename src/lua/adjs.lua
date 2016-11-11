@@ -90,6 +90,21 @@ error'TODO: luacov never executes this?'
         return AST.node('Nothing', me.ln)
     end,
 
+    Stmts__POS = function (me)
+        return F.__stmts_flatten(me), true
+    end,
+    __stmts_flatten = function (stmts, new)
+        local new = new or node('Stmts', stmts.ln)
+        for _, sub in ipairs(stmts) do
+            if AST.is_node(sub) and sub.tag=='Stmts' then
+                F.__stmts_flatten(sub, new)
+            else
+                AST.set(new, #new+1, sub)
+            end
+        end
+        return new
+    end,
+
 -------------------------------------------------------------------------------
 
     -- TODO: "__PRE" because of "continue"
@@ -721,39 +736,45 @@ error'TODO'
             end
 
             if (tag=='Pool' or tag=='Vec') and (not alias) then
-                --AST.set(ret, #ret, F._SPAWN(me,ret[#ret]))
-                local par = me
                 if tag == 'Pool' then
                     AST.set(ret, #ret, F._SPAWN(me.__par,ret[#ret]))
-                    par = ret
                 end
                 if dim == '[]' then
-                    AST.set(par, #ret+1,
+                    AST.set(ret, #ret+1,
                         node('_Finalize', me.ln,
                             false,
                             false,
                             node('Block', me.ln,
                                 node('Stmts', me.ln,
-                                    node('Finalize_'..tag, me.ln, id))),
+                                    node('Finalize_'..tag, me.ln,
+                                        node('Exp_Name', me.ln,
+                                            node('ID_int', me.ln, id))))),
                             false,
                             false,
-                            i))  -- skip Stmts above (ret)
+                            0))  -- skip Stmts above (ret)
                 end
             elseif (tag=='Var' or tag=='Evt') and alias=='&?'
                     and (tp[1].tag~='ID_nat' or tp[2]~=nil) -- TODO: TYPES.is_nat
             then
                 if #me.__par == 1 then
                     AST.set(ret, #ret+1,
-                        F._SPAWN(me.__par, node('Await_Alias',me.ln,id)))
+                        F._SPAWN(me.__par,
+                            node('Await_Alias',me.ln,
+                                node('Exp_Name', me.ln,
+                                    node('ID_int', me.ln, id)))))
                 else
                     AST.set(ret, #ret+1,
-                        F._SPAWN(me, node('Await_Alias',me.ln,id)))
+                        F._SPAWN(me,
+                            node('Await_Alias',me.ln,
+                                node('Exp_Name', me.ln,
+                                    node('ID_int', me.ln, id)))))
                 end
             end
         end
 
         return ret
     end,
+
     _Vars__PRE = '__dcls__PRE',
     _Vecs__PRE = '__dcls__PRE',
     _Pools__PRE = '__dcls__PRE',
