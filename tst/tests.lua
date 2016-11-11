@@ -29133,6 +29133,25 @@ escape us[0]+us[9];
 }
 
 Test { [[
+native _CEU_APP;
+var int n = 10;
+vector[n] byte us = [0,1,2,3,4,5,6,7,8,9];
+us[n-1] = 1;
+escape _CEU_APP.root.mem.trails_n;
+]],
+    run = 2,
+}
+Test { [[
+native _CEU_APP;
+var int n = 10;
+vector[10] byte us = [0,1,2,3,4,5,6,7,8,9];
+us[n-1] = 1;
+escape _CEU_APP.root.mem.trails_n;
+]],
+    run = 1,
+}
+
+Test { [[
 var int n = 10;
 vector[n] byte us = [0,1,2,3,4,5,6,7,8,9];
 us[n-1] = 1;
@@ -33350,7 +33369,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    props = 'line 4 : not permitted inside `function´',
+    --props = 'line 4 : not permitted inside `function´',
+    props_ = 'line 4 : invalid `await´ : unexpected enclosing `code´',
 }
 
 Test { [[

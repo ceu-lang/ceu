@@ -752,7 +752,9 @@ error'TODO'
             if tag=='Pool' or tag=='Vec' then
                 AST.set(ret, #ret+1,
                         node('_'..tag..'s', me.ln, is_alias, AST.copy(dim), AST.copy(tp), id))
-                if dim=='[]' and (not is_alias) then
+                --if dim=='[]' and (not is_alias) then
+                if (dim=='[]' or tag=='Vec') and (not is_alias) then
+                    -- waste for const vec (see consts.lua)
                     AST.set(ret, #ret+1,
                         node('_Finalize', me.ln,
                             false,

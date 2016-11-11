@@ -282,7 +282,6 @@ end
     if not check(T,'ast')    then return end
     if not check(T,'adjs')   then return end
     if not check(T,'spawns') then return end
---AST.dump(AST.root)
     dofile(DIR..'types.lua')
     if not check(T,'dcls')   then return end
     if not check(T,'names')  then return end
@@ -303,6 +302,7 @@ end
     dofile(DIR..'multis.lua')
     if not check(T,'mems')   then return end
     if not check(T,'codes')  then return end
+--AST.dump(AST.root)
 
 if T.ana or T.tmp or T.props or T.mode then return end
 
