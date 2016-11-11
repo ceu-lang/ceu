@@ -37027,12 +37027,12 @@ code/await Tx (var& int aaa)->void do
     aaa = aaa + 5;
     await FOREVER;
 end
-var int a = 0;
+var int zzz = 0;
 pool[] Tx ts;
-spawn Tx(&a) in ts;
-spawn Tx(&a) in ts;
+spawn Tx(&zzz) in ts;
+spawn Tx(&zzz) in ts;
 await 2s;
-escape a;
+escape zzz;
 ]],
     run = { ['~>2s']=20 },
 }

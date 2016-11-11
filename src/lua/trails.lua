@@ -109,6 +109,25 @@ end
             sub.trails[2] = sub.trails[1] + sub.trails_n-1
         end
     end,
+
+    -- invert pool/finalize b/c finalize frees pool before last iteration
+    __ok = false,
+    Pool = function (me)
+        local is_alias,_,_,dim = unpack(me)
+        if (not dim.is_const) and (not is_alias) then
+            F.__ok = true
+            me.trails[1] = me.trails[1] + 1
+            me.trails[2] = me.trails[2] + 1
+        end
+    end,
+    Finalize_Pool = function (me)
+        if F.__ok then
+            F.__ok = false
+            local fin = AST.par(me, 'Finalize_Case')
+            fin.trails[1] = fin.trails[1] - 1
+            fin.trails[2] = fin.trails[2] - 1
+        end
+    end,
 }
 
 AST.visit(G)

@@ -90,21 +90,6 @@ error'TODO: luacov never executes this?'
         return AST.node('Nothing', me.ln)
     end,
 
-    Stmts__POS = function (me)
-        return F.__stmts_flatten(me), true
-    end,
-    __stmts_flatten = function (stmts, new)
-        local new = new or node('Stmts', stmts.ln)
-        for _, sub in ipairs(stmts) do
-            if AST.is_node(sub) and sub.tag=='Stmts' then
-                F.__stmts_flatten(sub, new)
-            else
-                AST.set(new, #new+1, sub)
-            end
-        end
-        return new
-    end,
-
 -------------------------------------------------------------------------------
 
     -- TODO: "__PRE" because of "continue"
@@ -130,41 +115,11 @@ error'TODO: luacov never executes this?'
         end
     end,
 
--------------------------------------------------------------------------------
-
-    _SPAWN = function (me, spawn)
-        -- all statements after myself
-        local par_stmts = AST.asr(me.__par, 'Stmts')
-        local cnt_stmts = { unpack(par_stmts, me.__i+1) }
-        for i=me.__i, #par_stmts do
-            par_stmts[i] = nil
+    _Finalize__PRE = function (me)
+        if #me == 3 then
+            return      -- ok, already handled
         end
 
-        return node('Par_Or', me.ln,
-                node('Stmts', me.ln,
-                    spawn or me,
-                    node('Await_Forever', me.ln)),
-                node('Stmts', me.ln,
-                    unpack(cnt_stmts)))
-    end,
-
-    _Spawn_Block__PRE = function (me)
-        me.tag = 'Stmts'
-        return F._SPAWN(me)
-    end,
-
-    _Abs_Spawn_Single__PRE = function (me)
-        me.tag = 'Abs_Await'
-        me.__adjs_is_spawn = true
-        return F._SPAWN(me)
-    end,
-
-    _Async_Isr__PRE = function (me)
-        me.tag = 'Async_Isr'
-        return F._SPAWN(me)
-    end,
-
-    _Finalize__PRE = function (me)
         local now,list,fin,pse,res,depth = unpack(me)
 
         local t = {}
@@ -189,10 +144,7 @@ error'TODO: luacov never executes this?'
             x = node('Par', me.ln, unpack(t))
         end
 
-        for i=1,(depth or 0) do
-            me = me.__par   -- depth: number of Stmts to skip
-        end
-        return F._SPAWN(me, node('Finalize',me.ln,now,list,x))
+        return node('_Finalize',me.ln,now,list,x)
     end,
 
 -------------------------------------------------------------------------------
@@ -489,6 +441,22 @@ error'TODO'
 
 -------------------------------------------------------------------------------
 
+    _Async_Isr__PRE = function (me)
+        me.tag = 'Async_Isr'
+        return node('Stmts', me.ln,
+                me,
+                node('_Finalize', me.ln,
+                    false,
+                    false,
+                    node('Block', me.ln,
+                        node('Stmts', me.ln,
+                            node('Finalize_Async_Isr', me.ln))),
+                    false,
+                    false))
+    end,
+
+-------------------------------------------------------------------------------
+
     _Set__PRE = function (me)
         local to,set = unpack(me)
 
@@ -734,42 +702,6 @@ error'TODO'
                 AST.set(ret, #ret+1,
                         node(tag, me.ln, alias, AST.copy(tp), id))
             end
-
-            if (tag=='Pool' or tag=='Vec') and (not alias) then
-                if tag == 'Pool' then
-                    AST.set(ret, #ret, F._SPAWN(me.__par,ret[#ret]))
-                end
-                if dim == '[]' then
-                    AST.set(ret, #ret+1,
-                        node('_Finalize', me.ln,
-                            false,
-                            false,
-                            node('Block', me.ln,
-                                node('Stmts', me.ln,
-                                    node('Finalize_'..tag, me.ln,
-                                        node('Exp_Name', me.ln,
-                                            node('ID_int', me.ln, id))))),
-                            false,
-                            false,
-                            0))  -- skip Stmts above (ret)
-                end
-            elseif (tag=='Var' or tag=='Evt') and alias=='&?'
-                    and (tp[1].tag~='ID_nat' or tp[2]~=nil) -- TODO: TYPES.is_nat
-            then
-                if #me.__par == 1 then
-                    AST.set(ret, #ret+1,
-                        F._SPAWN(me.__par,
-                            node('Await_Alias',me.ln,
-                                node('Exp_Name', me.ln,
-                                    node('ID_int', me.ln, id)))))
-                else
-                    AST.set(ret, #ret+1,
-                        F._SPAWN(me,
-                            node('Await_Alias',me.ln,
-                                node('Exp_Name', me.ln,
-                                    node('ID_int', me.ln, id)))))
-                end
-            end
         end
 
         return ret
@@ -820,6 +752,19 @@ error'TODO'
             if tag=='Pool' or tag=='Vec' then
                 AST.set(ret, #ret+1,
                         node('_'..tag..'s', me.ln, is_alias, AST.copy(dim), AST.copy(tp), id))
+                if dim=='[]' and (not is_alias) then
+                    AST.set(ret, #ret+1,
+                        node('_Finalize', me.ln,
+                            false,
+                            false,
+                            node('Block', me.ln,
+                                node('Stmts', me.ln,
+                                    node('Finalize_'..tag, me.ln,
+                                        node('Exp_Name', me.ln,
+                                            node('ID_int', me.ln, id))))),
+                            false,
+                            false))
+                end
             else
                 AST.set(ret, #ret+1,
                         node('_'..tag..'s', me.ln, is_alias, AST.copy(tp), id))
@@ -862,20 +807,18 @@ error'TODO'
         --  end
 
         me[#me+1] = 1   -- finalize depth: skip Stmts below
-        local ret = node('Stmts', me.ln,
-                        node('Var', me.ln,
-                            '&?',
-                            Type,
-                            __ID_int),
-                        node('_Finalize', me.ln,
-                            node('Set_Alias', me.ln,
-                                node('Exp_1&', Nat_Call.ln, '&',
-                                    Nat_Call),
-                                node('Exp_Name', Type.ln,
-                                    node('ID_int', Type.ln, __ID_int))),
-                            unpack(me,4)))
-        ret = F._SPAWN(me,ret)
-        return ret
+        return node('Stmts', me.ln,
+                node('Var', me.ln,
+                    '&?',
+                    Type,
+                    __ID_int),
+                node('_Finalize', me.ln,
+                    node('Set_Alias', me.ln,
+                        node('Exp_1&', Nat_Call.ln, '&',
+                            Nat_Call),
+                        node('Exp_Name', Type.ln,
+                            node('ID_int', Type.ln, __ID_int))),
+                    unpack(me,4)))
     end,
 
 -------------------------------------------------------------------------------

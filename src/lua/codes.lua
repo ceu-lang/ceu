@@ -727,7 +727,9 @@ if (0) {
 ]])
         CASE(me, me.lbl_in)
         CONC(me, blk)
-        F.__fin(me, case)
+        if case ~= 'CEU_INPUT__FINALIZE' then
+            F.__fin(me, case)
+        end
         HALT(me)
         LINE(me, [[
 }
@@ -1634,50 +1636,35 @@ static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
     end,
 
     Async_Isr = function (me)
-    -- ISR: include "ceu_out_isr(id)"
-
         local exps, vars, _, blk = unpack(me)
-
-        local args = {}
+        me.args = {}
         for _, arg in ipairs(exps) do
-            args[#args+1] = V(arg)
+            me.args[#me.args+1] = V(arg)
         end
-        args = table.concat(args,',')
+        me.args = table.concat(me.args,',')
 
--- TODO: pause, resume
-        -- finalize
         LINE(me, [[
 {
-    int __ceu_args[] = { ]]..args..[[ };
+    int __ceu_args[] = { ]]..me.args..[[ };
     ceu_callback_ptr_ptr(CEU_CALLBACK_ISR_ATTACH, (void*)CEU_ISR_]]..me.n..[[, &__ceu_args);
 }
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__FINALIZE;
-_ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_fin.id..[[;
-_ceu_mem->trails[]]..me.trails[1]..[[].clr_range =
-    (tceu_evt_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[2]..[[ };
-if (0) {
 ]])
-        CASE(me, me.lbl_fin)
-        LINE(me, [[{
-    int __ceu_args[] = { ]]..args..[[ };
-    ceu_callback_ptr_ptr(CEU_CALLBACK_ISR_DETACH, (void*)CEU_ISR_]]..me.n..[[, &__ceu_args);
-}]])
-        HALT(me)
-        LINE(me, [[
-}
-]])
-
-
---[[
-        local code = string.gsub(blk.code, '_ceu_org', '((tceu_org*)CEU_APP.data)')
-        code = string.gsub(code, '_ceu_app', '(&CEU_APP)')
-]]
 
         CODES.isrs = CODES.isrs .. [[
 void CEU_ISR_]]..me.n..[[ (void) {
     ]]..blk.code..[[
 }
 ]]
+    end,
+
+    Finalize_Async_Isr = function (me)
+        -- TODO: pause, resume
+        local paror = AST.asr(me,6,'Par_Or')
+        local isr = AST.asr(paror,1,'Stmts', paror.__i-1, 'Async_Isr')
+        LINE(me, [[{
+    int __ceu_args[] = { ]]..isr.args..[[ };
+    ceu_callback_ptr_ptr(CEU_CALLBACK_ISR_DETACH, (void*)CEU_ISR_]]..isr.n..[[, &__ceu_args);
+}]])
     end,
 
     Atomic = function (me)
