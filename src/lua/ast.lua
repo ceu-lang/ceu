@@ -349,6 +349,8 @@ local function FF (F, str)
     return f
 end
 
+-------------------------------------------------------------------------------
+
 local function from_to (old, new, t)
     if new and new~=old then
         new.__par = t[1]
@@ -362,7 +364,9 @@ local function from_to (old, new, t)
     end
 end
 
-local function visit_aux (F, me, I)
+local visit_fs
+
+local function visit_aux (F, me)
     local pre, mid, pos = FF(F,me.tag..'__PRE'), FF(F,me.tag), FF(F,me.tag..'__POS')
     local bef, aft = FF(F,me.tag..'__BEF'), FF(F,me.tag..'__AFT')
 
@@ -373,14 +377,14 @@ local function visit_aux (F, me, I)
         local ret, dont = F.Node__PRE(me)
         chg, me = from_to(me, ret, t)
         if chg and (not dont) then
-            return visit_aux(F, me)
+            return visit_fs(me)
         end
     end
     if pre then
         local ret, dont = pre(me)
         chg, me = from_to(me, ret, t)
         if chg and (not dont) then
-            return visit_aux(F, me)
+            return visit_fs(me)
         end
     end
 
@@ -407,26 +411,36 @@ local function visit_aux (F, me, I)
         local ret, dont = pos(me)
         chg, me = from_to(me, ret, t)
         if chg and (not dont) then
-            return visit_aux(F, me)
+            return visit_fs(me)
         end
     end
      if F.Node__POS then
         local ret, dont = F.Node__POS(me)
         chg, me = from_to(me, ret, t)
         if chg and (not dont) then
-            return visit_aux(F, me)
+            return visit_fs(me)
         end
     end
 
    return me
 end
-AST.visit_aux = visit_aux
 
+local fs = {}
 function AST.visit (F, node)
-    assert(AST)
-    --STACK = {}
-    return visit_aux(F, node or AST.root)
+    assert(node == nil)
+    fs[#fs+1] = F
+    return visit_aux(F, AST.root)
 end
+
+visit_fs = function (node)
+    local ret
+    for _, f in ipairs(fs) do
+        ret = visit_aux(f, node)
+    end
+    return ret
+end
+
+-------------------------------------------------------------------------------
 
 local function i2l (p)
     return CEU.i2l[p]
