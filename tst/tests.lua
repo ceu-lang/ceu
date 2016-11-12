@@ -66,6 +66,7 @@ escape 1;
     run = 1,
 }
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -19684,7 +19685,6 @@ escape x;
     stmts = 'line 1 : invalid binding : expected `&?´ modifier',
 }
 
---]=====]
 Test { [[
 var&? int xxx = do
     var int y = 10;
@@ -26915,6 +26915,18 @@ escape vec[1];
     wrn = true,
     opts_pre = true,
     run = 10,
+}
+
+Test { [[
+vector[5] int vec = _;
+var int i;
+var int i;
+escape 1;
+]],
+    opts_pre = true,
+    --loop = true,
+    wrn = true,
+    run = 1,
 }
 
 Test { [[

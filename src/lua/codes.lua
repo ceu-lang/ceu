@@ -307,11 +307,11 @@ ceu_vector_setmax(&]]..V(me,ctx)..', '..V(dim)..[[, 1);
         end
     end,
     Finalize_Vec = function (me)
-        local id = unpack(me)
-        local _, _, _, dim = unpack(id.info.dcl)
+        local dcl = AST.ns[unpack(me)]
+        local _, _, _, dim = unpack(dcl)
         if not dim.is_const then
             LINE(me, [[
-ceu_vector_setmax(&]]..V(id,ctx)..[[, 0, 0);
+ceu_vector_setmax(&]]..V(dcl,ctx)..[[, 0, 0);
 ]])
         end
     end,

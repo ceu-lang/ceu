@@ -284,8 +284,8 @@ end
     dofile(DIR..'types.lua')
     if not check(T,'dcls')   then return end
     if not check(T,'fins')   then return end
---AST.dump(AST.root)
     if not check(T,'spawns') then return end
+--AST.dump(AST.root)
     if not check(T,'names')  then return end
     if not check(T,'exps')   then return end
 --do return end
