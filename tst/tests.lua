@@ -66,7 +66,6 @@ escape 1;
     run = 1,
 }
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -2625,6 +2624,7 @@ var int a = do/a end;
 
 -->>> SPAWN / BLOCK
 
+--]=====]
 Test { [[
 var int ret = 0;
 spawn do

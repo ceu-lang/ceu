@@ -667,12 +667,12 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
     ID_int = function (me)
         local id = unpack(me)
-        local blk = AST.par(me,'Block') or AST.iter'Block'()
+        local blk = AST.par(me,'Block')
         do
             -- escape should refer to the parent "a"
             -- var int a = do var int a; ... escape ...; end;
             local set = AST.par(me,'Set_Exp')
-            if set and set.__dcls_is_escape then
+            if set and set.__dcls_is_escape and AST.is_par(set[2],me) then
                 blk = AST.par(blk, 'Block')
             end
         end

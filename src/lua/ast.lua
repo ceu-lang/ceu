@@ -353,10 +353,8 @@ end
 
 local function from_to (old, new, t)
     if new and new~=old then
-        new.__par = t[1]
-        new.__i   = t[2]
-        if new.__par then
-            new.__par[new.__i] = new
+        if t.par then
+            AST.set(t.par, t.i, new)
         end
         return true, new
     else
@@ -371,7 +369,7 @@ local function visit_aux (F, me)
     local bef, aft = FF(F,me.tag..'__BEF'), FF(F,me.tag..'__AFT')
 
     local chg = false
-    local t   = { me.__par, me.__i }
+    local t   = { par=me.__par, i=me.__i }
 
     if F.Node__PRE then
         local ret, dont = F.Node__PRE(me)
