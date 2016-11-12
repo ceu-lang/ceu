@@ -90,12 +90,6 @@ F = {
             ASR(TYPES.is_int(dim.info.tp), me,
                 'invalid declaration : vector dimension must be an integer')
         end
-
-        if dim.is_const and (not is_alias) then
-            -- waste for const vec (see adjs.lua)
-            AST.set(me.__par, me.__i+1,
-                AST.asr(me.__par,'Stmts', me.__i+1,'Par_Or', 2,'Stmts'))
-        end
     end,
 
     Pool = function (me)

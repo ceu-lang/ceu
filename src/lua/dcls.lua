@@ -1,5 +1,6 @@
-DCLS = {
-}
+DCLS = {}
+
+local node = AST.node
 
 local function iter_boundary (cur, id, can_cross)
     return function ()
@@ -231,7 +232,7 @@ DCLS.F = {
     __F = function (id)
         return {
             Var__PRE = function (me)
-                return AST.node('Nothing', me.ln)
+                return node('Nothing', me.ln)
             end,
             Vec__PRE  = 'Var__PRE',
             Evt__PRE  = 'Var__PRE',
@@ -266,8 +267,8 @@ DCLS.F = {
                 assert(fst.tag == 'ID_int')
 
                 local field = unpack(fst)
-                local ret = AST.node('Exp_.', me.ln, '.',
-                                AST.node('ID_int',me.ln,id),
+                local ret = node('Exp_.', me.ln, '.',
+                                node('ID_int',me.ln,id),
                                 field)
                 if prv then
                     AST.set(prv, 2, ret)
@@ -275,7 +276,7 @@ DCLS.F = {
                     prv = ret
                 end
 
-                local ret = AST.node('Exp_Name', me.ln, prv)
+                local ret = node('Exp_Name', me.ln, prv)
                 ret.__handled = ret.__handled or {}
                 ret.__handled[id] = true
                 return ret
@@ -287,6 +288,7 @@ DCLS.F = {
         local alias,Type,id = unpack(me)
 
         -- default constructor for "data"
+if false then
         local abs = TYPES.abs_dcl(Type,'Data')
         if abs and (not alias) and (not me.__handled) and
            --(not AST.par(me,'Code_Pars')) and
@@ -295,6 +297,7 @@ DCLS.F = {
             me.__handled = true
             local sets = AST.copy( AST.asr(abs,'Data',3,'Block',1,'Stmts') )
             sets.__dcls_defaults = true
+error'oi'
             AST.visit(DCLS.F.__F(id), sets)
             if AST.par(me,'Code_Pars') then
                 local stmts = AST.get(AST.par(me,'Code'),'',
@@ -306,9 +309,10 @@ DCLS.F = {
                     -- code/dynamic?
                 end
             else
-                return AST.node('Stmts', me.ln, me, sets)
+                return node('Stmts', me.ln, me, sets)
             end
         end
+end
 
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
@@ -414,7 +418,7 @@ DCLS.F = {
 
         -- check types only
         do
-            local tps = AST.node('Typelist',me.ln)
+            local tps = node('Typelist',me.ln)
             for i, dcl in ipairs(me) do
                 tps[i] = dcl[2]
             end
@@ -477,7 +481,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
         local proto_body = AST.asr(me,'', 4,'Block', 1,'Stmts')
         local orig = proto_body[2]
-        AST.set(proto_body, 2, AST.node('Stmts', me.ln))
+        AST.set(proto_body, 2, node('Stmts', me.ln))
         local new = AST.copy(me)
         AST.set(proto_body, 2, orig)
 
@@ -485,7 +489,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         new.id = id
         new.is_dyn_base = true
 
-        local s = AST.node('Stmts', me.ln, new, me)
+        local s = node('Stmts', me.ln, new, me)
         return s
     end,
 
@@ -766,7 +770,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
                 ASR(type(fr)=='boolean', me,
                     'invalid `escape´ : unexpected expression')
                 set.tag = 'Nothing'
-                return AST.node('Nothing', me.ln)
+                return node('Nothing', me.ln)
             end
         else
             error'bug found'
@@ -775,3 +779,21 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 }
 
 AST.visit(DCLS.F)
+
+DCLS.G = {
+    Stmts__POS = function (me)
+        return DCLS.G.__stmts_flatten(me), true
+    end,
+    __stmts_flatten = function (stmts, new)
+        local new = new or node('Stmts', stmts.ln)
+        for _, sub in ipairs(stmts) do
+            if AST.is_node(sub) and sub.tag=='Stmts' then
+                DCLS.G.__stmts_flatten(sub, new)
+            else
+                AST.set(new, #new+1, sub)
+            end
+        end
+        return new
+    end,
+}
+AST.visit(DCLS.G)

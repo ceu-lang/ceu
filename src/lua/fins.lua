@@ -34,12 +34,14 @@ F = {
     end,
 
     Vec__PRE = function (me)
+        local is_alias,_,_,dim = unpack(me)
+
         if me.__fins_ok then
             return
         end
         me.__fins_ok = true
 
-        if not is_alias then
+        if not (is_alias or dim.is_const) then
             -- waste for const vec (see consts.lua)
             return node('Stmts', me.ln,
                     me,
