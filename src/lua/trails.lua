@@ -1,3 +1,5 @@
+TRAILS = {}
+
 local function MAX (v1, v2)
     return (v1 > v2) and v1 or v2
 end
@@ -11,12 +13,12 @@ local function MAX_all (me, t)
     end
 end
 
-F = {
+TRAILS.F = {
     Node__PRE = function (me)
         me.trails_n = 1
     end,
     Node__POS = function (me)
-        if not F[me.tag] then
+        if not TRAILS.F[me.tag] then
             MAX_all(me)
         end
 
@@ -34,7 +36,7 @@ F = {
             local blk = AST.asr(ID_abs.dcl,'Data', 3,'Block')
             local n = 1
             for _, sub in ipairs(blk.dcls) do
-                n = n + F.__var(sub) - 1
+                n = n + TRAILS.F.__var(sub) - 1
             end
             return n
         else
@@ -43,7 +45,7 @@ F = {
     end,
 
     Var = function (me)
-        me.trails_n = F.__var(me)
+        me.trails_n = TRAILS.F.__var(me)
     end,
 
     Loop_Pool = function (me)
@@ -78,7 +80,7 @@ F = {
     end,
 }
 
-AST.visit(F)
+AST.visit(TRAILS.F)
 
 -------------------------------------------------------------------------------
 
@@ -136,14 +138,14 @@ end
     Pool = function (me)
         local is_alias,_,_,dim = unpack(me)
         if (not dim.is_const) and (not is_alias) then
-            F.__ok = true
+            TRAILS.F.__ok = true
             me.trails[1] = me.trails[1] + 1
             me.trails[2] = me.trails[2] + 1
         end
     end,
     Finalize_Pool = function (me)
-        if F.__ok then
-            F.__ok = false
+        if TRAILS.F.__ok then
+            TRAILS.F.__ok = false
             local fin = AST.par(me, 'Finalize_Case')
             fin.trails[1] = fin.trails[1] - 1
             fin.trails[2] = fin.trails[2] - 1

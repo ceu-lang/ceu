@@ -1,4 +1,6 @@
-F = {
+STMTS = {}
+
+STMTS.F = {
 
 -- SETS
 
@@ -94,7 +96,7 @@ F = {
     Set_Vec = function (me)
         local fr, to = unpack(me)
         INFO.asr_tag(to, {'Vec'}, 'invalid constructor')
-        F.__set_vec(fr, to.info)
+        STMTS.F.__set_vec(fr, to.info)
 
         ASR(not TYPES.is_nat(TYPES.get(to.info.tp,1)), me,
             'invalid constructor : expected internal type : got "'..TYPES.tostring(to.info.tp)..'"')
@@ -332,7 +334,7 @@ F = {
         local ID_ext = unpack(me)
 
         -- ctx
-        local ok, msg = F.__await_ext_err(ID_ext, 'input')
+        local ok, msg = STMTS.F.__await_ext_err(ID_ext, 'input')
         ASR(ok, me, msg and 'invalid `await´ : '..msg)
 
         me.tp = ID_ext.dcl[2]
@@ -397,12 +399,12 @@ F = {
                                                        1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
 
             local pars = AST.asr(me.__code,'', 4,'Block', 1,'Stmts', 2,'Code_Pars')
-            F.__check_watching_list(me, pars, list, must_be_opt)
+            STMTS.F.__check_watching_list(me, pars, list, must_be_opt)
         end
     end,
 
     Abs_Await = function (me)
-        F.Abs_Spawn_Pool(me)
+        STMTS.F.Abs_Spawn_Pool(me)
 
         ASR(AST.par(me,'Code') ~= me.__code, me,
             'invalid `'..AST.tag2id[me.tag]..'´ : unexpected recursive invocation')
@@ -446,7 +448,7 @@ F = {
         local e = unpack(me)
 
         -- ctx
-        local ok, msg = F.__await_ext_err(e, 'input')
+        local ok, msg = STMTS.F.__await_ext_err(e, 'input')
         if not ok then
             INFO.asr_tag(e, {'Evt'}, 'invalid `pause/if´')
         end
@@ -495,7 +497,7 @@ F = {
         if list then
             local Code = AST.asr(pool.info.tp[1].dcl, 'Code')
             local pars = AST.asr(Code,'', 4,'Block', 1,'Stmts', 2,'Code_Pars')
-            F.__check_watching_list(me, pars, list)
+            STMTS.F.__check_watching_list(me, pars, list)
         end
     end,
 
@@ -624,4 +626,4 @@ F = {
     end,
 }
 
-AST.visit(F)
+AST.visit(STMTS.F)

@@ -1,3 +1,5 @@
+TIGHT_ = {}
+
 local awaits = {
     Par           = true,
     Async         = true,
@@ -89,7 +91,7 @@ error'TODO'
     end
 end
 
-F = {
+TIGHT_.F = {
     __loop = function (me, body, is_bounded)
         me.tight = run(body, me)
 
@@ -110,17 +112,17 @@ F = {
 
     Loop = function (me)
         local max, body = unpack(me)
-        F.__loop(me, body, max)
+        TIGHT_.F.__loop(me, body, max)
     end,
 
     Loop_Num = function (me)
         local max, _, range, body = unpack(me)
         local fr,_,to,_ = unpack(range)
-        F.__loop(me, body, max or (fr.is_const and to.is_const))
+        TIGHT_.F.__loop(me, body, max or (fr.is_const and to.is_const))
     end,
 }
 
-AST.visit(F)
+AST.visit(TIGHT_.F)
 
 local impls = {}
 

@@ -22,10 +22,7 @@ function EXPS.check_dim (to, fr)
     end
 end
 
-local F_Exp_as  = F.Exp_as
-local F_Exp_len = F['Exp_$']
-
-F = {
+EXPS.F = {
     Exp_Name = function (me)
         local e = unpack(me)
         me.info = e.info
@@ -193,7 +190,7 @@ F = {
             elseif val.tag == 'Vec_Cons' then
 assert(ID_abs.dcl.tag == 'Data', 'TODO')
 error'TODO: remove below'
-                F.__set_vec(val, var)
+                EXPS.F.__set_vec(val, var)
 
             else
                 -- ctx
@@ -286,7 +283,7 @@ error'TODO: remove below'
 
 -- VECTOR LENGTH: $$
 
-    ['Exp_$$'] = F_Exp_len,
+    ['Exp_$$'] = NAMES.F['Exp_$'],
 
 -- NOT
 
@@ -465,7 +462,7 @@ error'TODO: luacov never executes this?'
 
 -- IS, AS/CAST
 
-    Exp_as = F_Exp_as,
+    Exp_as = NAMES.F.Exp_as,
 
     Exp_is = function (me)
         local op,e = unpack(me)
@@ -485,4 +482,4 @@ error'TODO: luacov never executes this?'
     end,
 }
 
-AST.visit(F)
+AST.visit(EXPS.F)

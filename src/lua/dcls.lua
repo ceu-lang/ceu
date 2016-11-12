@@ -89,6 +89,10 @@ end
 local function dcls_new (blk, me, can_cross)
     AST.asr(blk, 'Block')
 
+    if blk.dcls[me.id] == me then
+        return  -- revisiting this node
+    end
+
     local old = DCLS.get(blk, me.id, can_cross)
     local implicit = (me.is_implicit and 'implicit ') or ''
     if old and (not old.is_predefined) then
@@ -136,7 +140,7 @@ end
 -- native declarations are allowed until `native/end´
 local native_end = false
 
-F = {
+DCLS.F = {
     -- Primitive types: id / is_num
     __prims = function (blk)
         local prims = {
@@ -172,9 +176,9 @@ F = {
     end,
     Block__PRE = function (me)
         me.dcls = {}
-        if F.__prims then
-            F.__prims(me)
-            F.__prims = nil
+        if DCLS.F.__prims then
+            DCLS.F.__prims(me)
+            DCLS.F.__prims = nil
         end
     end,
     Block__POS = function (me)
@@ -288,7 +292,7 @@ F = {
             me.__handled = true
             local sets = AST.copy( AST.asr(abs,'Data',3,'Block',1,'Stmts') )
             sets.__dcls_defaults = true
-            AST.visit(F.__F(id), sets)
+            AST.visit(DCLS.F.__F(id), sets)
             if AST.par(me,'Code_Pars') then
                 local stmts = AST.get(AST.par(me,'Code'),'',
                                         4,'Block', 1,'Stmts', 2,'Block',
@@ -305,7 +309,7 @@ F = {
 
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
-        F.__no_abs(Type, 'Code')
+        DCLS.F.__no_abs(Type, 'Code')
 
         if alias == '&?' then
             me.is_read_only = true
@@ -331,7 +335,7 @@ F = {
         local is_alias,Type,id,dim = unpack(me)
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
-        F.__no_abs(Type, 'Code')
+        DCLS.F.__no_abs(Type, 'Code')
 
         -- vector[] void vec;
         local ID_prim,mod = unpack(Type)
@@ -353,7 +357,7 @@ F = {
 
         -- no modifiers allowed
         for _, Type in ipairs(Typelist) do
-            F.__no_abs(Type)
+            DCLS.F.__no_abs(Type)
 
             local id, mod = unpack(Type)
             assert(id.dcl,'bug found')
@@ -411,7 +415,7 @@ F = {
             for i, dcl in ipairs(me) do
                 tps[i] = dcl[2]
             end
-            F.Typelist(tps)
+            DCLS.F.Typelist(tps)
         end
 
         -- check if all mid's are "&" aliases
@@ -519,7 +523,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             -- compare ins
             local proto1 = AST.asr(body1,'Block',1,'Stmts',1,'Stmts')
             local proto2 = AST.asr(body2,'Block',1,'Stmts',1,'Stmts')
-            local ok = AST.is_equal(proto1, proto2, F.__proto_ignore)
+            local ok = AST.is_equal(proto1, proto2, DCLS.F.__proto_ignore)
 
             -- compare mods
             do
@@ -701,7 +705,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
     end,
     __outer = function (me)
         local lbl = unpack(me)
-        for loop in AST.iter(F.__loop) do
+        for loop in AST.iter(DCLS.F.__loop) do
             if not lbl then
                 return loop
             else
@@ -713,12 +717,12 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         end
     end,
     Break = function (me)
-        me.outer = F.__outer(me)
+        me.outer = DCLS.F.__outer(me)
         ASR(me.outer, me,
             'invalid `break´ : expected matching enclosing `loop´')
     end,
     Continue = function (me)
-        me.outer = F.__outer(me)
+        me.outer = DCLS.F.__outer(me)
         ASR(me.outer, me,
             'invalid `continue´ : expected matching enclosing `loop´')
     end,
@@ -767,4 +771,4 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
     end,
 }
 
-AST.visit(F)
+AST.visit(DCLS.F)

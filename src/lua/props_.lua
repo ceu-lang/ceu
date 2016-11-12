@@ -1,3 +1,5 @@
+PROPS_ = {}
+
 local sync = {
     Await_Forever=true, Await_Ext=true, Await_Int=true, Await_Wclock=true,
     Abs_Spawn=true, Abs_Await=true,
@@ -15,7 +17,7 @@ local NO = {
     Code      = sync,   -- only code/tight
 }
 
-F = {
+PROPS_.F = {
     Node = function (me)
         for k, t in pairs(NO) do
             local par = AST.par(me,k)
@@ -83,19 +85,19 @@ F = {
         end
     end,
     Break = function (me)
-        F.__escape(me)
+        PROPS_.F.__escape(me)
         if me.outer then
             me.outer.has_break = true       -- avoids unnecessary CLEAR
         end
     end,
     Continue = function (me)
-        F.__escape(me)
+        PROPS_.F.__escape(me)
         if me.outer then
             me.outer.has_continue = true    -- avoids unnecessary CLEAR
         end
     end,
     Escape = function (me)
-        F.__escape(me)
+        PROPS_.F.__escape(me)
         if me.outer then
             me.outer.has_escape = true      -- avoids unnecessary CLEAR
         end
@@ -148,7 +150,7 @@ F = {
         local _,num = unpack(me)
         ASR(num, me, 'invalid `data´ declaration : missing `as´')
         for _, sub in ipairs(me.hier.down) do
-            F.__check(sub)
+            PROPS_.F.__check(sub)
         end
     end,
 
@@ -157,7 +159,7 @@ F = {
         if num then
             ASR(me.hier, me, 'invalid `as´ declaration : expected `data´ hierarchy')
             if num ~= 'nothing' then
-                F.__check(DCLS.base(me))
+                PROPS_.F.__check(DCLS.base(me))
             end
         end
     end,
@@ -211,4 +213,4 @@ F = {
     end,
 }
 
-AST.visit(F)
+AST.visit(PROPS_.F)

@@ -170,7 +170,7 @@ function LUA (me)
     end
 end
 
-F = {
+CODES.F = {
     ROOT     = CONC_ALL,
     Stmts    = CONC_ALL,
     Watching = CONC_ALL,
@@ -260,7 +260,7 @@ if (]]..V(c)..[[) {
             for _, sub in ipairs(blk.dcls) do
                 local base = base..me.id_..'.'
                 sub.code = ''
-                F[sub.tag](sub, base)
+                CODES.F[sub.tag](sub, base)
                 me.code = me.code..sub.code
             end
         else
@@ -276,7 +276,7 @@ if (]]..V(c)..[[) {
     end,
 
     Var = function (me, base)
-        F.__var(me, base or '')
+        CODES.F.__var(me, base or '')
     end,
 
     Vec = function (me, base)
@@ -547,7 +547,7 @@ if (((tceu_code_args_]]..Code.id_..[[*)_ceu_occ)->_]]..ID_int.dcl.is_mid_idx..[[
             { ['evt.mem'] = '(tceu_code_mem*) &'..CUR('__mem_'..me.n) },
             { lbl = me.lbl_out.id },
             lbl = me.lbl_out.id,
-            exec = F.__abs(me, '(&'..CUR(' __mem_'..me.n)..'.mem)', 'NULL'),
+            exec = CODES.F.__abs(me, '(&'..CUR(' __mem_'..me.n)..'.mem)', 'NULL'),
         })
 
         LINE(me, [[
@@ -561,7 +561,7 @@ ceu_stack_clear(_ceu_stk, _ceu_mem,
         local ID_abs, Abslist = unpack(Abs_Cons)
         local alias,tp,_,dim = unpack(pool.info.dcl)
 
-        local code = F.__abs(me, '__ceu_new_mem', '(&'..V(pool)..')')
+        local code = CODES.F.__abs(me, '__ceu_new_mem', '(&'..V(pool)..')')
         LINE(me, [[
 {
     tceu_code_mem_dyn* __ceu_new;
@@ -735,14 +735,14 @@ _ceu_mem->trails[]]..me.trails[1]..[[].clr_range =
     Finalize = CONC_ALL,
     Finalize_Case = function (me)
         local case, blk = unpack(me)
-        F.__fin(me, case)
+        CODES.F.__fin(me, case)
         LINE(me, [[
 if (0) {
 ]])
         CASE(me, me.lbl_in)
         CONC(me, blk)
         if case ~= 'CEU_INPUT__FINALIZE' then
-            F.__fin(me, case)
+            CODES.F.__fin(me, case)
         end
         HALT(me)
         LINE(me, [[
@@ -847,7 +847,7 @@ ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
 
     Loop = function (me)
         local _, body = unpack(me)
-        local max = F.__loop_max(me)
+        local max = CODES.F.__loop_max(me)
 
         LINE(me, [[
 ]]..max.ini..[[
@@ -863,7 +863,7 @@ while (1) {
 
         assert(body.trails[1]==me.trails[1] and body.trails[2]==me.trails[2])
 
-        F.__loop_async(me)
+        CODES.F.__loop_async(me)
         LINE(me, [[
     ]]..max.inc..[[
 }
@@ -878,7 +878,7 @@ while (1) {
     Loop_Num = function (me)
         local _, i, range, body = unpack(me)
         local fr, dir, to, step = unpack(range)
-        local max = F.__loop_max(me)
+        local max = CODES.F.__loop_max(me)
 
         -- check if step is positive (static)
         if step then
@@ -930,7 +930,7 @@ while (1) {
 ]])
         CASE(me, me.lbl_cnt)
             assert(body.trails[1]==me.trails[1] and body.trails[2]==me.trails[2])
-        F.__loop_async(me)
+        CODES.F.__loop_async(me)
         LINE(me, [[
     ]]..V(i)..' = '..V(i)..' + '..V(step)..[[;
     ceu_callback_assert_msg_ex(]]..V(i)..op..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n)..[[,
@@ -1869,7 +1869,7 @@ local function SUB (str, from, to)
     end
 end
 
-AST.visit(F)
+AST.visit(CODES.F)
 
 local labels do
     labels = ''

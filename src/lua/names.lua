@@ -1,5 +1,5 @@
-INFO = {
-}
+NAMES = {}
+INFO  = {}
 
 function INFO.asr_tag (e, cnds, err_msg)
     ASR(e.info, e, err_msg..' : expected name expression')
@@ -40,7 +40,7 @@ function INFO.new (me, tag, id, tp, ...)
     }
 end
 
-F = {
+NAMES.F = {
 -- IDs
 
     ID_nat = function (me)
@@ -207,7 +207,7 @@ DBG'TODO: type annotation'
         end
 
         if e.tag == 'Outer' then
-            F.ID_int(me)
+            NAMES.F.ID_int(me)
             me.info.id = 'outer.'..member
         else
             ASR(TYPES.ID_plain(e.info.tp), me,
@@ -251,4 +251,4 @@ DBG'TODO: type annotation'
     end,
 }
 
-AST.visit(F)
+AST.visit(NAMES.F)

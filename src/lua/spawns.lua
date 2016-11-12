@@ -1,14 +1,16 @@
 local node = AST.node
 
-F = {
+SPAWNS = {}
+
+SPAWNS.F = {
     Stmts__POS = function (me)
-        return F.__stmts_flatten(me), true
+        return SPAWNS.F.__stmts_flatten(me), true
     end,
     __stmts_flatten = function (stmts, new)
         local new = new or node('Stmts', stmts.ln)
         for _, sub in ipairs(stmts) do
             if AST.is_node(sub) and sub.tag=='Stmts' then
-                F.__stmts_flatten(sub, new)
+                SPAWNS.F.__stmts_flatten(sub, new)
             else
                 AST.set(new, #new+1, sub)
             end
@@ -16,9 +18,9 @@ F = {
         return new
     end,
 }
-AST.visit(F)
+AST.visit(SPAWNS.F)
 
-G = {
+SPAWNS.G = {
     _SPAWN = function (par, I, spawn)
         -- all statements after myself
         local par_stmts = AST.asr(par, 'Stmts')
@@ -37,18 +39,18 @@ G = {
 
     _Spawn_Block__PRE = function (me)
         me.tag = 'Stmts'
-        return G._SPAWN(me.__par, me.__i, me)
+        return SPAWNS.G._SPAWN(me.__par, me.__i, me)
     end,
 
     _Abs_Spawn_Single__PRE = function (me)
         me.tag = 'Abs_Await'
         me.__adjs_is_spawn = true
-        return G._SPAWN(me.__par, me.__i, me)
+        return SPAWNS.G._SPAWN(me.__par, me.__i, me)
     end,
 
     _Finalize_X__PRE = function (me)
         me.tag = 'Finalize'
-        return G._SPAWN(me.__par, me.__i, me)
+        return SPAWNS.G._SPAWN(me.__par, me.__i, me)
     end,
 
     Evt__PRE = 'Var__PRE',
@@ -63,7 +65,7 @@ G = {
         if alias == '&?' and (me.tag=='Evt' or tp[1].tag~='ID_nat' or tp[2]~=nil) then
                              -- TODO: TYPES.is_nat
             if not AST.par(me,'Code_Pars') then
-                return G._SPAWN(me.__par, me.__i,
+                return SPAWNS.G._SPAWN(me.__par, me.__i,
                         node('Stmts', me.ln,
                             me,
                             node('Await_Alias', me.ln, me.n)))
@@ -79,9 +81,9 @@ G = {
         end
         local alias = unpack(me)
         if not alias then
-            return G._SPAWN(me.__par, me.__i, me)
+            return SPAWNS.G._SPAWN(me.__par, me.__i, me)
         end
     end,
 }
 
-AST.visit(G)
+AST.visit(SPAWNS.G)

@@ -2624,7 +2624,6 @@ var int a = do/a end;
 
 -->>> SPAWN / BLOCK
 
---]=====]
 Test { [[
 var int ret = 0;
 spawn do
@@ -19685,6 +19684,7 @@ escape x;
     stmts = 'line 1 : invalid binding : expected `&?´ modifier',
 }
 
+--]=====]
 Test { [[
 var&? int xxx = do
     var int y = 10;
