@@ -46,7 +46,7 @@ G = {
         return G._SPAWN(me.__par, me.__i, me)
     end,
 
-    _Finalize__PRE = function (me)
+    _Finalize_X__PRE = function (me)
         me.tag = 'Finalize'
         return G._SPAWN(me.__par, me.__i, me)
     end,

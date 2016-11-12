@@ -115,38 +115,6 @@ error'TODO: luacov never executes this?'
         end
     end,
 
-    _Finalize__PRE = function (me)
-        if #me == 3 then
-            return      -- ok, already handled
-        end
-
-        local now,list,fin,pse,res,depth = unpack(me)
-
-        local t = {}
-        if #AST.asr(fin,'Block',1,'Stmts') > 0 then
-            t[#t+1] = node('Finalize_Case', me.ln, 'CEU_INPUT__FINALIZE', fin)
-        end
-        if pse then
-            t[#t+1] = node('Finalize_Case', me.ln, 'CEU_INPUT__PAUSE', pse)
-        end
-        if res then
-            t[#t+1] = node('Finalize_Case', me.ln, 'CEU_INPUT__RESUME', res)
-        end
-
-        if #t == 0 then
-            return node('Finalize',me.ln,now,list)
-        end
-
-        local x
-        if #t <= 1 then
-            x = unpack(t)
-        else
-            x = node('Par', me.ln, unpack(t))
-        end
-
-        return node('_Finalize',me.ln,now,list,x)
-    end,
-
 -------------------------------------------------------------------------------
 
     _Data_simple__PRE = '_Data_block__PRE',
@@ -441,22 +409,6 @@ error'TODO'
 
 -------------------------------------------------------------------------------
 
-    _Async_Isr__PRE = function (me)
-        me.tag = 'Async_Isr'
-        return node('Stmts', me.ln,
-                me,
-                node('_Finalize', me.ln,
-                    false,
-                    false,
-                    node('Block', me.ln,
-                        node('Stmts', me.ln,
-                            node('Finalize_Async_Isr', me.ln))),
-                    false,
-                    false))
-    end,
-
--------------------------------------------------------------------------------
-
     _Set__PRE = function (me)
         local to,set = unpack(me)
 
@@ -619,22 +571,6 @@ error'TODO'
 
 -------------------------------------------------------------------------------
 
-    _Lua_Do__PRE = function (me)
-        me.tag = 'Lua_Do'
-        return node('Block', me.ln,
-                node('Stmts', me.ln,
-                    node('Lua_Do_Open', me.ln, me.n),
-                    node('_Finalize', me.ln,
-                        false,
-                        false,
-                        node('Block', me.ln,
-                            node('Stmts', me.ln,
-                                node('Lua_Do_Close', me.ln, me.n))),
-                        false,
-                        false),
-                    me))
-    end,
-
     _Lua = function (me)
         --[[
         -- a = @a ; b = @b
@@ -752,21 +688,6 @@ error'TODO'
             if tag=='Pool' or tag=='Vec' then
                 AST.set(ret, #ret+1,
                         node('_'..tag..'s', me.ln, is_alias, AST.copy(dim), AST.copy(tp), id))
-                --if dim=='[]' and (not is_alias) then
-                if (dim=='[]' or tag=='Vec') and (not is_alias) then
-                    -- waste for const vec (see consts.lua)
-                    AST.set(ret, #ret+1,
-                        node('_Finalize', me.ln,
-                            false,
-                            false,
-                            node('Block', me.ln,
-                                node('Stmts', me.ln,
-                                    node('Finalize_'..tag, me.ln,
-                                        node('Exp_Name', me.ln,
-                                            node('ID_int', me.ln, id))))),
-                            false,
-                            false))
-                end
             else
                 AST.set(ret, #ret+1,
                         node('_'..tag..'s', me.ln, is_alias, AST.copy(tp), id))
@@ -797,30 +718,14 @@ error'TODO'
 -------------------------------------------------------------------------------
 
     _Var_set_fin__PRE = function (me)
-        local Type, __ID_int, Nat_Call = unpack(me)
-
-        --  var & Type __ID_int = & Nat_Call finalize with ... end
-        -->>>
-        --  var & Type __ID_int;
-        --  do
-        --      ID_int = & Nat_Call;
-        --  finalize with
-        --      ...
-        --  end
-
-        me[#me+1] = 1   -- finalize depth: skip Stmts below
+        local Type, __ID_int = unpack(me)
+        me.tag = '_Var_set_fin_X'
         return node('Stmts', me.ln,
                 node('Var', me.ln,
                     '&?',
                     Type,
                     __ID_int),
-                node('_Finalize', me.ln,
-                    node('Set_Alias', me.ln,
-                        node('Exp_1&', Nat_Call.ln, '&',
-                            Nat_Call),
-                        node('Exp_Name', Type.ln,
-                            node('ID_int', Type.ln, __ID_int))),
-                    unpack(me,4)))
+                me)
     end,
 
 -------------------------------------------------------------------------------

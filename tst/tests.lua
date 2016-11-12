@@ -66,6 +66,7 @@ escape 1;
     run = 1,
 }
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -42487,7 +42488,6 @@ escape (call Fx(Dd(1))) + (call Fx(_));
 -- << ADT : MISC
 
 -->> DATA / ALIAS / POINTER
---]=====]
 
 Test { [[
 data Dd with

@@ -54,11 +54,7 @@ function DCLS.get (blk, id, can_cross)
     for blk in iter_boundary(blk,id,can_cross) do
         local dcl = blk.dcls[id]
         if dcl then
-            if AST.iter'Finalize_Vec'() or AST.iter'Finalize_Pool'() then
-                -- not used
-            else
-                dcl.is_used = true
-            end
+            dcl.is_used = true
             return dcl
         end
     end
@@ -671,7 +667,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
     ID_int = function (me)
         local id = unpack(me)
-        local blk = AST.par(me, 'Block')
+        local blk = AST.par(me,'Block') or AST.iter'Block'()
         do
             -- escape should refer to the parent "a"
             -- var int a = do var int a; ... escape ...; end;
