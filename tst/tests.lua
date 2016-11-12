@@ -33369,8 +33369,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    --props = 'line 4 : not permitted inside `function´',
-    props_ = 'line 4 : invalid `await´ : unexpected enclosing `code´',
+    props = 'line 4 : not permitted inside `function´',
+    --props_ = 'line 4 : invalid `await´ : unexpected enclosing `code´',
 }
 
 Test { [[
@@ -42780,6 +42780,41 @@ escape 1;
     stmts = 'line 15 : invalid `emit´ : types mismatch : "(int)" <= "()"',
 }
 
+Test { [[
+native _CEU_APP;
+data Vv with
+    vector[] int xxx;
+end
+var Vv yyy = val Vv(_);
+escape _CEU_APP.root.mem.trails_n;
+]],
+    run = 2,
+}
+Test { [[
+native _CEU_APP;
+data Vv with
+    vector[] int xxx;
+    vector[] int yyy;
+end
+var Vv zzz = val Vv(_,_);
+escape _CEU_APP.root.mem.trails_n;
+]],
+    run = 3,
+}
+Test { [[
+native _CEU_APP;
+data Vv with
+    vector[] int xxx;
+    vector[] int yyy;
+end
+par/and do
+with
+    var Vv zzz = val Vv(_,_);
+end
+escape _CEU_APP.root.mem.trails_n;
+]],
+    run = 4,
+}
 Test { [[
 data Vv with
     vector[] int xxx;

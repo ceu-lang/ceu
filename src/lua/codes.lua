@@ -250,16 +250,39 @@ if (]]..V(c)..[[) {
     end,
 ]]
 
-    Var = function (me)
+    __var = function (me, base)
         local is_alias, tp = unpack(me)
-        if TYPES.check(tp,'?') and (not is_alias) and (not me.is_param) then
-            LINE(me, [[
-]]..V(me)..[[.is_set = 0;
+        local ID_abs = AST.get(tp,'Type',1,'ID_abs')
+        if me.tag=='Var' and (not is_alias) and ID_abs and
+           TYPES.check(tp,ID_abs[1]) and ID_abs.dcl.tag=='Data'
+        then
+            local blk = AST.asr(ID_abs.dcl,'Data', 3,'Block')
+            for _, sub in ipairs(blk.dcls) do
+                local base = base..me.id_..'.'
+                sub.code = ''
+                F[sub.tag](sub, base)
+                me.code = me.code..sub.code
+            end
+        else
+            if TYPES.check(tp,'?') and (not is_alias) and (not me.is_param) then
+                LINE(me, [[
+]]..V(me, {base=base})..[[.is_set = 0;
 ]])
+            end
         end
     end,
 
-    Vec = function (me)
+    Evt = function (me)
+    end,
+
+    Var = function (me, base)
+        F.__var(me, base or '')
+    end,
+
+    Vec = function (me, base)
+        base = base or ''
+        local ctx = { base=base }
+
         -- setmax (n)
         -- vector[n] int vec;
         local is_alias, tp, _, dim = unpack(me)
@@ -267,16 +290,16 @@ if (]]..V(c)..[[) {
             if not is_alias then
                 if dim.is_const then
                     LINE(me, [[
-ceu_vector_init(&]]..V(me)..','..V(dim)..', 0, sizeof('..TYPES.toc(tp)..[[),
-                (byte*)&]]..V(me,{id_suf='_buf'})..[[);
+ceu_vector_init(&]]..V(me,ctx)..','..V(dim)..', 0, sizeof('..TYPES.toc(tp)..[[),
+                (byte*)&]]..V(me,{base=base,id_suf='_buf'})..[[);
 ]])
                 else
                     LINE(me, [[
-ceu_vector_init(&]]..V(me)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
+ceu_vector_init(&]]..V(me,ctx)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
 ]])
                     if dim ~= '[]' then
                         LINE(me, [[
-ceu_vector_setmax(&]]..V(me)..', '..V(dim)..[[, 1);
+ceu_vector_setmax(&]]..V(me,ctx)..', '..V(dim)..[[, 1);
 ]])
                     end
                 end
@@ -293,7 +316,10 @@ ceu_vector_setmax(&]]..V(id,ctx)..[[, 0, 0);
         end
     end,
 
-    Pool = function (me)
+    Pool = function (me, base)
+        base = base or ''
+        local ctx = { base=base }
+
         local is_alias, tp, _, dim = unpack(me)
         if is_alias then
             return
@@ -301,27 +327,27 @@ ceu_vector_setmax(&]]..V(id,ctx)..[[, 0, 0);
         LINE(me, [[
 {
     /* first.nxt = first.prv = &first; */
-    tceu_code_mem_dyn* __ceu_dyn = &]]..V(me)..[[.first;
-    ]]..V(me)..[[.first = (tceu_code_mem_dyn) { __ceu_dyn, __ceu_dyn,
+    tceu_code_mem_dyn* __ceu_dyn = &]]..V(me,ctx)..[[.first;
+    ]]..V(me,ctx)..[[.first = (tceu_code_mem_dyn) { __ceu_dyn, __ceu_dyn,
                                                 CEU_CODE_MEM_DYN_STATE_NONE, {} };
 };
-]]..V(me)..[[.up_mem = _ceu_mem;
-]]..V(me)..[[.up_trl = ]]..me.trails[1]..[[;
+]]..V(me,ctx)..[[.up_mem = _ceu_mem;
+]]..V(me,ctx)..[[.up_trl = ]]..me.trails[1]..[[;
 ]])
         if dim == '[]' then
             LINE(me, [[
-]]..V(me)..[[.pool.queue = NULL;
+]]..V(me,ctx)..[[.pool.queue = NULL;
 ]])
         else
             LINE(me, [[
-ceu_pool_init(&]]..V(me)..'.pool, '..V(dim)..[[,
+ceu_pool_init(&]]..V(me,ctx)..'.pool, '..V(dim)..[[,
               sizeof(tceu_code_mem_dyn)+sizeof(]]..TYPES.toc(tp)..[[),
               (byte**)&]]..CUR(me.id_..'_queue')..', (byte*)&'..CUR(me.id_..'_buf')..[[);
 ]])
         end
         LINE(me, [[
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id         = CEU_INPUT__CODE_POOL;
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.pool_first = &]]..V(me)..[[.first;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.pool_first = &]]..V(me,ctx)..[[.first;
 ]])
     end,
     Finalize_Pool = function (me)

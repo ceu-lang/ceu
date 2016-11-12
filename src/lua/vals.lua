@@ -15,7 +15,7 @@ function CUR (field, ctx)
             data = 'CEU_APP.root'
         end
     end
-    local base = (ctx.base and ctx.base..'.') or ''
+    local base = ctx.base or ''
     return '('..data..'.'..base..field..')'
 end
 
