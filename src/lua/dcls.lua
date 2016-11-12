@@ -89,7 +89,7 @@ end
 local function dcls_new (blk, me, can_cross)
     AST.asr(blk, 'Block')
 
-    if blk.dcls[me.id] == me then
+    if me.n and blk.dcls[me.n..'_'] then
         return  -- revisiting this node
     end
 
@@ -113,6 +113,9 @@ local function dcls_new (blk, me, can_cross)
 
     blk.dcls[#blk.dcls+1] = me
     blk.dcls[me.id] = me
+    if me.n then
+        blk.dcls[me.n..'_'] = true
+    end
     me.blk = blk
     return me
 end
@@ -190,7 +193,7 @@ DCLS.F = {
             return
         end
 
-        for _, dcl in pairs(me.dcls) do
+        for _, dcl in ipairs(me.dcls) do
             if dcl.tag=='Data' and string.sub(dcl.id,1,1)=='_' then
                 -- auto generated
             else
