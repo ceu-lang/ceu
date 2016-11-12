@@ -138,8 +138,9 @@ stmt[4] = Y
             end
             --local stmts = AST.par('Stmts')
             --local is_default = stmts and stmts.__dcls_defaults
-            local ok = AST.par(me,'Await_Alias') or AST.par(me,'Finalize_Vec')
-            ASR(is_default or ok, Dcl,
+            --local ok = AST.par(me,'Await_Alias') or AST.par(me,'Finalize_Vec')
+            --ASR(is_default or ok, Dcl,
+            ASR(is_default, Dcl,
                 'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
                 'reached read access '..
                 '('..me.ln[1]..':'..me.ln[2]..')')

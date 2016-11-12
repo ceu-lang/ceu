@@ -66,9 +66,7 @@ G = {
                 return G._SPAWN(me.__par, me.__i,
                         node('Stmts', me.ln,
                             me,
-                            node('Await_Alias',me.ln,
-                                node('Exp_Name', me.ln,
-                                    node('ID_int', me.ln, id)))))
+                            node('Await_Alias', me.ln, me.n)))
             end
         end
     end,

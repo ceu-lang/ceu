@@ -1,5 +1,6 @@
 AST = {
     root = nil,
+    ns   = {},
 }
 
 local STACK = {}
@@ -66,6 +67,7 @@ function AST.node (tag, ln, ...)
         me = setmetatable({ ... }, MT)
     end
     me.n = _N
+    AST.ns[me.n] = me
     --me.xxx = debug.traceback()
     _N = _N + 1
     me.ln  = ln

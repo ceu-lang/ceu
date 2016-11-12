@@ -365,10 +365,10 @@ ceu_dbg_assert(]]..V(id,ctx)..[[.pool.queue == NULL);
 ]])
     end,
     Await_Alias = function (me)
-        local id = unpack(me)
+        local dcl = AST.ns[unpack(me)]
         -- HACK_4
         LINE(me, [[
-]]..V(id)..[[.alias = NULL;
+]]..V(dcl)..[[.alias = NULL;
 _ceu_mem->trails[]]..me.trails[1]..[[].lbl = ]]..me.lbl.id..[[;
 /* do not enter from outside */
 if (0)
@@ -376,7 +376,7 @@ if (0)
 ]])
         CASE(me, me.lbl)
         LINE(me, [[
-    ]]..V(id)..[[.alias = NULL;   /* set it to null when alias goes out of scope */
+    ]]..V(dcl)..[[.alias = NULL;   /* set it to null when alias goes out of scope */
     return;
 }
 ]])
