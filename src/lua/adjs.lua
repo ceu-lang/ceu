@@ -246,7 +246,7 @@ error'TODO'
                     _,_,_,_,tp,id = unpack(v)
                     id = id or '_anon_'..i
                     if tp.tag == 'Type' then
-                        tp = node('Typelist', me.ln, tp)
+                        tp = node('_Typelist', me.ln, tp)
                         AST.set(v, 4, tp)
                     end
                     AST.set(me, i, node('Evt', me.ln, is_alias, AST.copy(tp), id))
@@ -649,14 +649,14 @@ error'TODO'
     _Evts__PRE = function (me)
         local _,tp = unpack(me)
         if tp.tag == 'Type' then
-            AST.set(me, 2, node('Typelist', me.ln, tp))
+            AST.set(me, 2, node('_Typelist', me.ln, tp))
         end
         return F.__dcls__PRE(me)
     end,
     _Exts__PRE = function (me)
         local _,tp = unpack(me)
         if tp.tag == 'Type' then
-            AST.set(me, 2, node('Typelist', me.ln, tp))
+            AST.set(me, 2, node('_Typelist', me.ln, tp))
         end
         return F.__dcls__PRE(me)
     end,
@@ -710,7 +710,7 @@ error'TODO'
     _Evts_set__PRE = function (me)
         local _,tp = unpack(me)
         if tp.tag == 'Type' then
-            tp = node('Typelist', me.ln, tp)
+            tp = node('_Typelist', me.ln, tp)
         end
         return F.__dcls_set__PRE(me)
     end,
@@ -737,7 +737,7 @@ error'TODO'
     Evt__PRE = function (me)
         local _,Type = unpack(me)
         if Type.tag == 'Type' then
-            AST.set(me, 2, node('Typelist', me.ln, Type))
+            AST.set(me, 2, node('_Typelist', me.ln, Type))
         end
     end,
 
@@ -772,7 +772,8 @@ error'TODO: luacov never executes this?'
         end
     end,
 
-    Typelist__PRE = function (me)
+    _Typelist__PRE = function (me)
+        me.tag = 'Typelist'
         local Type, snd = unpack(me)
         local ID_prim, mod = unpack(Type)
         if (not snd) and

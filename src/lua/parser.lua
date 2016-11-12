@@ -508,14 +508,14 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     -- (var& int v, var/nohold void&& ptr)
     , __typepars = Cc{} * CK'vector' * CKK'&' * V'__Dim' * V'Type'
                  + Cc{} * CK'pool'   * CKK'&' * V'__Dim' * V'Type'
-                 + Cc{} * CK'event'  * CKK'&' * Cc(false) * (PARENS(V'Typelist') + V'Type')
+                 + Cc{} * CK'event'  * CKK'&' * Cc(false) * (PARENS(V'_Typelist') + V'Type')
                  + Ct(Cg(K'dynamic','dynamic')^-1)
                         * CK'var'    * OPT(CKK'&') * OPT(KK'/'*CK'hold') * V'Type'
     , _Code_Pars_Item  = V'__typepars' * OPT(V'__ID_int')
 
     , __typepars_init = Cc{} * CK'vector' * CKK'&' * V'__Dim' * V'Type'
                       + Cc{} * CK'pool'   * CKK'&' * V'__Dim' * V'Type'
-                      + Cc{} * CK'event'  * (V'__ALS') * Cc(false) * (PARENS(V'Typelist') + V'Type')
+                      + Cc{} * CK'event'  * (V'__ALS') * Cc(false) * (PARENS(V'_Typelist') + V'Type')
                       + Cc{} * CK'var'    * (V'__ALS') * Cc(false) * V'Type'
     , _Code_Pars_Init_Item = V'__typepars_init' * OPT(V'__ID_int')
 
@@ -587,12 +587,12 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                         -- TODO: only vec constr
     , _Pools_set = K'pool' * OPT(CKK'&') * V'__Dim' * V'Type' *
                     LIST(V'__vars_set')
-    , _Evts_set  = K'event' * OPT(V'__ALS') * (PARENS(V'Typelist')+V'Type') *
+    , _Evts_set  = K'event' * OPT(V'__ALS') * (PARENS(V'_Typelist')+V'Type') *
                     LIST(V'__vars_set')
 
-    , _Exts      = (CK'input'+CK'output') * (PARENS(V'Typelist')+V'Type') *
+    , _Exts      = (CK'input'+CK'output') * (PARENS(V'_Typelist')+V'Type') *
                     LIST(V'__ID_ext')
-    , Typelist   = LIST(V'Type')
+    , _Typelist  = LIST(V'Type')
 
 -- AWAIT, EMIT
 
