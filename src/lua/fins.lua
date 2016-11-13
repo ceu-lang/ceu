@@ -55,11 +55,13 @@ F = {
         end
     end,
 
-    Pool = function (me)
+    Pool__PRE = function (me)
         if me.__fins_ok then
             return
         end
         me.__fins_ok = true
+
+        local is_alias,_,_,dim = unpack(me)
 
         if dim=='[]' and (not is_alias) then
             return node('Stmts', me.ln,

@@ -326,7 +326,7 @@ end
 ]]
         ' (ln='..me.ln[2]..' n='..me.n..
                            ' p='..(me.__par and me.__par.n or '')..
-                           ' trl='..(me.trails_n or '?')..
+                           ' trl='..(me.trails and me.trails[1] or '?')..'/'..(me.trails_n or '?')..
                            ' i='..(me.__i or '?')..
                            ' d='..AST.depth(me)..
                            ') '..ks)

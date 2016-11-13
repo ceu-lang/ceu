@@ -351,12 +351,12 @@ _ceu_mem->trails[]]..me.trails[1]..[[].evt.pool_first = &]]..V(me,ctx)..[[.first
 ]])
     end,
     Finalize_Pool = function (me)
-        local id = unpack(me)
+        local dcl = AST.ns[unpack(me)]
         LINE(me, [[
-ceu_dbg_assert(]]..V(id,ctx)..[[.pool.queue == NULL);
+ceu_dbg_assert(]]..V(dcl,ctx)..[[.pool.queue == NULL);
 {
-    tceu_code_mem_dyn* __ceu_cur = ]]..V(id,ctx)..[[.first.nxt;
-    while (__ceu_cur != &]]..V(id,ctx)..[[.first) {
+    tceu_code_mem_dyn* __ceu_cur = ]]..V(dcl,ctx)..[[.first.nxt;
+    while (__ceu_cur != &]]..V(dcl,ctx)..[[.first) {
         tceu_code_mem_dyn* __ceu_nxt = __ceu_cur->nxt;
         ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, __ceu_cur, 0);
         __ceu_cur = __ceu_nxt;
