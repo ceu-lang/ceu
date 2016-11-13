@@ -34896,7 +34896,6 @@ escape 1;
     run = 1,
 }
 
---]=====]
 -- test valgrind used to fail
 Test { [[
 code/await Ff (void) -> (var&? int xxx) -> void do
@@ -35813,119 +35812,7 @@ escape r;
 ]],
     run = 10,
 }
-Test { [[
-data Object with
-  var int c = 101;
-end
-code/await Show(var Object obj) -> int do
-    escape obj.c;
-end
-var int r = await Show(_);
-escape r;
-]],
-    run = 101,
-}
-Test { [[
-data Object with
-  var int c = 101;
-end
-code/await Show(var Object obj) -> (var&? int ret) -> int do
-    var int a = obj.c;
-    ret = &a;
-    escape a;
-end
-var int r = await Show(_);
-escape r;
-]],
-    run = 101,
-}
-Test { [[
-data Object with
-  var int c = 101;
-end
-code/await Show(var Object obj) -> (var& int ret) -> FOREVER do
-    var int a = obj.c;
-    ret = &a;
-    await FOREVER;
-end
-
-var& int r;
-spawn Show(Object(1)) -> (&r); // prints 0
-escape r;
-]],
-    run = 101,
-}
-Test { [[
-data Object with
-  var int c = 101;
-end
-code/tight Show(var Object obj) -> int do
-    escape obj.c;
-end
-escape call Show(Object(_));
-]],
-    run = 101,
-}
-Test { [[
-data Object with
-  var int c = 101;
-end
-code/tight Show(var Object obj) -> int do
-    escape obj.c;
-end
-escape call Show(_);
-]],
-    run = 101,
-}
-Test { [[
-data Object with
-  var int ccc = 101;
-end
-code/await Show(var Object obj) -> (var& int rrr) -> FOREVER do
-    var int aaa = obj.ccc;
-    rrr = &aaa;
-    await FOREVER;
-end
-
-spawn Show(Object(_));
-escape 10;
-]],
-    run = 10,
-}
-Test { [[
-data Object with
-  var int ccc = 101;
-end
-code/await Show(var Object obj) -> (var&? int rrr) -> int do
-    var int aaa = obj.ccc;
-    rrr = &aaa;
-    await 1s;
-    escape 1;
-end
-
-var&? int r;
-spawn Show(Object(_)) -> (&r);
-escape r!;
-]],
-    run = 101,
-}
-Test { [[
-data Object with
-  var int c = 101;
-end
-code/await Show(var Object obj) -> (var& int ret) -> FOREVER do
-    var int a = obj.c;
-    ret = &a;
-    await FOREVER;
-end
-
-var& int r;
-spawn Show(_) -> (&r); // prints 0
-escape r;
-]],
-    run = 101,
-}
-
+--]=====]
 --<< CODE / WATCHING / SPAWN
 
 -->> CODE / WATCHING / SCOPES
@@ -43390,6 +43277,119 @@ escape a.c;
 ]],
     wrn = true,
     run = 20,
+}
+
+Test { [[
+data Object with
+  var int c = 101;
+end
+code/await Show(var Object obj) -> int do
+    escape obj.c;
+end
+var int r = await Show(_);
+escape r;
+]],
+    run = 101,
+}
+Test { [[
+data Object with
+  var int c = 101;
+end
+code/await Show(var Object obj) -> (var&? int ret) -> int do
+    var int a = obj.c;
+    ret = &a;
+    escape a;
+end
+var int r = await Show(_);
+escape r;
+]],
+    run = 101,
+}
+Test { [[
+data Object with
+  var int c = 101;
+end
+code/await Show(var Object obj) -> (var& int ret) -> FOREVER do
+    var int a = obj.c;
+    ret = &a;
+    await FOREVER;
+end
+
+var& int r;
+spawn Show(Object(1)) -> (&r); // prints 0
+escape r;
+]],
+    run = 101,
+}
+Test { [[
+data Object with
+  var int c = 101;
+end
+code/tight Show(var Object obj) -> int do
+    escape obj.c;
+end
+escape call Show(Object(_));
+]],
+    run = 101,
+}
+Test { [[
+data Object with
+  var int c = 101;
+end
+code/tight Show(var Object obj) -> int do
+    escape obj.c;
+end
+escape call Show(_);
+]],
+    run = 101,
+}
+Test { [[
+data Object with
+  var int ccc = 101;
+end
+code/await Show(var Object obj) -> (var& int rrr) -> FOREVER do
+    var int aaa = obj.ccc;
+    rrr = &aaa;
+    await FOREVER;
+end
+
+spawn Show(Object(_));
+escape 10;
+]],
+    run = 10,
+}
+Test { [[
+data Object with
+  var int ccc = 101;
+end
+code/await Show(var Object obj) -> (var&? int rrr) -> int do
+    var int aaa = obj.ccc;
+    rrr = &aaa;
+    await 1s;
+    escape 1;
+end
+
+var&? int r;
+spawn Show(Object(_)) -> (&r);
+escape r!;
+]],
+    run = 101,
+}
+Test { [[
+data Object with
+  var int c = 101;
+end
+code/await Show(var Object obj) -> (var& int ret) -> FOREVER do
+    var int a = obj.c;
+    ret = &a;
+    await FOREVER;
+end
+
+var& int r;
+spawn Show(_) -> (&r); // prints 0
+escape r;
+]],
+    run = 101,
 }
 
 --<< DATA / DEFAULT / CONSTRUCTOR
