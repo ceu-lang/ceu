@@ -66,6 +66,7 @@ escape 1;
     run = 1,
 }
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -34897,7 +34898,6 @@ escape 1;
 }
 
 -- test valgrind used to fail
---]=====]
 Test { [[
 code/await Ff (void) -> (var&? int xxx) -> void do
     var int v = 10;

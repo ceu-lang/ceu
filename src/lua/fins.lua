@@ -33,9 +33,10 @@ F = {
         return node('_Finalize_X',me.ln,now,list,x)
     end,
 
-    Vec__PRE = function (me)
-        local is_alias,tp,_,dim = unpack(me)
-        if is_alias or TYPES.is_nat(TYPES.get(tp,1)) then
+    Vec_Init__PRE = function (me)
+        local dcl = AST.ns[unpack(me)]
+        local _,_,_,dim = unpack(dcl)
+        if dim.is_const then
             return
         end
 
@@ -44,54 +45,20 @@ F = {
         end
         me.__fins_ok = true
 
-        local ret = node('Stmts', me.ln,
-                        me,
-                        node('Vec_Init', me.ln, me.n))
+        local id = (me.tag=='Vec_Init' and 'Vec_Finalize') or 'Pool_Finalize'
 
-        if (not dim.is_const) then
-            AST.insert(ret, #ret+1,
+        return node('Stmts', me.ln,
+                me,
                 node('_Finalize', me.ln,
                     false,
                     false,
                     node('Block', me.ln,
                         node('Stmts', me.ln,
-                            node('Vec_Finalize', me.ln, me.n))),
+                            node(id, me.ln, dcl.n))),
                     false,
                     false))
-        end
-
-        return ret
     end,
-
-    Pool__PRE = function (me)
-        local is_alias,_,_,dim = unpack(me)
-        if is_alias then
-            return
-        end
-
-        if me.__fins_ok then
-            return
-        end
-        me.__fins_ok = true
-
-        local ret = node('Stmts', me.ln,
-                        me,
-                        node('Pool_Init', me.ln, me.n))
-
-        if (not dim.is_const) then
-            AST.insert(ret, #ret+1,
-                node('_Finalize', me.ln,
-                    false,
-                    false,
-                    node('Block', me.ln,
-                        node('Stmts', me.ln,
-                            node('Pool_Finalize', me.ln, me.n))),
-                    false,
-                    false))
-        end
-
-        return ret
-    end,
+    Pool_Init__PRE = 'Vec_Init__PRE',
 
     _Var_set_fin_X__PRE = function (me)
         local Type, __ID_int, Nat_Call = unpack(me)

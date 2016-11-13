@@ -345,6 +345,21 @@ error'oi'
         end
     end,
 
+    Vec__PRE = function (me)
+        local is_alias,tp,_,dim = unpack(me)
+        if is_alias or TYPES.is_nat(TYPES.get(tp,1)) then
+            return
+        end
+
+        if me.__dcls_ok then
+            return
+        end
+        me.__dcls_ok = true
+
+        return node('Stmts', me.ln,
+                me,
+                node(me.tag..'_Init', me.ln, me.n))
+    end,
     Vec = function (me)
         local is_alias,Type,id,dim = unpack(me)
         me.id = id
@@ -359,6 +374,7 @@ error'oi'
         end
     end,
 
+    Pool__PRE = 'Vec__PRE',
     Pool = function (me)
         local _,_,id,_ = unpack(me)
         me.id = id
