@@ -276,81 +276,65 @@ if (]]..V(c)..[[) {
     end,
 
     Var = function (me, base)
-        CODES.F.__var(me, base or '')
+        --CODES.F.__var(me, base or '')
     end,
 
-    Vec = function (me, base)
-        base = base or ''
-        local ctx = { base=base }
-
-        -- setmax (n)
-        -- vector[n] int vec;
-        local is_alias, tp, _, dim = unpack(me)
-        if (not TYPES.is_nat(TYPES.get(tp,1))) then
-            if not is_alias then
-                if dim.is_const then
-                    LINE(me, [[
-ceu_vector_init(&]]..V(me,ctx)..','..V(dim)..', 0, sizeof('..TYPES.toc(tp)..[[),
-                (byte*)&]]..V(me,{base=base,id_suf='_buf'})..[[);
-]])
-                else
-                    LINE(me, [[
-ceu_vector_init(&]]..V(me,ctx)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
-]])
-                    if dim ~= '[]' then
-                        LINE(me, [[
-ceu_vector_setmax(&]]..V(me,ctx)..', '..V(dim)..[[, 1);
-]])
-                    end
-                end
-            end
-        end
-    end,
-    Finalize_Vec = function (me)
+    Vec_Init = function (me)
         local dcl = AST.ns[unpack(me)]
-        local _, _, _, dim = unpack(dcl)
-        if not dim.is_const then
+        local _, tp, _, dim = unpack(dcl)
+        if dim.is_const then
             LINE(me, [[
-ceu_vector_setmax(&]]..V(dcl,ctx)..[[, 0, 0);
-]])
-        end
-    end,
-
-    Pool = function (me, base)
-        base = base or ''
-        local ctx = { base=base }
-
-        local is_alias, tp, _, dim = unpack(me)
-        if is_alias then
-            return
-        end
-        LINE(me, [[
-{
-    /* first.nxt = first.prv = &first; */
-    tceu_code_mem_dyn* __ceu_dyn = &]]..V(me,ctx)..[[.first;
-    ]]..V(me,ctx)..[[.first = (tceu_code_mem_dyn) { __ceu_dyn, __ceu_dyn,
-                                                CEU_CODE_MEM_DYN_STATE_NONE, {} };
-};
-]]..V(me,ctx)..[[.up_mem = _ceu_mem;
-]]..V(me,ctx)..[[.up_trl = ]]..me.trails[1]..[[;
-]])
-        if dim == '[]' then
-            LINE(me, [[
-]]..V(me,ctx)..[[.pool.queue = NULL;
+ceu_vector_init(&]]..V(dcl)..','..V(dim)..', 0, sizeof('..TYPES.toc(tp)..[[),
+                (byte*)&]]..V(dcl,{id_suf='_buf'})..[[);
 ]])
         else
             LINE(me, [[
-ceu_pool_init(&]]..V(me,ctx)..'.pool, '..V(dim)..[[,
+ceu_vector_init(&]]..V(dcl)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
+]])
+            if dim ~= '[]' then
+                LINE(me, [[
+ceu_vector_setmax(&]]..V(dcl)..', '..V(dim)..[[, 1);
+]])
+            end
+        end
+    end,
+    Vec_Finalize = function (me)
+        local dcl = AST.ns[unpack(me)]
+        LINE(me, [[
+ceu_vector_setmax(&]]..V(dcl,ctx)..[[, 0, 0);
+]])
+    end,
+
+    Pool_Init = function (me)
+        local dcl = AST.ns[unpack(me)]
+        local _, tp, _, dim = unpack(dcl)
+        LINE(me, [[
+{
+    /* first.nxt = first.prv = &first; */
+    tceu_code_mem_dyn* __ceu_dyn = &]]..V(dcl)..[[.first;
+    ]]..V(dcl)..[[.first = (tceu_code_mem_dyn) { __ceu_dyn, __ceu_dyn,
+                                                CEU_CODE_MEM_DYN_STATE_NONE, {} };
+};
+]]..V(dcl)..[[.up_mem = _ceu_mem;
+]]..V(dcl)..[[.up_trl = ]]..dcl.trails[1]..[[;
+]])
+        if dim == '[]' then
+            LINE(me, [[
+]]..V(dcl)..[[.pool.queue = NULL;
+]])
+        else
+            LINE(me, [[
+ceu_pool_init(&]]..V(dcl)..'.pool, '..V(dim)..[[,
               sizeof(tceu_code_mem_dyn)+sizeof(]]..TYPES.toc(tp)..[[),
-              (byte**)&]]..CUR(me.id_..'_queue')..', (byte*)&'..CUR(me.id_..'_buf')..[[);
+              (byte**)&]]..CUR(dcl.id_..'_queue')..', (byte*)&'..CUR(dcl.id_..'_buf')..[[);
 ]])
         end
         LINE(me, [[
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.id         = CEU_INPUT__CODE_POOL;
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.pool_first = &]]..V(me,ctx)..[[.first;
+_ceu_mem->trails[]]..dcl.trails[1]..[[].evt.id         = CEU_INPUT__CODE_POOL;
+_ceu_mem->trails[]]..dcl.trails[1]..[[].evt.pool_first = &]]..V(dcl)..[[.first;
 ]])
     end,
-    Finalize_Pool = function (me)
+    Pool_Finalize = function (me)
         local dcl = AST.ns[unpack(me)]
         LINE(me, [[
 ceu_dbg_assert(]]..V(dcl,ctx)..[[.pool.queue == NULL);

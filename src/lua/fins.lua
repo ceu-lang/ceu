@@ -34,47 +34,63 @@ F = {
     end,
 
     Vec__PRE = function (me)
-        local is_alias,_,_,dim = unpack(me)
+        local is_alias,tp,_,dim = unpack(me)
+        if is_alias or TYPES.is_nat(TYPES.get(tp,1)) then
+            return
+        end
 
         if me.__fins_ok then
             return
         end
         me.__fins_ok = true
 
-        if not (is_alias or dim.is_const) then
-            return node('Stmts', me.ln,
-                    me,
-                    node('_Finalize', me.ln,
-                        false,
-                        false,
-                        node('Block', me.ln,
-                            node('Stmts', me.ln,
-                                node('Finalize_Vec', me.ln, me.n))),
-                        false,
-                        false))
+        local ret = node('Stmts', me.ln,
+                        me,
+                        node('Vec_Init', me.ln, me.n))
+
+        if (not dim.is_const) then
+            AST.insert(ret, #ret+1,
+                node('_Finalize', me.ln,
+                    false,
+                    false,
+                    node('Block', me.ln,
+                        node('Stmts', me.ln,
+                            node('Vec_Finalize', me.ln, me.n))),
+                    false,
+                    false))
         end
+
+        return ret
     end,
 
     Pool__PRE = function (me)
+        local is_alias,_,_,dim = unpack(me)
+        if is_alias then
+            return
+        end
+
         if me.__fins_ok then
             return
         end
         me.__fins_ok = true
 
-        local is_alias,_,_,dim = unpack(me)
+        local ret = node('Stmts', me.ln,
+                        me,
+                        node('Pool_Init', me.ln, me.n))
 
-        if dim=='[]' and (not is_alias) then
-            return node('Stmts', me.ln,
-                    me,
-                    node('_Finalize', me.ln,
-                        false,
-                        false,
-                        node('Block', me.ln,
-                            node('Stmts', me.ln,
-                                node('Finalize_Pool', me.ln, me.n))),
-                        false,
-                        false))
+        if (not dim.is_const) then
+            AST.insert(ret, #ret+1,
+                node('_Finalize', me.ln,
+                    false,
+                    false,
+                    node('Block', me.ln,
+                        node('Stmts', me.ln,
+                            node('Pool_Finalize', me.ln, me.n))),
+                    false,
+                    false))
         end
+
+        return ret
     end,
 
     _Var_set_fin_X__PRE = function (me)

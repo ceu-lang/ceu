@@ -287,11 +287,11 @@ DCLS.F = {
         }
     end,
 
-    Var__POS = function (me)
+--[[
+    Var__PRE = function (me)
         local alias,Type,id = unpack(me)
 
         -- default constructor for "data"
-if false then
         local abs = TYPES.abs_dcl(Type,'Data')
         if abs and (not alias) and (not me.__handled) and
            --(not AST.par(me,'Code_Pars')) and
@@ -315,7 +315,11 @@ error'oi'
                 return node('Stmts', me.ln, me, sets)
             end
         end
-end
+    end,
+]]
+
+    Var__POS = function (me)
+        local alias,Type,id = unpack(me)
 
         me.id = id
         dcls_new(AST.par(me,'Block'), me)

@@ -66,7 +66,6 @@ escape 1;
     run = 1,
 }
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -34898,6 +34897,7 @@ escape 1;
 }
 
 -- test valgrind used to fail
+--]=====]
 Test { [[
 code/await Ff (void) -> (var&? int xxx) -> void do
     var int v = 10;
@@ -41650,20 +41650,6 @@ Test { [[
 data Aa with
     var int a;
 end
-data Aa.Bb with
-    var int b = 20;
-end
-var Aa.Bb b = _;
-escape b.b;
-]],
-    wrn = true,
-    run = 20,
-}
-
-Test { [[
-data Aa with
-    var int a;
-end
 
 code/tight Ff (var& Aa a) -> int do
     escape a.a;
@@ -43390,6 +43376,20 @@ spawn Show(_) -> (&r); // prints 0
 escape r;
 ]],
     run = 101,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+data Aa.Bb with
+    var int b = 20;
+end
+var Aa.Bb b = _;
+escape b.b;
+]],
+    wrn = true,
+    run = 20,
 }
 
 --<< DATA / DEFAULT / CONSTRUCTOR

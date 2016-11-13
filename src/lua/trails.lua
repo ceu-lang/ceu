@@ -122,7 +122,7 @@ end
             me.trails[2] = me.trails[2] + 1
         end
     end,
-    Finalize_Pool = function (me)
+    Pool_Finalize = function (me)
         if TRAILS.F.__ok then
             TRAILS.F.__ok = false
             local fin = AST.par(me, 'Finalize_Case')
