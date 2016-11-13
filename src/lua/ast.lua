@@ -104,7 +104,9 @@ function AST.copy (node, ln, keep_n)
     end
 
     for k, v in pairs(node) do
-        if type(k) ~= 'number' then
+        if type(k)=='table' and v=='fs' then
+            -- skip F's
+        elseif type(k) ~= 'number' then
             ret[k] = v
         else
             if AST.is_node(v) then
@@ -423,7 +425,7 @@ local function visit_aux (F, me)
         end
     end
 
-    me[F] = true
+    me[F] = 'fs'
 
    return me
 end

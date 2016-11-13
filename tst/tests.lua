@@ -66,6 +66,7 @@ escape 1;
     run = 1,
 }
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -35812,7 +35813,6 @@ escape r;
 ]],
     run = 10,
 }
---]=====]
 --<< CODE / WATCHING / SPAWN
 
 -->> CODE / WATCHING / SCOPES
