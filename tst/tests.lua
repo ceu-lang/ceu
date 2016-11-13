@@ -33901,7 +33901,6 @@ escape 1;
 }
 
 
---]=====]
 Test { [[
 native _SDL_MouseButtonEvent;
 input _SDL_MouseButtonEvent&& SDL_MOUSEBUTTONUP;
@@ -34867,6 +34866,37 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+code/await Ff (void) -> (var&? int xxx) -> void do
+    var int v = 10;
+    xxx = &v;
+    await async do end;
+end
+
+var&? int x_;
+spawn Ff() -> (&x_);
+
+await x_;
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> (var&? int xxx) -> void do
+    var int v = 10;
+    xxx = &v;
+    await async do end;
+end
+pool[] Ff ffs;
+spawn Ff() in ffs;
+escape 1;
+]],
+    run = 1,
+}
+
+--]=====]
 -- test valgrind used to fail
 Test { [[
 code/await Ff (void) -> (var&? int xxx) -> void do

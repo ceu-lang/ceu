@@ -87,14 +87,17 @@ function DCLS.asr (me, blk_or_data, id, can_cross, err)
     end
 end
 
-local function dcls_new (blk, me, can_cross)
+local function dcls_new (blk, me, can_cross, opts)
+assert(can_cross==nil)
     AST.asr(blk, 'Block')
 
     if me.n and blk.dcls[me.n..'_'] then
         return  -- revisiting this node
     end
 
-    local old = DCLS.get(blk, me.id, can_cross)
+    local id = (opts and opts.id) or me.id
+
+    local old = DCLS.get(blk, id, can_cross)
     local implicit = (me.is_implicit and 'implicit ') or ''
     if old and (not old.is_predefined) then
         local F do
@@ -108,12 +111,12 @@ local function dcls_new (blk, me, can_cross)
         end
         me.__dcls_dup = true
         F(false, me, old and
-            implicit..'declaration of "'..me.id..'" hides previous declaration'..
+            implicit..'declaration of "'..id..'" hides previous declaration'..
                 ' ('..old.ln[1]..' : line '..old.ln[2]..')')
     end
 
     blk.dcls[#blk.dcls+1] = me
-    blk.dcls[me.id] = me
+    blk.dcls[id] = me
     if me.n then
         blk.dcls[me.n..'_'] = true
     end
@@ -553,11 +556,11 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
                 'invalid `code´ declaration : unmatching prototypes '..
                 '(vs. '..proto1.ln[1]..':'..proto2.ln[2]..')')
         else
-            blk.dcls[me.id] = me
+            dcls_new(blk,me)
             assert(me == DCLS.get(blk,me.id))
 
             if not mods1.dynamic then
-                blk.dcls[id] = me
+                dcls_new(blk,me,nil,{id=id})
                 assert(me == DCLS.get(blk,id))
             end
         end

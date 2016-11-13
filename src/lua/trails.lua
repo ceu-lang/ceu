@@ -27,27 +27,6 @@ TRAILS.F = {
         end
     end,
 
-    __var = function (me)
-        local alias, tp = unpack(me)
-        local ID_abs = AST.get(tp,'Type',1,'ID_abs')
-        if me.tag=='Var' and (not alias) and ID_abs and
-           TYPES.check(tp,ID_abs[1]) and ID_abs.dcl.tag=='Data'
-        then
-            local blk = AST.asr(ID_abs.dcl,'Data', 3,'Block')
-            local n = 1
-            for _, sub in ipairs(blk.dcls) do
-                n = n + TRAILS.F.__var(sub) - 1
-            end
-            return n
-        else
-            return me.trails_n
-        end
-    end,
-
-    Var = function (me)
-        me.trails_n = TRAILS.F.__var(me)
-    end,
-
     Loop_Pool = function (me)
         local _, _, _, body = unpack(me)
         if me.yields then
