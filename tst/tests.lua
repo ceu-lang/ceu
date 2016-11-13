@@ -66,7 +66,6 @@ escape 1;
     run = 1,
 }
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -34748,6 +34747,7 @@ pool[] Ff ffs;
     dcls = 'line 3 : pool "ffs" declared but not used',
 }
 
+--]=====]
 Test { [[
 code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;

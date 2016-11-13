@@ -346,7 +346,7 @@ error'oi'
     end,
 
     Vec__PRE = function (me)
-        local is_alias,tp,_,dim = unpack(me)
+        local is_alias,tp,id,dim = unpack(me)
         if is_alias or TYPES.is_nat(TYPES.get(tp,1)) then
             return
         end
@@ -358,7 +358,8 @@ error'oi'
 
         return node('Stmts', me.ln,
                 me,
-                node(me.tag..'_Init', me.ln, me.n))
+                node(me.tag..'_Init', me.ln,
+                    node('ID_int', me.ln, id)))
     end,
     Vec = function (me)
         local is_alias,Type,id,dim = unpack(me)
