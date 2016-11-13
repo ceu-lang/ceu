@@ -468,14 +468,14 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                              Cg(K'/dynamic'*Cc'dynamic','dynamic')^-1 *
                              Cg(K'/recursive'*Cc'recursive','recursive')^-1 ) *
                 (V'__ID_abs'-V'__id_data') *
-                    V'Code_Pars' * KK'->' *
+                    V'_Code_Pars' * KK'->' *
                         Cc(false) *
                             (#V'Type' * V'Code_Ret')
              + K'code' * Ct( Cg(K'/await'*Cc'await','await') *
                              Cg(K'/dynamic'*Cc'dynamic','dynamic')^-1 *
                              Cg(K'/recursive'*Cc'recursive','recursive')^-1 ) *
                 (V'__ID_abs'-V'__id_data') *
-                    V'Code_Pars' * KK'->' *
+                    V'_Code_Pars' * KK'->' *
                         OPT(V'_Code_Pars_Init' * KK'->') *
                             V'Code_Ret'
 
@@ -489,7 +489,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     -- call
     , __extcode = (CK'input/output' + CK'output/input') * K'/tight'
                     * OPT(CK'/recursive')
-                    * V'__ID_ext' * V'Code_Pars' * KK'->' * V'Type'
+                    * V'__ID_ext' * V'_Code_Pars' * KK'->' * V'Type'
 * EE'TODO-PARSER: extcode'
     , _Ext_Code_proto = V'__extcode'
     , _Ext_Code_impl  = V'__extcode' * V'__Do'
@@ -497,7 +497,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     -- req
     , __extreq = (CK'input/output' + CK'output/input') * K'/await'
                    * OPT('[' * (V'__Exp'+Cc(true)) * KK']')
-                   * V'__ID_ext' * V'Code_Pars' * KK'->' * V'Type'
+                   * V'__ID_ext' * V'_Code_Pars' * KK'->' * V'Type'
 * EE'TODO-PARSER: request'
     , _Ext_Req_proto = V'__extreq'
     , _Ext_Req_impl  = V'__extreq' * V'__Do'
@@ -519,7 +519,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                       + Cc{} * CK'var'    * (V'__ALS') * Cc(false) * V'Type'
     , _Code_Pars_Init_Item = V'__typepars_init' * OPT(V'__ID_int')
 
-    , Code_Pars = #KK'(' * (
+    , _Code_Pars = #KK'(' * (
                     PARENS(P'void') +
                     PARENS(LIST(V'_Code_Pars_Item'))
                   )

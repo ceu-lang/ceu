@@ -178,7 +178,7 @@ error'TODO: luacov never executes this?'
 
     _Code__PRE = function (me)
         local Y, mods, id, ins, mid, out, blk, eoc = unpack(me)
-        mid = mid or AST.node('Code_Pars', me.ln)
+        mid = mid or AST.node('_Code_Pars', me.ln)
 
         local Type = AST.get(out,'Code_Ret', 1,'Type')
         if Type then
@@ -209,10 +209,11 @@ error'TODO: luacov never executes this?'
     end,
 
     _Code_Pars_Init__PRE = function (me)
-        me.tag = 'Code_Pars'
-        return F.Code_Pars__PRE(me)
+        me.tag = '_Code_Pars'
+        return F._Code_Pars__PRE(me)
     end,
-    Code_Pars__PRE = function (me)
+    _Code_Pars__PRE = function (me)
+        me.tag = '_Code_Pars_X'
         local Code = AST.par(me,'Code')
 
         local params, mids = unpack(AST.asr(me,1,'Stmts'))

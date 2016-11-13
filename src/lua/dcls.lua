@@ -412,7 +412,8 @@ end
 
     -- CODE / DATA
 
-    Code_Pars = function (me)
+    _Code_Pars_X = function (me)
+        me.tag = 'Code_Pars'
         local Code = AST.asr(me,4,'Code')
         local _,mods = unpack(Code)
 
@@ -779,21 +780,3 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 }
 
 AST.visit(DCLS.F)
-
-DCLS.G = {
-    Stmts__POS = function (me)
-        return DCLS.G.__stmts_flatten(me), true
-    end,
-    __stmts_flatten = function (stmts, new)
-        local new = new or node('Stmts', stmts.ln)
-        for _, sub in ipairs(stmts) do
-            if AST.is_node(sub) and sub.tag=='Stmts' then
-                DCLS.G.__stmts_flatten(sub, new)
-            else
-                AST.set(new, #new+1, sub)
-            end
-        end
-        return new
-    end,
-}
-AST.visit(DCLS.G)

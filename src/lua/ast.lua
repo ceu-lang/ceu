@@ -364,6 +364,10 @@ end
 local visit_fs
 
 local function visit_aux (F, me)
+    if me[F] then
+        return me
+    end
+
     local pre, mid, pos = FF(F,me.tag..'__PRE'), FF(F,me.tag), FF(F,me.tag..'__POS')
     local bef, aft = FF(F,me.tag..'__BEF'), FF(F,me.tag..'__AFT')
 
@@ -418,6 +422,8 @@ local function visit_aux (F, me)
             return visit_fs(me)
         end
     end
+
+    me[F] = true
 
    return me
 end

@@ -33053,7 +33053,6 @@ escape call Fx(&str);
 ]],
     parser = 'line 3 : after `vector´ : expected `&´',
 }
---]=====]
 Test { [[
 vector[] byte str = [0,1,2];
 
@@ -33902,6 +33901,7 @@ escape 1;
 }
 
 
+--]=====]
 Test { [[
 native _SDL_MouseButtonEvent;
 input _SDL_MouseButtonEvent&& SDL_MOUSEBUTTONUP;
