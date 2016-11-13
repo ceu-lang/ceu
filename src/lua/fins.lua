@@ -42,7 +42,6 @@ F = {
         me.__fins_ok = true
 
         if not (is_alias or dim.is_const) then
-            -- waste for const vec (see consts.lua)
             return node('Stmts', me.ln,
                     me,
                     node('_Finalize', me.ln,

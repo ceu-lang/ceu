@@ -76,8 +76,7 @@ function AST.node (tag, ln, ...)
 
     for i,sub in ipairs(me) do
         if AST.is_node(sub) then
-            sub.__par   = me
-            sub.__i     = i
+            AST.set(me, i, sub)
         end
     end
 

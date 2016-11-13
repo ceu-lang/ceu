@@ -66,7 +66,6 @@ escape 1;
     run = 1,
 }
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -33054,6 +33053,7 @@ escape call Fx(&str);
 ]],
     parser = 'line 3 : after `vector´ : expected `&´',
 }
+--]=====]
 Test { [[
 vector[] byte str = [0,1,2];
 
