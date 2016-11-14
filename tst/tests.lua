@@ -66,6 +66,7 @@ escape 1;
     run = 1,
 }
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -43126,7 +43127,6 @@ escape (call Ff ());
 --<< DATA / VECTOR
 
 -->> DATA / DEFAULT / CONSTRUCTOR
---]=====]
 Test { [[
 data Dd with
     var int x = 10;

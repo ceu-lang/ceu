@@ -223,92 +223,6 @@ DCLS.F = {
 
     -- LOC
 
---[[
-    __F = function (id)
-        return {
-            Var__PRE = function (me)
-                return node('Nothing', me.ln)
-            end,
-            Vec__PRE  = 'Var__PRE',
-            Evt__PRE  = 'Var__PRE',
-            Pool__PRE = 'Var__PRE',
-
-            Exp_Name__PRE = function (me)
-                local set = AST.par(me,'Set_Exp') or AST.par(me,'Set_Any') or
-                            AST.par(me,'Set_Abs_Val')
-                local fin = AST.par(me,'_Finalize')
-                assert(set or fin)
-                local Exp_Name do
-                    if set then
-                        Exp_Name = AST.asr(set,'',2,'Exp_Name')
-                    else
-                        Exp_Name = AST.asr(fin,'', 3,'Finalize_Case', 2,'Block',
-                                            1,'Stmts', 1,'Finalize_Vec', 1,'Exp_Name')
-                    end
-                end
-                if Exp_Name ~= me then
-                    return  -- skip if not "to"
-                end
-                if me.__handled and me.__handled[id] then
-                    return
-                end
-
-                local prv
-                local fst,_ = unpack(me)
-                while fst.tag == 'Exp_.' do
-                    prv = fst
-                    _,fst = unpack(fst)
-                end
-                assert(fst.tag == 'ID_int')
-
-                local field = unpack(fst)
-                local ret = node('Exp_.', me.ln, '.',
-                                node('ID_int',me.ln,id),
-                                field)
-                if prv then
-                    AST.set(prv, 2, ret)
-                else
-                    prv = ret
-                end
-
-                local ret = node('Exp_Name', me.ln, prv)
-                ret.__handled = ret.__handled or {}
-                ret.__handled[id] = true
-                return ret
-            end,
-        }
-    end,
-
-    Var__PRE = function (me)
-        local alias,Type,id = unpack(me)
-
-        -- default constructor for "data"
-        local abs = TYPES.abs_dcl(Type,'Data')
-        if abs and (not alias) and (not me.__handled) and
-           --(not AST.par(me,'Code_Pars')) and
-           (not AST.par(me,'Code_Ret'))
-        then
-            me.__handled = true
-            local sets = AST.copy( AST.asr(abs,'Data',3,'Block',1,'Stmts') )
-            sets.__dcls_defaults = true
-error'oi'
-            AST.visit(DCLS.F.__F(id), sets)
-            if AST.par(me,'Code_Pars') then
-                local stmts = AST.get(AST.par(me,'Code'),'',
-                                        4,'Block', 1,'Stmts', 2,'Block',
-                                        1,'Stmts', 1,'Do', 2,'Block', 1,'Stmts')
-                if stmts then
-                    AST.insert(stmts, 1, sets)
-                else
-                    -- code/dynamic?
-                end
-            else
-                return node('Stmts', me.ln, me, sets)
-            end
-        end
-    end,
-]]
-
     __no_abs = function (tp, no_what)
         local ID = unpack(tp)
         if ID.tag == 'ID_abs' then
@@ -355,8 +269,10 @@ error'oi'
     Var__POS__POS = function (me, t)
         local is_alias,Type,id = unpack(me)
 
-        if ((not t) and AST.par(me,'Data')) or is_alias or AST.par(me,'Code_Ret') then
-           --(not AST.par(me,'Code_Pars')) and
+        if ((not t) and AST.par(me,'Data')) or is_alias
+            or AST.par(me,'Code_Ret')
+            --or AST.par(me,'_Code_Pars_X')
+        then
             return
         end
 
@@ -370,17 +286,20 @@ error'oi'
             return
         end
 
+        local blk = AST.asr(abs,'', 3,'Block')
+
+        local is_top = (not t)
         t = t or {}
         t.stmts = t.stmts or node('Stmts', me.ln)
         t.base  = t.base or node('ID_int', me.ln, id)
 
-        local blk = AST.asr(abs,'', 3,'Block')
         for _, dcl in ipairs(blk.dcls) do
             local is_alias,tp,id,dim = unpack(dcl)
             local base = node('Exp_.', dcl.ln, '.',
                             AST.copy(t.base),
                             id)
 
+            -- initialize vecs
             if dcl.tag == 'Var' then
                 DCLS.F.Var__POS__POS(dcl, {stmts=t.stmts,base=base})
             elseif dcl.tag == 'Vec' then
@@ -392,8 +311,34 @@ error'oi'
                             base))
                 end
             end
+
+            -- default vaules
+            local stmts = AST.asr(dcl,2,'Stmts')
+            local set = AST.get(stmts,'', 2,'Set_Exp') or
+                        AST.get(stmts,'', 2,'Set_Any') or
+                        AST.get(stmts,'', 2,'Set_Abs_Val')
+            if set then
+                set = AST.copy(set)
+                set.__dcls_defaults = true
+                AST.set(set, 2, AST.copy(base))
+                AST.insert(t.stmts, #t.stmts+1, set)
+            end
+
         end
-        return t.stmts
+
+        if AST.par(me,'_Code_Pars_X') and is_top then
+            local stmts = AST.get(AST.par(me,'Code'),'',
+                                    4,'Block', 1,'Stmts', 2,'Block',
+                                    1,'Stmts', 1,'Do', 2,'Block', 1,'Stmts')
+            if stmts then
+                AST.insert(stmts, 1, t.stmts)
+            else
+               -- code/dynamic?
+                error'not implemented'
+            end
+        else
+            return t.stmts
+        end
     end,
 
     Pool__PRE = 'Vec__PRE',

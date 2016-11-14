@@ -126,21 +126,9 @@ stmt[4] = Y
         if me.__par.tag == 'Do' then
             -- ok: do/a end
         elseif me.dcl == Dcl then
-            local is_default do
-                local stmts = AST.par(me, 'Stmts')
-                while stmts do
-                    if stmts.__dcls_defaults then
-                        is_default = true
-                        break
-                    end
-                    stmts = AST.par(stmts, 'Stmts')
-                end
-            end
-            --local stmts = AST.par('Stmts')
-            --local is_default = stmts and stmts.__dcls_defaults
-            --local ok = AST.par(me,'Await_Alias') or AST.par(me,'Finalize_Vec')
             local ok = AST.par(me,'Vec_Init') or AST.par(me,'Vec_Finalize')
-            ASR(is_default or ok, Dcl,
+            local set = AST.par(me,'Set_Exp') or AST.par(me,'Set_Any') or AST.par(me,'Set_Abs_Val')
+            ASR(ok or (set and set.__dcls_defaults), Dcl,
             --ASR(is_default, Dcl,
                 'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
                 'reached read access '..
