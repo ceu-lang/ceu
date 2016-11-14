@@ -562,11 +562,12 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
 
             /* clearing this trail? */
             if (matches_clear_vs_trail) {
-                if (trl->evt.id == CEU_INPUT__FINALIZE) {
-                    /* FINALIZE awakes now on "mark" */
-                    ceu_lbl(occ, NULL, range.mem, trlK, trl->lbl);
-                }
+                tceu_nevt trl_evt_id = trl->evt.id;
                 trl->evt.id = CEU_INPUT__NONE;
+                if (trl_evt_id == CEU_INPUT__FINALIZE) {
+                    /* FINALIZE awakes now on "mark" */
+                    ceu_lbl(occ, &_stk, range.mem, trlK, trl->lbl);
+                }
 
             /* clear matches CLEAR? */
             } else if (trl->evt.id == CEU_INPUT__CLEAR) {

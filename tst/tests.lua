@@ -9,7 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
-
 do return end
 
 -- XXX-02
@@ -44987,6 +44986,157 @@ escape v;
     run = 2,
     _opts = { ceu_features_thread='true' },
 }
+
+-->> CODE / FINALIZE / EMIT / SPAWN / THREADS
+
+Test { [[
+event void e;
+var int ret = 0;
+par/or do
+    every e do
+        ret = ret + 1;
+    end
+with
+    watching e do
+        do finalize with
+            emit e;
+        end
+    end
+end
+
+escape ret;
+]],
+    run = 1,
+}
+
+Test { [[
+var int ret = 0;
+
+code/tight Ff (void) -> void do
+    outer.ret = outer.ret + 1;
+end
+
+do
+    do finalize with
+        call Ff();
+    end
+end
+
+escape ret;
+]],
+    run = 1,
+}
+
+Test { [[
+var int ret = 0;
+
+code/await Ff (void) -> void do
+    outer.ret = outer.ret + 1;
+end
+
+//pool[] Ff fs;
+
+do
+    do finalize with
+        spawn Ff();// in fs;
+    end
+end
+await 1s;
+
+escape ret;
+]],
+    props_ = 'line 11 : invalid `await´ : unexpected enclosing `finalize´',
+}
+
+Test { [[
+var int ret = 0;
+
+code/await Ff (void) -> void do
+    outer.ret = outer.ret + 1;
+end
+
+pool[] Ff fs;
+
+do
+    do finalize with
+        spawn Ff() in fs;
+    end
+end
+await 1s;
+
+escape ret;
+]],
+    run = {['~>1s']=1},
+}
+
+Test { [[
+var int ret = 0;
+
+code/await Ff (var int s) -> void do
+    do finalize with
+        outer.ret = outer.ret + 1;
+    end
+    await (s)s;
+    outer.ret = outer.ret + 1;
+end
+
+do
+    pool[] Ff fs;
+
+    do
+        do finalize with
+            spawn Ff(2) in fs;
+        end
+        do finalize with
+            spawn Ff(1) in fs;
+        end
+    end
+    await 1s500ms;
+end
+
+escape ret;
+]],
+    _opts = { ceu_features_thread='true' },
+    run = {['~>5s']=3},
+}
+
+Test { [[
+native _sleep;
+var int ret = 0;
+
+code/await Ff (var int s) -> void do
+    do finalize with
+        outer.ret = outer.ret + 1;
+    end
+    await async/thread (s) do
+        _sleep(s);
+    end
+    outer.ret = outer.ret + 1;
+end
+
+do
+    pool[] Ff fs;
+    do
+        do finalize with
+            spawn Ff(3) in fs;
+        end
+        do finalize with
+            spawn Ff(1) in fs;
+        end
+    end
+    _sleep(2);
+    await async do end
+    await async do end
+    await async do end
+end
+
+escape ret;
+]],
+    _opts = { ceu_features_thread='true' },
+    run = {['~>5s']=3},
+}
+
+--<< CODE / FINALIZE / EMIT / SPAWN / THREADS
 
 --<<< ASYNCS / THREADS
 
