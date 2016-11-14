@@ -323,7 +323,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
 
 -- MEMBER: .
 
-    ['Exp_.'] = function (me)
+    ['Exp_.'] = function (me,ctx)
         local _, e, member = unpack(me)
         member = string.gsub(member, '^_', '')  -- _nat._data (data is a keyword)
 
@@ -345,7 +345,8 @@ CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
                 end
             end
 
-            return '('..ptr..'('..V(e)..'.'..member..'))'
+            local suf = (ctx and ctx.id_suf) or ''
+            return '('..ptr..'('..V(e)..'.'..member..suf..'))'
         end
     end,
 

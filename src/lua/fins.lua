@@ -34,8 +34,8 @@ F = {
     end,
 
     Vec_Init__PRE = function (me)
-        local ID_int = unpack(me)
-        local _,_,_,dim = unpack(ID_int.dcl)
+        local vec = unpack(me)
+        local _,_,_,dim = unpack(vec.info.dcl)
         if dim.is_const then
             return
         end
@@ -55,7 +55,7 @@ F = {
                     node('Block', me.ln,
                         node('Stmts', me.ln,
                             node(id, me.ln,
-                                AST.copy(ID_int)))),
+                                AST.copy(vec)))),
                     false,
                     false))
     end,

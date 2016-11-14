@@ -34747,7 +34747,6 @@ pool[] Ff ffs;
     dcls = 'line 3 : pool "ffs" declared but not used',
 }
 
---]=====]
 Test { [[
 code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
@@ -42905,6 +42904,18 @@ escape _strlen(&&yyy.kkk.xxx[0] as _char&&);
 
 Test { [[
 data Tt with
+    vector[10] int v;
+end
+
+var Tt t = val Tt(_);
+t.v = [1,2,3];
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+data Tt with
     var        int x;
     vector[10] int v;
     event      int e;
@@ -43115,6 +43126,7 @@ escape (call Ff ());
 --<< DATA / VECTOR
 
 -->> DATA / DEFAULT / CONSTRUCTOR
+--]=====]
 Test { [[
 data Dd with
     var int x = 10;

@@ -280,20 +280,20 @@ if (]]..V(c)..[[) {
     end,
 
     Vec_Init = function (me)
-        local ID_int = unpack(me)
-        local _, tp, _, dim = unpack(ID_int.dcl)
+        local vec = unpack(me)
+        local _, tp, _, dim = unpack(vec.info.dcl)
         if dim.is_const then
             LINE(me, [[
-ceu_vector_init(&]]..V(ID_int)..','..V(dim)..', 0, sizeof('..TYPES.toc(tp)..[[),
-                (byte*)&]]..V(ID_int,{id_suf='_buf'})..[[);
+ceu_vector_init(&]]..V(vec)..','..V(dim)..', 0, sizeof('..TYPES.toc(tp)..[[),
+                (byte*)&]]..V(vec,{id_suf='_buf'})..[[);
 ]])
         else
             LINE(me, [[
-ceu_vector_init(&]]..V(ID_int)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
+ceu_vector_init(&]]..V(vec)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
 ]])
             if dim ~= '[]' then
                 LINE(me, [[
-ceu_vector_setmax(&]]..V(ID_int)..', '..V(dim)..[[, 1);
+ceu_vector_setmax(&]]..V(vec)..', '..V(dim)..[[, 1);
 ]])
             end
         end

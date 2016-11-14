@@ -223,15 +223,7 @@ DCLS.F = {
 
     -- LOC
 
-    __no_abs = function (tp, no_what)
-        local ID = unpack(tp)
-        if ID.tag == 'ID_abs' then
-            ASR(no_what and ID.dcl.tag~=no_what, tp,
-                'invalid declaration : unexpected context for `'..AST.tag2id[ID.dcl.tag]..'´ "'..
-                    (ID.dcl.id or ID.dcl[3])..'"')
-        end
-    end,
-
+--[[
     __F = function (id)
         return {
             Var__PRE = function (me)
@@ -287,7 +279,6 @@ DCLS.F = {
         }
     end,
 
---[[
     Var__PRE = function (me)
         local alias,Type,id = unpack(me)
 
@@ -318,6 +309,15 @@ error'oi'
     end,
 ]]
 
+    __no_abs = function (tp, no_what)
+        local ID = unpack(tp)
+        if ID.tag == 'ID_abs' then
+            ASR(no_what and ID.dcl.tag~=no_what, tp,
+                'invalid declaration : unexpected context for `'..AST.tag2id[ID.dcl.tag]..'´ "'..
+                    (ID.dcl.id or ID.dcl[3])..'"')
+        end
+    end,
+
     Var__POS = function (me)
         local alias,Type,id = unpack(me)
 
@@ -343,11 +343,63 @@ error'oi'
             ASR(alias, me,
                 'invalid declaration : variable cannot be of type `void´') 
         end
+
+        local inits = DCLS.F.Var__POS__POS(me)
+        if inits then
+            return node('Stmts', me.ln, me, inits)
+        end
     end,
 
+-------------------------------------------------------------------------------
+
+    Var__POS__POS = function (me, t)
+        local is_alias,Type,id = unpack(me)
+
+        if ((not t) and AST.par(me,'Data')) or is_alias or AST.par(me,'Code_Ret') then
+           --(not AST.par(me,'Code_Pars')) and
+            return
+        end
+
+        if me.__dcls_ok then
+            return
+        end
+        me.__dcls_ok = true
+
+        local abs = TYPES.abs_dcl(Type,'Data')
+        if not abs then
+            return
+        end
+
+        t = t or {}
+        t.stmts = t.stmts or node('Stmts', me.ln)
+        t.base  = t.base or node('ID_int', me.ln, id)
+
+        local blk = AST.asr(abs,'', 3,'Block')
+        for _, dcl in ipairs(blk.dcls) do
+            local is_alias,tp,id,dim = unpack(dcl)
+            local base = node('Exp_.', dcl.ln, '.',
+                            AST.copy(t.base),
+                            id)
+
+            if dcl.tag == 'Var' then
+                DCLS.F.Var__POS__POS(dcl, {stmts=t.stmts,base=base})
+            elseif dcl.tag == 'Vec' then
+                if is_alias or TYPES.is_nat(TYPES.get(tp,1)) then
+                    --
+                else
+                    AST.insert(t.stmts, #t.stmts+1,
+                        node(dcl.tag..'_Init', dcl.ln,
+                            base))
+                end
+            end
+        end
+        return t.stmts
+    end,
+
+    Pool__PRE = 'Vec__PRE',
     Vec__PRE = function (me)
         local is_alias,tp,id,dim = unpack(me)
-        if is_alias or TYPES.is_nat(TYPES.get(tp,1)) then
+        if AST.par(me,'Data') or is_alias or TYPES.is_nat(TYPES.get(tp,1)) then
             return
         end
 
@@ -361,6 +413,9 @@ error'oi'
                 node(me.tag..'_Init', me.ln,
                     node('ID_int', me.ln, id)))
     end,
+
+------------------------------------------------------------------------------
+
     Vec = function (me)
         local is_alias,Type,id,dim = unpack(me)
         me.id = id
@@ -375,7 +430,6 @@ error'oi'
         end
     end,
 
-    Pool__PRE = 'Vec__PRE',
     Pool = function (me)
         local _,_,id,_ = unpack(me)
         me.id = id
