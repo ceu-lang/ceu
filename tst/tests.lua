@@ -8,8 +8,6 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
--- spawn/finalize => par/or
-
 --[=====[
 -- XXX-02
 Test { [[
@@ -25,46 +23,6 @@ escape 1;
     run = 15,
 }
 
--- XXX-01
-Test { [[
-native _V;
-native/pure _f;
-native/nohold _ceu_dbg_assert;
-native/pos do
-    ##define f(x) x
-    void* V;
-end
-
-data Ii;
-
-code/await Cloud (void) -> (var& Ii i) -> FOREVER do
-    var Ii i_ = val Ii();
-    i = &i_;
-    await FOREVER;
-end
-
-pool[] Cloud clouds;
-spawn Cloud() in clouds;
-spawn Cloud() in clouds;
-
-code/await Collides (void) -> void do end
-
-code/await Collisions (void) -> void do
-    var& Ii cloud1;
-    loop (cloud1) in outer.clouds do
-        var& Ii cloud2;
-        loop (cloud2) in outer.clouds do
-            _V = _f(&&cloud1);
-            spawn Collides();
-            _ceu_dbg_assert(_V == &&cloud1);
-        end
-    end
-end
-await Collisions();
-escape 1;
-]],
-    run = 1,
-}
 do return end -- OK
 --]=====]
 
@@ -39476,7 +39434,45 @@ escape _V;
     run = 2,
 }
 
--- XXX-01
+Test { [[
+native _V;
+native/pure _f;
+native/nohold _ceu_dbg_assert;
+native/pos do
+    ##define f(x) x
+    void* V;
+end
+
+data Ii;
+
+code/await Cloud (void) -> (var& Ii i) -> FOREVER do
+    var Ii i_ = val Ii();
+    i = &i_;
+    await FOREVER;
+end
+
+pool[] Cloud clouds;
+spawn Cloud() in clouds;
+spawn Cloud() in clouds;
+
+code/await Collides (void) -> void do end
+
+code/await Collisions (void) -> void do
+    var& Ii cloud1;
+    loop (cloud1) in outer.clouds do
+        var& Ii cloud2;
+        loop (cloud2) in outer.clouds do
+            _V = _f(&&cloud1);
+            spawn Collides();
+            _ceu_dbg_assert(_V == &&cloud1);
+        end
+    end
+end
+await Collisions();
+escape 1;
+]],
+    run = 1,
+}
 
 Test { [[
 native _ceu_dbg_assert;

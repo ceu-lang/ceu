@@ -10,16 +10,17 @@ local sync = {
 }
 
 local NO = {
-    Every     = sync,
-    Loop_Pool = sync,
-    Async     = sync,
-    Finalize  = sync,
-    Code      = sync,   -- only code/tight
+    {Every     = sync},
+    {Loop_Pool = sync},
+    {Async     = sync},
+    {Finalize  = sync},
+    {Code      = sync},   -- only code/tight
 }
 
 PROPS_.F = {
     Node = function (me)
-        for k, t in pairs(NO) do
+        for _,T in ipairs(NO) do
+            local k,t = next(T)
             local par = AST.par(me,k)
             if par and t[me.tag] then
                 local sub = par
