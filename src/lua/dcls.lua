@@ -336,8 +336,10 @@ DCLS.F = {
             if stmts then
                 AST.insert(stmts, 1, t.stmts)
             else
-               -- code/dynamic?
-                error'not implemented'
+                if #t.stmts > 0 then
+                   -- code/dynamic / prototype
+                    error'not implemented'
+                end
             end
         else
             return t.stmts

@@ -9,6 +9,72 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+Test { [[
+code/await Ff (var int? v) -> int do
+    escape v? as int;
+end
+
+var int v1 = await Ff(_);
+var int v2 = await Ff(1);
+
+escape v1+v2;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Test(void) -> FOREVER do
+    _printf("oi!\n");
+    do finalize with
+        await async/thread do
+            _printf("tchau!\n");
+        end
+    end
+    await FOREVER;
+end
+
+par/or do
+    await Test();
+with
+    await 1ms;
+end
+
+escape 0;
+]],
+    run = 1,
+}
+
+Test { [[
+data Obj with
+    var bool a = false;
+end
+
+code/await DoObjRef(var& Obj o) -> FOREVER
+do
+    _printf("a: %d\n", o.a);
+    await FOREVER;
+end
+
+code/await DoObj(var Obj o) -> FOREVER
+do
+    _printf("a: %d\n", o.a);
+    await FOREVER;
+end
+
+spawn DoObj(Obj(true)); // fails... prints 0
+
+var Obj o = val Obj(true);
+spawn DoObj(o); // fails... prints 0
+
+spawn DoObjRef(&o); // works... prints 1
+
+escape 0;
+]],
+    run = 1,
+}
+
+do return end
+
 -- XXX-02
 Test { [[
 data Aa;
@@ -23,6 +89,41 @@ escape 1;
     run = 15,
 }
 
+-- XXX-03
+Test { [[
+data Bb with
+    var int x=10;
+end
+
+code/tight Ff (var Bb b) -> int;
+
+var int v1 = call Ff(_);
+escape v1;
+]],
+    run = 50,
+}
+Test { [[
+data Bb with
+    var int x=10;
+end
+data Bb.Cc with
+    var int y=20;
+end
+
+code/tight/dynamic Ff (dynamic var Bb b) -> int do
+    escape b.x;
+end
+
+code/tight/dynamic Ff (dynamic var Bb.Cc c) -> void do
+    escape c.x + c.y;
+end
+
+var int v1 = call/dynamic Ff(Bb.Cc(_,_));
+var int v2 = call/dynamic Ff(Bb(_));
+escape v1 + v2;
+]],
+    run = 50,
+}
 do return end -- OK
 --]=====]
 
@@ -37864,6 +37965,8 @@ escape (call/dynamic Ff(&b,&a,&a)) + (call/dynamic Ff(&b,&a,&b)) +
     wrn = true,
     run = 15,
 }
+
+-- XXX-03
 
 Test { [[
 data Aa;
