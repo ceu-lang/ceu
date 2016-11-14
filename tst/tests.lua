@@ -9,7 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
-do return end
 
 -- XXX-02
 Test { [[
@@ -24,6 +23,7 @@ escape 1;
     wrn = true,
     run = 15,
 }
+do return end
 
 -- XXX-03
 Test { [[
@@ -38034,10 +38034,10 @@ Test { [[
 data Dd;
 data Dd.Ee;
 
-code/tight Play_New (var& Dd d) -> void;
-code/tight Play_New (var& Dd d) -> void do
+code/tight Play_New (var& Dd x) -> void;
+code/tight Play_New (var& Dd x) -> void do
 end
-code/tight Play_New (var& Dd d) -> void;
+code/tight Play_New (var& Dd x) -> void;
 
 var Dd d = _;
 
@@ -41811,7 +41811,7 @@ var int c = 0;
 
 escape d.e!.x;
 ]],
-    wrn = true,
+    --wrn = true,
     run = 10,
 }
 
@@ -43143,6 +43143,28 @@ escape call Ff(&d);
 }
 
 Test { [[
+data Aa with
+    event void e;
+end
+var Aa d = _;
+escape 1;
+]],
+    --wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Aa with
+    vector[] u8 v;
+end
+var Aa d = _;
+escape 1;
+]],
+    --wrn = true,
+    run = 1,
+}
+
+Test { [[
 data Bb with
     vector [] byte v;
 end
@@ -43153,7 +43175,7 @@ var Aa d = _;
 d.b = val Bb([1,2,3]);
 escape $d.b.v as int;
 ]],
-    wrn = true,
+    --wrn = true,
     run = 3,
 }
 
@@ -43168,7 +43190,7 @@ code/tight Ff (void)->int do
 end
 escape (call Ff ());
 ]],
-    wrn = true,
+    --wrn = true,
     run = 3,
 }
 
@@ -43182,8 +43204,20 @@ end
 var Dd ddd = _;
 escape ddd.x;
 ]],
-    wrn = true,
+    --wrn = true,
     run = 10,
+}
+
+Test { [[
+data Dd with
+    var int x = 10;
+    var int y;
+end
+var Dd ddd = _;
+escape ddd.x;
+]],
+    inits = 'line 5 : uninitialized variable "ddd"',
+    --run = 10,
 }
 
 Test { [[
@@ -43196,7 +43230,7 @@ end
 var Dd d = _;
 escape d.e1.e;
 ]],
-    wrn = true,
+    --wrn = true,
     run = 10,
 }
 
@@ -43212,7 +43246,7 @@ end
 var Dd d = _;
 escape d.e1.e + d.e2.e + d.e3.e;
 ]],
-    wrn = true,
+    --wrn = true,
     run = 120,
 }
 
@@ -43289,7 +43323,7 @@ end
 escape call Ff(_);
 //escape call Ff(Dd(_));
 ]],
-    wrn = true,
+    --wrn = true,
     run = 10,
 }
 Test { [[
@@ -43299,7 +43333,7 @@ end
 var Dd d = _;
 escape d.x;
 ]],
-    wrn = true,
+    --wrn = true,
     run = 10,
 }
 Test { [[
@@ -43351,7 +43385,7 @@ var Object a = _;
 
 escape a.c;
 ]],
-    wrn = true,
+    --wrn = true,
     run = 10,
 }
 
@@ -43371,7 +43405,7 @@ var Object a = _;
 
 escape a.c;
 ]],
-    wrn = true,
+    --wrn = true,
     run = 20,
 }
 
@@ -43385,7 +43419,7 @@ end
 var int r = await Show(_);
 escape r;
 ]],
-    wrn = true,
+    --wrn = true,
     run = 101,
 }
 Test { [[
@@ -43400,7 +43434,7 @@ end
 var int r = await Show(_);
 escape r;
 ]],
-    wrn = true,
+    --wrn = true,
     run = 101,
 }
 Test { [[
@@ -43428,7 +43462,7 @@ code/tight Show(var Object obj) -> int do
 end
 escape call Show(Object(_));
 ]],
-    wrn = true,
+    --wrn = true,
     run = 101,
 }
 Test { [[
@@ -43440,7 +43474,7 @@ code/tight Show(var Object obj) -> int do
 end
 escape call Show(_);
 ]],
-    wrn = true,
+    --wrn = true,
     run = 101,
 }
 Test { [[
@@ -43456,7 +43490,7 @@ end
 spawn Show(Object(_));
 escape 10;
 ]],
-    wrn = true,
+    --wrn = true,
     run = 10,
 }
 Test { [[
@@ -43474,7 +43508,7 @@ var&? int r;
 spawn Show(Object(_)) -> (&r);
 escape r!;
 ]],
-    wrn = true,
+    --wrn = true,
     run = 101,
 }
 Test { [[
@@ -43491,7 +43525,7 @@ var& int r;
 spawn Show(_) -> (&r); // prints 0
 escape r;
 ]],
-    wrn = true,
+    --wrn = true,
     run = 101,
 }
 
@@ -43507,6 +43541,19 @@ escape b.b;
 ]],
     wrn = true,
     run = 20,
+}
+Test { [[
+data Aa with
+    var int a;
+end
+data Aa.Bb with
+    var int b = 20;
+end
+var Aa.Bb b = _;
+escape b.b;
+]],
+    inits = 'line 7 : uninitialized variable "b"',
+    --run = 20,
 }
 
 --<< DATA / DEFAULT / CONSTRUCTOR

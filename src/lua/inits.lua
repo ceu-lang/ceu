@@ -218,12 +218,18 @@ stmt[4] = Y
                     local ID_int = AST.asr(sub,'Exp_Name', 1,'ID_int')
                     if ID_int.dcl == Dcl then
                         if me.tag == 'Set_Any' then
-                            local f = WRN
-                            if CEU.opts.ceu_err_uninitialized then
-                                f = ASR_WRN_PASS(CEU.opts.ceu_err_uninitialized)
+                            local _, tp = unpack(Dcl)
+                            local abs = TYPES.abs_dcl(tp,'Data')
+                            if abs and abs.no_uninit then
+                                -- ok: dcl is a all-inited data
+                            else
+                                local f = WRN
+                                if CEU.opts.ceu_err_uninitialized then
+                                    f = ASR_WRN_PASS(CEU.opts.ceu_err_uninitialized)
+                                end
+                                f(false, Dcl,
+                                  'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'"')
                             end
-                            f(false, Dcl,
-                              'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'"')
                         end
                         if me.tag == 'Set_Alias' then
                             me.is_init = true       -- refuse all others
@@ -501,6 +507,35 @@ F = {
                             ..' "'..me.info.dcl.id..'" : '
                             ..'assignment in enclosing `do` ('
                             ..Exp_Name.ln[1]..':'..Exp_Name.ln[2]..')')
+                end
+            end
+        end
+    end,
+
+    Data = function (me)
+        me.no_uninit = true
+        local stmts = AST.asr(me,'', 3,'Block', 1,'Stmts')
+        for i, var in ipairs(stmts) do
+            if (string.sub(var.tag,1,4) == 'Set_') then
+                -- ok: this is an assignment, not a field
+            else
+                if var.tag == 'Var' then
+                    local _,tp = unpack(var)
+                    local abs = TYPES.abs_dcl(tp,'Data')
+
+                    local nxt = stmts[i+1]
+                    if abs and abs.no_uninit then
+                        -- ok: field a all-init data
+                    elseif TYPES.check(tp,'?') then
+                        -- ok: field is optional
+                    elseif nxt and (string.sub(nxt.tag,1,4) == 'Set_') then
+                        -- ok: field is assigned
+                    else
+                        me.no_uninit = false
+                        break
+                    end
+                else
+                    -- ok: event/vector doesn't need
                 end
             end
         end
