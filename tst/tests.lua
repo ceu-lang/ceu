@@ -39574,7 +39574,8 @@ end
 await Collisions();
 escape 1;
 ]],
-    run = 1,
+    --run = 1,
+    props_ = 'line 29 : invalid `await´ : unexpected enclosing `loop´',
 }
 
 Test { [[

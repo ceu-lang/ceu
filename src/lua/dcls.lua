@@ -11,7 +11,7 @@ local function iter_boundary (cur, id, can_cross)
                 return c
             elseif can_cross then
                 -- continue
-            elseif string.sub(c.tag,1,5)=='Async' then
+            elseif string.match(c.tag, '^.?Async') then
                 -- see if varlist matches id to can_cross the boundary
                 -- async (a,b,c) do ... end
                 local can_cross2 = false
@@ -23,13 +23,7 @@ local function iter_boundary (cur, id, can_cross)
                     can_cross2 = true
                 end
 
-                local varlist,_
-                if c.tag == 'Async_Isr' then
-                    _,varlist = unpack(c)
-                else
-                    _,varlist = unpack(c)
-                end
-
+                local _,varlist = unpack(c)
                 if varlist then
                     for _, ID_int in ipairs(varlist) do
                         if ID_int[1] == id then
