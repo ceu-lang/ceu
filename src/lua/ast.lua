@@ -235,7 +235,7 @@ function AST.par (me, pred)
     if not me.__par then
         return nil
     elseif pred(me.__par) then
-        return me.__par
+        return me.__par, me.__i
     else
         return AST.par(me.__par, pred)
     end
@@ -363,8 +363,6 @@ local function from_to (old, new, t)
     end
 end
 
-local visit_fs
-
 local function visit_aux (F, me)
     if me[F] then
         return me
@@ -380,14 +378,14 @@ local function visit_aux (F, me)
         local ret, dont = F.Node__PRE(me)
         chg, me = from_to(me, ret, t)
         if chg and (not dont) then
-            return visit_fs(me)
+            return AST.visit_fs(me)
         end
     end
     if pre then
         local ret, dont = pre(me)
         chg, me = from_to(me, ret, t)
         if chg and (not dont) then
-            return visit_fs(me)
+            return AST.visit_fs(me)
         end
     end
 
@@ -414,14 +412,14 @@ local function visit_aux (F, me)
         local ret, dont = pos(me)
         chg, me = from_to(me, ret, t)
         if chg and (not dont) then
-            return visit_fs(me)
+            return AST.visit_fs(me)
         end
     end
      if F.Node__POS then
         local ret, dont = F.Node__POS(me)
         chg, me = from_to(me, ret, t)
         if chg and (not dont) then
-            return visit_fs(me)
+            return AST.visit_fs(me)
         end
     end
 
@@ -437,7 +435,7 @@ function AST.visit (F, node)
     return visit_aux(F, AST.root)
 end
 
-visit_fs = function (node)
+AST.visit_fs = function (node)
     local ret
     for _, f in ipairs(fs) do
         ret = visit_aux(f, node)

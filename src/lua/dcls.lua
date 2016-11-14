@@ -268,7 +268,7 @@ DCLS.F = {
 
         if ((not t) and AST.par(me,'Data')) or is_alias
             or AST.par(me,'Code_Ret')
-            --or AST.par(me,'_Code_Pars_X')
+            or AST.par(me,'_Code_Pars_X')
         then
             return
         end
@@ -328,6 +328,7 @@ DCLS.F = {
                                     4,'Block', 1,'Stmts', 2,'Block',
                                     1,'Stmts', 1,'Do', 2,'Block', 1,'Stmts')
             if stmts then
+                AST.asr(stmts,'', 1,'Code_Args')
                 AST.insert(stmts, 1, t.stmts)
             else
                 if #t.stmts > 0 then
@@ -652,8 +653,6 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         end
     end,
 
-    -- Typelists
-
     Typelist = function (me)
         if #me == 1 then
             return
@@ -665,6 +664,79 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
                     ASR(false, me,
                         'invalid declaration : unexpected type `void´')
                 end
+            end
+        end
+    end,
+
+    ---------------------------------------------------------------------------
+
+    --  call Ff(Dd(...));
+    -- to
+    --  var Dd x = Dd(...);
+    --  call FF(x);
+
+    Abs_Cons__POS = function (me)
+        local code, Abslist = unpack(me)
+        if code.dcl.tag ~= 'Code' then
+            return
+        end
+
+        for i, v in ipairs(Abslist) do
+            local id = '_'..code.n..'_'..v.n..'_abs'
+            local xxx, yyy
+
+            local data = AST.get(v,'Abs_Cons', 1,'ID_abs')
+            if data and data.dcl.tag == 'Data' then
+                xxx = data
+                yyy = node('Set_Abs_Val', v.ln,
+                        node('Abs_Val', v.ln, 'val', v),
+                        node('Exp_Name', v.ln,
+                            node('ID_int', v.ln, id)))
+            elseif v.tag == 'ID_any' then
+                local vars = AST.asr(code.dcl,'Code', 4,'Block', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
+                local _,tp = unpack(vars[i])
+                if TYPES.abs_dcl(tp,'Data') then
+                    xxx = tp[1]
+                    yyy = node('Set_Any', v.ln,
+                            v,
+                            node('Exp_Name', v.ln,
+                                node('ID_int', v.ln, id)))
+                end
+            end
+
+            if xxx then
+                local set =
+                    node('Stmts', v.ln,
+                        node('Var', v.ln,
+                            false,
+                            node('Type', v.ln,
+                                AST.copy(xxx)),
+                            id),
+                        yyy)
+
+                local get = node('ID_int', v.ln, id)
+
+                local stmts, j = AST.par(code,'Stmts')
+                local t = stmts.__dcls_cons or {}
+                stmts.__dcls_cons = t
+                t[#t+1] = { j, set, get }
+
+                AST.set(Abslist,i,get)
+            end
+        end
+    end,
+
+    Stmts__POS = function (me)
+        local t = me.__dcls_cons
+        if t then
+            for i=#t, 1, -1 do
+                local j, set, get = unpack(t[i])
+
+                AST.insert(me, j, set)
+                AST.visit_fs(set)
+
+                get[DCLS.F] = nil
+                AST.visit_fs(get)
             end
         end
     end,

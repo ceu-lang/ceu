@@ -9,69 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
-Test { [[
-code/await Ff (var int? v) -> int do
-    escape v? as int;
-end
-
-var int v1 = await Ff(_);
-var int v2 = await Ff(1);
-
-escape v1+v2;
-]],
-    run = 1,
-}
-
-Test { [[
-code/await Test(void) -> FOREVER do
-    _printf("oi!\n");
-    do finalize with
-        await async/thread do
-            _printf("tchau!\n");
-        end
-    end
-    await FOREVER;
-end
-
-par/or do
-    await Test();
-with
-    await 1ms;
-end
-
-escape 0;
-]],
-    run = 1,
-}
-
-Test { [[
-data Obj with
-    var bool a = false;
-end
-
-code/await DoObjRef(var& Obj o) -> FOREVER
-do
-    _printf("a: %d\n", o.a);
-    await FOREVER;
-end
-
-code/await DoObj(var Obj o) -> FOREVER
-do
-    _printf("a: %d\n", o.a);
-    await FOREVER;
-end
-
-spawn DoObj(Obj(true)); // fails... prints 0
-
-var Obj o = val Obj(true);
-spawn DoObj(o); // fails... prints 0
-
-spawn DoObjRef(&o); // works... prints 1
-
-escape 0;
-]],
-    run = 1,
-}
 
 do return end
 
@@ -35862,6 +35799,18 @@ Test { [[
 data Object with
   var int c;
 end
+code/await Show (var Object obj) -> int do
+    escape obj.c;
+end
+var int r = await Show(Object(10));
+escape r;
+]],
+    run = 10,
+}
+Test { [[
+data Object with
+  var int c;
+end
 code/await Show (var Object obj) -> (var&? int ret) -> int do
     var int a = obj.c;
     ret = &a;
@@ -43269,6 +43218,37 @@ escape d.e1.e + d.e2.e + d.e3.e;
 }
 
 Test { [[
+data Obj with
+    var bool a = false;
+end
+
+var int ret = 0;
+
+code/await DoObjRef(var& Obj o) -> FOREVER
+do
+    outer.ret = outer.ret + (o.a as int);
+    await FOREVER;
+end
+
+code/await DoObj(var Obj o) -> FOREVER
+do
+    outer.ret = outer.ret + (o.a as int);
+    await FOREVER;
+end
+
+spawn DoObj(Obj(true));
+
+var Obj o = val Obj(true);
+spawn DoObj(o);
+
+spawn DoObjRef(&o);
+
+escape ret;
+]],
+    run = 3,
+}
+
+Test { [[
 data Dd with
     var int x = 10;
 end
@@ -43277,7 +43257,24 @@ code/tight Ff (var Dd d) -> int do
     escape d.x;
 end
 
-escape call Ff(Dd(_));
+var Dd d = val Dd(_);
+
+escape call Ff(Dd(_)) + d.x
+     + call Ff(Dd(_));
+]],
+    run = 30,
+}
+Test { [[
+data Dd with
+    var int x = 10;
+end
+
+code/await Ff (var Dd d) -> int do
+    escape d.x;
+end
+
+var int x = await Ff(Dd(_));
+escape x;
 ]],
     run = 10,
 }
@@ -43291,7 +43288,9 @@ code/tight Ff (var Dd d) -> int do
 end
 
 escape call Ff(_);
+//escape call Ff(Dd(_));
 ]],
+    wrn = true,
     run = 10,
 }
 Test { [[
@@ -43387,6 +43386,7 @@ end
 var int r = await Show(_);
 escape r;
 ]],
+    wrn = true,
     run = 101,
 }
 Test { [[
@@ -43401,6 +43401,7 @@ end
 var int r = await Show(_);
 escape r;
 ]],
+    wrn = true,
     run = 101,
 }
 Test { [[
@@ -43417,7 +43418,7 @@ var& int r;
 spawn Show(Object(1)) -> (&r); // prints 0
 escape r;
 ]],
-    run = 101,
+    run = 1,
 }
 Test { [[
 data Object with
@@ -43428,6 +43429,7 @@ code/tight Show(var Object obj) -> int do
 end
 escape call Show(Object(_));
 ]],
+    wrn = true,
     run = 101,
 }
 Test { [[
@@ -43439,6 +43441,7 @@ code/tight Show(var Object obj) -> int do
 end
 escape call Show(_);
 ]],
+    wrn = true,
     run = 101,
 }
 Test { [[
@@ -43454,6 +43457,7 @@ end
 spawn Show(Object(_));
 escape 10;
 ]],
+    wrn = true,
     run = 10,
 }
 Test { [[
@@ -43471,6 +43475,7 @@ var&? int r;
 spawn Show(Object(_)) -> (&r);
 escape r!;
 ]],
+    wrn = true,
     run = 101,
 }
 Test { [[
@@ -43487,6 +43492,7 @@ var& int r;
 spawn Show(_) -> (&r); // prints 0
 escape r;
 ]],
+    wrn = true,
     run = 101,
 }
 
@@ -43756,6 +43762,26 @@ escape 1;
     _opts = { ceu_features_thread='true' },
 }
 
+Test { [[
+code/await Test(void) -> FOREVER do
+    do finalize with
+        await async/thread do
+        end
+    end
+    await FOREVER;
+end
+
+par/or do
+    await Test();
+with
+    await 1ms;
+end
+
+escape 0;
+]],
+    _opts = { ceu_features_thread='true' },
+    props_ = 'line 3 : invalid `async/thread´ : unexpected enclosing `finalize´',
+}
 Test { [[
 var int  a=10, b=5;
 var& int p = &b;
