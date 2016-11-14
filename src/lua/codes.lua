@@ -326,7 +326,7 @@ ceu_vector_setmax(&]]..V(ID_int,ctx)..[[, 0, 0);
             LINE(me, [[
 ceu_pool_init(&]]..V(ID_int)..'.pool, '..V(dim)..[[,
               sizeof(tceu_code_mem_dyn)+sizeof(]]..TYPES.toc(tp)..[[),
-              (byte**)&]]..CUR(ID_int.id_..'_queue')..', (byte*)&'..CUR(ID_int.id_..'_buf')..[[);
+              (byte**)&]]..CUR(ID_int.dcl.id_..'_queue')..', (byte*)&'..CUR(ID_int.dcl.id_..'_buf')..[[);
 ]])
         end
         LINE(me, [[

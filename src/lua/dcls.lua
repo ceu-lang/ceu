@@ -55,7 +55,10 @@ function DCLS.get (blk, id, can_cross)
     for blk in iter_boundary(blk,id,can_cross) do
         local dcl = blk.dcls[id]
         if dcl then
-            dcl.is_used = true
+            local no = AST.iter'Vec_Init'() or AST.iter'Pool_Init'()
+            if not no then
+                dcl.is_used = true
+            end
             return dcl
         end
     end
