@@ -310,6 +310,12 @@ escape esp as int;
     run = 6,
 }
 
+Test { [[
+escape (1<<1) + (8>>2);
+]],
+    run = 4,
+}
+
 --<<< EXPS / EXPRESSIONS
 
 -->>> NATIVE
@@ -38142,6 +38148,19 @@ escape 1;
 Test { [[
 data Media;
 data Media.Text;
+do/_
+    code/tight/dynamic Play (dynamic var& Media m) -> int do escape 1; end
+    code/tight/dynamic Play (dynamic var& Media.Text m) -> int do escape 2; end
+    var Media x = val Media.Text();
+    escape call/dynamic Play(&x);
+end
+]],
+    wrn = true,
+    run = 2,
+}
+Test { [[
+data Media;
+data Media.Text;
 code/tight/dynamic Play (dynamic var& Media m) -> void do end
 code/tight/dynamic Play (dynamic var& Media.Text m) -> void do end
 escape 1;
@@ -46075,6 +46094,49 @@ escape _CEU_APP.root.mem.trails_n;
     _opts = { ceu_features_isr='true' },
     run = 3,
 }
+
+Test { [[
+spawn async/isr [0] do
+    emit 1s;
+end
+escape 1;
+]],
+    _opts = { ceu_features_isr='true' },
+    run = 1,
+}
+
+Test { [[
+native _X, _V, _U, _f;
+native/pre do
+    ##define X 1
+end
+native/pos do
+    ##define f(x)
+    ##ifdef CEU_ISR__X
+        int V = 1;
+    ##else
+        int V = 0;
+    ##endif
+    ##ifdef CEU_ISR__f__lpar__0__rpar__                                             
+        int U = 1;
+    ##else
+        int U = 0;
+    ##endif
+
+end
+
+spawn async/isr [_X] do
+    emit 1s;
+end
+spawn async/isr [_f(0)] do
+    emit 1s;
+end
+escape _V+_U;
+]],
+    _opts = { ceu_features_isr='true' },
+    run = 2,
+}
+
 --<<< ASYNCS / ISR / ATOMIC
 
 -->>> CEU_FEATURES_*

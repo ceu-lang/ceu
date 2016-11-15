@@ -1483,25 +1483,37 @@ _CEU_HALT_]]..me.n..[[_:
 
     Emit_Wclock = function (me)
         local e = unpack(me)
+        if AST.par(me,'Async') then
+            LINE(me, [[
+ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
+]])
+        end
         LINE(me, [[
 {
-    ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
     s32 __ceu_dt = ]]..V(e)..[[;
     do {
         ceu_input(CEU_INPUT__WCLOCK, &__ceu_dt);
+]])
+        if AST.par(me,'Async') then
+            LINE(me, [[
         if (!_ceu_stk->is_alive) {
             return;
         }
+]])
+        end
+        LINE(me, [[
         __ceu_dt = 0;
     } while (CEU_APP.wclk_min_set <= 0);
 }
 ]])
-        HALT(me, {
-            { ['evt.id'] = 'CEU_INPUT__ASYNC' },
-            { seq        = 'CEU_APP.seq+1' },
-            { lbl        = me.lbl_out.id },
-            lbl = me.lbl_out.id,
-        })
+        if AST.par(me,'Async') then
+            HALT(me, {
+                { ['evt.id'] = 'CEU_INPUT__ASYNC' },
+                { seq        = 'CEU_APP.seq+1' },
+                { lbl        = me.lbl_out.id },
+                lbl = me.lbl_out.id,
+            })
+        end
     end,
 
     ---------------------------------------------------------------------------
@@ -1881,6 +1893,7 @@ local c = PAK.files.ceu_c
 local c = SUB(c, '=== FEATURES ===',         features)
 local c = SUB(c, '=== NATIVE_PRE ===',       CODES.native.pre)
 local c = SUB(c, '=== EXTS_ENUM_INPUT ===',  MEMS.exts.enum_input)
+local c = SUB(c, '=== ISRS_DEFINES ===',     MEMS.isrs)
 local c = SUB(c, '=== EXTS_DEFINES_INPUT_OUTPUT ===', MEMS.exts.defines_input_output)
 local c = SUB(c, '=== EVTS_ENUM ===',        MEMS.evts.enum)
 local c = SUB(c, '=== DATAS_HIERS ===',      MEMS.datas.hiers)

@@ -438,6 +438,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
     ['Exp_1+']  = 'Exp_1',
     ['Exp_1-']  = 'Exp_1',
     ['Exp_not'] = 'Exp_1',
+    ['Exp_~']   = 'Exp_1',
     Exp_1 = function (me)
         local op,e = unpack(me)
         return '('..ceu2c(op)..V(e)..')'
@@ -460,6 +461,8 @@ CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
     ['Exp_<']   = 'Exp_2',
     ['Exp_<=']  = 'Exp_2',
     ['Exp_>=']  = 'Exp_2',
+    ['Exp_>>']  = 'Exp_2',
+    ['Exp_<<']  = 'Exp_2',
     Exp_2 = function (me)
         local op,e1,e2 = unpack(me)
         return '('..V(e1)..ceu2c(op)..V(e2)..')'

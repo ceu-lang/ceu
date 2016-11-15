@@ -1,4 +1,5 @@
 MEMS = {
+    isrs = '',
     exts = {
         types       = '',
         enum_input  = '',
@@ -609,6 +610,11 @@ end
     end,
 
     ---------------------------------------------------------------------------
+
+    Async_Isr = function (me)
+        local exps, vars, _, blk = unpack(me)
+        MEMS.isrs = MEMS.isrs..'#define CEU_ISR__'..TYPES.noc(V(exps[1]))..'\n'
+    end,
 
     Async_Thread__PRE = function (me)
         CUR().mem = CUR().mem..'struct {\n'

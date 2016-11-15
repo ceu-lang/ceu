@@ -56,7 +56,7 @@ PROPS_.F = {
     --------------------------------------------------------------------------
 
     Emit_Wclock = function (me)
-        ASR(AST.par(me,'Async') or AST.par(me,'Isr'), me,
+        ASR(AST.par(me,'Async') or AST.par(me,'Async_Isr'), me,
             'invalid `emit´ : expected enclosing `async´ or `async/isr´')
     end,
 

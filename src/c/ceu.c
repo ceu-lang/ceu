@@ -184,6 +184,10 @@ enum {
     === EXTS_ENUM_OUTPUT ===
 };
 
+/* ISRS_DEFINES */
+
+=== ISRS_DEFINES ===
+
 /* EVENTS_DEFINES */
 
 === EXTS_DEFINES_INPUT_OUTPUT ===
