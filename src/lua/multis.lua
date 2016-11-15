@@ -75,7 +75,7 @@ function get (Code, ret, goleft)
         dyn = cur.left.dyn..dyn
         cur = cur.left
     end
-    dyn = Code.id_..dyn
+    dyn = Code.id..dyn
 
     local dcl = DCLS.get(AST.par(Code,'Block'), dyn)
     if dcl then
@@ -93,7 +93,7 @@ function get (Code, ret, goleft)
         local idxs = { ret.idx }
         local left = assert(ret.left)
         while not left.up do
-            left = assert(left.left)
+            left = ASR(left.left, Code, 'missing implementation')
             idxs[#idxs+1] = 1
         end
         local t = left.up

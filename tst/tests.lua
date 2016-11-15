@@ -9,108 +9,8 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+do return end -- OK
 --]=====]
-
-Test { [[
-data Media;
-data Media.Text;
-do
-    code/tight/dynamic Play (dynamic var& Media m) -> void do end
-    code/tight/dynamic Play (dynamic var& Media.Text m) -> void do end
-end
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-Test { [[
-data Media;
-data Media.Text;
-code/tight/dynamic Play (dynamic var& Media m) -> void do end
-code/tight/dynamic Play (dynamic var& Media.Text m) -> void do end
-escape 1;
-]],
-    _opts = { ceu_features_lua='true' },
-    wrn = true,
-    run = 1,
-}
-
--- XXX-02
-Test { [[
-data Aa;
-data Aa.Bb;
-code/await/dynamic Ff (dynamic var& Aa v1) -> void;
-var Aa a = val Aa();
-pool[10] Ff ffs;
-spawn/dynamic Ff(&a) in ffs;
-escape 1;
-]],
-    mems = 'line 3 : missing implementation',
-    wrn = true,
-    run = 15,
-}
-
--- XXX-03
-Test { [[
-data Bb with
-    var int x=10;
-end
-
-code/tight Ff (var Bb b) -> int;
-
-var int v1 = call Ff(_);
-escape v1;
-]],
-    tight_ = 'line 5 : invalid `code´ declaration : expected `/recursive´ : `call´ to unknown body (/tmp/tmp.ceu:7)',
-}
-Test { [[
-data Bb with
-    var int x=10;
-end
-data Bb.Cc with
-    var int y=20;
-end
-
-code/tight/dynamic Ff (dynamic var& Bb b) -> int do
-    escape b.x;
-end
-
-code/tight/dynamic Ff (dynamic var& Bb.Cc c) -> int do
-    escape c.x + c.y;
-end
-
-var Bb.Cc c = val Bb.Cc(_,_);
-var Bb    b = val Bb(_);
-var int v1 = call/dynamic Ff(&c);
-var int v2 = call/dynamic Ff(&b);
-escape v1 + v2;
-]],
-    run = 40,
-}
-
-Test { [[
-data Bb with
-    var int x=10;
-end
-data Bb.Cc with
-    var int y=20;
-end
-
-code/tight/dynamic Ff (dynamic var Bb b) -> int do
-    escape b.x;
-end
-
-code/tight/dynamic Ff (dynamic var Bb.Cc c) -> int do
-    escape c.x + c.y;
-end
-
-var int v2 = call/dynamic Ff(Bb(_));
-var int v1 = call/dynamic Ff(Bb.Cc(_,_));
-escape v1 + v2;
-]],
-    exps = 'line 17 : invalid call argument #1 : `data´ copy : unmatching fields',
-}
---do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -37963,8 +37863,65 @@ escape (call/dynamic Ff(&b,&a,&a)) + (call/dynamic Ff(&b,&a,&b)) +
     run = 15,
 }
 
--- XXX-03
+Test { [[
+data Bb with
+    var int x=10;
+end
 
+code/tight Ff (var Bb b) -> int;
+
+var int v1 = call Ff(_);
+escape v1;
+]],
+    tight_ = 'line 5 : invalid `code´ declaration : expected `/recursive´ : `call´ to unknown body (/tmp/tmp.ceu:7)',
+}
+Test { [[
+data Bb with
+    var int x=10;
+end
+data Bb.Cc with
+    var int y=20;
+end
+
+code/tight/dynamic Ff (dynamic var& Bb b) -> int do
+    escape b.x;
+end
+
+code/tight/dynamic Ff (dynamic var& Bb.Cc c) -> int do
+    escape c.x + c.y;
+end
+
+var Bb.Cc c = val Bb.Cc(_,_);
+var Bb    b = val Bb(_);
+var int v1 = call/dynamic Ff(&c);
+var int v2 = call/dynamic Ff(&b);
+escape v1 + v2;
+]],
+    run = 40,
+}
+
+Test { [[
+data Bb with
+    var int x=10;
+end
+data Bb.Cc with
+    var int y=20;
+end
+
+code/tight/dynamic Ff (dynamic var Bb b) -> int do
+    escape b.x;
+end
+
+code/tight/dynamic Ff (dynamic var Bb.Cc c) -> int do
+    escape c.x + c.y;
+end
+
+var int v2 = call/dynamic Ff(Bb(_));
+var int v1 = call/dynamic Ff(Bb.Cc(_,_));
+escape v1 + v2;
+]],
+    exps = 'line 17 : invalid call argument #1 : `data´ copy : unmatching fields',
+}
 Test { [[
 data Aa;
 data Bb with
@@ -38156,7 +38113,43 @@ escape ret;
     run = 15,
 }
 
--- XXX-02
+Test { [[
+data Aa;
+data Aa.Bb;
+code/await/dynamic Ff (dynamic var& Aa v1) -> void;
+var Aa a = val Aa();
+pool[10] Ff ffs;
+spawn/dynamic Ff(&a) in ffs;
+escape 1;
+]],
+    mems = 'line 3 : missing implementation',
+    wrn = true,
+    run = 15,
+}
+
+Test { [[
+data Media;
+data Media.Text;
+do
+    code/tight/dynamic Play (dynamic var& Media m) -> void do end
+    code/tight/dynamic Play (dynamic var& Media.Text m) -> void do end
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+data Media;
+data Media.Text;
+code/tight/dynamic Play (dynamic var& Media m) -> void do end
+code/tight/dynamic Play (dynamic var& Media.Text m) -> void do end
+escape 1;
+]],
+    _opts = { ceu_features_lua='true' },
+    wrn = true,
+    run = 1,
+}
 
 Test { [[
 data Aa;

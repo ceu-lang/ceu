@@ -526,20 +526,27 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
     Code = function (me)
         local _,mods1,id,body1 = unpack(me)
 
+        local _n = ''
+        local blk1 = AST.par(me, 'Block')
+        local blk2 = AST.par(blk1,'Block') or blk1
+        if blk2.__par.tag ~= 'ROOT' then
+            _n = '_'..me.n
+        end
+
         ASR(not AST.par(me,'Code'), me,
             'invalid `code´ declaration : nesting is not allowed')
 
         local blk = AST.par(me, 'Block')
 
-        if not me.is_dyn_base then
-            if mods1.dynamic and me.is_impl then
-                local ins1 = AST.asr(body1,'Block', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
-                me.id = id..ins1.ids_dyn
-                me.dyn_base = DCLS.asr(me,blk,id)
-                me.dyn_base.dyn_last = me
-            else
-                me.id = id
-            end
+        if (not me.is_dyn_base) and mods1.dynamic and me.is_impl then
+            local ins1 = AST.asr(body1,'Block', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
+            me.id  = id..ins1.ids_dyn
+            me.id_ = id.._n..ins1.ids_dyn
+            me.dyn_base = DCLS.asr(me,blk,id)
+            me.dyn_base.dyn_last = me
+        else
+            me.id  = id
+            me.id_ = id.._n
         end
 
         local old = DCLS.get(blk, me.id)
@@ -586,13 +593,6 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         end
         me.is_used = (old and old.is_used)
                         or (mods1.dynamic and (not me.is_dyn_base))
-
-        me.id_ = me.id
-        local blk1 = AST.par(me, 'Block')
-        local blk2 = AST.par(blk1,'Block') or blk1
-        if blk2.__par.tag ~= 'ROOT' then
-            me.id_ = me.id..'_'..me.n
-        end
     end,
 
     Data__PRE = function (me)
