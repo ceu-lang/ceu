@@ -201,6 +201,23 @@ error'TODO: remove below'
                     EXPS.check_tag(me, var.tag, val.info.dcl.tag, 'invalid binding')
                 end
                 EXPS.check_tp(me, var_tp, val.info.tp, err_str..' : argument #'..i,var_is_alias)
+
+                -- abs vs abs
+                local to_abs = TYPES.abs_dcl(var_tp, 'Data')
+                if to_abs then
+                    local is_alias = unpack(var)
+                    if not is_alias then
+                        local fr_abs = TYPES.abs_dcl(val.info.tp, 'Data')
+                        local is_alias = unpack(val.info)
+                        assert(not is_alias)
+
+                        ASR(to_abs.n_vars == fr_abs.n_vars, me,
+                            err_str..' argument #'..i..' : `data´ copy : unmatching fields')
+
+                        --ASR(to_abs.weaker=='plain', me,
+                            --'invalid assignment : `data´ copy : expected plain `data´')
+                    end
+                end
             end
         end
 

@@ -9,6 +9,31 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+--]=====]
+
+Test { [[
+data Media;
+data Media.Text;
+do
+    code/tight/dynamic Play (dynamic var& Media m) -> void do end
+    code/tight/dynamic Play (dynamic var& Media.Text m) -> void do end
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+data Media;
+data Media.Text;
+code/tight/dynamic Play (dynamic var& Media m) -> void do end
+code/tight/dynamic Play (dynamic var& Media.Text m) -> void do end
+escape 1;
+]],
+    _opts = { ceu_features_lua='true' },
+    wrn = true,
+    run = 1,
+}
 
 -- XXX-02
 Test { [[
@@ -20,10 +45,10 @@ pool[10] Ff ffs;
 spawn/dynamic Ff(&a) in ffs;
 escape 1;
 ]],
+    mems = 'line 3 : missing implementation',
     wrn = true,
     run = 15,
 }
-do return end
 
 -- XXX-03
 Test { [[
@@ -36,8 +61,33 @@ code/tight Ff (var Bb b) -> int;
 var int v1 = call Ff(_);
 escape v1;
 ]],
-    run = 50,
+    tight_ = 'line 5 : invalid `code´ declaration : expected `/recursive´ : `call´ to unknown body (/tmp/tmp.ceu:7)',
 }
+Test { [[
+data Bb with
+    var int x=10;
+end
+data Bb.Cc with
+    var int y=20;
+end
+
+code/tight/dynamic Ff (dynamic var& Bb b) -> int do
+    escape b.x;
+end
+
+code/tight/dynamic Ff (dynamic var& Bb.Cc c) -> int do
+    escape c.x + c.y;
+end
+
+var Bb.Cc c = val Bb.Cc(_,_);
+var Bb    b = val Bb(_);
+var int v1 = call/dynamic Ff(&c);
+var int v2 = call/dynamic Ff(&b);
+escape v1 + v2;
+]],
+    run = 40,
+}
+
 Test { [[
 data Bb with
     var int x=10;
@@ -50,18 +100,17 @@ code/tight/dynamic Ff (dynamic var Bb b) -> int do
     escape b.x;
 end
 
-code/tight/dynamic Ff (dynamic var Bb.Cc c) -> void do
+code/tight/dynamic Ff (dynamic var Bb.Cc c) -> int do
     escape c.x + c.y;
 end
 
-var int v1 = call/dynamic Ff(Bb.Cc(_,_));
 var int v2 = call/dynamic Ff(Bb(_));
+var int v1 = call/dynamic Ff(Bb.Cc(_,_));
 escape v1 + v2;
 ]],
-    run = 50,
+    exps = 'line 17 : invalid call argument #1 : `data´ copy : unmatching fields',
 }
-do return end -- OK
---]=====]
+--do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested
