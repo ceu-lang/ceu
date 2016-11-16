@@ -317,6 +317,7 @@ KEYS = P
 'native' +
 'lua' +
 'loop' +
+'lock' +
 'kill' +
 'isr' +
 'is' +
@@ -427,6 +428,8 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , _Every  = K'every' * OPT((V'Exp_Name'+PARENS(V'List_Name')) * K'in') *
                     (V'Await_Ext' + V'Await_Int' + V'Await_Wclock') *
                 V'__Do'
+
+    , _Lock = K'lock' * V'Exp_Name' * V'__Do'
 
     , Stmt_Call = V'Abs_Call' + V'Nat_Call'
 
@@ -868,7 +871,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
               + V'Nat_Block'
               + V'Do'    + V'_If'
               + V'Loop' + V'_Loop_Num' + V'Loop_Pool'
-              + V'_Every'
+              + V'_Every' + V'_Lock'
               + V'_Spawn_Block'
               + V'_Finalize'
               + V'Y'*V'Par_Or' + V'Y'*V'Par_And' + V'_Watching'

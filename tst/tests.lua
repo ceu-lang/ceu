@@ -4501,6 +4501,77 @@ escape ret;
 
 --<<< EVERY
 
+-->>> LOCK
+
+Test { [[
+var Lock l1 = _;
+var int ret =
+    do
+        var int v = 0;
+        par do
+            watching 5s do
+                lock l1 do
+                    every 1s do
+                        v = v + 1;
+                    end
+                end
+            end
+        with
+            await l1.ok_unlocked;
+        with
+            native _ceu_dbg_assert;
+            _ceu_dbg_assert(l1.is_locked);
+            lock l1 do
+                escape v;
+            end
+        end
+    end;
+_ceu_dbg_assert(not l1.is_locked);
+escape ret;
+]],
+    run = { ['~>10s']=4 },
+}
+
+Test { [[
+native _ceu_dbg_assert;
+var Lock l1 = _;
+var int ret =
+    do
+        var int v = 0;
+        par do
+            watching 5s do
+                lock l1 do
+                    every 1s do
+                        v = v + 1;
+                    end
+                end
+            end
+        with
+            await l1.ok_unlocked;
+        with
+            _ceu_dbg_assert(l1.is_locked);
+            lock l1 do
+                watching 5s do
+                    every 1s do
+                        v = v + 1;
+                    end
+                end
+            end
+        with
+            _ceu_dbg_assert(l1.is_locked);
+            lock l1 do
+                escape v;
+            end
+        end
+    end;
+_ceu_dbg_assert(not l1.is_locked);
+escape ret;
+]],
+    run = { ['~>10s']=8 },
+}
+
+--<<< LOCK
+
 Test { [[
 var int ret = 0;
 loop do

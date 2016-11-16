@@ -23,7 +23,7 @@ syn keyword cType       uint usize void
 syn keyword cType       const nohold recursive plain pure hold
 syn keyword cType       tight dynamic
 syn keyword	cStatement  as async await break native continue data deterministic do else emit end
-syn keyword cStatement  code event every finalize FOREVER outer if input loop nothing
+syn keyword cStatement  code event every finalize FOREVER outer if input loop nothing lock
 syn keyword cStatement  output pre pos par pause return then until var val vector with
 syn keyword cStatement  include kill spawn thread lua resume
 syn keyword cStatement  escape call isr atomic request in is
