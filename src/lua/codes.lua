@@ -1210,7 +1210,7 @@ _ceu_mem->trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
             if fr.info and TYPES.check(fr.info.tp, '_char', '&&') then
                 LINE(me, [[
     {
-        char* __ceu_str = ]]..V(fr)..[[;
+        const char* __ceu_str = ]]..V(fr)..[[;
         usize __ceu_len = strlen(__ceu_str);
         ceu_vector_setlen(&]]..V(to)..', ('..V(to)..[[.len + __ceu_len), 1);
         ceu_vector_buf_set(&]]..V(to)..[[,
@@ -1441,7 +1441,7 @@ if (]]..V(Exp_Name)..[[.alias != NULL) {
         LINE(me, [[
     tceu_evt_occ __ceu_occ = { ]]..V(Exp_Name)..[[, CEU_APP.seq+1, &__ceu_ps,
                                {(tceu_code_mem*)&CEU_APP.root,
-                                0, CEU_APP.root.mem.trails_n-1}
+                                0, (tceu_ntrl)(CEU_APP.root.mem.trails_n-1)}
                              };
     tceu_stk __ceu_stk  = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
     ceu_bcast(&__ceu_occ, &__ceu_stk);

@@ -55,6 +55,8 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg
                           (tceu_callback_arg){.size=p2})
 
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
+#ifndef ceu_callback_assert_msg_ex
 #define ceu_callback_assert_msg_ex(v,msg,file,line)                              \
     if (!(v)) {                                                                  \
         if ((msg)!=NULL) {                                                       \
@@ -69,6 +71,8 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg
         }                                                                        \
         ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL);                       \
     }
+#endif
+
 #define ceu_callback_assert_msg(v,msg) ceu_callback_assert_msg_ex((v),(msg),__FILE__,__LINE__)
 
 #define ceu_dbg_assert(v) ceu_callback_assert_msg(v,"bug found")

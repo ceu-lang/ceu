@@ -129,7 +129,7 @@ typedef struct tceu_opt_alias {
     tceu_evt_range range;
 } tceu_opt_alias;
 
-static tceu_evt* CEU_OPTION_EVT (tceu_evt* alias, char* file, int line) {
+static tceu_evt* CEU_OPTION_EVT (tceu_evt* alias, const char* file, int line) {
     ceu_callback_assert_msg_ex(alias != NULL, "value is not set", file, line);
     return alias;
 }
@@ -203,7 +203,7 @@ static int ceu_data_is (tceu_ndata* supers, tceu_ndata me, tceu_ndata cmp) {
 }
 
 static void* ceu_data_as (tceu_ndata* supers, tceu_ndata* me, tceu_ndata cmp,
-                          char* file, int line) {
+                          const char* file, int line) {
     ceu_callback_assert_msg_ex(ceu_data_is(supers, *me, cmp),
                                "invalid cast `as´", file, line);
     return me;

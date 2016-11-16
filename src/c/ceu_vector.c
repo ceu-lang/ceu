@@ -22,9 +22,9 @@ void  ceu_vector_init         (tceu_vector* vector, usize max, bool is_dyn,
 byte* ceu_vector_setmax       (tceu_vector* vector, usize len, bool freeze);
 int   ceu_vector_setlen_could (tceu_vector* vector, usize len, bool grow);
 void  ceu_vector_setlen_ex    (tceu_vector* vector, usize len, bool grow,
-                               char* file, int line);
+                               const char* file, int line);
 byte* ceu_vector_geti_ex      (tceu_vector* vector, usize idx,
-                               char* file, int line);
+                               const char* file, int line);
 
 #if 0
 char* ceu_vector_tochar (tceu_vector* vector);
@@ -103,7 +103,7 @@ int ceu_vector_setlen_could (tceu_vector* vector, usize len, bool grow)
 }
 
 void ceu_vector_setlen_ex (tceu_vector* vector, usize len, bool grow,
-                           char* file, int line)
+                           const char* file, int line)
 {
     /* must fit w/o growing */
     if (!grow) {
@@ -137,7 +137,7 @@ void ceu_vector_setlen_ex (tceu_vector* vector, usize len, bool grow,
     vector->len = len;
 }
 
-byte* ceu_vector_geti_ex (tceu_vector* vector, usize idx, char* file, int line) {
+byte* ceu_vector_geti_ex (tceu_vector* vector, usize idx, const char* file, int line) {
     ceu_callback_assert_msg_ex(idx < vector->len, "access out of bounds", file, line);
     return ceu_vector_buf_get(vector, idx);
 }
