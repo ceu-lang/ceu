@@ -46208,6 +46208,19 @@ escape _V+_U;
     run = 2,
 }
 
+Test { [[
+code/await Ff (void) -> void do
+    spawn async/isr [0] do
+        var int x = 10;
+    end
+end
+escape 1;
+]],
+    wrn = true,
+    _opts = { ceu_features_isr='true' },
+    run = 1,
+}
+
 --<<< ASYNCS / ISR / ATOMIC
 
 -->>> CEU_FEATURES_*

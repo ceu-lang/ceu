@@ -150,6 +150,14 @@ typedef struct {
 } tceu_threads_param;
 #endif
 
+#ifdef CEU_FEATURES_ISR
+typedef struct tceu_isr {
+    void (*fun)(tceu_code_mem*);
+    tceu_code_mem* mem;
+} tceu_isr;
+
+#endif
+
 /*****************************************************************************/
 
 /* NATIVE_PRE */

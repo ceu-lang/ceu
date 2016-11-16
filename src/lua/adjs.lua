@@ -54,6 +54,27 @@ F = {
                         '_ret')
         ret.is_implicit = true
 
+        local lock = node('Data', me.ln,
+                        'Lock',
+                        false,
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('_Vars_set', me.ln,
+                                    false,
+                                    node('Type', me.ln,
+                                        node('ID_prim', me.ln, 'bool')),
+                                    'is_locked',
+                                    {node('_Set_Exp',me.ln,
+                                        node('BOOL',me.ln,'0'))}
+                                    ),
+                                node('_Evts_set', me.ln,
+                                    false,
+                                    node('Type', me.ln,
+                                        node('ID_prim', me.ln, 'void')),
+                                    'ok_unlocked',
+                                    false))))
+        lock.is_predefined = true
+
         local lua do
             if CEU.opts.ceu_features_lua then
                 lua = node('Stmts', me.ln,
@@ -71,23 +92,7 @@ F = {
                 node('Block', me.ln,
                     node('Stmts', me.ln,
                         nats,
-                        node('_Data_block', me.ln,
-                            'Lock',
-                            false,
-                            node('_Vars_set', me.ln,
-                                false,
-                                node('Type', me.ln,
-                                    node('ID_prim', me.ln, 'bool')),
-                                'is_locked',
-                                {node('_Set_Exp',me.ln,
-                                    node('BOOL',me.ln,'0'))}
-                                ),
-                            node('_Evts_set', me.ln,
-                                false,
-                                node('Type', me.ln,
-                                    node('ID_prim', me.ln, 'void')),
-                                'ok_unlocked',
-                                false)),
+                        lock,
                         ret,
                         node('_Set', me.ln,
                             node('Exp_Name', me.ln,

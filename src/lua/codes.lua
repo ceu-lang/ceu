@@ -1658,13 +1658,14 @@ static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
 
         LINE(me, [[
 {
+    tceu_isr __ceu_isr = { CEU_ISR_]]..me.n..','..[[ _ceu_mem };
     int __ceu_args[] = { ]]..me.args..[[ };
-    ceu_callback_ptr_ptr(CEU_CALLBACK_ISR_ATTACH, (void*)CEU_ISR_]]..me.n..[[, &__ceu_args);
+    ceu_callback_ptr_ptr(CEU_CALLBACK_ISR_ATTACH, (void*)&__ceu_isr, &__ceu_args);
 }
 ]])
 
         CODES.isrs = CODES.isrs .. [[
-void CEU_ISR_]]..me.n..[[ (void) {
+void CEU_ISR_]]..me.n..[[ (tceu_code_mem* _ceu_mem) {
     ]]..blk.code..[[
 }
 ]]
@@ -1675,8 +1676,9 @@ void CEU_ISR_]]..me.n..[[ (void) {
         local paror = AST.asr(me,6,'Par_Or')
         local isr = AST.asr(paror,1,'Stmts', paror.__i-1, 'Async_Isr')
         LINE(me, [[{
+    tceu_isr __ceu_isr = { CEU_ISR_]]..isr.n..','..[[ _ceu_mem };
     int __ceu_args[] = { ]]..isr.args..[[ };
-    ceu_callback_ptr_ptr(CEU_CALLBACK_ISR_DETACH, (void*)CEU_ISR_]]..isr.n..[[, &__ceu_args);
+    ceu_callback_ptr_ptr(CEU_CALLBACK_ISR_DETACH, &__ceu_isr, &__ceu_args);
 }]])
     end,
 
