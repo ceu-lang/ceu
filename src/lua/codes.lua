@@ -1332,9 +1332,17 @@ do {
 ]])
         local ps = 'NULL'
         if #List_Exp > 0 then
+            if AST.par(me,'Async_Isr') then
+                LINE(me, 'static ')
+            end
             LINE(me, [[
-tceu_]]..inout..'_'..ID_ext.dcl.id..' __ceu_ps = { '..table.concat(V(List_Exp),',')..[[ };
+tceu_]]..inout..'_'..ID_ext.dcl.id..[[ __ceu_ps;
 ]])
+            for i, exp in ipairs(List_Exp) do
+                LINE(me, [[
+__ceu_ps._]]..i..' = '..V(exp)..[[;
+]])
+            end
             ps = '&__ceu_ps'
         end
 
@@ -1349,9 +1357,6 @@ ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..'.id, '..ps..[[).value.
             else
                 LINE(me, cb)
             end
-            LINE(me, [[
-}
-]])
         else
             if AST.par(me, 'Async') then
                 LINE(me, [[
@@ -1359,21 +1364,27 @@ ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__ASYNC;
 _ceu_mem->trails[]]..me.trails[1]..[[].seq    = CEU_APP.seq+1;
 _ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
+ceu_input(]]..V(ID_ext)..'.id, '..ps..[[);
 ]])
             else
-                assert(AST.par(me, 'Async_Isr'))
-            end
-
-            LINE(me, [[
-    ceu_input(]]..V(ID_ext)..'.id, '..ps..[[);
+                local isr = assert(AST.par(me,'Async_Isr'))
+                local exps = unpack(isr)
+                LINE(me, [[
+{
+    tceu_evt_id_params __ceu_evt = { ]]..V(ID_ext)..'.id, '..ps..[[ };
+    ceu_callback_num_ptr(CEU_CALLBACK_ISR_EMIT, ]]..V(exps[1])..[[, (void*)&__ceu_evt);
 }
 ]])
+            end
             if AST.par(me, 'Async') then
                 HALT(me, {
                     lbl = me.lbl_out.id,
                 })
             end
         end
+        LINE(me, [[
+}
+]])
     end,
 
     ---------------------------------------------------------------------------
@@ -1468,33 +1479,34 @@ _CEU_HALT_]]..me.n..[[_:
         if AST.par(me,'Async') then
             LINE(me, [[
 ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
-]])
-        end
-        LINE(me, [[
 {
     s32 __ceu_dt = ]]..V(e)..[[;
     do {
         ceu_input(CEU_INPUT__WCLOCK, &__ceu_dt);
-]])
-        if AST.par(me,'Async') then
-            LINE(me, [[
         if (!_ceu_stk->is_alive) {
             return;
         }
-]])
-        end
-        LINE(me, [[
         __ceu_dt = 0;
     } while (CEU_APP.wclk_min_set <= 0);
 }
 ]])
-        if AST.par(me,'Async') then
             HALT(me, {
                 { ['evt.id'] = 'CEU_INPUT__ASYNC' },
                 { seq        = 'CEU_APP.seq+1' },
                 { lbl        = me.lbl_out.id },
                 lbl = me.lbl_out.id,
             })
+        else
+            local isr = assert(AST.par(me,'Async_Isr'))
+            local exps = unpack(isr)
+            LINE(me, [[
+{
+    static s32 __ceu_dt;
+    __ceu_dt = ]]..V(e)..[[;
+    tceu_evt_id_params __ceu_evt = { CEU_INPUT__WCLOCK, &__ceu_dt };
+    ceu_callback_num_ptr(CEU_CALLBACK_ISR_EMIT, ]]..V(exps[1])..[[, (void*)&__ceu_evt);
+}
+]])
         end
     end,
 

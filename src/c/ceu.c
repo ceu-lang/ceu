@@ -151,9 +151,15 @@ typedef struct {
 #endif
 
 #ifdef CEU_FEATURES_ISR
+typedef struct tceu_evt_id_params {
+    tceu_nevt id;
+    void*     params;
+} tceu_evt_id_params;
+
 typedef struct tceu_isr {
     void (*fun)(tceu_code_mem*);
-    tceu_code_mem* mem;
+    tceu_code_mem*     mem;
+    tceu_evt_id_params evt;
 } tceu_isr;
 
 #endif
