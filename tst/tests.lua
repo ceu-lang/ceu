@@ -46182,7 +46182,7 @@ native/pre do
     ##define X 1
 end
 native/pos do
-    ##define f(x)
+    ##define f(x) 1
     ##ifdef CEU_ISR__X
         int V = 1;
     ##else
