@@ -231,24 +231,6 @@ if (]]..V(c)..[[) {
             CLEAR(me)
         end
     end,
---[[
-    Block__PRE = function (me, par,base)
-        par = par or me
-        local ctx = { base=base }
-
-        -- recurse for "data" var
-        for _, dcl in ipairs(me.dcls) do
-            local alias, tp = unpack(dcl)
-            local ID_abs = AST.get(tp,'Type',1,'ID_abs')
-            if (not alias) and dcl.tag=='Var' and ID_abs and
-               TYPES.check(tp,ID_abs[1]) and ID_abs.dcl.tag=='Data'
-            then
-                local blk = AST.asr(ID_abs.dcl,'Data', 3,'Block')
-                F.Block__PRE(blk, par, (base and base..'.' or '')..dcl.id_)
-            end
-        end
-    end,
-]]
 
     __var = function (me, base)
         local is_alias, tp = unpack(me)
