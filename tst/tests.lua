@@ -43745,6 +43745,57 @@ end
     run = 100,
 }
 
+Test { [[
+code/tight Ff (void) -> void;
+code/tight Ff (void) -> void do
+end
+call Ff();
+escape 1;
+]],
+    _opts = { ceu_features_lua='true' },
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> void;
+code/await Ff (void) -> void do
+end
+await Ff();
+escape 1;
+]],
+    _opts = { ceu_features_lua='true' },
+    run = 1,
+}
+
+Test { [[
+do/_
+    code/await Ff (void) -> void;
+    code/await Ff (void) -> void do
+    end
+    await Ff();
+    escape 1;
+end
+]],
+    _opts = { ceu_features_lua='true' },
+    run = 1,
+}
+
+Test { [[
+data IData with
+   var int d;
+end
+code/await Data (var int d) -> (var& IData mydata) -> void;
+code/await Data (var int d) -> (var& IData mydata) -> void
+do
+   var IData ref_ = val IData (d);
+   mydata = &ref_;
+end
+await Data (0);
+escape 1;
+]],
+    run = 1,
+}
+
 --<< DATA / CODE / SCOPE
 
 --<<< DATA
