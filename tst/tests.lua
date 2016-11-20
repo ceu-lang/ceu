@@ -9,6 +9,50 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+Test { [[
+ data IData;                                                                     
+ data IData.Test1 with                                                           
+   var int d;                                                                    
+ end                                                                             
+ code/tight/dynamic Ff (dynamic var& IData mydata) -> int do                                                                              
+   escape 1;
+ end                                                                             
+ code/tight/dynamic Ff (dynamic var& IData.Test1 mydata) -> int;
+ code/tight/dynamic                                                              
+ Ff (dynamic var& IData.Test1 mydata) -> int                                  
+ do                                                                              
+   escape 2;
+ end                                                                             
+ var IData.Test1 t1 = val IData.Test1 (0);                                       
+ escape call/dynamic Ff (&t1);                                                        
+]],
+    wrn = true,
+    run = 2,
+}
+do return end
+Test { [[
+do/_
+ data IData;                                                                     
+ data IData.Test1 with                                                           
+   var int d;                                                                    
+ end                                                                             
+ code/tight/dynamic Ff (dynamic var& IData mydata) -> int do                                                                              
+   escape 1;
+ end                                                                             
+ code/tight/dynamic Ff (dynamic var& IData.Test1 mydata) -> int;
+ code/tight/dynamic                                                              
+ Ff (dynamic var& IData.Test1 mydata) -> int                                  
+ do                                                                              
+   escape 2;
+ end                                                                             
+ var IData.Test1 t1 = val IData.Test1 (0);                                       
+ escape call/dynamic Ff (&t1);                                                        
+end
+]],
+    wrn = true,
+    run = 2,
+}
+
 do return end -- OK
 --]=====]
 
@@ -38426,6 +38470,213 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+do/_
+ data IData;                                                                     
+ data IData.Test1 with                                                           
+   var int d;                                                                    
+ end                                                                             
+ code/tight/dynamic                                                              
+ Ff (dynamic var& IData mydata) -> int                                        
+ do                                                                              
+   escape 1;
+ end                                                                             
+ code/tight/dynamic                                                              
+ Ff (dynamic var& IData.Test1 mydata) -> int                                  
+ do                                                                              
+   escape 2;
+ end                                                                             
+ var IData.Test1 t1 = val IData.Test1 (0);                                       
+ escape call/dynamic Ff (&t1);                                                        
+end
+]],
+    wrn = true,
+    run = 2,
+}
+Test { [[
+do/_
+data IData;                                                                     
+                                                                                 
+ data IData.Test1 with                                                           
+   var int d;                                                                    
+ end                                                                             
+                                                                                 
+ data IData.Test2 with                                                           
+   var f64 f;                                                                    
+ end                                                                             
+                                                                                 
+ code/tight/dynamic                                                              
+ Test (dynamic var& IData mydata) -> int                                        
+ do                                                                              
+   escape 1;
+ end                                                                             
+                                                                                 
+ code/tight/dynamic                                                              
+ Test (dynamic var& IData.Test1 mydata) -> int                                  
+ do                                                                              
+   escape 2;
+ end                                                                             
+                                                                                 
+ code/tight/dynamic                                                              
+ Test (dynamic var& IData.Test2 mydata) -> int                                  
+ do                                                                              
+   escape 3;
+ end                                                                             
+                                                                                 
+ var IData.Test1 t1 = val IData.Test1 (0);                                       
+ var int v1 = call/dynamic Test (&t1);                                                        
+                                                                                 
+ var IData.Test2 t2 = val IData.Test2 (0);                                       
+ var int v2 = call/dynamic Test (&t2); 
+
+escape v1 + v2;
+end
+]],
+    wrn = true,
+    run = 5,
+}
+Test { [[
+do/_
+    data Media as nothing;
+    data Media.Audio with 
+        var int a = 1;
+    end
+    code/tight/dynamic Play (dynamic var& Media media) -> int do
+    end
+    code/tight/dynamic Play (dynamic var& Media.Audio media) -> int do
+        escape media.a;
+    end
+    var Media.Audio audio = val Media.Audio(_);
+    var& Media m = &audio;
+    var int ret = call/dynamic Play(&m);
+    escape ret;
+end
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+do/_
+    data Media as nothing;
+    data Media.Audio with 
+        var int a = 1;
+    end
+    code/await/dynamic Play (dynamic var& Media media) -> int do
+    end
+    code/await/dynamic Play (dynamic var& Media.Audio media) -> int do
+        escape media.a;
+    end
+    var Media.Audio audio = val Media.Audio(_);
+    var& Media m = &audio;
+    var int ret = await/dynamic Play(&m);
+    escape ret;
+end
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+do/_
+    native _ceu_dbg_assert, _printf;
+    data Media as nothing;
+
+    data Media.Audio with 
+        var int a = 1;
+    end
+
+    data Media.Video with
+        var int b = 2;
+    end
+
+
+    code/await/dynamic Play (dynamic var& Media media) -> int do
+        _ceu_dbg_assert(0);               // never dispatched
+    end
+
+    code/await/dynamic Play (dynamic var& Media.Audio media) -> int do
+        escape media.a;
+    end
+
+    code/await/dynamic Play (dynamic var& Media.Video media) -> int do
+        escape media.b;
+    end
+
+    var Media.Audio audio = val Media.Audio(_);
+
+    var& Media m = &audio; // receives one of "Media.Audio" or "Media.Video"
+
+    var int ret = await/dynamic Play(&m);
+    escape ret;
+end
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+native _ceu_dbg_assert, _printf;
+data Media as nothing;
+
+data Media.Audio with 
+    var int a = 1;
+end
+
+data Media.Video with
+    var int b = 2;
+end
+
+
+code/await/dynamic Play (dynamic var& Media media) -> int do
+    _ceu_dbg_assert(0);               // never dispatched
+end
+
+code/await/dynamic Play (dynamic var& Media.Audio media) -> int do
+    escape media.a;
+end
+
+code/await/dynamic Play (dynamic var& Media.Video media) -> int do
+    escape media.b;
+end
+
+var Media.Audio audio = val Media.Audio(_);
+
+var& Media m = &audio; // receives one of "Media.Audio" or "Media.Video"
+
+var int ret = await/dynamic Play(&m);
+escape ret;
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+do/_
+    data Media as nothing;
+
+    data Media.Audio with
+        var int a = 2;
+    end
+
+    data Media.Video with
+        var int v = 1;
+    end
+
+    code/await/dynamic Play (dynamic var& Media media) -> void do
+        escape;             // never dispatched
+    end
+
+    code/await/dynamic Play (dynamic var& Media.Audio media) -> void do
+        await 1s;                   // plays an audio
+    end
+
+    code/await/dynamic Play (dynamic var& Media.Video media) -> void do
+        await 2s;                  // plays a video
+    end
+    escape 1;
+end
+]],
+    _opts = { ceu_features_lua='true' },
+    wrn = true,
+    run = 1,
+}
 --<< CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
 
 -->> CODE / AWAIT / FINALIZE

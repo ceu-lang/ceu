@@ -7,8 +7,8 @@ local function down (T, i, sup, ret)
     for _, dcl in ipairs(sup.hier.down) do
         local me = {
             data = 'CEU_DATA_'..TYPES.noc(dcl.id),
-            dyn  = string.gsub(t.dyn, '_'..t.base.id,
-                                      '_'..TYPES.noc(dcl.id)),
+            dyn  = string.gsub(t.dyn, '_'..t.base.id_,
+                                      '_'..TYPES.noc(dcl.id_)),
             id   = dcl.id,
 
             idx  = #ret+1,
