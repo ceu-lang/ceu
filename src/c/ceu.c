@@ -670,6 +670,19 @@ fprintf(stderr, "<<< %d [%p] %d->%d\n", occ->evt.id, range.mem, range.trl0, rang
 
 CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params)
 {
+    if (evt_id == CEU_INPUT__WCLOCK) {
+        CEU_APP.wclk_min_cmp = CEU_APP.wclk_min_set;      /* swap "cmp" to last "set" */
+        CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;    /* new "set" resets to inactive */
+        if (CEU_APP.wclk_min_cmp <= *((s32*)evt_params)) {
+            CEU_APP.wclk_late = *((s32*)evt_params) - CEU_APP.wclk_min_cmp;
+        }
+    } else {
+        s32 dt = ceu_callback_void_void(CEU_CALLBACK_WCLOCK_DT).value.num;
+        if (dt != CEU_WCLOCK_INACTIVE) {
+            ceu_input(CEU_INPUT__WCLOCK, &dt);
+        }
+    }
+
     CEU_APP.seq_base = CEU_APP.seq;
 
 /* TODO: remove this extra bcast to reset seqs */
@@ -690,18 +703,6 @@ CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params)
                          {(tceu_code_mem*)&CEU_APP.root,
                           0, (tceu_ntrl)(CEU_APP.root.mem.trails_n-1)}
                        };
-    switch (evt_id)
-    {
-        case CEU_INPUT__WCLOCK: {
-            CEU_APP.wclk_min_cmp = CEU_APP.wclk_min_set;      /* swap "cmp" to last "set" */
-            CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;    /* new "set" resets to inactive */
-            if (CEU_APP.wclk_min_cmp <= *((s32*)evt_params)) {
-                CEU_APP.wclk_late = *((s32*)evt_params) - CEU_APP.wclk_min_cmp;
-            }
-            break;
-        }
-    }
-
     tceu_stk stk = { 1, NULL,
                      { (tceu_code_mem*)&CEU_APP.root,
                        0, (tceu_ntrl)(CEU_APP.root.mem.trails_n-1) } };
