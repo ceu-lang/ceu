@@ -710,6 +710,8 @@ CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params)
 }
 
 CEU_API void ceu_start (void) {
+    ceu_callback_void_void(CEU_CALLBACK_START);
+
     CEU_APP.seq      = 0;
     CEU_APP.seq_base = 0;
 
@@ -740,6 +742,7 @@ CEU_API void ceu_stop (void) {
     CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
     ceu_dbg_assert(ceu_threads_gc(1) == 0); /* wait all terminate/free */
 #endif
+    ceu_callback_void_void(CEU_CALLBACK_STOP);
 }
 
 /*****************************************************************************/
@@ -766,7 +769,6 @@ static tceu_callback_ret ceu_callback_go_all (int cmd, tceu_callback_arg p1, tce
 
 CEU_API int ceu_loop (void)
 {
-    ceu_callback_void_void(CEU_CALLBACK_START);
     ceu_start();
 
     while (!ceu_cb_terminating) {
@@ -787,7 +789,6 @@ CEU_API int ceu_loop (void)
     }
 
     ceu_stop();
-    ceu_callback_void_void(CEU_CALLBACK_STOP);
 
 #ifdef CEU_TESTS
     printf("_ceu_tests_trails_visited_ = %d\n", _ceu_tests_trails_visited_);
