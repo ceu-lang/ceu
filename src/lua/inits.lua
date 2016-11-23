@@ -385,6 +385,26 @@ F = {
         end
     end,
 
+    ['Exp_.'] = function (me)
+        local _, e, member = unpack(me)
+        if e.tag=='Outer' and me.info.tag=='Var' then
+            local out = assert(AST.par(me,'Code') or AST.par(me,'Async_Isr'))
+            local is_ptr = TYPES.check(me.info.tp,'&&') or TYPES.is_nat_not_plain(me.info.tp)
+            if not is_ptr then
+                local ID = TYPES.ID_plain(me.info.tp)
+                is_ptr = ID and ID.tag=='ID_abs' and
+                            ID.dcl.tag=='Data' and ID.dcl.weaker=='pointer'
+            end
+            if is_ptr then
+                ASR(false, me,
+                    'invalid pointer access : crossed '..
+                    'yielding statement '..
+                    --AST.tag2id[yield.tag]..'´ '..
+                    '('..out.ln[1]..':'..out.ln[2]..')')
+            end
+        end
+    end,
+
     -- skiped by run_ptrs with tag=='Do'
     Stmts__PRE = function (me)
         local Set_Exp, Escape = unpack(me, #me-1)

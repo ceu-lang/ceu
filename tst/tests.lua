@@ -45852,8 +45852,8 @@ Test { PRE_ISR..[[
 vector[10] int v = [1];
 v[0] = 2;
 par/or do
-    spawn async/isr [20] (v) do
-        v[0] = 1;
+    spawn async/isr [20] do
+        outer.v[0] = 1;
     end
     await FOREVER;
 with
@@ -45871,8 +45871,8 @@ atomic do
     v[0] = 2;
 end
 par/or do
-    spawn async/isr [20] (v) do
-        v[0] = 1;
+    spawn async/isr [20] do
+        outer.v[0] = 1;
     end
     await FOREVER;
 with
@@ -45910,8 +45910,8 @@ atomic do
     v = v .. [2];
 end
 par do
-    spawn async/isr [20] (v) do
-        v[0] = 1;
+    spawn async/isr [20] do
+        outer.v[0] = 1;
     end
     await FOREVER;
 with
@@ -45986,8 +45986,8 @@ atomic do
     x = 1;
 end
 par/or do
-    spawn async/isr [20] (x) do
-        x = 0;
+    spawn async/isr [20] do
+        outer.x = 0;
     end
     await FOREVER;
 with
@@ -46001,8 +46001,8 @@ escape x;
 Test { PRE_ISR..[[
 var int v = 2;
 par/or do
-    spawn async/isr[20] (v) do
-        v = 1;
+    spawn async/isr[20] do
+        outer.v = 1;
     end
     await FOREVER;
 with
@@ -46016,8 +46016,8 @@ escape v;
 
 Test { PRE_ISR..[[
 var int&& v = null;
-    spawn async/isr[20] (v) do
-        *v = 1;
+    spawn async/isr[20] do
+        *outer.v = 1;
     end
     await FOREVER;
 ]],
@@ -46030,15 +46030,16 @@ var int&& v = null;
 Test { PRE_ISR..[[
 var int&& v = null;
 par/or do
-    spawn async/isr[20] (v) do
-        *v = 1;
+    spawn async/isr[20] do
+        *outer.v = 1;
     end
     await FOREVER;
 with
 end
 escape 1;
 ]],
-    inits = 'line 22 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:21)',
+    inits = 'line 23 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:22)',
+    --inits = 'line 22 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:21)',
     --inits = 'line 23 : invalid pointer access : crossed `par/or´ (/tmp/tmp.ceu:22)',
     --isr = 'line 4 : pointer access breaks the static check for `atomic´ sections',
     --run = 1,
@@ -46112,8 +46113,8 @@ Test { PRE_ISR..[[
 var int v;
 v = 2;
 par/or do
-    spawn async/isr [20] (v) do
-        v = 1;
+    spawn async/isr [20] do
+        outer.v = 1;
     end
     await FOREVER;
 with
@@ -46131,8 +46132,8 @@ atomic do
     v = 2;
 end
 par/or do
-    spawn async/isr [20] (v) do
-        v = 1;
+    spawn async/isr [20] do
+        outer.v = 1;
     end
     await FOREVER;
 with
@@ -46149,9 +46150,9 @@ atomic do
     v = 2;
 end
 par do
-    spawn async/isr [20] (v) do
-        v = 1;
-        v = 1;
+    spawn async/isr [20] do
+        outer.v = 1;
+        outer.v = 1;
     end
     await FOREVER;
 with
@@ -46173,8 +46174,8 @@ atomic do
     v = 2;
 end
 par/or do
-    spawn async/isr [20] (v) do
-        v = 1;
+    spawn async/isr [20] do
+        outer.v = 1;
     end
     await FOREVER;
 with
@@ -46194,8 +46195,8 @@ atomic do
     p = &&v;
 end
 par/or do
-    spawn async/isr [20](v) do
-        v = 1;
+    spawn async/isr [20] do
+        outer.v = 1;
     end
     await FOREVER;
 with
@@ -46374,8 +46375,8 @@ native _digitalWrite;
 input int PIN02;
 par/or do
     var int i = 0;
-    spawn async/isr [1] (i) do
-        emit PIN02(i);
+    spawn async/isr [1] do
+        emit PIN02(outer.i);
     end
     await FOREVER;
 with
@@ -46390,8 +46391,8 @@ escape 1;
 Test { [[
 var int i = 0;
 par/or do
-    spawn async/isr [1] (i) do
-        i = 2;
+    spawn async/isr [1] do
+        outer.i = 2;
     end
     await FOREVER;
 with
@@ -46408,8 +46409,8 @@ Test { [[
 input int PIN02;
 var int i = 0;
 par/or do
-    spawn async/isr [1] (i) do
-        i = 2;
+    spawn async/isr [1] do
+        outer.i = 2;
     end
     await FOREVER;
 with
@@ -46520,6 +46521,20 @@ escape 1;
 ]],
     wrn = true,
     _opts = { ceu_features_isr='true' },
+    run = 1,
+}
+
+Test { [[
+code/await Ff (var int x) -> void do
+    var int y = 0;
+    spawn async/isr [0] do
+        var int z = outer.x + outer.y;
+    end
+end
+escape 1;
+]],
+    _opts = { ceu_features_isr='true' },
+    wrn = true,
     run = 1,
 }
 

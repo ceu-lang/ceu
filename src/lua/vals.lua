@@ -8,8 +8,17 @@ local F
 function CUR (field, ctx)
     ctx = ctx or {}
     local Code = AST.iter'Code'()
+    local Isr  = AST.iter'Async_Isr'()
     local data do
-        if Code and (not ctx.is_outer) then
+        if ctx.is_outer then
+            if Isr and Code then
+                data = '(*((tceu_code_mem_'..Code.id_..'*)_ceu_mem))'
+            else
+                data = 'CEU_APP.root'
+            end
+        elseif Isr then
+            data = '_ceu_loc'
+        elseif Code then
             data = '(*((tceu_code_mem_'..Code.id_..'*)_ceu_mem))'
         else
             data = 'CEU_APP.root'

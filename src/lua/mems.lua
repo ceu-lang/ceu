@@ -38,7 +38,8 @@ MEMS = {
 local EVENT_SUFIX_EXISTS = {}
 
 local function CUR ()
-    return (AST.iter'Code'() or AST.iter'Data'() or AST.root).mems
+    return (AST.iter'Async_Isr'() or AST.iter'Code'() or
+            AST.iter'Data'() or AST.root).mems
 end
 
 F = {
@@ -610,6 +611,10 @@ end
     end,
 
     ---------------------------------------------------------------------------
+
+    Async_Isr__PRE = function (me)
+        me.mems = { mem='' }
+    end,
 
     Async_Isr = function (me)
         local exps, vars, _, blk = unpack(me)

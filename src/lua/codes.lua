@@ -1659,7 +1659,12 @@ static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
 ]])
 
         CODES.isrs = CODES.isrs .. [[
+typedef struct tceu_isr_mem_]]..me.n..[[ {
+    ]]..me.mems.mem..[[
+} tceu_isr_mem_]]..me.n..[[;
+
 void CEU_ISR_]]..me.n..[[ (tceu_code_mem* _ceu_mem) {
+    tceu_isr_mem_]]..me.n..[[ _ceu_loc;
     ]]..blk.code..[[
 }
 ]]
