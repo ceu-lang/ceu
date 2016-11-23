@@ -5,6 +5,10 @@ Try it online:
 
 http://www.ceu-lang.org/
 
+Documentation:
+
+http://fsantanna.github.io/ceu/
+
 Source code:
 
 https://github.com/fsantanna/ceu/
@@ -18,7 +22,7 @@ https://gitter.im/fsantanna/ceu
 ## Install required software:
 
 ```
-$ sudo apt-get install git lua5.3 lua-lpeg valgrind
+$ sudo apt-get install git lua5.3 lua-lpeg
 ```
 
 (Assuming a Linux/Ubuntu machine.)
