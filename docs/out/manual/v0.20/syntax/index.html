@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  
+  <title>Syntax - Céu v0.20 - Reference Manual</title>
+  
+
+  <link rel="shortcut icon" href="../img/favicon.ico">
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../css/highlight.css">
+
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Syntax";
+    var mkdocs_page_input_path = "syntax.md";
+    var mkdocs_page_url = "/syntax/";
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js"></script>
+  <script src="../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../js/highlight.pack.js"></script>
+  <script src="../js/theme.js"></script> 
+
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Céu v0.20 - Reference Manual</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        <ul class="current">
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="..">Home</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../010-introduction/">Introduction</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../020-lexical_rules/">Lexical Rules</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../030-types/">Types</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../040-storage_classes/">Storage Classes</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../050-statements/">Statements</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../060-expressions/">Expressions</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../070-static_checks/">Static Checks</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../080-environment/">Environment</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../090-errors/">Errors</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Syntax</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#syntax">Syntax</a></li>
+                
+            
+            </ul>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../license/">License</a>
+        
+    </li>
+<li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Céu v0.20 - Reference Manual</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Syntax</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="syntax">Syntax</h1>
+<p>Follows the complete syntax of Céu in a BNF-like syntax:</p>
+<ul>
+<li><code>A</code> : non terminal (starting in uppercase)</li>
+<li><strong><code>a</code></strong> : terminal (in bold and lowercase)</li>
+<li><code>&grave;.&acute;</code> : terminal (non-alphanumeric characters)</li>
+<li><code>A ::= ...</code> : defines <code>A</code> as <code>...</code></li>
+<li><code>x y</code> : <code>x</code> in sequence with <code>y</code></li>
+<li><code>x|y</code> : <code>x</code> or <code>y</code></li>
+<li><code>{x}</code> : zero or more xs</li>
+<li><code>[x]</code> : optional x</li>
+<li><code>LIST(x)</code> : expands to <code>x {&grave;,&acute; x} [&grave;,&acute;]</code></li>
+<li><code>(...)</code> : groups <code>...</code></li>
+<li><code>&lt;...&gt;</code> : special informal rule</li>
+</ul>
+<pre><code class="ceu">Program ::= Block
+Block   ::= {Stmt `;´} {`;´}
+
+Stmt ::= nothing
+
+  /* Blocks */
+
+      // Do ::=
+      | do [`/´(`_´|ID_int)]
+            Block
+        end
+      |  escape [`/´ID_int] [Exp]
+
+      /* pre (top level) execution */
+      | pre do
+            Block
+        end
+
+  /* Storage Classes */
+
+      | var [`&amp;´|`&amp;?´] Type LIST(ID_int [`=´ Cons])
+      | vector [`&amp;´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Cons])
+      | pool [`&amp;´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Cons])
+      | event [`&amp;´|`&amp;?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Cons])
+      | input (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
+      | output (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
+
+  /* Event Handling */
+
+      // Await ::=
+      | await (ID_ext | Name) [until Exp]
+      | await (WCLOCKK|WCLOCKE)
+      //
+      | await (FOREVER | pause | resume)
+
+      // Emit_Ext ::=
+      | emit ID_ext [`(´ [LIST(Exp)] `)´]
+      | emit (WCLOCKK|WCLOCKE)
+      //
+      | emit Name [`(´ [LIST(Exp)] `)´]
+
+  /* Conditional */
+
+      | if Exp then
+            Block
+        { else/if Exp then
+            Block }
+        [ else
+            Block ]
+        end
+
+  /* Loops */
+
+      /* simple */
+      | loop [`/´Exp] do
+            Block
+        end
+
+      /* numeric iterator */
+      | loop [`/´Exp] (`_´|ID_int) in [Range] do
+            Block
+        end
+        // where
+            Range ::= (`[´ | `]´)
+                        ( (      Exp `-&gt;´ (`_´|Exp))
+                        | ((`_´|Exp) `&lt;-´ Exp      ) )
+                      (`[´ | `]´) [`,´ Exp]
+
+      /* pool iterator */
+      | loop [`/´Exp] [ `(´ LIST(Var) `)´ ] in Name do
+            Block
+        end
+
+      /* event iterator */
+      | every [(Name | `(´ LIST(Name|`_´) `)´) in] (ID_ext|Name|WCLOCKK|WCLOCKE) do
+            Block
+        end
+
+      |  break [`/´ID_int]
+      |  continue [`/´ID_int]
+
+  /* Parallel Compositions */
+
+      /* parallels */
+      | (par | par/and | par/or) do
+            Block
+        with
+            Block
+        { with
+            Block }
+         end
+
+      /* watching */
+      // Watching ::=
+      | watching LIST(ID_ext|Name|WCLOCKK|WCLOCKE|Code_Cons_Init) do
+            Block
+        end
+
+      /* block spawn */
+      | spawn do
+            Block
+        end
+
+  /* Pause */
+
+      | pause/if (Name|ID_ext) do
+            Block
+        end
+
+  /* Asynchronous Execution */
+
+      | await async [ `(´ LIST(Var) `)´ ] do
+            Block
+        end
+
+      // Async_Thread ::=
+      | await async/thread [ `(´ LIST(Var) `)´ ] do
+            Block
+        end
+
+      /* synchronization */
+      | atomic do
+            Block
+        end
+
+  /* C integration */
+
+      | native [`/´(pure|const|nohold|plain)] `(´ List_Nat `)´
+        // where
+            List_Nat ::= LIST(ID_nat)
+      | native `/´(pre|pos) do
+            &lt;code definitions in C&gt;
+        end
+      | native `/´ end
+      | `{´ {&lt;code in C&gt; | `@´ Exp} `}´
+
+      // Nat_Call ::=
+      | [call] (Name | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
+
+      /* finalization */
+      | do [Stmt] Finalize
+      | var `&amp;?´ Type ID_int `=´ `&amp;´ (Nat_Call | Code_Call) Finalize
+        // where
+            Finalize ::= finalize `(´ LIST(Name) `)´ with
+                             Block
+                         [ pause  with Block ]
+                         [ resume with Block ]
+                         end
+
+  /* Lua integration */
+
+      // Lua_State ::=
+      | lua `[´ [Exp] `]´ do
+            Block
+        end
+      // Lua_Stmts ::=
+      | `[´ {`=´} `[´
+            { {&lt;code in Lua&gt; | `@´ Exp} }
+        `]´ {`=´} `]´
+
+  /* Abstractions */
+
+      /* Data */
+
+      | data ID_abs [as (nothing|Exp)] [ with
+            { &lt;var_set|vector_set|pool_set|event_set&gt; `;´ {`;´} }
+        end ]
+
+      /* Code */
+
+      // Code_Tight ::=
+      | code/tight [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ `-&gt;´ Type
+
+      // Code_Await ::=
+      | code/await [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ [ `-&gt;´ `(´ Inits `)´ ] `-&gt;´ (Type | FOREVER)
+        // where
+            Params ::= void | LIST(Class [ID_int])
+            Class ::= [dynamic] var    [`&amp;´] [`/´hold] * Type
+                   |            vector `&amp;´ `[´ [Exp] `]´ Type
+                   |            pool   `&amp;´ `[´ [Exp] `]´ Type
+                   |            event  `&amp;´ (Type | `(´ LIST(Type) `)´)
+            Inits ::= void | LIST(Class [ID_int])
+            Class ::= var    (`&amp;´|`&amp;?`) * Type
+                   |  vector (`&amp;´|`&amp;?`) `[´ [Exp] `]´ Type
+                   |  pool   (`&amp;´|`&amp;?`) `[´ [Exp] `]´ Type
+                   |  event  (`&amp;´|`&amp;?`) (Type | `(´ LIST(Type) `)´)
+
+      /* code implementation */
+      | (Code_Tight | Code_Await) do
+            Block
+        end
+
+      /* code invocation */
+
+      // Code_Call ::=
+      | call  Mods Abs_Cons
+
+      // Code_Await ::=
+      | await Mods Abs_Cons
+
+      // Code_Spawn ::=
+      | spawn Mods Code_Cons_Init [in Name]
+
+        // where
+            Mods ::= [`/´dynamic | `/´static] [`/´recursive]
+            Abs_Cons ::= ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
+            Code_Cons_Init ::= Abs_Cons [`-&gt;´ `(´ LIST(`&amp;´ Var) `)´])
+
+  /* Assignments */
+
+      | (Name | `(´ LIST(Name|`_´) `)´) `=´ Cons
+        // where
+            Cons ::= ( Do
+                     | Emit_Ext
+                     | Watching
+                     | Async_Thread
+                     | Await
+                     | Lua_State
+                     | Lua_Stmts
+                     | Code_Await
+                     | Code_Spawn
+                     | Vec_Cons
+                     | Data_Cons
+                     | `_´
+                     | Exp )
+            Vec_Cons  ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´) }
+            Data_Cons ::= (val|new) Abs_Cons
+
+/* Identifiers */
+
+ID       ::= [a-zA-Z0-9_]+
+ID_int   ::= ID             // ID beginning with lowercase
+ID_ext   ::= ID             // ID all in uppercase, not beginning with digit
+ID_abs   ::= ID {`.´ ID}    // IDs beginning with uppercase, containining at least one lowercase)
+ID_field ::= ID             // ID not beginning with digit
+ID_nat   ::= ID             // ID beginning with underscore
+ID_type  ::= ( ID_nat | ID_abs
+             | void  | bool  | byte
+             | f32   | f64   | float
+             | s8    | s16   | s32   | s64
+             | u8    | u16   | u32   | u64
+             | int   | uint  | ssize | usize )
+
+/* Types */
+
+Type ::= ID_type { `&amp;&amp;´ } [`?´]
+
+/* Wall-clock values */
+
+WCLOCKK ::= [NUM h] [NUM min] [NUM s] [NUM ms] [NUM us]
+WCLOCKE ::= `(´ Exp `)´ (h|min|s|ms|us)
+
+/* Name */
+
+Name    ::= [`*´|`$´] Name_01
+Name_01 ::= Name_02 { `[´Exp`]´ | (`:´|`.´) (ID_int|ID_nat) | `!´ }
+Name_02 ::= `(´ Name [as (Type | `/´(nohold|plain|pure)) `)´
+         |  ID_int
+         |  ID_nat
+         |  outer
+         |  `{´ &lt;code in C&gt; `}´
+
+/* Expressions */
+
+Exp  ::= Prim (combined with the &quot;Operator Precedence&quot; below)
+Prim ::= `(´ Exp `)´
+      |  `&amp;&amp;´ Name
+      |  Name [`?´]
+      |  `&amp;´ (Nat_Call | Name)
+      |  Nat_Call | Code_Call
+      |  sizeof `(´ (Type|Exp) `)´
+      |  NUM | STR | null | true | false
+
+/* Literals */
+
+NUM ::= [0-9] ([0-9]|[xX]|[A-F]|[a-f]|\.)*  // regex
+STR ::= &quot; [^\&quot;\n]* &quot;                        // regex
+
+/* Operator precedence */
+
+    /* lowest priority */
+    is    as
+    or
+    and
+    !=    ==    &lt;=    &gt;=    &lt;     &gt;
+    |
+    ^
+    &amp;
+    &lt;&lt;    &gt;&gt;
+    +     -
+    *     /     %
+    not   +    -    ~    $$
+    /* highest priority */
+
+/* Other */
+
+    // single-line comment
+
+    /** nested
+        /* multi-line */
+        comments **/
+
+    # preprocessor directive
+
+</code></pre>
+
+<p><code>TODO: statements that do not require ;</code></p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../license/" class="btn btn-neutral float-right" title="License">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../090-errors/" class="btn btn-neutral" title="Errors"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+<div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../090-errors/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../license/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+
+</body>
+</html>

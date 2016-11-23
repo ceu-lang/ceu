@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  
+  <title>Statements - Céu v0.20 - Reference Manual</title>
+  
+
+  <link rel="shortcut icon" href="../img/favicon.ico">
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../css/highlight.css">
+
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Statements";
+    var mkdocs_page_input_path = "050-statements.md";
+    var mkdocs_page_url = "/050-statements/";
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js"></script>
+  <script src="../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../js/highlight.pack.js"></script>
+  <script src="../js/theme.js"></script> 
+
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Céu v0.20 - Reference Manual</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        <ul class="current">
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="..">Home</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../010-introduction/">Introduction</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../020-lexical_rules/">Lexical Rules</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../030-types/">Types</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../040-storage_classes/">Storage Classes</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Statements</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#statements">Statements</a></li>
+                
+                    <li><a class="toctree-l4" href="#blocks">Blocks</a></li>
+                
+                    <li><a class="toctree-l4" href="#declarations">Declarations</a></li>
+                
+                    <li><a class="toctree-l4" href="#assignments">Assignments</a></li>
+                
+                    <li><a class="toctree-l4" href="#event-handling">Event Handling</a></li>
+                
+                    <li><a class="toctree-l4" href="#conditional">Conditional</a></li>
+                
+                    <li><a class="toctree-l4" href="#loops">Loops</a></li>
+                
+                    <li><a class="toctree-l4" href="#parallel-compositions">Parallel Compositions</a></li>
+                
+                    <li><a class="toctree-l4" href="#pausing_1">Pausing</a></li>
+                
+                    <li><a class="toctree-l4" href="#asynchronous-execution">Asynchronous Execution</a></li>
+                
+                    <li><a class="toctree-l4" href="#c-integration">C Integration</a></li>
+                
+                    <li><a class="toctree-l4" href="#lua-integration">Lua Integration</a></li>
+                
+                    <li><a class="toctree-l4" href="#abstractions">Abstractions</a></li>
+                
+                    <li><a class="toctree-l4" href="#synchronous-control-statements">Synchronous Control Statements</a></li>
+                
+            
+            </ul>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../060-expressions/">Expressions</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../070-static_checks/">Static Checks</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../080-environment/">Environment</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../090-errors/">Errors</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../syntax/">Syntax</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../license/">License</a>
+        
+    </li>
+<li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Céu v0.20 - Reference Manual</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Statements</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="statements">Statements</h1>
+<p>A program in Céu is a sequence of statements delimited by an enclosing block as
+follows:</p>
+<pre><code class="ceu">Program ::= Block
+Block   ::= {Stmt `;´} {`;´}
+</code></pre>
+
+<p><em>Note: statements terminated with the <code>end</code> keyword do not require a
+terminating semicolon.</em></p>
+<h2 id="blocks">Blocks</h2>
+<p>A <code>Block</code> creates a new lexical scope for
+<a href="#TODO">storage entities</a>
+and
+<a href="#TODO">abstractions</a>,
+which are visible only for statements inside the block.</p>
+<p>Compound statements (e.g. <em>do-end</em>, <em>if-then-else</em>, <em>loops</em>, etc.) create new
+blocks and can be nested to an arbitrary level.</p>
+<h3 id="do-end-and-escape"><code>do-end</code> and <code>escape</code></h3>
+<p>The <code>do-end</code> statement creates an explicit block with an optional identifier.
+The <code>escape</code> statement aborts the deepest enclosing <code>do-end</code> matching its
+identifier:</p>
+<pre><code class="ceu">Do ::= do [`/´ (`_´|ID_int)]
+           Block
+       end
+
+Escape ::= escape [`/´ID_int] [Exp]
+</code></pre>
+
+<p><code>do-end</code> supports the neutral identifier <code>_</code> which is guaranteed not to match
+any <code>escape</code> statement.</p>
+<p>A <code>do-end</code> can be <a href="#TODO">assigned</a> to a variable whose type must be matched
+by nested <code>escape</code> statements.
+The whole block evaluates to the value of a reached <code>escape</code>.
+If the variable is of <a href="#TODO">option type</a>, the <code>do-end</code> is allowed to
+terminate without an <code>escape</code>, otherwise it raises a runtime error.</p>
+<p>Programs have an implicit enclosing <code>do-end</code> that assigns to a
+<em>program status variable</em> of type <code>int</code> whose meaning is
+<a href="#TODO">platform dependent</a>.</p>
+<p>Examples:</p>
+<pre><code class="ceu">do
+    do/a
+        do/_
+            escape;     // matches line 1
+        end
+        escape/a;       // matches line 2
+    end
+end
+</code></pre>
+
+<pre><code class="ceu">var int? v =
+    do
+        if &lt;cnd&gt; then
+            escape 10;  // assigns 10 to &quot;v&quot;
+        else
+            nothing;    // &quot;v&quot; remains unassigned
+        end
+    end;
+</code></pre>
+
+<pre><code class="ceu">escape 0;               // program terminates with a status value of 0
+</code></pre>
+
+<h3 id="pre-do-end"><code>pre-do-end</code></h3>
+<p>The <code>pre-do-end</code> statement prepends its statements in the beginning of the
+program:</p>
+<pre><code class="ceu">Pre_Do ::= pre do
+               Block
+           end
+</code></pre>
+
+<p>All <code>pre-do-end</code> statements are concatenated together in the order they appear
+and moved to the beginning of the top-level block, before all other statements.</p>
+<hr />
+<h2 id="declarations">Declarations</h2>
+<p>A declaration exposes a <a href="#TODO">storage entity</a> to the program.
+Declarations have <a href="#TODO">lexical scope</a>.</p>
+<p>Céu supports variables, vectors, external events, internal events, and pools:</p>
+<pre><code class="ceu">Var  ::= var [`&amp;´|`&amp;?´] Type LIST(ID_int [`=´ Cons])
+Vec  ::= vector [`&amp;´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Cons])
+Ext  ::= input  (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
+      |  output (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
+Int  ::= event [`&amp;´|`&amp;?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Cons])
+Pool ::= pool [`&amp;´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Cons])
+
+Vec_Cons ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´) }
+</code></pre>
+
+<p>See also <a href="#TODO">Storage Classes</a> for an overview of storage entities.</p>
+<h3 id="variable">Variable</h3>
+<p>A <a href="#TODO">variable</a> declaration has an associated <a href="#TODO">type</a> and can be
+optionally <a href="#TODO">initialized</a>.
+A single statement can declare multiple variables of the same type.
+Declarations can also be <a href="#TODO">aliases</a> or <a href="#TODO">option aliases</a>.</p>
+<p>Examples:</p>
+<pre><code class="ceu">var  int v = 10;    // &quot;v&quot; is an integer variable initialized to 10
+var  int a=0, b=3;  // &quot;a&quot; and &quot;b&quot; are integer variables initialized to 0 and 3
+var&amp; int z = &amp;v;    // &quot;z&quot; is an alias to &quot;v&quot;
+</code></pre>
+
+<h3 id="vector">Vector</h3>
+<p>A <a href="#TODO">vector</a> declaration has a dimension, an associated <a href="#TODO">type</a> and
+can be optionally <a href="#TODO">initialized</a>.
+A single statement can declare multiple vectors of the same dimension and type.
+Declarations can also be <a href="#TODO">aliases</a>.
+The expression between the brackets specifies the <a href="#TODO">dimension</a> of the
+vector.</p>
+<p><code>TODO: constructor</code></p>
+<p>Examples:</p>
+<pre><code class="ceu">var int n = 10;
+vector[10] int vs1 = [];    // &quot;vs1&quot; is a static vector of 10 elements max
+vector[n]  int vs2 = [];    // &quot;vs2&quot; is a dynamic vector of 10 elements max
+vector[]   int vs3 = [];    // &quot;vs3&quot; is an unbounded vector
+vector&amp;[]  int vs4 = &amp;vs1;  // &quot;vs4&quot; is an alias to &quot;vs1&quot;
+</code></pre>
+
+<h3 id="event">Event</h3>
+<p>An <a href="#TODO">event</a> has a <a href="#TODO">type</a> for the value it carries when occurring.
+It can be also a list of types if the event communicates multiple values.
+A single statement can declare multiple events of the same type.</p>
+<p>See also <a href="#TODO">Introduction</a> for a general overview of events.</p>
+<h4 id="external-event">External Event</h4>
+<p>Examples:</p>
+<pre><code class="ceu">input  void A,B;        // &quot;A&quot; and &quot;B&quot; are input events carrying no values
+output int  MY_EVT;     // &quot;MY_EVT&quot; is an output event carrying integer values
+input (int,byte&amp;&amp;) BUF; // &quot;BUF&quot; is an input event carrying an &quot;(int,byte&amp;&amp;)&quot; pair
+</code></pre>
+
+<h3 id="internal-event">Internal Event</h3>
+<p>Declarations for internal events can also be <a href="#TODO">aliases</a> or
+<a href="#TODO">option aliases</a>.
+Only in this case they can contain an <a href="#TODO">initialization</a>.</p>
+<p>Examples:</p>
+<pre><code class="ceu">event  void a,b;        // &quot;a&quot; and &quot;b&quot; are internal events carrying no values
+event&amp; void z = &amp;a;     // &quot;z&quot; is an alias to event &quot;a&quot;
+event (int,int) c;      // &quot;c&quot; is a internal event carrying an &quot;(int,int)&quot; pair
+</code></pre>
+
+<h3 id="pool">Pool</h3>
+<p>A <a href="#TODO">pool</a> has a dimension, an associated <a href="#TODO">type</a> and can be
+optionally <a href="#TODO">initialized</a>.
+A single statement can declare multiple pools of the same dimension and type.
+Declarations can also be <a href="#TODO">aliases</a>.
+The expression between the brackets specifies the <a href="#TODO">dimension</a> of the
+pool.</p>
+<p>Examples:</p>
+<pre><code class="ceu">code/await Play (...) do ... end
+pool[10] Play plays;        // &quot;plays&quot; is a static pool of 10 elements max
+pool&amp;[]  Play a = &amp;plays;   // &quot;a&quot; is an alias to &quot;plays&quot;
+</code></pre>
+
+<p>See also <a href="#TODO">Code Invocation</a>.</p>
+<p><code>TODO: data</code></p>
+<h3 id="dimension">Dimension</h3>
+<p>A declaration for <a href="#TODO">vector</a> or <a href="#TODO">pool</a> requires an expression
+between brackets to specify its <a href="#TODO">dimension</a> as follows:</p>
+<ul>
+<li><em>constant expression</em>: Maximum number of elements is fixed and space is
+                         statically pre-allocated.</li>
+<li><em>variable expression</em>: Maximum number of elements is fixed but space is
+                         dynamically allocated.
+                         The expression is evaulated once at declaration time.</li>
+<li><em>omitted</em>: Maximum number of elements is unbounded and space is dynamically
+             allocated.</li>
+</ul>
+<p>The space for dynamic dimensions grow and shrink automatically.</p>
+<hr />
+<h2 id="assignments">Assignments</h2>
+<p>An assignment associates the statement or expression at the right side of <code>=</code>
+with the name(s) at the left side:</p>
+<pre><code class="ceu">Set ::= (Name | `(´ LIST(Name|`_´) `)´) `=´ Cons
+
+Cons ::= ( Do
+         | Await
+         | Emit_Ext
+         | Watching
+         | Async_Thread
+         | Lua_State
+         | Lua_Stmts
+         | Code_Await
+         | Code_Spawn
+         | Vec_Cons
+         | Data_Cons
+         | `_´
+         | Exp )
+</code></pre>
+
+<h3 id="copy-assignment">Copy Assignment</h3>
+<p>A <em>copy assignment</em> evaluates the statement or expression at the right side and
+copies the result(s) to the name(s).</p>
+<h3 id="alias-assignment">Alias Assignment</h3>
+<p>An <em>alias assignment</em> makes the name at the left side to be a synonym to the
+expression at the right side.</p>
+<hr />
+<h2 id="event-handling">Event Handling</h2>
+<h3 id="await">Await</h3>
+<p>The <code>await</code> statement halts the running trail until the referred
+event occurs.
+The event can be an <a href="#TODO">external input event</a>, an <a href="#TODO">internal event</a>,
+a timer, a <a href="#TODO">pausing event</a>, or forever (i.e., never awake):</p>
+<pre><code class="ceu">Await ::= await (ID_ext | Name) [until Exp]     /* events */
+       |  await (WCLOCKK|WCLOCKE)               /* timers */
+       |  await (pause|resume)                  /* pausing events */
+       |  await FOREVER                         /* forever */
+</code></pre>
+
+<p>Examples:</p>
+<pre><code class="ceu">await A;                  // awaits the input event `A`
+await a;                  // awaits the internal event `a`
+
+await 1min10s30ms100us;   // awaits the specified time
+await (t)ms;              // awaits the current value of the variable `t` in milliseconds
+
+await FOREVER;            // awaits forever
+</code></pre>
+
+<p>An <code>await</code> evaluates to zero or more values which can be captured with an
+optional <a href="#TODO">assignment</a>.</p>
+<h4 id="event_1">Event</h4>
+<p>The <code>await</code> statement for events halts the running trail until the referred
+<a href="#TODO">external input event</a> or  <a href="#TODO">internal event</a> occurs.</p>
+<p>The <code>await</code> evaluates to a value of the type of the event.</p>
+<p>The optional clause <code>until</code> tests an additional condition required to awake.
+The condition can use the returned value from the <code>await</code>.
+It expands to a <a href="#TODO"><code>loop</code></a> as follows:</p>
+<pre><code class="ceu">loop do
+    &lt;ret&gt; = await &lt;evt&gt;;
+    if &lt;Exp&gt; then   // &lt;Exp&gt; can use &lt;ret&gt;
+        break;
+    end
+end
+</code></pre>
+
+<p>Examples:</p>
+<pre><code class="ceu">input int E;                    // &quot;E&quot; is an external input event carrying &quot;int&quot; values
+var int v = await E until v&gt;10; // assigns occurring &quot;E&quot; to &quot;v&quot;, awaking when &quot;v&gt;10&quot;
+
+event (bool,int) e;             // &quot;e&quot; is an internal event carrying &quot;(bool,int)&quot; pairs
+var bool v1;
+var int  v2;
+(v1,v2) = await e;              // awakes on &quot;e&quot; and assigns its values to &quot;v1&quot; and &quot;v2&quot;
+</code></pre>
+
+<h4 id="timer">Timer</h4>
+<p>The <code>await</code> statement for timers halts the running trail until the referred
+timer expires.</p>
+<p><code>WCLOCKK</code> specifies a constant time expressed as a sequence of value/unit
+pairs.
+<code>WCLOCKE</code> specifies an expression in parenthesis followed by a single unit of
+time.</p>
+<p>The <code>await</code> evaluates to a value of type <code>s32</code> and is the
+<em>residual delta time (<code>dt</code>)</em> measured in microseconds.
+It is the difference between the actual elapsed time and the requested time.</p>
+<p>If a program awaits timers in sequence (or in a <code>loop</code>), the residual <code>dt</code> from
+the preceding timer is reduced from the timer in sequence.</p>
+<p>Examples:</p>
+<pre><code class="ceu">var int t = &lt;...&gt;;
+await (t)ms;                // awakes after &quot;t&quot; milliseconds
+</code></pre>
+
+<pre><code class="ceu">var int dt = await 100us;   // if 1ms elapses,  1000&gt;100, dt=900us
+await 100us;                // timer is expired, 900&gt;100, dt=800us
+await 1ms;                  // timer only awaits 200us (1000-800)
+</code></pre>
+
+<p><em>Note: The residual <code>dt</code> is always greater than or equal to 0.</em></p>
+<!--
+Refer to [[#Environment]] for information about storage types for *wall-clock*
+time.
+-->
+
+<h4 id="pausing">Pausing</h4>
+<p>Pausing events are dicussed in <a href="#TODO">Pausing</a>.</p>
+<h4 id="forever"><code>FOREVER</code></h4>
+<p>The <code>await</code> statement for <code>FOREVER</code> halts the running trail forever.
+It cannot be used in assignments because it never evaluates to anything.</p>
+<pre><code class="ceu">if &lt;cnd&gt; then
+    await FOREVER;  // this trail never awakes if the condition is true
+end
+</code></pre>
+
+<h3 id="emit">Emit</h3>
+<p>The <code>emit</code> statement broadcasts an event to the whole program.
+The event can be an <a href="#TODO">external event</a>, an <a href="#TODO">internal event</a>, or
+a timer:</p>
+<pre><code class="ceu">Emit ::= emit (ID_ext | Name) [`(´ [LIST(Exp)] `)´)]
+      |  emit (WCLOCKK|WCLOCKE)
+</code></pre>
+
+<p>Examples:</p>
+<pre><code class="ceu">emit A;         // emits the external event `A` of type &quot;void&quot;
+emit a(1);      // emits the internal event `a` of type &quot;int&quot;
+
+emit 1s;        // emits the specified time
+emit (t)ms;     // emits the current value of the variable `t` in milliseconds
+</code></pre>
+
+<h4 id="events">Events</h4>
+<p>The <code>emit</code> statement for events expects a specific number of arguments matching
+the event type (unless the event is of type <code>void</code>).</p>
+<ul>
+<li>An <code>emit</code> to an external input or timer event can only occur inside
+  <a href="#TODO">asynchronous blocks</a>.</li>
+<li>An <code>emit</code> to an external output event is also an expression that evaluates
+  to a value of type <code>s32</code> and can be captured with an optional
+  <a href="#TODO">assignment</a> (its meaning is <a href="#TODO">platform dependent</a>).</li>
+<li>An <code>emit</code> to an internal event starts a new <a href="#TODO">internal reaction</a>.</li>
+</ul>
+<p>Examples:</p>
+<pre><code class="ceu">input int I;
+async do
+    emit I(10);         // broadcasts &quot;I&quot; to the application itself, passing &quot;10&quot;
+end
+
+output void O;
+var int ret = emit O(); // outputs &quot;O&quot; to the environment and captures the result
+
+event (int,int) e;
+emit e(1,2);            // broadcasts &quot;e&quot; passing a pair of &quot;int&quot; values
+</code></pre>
+
+<h4 id="timer_1">Timer</h4>
+<p>The <code>emit</code> statement for timers expects an expression of time as described in
+<a href="#TODO">Await Timer</a>.</p>
+<p>Like input events, time can only be emitted inside <a href="#asynchronous-blocks">asynchronous 
+blocks</a>.</p>
+<p>Examples:</p>
+<pre><code class="ceu">async do
+    emit 1s;    // broadcasts &quot;1s&quot; to the application itself
+end
+</code></pre>
+
+<hr />
+<h2 id="conditional">Conditional</h2>
+<p>The <code>if-then-else</code> statement provides conditionals in Céu:</p>
+<pre><code class="ceu">If ::= if Exp then
+           Block
+       { else/if Exp then
+           Block }
+       [ else
+           Block ]
+       end
+</code></pre>
+
+<p>Each condition <code>Exp</code> is tested in sequence, first for the <code>if</code> clause and then
+for each of the optional <code>else/if</code> clauses.
+For the first condition that evaluates to <code>true</code>, the <code>Block</code> following it
+executes.
+If all conditions fail, the optional <code>else</code> clause executes.</p>
+<p>All conditions must evaluate to a value of type <a href="#TODO"><code>bool</code></a>, which is
+checked at compile time.</p>
+<h2 id="loops">Loops</h2>
+<p>Céu supports simple loops, numeric iterators, event iterators, and pool
+iterators:</p>
+<pre><code class="ceu">Loop ::=
+      /* simple loop */
+        loop [`/´Exp] do
+            Block
+        end
+
+      /* numeric iterator */
+      | loop [`/´Exp] Numeric do    /* Numeric ::= (see &quot;Numeric Iterators&quot;) */
+            Block
+        end
+
+      /* event iterator */
+      | every [(Name | `(´ LIST(Name|`_´) `)´) in] (ID_ext|Name|WCLOCKK|WCLOCKE) do
+            Block
+        end
+
+      /* pool iterator */
+      | loop [`/´Exp] [ `(´ LIST(Var) `)´ ] in Name do
+            Block
+        end
+
+Break    ::= break [`/´ID_int]
+Continue ::= continue [`/´ID_int]
+</code></pre>
+
+<p>The <code>Block</code> body of a loop executes an arbitrary number of times, depending on
+the conditions imposed by each kind of loop.</p>
+<p>Except for the <code>every</code> iterator, all loops support an optional
+<code>&grave;/&acute;Exp</code> to limit the maximum number of iterations and
+avoid <a href="#TODO">infinite execution</a>.
+The expression must be a constant evaluated at compile time.</p>
+<h3 id="break-and-continue"><code>break</code> and <code>continue</code></h3>
+<p>The <code>break</code> statement aborts the deepest enclosing loop.</p>
+<p>The <code>continue</code> statement aborts the body of the deepest enclosing loop and
+restarts in the next iteration.</p>
+<p>The optional <code>&grave;/&acute;ID_int</code> in both statements only applies
+to <a href="#TODO">numeric iterators</a>.</p>
+<h3 id="simple-loop">Simple Loop</h3>
+<p>A simple loop executes its body continually and forever.</p>
+<p>Examples:</p>
+<pre><code class="ceu">// blinks a LED with a frequency of 1s forever
+loop do
+    emit LED(1);
+    await 1s;
+    emit LED(0);
+    await 1s;
+end
+</code></pre>
+
+<pre><code class="ceu">loop do
+    loop do
+        if &lt;cnd-1&gt; then
+            break;      // aborts the loop at line 2 if &lt;cnd-1&gt; is satisfied
+        end
+    end
+    if &lt;cnd-2&gt; then
+        continue;       // restarts the loop at line 1 if &lt;cnd-2&gt; is satisfied
+    end
+end
+</code></pre>
+
+<h3 id="numeric-iterator">Numeric Iterator</h3>
+<p>The numeric loop modifies the value of a control variable on each iteration
+according to the specification of an optional interval as follows:</p>
+<pre><code class="ceu">Numeric ::= (`_´|ID_int) in [ (`[´ | `]´)
+                                  ( (     Exp `-&gt;´ (`_´|Exp))
+                                  | (`_´|Exp) `&lt;-´ Exp      ) )
+                              (`[´ | `]´) [`,´ Exp] ]
+</code></pre>
+
+<p>The control variable assumes the values specified in the interval, one by one,
+for each iteration of the loop body:</p>
+<ul>
+<li><strong>control variable:</strong>
+    <code>ID_int</code> is a variable of a <a href="#TODO">numeric type</a>.
+    Alternatively, the special anonymous identifier <code>_</code> can be used if the body
+    of the loop does not access the variable.
+    The control variable is marked as <code>read-only</code> and cannot be changed
+    explicitly.</li>
+<li><strong>interval:</strong>
+    Specifies a direction, endpoints with open or closed modifiers, and a step.<ul>
+<li><strong>direction</strong>:<ul>
+<li><code>-&gt;</code>: Starts from the endpoint <code>Exp</code> on the left increasing towards <code>Exp</code> on the right.</li>
+<li><code>&lt;-</code>: Starts from the endpoint <code>Exp</code> on the right decreasing towards <code>Exp</code> on the left.
+Typically, the value on the left should always be smaller or equal to
+the value on the right.</li>
+</ul>
+</li>
+<li><strong>endpoints</strong>:
+    <code>[Exp</code> and <code>Exp]</code> are closed intervals which include <code>Exp</code> as the
+    endpoints;
+    <code>]Exp</code> and <code>Exp[</code> are open intervals which exclude <code>Exp</code> as the
+    endpoints.
+    Alternatively, the finishing endpoint may be <code>_</code> which means that the
+    interval goes towards infinite.</li>
+<li><strong>step</strong>:
+    An optional positive number added or subtracted towards the limit.
+    If the step is omitted, it assumes the value <code>1</code>.
+    If the direction is <code>-&gt;</code>, the step is added, otherwise it is subtracted.
+If the interval is not specified, it assumes the default <code>[0 -&gt; _]</code>.</li>
+</ul>
+</li>
+</ul>
+<p>The numeric iterator executes as follows:</p>
+<ul>
+<li><strong>initialization:</strong>
+    The starting endpoint is assigned to the control variable.
+    If the starting enpoint is open, the control variable accumulates a step.</li>
+<li><strong>iteration:</strong><ol>
+<li><strong>limits test:</strong>
+    If the control variable crossed the finishing endpoint, the loop
+    terminates.</li>
+<li><strong>body execution:</strong>
+    The loop body executes.</li>
+<li><strong>step</strong>
+    Applies a step to the control variable. Goto step <code>1</code>.</li>
+</ol>
+</li>
+</ul>
+<p>The <code>break</code> and <code>continue</code> statements inside numeric iterators accept an
+optional modifier <code>&grave;/&acute;ID_int</code> to match the control
+variable of the enclosing loop to affect.</p>
+<p>Examples:</p>
+<pre><code class="ceu">// prints &quot;i=0&quot;, &quot;i=1&quot;, ...
+var int i;
+loop i do
+    _printf(&quot;i=%d\n&quot;, i);
+end
+</code></pre>
+
+<pre><code class="ceu">// awaits 1s and prints &quot;Hello World!&quot; 10 times
+loop _ in [0 -&gt; 10[ do
+    await 1s;
+    _printf(&quot;Hello World!\n&quot;);
+end
+</code></pre>
+
+<pre><code class="ceu">var int i;
+loop i do
+    var int j;
+    loop j do
+        if &lt;cnd-1&gt; then
+            continue/i;         // continues the loop at line 1
+        else/if &lt;cnd-2&gt; then
+            break/j;            // breaks the loop at line 4
+        end
+    end
+end
+</code></pre>
+
+<p><em>Note : the runtime asserts that the step is a positive number and that the
+        control variable does not overflow.</em></p>
+<h3 id="event-iterator">Event Iterator</h3>
+<p>The <code>every</code> statement iterates over an event continuously and executes its
+body whenever the event occurs.</p>
+<p>The event can be an <a href="#TODO">external or internal event</a> or a <a href="#TODO">timer</a>.</p>
+<p>The optional assignment to a variable (or list of variables) stores the
+carrying value(s) of the event.</p>
+<p>An <code>every</code> expands to a <code>loop</code> as illustrated below:</p>
+<pre><code class="ceu">every &lt;vars&gt; in &lt;event&gt; do
+    &lt;body&gt;
+end
+</code></pre>
+
+<p>is equivalent to</p>
+<pre><code class="ceu">loop do
+    &lt;vars&gt; = await &lt;event&gt;;
+    &lt;body&gt;
+end
+</code></pre>
+
+<p>However, the body of an <code>every</code> cannot contain
+<a href="#TODO">synchronous control statements</a>, ensuring that no occurrences of the
+specified event are ever missed.</p>
+<p>Examples:</p>
+<pre><code class="ceu">every 1s do
+    _printf(&quot;Hello World!\n&quot;);      // prints the &quot;Hello World!&quot; message on every second
+end
+</code></pre>
+
+<pre><code class="ceu">event (bool,int) e;
+var bool cnd;
+var int  v;
+every (cnd,v) in e do
+    if not cnd then
+        break;                      // terminates when the received &quot;cnd&quot; is false
+    else
+        _printf(&quot;v = %d\n&quot;, v);     // prints the received &quot;v&quot; otherwise
+    end
+end
+</code></pre>
+
+<h3 id="pool-iterator">Pool Iterator</h3>
+<p>Pool iterator is discussed in <a href="#TODO">Code Pools</a>.</p>
+<hr />
+<h2 id="parallel-compositions">Parallel Compositions</h2>
+<p>The parallel statements <code>par/and</code>, <code>par/or</code>, and <code>par</code> split the running trail 
+in multiple others:</p>
+<pre><code class="ceu">Pars ::= (par | par/and | par/or) do
+             Block
+         with
+             Block
+         { with
+             Block }
+         end
+
+Watching ::= watching LIST(ID_ext|Name|WCLOCKK|WCLOCKE|Code_Cons_Init) do
+                 Block
+             end
+
+</code></pre>
+
+<p>They differ only on how trails rejoin and terminate the composition.</p>
+<p>The <code>watching</code> statement terminates when one of its listed events occur.
+It evaluates to what the terminating event evaluates which can be captured with
+an optional <a href="#TODO">assignment</a>.</p>
+<p>See also <a href="#TODO">Parallel Compositions and Abortion</a>.</p>
+<h3 id="par">par</h3>
+<p>The <code>par</code> statement never rejoins.</p>
+<p>Examples:</p>
+<pre><code class="ceu">// reacts continuously to &quot;1s&quot; and &quot;KEY_PRESSED&quot; and never terminates
+input void KEY_PRESSED;
+par do
+    every 1s do
+        &lt;...&gt;           // does something every &quot;1s&quot;
+    end
+with
+    every KEY_PRESSED do
+        &lt;...&gt;           // does something every &quot;KEY_PRESSED&quot;
+    end
+end
+</code></pre>
+
+<h3 id="parand">par/and</h3>
+<p>The <code>par/and</code> statement stands for <em>parallel-and</em> and rejoins when all trails 
+terminate.</p>
+<p>Examples:</p>
+<pre><code class="ceu">// reacts once to &quot;1s&quot; and &quot;KEY_PRESSED&quot; and terminates
+input void KEY_PRESSED;
+par/and do
+    await 1s;
+    &lt;...&gt;               // does something after &quot;1s&quot;
+with
+    await KEY_PRESSED;
+    &lt;...&gt;               // does something after &quot;KEY_PRESSED&quot;
+end
+</code></pre>
+
+<h3 id="paror">par/or</h3>
+<p>The <code>par/or</code> statement stands for <em>parallel-or</em> and rejoins when any of the 
+trails terminate, aborting all other trails.</p>
+<p>Examples:</p>
+<pre><code class="ceu">// reacts once to `1s` or `KEY_PRESSED` and terminates
+input void KEY_PRESSED;
+par/or do
+    await 1s;
+    &lt;...&gt;               // does something after &quot;1s&quot;
+with
+    await KEY_PRESSED;
+    &lt;...&gt;               // does something after &quot;KEY_PRESSED&quot;
+end
+</code></pre>
+
+<h3 id="watching">watching</h3>
+<p>The <code>watching</code> statement accepts a list of events and terminates when any of
+the events occur.</p>
+<p>A <code>watching</code> expands to a <code>par/or</code> with <em>n+1</em> trails:
+one to await each of the listed events,
+and one for its body, i.e.:</p>
+<pre><code class="ceu">watching &lt;e1&gt;,&lt;e2&gt;,... do
+    &lt;body&gt;
+end
+</code></pre>
+
+<p>expands to</p>
+<pre><code class="ceu">par/or do
+    await &lt;e1&gt;;
+with
+    await &lt;e2&gt;;
+with
+    ...
+with
+    &lt;body&gt;
+end
+</code></pre>
+
+<p>Examples:</p>
+<pre><code class="ceu">// reacts continuously to &quot;KEY_PRESSED&quot; during &quot;1s&quot;
+input void KEY_PRESSED;
+watching 1s do
+    every KEY_PRESSED do
+        &lt;...&gt;           // does something every &quot;KEY_PRESSED&quot;
+    end
+end
+</code></pre>
+
+<hr />
+<h2 id="pausing_1">Pausing</h2>
+<p>The <code>pause/if</code> statement controls if its body should temporarily stop to react
+to events:</p>
+<pre><code class="ceu">Pause_If ::= pause/if (Name|ID_ext) do
+                 Block
+             end
+
+Pause_Await ::= await (pause|resume)
+</code></pre>
+
+<p>A <code>pause/if</code> determines a pausing event of type <code>bool</code> which, when emitted,
+toggles between pausing (<code>true</code>) and resuming (<code>false</code>) reactions for its body.</p>
+<p>When its body terminates, the whole <code>pause/if</code> terminates and proceeds to the
+statement in sequence.</p>
+<p>In transition points, the body can react to the special <code>pause</code> and <code>resume</code>
+events before the corresponding state applies.</p>
+<p><code>TODO: finalize/pause/resume</code></p>
+<p>Examples:</p>
+<pre><code class="ceu">event bool e;
+pause/if e do       // pauses/resumes the nested body on each &quot;e&quot;
+    every 1s do
+        &lt;...&gt;       // does something every &quot;1s&quot;
+    end
+end
+</code></pre>
+
+<pre><code class="ceu">event bool e;
+pause/if e do               // pauses/resumes the nested body on each &quot;e&quot;
+    &lt;...&gt;
+        loop do
+            await pause;
+            &lt;...&gt;           // does something before pausing
+            await resume;
+            &lt;...&gt;           // does something before resuming
+        end
+    &lt;...&gt;
+end
+</code></pre>
+
+<!--
+*Note: The timeouts for timers remain frozen while paused.*
+-->
+
+<hr />
+<h2 id="asynchronous-execution">Asynchronous Execution</h2>
+<p>Asynchronous execution allow programs to execute time consuming computations 
+without interfering with the responsiveness of the  <em>synchronous side</em> of
+applications (i.e., all core language statements):</p>
+<pre><code class="ceu">Async  ::= await async [ `(´LIST(Var)`)´ ] do
+               Block
+           end
+
+Thread ::= await async/thread [ `(´LIST(Var)`)´ ] do
+               Block
+           end
+Atomic ::= atomic do
+               Block
+           end
+</code></pre>
+
+<p>The program awaits the termination of the asynchronous body to proceed to the
+statement in sequence.</p>
+<p>Asynchronous bodies can contain <a href="#TODO">tight loops</a> but which keep the
+application reactive to incoming events.
+However, they do not support nesting of asynchronous statements, and do not
+support <a href="#TODO">synchronous control statements</a> (i.e., parallel compositions,
+event handling, pausing, etc.).</p>
+<p>By default, asynchronous bodies do not shared variables with their enclosing
+scope.
+The optional list of variables makes them visible to the block.</p>
+<h3 id="asynchronous-block">Asynchronous Block</h3>
+<p>The asynchronous block (<code>async</code>) preserves deterministic execution with the
+rules as follows:</p>
+<ol>
+<li>Resume execution whenever the synchronous side is idle.</li>
+<li>Yield control to the synchronous side on every complete <code>loop</code> iteration.</li>
+<li>Yield control to the synchronous side on every <code>emit</code>.</li>
+<li>Execute atomically and to completion unless rules <code>2</code> and <code>3</code> apply.</li>
+</ol>
+<p>This rules imply that <code>async</code> blocks and the synchronous side never run at the
+same time with real parallelism.</p>
+<p>Examples:</p>
+<pre><code class="ceu">// calculates the factorial of some &quot;v&quot; if it doesn't take too long
+var u64  v   = &lt;...&gt;;
+var u64  fat = 1;
+var bool ok  = false;
+watching 1s do
+    await async (v,fat) do      // keeps &quot;v&quot; and &quot;fat&quot; visible
+        loop i in [1 -&gt; v] do   // reads from &quot;v&quot;
+            fat = fat * i;      // writes to &quot;fat&quot;
+        end
+    end
+    ok = true;                  // completed within &quot;1s&quot;
+end
+</code></pre>
+
+<h4 id="simulation">Simulation</h4>
+<p>An <code>async</code> block can emit <a href="#TODO">input events</a> and the
+<a href="#TODO">passage of time</a> towards the synchronous side, providing a way to test
+programs in the language itself.
+Every time an <code>async</code> emits an event, it suspends until the synchronous side
+reacts to the event (see <a href="#TODO"><code>rule 1</code></a> above).</p>
+<p>Examples:</p>
+<pre><code class="ceu">input int A;
+
+// tests a program with a simulation in parallel
+par do
+
+    // original program
+    var int v = await A;
+    loop i in [0 -&gt; _[ do
+        await 10ms;
+        _printf(&quot;v = %d\n&quot;, v+i);
+    end
+
+with
+
+    // input simulation
+    async do
+        emit A(0);      // initial value for &quot;v&quot;
+        emit 1s35ms;    // the loop in the original program executes 103 times
+    end
+    escape 0;
+
+end
+
+// The example prints the message `v = &lt;v+i&gt;` exactly 103 times.
+</code></pre>
+
+<h3 id="asynchronous-thread">Asynchronous Thread</h3>
+<p>Asynchronous threads (<code>async/thread</code>) provide real parallelism for applications
+in Céu.
+Once an <code>async/thread</code> starts, it runs completely detached from the synchronous
+side.
+However, they are still ruled by the synchronous side and are also subject to
+abortion.</p>
+<p>An <code>async/thread</code> evaluates to a boolean value which indicates whether it
+started successfully.
+The value can be captured with an optional <a href="#TODO">assignment</a>.</p>
+<p>Asynchronous threads are non deterministic and require explicit synchronization
+on accesses to variables to avoid race conditions.</p>
+<p>Examples:</p>
+<pre><code class="ceu">// calculates the factorial of some &quot;v&quot; if it doesn't take too long
+var u64  v   = &lt;...&gt;;
+var u64  fat = 1;
+var bool ok  = false;
+watching 1s do
+    await async/thread (v,fat) do   // keeps &quot;v&quot; and &quot;fat&quot; visible
+        loop i in [1 -&gt; v] do       // reads from &quot;v&quot;
+            fat = fat * i;          // writes to &quot;fat&quot;
+        end
+    end
+    ok = true;                      // completed within &quot;1s&quot;
+end
+</code></pre>
+
+<h4 id="atomic-block">Atomic Block</h4>
+<p>Atomic blocks provide mutual exclusion among threads and the synchronous
+side of application.
+Once an atomic block starts to execute, no other atomic block in the program
+starts.</p>
+<p>Examples:</p>
+<pre><code class="ceu">// A &quot;race&quot; between two threads: one incrementing, the other decrementing &quot;count&quot;.
+
+var s64 count = 0;                              // &quot;count&quot; is a shared variable
+par do
+    every 1s do
+        atomic do
+            _printf(&quot;count = %d\n&quot;, count);     // prints current value of &quot;count&quot; every &quot;1s&quot;
+        end
+    end
+with
+    await async/thread (count) do
+        loop do
+            atomic do
+                count = count - 1;              // decrements &quot;count&quot; as fast as possible
+            end
+        end
+    end
+with
+    await async/thread (count) do
+        loop do
+            atomic do
+                count = count + 1;              // increments &quot;count&quot; as fast as possible
+            end
+        end
+    end
+end
+</code></pre>
+
+<hr />
+<h2 id="c-integration">C Integration</h2>
+<p>Céu integrates safely with C, and programs can define and make native calls
+seamlessly while avoiding memory leaks and dangling pointers when dealing with
+external resources.</p>
+<p>Céu provides <a href="#TODO">native declarations</a> to import C symbols,
+<a href="#TODO">native blocks</a> to define new code in C,
+<a href="#TODO">native statements</a> to inline C statements,
+<a href="#TODO">native calls</a> to call C functions,
+and <a href="#TODO">finalization</a> to deal with C pointers safely:</p>
+<pre><code class="ceu">Nat_Symbol ::= native [`/´(pure|const|nohold|plain)] `(´ List_Nat `)´
+Nat_Block  ::= native `/´(pre|pos) do
+                   &lt;code definitions in C&gt;
+               end
+Nat_End    ::= native `/´ end
+
+Nat_Stmts  ::= `{´ {&lt;code in C&gt; | `@´ Exp} `}´
+
+Nat_Call   ::= [call] (Name | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
+
+List_Nat ::= LIST(ID_nat)
+
+Finalization ::= do [Stmt] Finalize
+              |  var `&amp;?´ Type ID_int `=´ `&amp;´ (Call_Nat | Call_Code) Finalize
+Finalize ::= finalize `(´ LIST(Name) `)´ with
+                 Block
+             [ pause  with Block ]
+             [ resume with Block ]
+             end
+</code></pre>
+
+<p>Native calls and statements transfer the control of the CPU to inlined code in
+C, losing the guarantees of the <a href="#TODO">synchronous model</a>.
+For this reason, programs should only resort to C for asynchronous
+functionality, such as non-blocking I/O, or simple <code>struct</code> accessors, but
+never for control purposes.</p>
+<p><code>TODO: Nat_End</code></p>
+<h3 id="native-declaration">Native Declaration</h3>
+<p>In Céu, an <a href="#TODO">identifier</a> prefixed with an underscore is considered a
+native symbol that is defined externally in C.
+However, all external symbols must be declared before their first use.</p>
+<p>Native declarations support four modifiers as follows:</p>
+<ul>
+<li><code>const</code>: declares the listed symbols as constants.
+    Constants can be used as <a href="#TODO">bounded limits</a> in <a href="#TODO">vectors</a>,
+    <a href="#TODO">pools</a>, and <a href="#TODO">numeric loops</a>.
+    Also, constants cannot be <a href="#TODO">assigned</a>.</li>
+<li><code>plain</code>: declares the listed symbols as <em>plain</em> types, i.e., types (or
+    composite types) that do not contain pointers.
+    Value of plain types passed as arguments to functions do not require
+    <a href="#TODO">finalization</a>.</li>
+<li><code>nohold</code>: declares the listed symbols as <em>non-holding</em> functions, i.e.,
+    a function that does not retain received pointers as arguments after
+    returning.
+    Pointers passed to non-holding functions do not require
+    <a href="#TODO">finalization</a>.</li>
+<li><code>pure</code>: declares the listed symbols as pure functions.
+    In addition to the <code>nohold</code> properties, pure functions never allocate
+    resources that require <a href="#TODO">finalization</a> and have no side effects to
+    take into account for the <a href="#TODO">safety checks</a>.</li>
+</ul>
+<p>Examples:</p>
+<pre><code class="ceu">// values
+native/const  _LOW, _HIGH;      // Arduino's &quot;LOW&quot; and &quot;HIGH&quot; are constants
+native        _errno;           // POSIX's &quot;errno&quot; is a global variable
+
+// types
+native/plain  _char;            // &quot;char&quot; is a &quot;plain&quot; type
+native        _SDL_PixelFormat; // SDL's &quot;SDL_PixelFormat&quot; is a type holding a pointer
+
+// functions
+native        _uv_read_start;   // Libuv's &quot;uv_read_start&quot; retains the received pointer
+native/nohold _free;            // POSIX's &quot;free&quot; receives a pointer but does not retain it
+native/pure   _strlen;          // POSIX's &quot;strlen&quot; is a &quot;pure&quot; function
+</code></pre>
+
+<h3 id="native-block">Native Block</h3>
+<p>Native blocks allows programs to define new external symbols in C.</p>
+<p>The <a href="#TODO">compiler of Céu</a> generates as output a program in C, which is
+embedded in a host program also in C, which is further compiled to the final
+binary program.</p>
+<p>The contents of native blocks is not parsed by Céu, but copied unchanged to the
+output in C depending on the modifier specified:</p>
+<ul>
+<li><code>pre</code>: code is placed before the declarations for the Céu program.
+    Symbols defined in <code>pre</code> blocks are visible to Céu.</li>
+<li><code>pos</code>: code is placed after the declarations for the Céu program.
+    Symbols defined by Céu are visible to <code>pos</code> blocks.</li>
+</ul>
+<p>Native blocks are copied in the order they appear in the source code.</p>
+<p>Since Céu uses the <a href="#TODO">C preprocessor</a>, <code>#</code> directives inside native blocks
+must use <code>##</code> directives to be considered only in the C compilation phase.</p>
+<p>Symbols defined in native blocks still need to be <a href="#TODO">declared</a> for use in
+the program.</p>
+<p>Examples:</p>
+<pre><code class="ceu">native/plain _t;
+native/pre do
+    typedef int t;              // definition for &quot;t&quot; is placed before Céu declarations
+end
+var _t x = 10;                  // requires &quot;t&quot; to be already defined
+</code></pre>
+
+<pre><code class="ceu">input void A;                   // declaration for &quot;A&quot; is placed before &quot;pos&quot; blocks
+native _get_A_id;
+native/pos do
+    int get_A_id (void) {
+        return CEU_INPUT_A;     // requires &quot;A&quot; to be already declared
+    }
+end
+</code></pre>
+
+<pre><code class="ceu">native/nohold _printf;
+native/pre do
+    ##include &lt;stdio.h&gt;         // include the relevant header for &quot;printf&quot;
+end
+</code></pre>
+
+<h3 id="native-statement">Native Statement</h3>
+<p>The contents of native statements in between <code>{</code> and <code>}</code> are inlined in the
+program.</p>
+<p>Native statements support interpolation of expressions in Céu which are
+expanded when preceded by a <code>@</code>.</p>
+<p>Examples:</p>
+<pre><code class="ceu">var int v_ceu = 10;
+{
+    int v_c = @v_ceu * 2;       // yields 20
+}
+v_ceu = { v_c + @v_ceu };       // yields 30
+{
+    printf(&quot;%d\n&quot;, @v_ceu);     // prints 30
+}
+</code></pre>
+
+<h3 id="native-call">Native Call</h3>
+<p>Names and expressions that evaluate to a <a href="#TODO">native type</a> can be called
+from Céu.</p>
+<p>If a call passes or returns pointers, it may require an accompanying
+<a href="#TODO">finalization statement</a>.</p>
+<p>Examples:</p>
+<pre><code class="ceu">// all expressions evaluate to a native type and can be called
+
+_printf(&quot;Hello World!\n&quot;);
+
+var _t f = &lt;...&gt;;
+f();
+
+var _s s = &lt;...&gt;;
+s.f();
+</code></pre>
+
+<p><code>TODO: ex. pointer return</code></p>
+<h3 id="finalization">Finalization</h3>
+<p>The finalization statement unconditionally executes a series of statements when
+its corresponding enclosing block terminates, even if aborted abruptly.</p>
+<p>Céu tracks the interaction of native calls with pointers and requires 
+<code>finalize</code> clauses to accompany them:</p>
+<ul>
+<li>If Céu <strong>passes</strong> a pointer to a native call, the pointer represents a
+  <strong>local resource</strong> that requires finalization.
+  Finalization executes when the block of the local resource goes out of scope.</li>
+<li>If Céu <strong>receives</strong> a pointer from a native call return, the pointer
+  represents an <strong>external resource</strong> that requires finalization.
+  Finalization executes when the block of the receiving pointer goes out of
+  scope.</li>
+</ul>
+<p>In both cases, the program does not compile without the <code>finalize</code> statement.</p>
+<p>A <code>finalize</code> cannot contain <a href="#TODO">synchronous control statements</a>.</p>
+<p>Examples:</p>
+<pre><code class="ceu">// Local resource finalization
+watching &lt;...&gt; do
+    var _buffer_t msg;
+    &lt;...&gt;                       // prepares msg
+    do
+        _send_request(&amp;msg);
+    finalize with
+        _send_cancel(&amp;msg);
+    end
+    await SEND_ACK;             // transmission is complete
+end
+</code></pre>
+
+<p>In the example above, the local variable <code>msg</code> is an internal resource passed
+as a pointer to <code>_send_request</code>, which is an asynchronous call that transmits
+the buffer in the background.
+If the enclosing <code>watching</code> aborts before awaking from the <code>await SEND_ACK</code>,
+the local <code>msg</code> goes out of scope and the external transmission now holds a
+<em>dangling pointer</em>.
+The <code>finalize</code> ensures that <code>_send_cancel</code> also aborts the transmission.</p>
+<pre><code class="ceu">// External resource finalization
+watching &lt;...&gt; do
+    var&amp;? _FILE f = _fopen(&lt;...&gt;) finalize with
+                        _fclose(f);
+                    end;
+    _fwrite(&lt;...&gt;, f);
+    await A;
+    _fwrite(&lt;...&gt;, f);
+end
+</code></pre>
+
+<p>In the example above, the call to <code>_fopen</code> returns an external file resource as
+a pointer.
+If the enclosing <code>watching</code> aborts before awaking from the <code>await A</code>, the file
+would remain open as a <em>memory leak</em>.
+The <code>finalize</code> ensures that <code>_fclose</code> closes the file properly.</p>
+<p><code>TODO</code>
+An external resource requires an <a href="#TODO">alias assignment</a> to an
+<a href="#TODO">option <code>&amp;?</code></a> variable.
+If the external call returns <code>NULL</code>, the alias is not set.</p>
+<p><em>Note: the compiler only forces the programmer to write finalization clauses,
+       but cannot check if they handle the resource properly.</em></p>
+<p><a href="#TODO">Declaration modifiers</a> and <a href="#TODO">typecasts</a> may suppress the
+requirement for finalization:</p>
+<ul>
+<li><code>nohold</code> modifiers or <code>/nohold</code> typecasts make passing pointers safe.</li>
+<li><code>pure</code>   modifiers or <code>/pure</code>   typecasts make passing pointers and returning
+                                  pointers safe</li>
+<li><code>/plain</code> typecasts make returns safe</li>
+</ul>
+<p>Examples:</p>
+<pre><code class="ceu">// &quot;_free&quot; does not retain &quot;ptr&quot;
+native/nohold _free;
+_free(ptr);
+// or
+(_free as /nohold)(ptr);
+</code></pre>
+
+<pre><code class="ceu">// &quot;_strchr&quot; does retain &quot;ptr&quot; or allocates resources
+native/pure _strchr;
+var _char&amp;&amp; found = _strchr(ptr);
+// or
+var _char&amp;&amp; found = (_strchr as /pure)(ptr);
+</code></pre>
+
+<pre><code class="ceu">// &quot;_f&quot; returns a non-pointer type
+var _tp v = _f() as /plain;
+</code></pre>
+
+<hr />
+<h2 id="lua-integration">Lua Integration</h2>
+<p>Céu also integrates with Lua, providing <a href="#TODO">Lua states</a> to delimit the
+effects of <a href="#TODO">Lua statements</a> which can be inlined in programs:</p>
+<pre><code class="ceu">Lua_State ::= lua `[´ [Exp] `]´ do
+                 Block
+              end
+Lua_Stmts ::= `[´ {`=´} `[´
+                  { {&lt;code in Lua&gt; | `@´ Exp} }
+              `]´ {`=´} `]´
+</code></pre>
+
+<p>Lua statements transfer the control of the CPU to Lua, losing the guarantees of
+the <a href="#TODO">synchronous model</a>.
+Like <a href="#TODO">native statements</a>, programs should only resort to Lua for
+asynchronous functionality, such as non-blocking I/O, or simple <code>struct</code>
+accessors, but never for control purposes.</p>
+<h3 id="lua-statement">Lua Statement</h3>
+<p>The contents of Lua statements in between <code>[[</code> and <code>]]</code> are inlined in the
+program.</p>
+<p>Like <a href="#TODO">native statements</a>, Lua statements support interpolation of
+expressions in Céu which are expanded when preceded by a <code>@</code>.</p>
+<p>Lua statements only affect the <a href="#TODO">Lua state</a> in which they are embedded.</p>
+<p>If a Lua statement is used in an <a href="#TODO">assignment</a>, it is evaluated as an
+expression that either satisfies the destination or generates a runtime error.
+The list that follows specifies the <em>Céu destination</em> and expected
+<em>Lua source</em>:</p>
+<ul>
+<li>a <code>var</code> <code>bool</code>              expects a <code>boolean</code></li>
+<li>a <a href="#TODO">numeric</a> <code>var</code>    expects a <code>number</code></li>
+<li>a pointer <code>var</code>             expects a <code>lightuserdata</code></li>
+<li>a <code>vector</code> <code>byte</code>           expects a <code>string</code></li>
+</ul>
+<p><code>TODO: lua state captures errors</code></p>
+<p>Examples:</p>
+<pre><code class="ceu">var int v_ceu = 10;
+[[
+    v_lua = @v_ceu * 2          -- yields 20
+]]
+v_ceu = [[ v_lua + @v_ceu ]];   // yields 30
+[[
+    print(@v_ceu)               -- prints 30
+]]
+</code></pre>
+
+<h3 id="lua-state">Lua State</h3>
+<p>A Lua state creates a separate environment for its embedded
+<a href="#TODO">Lua statements</a>.</p>
+<p>Programs have an implicit enclosing <em>global Lua state</em> which all orphan
+statements apply.</p>
+<p>Examples:</p>
+<pre><code class="ceu">// &quot;v&quot; is not shared between the two statements
+par do
+    // global Lua state
+    [[ v = 0 ]];
+    var int v = 0;
+    every 1s do
+        [[print('Lua 1', v, @v) ]];
+        v = v + 1;
+        [[ v = v + 1 ]];
+    end
+with
+    // local Lua state
+    lua[] do
+        [[ v = 0 ]];
+        var int v = 0;
+        every 1s do
+            [[print('Lua 2', v, @v) ]];
+            v = v + 1;
+            [[ v = v + 1 ]];
+        end
+    end
+end
+</code></pre>
+
+<p><code>TODO: dynamic scope, assignment/error, [dim]</code></p>
+<hr />
+<h2 id="abstractions">Abstractions</h2>
+<p>Céu supports reuse with <code>data</code> declarations to define new types, and <code>code</code>
+declarations to define new subprograms.
+Declarations have <a href="#TODO">lexical scope</a>.</p>
+<h3 id="data">Data</h3>
+<p>The <code>data</code> declaration creates a new data type:</p>
+<pre><code class="ceu">Data ::= data ID_abs [as (nothing|Exp)] [ with
+             { &lt;var_set|vector_set|pool_set|event_set&gt; `;´ {`;´} }
+         end ]
+
+Data_Cons ::= (val|new) Abs_Cons
+Abs_Cons  ::= ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
+</code></pre>
+
+<p>A declaration may include fields with <a href="#TODO">storage declarations</a> which
+are included in the <code>data</code> type and are publicly accessible.
+Field declarations may <a href="#TODO">assign</a> default values for uninitialized
+instances.</p>
+<p>Data types can form hierarchies using dots (<code>.</code>) in identifiers:</p>
+<ul>
+<li>An identifier like <code>A</code> makes <code>A</code> a base type.</li>
+<li>An identifier like <code>A.B</code> makes <code>A.B</code> a subtype of its supertype <code>A</code>.</li>
+</ul>
+<p>A subtype inherits all fields from its supertype.</p>
+<p>The optional <code>as</code> modifier expects <code>nothing</code> or a constant expression of type
+<code>int</code>:</p>
+<ul>
+<li><code>nothing</code>: the <code>data</code> cannot be instantiated.</li>
+<li><em>constant expression</em>: typecasting a value of the type to <code>int</code> evaluates to
+                         the specified expression.</li>
+</ul>
+<p>Examples:</p>
+<pre><code class="ceu">data Rect with
+    var int x, y, h, w;
+    var int z = 0;
+end
+var Rect r = val Rect(10,10, 100,100, _);  // &quot;r.z&quot; defaults to 0
+</code></pre>
+
+<pre><code class="ceu">data Dir       as nothing;  // &quot;Dir&quot; is a base type and cannot be intantiated
+data Dir.Right as  1;       // &quot;Dir.Right&quot; is a subtype of &quot;Dir&quot;
+data Dir.Left  as -1;       // &quot;Dir.Left&quot;  is a subtype of &quot;Dir&quot;
+var  Dir dir = &lt;...&gt;;       // receives one of &quot;Dir.Right&quot; or &quot;Dir.Left&quot;
+escape (dir as int);        // returns 1 or -1
+</code></pre>
+
+<p><code>TODO: new, pool, recursive types</code></p>
+<h4 id="data-constructor">Data Constructor</h4>
+<p>A new <em>static value</em> is created with the <code>data</code> name followed by a list of
+arguments matching its fields in the contexts as follows:</p>
+<ul>
+<li>Prefixed by <code>val</code> in an <a href="#TODO">assignment</a> to a variable.</li>
+<li>As an argument to a <a href="#TODO"><code>code</code> instantiation</a>.</li>
+<li>Nested as an argument in a <code>data</code> creation.</li>
+</ul>
+<p>In all cases, the arguments are copied to an explicit destination with static
+storage.
+The destination must be a plain declaration, and not an alias or pointer.</p>
+<p>Variables of the exact same type can be copied in <a href="#TODO">assignments</a>.
+The rules for assignments from a subtype to a supertype are as follows:</p>
+<ul>
+<li><a href="#TODO">Copy assignments</a> for plain values is only allowed if the subtype
+                            is the same size as the supertype (i.e., no extra
+                            fields).</li>
+<li><a href="#TODO">Copy assignments</a> for pointers is allowed.</li>
+<li><a href="#TODO">Alias assignment</a> is allowed.</li>
+</ul>
+<pre><code class="ceu">data Object with
+    var Rect rect;
+    var Dir  dir;
+end
+var Object o1 = val Object(Rect(0,0,10,10,_), Dir.Right());
+</code></pre>
+
+<pre><code class="ceu">var Object o2 = o1;         // makes a deep copy of all fields from &quot;o1&quot; to &quot;o2&quot;
+</code></pre>
+
+<h3 id="code">Code</h3>
+<p>The <code>code/tight</code> and <code>code/await</code> declarations create new subprograms that can
+be <a href="#TODO">invoked</a> from arbitrary points in programs:</p>
+<pre><code class="ceu">// prototype declaration
+Code_Tight ::= code/tight Mods ID_abs `(´ Params `)´ `-&gt;´ Type
+Code_Await ::= code/await Mods ID_abs `(´ Params `)´ [`-&gt;´ `(´ Inits `)´] `-&gt;´ (Type | FOREVER)
+
+// full declaration
+Code_Impl ::= (Code_Tight | Code_Await) do
+                  Block
+              end
+
+Mods ::= [`/´dynamic] [`/´recursive]
+
+Params ::= void | LIST(Class [ID_int])
+Class  ::= [dynamic] var   [`&amp;´] [`/´hold] * Type
+        |            vector `&amp;´ `[´ [Exp] `]´ Type
+        |            pool   `&amp;´ `[´ [Exp] `]´ Type
+        |            event  `&amp;´ (Type | `(´ LIST(Type) `)´)
+
+Inits ::= void | LIST(Class [ID_int])
+Class ::= var    (`&amp;´|`&amp;?`) * Type
+       |  vector (`&amp;´|`&amp;?`) `[´ [Exp] `]´ Type
+       |  pool   (`&amp;´|`&amp;?`) `[´ [Exp] `]´ Type
+       |  event  (`&amp;´|`&amp;?`) (Type | `(´ LIST(Type) `)´)
+
+// invocation
+Code_Call  ::= call  Mods Abs_Cons
+Code_Await ::= await Mods Code_Cons_Init
+Code_Spawn ::= spawn Mods Code_Cons_Init [in Name]
+
+Mods ::= [`/´dynamic | `/´static] [`/´recursive]
+Code_Cons_Init ::= Abs_Cons [`-&gt;´ `(´ LIST(`&amp;´ Var) `)´])
+</code></pre>
+
+<p>A <code>code/tight</code> is a subprogram that cannot contain
+<a href="#TODO">synchronous control statements</a> and runs to completion in the current
+<a href="#TODO">internal reaction</a>.</p>
+<p>A <code>code/await</code> is a subprogram with no restrictions (e.g., it can manipulate
+events and use parallel compositions) and its execution may outlive multiple
+reactions.</p>
+<p>A <em>prototype declaration</em> specifies the interface parameters of the
+abstraction which code invocations must satisfy.
+A <em>full declaration</em> (a.k.a. <em>definition</em>) also specifies an implementation
+with a block of code.
+An <em>invocation</em> specifies the name of the code abstraction and arguments
+matching its declaration.</p>
+<p>To support recursive abstractions, a code invocation can appear before the
+implementation is known, but after the prototype declaration.
+In this case, the declaration must use the modifier <code>recursive</code>.</p>
+<p>Examples:</p>
+<pre><code class="ceu">code/tight Absolute (var int v) -&gt; int do   // declares the prototype for &quot;Absolute&quot;
+    if v &gt; 0 then                           // implements the behavior
+        escape  v;
+    else
+        escape -v;
+    end
+end
+var int abs = call Absolute(-10);           // invokes &quot;Absolute&quot; (yields 10)
+</code></pre>
+
+<pre><code class="ceu">code/await Hello_World (void) -&gt; FOREVER do
+    every 1s do
+        _printf(&quot;Hello World!\n&quot;);  // prints &quot;Hello World!&quot; every second
+    end
+end
+await Hello_World();                // never awakes
+</code></pre>
+
+<pre><code class="ceu">code/tight/recursive Fat (var int v) -&gt; int;    // &quot;Fat&quot; is a recursive code
+code/tight/recursive Fat (var int v) -&gt; int do
+    if v &gt; 1 then
+        escape v * (call/recursive Fat(v-1));   // recursive invocation before full declaration
+    else
+        escape 1;
+    end
+end
+var int fat = call/recursive Fat(10);           // invokes &quot;Fat&quot; (yields 3628800)
+</code></pre>
+
+<p><code>TODO: hold</code></p>
+<h4 id="code-declaration">Code Declaration</h4>
+<p>Code abstractions specify a list of input parameters in between <code>(</code> and <code>)</code>.
+Each parameter specifies a <a href="#TODO">storage class</a> with modifiers, a type and
+an identifier (optional in declarations).
+A <code>void</code> list specifies that the code has no parameters.</p>
+<p>Code abstractions also specify an output return type.
+A <code>code/await</code> may use <code>FOREVER</code> to indicate that the code never returns.</p>
+<p>A <code>code/await</code> may also specify an optional <em>initialization return list</em>, which
+represents local resources created in the outermost scope of its body.
+These resources are exported and bound to aliases in the invoking context which
+may access them while the code executes:</p>
+<ul>
+<li>The invoker passes a list of unbound aliases to the code.</li>
+<li>The code <a href="#TODO">binds</a> the aliases to the local resources before any
+  <a href="#TODO">synchronous control statement</a> executes.</li>
+</ul>
+<p>If the code does not terminate (i.e., return type is <code>FOREVER</code>), the
+initialization list specifies normal <code>&amp;</code> aliases.
+Otherwise, since the code may terminate and deallocated the resource, the list
+must specify option <code>&amp;?</code> aliases.</p>
+<p>Examples:</p>
+<pre><code class="ceu">// &quot;Open&quot; abstracts
+code/await Open (var _char&amp;&amp; path) -&gt; (var&amp; _FILE res) -&gt; FOREVER do
+    var&amp;? _FILE res_ = _fopen(path, &lt;...&gt;)  // allocates resource
+                       finalize with
+                           _fclose(res_!);  // releases resource
+                       end;
+    res = &amp;res_!;                           // exports resource to invoker
+    await FOREVER;
+end
+
+var&amp; _FILE res;                             // declares resource
+spawn Open(&lt;...&gt;) -&gt; (&amp;res);                // initiliazes resource
+&lt;...&gt;                                       // uses resource
+</code></pre>
+
+<h4 id="code-invocation">Code Invocation</h4>
+<p>A <code>code/tight</code> is invoked with a <code>call</code> followed by the abstraction name and
+list of arguments.
+A <code>code/await</code> is invoked with an <code>await</code> or <code>spawn</code> followed by the
+abstraction name and list of arguments.</p>
+<p>The list of arguments must satisfy the list of parameters in the
+<a href="#TODO">code declaration</a>.</p>
+<p>The <code>call</code> and <code>await</code> invocations suspend the ongoing computation and transfer
+the execution control to the code abstraction.
+The invoking point only resumes after the abstraction terminates and evaluates
+to a value of the <a href="#TODO">return type</a> which can be captured with an optional
+<a href="#TODO">assignment</a>.</p>
+<p>The <code>spawn</code> invocation also suspends and transfers control to the code
+abstraction.
+However, when the abstraction becomes idle (or terminates), the invoking point
+resumes.
+This allows the invocation point and the abstraction to execute concurrently.</p>
+<p>The <code>spawn</code> invocation accepts an optional list of aliases matching the
+<a href="#TODO">initialization list</a> in the code abstraction.
+These aliases are bound to local resources in the code and can be accessed
+from the invocation point.</p>
+<p>The <code>spawn</code> invocation also accepts an optional <a href="#TODO">pool</a> which provides
+storage and scope for invoked abstractions.
+In this case, the invocation evaluates to a boolean that indicates if the pool
+has space to execute the code.
+The result can be captured with an optional <a href="#TODO">assignment</a>.
+If the pool goes out of scope, all invoked abstractions invoked at that pool
+are aborted.
+If the <code>spawn</code> omits the pool, the invocation always succeed and has the same
+scope as the invoking point: when the enclosing block terminates, the invoked
+code is aborted.</p>
+<h4 id="dynamic-dispatching">Dynamic Dispatching</h4>
+<p>Céu supports dynamic code dispatching based on multiple parameters.</p>
+<p>The <code>/dynamic</code> modifier in a declaration specifies that the code is dynamically
+dispatched.
+A dynamic code must have at least one <code>dynamic</code> parameter.
+Also, all dynamic parameters must be pointers or aliases to a
+<a href="#TODO">data type</a> in some hierarchy.</p>
+<p>A dynamic declaration requires other compatible dynamic declarations with the
+same name, modifiers, parameters, and return type.
+The exceptions are the <code>dynamic</code> parameters, which must be in the same
+hierarchy of their corresponding parameters in other declarations.</p>
+<p>To determine which declaration to execute during runtime, the actual argument
+is checked against the first formal <code>dynamic</code> parameter of each declaration.
+The declaration with the most specific type matching the argument wins.
+In the case of a tie, the next dynamic parameter is checked.</p>
+<p>A <em>catchall</em> declaration with the most general dynamic types must always be
+provided.</p>
+<p>Examples:</p>
+<pre><code class="ceu">data Media as nothing;
+data Media.Audio with &lt;...&gt; end
+data Media.Video with &lt;...&gt; end
+
+code/await/dynamic Play (dynamic var&amp; Media media) -&gt; void do
+    _assert(0);             // never dispatched
+end
+code/await/dynamic Play (dynamic var&amp; Media.Audio media) -&gt; void do
+    &lt;...&gt;                   // plays an audio
+end
+code/await/dynamic Play (dynamic var&amp; Media.Video media) -&gt; void do
+    &lt;...&gt;                   // plays a video
+end
+
+var&amp; Media m = &lt;...&gt;;       // receives one of &quot;Media.Audio&quot; or &quot;Media.Video&quot;
+await/dynamic Play(&amp;m);     // dispatches the appropriate subprogram to play the media
+</code></pre>
+
+<hr />
+<h2 id="synchronous-control-statements">Synchronous Control Statements</h2>
+<p>The <em>synchronous control statements</em>
+<code>await</code>, <code>spawn</code>, <code>emit</code> (internal events), <code>every</code>, <code>finalize</code>, <code>pause/if</code>,
+<code>par</code>, <code>par/and</code>, <code>par/or</code>, and <code>watching</code>
+cannot appear in
+<a href="#TODO">event iterators</a>,
+<a href="#TODO">pool iterators</a>,
+<a href="#TODO">asynchronous execution</a>,
+<a href="#TODO">finalization</a>,
+and
+<a href="#TODO">tight code abstractions</a>.</p>
+<p>As exceptions, an <code>every</code> can <code>emit</code> internal events, and a <code>code/tight</code> can
+contain empty <code>finalize</code> statements.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../060-expressions/" class="btn btn-neutral float-right" title="Expressions">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../040-storage_classes/" class="btn btn-neutral" title="Storage Classes"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+<div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../040-storage_classes/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../060-expressions/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+
+</body>
+</html>
