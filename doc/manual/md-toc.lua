@@ -1,4 +1,4 @@
-require 'lpeg'
+local lpeg = require 'lpeg'
 local P, C, V, Cp = lpeg.P, lpeg.C, lpeg.V, lpeg.Cp
 
 G = {
@@ -33,13 +33,13 @@ for lvl=1, 6 do
     end
 end
 
-local MANUAL = assert(io.open('manual-v0.10.md')):read'*a'
+local MANUAL = assert(io.open('manual-'..(...)..'.md')):read'*a'
 local T = { P(G):match(MANUAL) }
 
 local toc = { 0 }
 local TOC = ''
 for _, t in ipairs(T) do
-    local lvl, pos, v = unpack(t)
+    local lvl, pos, v = table.unpack(t)
     if lvl < #toc then
         for j=lvl+1, #toc do
             toc[j] = nil
@@ -66,11 +66,11 @@ end
 
 for i=#T, 1, -1 do
     local t = T[i]
-    local lvl, pos, v, idx = unpack(t)
+    local lvl, pos, v, idx = table.unpack(t)
     MANUAL = string.sub(MANUAL,1,pos-1)..string.rep('#',lvl+1)..' '..idx..'\n'..
              string.sub(MANUAL,pos)
 end
 
-local f = assert(io.open('manual-toc-v0.10.md','w'))
+local f = assert(io.open('manual-toc-'..(...)..'.md','w'))
 f:write(TOC..'\n\n'..MANUAL)
 f:close()
