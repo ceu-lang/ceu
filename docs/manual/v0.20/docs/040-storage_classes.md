@@ -30,8 +30,10 @@ in memory) is also limited to the scope of the enclosing block.
 However, individual elements inside *vector* and *pool* entities have dynamic
 lifetime, but which never outlive the scope of the declaration.
 
-Variables
----------
+Classes
+-------
+
+### Variables
 
 As in typical imperative languages, a variable in Céu holds a value of a
 [declared](#TODO) [type](#TODO) that may vary during program execution.
@@ -61,8 +63,7 @@ end
 escape v;       // read access (yields 2)
 ```
 
-Vectors
--------
+### Vectors
 
 In Céu, a vector is a dynamic and contiguous collection of elements of the same
 type.
@@ -81,8 +82,7 @@ buf[$buf+1] = 4;                // write access
 escape buf[1];                  // read access (yields 2)
 ```
 
-Events
-------
+### Events
 
 Events are the most fundamental concept of Céu, accounting for its reactive 
 nature.
@@ -154,8 +154,7 @@ trails in a program.
 
 Programs can `emit` and `await` internal events.
 
-Pools
------
+### Pools
 
 A pool is a dynamic container to hold running [code abstractions](#TODO).
 A pool [declaration](#TODO) specifies the type of the abstraction and maximum
@@ -180,6 +179,22 @@ When a pool declaration goes out of scope, all running code abstractions are
 automatically aborted.
 
 `TODO: data`
+
+Names
+-----
+
+A storage entity has one or more names :
+
+```
+Name    ::= Name_01
+Name_01 ::= [`*´|`$´] Name_02
+Name_02 ::= Name_03 { `[´Exp`]´ | (`:´|`.´) (ID_int|ID_nat) | `!´ }
+Name_03 ::= `(´ Name_01 [as (Type | `/´(nohold|plain|pure)) `)´
+         |  ID_int
+         |  ID_nat
+         |  outer
+         |  `{´ <code in C> `}´
+```
 
 References
 ----------
@@ -211,7 +226,7 @@ _printf("%d\n", v);     // prints 1
 ```
 
 An alias must have a narrower scope than the entity it refers to.
-The [binding](#TODO) to the alias is immutable and must occur between its
+The [assignment](#TODO) to the alias is immutable and must occur between its
 declaration and first access or next [yielding statement](#TODO).
 It is not possible to acquire aliases to external events or to pointer types.
 

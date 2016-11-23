@@ -140,6 +140,8 @@ Declarations can also be [aliases](#TODO).
 The expression between the brackets specifies the [dimension](#TODO) of the
 vector.
 
+`TODO: constructor`
+
 Examples:
 
 ```ceu
@@ -149,10 +151,6 @@ vector[n]  int vs2 = [];    // "vs2" is a dynamic vector of 10 elements max
 vector[]   int vs3 = [];    // "vs3" is an unbounded vector
 vector&[]  int vs4 = &vs1;  // "vs4" is an alias to "vs1"
 ```
-
-#### Vector Constructor
-
-`TODO:` See also [vector constructor](#TODO).
 
 ### Event
 
@@ -227,8 +225,8 @@ The space for dynamic dimensions grow and shrink automatically.
 Assignments
 -----------
 
-An assignment evaluates the statement or expression at the right side of the
-symbol `=` and mutates the name(s) at the left side:
+An assignment associates the statement or expression at the right side of `=`
+with the name(s) at the left side:
 
 ```ceu
 Set ::= (Name | `(´ LIST(Name|`_´) `)´) `=´ Cons
@@ -248,11 +246,15 @@ Cons ::= ( Do
          | Exp )
 ```
 
-`TODO:`
+### Copy Assignment
 
-A *copying assignment* ...
+A *copy assignment* evaluates the statement or expression at the right side and
+copies the result(s) to the name(s).
 
-A *binding assignment* ...
+### Alias Assignment
+
+An *alias assignment* makes the name at the left side to be a synonym to the
+expression at the right side.
 
 -------------------------------------------------------------------------------
 
@@ -1243,10 +1245,10 @@ Céu tracks the interaction of native calls with pointers and requires
 `finalize` clauses to accompany them:
 
 - If Céu **passes** a pointer to a native call, the pointer represents a
-  **local** resource that requires finalization.
+  **local resource** that requires finalization.
   Finalization executes when the block of the local resource goes out of scope.
 - If Céu **receives** a pointer from a native call return, the pointer
-  represents an **external** resource that requires finalization.
+  represents an **external resource** that requires finalization.
   Finalization executes when the block of the receiving pointer goes out of
   scope.
 
@@ -1293,12 +1295,13 @@ end
 In the example above, the call to `_fopen` returns an external file resource as
 a pointer.
 If the enclosing `watching` aborts before awaking from the `await A`, the file
-remains open as a *memory leak*.
+would remain open as a *memory leak*.
 The `finalize` ensures that `_fclose` closes the file properly.
 
-A resource assignment requires a [binding](#TODO) to an option `&?`
-[alias](#TODO).
-If the external call returns `NULL`, the binding is not set.
+`TODO`
+An external resource requires an [alias assignment](#TODO) to an
+[option `&?`](#TODO) variable.
+If the external call returns `NULL`, the alias is not set.
 
 *Note: the compiler only forces the programmer to write finalization clauses,
        but cannot check if they handle the resource properly.*
@@ -1510,7 +1513,7 @@ The rules for assignments from a subtype to a supertype are as follows:
                             is the same size as the supertype (i.e., no extra
                             fields).
 - [Copy assignments](#TODO) for pointers is allowed.
-- [Binding assignment](#TODO) is allowed.
+- [Alias assignment](#TODO) is allowed.
 
 ```ceu
 data Object with

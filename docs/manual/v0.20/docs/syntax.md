@@ -268,16 +268,17 @@ Type ::= ID_type { `&&´ } [`?´]
 WCLOCKK ::= [NUM h] [NUM min] [NUM s] [NUM ms] [NUM us]
 WCLOCKE ::= `(´ Exp `)´ (h|min|s|ms|us)
 
-/* Expressions */
+/* Name */
 
-Name    ::= Name_01
-Name_01 ::= [`*´|`$´] Name_02
-Name_02 ::= Name_03 { `[´Exp`]´ | (`:´|`.´) (ID_int|ID_nat) | `!´ }
-Name_03 ::= `(´ Name_01 [as (Type | `/´(nohold|plain|pure)) `)´
+Name    ::= [`*´|`$´] Name_01
+Name_01 ::= Name_02 { `[´Exp`]´ | (`:´|`.´) (ID_int|ID_nat) | `!´ }
+Name_02 ::= `(´ Name [as (Type | `/´(nohold|plain|pure)) `)´
          |  ID_int
          |  ID_nat
          |  outer
          |  `{´ <code in C> `}´
+
+/* Expressions */
 
 Exp  ::= Prim (combined with the "Operator Precedence" below)
 Prim ::= `(´ Exp `)´
