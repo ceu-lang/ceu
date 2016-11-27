@@ -2116,6 +2116,21 @@ escape a + 1;
     run = 11,
 }
 
+Test { [[
+var int diff = 290 - 48;
+await (1.1)ms;
+escape 1;
+]],
+    stmts = 'line 2 : invalid expression : expected integer type',
+}
+Test { [[
+var int diff = 290 - 48;
+await (1.1 as int)ms;
+escape 1;
+]],
+    run = {['~>2ms']=1},
+}
+
 -- Seq
 
 Test { [[

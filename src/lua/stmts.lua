@@ -345,6 +345,11 @@ STMTS.F = {
     end,
 
     Await_Wclock = function (me)
+        local e = unpack(me)
+        if e.tag == 'WCLOCKE' then
+            local n = unpack(e)
+            ASR(TYPES.is_int(n.info.tp), me, 'invalid expression : expected integer type')
+        end
         me.tp = TYPES.new(me, 'int')
     end,
 
