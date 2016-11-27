@@ -344,7 +344,7 @@ F = {
         local is_alias,tp = unpack(me)
 
         local Code = AST.par(me, 'Code')
-        if Code and (not Code.is_impl) then
+        if Code and (not Code.is_impl or Code.is_dyn_base) then
             return
         end
 

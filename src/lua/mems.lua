@@ -92,9 +92,22 @@ typedef struct tceu_code_mem_]]..me.id_..[[ {
     Code = function (me)
         local _, mods, _, body = unpack(me)
 
+        me.mems.wrapper = ''
+
+        -- CEU_CODE_WATCH_xxx
+        if me.mems.watch ~= '' then
+            me.mems.wrapper = me.mems.wrapper .. [[
+static void CEU_CODE_WATCH_]]..me.id_..[[ (tceu_code_mem* _ceu_mem,
+                                           tceu_code_args_]]..me.id_..[[* args)
+{
+    ]]..me.mems.watch..[[
+}
+]]
+        end
+
         if (not me.is_dyn_base) and ((not me.is_impl) or mods.dynamic) then
             me.mems.args = ''
-            me.mems.wrapper = ''
+            --me.mems.wrapper = ''
             return
         end
 
@@ -204,19 +217,6 @@ tceu_nlbl lbl = multis
 
         me.mems.args = me.mems.args..'} tceu_code_args_'..me.id_..';\n'
 
-        me.mems.wrapper = ''
-
-        -- CEU_CODE_WATCH_xxx
-        if me.mems.watch ~= '' then
-            me.mems.wrapper = me.mems.wrapper .. [[
-static void CEU_CODE_WATCH_]]..me.id_..[[ (tceu_code_mem* _ceu_mem,
-                                           tceu_code_args_]]..me.id_..[[* args)
-{
-    ]]..me.mems.watch..[[
-}
-]]
-        end
-
         -- CEU_CODE_xxx
 
         local Type = AST.get(body,'Block', 1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
@@ -291,6 +291,9 @@ static void CEU_CODE_]]..me.id_..[[ (tceu_stk* stk, tceu_ntrl trlK,
         local idx = to.info.dcl.is_mid_idx
         if idx then
             local Code = AST.par(me,'Code')
+            if Code.dyn_base then
+                Code = Code.dyn_base
+            end
             if to.info.dcl[1] == '&' then
                 Code.mems.watch = Code.mems.watch .. [[
 if (args->_]]..idx..[[ != NULL) {

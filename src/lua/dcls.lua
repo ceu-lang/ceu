@@ -461,6 +461,11 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         end
 ]]
 
+        local stmts = AST.asr(me,1,'Stmts')
+        if stmts[2] == me then
+            return  -- initialization list
+        end
+
         -- multi-methods: changes "me.id" on Code
         me.ids_dyn = ''
         for i, dcl in ipairs(me) do

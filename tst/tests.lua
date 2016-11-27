@@ -53,6 +53,224 @@ end
     run = 2,
 }
 
+Test { [[
+data Dd;
+
+code/tight Ff (void) -> Dd do
+    var Dd d = val Dd();
+    escape d;
+end
+
+var Dd d = call Ff();
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+data Dd;
+data Dd.Ee;
+
+code/tight Ff (void) -> Dd do
+    var Dd d = val Dd.Ee();
+    escape d;
+end
+
+var Dd d = call Ff();
+
+escape (d is Dd.Ee) as int;
+]],
+    run = 1,
+}
+
+Test { [[
+data Dd;
+data Dd.Ee;
+
+code/await Ff (void) -> (var& Dd d) -> FOREVER do
+    var Dd d_ = val Dd.Ee();
+    d = &d_;
+    await FOREVER;
+end
+
+var& Dd d;
+spawn Ff() -> (&d);
+
+escape (d is Dd.Ee) as int;
+]],
+    run = 1,
+}
+
+Test { [[
+data Xx;
+code/await/dynamic Ff (dynamic var Xx x1) -> (var& Xx x2) -> void;
+escape 1;
+]],
+    wrn = true,
+    props_ = 'line 2 : invalid `dynamic´ declaration : parameter #1 : expected `data´ in hierarchy',
+}
+
+Test { [[
+data Dd with
+    var int x;
+end
+data Dd.Ee;
+
+var Dd d = val Dd.Ee(10);
+
+escape ((d is Dd.Ee) as int) + d.x;
+]],
+    wrn = true,
+    run = 11,
+}
+
+Test { [[
+data Xx;
+data Xx.Yy;
+data Dd;
+
+code/await/dynamic Ff (dynamic var Xx x) -> (var& Dd d) -> FOREVER;
+
+code/await/dynamic Ff (dynamic var Xx x) -> (var& Dd d) -> FOREVER do
+    var Dd d_ = val Dd();
+    d = &d_;
+    await FOREVER;
+end
+
+var& Dd d;
+spawn/dynamic Ff(Xx.Yy()) -> (&d);
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Xx;
+data Xx.Yy;
+data Dd;
+
+//code/await/dynamic Ff (dynamic var Xx x) -> (var& Dd d) -> FOREVER;
+
+code/await/dynamic Ff (dynamic var Xx x) -> (var& Dd d) -> FOREVER do
+    var Dd d_ = val Dd();
+    d = &d_;
+    await FOREVER;
+end
+
+var& Dd d;
+spawn/dynamic Ff(Xx.Yy()) -> (&d);
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Xx with
+    var int v = 10;
+end
+data Xx.Yy;
+
+data Dd with
+    var Xx x;
+end
+data Dd.Ee;
+
+native _ceu_dbg_assert;
+code/await/dynamic Ff (dynamic var Xx x) -> (var& Dd d) -> FOREVER do
+    var Dd d_ = val Dd(x);
+    d = &d_;
+    _ceu_dbg_assert(0);
+    await FOREVER;
+end
+
+code/await/dynamic Ff (dynamic var Xx.Yy x) -> (var& Dd d) -> FOREVER do
+    var Dd d_ = val Dd.Ee(x);
+    d = &d_;
+    await FOREVER;
+end
+
+var& Dd d;
+spawn/dynamic Ff(Xx.Yy(20)) -> (&d);
+
+escape ((d is Dd.Ee) as int);
+]],
+    wrn = true,
+    run = 21,
+}
+do return end
+Test { [[
+data Xx with
+    var int v = 10;
+end
+data Xx.Yy;
+
+data Dd with
+    var Xx x;
+end
+data Dd.Ee;
+
+native _ceu_dbg_assert;
+code/await/dynamic Ff (dynamic var Xx x) -> (var& Dd d) -> FOREVER do
+    var Dd d_ = val Dd(x);
+    d = &d_;
+    _ceu_dbg_assert(0);
+    await FOREVER;
+end
+
+code/await Gg (dynamic var Xx.Yy x) -> (var& Dd d) -> FOREVER do
+    var Dd d_ = val Dd.Ee(x);
+    d = &d_;
+    await FOREVER;
+end
+
+var& Dd d;
+spawn Gg(Xx.Yy(20)) -> (&d);
+
+escape ((d is Dd.Ee) as int);
+]],
+    wrn = true,
+    run = 21,
+}
+
+Test { [[
+data Xx with
+    var int v = 10;
+end
+data Xx.Yy;
+
+data Dd with
+    var Xx x;
+end
+data Dd.Ee;
+
+native _ceu_dbg_assert;
+code/await/dynamic Ff (dynamic var Xx x) -> (var& Dd d) -> FOREVER do
+    var Dd d_ = val Dd(x);
+    d = &d_;
+    _ceu_dbg_assert(0);
+    await FOREVER;
+end
+
+code/await/dynamic Ff (dynamic var Xx.Yy x) -> (var& Dd d) -> FOREVER do
+    var Dd d_ = val Dd.Ee(x);
+    d = &d_;
+    await FOREVER;
+end
+
+var& Dd d;
+spawn/dynamic Ff(Xx.Yy(20)) -> (&d);
+
+escape ((d is Dd.Ee) as int) + d.x.v;
+]],
+    wrn = true,
+    run = 21,
+}
+
 do return end -- OK
 --]=====]
 
