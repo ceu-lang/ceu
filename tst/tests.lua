@@ -271,7 +271,7 @@ escape ((d is Dd.Ee) as int) + d.x.v;
     run = 21,
 }
 
-do return end -- OK
+--do return end -- OK
 --]=====]
 
 ----------------------------------------------------------------------------
@@ -40377,6 +40377,68 @@ escape v!;
 ]],
     --asr = '7] runtime error: invalid tag',
     run = '9] runtime error: value is not set',
+}
+
+Test { [[
+data Dd with
+    var int v = 10;
+end
+
+code/await Ff (void) -> (var&? Dd d) -> FOREVER do
+    var Dd d_ = val Dd(_);
+    d = &d_;
+    await FOREVER;
+end
+
+pool[] Ff fs;
+spawn Ff() in fs;
+
+var int ret = 0;
+
+watching 10s do
+    every 1s do
+        var&? Dd d;
+        loop (d) in fs do
+            ret = ret + d.v;
+        end
+    end
+end
+
+escape ret;
+]],
+    wrn = true,
+    names = 'line 20 : invalid operand to `.´ : unexpected option alias',
+}
+
+Test { [[
+data Dd with
+    var int v = 10;
+end
+
+code/await Ff (void) -> (var&? Dd d) -> FOREVER do
+    var Dd d_ = val Dd(_);
+    d = &d_;
+    await FOREVER;
+end
+
+pool[] Ff fs;
+spawn Ff() in fs;
+
+var int ret = 0;
+
+watching 10s do
+    every 1s do
+        var&? Dd d;
+        loop (d) in fs do
+            ret = ret + d!.v;
+        end
+    end
+end
+
+escape ret;
+]],
+    wrn = true,
+    run = {['~>10s']=90},
 }
 
 Test { [[

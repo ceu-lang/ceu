@@ -214,6 +214,11 @@ DBG'TODO: type annotation'
                 'invalid operand to `.´ : expected plain type : got "'..
                 TYPES.tostring(e.info.tp)..'"')
 
+assert(e.info.dcl)
+            local alias = unpack(e.info.dcl)
+            ASR(alias~='&?', me,
+                'invalid operand to `.´ : unexpected option alias')
+
             local ID_abs = unpack(e.info.tp)
             if ID_abs and ID_abs.dcl.tag=='Data' then
                 -- data.member

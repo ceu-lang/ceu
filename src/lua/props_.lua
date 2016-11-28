@@ -41,7 +41,7 @@ PROPS_.F = {
                     -- ok
                 else
                     local paror = AST.par(me,'Par_Or')
-                    ASR(paror and paror.__props_ok, me,
+                    ASR(paror and paror.__props_ok or me.__props_ok, me,
                         'invalid `'..AST.tag2id[me.tag]..
                         '´ : unexpected enclosing `'..AST.tag2id[par.tag]..'´')
                 end
