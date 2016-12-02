@@ -329,8 +329,8 @@ timer expires.
 
 `WCLOCKK` specifies a constant time expressed as a sequence of value/unit
 pairs.
-`WCLOCKE` specifies an expression in parenthesis followed by a single unit of
-time.
+`WCLOCKE` specifies an [integer](#TODO) expression in parenthesis followed by a
+single unit of time.
 
 The `await` evaluates to a value of type `s32` and is the
 *residual delta time (`dt`)* measured in microseconds.
@@ -437,6 +437,10 @@ async do
     emit 1s;    // broadcasts "1s" to the application itself
 end
 ```
+
+### Lock
+
+`TODO`
 
 -------------------------------------------------------------------------------
 
@@ -1051,6 +1055,12 @@ with
     end
 end
 ```
+
+`TODO: isr`
+
+### Asynchronous Interrupt Service Routine
+
+`TODO`
 
 -------------------------------------------------------------------------------
 

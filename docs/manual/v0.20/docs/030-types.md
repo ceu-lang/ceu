@@ -39,6 +39,10 @@ f32      f64       // 32-bit and 64-bit floats
 ssize    usize     // signed and unsigned size types
 ```
 
+The types that follow are considered an *integer type*:
+`byte`, `int`, `uint`, `s8`, `u8`, `s16`, `u16`,
+`s32`, `u32`, `s64`, `u64`, `ssize`, `usize`.
+
 See also the [literals](#TODO) for these types.
 
 Native Types

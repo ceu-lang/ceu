@@ -57,6 +57,10 @@ Stmt ::= nothing
       //
       | emit Name [`(´ [LIST(Exp)] `)´]
 
+      | lock Name do
+            Block
+        end
+
   /* Conditional */
 
       | if Exp then
