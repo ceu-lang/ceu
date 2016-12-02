@@ -494,6 +494,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
         local old = DCLS.get(AST.par(me,'Block'), id)
         if old then
+            ASR(me.is_impl, me, 'not implemented : prototype for non-base dynamic code')
             return  -- not first appearence
         end
 
@@ -538,11 +539,11 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
         if (not me.is_dyn_base) and mods1.dynamic and me.is_impl then
             local ins1 = AST.asr(body1,'Block', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
-            me.id  = id..ins1.ids_dyn
+            me.id = id..ins1.ids_dyn
             me.dyn_base = DCLS.asr(me,blk,id)
             me.dyn_base.dyn_last = me
         else
-            me.id  = id
+            me.id = id
         end
 
         local old = DCLS.get(blk, me.id)
@@ -562,7 +563,6 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             end
         end
 
-        local old = DCLS.get(blk, me.id)
         if old then
             local _,mods2,_,body2 = unpack(old)
             if me.is_impl then

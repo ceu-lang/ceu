@@ -9,26 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
-Test { [[
- data IData;                                                                     
- data IData.Test1 with                                                           
-   var int d;                                                                    
- end                                                                             
- code/tight/dynamic Ff (dynamic var& IData mydata) -> int do                                                                              
-   escape 1;
- end                                                                             
- code/tight/dynamic Ff (dynamic var& IData.Test1 mydata) -> int;
- code/tight/dynamic                                                              
- Ff (dynamic var& IData.Test1 mydata) -> int                                  
- do                                                                              
-   escape 2;
- end                                                                             
- var IData.Test1 t1 = val IData.Test1 (0);                                       
- escape call/dynamic Ff (&t1);                                                        
-]],
-    wrn = true,
-    run = 2,
-}
 do return end
 Test { [[
 do/_
@@ -271,7 +251,7 @@ escape ((d is Dd.Ee) as int) + d.x.v;
     run = 21,
 }
 
---do return end -- OK
+do return end -- OK
 --]=====]
 
 ----------------------------------------------------------------------------
@@ -38909,6 +38889,26 @@ end
     _opts = { ceu_features_lua='true' },
     wrn = true,
     run = 1,
+}
+
+Test { [[
+data IData;                                                                     
+data IData.Test1 with                                                           
+  var int d;                                                                    
+end                                                                             
+code/tight/dynamic Ff (dynamic var& IData mydata) -> int do
+  escape 1;
+end                                                                             
+code/tight/dynamic Ff (dynamic var& IData.Test1 mydata) -> int;
+code/tight/dynamic Ff (dynamic var& IData.Test1 mydata) -> int do
+  escape 2;
+end                                                                             
+var IData.Test1 t1 = val IData.Test1 (0);                                       
+escape call/dynamic Ff (&t1);                                                        
+]],
+    dcls = 'line 8 : not implemented : prototype for non-base dynamic code',
+    wrn = true,
+    run = 2,
 }
 --<< CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
 
