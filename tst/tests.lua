@@ -38422,6 +38422,7 @@ call/dynamic Play_New(&d);
 
 escape 1;
 ]],
+    dcls = 'line 7 : not implemented : prototype for non-base dynamic code',
     wrn = true,
     run = 1,
 }
