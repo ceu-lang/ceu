@@ -49,8 +49,8 @@ F = {
     ROOT__POS = function (me)
         me.mems.mem = [[
 typedef struct tceu_code_mem_ROOT {
-    tceu_code_mem mem;
-    tceu_trl      trails[]]..me.trails_n..[[];
+    tceu_code_mem _mem;
+    tceu_trl      _trails[]]..me.trails_n..[[];
     byte          _params[0];
     ]]..me.mems.mem..[[
 } tceu_code_mem_ROOT;
@@ -79,8 +79,8 @@ typedef struct tceu_code_mem_ROOT {
 
             me.mems.mem = [[
 typedef struct tceu_code_mem_]]..me.id_..[[ {
-    tceu_code_mem mem;
-    tceu_trl      trails[]]..me.trails_n..[[];
+    tceu_code_mem _mem;
+    tceu_trl      _trails[]]..me.trails_n..[[];
     byte          _params[0];
     ]]..me.mems.mem..[[
 } tceu_code_mem_]]..me.id_..[[;
@@ -288,7 +288,7 @@ CEU_CODE_]]..me.id_..[[ (tceu_stk* stk, tceu_ntrl trlK,
 {
     tceu_code_mem_]]..me.id_..[[ mem;
 #ifdef CEU_FEATURES_LUA
-    mem.mem.lua = lua;
+    mem._mem.lua = lua;
 #endif
 ]]
             if mods.dynamic then
@@ -740,7 +740,7 @@ for i, code in ipairs(MEMS.codes) do
     if me and me.dyn_base and me.dyn_base.dyn_last==me then
         MEMS.codes.mems = MEMS.codes.mems..[[
 typedef union {
-    tceu_code_mem mem;
+    tceu_code_mem _mem;
 
     /* only to compare params offsets */
     struct {

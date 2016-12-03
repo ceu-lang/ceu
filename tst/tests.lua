@@ -9,6 +9,7 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+--]=====]
 Test { [[
 data Xx;
 data Xx.Yy;
@@ -21,18 +22,7 @@ escape 1;
     run = 'error: missing /dynamic',
 }
 
-Test { [[
-code/await Ff (void) -> void do
-    var int trails=0;
-end
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -2627,7 +2617,7 @@ Test { [[
 native _CEU_APP;
 spawn do
 end
-escape _CEU_APP.root.mem.trails_n;
+escape _CEU_APP.root.__mem.trails_n;
 ]],
     run = 2,
 }
@@ -2637,7 +2627,7 @@ do finalize with
 end
 spawn do
 end
-escape _CEU_APP.root.mem.trails_n;
+escape _CEU_APP.root.__mem.trails_n;
 ]],
     run = 2,
 }
@@ -2648,7 +2638,7 @@ do finalize with
 end
 spawn do
 end
-escape _CEU_APP.root.mem.trails_n;
+escape _CEU_APP.root.__mem.trails_n;
 ]],
     run = 3,
 }
@@ -29207,7 +29197,7 @@ native _CEU_APP;
 var int n = 10;
 vector[n] byte us = [0,1,2,3,4,5,6,7,8,9];
 us[n-1] = 1;
-escape _CEU_APP.root.mem.trails_n;
+escape _CEU_APP.root.__mem.trails_n;
 ]],
     run = 2,
 }
@@ -29216,7 +29206,7 @@ native _CEU_APP;
 var int n = 10;
 vector[10] byte us = [0,1,2,3,4,5,6,7,8,9];
 us[n-1] = 1;
-escape _CEU_APP.root.mem.trails_n;
+escape _CEU_APP.root.__mem.trails_n;
 ]],
     run = 1,
 }
@@ -34424,6 +34414,17 @@ end
 spawn Ff();
 escape 1;
 ]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> void do
+    var int trails=0;
+    var int mem=0;
+end
+escape 1;
+]],
+    wrn = true,
     run = 1,
 }
 
@@ -43621,7 +43622,7 @@ data Vv with
     vector[] int xxx;
 end
 var Vv yyy = val Vv(_);
-escape _CEU_APP.root.mem.trails_n;
+escape _CEU_APP.root.__mem.trails_n;
 ]],
     run = 2,
 }
@@ -43632,7 +43633,7 @@ data Vv with
     vector[] int yyy;
 end
 var Vv zzz = val Vv(_,_);
-escape _CEU_APP.root.mem.trails_n;
+escape _CEU_APP.root.__mem.trails_n;
 ]],
     run = 3,
 }
@@ -43646,7 +43647,7 @@ par/and do
 with
     var Vv zzz = val Vv(_,_);
 end
-escape _CEU_APP.root.mem.trails_n;
+escape _CEU_APP.root.__mem.trails_n;
 ]],
     run = 4,
 }
@@ -46941,7 +46942,7 @@ Test { [[
 native _CEU_APP;
 spawn async/isr [1] do
 end
-escape _CEU_APP.root.mem.trails_n;
+escape _CEU_APP.root.__mem.trails_n;
 ]],
     _opts = { ceu_features_isr='true' },
     run = 2,
@@ -46952,7 +46953,7 @@ spawn async/isr [1] do
 end
 spawn do
 end
-escape _CEU_APP.root.mem.trails_n;
+escape _CEU_APP.root.__mem.trails_n;
 ]],
     _opts = { ceu_features_isr='true' },
     run = 3,

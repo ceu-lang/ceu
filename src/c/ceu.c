@@ -101,7 +101,7 @@ typedef struct tceu_code_mem {
     lua_State* lua;
 #endif
     tceu_ntrl  trails_n;
-    tceu_trl   trails[0];
+    tceu_trl   _trails[0];
 } tceu_code_mem;
 
 typedef enum tceu_code_mem_dyn_state {
@@ -480,7 +480,7 @@ xxx += 4;
         trlF = tmp;
     }
 
-    for (trlK=trl0, trl=&range.mem->trails[trlK]; ;)
+    for (trlK=trl0, trl=&range.mem->_trails[trlK]; ;)
     {
 #ifdef CEU_TESTS
         _ceu_tests_trails_visited_++;
@@ -691,22 +691,22 @@ CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params)
 {
     tceu_evt_occ occ = { {CEU_INPUT__NONE,{NULL}}, CEU_APP.seq, evt_params,
                          {(tceu_code_mem*)&CEU_APP.root,
-                          0, (tceu_ntrl)(CEU_APP.root.mem.trails_n-1)}
+                          0, (tceu_ntrl)(CEU_APP.root._mem.trails_n-1)}
                        };
     tceu_stk stk = { 1, NULL,
                      { (tceu_code_mem*)&CEU_APP.root,
-                       0, (tceu_ntrl)(CEU_APP.root.mem.trails_n-1) } };
+                       0, (tceu_ntrl)(CEU_APP.root._mem.trails_n-1) } };
     ceu_bcast(&occ, &stk);
 }
 #endif
 
     tceu_evt_occ occ = { {evt_id,{NULL}}, CEU_APP.seq+1, evt_params,
                          {(tceu_code_mem*)&CEU_APP.root,
-                          0, (tceu_ntrl)(CEU_APP.root.mem.trails_n-1)}
+                          0, (tceu_ntrl)(CEU_APP.root._mem.trails_n-1)}
                        };
     tceu_stk stk = { 1, NULL,
                      { (tceu_code_mem*)&CEU_APP.root,
-                       0, (tceu_ntrl)(CEU_APP.root.mem.trails_n-1) } };
+                       0, (tceu_ntrl)(CEU_APP.root._mem.trails_n-1) } };
     ceu_bcast(&occ, &stk);
 }
 
@@ -734,7 +734,7 @@ CEU_API void ceu_start (void) {
 
     tceu_stk stk = { 1, NULL,
                      { (tceu_code_mem*)&CEU_APP.root,
-                       0, (tceu_ntrl)(CEU_APP.root.mem.trails_n-1) } };
+                       0, (tceu_ntrl)(CEU_APP.root._mem.trails_n-1) } };
     ceu_lbl(NULL, &stk, (tceu_code_mem*)&CEU_APP.root, 0, CEU_LABEL_ROOT);
 }
 
