@@ -51,6 +51,7 @@ F = {
 typedef struct tceu_code_mem_ROOT {
     tceu_code_mem mem;
     tceu_trl      trails[]]..me.trails_n..[[];
+    byte          _params[0];
     ]]..me.mems.mem..[[
 } tceu_code_mem_ROOT;
 ]]..'\n'
@@ -60,14 +61,13 @@ typedef struct tceu_code_mem_ROOT {
     ---------------------------------------------------------------------------
 
     Code__PRE = function (me)
-        me.mems = { me=me, mem='', watch='' }
+        me.mems = { me=me, mem='' }
     end,
     Code__POS = function (me)
         local _,mods,id = unpack(me)
 
         if me.is_dyn_base then
             me.dyns = {}
-            me.mems.mem = ''
         else
             if not me.is_impl then
                 return
@@ -81,11 +81,11 @@ typedef struct tceu_code_mem_ROOT {
 typedef struct tceu_code_mem_]]..me.id_..[[ {
     tceu_code_mem mem;
     tceu_trl      trails[]]..me.trails_n..[[];
+    byte          _params[0];
     ]]..me.mems.mem..[[
 } tceu_code_mem_]]..me.id_..[[;
 ]]
         end
-
         MEMS.codes[#MEMS.codes+1] = me.mems
     end,
 
@@ -93,17 +93,6 @@ typedef struct tceu_code_mem_]]..me.id_..[[ {
         local _, mods, _, body = unpack(me)
 
         me.mems.wrapper = ''
-
-        -- CEU_CODE_WATCH_xxx
-        if me.mems.watch ~= '' then
-            me.mems.wrapper = me.mems.wrapper .. [[
-static void CEU_CODE_WATCH_]]..me.id_..[[ (tceu_code_mem* _ceu_mem,
-                                           tceu_code_args_]]..me.id_..[[* args)
-{
-    ]]..me.mems.watch..[[
-}
-]]
-        end
 
         if (not me.is_dyn_base) and ((not me.is_impl) or mods.dynamic) then
             me.mems.args = ''
@@ -202,20 +191,87 @@ tceu_ndata _data_]]..i..[[;     /* force multimethod arg data id */
             end
             assert(#multis > 0)
 
-            local dims, constr = MULTIS.tostring(me, multis);
-            multis.code = [[
-static tceu_ndata multis]]..dims..[[ = {
-]] .. constr .. [[
+            local dims, lbls, params = MULTIS.tostring(me, multis);
+
+            -- LBL
+            do
+                multis.lbl = [[
+static tceu_ndata multis_lbl]]..dims..[[ = {
+]] .. lbls .. [[
 };
-tceu_nlbl lbl = multis
+tceu_nlbl lbl = multis_lbl
 ]]
-            for _, t in ipairs(multis) do
-                multis.code = multis.code..'[ ps._data_'..t.i..' ]'
+                for _, t in ipairs(multis) do
+                    multis.lbl = multis.lbl..'[ ps._data_'..t.i..' ]'
+                end
+                multis.lbl = multis.lbl..';\n'
             end
-            multis.code = multis.code..';\n'
+
+            -- WATCH
+            do
+                multis.params = [[
+static tceu_ndata multis_params]]..dims..[[ = {
+]] .. params .. [[
+};
+usize params = multis_params
+]]
+                for _, t in ipairs(multis) do
+                    multis.params = multis.params..'[ args->_data_'..t.i..' ]'
+                end
+                multis.params = multis.params..';\n'
+            end
         end
 
         me.mems.args = me.mems.args..'} tceu_code_args_'..me.id_..';\n'
+
+        -- CEU_CODE_WATCH_xxx
+        local mid = AST.asr(body,'', 1,'Stmts', 2,'Code_Pars')
+        if #mid>0 and mods.await then
+            me.mems.wrapper = me.mems.wrapper .. [[
+static void CEU_CODE_WATCH_]]..me.id_..[[ (tceu_code_mem* _ceu_mem,
+                                           tceu_code_args_]]..me.id_..[[* args)
+{
+]]
+            if mods.dynamic then
+                me.mems.wrapper = me.mems.wrapper .. multis.params
+            else
+                me.mems.wrapper = me.mems.wrapper .. [[
+usize params = offsetof(tceu_code_mem_]]..me.id_..[[,_params);
+]]
+            end
+            local params = AST.asr(body,'', 1,'Stmts', 1,'Code_Pars')
+            for i, var in ipairs(mid) do
+                local idx = #params + i
+                local alias = unpack(var)
+                local v = [[
+    *((typeof(args->_]]..idx..[[))(((byte*)_ceu_mem) + params +
+                                (offsetof(tceu_code_mem_]]..me.id_..','..var.id_..[[) -
+                                 offsetof(tceu_code_mem_]]..me.id_..[[,_params))))
+]]
+                if alias == '&' then
+                    me.mems.wrapper = me.mems.wrapper .. [[
+    if (args->_]]..idx..[[ != NULL) {
+        *(args->_]]..idx..[[) = ]]..v..[[;
+    }
+]]
+                else
+                    assert(alias == '&?')
+                    me.mems.wrapper = me.mems.wrapper .. [[
+    if (args->_]]..idx..[[ != NULL) {
+        tceu_trl* trl = (tceu_trl*) args->_]]..idx..[[->range.mem;
+        *(args->_]]..idx..[[) = ]]..v..[[;
+
+        /* HACK_4 */
+        trl->evt.id    = CEU_INPUT__CLEAR;
+        trl->clr_range = args->_]]..idx..[[->range;
+    }
+]]
+                end
+            end
+            me.mems.wrapper = me.mems.wrapper .. [[
+}
+]]
+        end
 
         -- CEU_CODE_xxx
 
@@ -236,7 +292,7 @@ CEU_CODE_]]..me.id_..[[ (tceu_stk* stk, tceu_ntrl trlK,
 #endif
 ]]
             if mods.dynamic then
-                me.mems.wrapper = me.mems.wrapper .. multis.code
+                me.mems.wrapper = me.mems.wrapper .. multis.lbl
             else
                 me.mems.wrapper = me.mems.wrapper .. [[
     tceu_nlbl lbl = ]]..me.lbl_in.id..[[;
@@ -249,7 +305,7 @@ CEU_CODE_]]..me.id_..[[ (tceu_stk* stk, tceu_ntrl trlK,
                 me.mems.wrapper = me.mems.wrapper..[[
     return ps._ret;
 ]]
-        end
+            end
             me.mems.wrapper = me.mems.wrapper..[[
 }
 ]]
@@ -261,7 +317,7 @@ static void CEU_CODE_]]..me.id_..[[ (tceu_stk* stk, tceu_ntrl trlK,
 {
 ]]
             if mods.dynamic then
-                me.mems.wrapper = me.mems.wrapper .. multis.code
+                me.mems.wrapper = me.mems.wrapper .. multis.lbl
             else
                 me.mems.wrapper = me.mems.wrapper .. [[
     tceu_nlbl lbl = ]]..me.lbl_in.id..[[;
@@ -274,7 +330,8 @@ static void CEU_CODE_]]..me.id_..[[ (tceu_stk* stk, tceu_ntrl trlK,
         return; /* skips WATCH below */
     }
 ]]
-            if me.mems.watch ~= '' then
+            if #mid>0 and mods.await then
+            --if me.mems.watch ~= '' then
                 me.mems.wrapper = me.mems.wrapper .. [[
     CEU_CODE_WATCH_]]..me.id_..[[(mem, &ps);
 ]]
@@ -282,37 +339,6 @@ static void CEU_CODE_]]..me.id_..[[ (tceu_stk* stk, tceu_ntrl trlK,
             me.mems.wrapper = me.mems.wrapper .. [[
 }
 ]]
-        end
-    end,
-
-    Set_Alias = function (me)
-        local fr, to = unpack(me)
-
-        local idx = to.info.dcl.is_mid_idx
-        if idx then
-            local Code = AST.par(me,'Code')
-            if Code.dyn_base then
-                Code = Code.dyn_base
-            end
-            if to.info.dcl[1] == '&' then
-                Code.mems.watch = Code.mems.watch .. [[
-if (args->_]]..idx..[[ != NULL) {
-    *(args->_]]..idx..[[) = ]]..V(to, {is_bind=true})..[[;
-}
-]]
-            else
-                assert(to.info.dcl[1] == '&?')
-                Code.mems.watch = Code.mems.watch .. [[
-if (args->_]]..idx..[[ != NULL) {
-    tceu_trl* trl = (tceu_trl*) args->_]]..idx..[[->range.mem;
-    *(args->_]]..idx..[[) = ]]..V(to, {is_bind=true})..[[;
-
-    /* HACK_4 */
-    trl->evt.id    = CEU_INPUT__CLEAR;
-    trl->clr_range = args->_]]..idx..[[->range;
-}
-]]
-            end
         end
     end,
 
@@ -700,7 +726,10 @@ for i, code in ipairs(MEMS.codes) do
     local me = code.me
     local mods = me and unpack(me)
 
-    MEMS.codes.mems = MEMS.codes.mems..code.mem
+    if not (me and me.is_dyn_base) then
+        MEMS.codes.mems = MEMS.codes.mems..code.mem
+    end
+
     if i < #MEMS.codes then
         MEMS.codes.args = MEMS.codes.args..code.args
         if code.wrapper then
@@ -708,18 +737,24 @@ for i, code in ipairs(MEMS.codes) do
         end
     end
 
-    if code.me and code.me.dyn_base and code.me.dyn_base.dyn_last==code.me then
+    if me and me.dyn_base and me.dyn_base.dyn_last==me then
         MEMS.codes.mems = MEMS.codes.mems..[[
 typedef union {
     tceu_code_mem mem;
+
+    /* only to compare params offsets */
+    struct {
+        byte _params[0];
+        ]]..me.dyn_base.mems.mem..[[
+    };
 ]]
-        for i, id2 in ipairs(code.me.dyn_base.dyns) do
+        for i, id2 in ipairs(me.dyn_base.dyns) do
             MEMS.codes.mems = MEMS.codes.mems..[[
     struct tceu_code_mem_]]..id2..' _'..i..[[;
 ]]
         end
         MEMS.codes.mems = MEMS.codes.mems..[[
-} tceu_code_mem_]]..code.me.dyn_base.id_..[[;
+} tceu_code_mem_]]..me.dyn_base.id_..[[;
 ]]
     end
 end

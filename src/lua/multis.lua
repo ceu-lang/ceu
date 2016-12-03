@@ -128,18 +128,18 @@ function dump2 (Code, ret, spc)
 end
 ]]
 
-function dump3 (Code, ret, spc)
+function dump3 (Code, f, ret, spc)
     spc = spc or ''
     if #ret == 0 then
-        return spc..'CEU_LABEL_Code_'..get(Code,ret,true).id_..',\n'
+        return spc..f(get(Code,ret,true).id_)..',\n'
     else
         local str = ''
         for i, t in ipairs(ret) do
             local spc = spc..' '
             if #t > 0 then
-                str = str..spc..'{\n'..dump3(Code,t,spc..' ')..spc..'},\n'
+                str = str..spc..'{\n'..dump3(Code,f,t,spc..' ')..spc..'},\n'
             else
-                str = str..dump3(Code,t,spc)
+                str = str..dump3(Code,f,t,spc)
             end
         end
         return str
@@ -154,8 +154,15 @@ function dims (ret)
     end
 end
 
+local f1 = function (id)
+    return 'CEU_LABEL_Code_'..id
+end
+local f2 = function (id)
+    return 'offsetof(tceu_code_mem_'..id..', _params)'
+end
+
 function MULTIS.tostring (Code, T)
     local ret = {}
     fff(T, 1, ret)
-    return dims(ret), dump3(Code, ret)
+    return dims(ret), dump3(Code,f1,ret), dump3(Code,f2,ret)
 end
