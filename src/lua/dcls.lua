@@ -470,6 +470,8 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         me.ids_dyn = ''
         for i, dcl in ipairs(me) do
             if dcl.mods.dynamic then
+                ASR(mods.dynamic, me,
+                    'invalid `dynamic´ modifier : expected enclosing `code/dynamic´')
                 local is_alias,Type = unpack(dcl)
                 dcl.id_dyn = '_'..i..'_'..dcl.tag..
                              '_'..(is_alias and 'y' or 'n')..

@@ -9,20 +9,8 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
---]=====]
-Test { [[
-data Xx;
-data Xx.Yy;
-code/await Gg (dynamic var Xx.Yy x) -> (void) -> FOREVER do
-    await FOREVER;
-end
-escape 1;
-]],
-    wrn = true,
-    run = 'error: missing /dynamic',
-}
-
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -39103,6 +39091,18 @@ escape ret+1;
 ]],
     wrn = true,
     run = 23,
+}
+
+Test { [[
+data Xx;
+data Xx.Yy;
+code/await Gg (dynamic var Xx.Yy x) -> (void) -> FOREVER do
+    await FOREVER;
+end
+escape 1;
+]],
+    dcls = 'line 3 : invalid `dynamic´ modifier : expected enclosing `code/dynamic´',
+    run = 1,
 }
 
 --<< CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
