@@ -803,6 +803,7 @@ ceu_callback_assert_msg(]]..CUR('__max_'..me.n)..' < '..V(max)..[[, "`loop´ ove
         local async = AST.par(me, 'Async')
         if async then
             LINE(me, [[
+CEU_APP.async_pending = 1;
 ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
 ]])
             HALT(me, {
@@ -1057,8 +1058,8 @@ __ceu_ret_]]..code.n..' = '..V(fr)..[[;
                 end
             else
                 LINE(me, [[
-{   int __ceu_ret = ]]..V(fr)..[[;
-    ceu_callback_num_ptr(CEU_CALLBACK_TERMINATING, __ceu_ret, NULL);
+{   CEU_APP.end_ok=1; CEU_APP.end_val=]]..V(fr)..[[;
+    ceu_callback_void_void(CEU_CALLBACK_TERMINATING);
 }
 ]])
             end
@@ -1360,11 +1361,12 @@ ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..'.id, '..ps..[[).value.
         else
             if AST.par(me, 'Async') then
                 LINE(me, [[
+CEU_APP.async_pending = 1;
 ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
 _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__ASYNC;
 _ceu_mem->_trails[]]..me.trails[1]..[[].seq    = CEU_APP.seq+1;
 _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
-ceu_input(]]..V(ID_ext)..'.id, '..ps..[[);
+ceu_input_one(]]..V(ID_ext)..'.id, '..ps..[[);
 ]])
             else
                 local isr = assert(AST.par(me,'Async_Isr'))
@@ -1478,11 +1480,12 @@ _CEU_HALT_]]..me.n..[[_:
         local e = unpack(me)
         if AST.par(me,'Async') then
             LINE(me, [[
+CEU_APP.async_pending = 1;
 ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
 {
     s32 __ceu_dt = ]]..V(e)..[[;
     do {
-        ceu_input(CEU_INPUT__WCLOCK, &__ceu_dt);
+        ceu_input_one(CEU_INPUT__WCLOCK, &__ceu_dt);
         if (!_ceu_stk->is_alive) {
             return;
         }
@@ -1515,6 +1518,7 @@ ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
     Async = function (me)
         local _,_,blk = unpack(me)
         LINE(me, [[
+CEU_APP.async_pending = 1;
 ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
 ]])
         HALT(me, {

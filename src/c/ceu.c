@@ -40,8 +40,9 @@ typedef === TCEU_NLBL === tceu_nlbl;
 #define CEU_API
 CEU_API void ceu_start (void);
 CEU_API void ceu_stop  (void);
-CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params);
+CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params, s32 dt);
 CEU_API int  ceu_loop  (void);
+void ceu_input_one (tceu_nevt evt_id, void* evt_params);
 
 struct tceu_stk;
 struct tceu_code_mem;
@@ -243,8 +244,14 @@ enum {
 };
 
 typedef struct tceu_app {
+    bool end_ok;
+    int  end_val;
+
     tceu_nseq seq;
     tceu_nseq seq_base;
+
+    /* ASYNC */
+    bool async_pending;
 
     /* WCLOCK */
     s32 wclk_late;
@@ -399,7 +406,7 @@ int ceu_threads_gc (int force_join) {
         if (head->has_terminated || head->has_aborted)
         {
             if (!head->has_notified) {
-                ceu_input(CEU_INPUT__THREAD, &head->id);
+                ceu_input_one(CEU_INPUT__THREAD, &head->id);
                 head->has_notified = 1;
             }
 
@@ -669,22 +676,17 @@ fprintf(stderr, "<<< %d [%p] %d->%d\n", occ->evt.id, range.mem, range.trl0, rang
 #endif
 }
 
-CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params)
+void ceu_input_one (tceu_nevt evt_id, void* evt_params)
 {
+    CEU_APP.seq_base = CEU_APP.seq;
+
     if (evt_id == CEU_INPUT__WCLOCK) {
-        CEU_APP.wclk_min_cmp = CEU_APP.wclk_min_set;      /* swap "cmp" to last "set" */
-        CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;    /* new "set" resets to inactive */
+        CEU_APP.wclk_min_cmp = CEU_APP.wclk_min_set;    /* swap "cmp" to last "set" */
+        CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;     /* new "set" resets to inactive */
         if (CEU_APP.wclk_min_cmp <= *((s32*)evt_params)) {
             CEU_APP.wclk_late = *((s32*)evt_params) - CEU_APP.wclk_min_cmp;
         }
-    } else {
-        s32 dt = ceu_callback_void_void(CEU_CALLBACK_WCLOCK_DT).value.num;
-        if (dt != CEU_WCLOCK_INACTIVE) {
-            ceu_input(CEU_INPUT__WCLOCK, &dt);
-        }
     }
-
-    CEU_APP.seq_base = CEU_APP.seq;
 
 /* TODO: remove this extra bcast to reset seqs */
 #if 1
@@ -710,11 +712,31 @@ CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params)
     ceu_bcast(&occ, &stk);
 }
 
+CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params, s32 dt)
+{
+    if (CEU_APP.async_pending) {
+        CEU_APP.async_pending = 0;
+        ceu_input_one(CEU_INPUT__ASYNC, NULL);
+    }
+
+    if (dt != CEU_WCLOCK_INACTIVE) {
+        ceu_input_one(CEU_INPUT__WCLOCK, &dt);
+    }
+
+    if (evt_id != CEU_INPUT__NONE) {
+        ceu_input_one(evt_id, evt_params);
+    }
+}
+
 CEU_API void ceu_start (void) {
     ceu_callback_void_void(CEU_CALLBACK_START);
 
+    CEU_APP.end_ok   = 0;
+
     CEU_APP.seq      = 0;
     CEU_APP.seq_base = 0;
+
+    CEU_APP.async_pending = 0;
 
     CEU_APP.wclk_late = 0;
     CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;
@@ -748,31 +770,11 @@ CEU_API void ceu_stop (void) {
 
 /*****************************************************************************/
 
-static int ceu_cb_terminating     = 0;
-static int ceu_cb_terminating_ret = 0;
-static int ceu_cb_pending_async   = 0;
-
-static tceu_callback_ret ceu_callback_go_all (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
-    tceu_callback_ret ret = { .is_handled=1 };
-    switch (cmd) {
-        case CEU_CALLBACK_TERMINATING:
-            ceu_cb_terminating = 1;
-            ceu_cb_terminating_ret = p1.num;
-            break;
-        case CEU_CALLBACK_ASYNC_PENDING:
-            ceu_cb_pending_async = 1;
-            break;
-        default:
-            ret.is_handled = 0;
-    }
-    return ret;
-}
-
 CEU_API int ceu_loop (void)
 {
     ceu_start();
 
-    while (!ceu_cb_terminating) {
+    while (!CEU_APP.end_ok) {
         ceu_callback_void_void(CEU_CALLBACK_STEP);
 #ifdef CEU_FEATURES_THREAD
         if (CEU_APP.threads_head != NULL) {
@@ -783,10 +785,7 @@ CEU_API int ceu_loop (void)
             ceu_threads_gc(0);
         }
 #endif
-        if (ceu_cb_pending_async) {
-            ceu_cb_pending_async = 0;
-            ceu_input(CEU_INPUT__ASYNC, NULL);
-        }
+        ceu_input(CEU_INPUT__NONE, NULL, CEU_WCLOCK_INACTIVE);
     }
 
     ceu_stop();
@@ -795,5 +794,5 @@ CEU_API int ceu_loop (void)
     printf("_ceu_tests_trails_visited_ = %d\n", _ceu_tests_trails_visited_);
 #endif
 
-    return ceu_cb_terminating_ret;
+    return CEU_APP.end_val;
 }

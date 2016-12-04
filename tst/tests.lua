@@ -446,7 +446,7 @@ Test { [[
 native _V, _f;
 escape _f(_V);
 ]],
-    cc = '2:23: error: ‘V’ undeclared (first use in this function)',
+    cc = '2:41: error: ‘V’ undeclared (first use in this function)',
 }
 
 --<<< NATIVE
@@ -1743,6 +1743,32 @@ Test { [[await 1; escape 0;]],
 Test { [[await -1; escape 0;]],
     parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or name expression or `{´ or `pause´ or `resume´ or `async´ or `async/thread´ or `FOREVER´',
     --env = 'line 1 : event "?" is not declared',
+}
+
+Test { [[
+par/or do
+    await 1s;
+with
+    await async do
+        emit 1s;
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+par do
+    var int v = await 1us;
+    escape v;
+with
+    await async do
+        emit 2us;
+    end
+end
+]],
+    run = 1,
 }
 
 Test { [[var s32 a=await 10s; escape (a==8000000) as int;]],
