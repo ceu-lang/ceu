@@ -232,33 +232,13 @@ if (]]..V(c)..[[) {
         end
     end,
 
-    __var = function (me, base)
+    Var = function (me, base)
         local is_alias, tp = unpack(me)
-        local ID_abs = AST.get(tp,'Type',1,'ID_abs')
-        if me.tag=='Var' and (not is_alias) and ID_abs and
-           TYPES.check(tp,ID_abs[1]) and ID_abs.dcl.tag=='Data'
-        then
-            local blk = AST.asr(ID_abs.dcl,'Data', 3,'Block')
-            for _, sub in ipairs(blk.dcls) do
-                local base = base..me.id_..'.'
-                sub.code = ''
-                CODES.F[sub.tag](sub, base)
-                me.code = me.code..sub.code
-            end
-        else
-            if TYPES.check(tp,'?') and (not is_alias) and (not me.is_param) then
-                LINE(me, [[
+        if TYPES.check(tp,'?') and (not is_alias) then
+            LINE(me, [[
 ]]..V(me, {base=base})..[[.is_set = 0;
 ]])
-            end
         end
-    end,
-
-    Evt = function (me)
-    end,
-
-    Var = function (me, base)
-        --CODES.F.__var(me, base or '')
     end,
 
     Vec_Init = function (me)

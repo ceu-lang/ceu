@@ -35446,6 +35446,27 @@ escape x;
 }
 
 Test { [[
+code/await Ff (void) -> int do
+    await 2s;
+    escape 100;
+end
+
+do
+    var int? err = 1;
+end
+
+do/_
+    var int? err =
+        watching Ff() do
+            await 1s;
+        end;
+    escape (err? as int) + 1;
+end
+]],
+    run = { ['~>2s']=1 },
+}
+
+Test { [[
 native/nohold _SDL_CreateWindow;
 
 native _SDL_Window;
