@@ -12,6 +12,10 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg
 #endif
 
     switch (cmd) {
+        case CEU_CALLBACK_WCLOCK_DT:
+            ret.is_handled = 1;
+            ret.value.num  = CEU_WCLOCK_INACTIVE;
+            break;
         case CEU_CALLBACK_ABORT:
             ret.is_handled = 1;
             abort();

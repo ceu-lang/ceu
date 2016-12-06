@@ -40,7 +40,7 @@ typedef === TCEU_NLBL === tceu_nlbl;
 #define CEU_API
 CEU_API void ceu_start (void);
 CEU_API void ceu_stop  (void);
-CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params, s32 dt);
+CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params);
 CEU_API int  ceu_loop  (void);
 void ceu_input_one (tceu_nevt evt_id, void* evt_params);
 
@@ -406,7 +406,7 @@ int ceu_threads_gc (int force_join) {
         if (head->has_terminated || head->has_aborted)
         {
             if (!head->has_notified) {
-                ceu_input_one(CEU_INPUT__THREAD, &head->id);
+                ceu_input(CEU_INPUT__THREAD, &head->id);
                 head->has_notified = 1;
             }
 
@@ -712,17 +712,12 @@ void ceu_input_one (tceu_nevt evt_id, void* evt_params)
     ceu_bcast(&occ, &stk);
 }
 
-CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params, s32 dt)
+CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params)
 {
-    if (CEU_APP.async_pending) {
-        CEU_APP.async_pending = 0;
-        ceu_input_one(CEU_INPUT__ASYNC, NULL);
-    }
-
+    s32 dt = ceu_callback_void_void(CEU_CALLBACK_WCLOCK_DT).value.num;
     if (dt != CEU_WCLOCK_INACTIVE) {
         ceu_input_one(CEU_INPUT__WCLOCK, &dt);
     }
-
     if (evt_id != CEU_INPUT__NONE) {
         ceu_input_one(evt_id, evt_params);
     }
@@ -785,7 +780,7 @@ CEU_API int ceu_loop (void)
             ceu_threads_gc(0);
         }
 #endif
-        ceu_input(CEU_INPUT__NONE, NULL, CEU_WCLOCK_INACTIVE);
+        ceu_input(CEU_INPUT__ASYNC, NULL);
     }
 
     ceu_stop();
