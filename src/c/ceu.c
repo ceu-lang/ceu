@@ -627,7 +627,9 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                     goto _CEU_AWAKE_YES_;   /* internal event matches "mem" */
                 }
             } else {
-                goto _CEU_AWAKE_YES_;       /* external event matches */
+                if (occ->evt.id != CEU_INPUT__NONE) {
+                    goto _CEU_AWAKE_YES_;       /* external event matches */
+                }
             }
         }
 
