@@ -8,7 +8,7 @@
   
   
   
-  <title>License - Céu v0.20 - Reference Manual</title>
+  <title>Storage Classes - Céu v0.20 - Reference Manual</title>
   
 
   <link rel="shortcut icon" href="../img/favicon.ico">
@@ -24,9 +24,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "License";
-    var mkdocs_page_input_path = "license.md";
-    var mkdocs_page_url = "/license/";
+    var mkdocs_page_name = "Storage Classes";
+    var mkdocs_page_input_path = "storage_classes/index.md";
+    var mkdocs_page_url = "/storage_classes/";
   </script>
   
   <script src="../js/jquery-2.1.1.min.js"></script>
@@ -190,36 +190,43 @@
 
         
             
-    <li class="toctree-l1 ">
-        <a class="" href="../storage_classes/">Storage Classes</a>
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Storage Classes</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#storage-classes">Storage Classes</a></li>
+                
+            
+            </ul>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../storage_classes/lexical_scope/">Lexical Scope</a>
+        <a class="" href="lexical_scope/">Lexical Scope</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../storage_classes/classes/">Classes</a>
+        <a class="" href="classes/">Classes</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../storage_classes/names/">Names</a>
+        <a class="" href="names/">Names</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../storage_classes/references/">References</a>
+        <a class="" href="references/">References</a>
         
     </li>
 
@@ -355,15 +362,8 @@
 <li>
           
             <li>
-    <li class="toctree-l1 current">
-        <a class="current" href="./">License</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#license">License</a></li>
-                
-            
-            </ul>
+    <li class="toctree-l1 ">
+        <a class="" href="../license/">License</a>
         
     </li>
 <li>
@@ -389,8 +389,12 @@
     <li><a href="../introduction/">Docs</a> &raquo;</li>
     
       
+        
+          <li>Storage Classes &raquo;</li>
+        
+      
     
-    <li>License</li>
+    <li>Storage Classes</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -400,28 +404,22 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="license">License</h1>
-<p>Céu is distributed under the MIT license reproduced below:</p>
-<pre><code> Copyright (C) 2012-2016 Francisco Sant'Anna
-
- Permission is hereby granted, free of charge, to any person obtaining a copy of
- this software and associated documentation files (the &quot;Software&quot;), to deal in
- the Software without restriction, including without limitation the rights to
- use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- of the Software, and to permit persons to whom the Software is furnished to do
- so, subject to the following conditions:
-
- The above copyright notice and this permission notice shall be included in all
- copies or substantial portions of the Software.
-
- THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- SOFTWARE.
+                <h1 id="storage-classes">Storage Classes</h1>
+<p>Storage classes represent all entities that are stored in memory at runtime.
+Céu supports <em>variables</em>, <em>vectors</em>, <em>events</em> (external and internal), and
+<em>pools</em> as storage classes.
+An entity <a href="#TODO">declaration</a> consists of a storage class,
+a <a href="#TODO">type</a>, and an <a href="#TODO">identifier</a>.</p>
+<p>Examples:</p>
+<pre><code class="ceu">var       int    v;     // &quot;v&quot; is a variable of type &quot;int&quot;
+vector[9] byte   buf;   // &quot;buf&quot; is a vector with at most 9 values of type &quot;byte&quot;
+input     void&amp;&amp; A;     // &quot;A&quot; is an external event that carries values of type &quot;void&amp;&amp;&quot;
+event     bool   e;     // &quot;e&quot; is an internal event that carries values of type &quot;bool&quot;
+pool[]    Anim   anims; // &quot;anims&quot; is a dynamic &quot;pool&quot; for instances of type &quot;Anim&quot;
 </code></pre>
+
+<p>A declaration binds the identifier with a memory location to hold values of the
+associated type.</p>
               
             </div>
           </div>
@@ -429,8 +427,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
+        <a href="lexical_scope/" class="btn btn-neutral float-right" title="Lexical Scope">Next <span class="icon icon-circle-arrow-right"></span></a>
       
-        <a href="../syntax/" class="btn btn-neutral" title="Syntax"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+        <a href="../types/modifiers/" class="btn btn-neutral" title="Modifiers"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -456,8 +456,10 @@
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../syntax/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../types/modifiers/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
+      
+        <span style="margin-left: 15px"><a href="lexical_scope/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

@@ -1,5 +1,4 @@
-Syntax
-======
+# Syntax
 
 Follows the complete syntax of Céu in a BNF-like syntax:
 

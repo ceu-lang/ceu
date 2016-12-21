@@ -3,15 +3,47 @@ theme:     readthedocs
 #site_dir:  site/v0.20
 
 pages:
-- Home:            index.md
-- Introduction:    010-introduction.md
-- Lexical Rules:   020-lexical_rules.md
-- Types:           030-types.md
-- Storage Classes: 040-storage_classes.md
-- Statements:      050-statements.md
-- Expressions:     060-expressions.md
-- Static Checks:   070-static_checks.md
-- Environment:     080-environment.md
-- Errors:          090-errors.md
-- Syntax:          syntax.md
-- License:         license.md
+    - Introduction:
+        - Introduction:                         'introduction/index.md'
+        - Synchronous Execution Model:          'introduction/synchronous_execution_model.md'
+        - Parallel Compositions and Abortion:   'introduction/parallel_compositions_and_abortion.md'
+        - Bounded Execution:                    'introduction/bounded_execution.md'
+        - Deterministic Execution:              'introduction/deterministic_execution.md'
+        - Internal Reactions:                   'introduction/internal_reactions.md'
+    - Lexical Rules:
+        #- Lexical Rules:    'lexical_rules/index.md'
+        - Keywords:         'lexical_rules/keywords.md'
+        - Identifiers:      'lexical_rules/identifiers.md'
+        - Literals:         'lexical_rules/literals.md'
+        - Comments:         'lexical_rules/comments.md'
+    - Types:
+        - Types:            'types/index.md'
+        - Primitives:       'types/primitives.md'
+        - Natives:          'types/natives.md'
+        - Abstractions:     'types/abstractions.md'
+        - Modifiers:        'types/modifiers.md'
+    - Storage Classes:
+        - Storage Classes:  'storage_classes/index.md'
+        - Lexical Scope:    'storage_classes/lexical_scope.md'
+        - Classes:          'storage_classes/classes.md'
+        - Names:            'storage_classes/names.md'
+        - References:       'storage_classes/references.md'
+    - Statements:
+        - Statements:                       'statements/index.md'
+        - Declatations:                     'statements/declarations.md'
+        - Assignments:                      'statements/assignments.md'
+        - Event Handling:                   'statements/event_handling.md'
+        - Conditional:                      'statements/conditional.md'
+        - Parallel Compositions:            'statements/parallel_compositions.md'
+        - Pausing:                          'statements/pausing.md'
+        - Asynchronous Execution:           'statements/asynchronous_execution.md'
+        - C Integration:                    'statements/c_integration.md'
+        - Lua Integration:                  'statements/lua_integration.md'
+        - Abstraction:                      'statements/abstractions.md'
+        - Synchronous Control Statements:   'statements/synchronous_control_statements.md'
+    - Expressions:     'expressions/index.md'
+    - Static Checks:   'static_checks/index.md'
+    - Environment:     'environment/index.md'
+    - Errors:          'errors/index.md'
+    - Syntax:          'syntax.md'
+    - License:         'license.md'

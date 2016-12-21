@@ -1,5 +1,4 @@
-License
-=======
+# License
 
 Céu is distributed under the MIT license reproduced below:
 

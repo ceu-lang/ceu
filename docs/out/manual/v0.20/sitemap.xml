@@ -2,81 +2,245 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
     
+        
     <url>
-     <loc>None/</loc>
-     <lastmod>2016-12-04</lastmod>
+     <loc>None/introduction/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/introduction/synchronous_execution_model/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/introduction/parallel_compositions_and_abortion/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/introduction/bounded_execution/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/introduction/deterministic_execution/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/introduction/internal_reactions/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    
+
+    
+        
+    <url>
+     <loc>None/lexical_rules/keywords/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/lexical_rules/identifiers/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/lexical_rules/literals/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/lexical_rules/comments/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    
+
+    
+        
+    <url>
+     <loc>None/types/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/types/primitives/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/types/natives/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/types/abstractions/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/types/modifiers/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    
+
+    
+        
+    <url>
+     <loc>None/storage_classes/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/storage_classes/lexical_scope/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/storage_classes/classes/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/storage_classes/names/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/storage_classes/references/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    
+
+    
+        
+    <url>
+     <loc>None/statements/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/statements/declarations/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/statements/assignments/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/statements/event_handling/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/statements/conditional/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/statements/parallel_compositions/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/statements/pausing/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/statements/asynchronous_execution/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/statements/c_integration/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/statements/lua_integration/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/statements/abstractions/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/statements/synchronous_control_statements/</loc>
+     <lastmod>2016-12-21</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    
+
+    
+    <url>
+     <loc>None/expressions/</loc>
+     <lastmod>2016-12-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
 
     
     <url>
-     <loc>None/010-introduction/</loc>
-     <lastmod>2016-12-04</lastmod>
+     <loc>None/static_checks/</loc>
+     <lastmod>2016-12-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
 
     
     <url>
-     <loc>None/020-lexical_rules/</loc>
-     <lastmod>2016-12-04</lastmod>
+     <loc>None/environment/</loc>
+     <lastmod>2016-12-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
 
     
     <url>
-     <loc>None/030-types/</loc>
-     <lastmod>2016-12-04</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-    
-
-    
-    <url>
-     <loc>None/040-storage_classes/</loc>
-     <lastmod>2016-12-04</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-    
-
-    
-    <url>
-     <loc>None/050-statements/</loc>
-     <lastmod>2016-12-04</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-    
-
-    
-    <url>
-     <loc>None/060-expressions/</loc>
-     <lastmod>2016-12-04</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-    
-
-    
-    <url>
-     <loc>None/070-static_checks/</loc>
-     <lastmod>2016-12-04</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-    
-
-    
-    <url>
-     <loc>None/080-environment/</loc>
-     <lastmod>2016-12-04</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-    
-
-    
-    <url>
-     <loc>None/090-errors/</loc>
-     <lastmod>2016-12-04</lastmod>
+     <loc>None/errors/</loc>
+     <lastmod>2016-12-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -84,7 +248,7 @@
     
     <url>
      <loc>None/syntax/</loc>
-     <lastmod>2016-12-04</lastmod>
+     <lastmod>2016-12-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -92,7 +256,7 @@
     
     <url>
      <loc>None/license/</loc>
-     <lastmod>2016-12-04</lastmod>
+     <lastmod>2016-12-21</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
