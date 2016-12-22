@@ -3,13 +3,13 @@ theme:     readthedocs
 #site_dir:  site/v0.20
 
 pages:
-    - Introduction:
-        - Introduction:                         'introduction/index.md'
-        - Synchronous Execution Model:          'introduction/synchronous_execution_model.md'
-        - Parallel Compositions and Abortion:   'introduction/parallel_compositions_and_abortion.md'
-        - Bounded Execution:                    'introduction/bounded_execution.md'
-        - Deterministic Execution:              'introduction/deterministic_execution.md'
-        - Internal Reactions:                   'introduction/internal_reactions.md'
+    - Introduction:                             'index.md'
+    - Overview:
+        - Synchronous Execution Model:          'overview/synchronous_execution_model.md'
+        - Parallel Compositions and Abortion:   'overview/parallel_compositions_and_abortion.md'
+        - Bounded Execution:                    'overview/bounded_execution.md'
+        - Deterministic Execution:              'overview/deterministic_execution.md'
+        - Internal Reactions:                   'overview/internal_reactions.md'
     - Lexical Rules:
         #- Lexical Rules:    'lexical_rules/index.md'
         - Keywords:         'lexical_rules/keywords.md'
