@@ -8,7 +8,7 @@
   
   
   
-  <title>Internal Reactions - Céu v0.20 - Reference Manual</title>
+  <title>Parallel Compositions and Abortion - Céu v0.20 - Reference Manual</title>
   
 
   <link rel="shortcut icon" href="../../img/favicon.ico">
@@ -24,9 +24,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Internal Reactions";
-    var mkdocs_page_input_path = "introduction/internal_reactions.md";
-    var mkdocs_page_url = "/introduction/internal_reactions/";
+    var mkdocs_page_name = "Parallel Compositions and Abortion";
+    var mkdocs_page_input_path = "overview/parallel_compositions_and_abortion.md";
+    var mkdocs_page_url = "/overview/parallel_compositions_and_abortion/";
   </script>
   
   <script src="../../js/jquery-2.1.1.min.js"></script>
@@ -44,7 +44,7 @@
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
       <div class="wy-side-nav-search">
-        <a href="../" class="icon icon-home"> Céu v0.20 - Reference Manual</a>
+        <a href="../.." class="icon icon-home"> Céu v0.20 - Reference Manual</a>
         <div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -56,15 +56,15 @@
         <ul class="current">
           
             <li>
-    <ul class="subnav">
-    <li><span>Introduction</span></li>
-
-        
-            
     <li class="toctree-l1 ">
-        <a class="" href="../">Introduction</a>
+        <a class="" href="../..">Introduction</a>
         
     </li>
+<li>
+          
+            <li>
+    <ul class="subnav">
+    <li><span>Overview</span></li>
 
         
             
@@ -75,8 +75,15 @@
 
         
             
-    <li class="toctree-l1 ">
-        <a class="" href="../parallel_compositions_and_abortion/">Parallel Compositions and Abortion</a>
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Parallel Compositions and Abortion</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#parallel-compositions-and-abortion">Parallel Compositions and Abortion</a></li>
+                
+            
+            </ul>
         
     </li>
 
@@ -96,15 +103,8 @@
 
         
             
-    <li class="toctree-l1 current">
-        <a class="current" href="./">Internal Reactions</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#internal-reactions">Internal Reactions</a></li>
-                
-            
-            </ul>
+    <li class="toctree-l1 ">
+        <a class="" href="../internal_reactions/">Internal Reactions</a>
         
     </li>
 
@@ -378,7 +378,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="../">Céu v0.20 - Reference Manual</a>
+        <a href="../..">Céu v0.20 - Reference Manual</a>
       </nav>
 
       
@@ -386,15 +386,15 @@
         <div class="rst-content">
           <div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="../">Docs</a> &raquo;</li>
+    <li><a href="../..">Docs</a> &raquo;</li>
     
       
         
-          <li>Introduction &raquo;</li>
+          <li>Overview &raquo;</li>
         
       
     
-    <li>Internal Reactions</li>
+    <li>Parallel Compositions and Abortion</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -404,43 +404,26 @@
           <div role="main">
             <div class="section">
               
-                <h2 id="internal-reactions">Internal Reactions</h2>
-<p>Céu supports inter-trail communication through <code>await</code> and <code>emit</code> statements
-for <em>internal events</em>.
-A trail can <code>emit</code> an event which is broadcast to the program to awake trails
-in parallel that are blocked in an <code>await</code> statement for that same event.</p>
-<p>An <code>emit</code> starts a new <em>internal reaction</em> in the program relying on a
-runtime stack:</p>
+                <h2 id="parallel-compositions-and-abortion">Parallel Compositions and Abortion</h2>
+<p>The use of trails in parallel allows programs to wait for multiple events at 
+the same time.
+Céu supports three kinds of parallel compositions that differ in how they
+rejoin and proceed to the statement in sequence:</p>
 <ol>
-<li>An <code>emit</code> suspends the current trail and its continuation is pushed into the
-    stack (i.e., the statement in sequence with the <code>emit</code>).</li>
-<li>All trails awaiting the emitted event awake and execute
-    (see <a href="#synchronous-execution-model"><code>rule 2</code> for external reactions</a>).</li>
-<li>The top of stack is popped and the last emitting trail resumes execution
-    from its continuation.</li>
+<li>a <code>par/and</code> rejoins after all trails in parallel terminate;</li>
+<li>a <code>par/or</code> rejoins after any trail in parallel terminates, aborting all
+   other trails;</li>
+<li>a <code>par</code> never rejoins, even if all trails terminate.</li>
 </ol>
-<p>Note that if an awaking trail emits another internal event (in <code>rule 2</code>), a
-nested internal reaction starts (in <code>rule 1</code>).
-Example:</p>
-<pre><code class="ceu">1:  par/and do
-2:      await e;
-3:      emit f;
-4:  with
-5:      await f;
-6:  with
-7:      ...
-8:      emit e;
-9:  end
-</code></pre>
-
-<p>The <code>emit e</code> in <em>trail-3</em> (line 8) starts an internal reaction that awakes the 
-<code>await e</code> in <em>trail-1</em> (line 2).
-Then, the <code>emit f</code> (line 3) starts another internal reaction that awakes the 
-<code>await f</code> in <em>trail-2</em> (line 5).
-<em>Trail-2</em> terminates and the <code>emit f</code> resumes in <em>trail-1</em>.
-<em>Trail-1</em> terminates and the <code>emit e</code> resumes in <em>trail-3</em>.
-<em>Trail-3</em> terminates.
-Finally, the <code>par/and</code> rejoins and the program terminates.</p>
+<p>The termination of a trail inside a <code>par/or</code> aborts the other trails in 
+parallel which are necessarily idle
+(see <a href="#synchronous-execution-model"><code>rule 2</code> for external reactions</a>).
+Before being aborted, a trail has a last opportunity to execute active 
+<a href="#TODO">finalization statements</a>.</p>
+<p>As mentioned in the introduction and emphasized in the execution model, trails
+in parallel do not execute with real parallelism.
+Therefore, parallel compositions should read as <em>awaiting in parallel</em>, rather
+than <em>executing in parallel</em>.</p>
               
             </div>
           </div>
@@ -448,10 +431,10 @@ Finally, the <code>par/and</code> rejoins and the program terminates.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../../lexical_rules/keywords/" class="btn btn-neutral float-right" title="Keywords">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../bounded_execution/" class="btn btn-neutral float-right" title="Bounded Execution">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../deterministic_execution/" class="btn btn-neutral" title="Deterministic Execution"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../synchronous_execution_model/" class="btn btn-neutral" title="Synchronous Execution Model"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -477,10 +460,10 @@ Finally, the <code>par/and</code> rejoins and the program terminates.</p>
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../deterministic_execution/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../synchronous_execution_model/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../../lexical_rules/keywords/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../bounded_execution/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

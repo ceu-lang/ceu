@@ -8,7 +8,7 @@
   
   
   
-  <title>Parallel Compositions and Abortion - Céu v0.20 - Reference Manual</title>
+  <title>Synchronous Execution Model - Céu v0.20 - Reference Manual</title>
   
 
   <link rel="shortcut icon" href="../../img/favicon.ico">
@@ -24,9 +24,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Parallel Compositions and Abortion";
-    var mkdocs_page_input_path = "introduction/parallel_compositions_and_abortion.md";
-    var mkdocs_page_url = "/introduction/parallel_compositions_and_abortion/";
+    var mkdocs_page_name = "Synchronous Execution Model";
+    var mkdocs_page_input_path = "overview/synchronous_execution_model.md";
+    var mkdocs_page_url = "/overview/synchronous_execution_model/";
   </script>
   
   <script src="../../js/jquery-2.1.1.min.js"></script>
@@ -44,7 +44,7 @@
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
       <div class="wy-side-nav-search">
-        <a href="../" class="icon icon-home"> Céu v0.20 - Reference Manual</a>
+        <a href="../.." class="icon icon-home"> Céu v0.20 - Reference Manual</a>
         <div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -56,34 +56,34 @@
         <ul class="current">
           
             <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../..">Introduction</a>
+        
+    </li>
+<li>
+          
+            <li>
     <ul class="subnav">
-    <li><span>Introduction</span></li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../">Introduction</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../synchronous_execution_model/">Synchronous Execution Model</a>
-        
-    </li>
+    <li><span>Overview</span></li>
 
         
             
     <li class="toctree-l1 current">
-        <a class="current" href="./">Parallel Compositions and Abortion</a>
+        <a class="current" href="./">Synchronous Execution Model</a>
         
             <ul>
             
-                <li class="toctree-l3"><a href="#parallel-compositions-and-abortion">Parallel Compositions and Abortion</a></li>
+                <li class="toctree-l3"><a href="#synchronous-execution-model">Synchronous Execution Model</a></li>
                 
             
             </ul>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../parallel_compositions_and_abortion/">Parallel Compositions and Abortion</a>
         
     </li>
 
@@ -378,7 +378,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="../">Céu v0.20 - Reference Manual</a>
+        <a href="../..">Céu v0.20 - Reference Manual</a>
       </nav>
 
       
@@ -386,15 +386,15 @@
         <div class="rst-content">
           <div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="../">Docs</a> &raquo;</li>
+    <li><a href="../..">Docs</a> &raquo;</li>
     
       
         
-          <li>Introduction &raquo;</li>
+          <li>Overview &raquo;</li>
         
       
     
-    <li>Parallel Compositions and Abortion</li>
+    <li>Synchronous Execution Model</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -404,26 +404,105 @@
           <div role="main">
             <div class="section">
               
-                <h2 id="parallel-compositions-and-abortion">Parallel Compositions and Abortion</h2>
-<p>The use of trails in parallel allows programs to wait for multiple events at 
-the same time.
-Céu supports three kinds of parallel compositions that differ in how they
-rejoin and proceed to the statement in sequence:</p>
+                <h2 id="synchronous-execution-model">Synchronous Execution Model</h2>
+<p>Céu is grounded on a precise definition of <em>logical time</em> (as opposed to
+<em>physical</em> or <em>wall-clock time</em>) as a discrete sequence of external input
+events:
+a sequence because only a single input event is handled at a logical time; 
+discrete because reactions to events are guaranteed to execute in bounded
+physical time (see <a href="#bounded-execution">Bounded Execution</a>).</p>
+<p>The execution model for Céu programs is as follows:</p>
 <ol>
-<li>a <code>par/and</code> rejoins after all trails in parallel terminate;</li>
-<li>a <code>par/or</code> rejoins after any trail in parallel terminates, aborting all
-   other trails;</li>
-<li>a <code>par</code> never rejoins, even if all trails terminate.</li>
+<li>The program initiates the <em>boot reaction</em> from the first line of code in a
+      single trail.</li>
+<li>Active trails<sup>1</sup>, one after another, execute until they await or 
+      terminate.
+      This step is named a <em>reaction chain</em>, and always runs in bounded time.</li>
+<li>The program goes idle and the environment takes control.</li>
+<li>On the occurrence of a new external input event, the environment awakes 
+      <em>all</em> trails awaiting that event.
+      It then goes to step 2.</li>
 </ol>
-<p>The termination of a trail inside a <code>par/or</code> aborts the other trails in 
-parallel which are necessarily idle
-(see <a href="#synchronous-execution-model"><code>rule 2</code> for external reactions</a>).
-Before being aborted, a trail has a last opportunity to execute active 
-<a href="#TODO">finalization statements</a>.</p>
-<p>As mentioned in the introduction and emphasized in the execution model, trails
-in parallel do not execute with real parallelism.
-Therefore, parallel compositions should read as <em>awaiting in parallel</em>, rather
-than <em>executing in parallel</em>.</p>
+<p>(<sup>1</sup>
+<em>Trails can be created with <a href="#parallel-compositions-and-abortion">parallel 
+compositions</a>.</em>)</p>
+<p>The synchronous execution model of Céu is based on the hypothesis that reaction
+chains run <em>infinitely faster</em> in comparison to the rate of external events.
+A reaction chain is the set of computations that execute when an external 
+event occurs.
+Conceptually, a program takes no time on step 2 and is always idle on step 3.
+In practice, if a new external input event occurs while a reaction chain is 
+running (step 2), it is enqueued to run in the next reaction.
+When multiple trails are active at a logical time (i.e. awaking from the same 
+event), Céu schedules them in the order they appear in the program text.
+This policy is somewhat arbitrary, but provides a priority scheme for trails, 
+and also ensures deterministic and reproducible execution for programs.
+At any time, at most one trail is executing.</p>
+<p>The program and diagram below illustrate the behavior of the scheduler of Céu:</p>
+<pre><code class="ceu"> 1:  input void A, B, C;
+ 2:  par/and do           // A, B, and C are external input events
+ 3:      // trail 1
+ 4:      &lt;...&gt;            // &lt;...&gt; represents non-awaiting statements
+ 5:      await A;
+ 6:      &lt;...&gt;
+ 7:  with
+ 8:      // trail 2
+ 9:      &lt;...&gt;
+10:      await B;
+11:      &lt;...&gt;
+12:  with
+13:      // trail 3
+14:      &lt;...&gt;
+15:      await A;
+16:      &lt;...&gt;
+17:      await B;
+18:      par/and do
+19:          // trail 3
+20:          &lt;...&gt;
+21:      with
+22:          // trail 4
+23:          &lt;...&gt;
+24:      end
+25:  end
+</code></pre>
+
+<p><img alt="" src="../images/010-reaction.png" /></p>
+<p>The program starts in the boot reaction and forks into three trails.
+Respecting the lexical order of declaration for the trails, they are scheduled
+as follows (<em>t0</em> in the diagram):</p>
+<ul>
+<li><em>trail-1</em> executes up to the <code>await A</code> (line 5);</li>
+<li><em>trail-2</em>, up to the <code>await B</code> (line 10);</li>
+<li><em>trail-3</em>, up to <code>await A</code> (line 15).</li>
+</ul>
+<p>As no other trails are pending, the reaction chain terminates and the scheduler 
+remains idle until the event <code>A</code> occurs (<em>t1</em> in the diagram):</p>
+<ul>
+<li><em>trail-1</em> awakes, executes and terminates (line 6);</li>
+<li><em>trail-2</em> remains suspended, as it is not awaiting <code>A</code>.</li>
+<li><em>trail-3</em> executes up to <code>await B</code> (line 17).</li>
+</ul>
+<p>During the reaction <em>t1</em>, new instances of events <code>A</code>, <code>B</code>, and <code>C</code> occur and
+are enqueued to be handled in the reactions in sequence.
+As <code>A</code> happened first, it is used in the next reaction.
+However, no trails are awaiting it, so an empty reaction chain takes place 
+(<em>t2</em> in the diagram).
+The next reaction dequeues the event <code>B</code> (<em>t3</em> in the diagram):</p>
+<ul>
+<li><em>trail-2</em> awakes, executes and terminates;</li>
+<li><em>trail-3</em> splits in two and they both terminate immediately.</li>
+</ul>
+<p>A <code>par/and</code> rejoins after all trails terminate.
+With all trails terminated, the program also terminates and does not react to 
+the pending event <code>C</code>.</p>
+<p>Note that each step in the logical time line (<em>t0</em>, <em>t1</em>, etc.) is identified 
+by the unique event it handles.
+Inside a reaction, trails only react to that identifying event (or remain 
+suspended).</p>
+<!--
+A reaction chain may also contain emissions and reactions to internal events, 
+which are presented in Section~\ref{sec.ceu.ints}.
+-->
               
             </div>
           </div>
@@ -431,10 +510,10 @@ than <em>executing in parallel</em>.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../bounded_execution/" class="btn btn-neutral float-right" title="Bounded Execution">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../parallel_compositions_and_abortion/" class="btn btn-neutral float-right" title="Parallel Compositions and Abortion">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../synchronous_execution_model/" class="btn btn-neutral" title="Synchronous Execution Model"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../.." class="btn btn-neutral" title="Introduction"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -460,10 +539,10 @@ than <em>executing in parallel</em>.</p>
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../synchronous_execution_model/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../.." style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../bounded_execution/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../parallel_compositions_and_abortion/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

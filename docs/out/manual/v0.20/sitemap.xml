@@ -2,39 +2,41 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
     
+    <url>
+     <loc>None/</loc>
+     <lastmod>2016-12-22</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    
+
+    
         
     <url>
-     <loc>None/introduction/</loc>
+     <loc>None/overview/synchronous_execution_model/</loc>
      <lastmod>2016-12-22</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>None/introduction/synchronous_execution_model/</loc>
+     <loc>None/overview/parallel_compositions_and_abortion/</loc>
      <lastmod>2016-12-22</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>None/introduction/parallel_compositions_and_abortion/</loc>
+     <loc>None/overview/bounded_execution/</loc>
      <lastmod>2016-12-22</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>None/introduction/bounded_execution/</loc>
+     <loc>None/overview/deterministic_execution/</loc>
      <lastmod>2016-12-22</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
-     <loc>None/introduction/deterministic_execution/</loc>
-     <lastmod>2016-12-22</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-        
-    <url>
-     <loc>None/introduction/internal_reactions/</loc>
+     <loc>None/overview/internal_reactions/</loc>
      <lastmod>2016-12-22</lastmod>
      <changefreq>daily</changefreq>
     </url>
