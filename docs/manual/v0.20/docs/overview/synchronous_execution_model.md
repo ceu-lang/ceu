@@ -10,14 +10,13 @@ The execution model for Céu programs is as follows:
 
 1. The program initiates the *boot reaction* from the first line of code in a
    single trail.
-2. Active trails, one after another, execute until they await or terminate.
+2. Active trails<sup>1</sup>, one after another, execute until they await or
+   terminate.
    This step is named a *reaction chain*, and always runs in bounded time.
-   New trails can be created with [parallel compositions](#TODO).
-3. The program goes idle and the environment takes control.
-4. On the occurrence of a new input event, the environment awakes *all* trails
-   awaiting that event.
+3. The program goes idle.
+4. On the occurrence of a new external input event, *all* trails awaiting that
+   event awake.
    It then goes to step 2.
-
 
 The synchronous execution model of Céu is based on the hypothesis that reaction
 chains run *infinitely faster* in comparison to the rate of input events.
@@ -62,7 +61,7 @@ The program and diagram below illustrate the behavior of the scheduler of Céu:
 25:  end
 ```
 
-![](images/010-reaction.png)
+![](reaction.png)
 
 The program starts in the boot reaction and forks into three trails.
 Respecting the lexical order of declaration for the trails, they are scheduled

@@ -3,27 +3,33 @@
 Céu provides *Structured Synchronous Reactive Programming*, extending classical
 structured programming with two main functionalities:
 
-- An `await` statement to suspend a line of execution until the specified input
-  event occurs.
-- A set of parallel constructs to compose concurrent lines of execution.
+- Event Handling:
+    - An `await` statement to suspend a line of execution and wait for an input
+      event from the environment.
+    - An `emit` statement to signal an output event back to the environment.
+- Concurrency:
+    - A set of parallel constructs to compose concurrent lines of execution.
 
-The lines of execution in Céu, known as *trails*, react together to input
-events continuously and in discrete steps.
+The lines of execution in Céu, known as *trails*, react all together to input
+events one after another, in discrete steps.
 An input event is broadcast to all active trails, which share the event as
 their unique and global time reference.
 
-The example that follows prints "Hello World!" every second and terminates on a
-key press:
+The program that follows blinks a LED every second and terminates on a button
+press:
 
 ```ceu
-input int KEY;
+input  void BUTTON;
+output bool LED;
 par/or do
+    await BUTTON;
+with
     loop do
         await 1s;
-        _printf("Hello World!\n");
+        emit LED(true);
+        await 1s;
+        emit LED(false);
     end
-with
-    await KEY;
 end
 ```
 

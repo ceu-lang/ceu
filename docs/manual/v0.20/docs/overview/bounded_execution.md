@@ -1,7 +1,7 @@
 ## Bounded Execution
 
 Reaction chains must run in bounded time to guarantee that programs are 
-responsive and can handle upcoming input events from the environment.
+responsive and can handle incoming input events.
 For this reason, Céu requires every path inside the body of a `loop` statement
 to contain at least one `await` or `break` statement.
 This prevents *tight loops*, i.e., unbounded loops that do not await.
