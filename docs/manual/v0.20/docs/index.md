@@ -1,25 +1,46 @@
 # Introduction
 
-Céu provides *Structured Synchronous Reactive Programming* which supports
-safe and deterministic concurrency with side effects.
-The lines of execution in Céu, known as *trails*, react together continuously
-and in synchronous steps to external input events from the environment.
-Waiting for an event halts the running trail until that event occurs.
-The environment broadcasts an occurring event to all active trails, which share 
-a single global time reference.
+Céu provides *Structured Synchronous Reactive Programming* extending classical
+structured programming with two main functionalities:
 
-The synchronous concurrency model of Céu diverges from multithreading and also
-from actor-based models (e.g. *pthreads* and *erlang*).
+- An `await` statement to suspend a line of execution until the specified input
+  event occurs.
+- A set of parallel constructs to compose concurrent lines of execution.
+
+The lines of execution in Céu, known as *trails*, react together to input
+events continuously and in discrete steps.
+An input event is broadcast to all active trails, which share the event as
+their unique and global time reference.
+
+The example that follows prints "Hello World!" every second and terminates on a
+key press:
+
+```ceu
+input int KEY;
+par/or do
+    loop do
+        await 1s;
+        _printf("Hello World!\n");
+    end
+with
+    await KEY;
+end
+```
+
+The synchronous concurrency model of Céu greatly diverges from multithreaded
+and actor-based models (e.g. *pthreads* and *erlang*).
 On the one hand, there is no real parallelism at the synchronous kernel of the
 language (i.e., no multi-core execution).
-On the other hand, trails can share variables deterministically without
-synchronization primitives (i.e., no *locks*, *semaphores*, or *queues*).
+On the other hand, accesses to shared variables among trails are deterministic
+and do not require synchronization primitives (i.e., *locks* or
+*queues*).
 
-Céu provides automatic memory management based on static lexical scopes (i.e.,
-no *free* or *delete*) and does not require runtime garbage collection.
+Céu provides static memory management based on lexical scopes and does not
+require a garbage collector.
 
-Céu integrates safely with C, and programs can define and make native calls
-seamlessly while avoiding memory leaks and dangling pointers when dealing with
-external resources.
+Céu integrates safely with C, particularly when manipulating external resources
+(e.g., file handles).
+Programs can make native calls seamlessly while avoiding common pitfalls such
+as memory leaks and dangling pointers.
 
 Céu is [free software](#TODO).
