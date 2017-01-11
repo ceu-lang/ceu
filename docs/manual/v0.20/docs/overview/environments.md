@@ -10,6 +10,6 @@ world:
 
 ![](environment.png)
 
-As examples of possible environments, an embedded systems may provide button
-input and LED output, while a video game engine may provide keyboard input and
+As examples of typical environments, an embedded system may provide button
+input and LED output, and a video game engine may provide keyboard input and
 video output.

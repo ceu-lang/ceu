@@ -1,15 +1,25 @@
 ## Literals
 
+Céu supports literals for *booleans*, *integers*, *floats*, *strings*, and
+*null pointers*.
+
+<!--
+A literal is a primitive and fixed value in source code.
+A literal is a source code representation of a value. 
+-->
+
 ### Booleans
 
-The boolean type has two values, `true` and `false`.
+The boolean type has only two possible values: `true` and `false`.
 
 ### Integers
 
-Integer values can be written in decimal and hexadecimal bases:
+Céu supports decimal and hexadecimal integers:
 
-* Decimals are written *as is*.
-* Hexadecimals are prefixed with <tt>0x</tt>.
+* Decimals: a sequence of digits (i.e., `[0-9]+`).
+* Hexadecimals: a sequence of hexadecimal digits (i.e., `[0-9, a-f, A-F]+`)
+                prefixed by <tt>0x</tt>.
+
 <!--
 * `TODO: "0b---", "0o---"`
 -->
@@ -18,17 +28,13 @@ Examples:
 
 ```ceu
 // both are equal to the decimal 127
-v = 127;
-v = 0x7F;
+v = 127;    // decimal
+v = 0x7F;   // hexadecimal
 ```
 
 ### Floats
 
 `TODO (like C)`
-
-### Null pointer
-
-The `null` literal represents null [pointers](#TODO).
 
 ### Strings
 
@@ -40,3 +46,7 @@ Example:
 ```ceu
 _printf("Hello World!\n");
 ```
+
+### Null pointer
+
+The `null` literal represents [null pointers](#TODO).
