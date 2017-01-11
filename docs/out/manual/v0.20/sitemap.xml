@@ -18,6 +18,12 @@
     </url>
         
     <url>
+     <loc>None/overview/environments/</loc>
+     <lastmod>2017-01-11</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
      <loc>None/overview/synchronous_execution_model/</loc>
      <lastmod>2017-01-11</lastmod>
      <changefreq>daily</changefreq>

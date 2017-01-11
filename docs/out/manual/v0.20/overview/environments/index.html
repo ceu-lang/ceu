@@ -8,7 +8,7 @@
   
   
   
-  <title>Pausing - Céu v0.20 - Reference Manual</title>
+  <title>Environments - Céu v0.20 - Reference Manual</title>
   
 
   <link rel="shortcut icon" href="../../img/favicon.ico">
@@ -24,9 +24,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Pausing";
-    var mkdocs_page_input_path = "statements/pausing.md";
-    var mkdocs_page_url = "/statements/pausing/";
+    var mkdocs_page_name = "Environments";
+    var mkdocs_page_input_path = "overview/environments.md";
+    var mkdocs_page_url = "/overview/environments/";
   </script>
   
   <script src="../../js/jquery-2.1.1.min.js"></script>
@@ -69,49 +69,56 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../overview/">Introduction</a>
+        <a class="" href="../">Introduction</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Environments</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#environments">Environments</a></li>
+                
+            
+            </ul>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../overview/environments/">Environments</a>
+        <a class="" href="../synchronous_execution_model/">Synchronous Execution Model</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../overview/synchronous_execution_model/">Synchronous Execution Model</a>
+        <a class="" href="../parallel_compositions_and_abortion/">Parallel Compositions and Abortion</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../overview/parallel_compositions_and_abortion/">Parallel Compositions and Abortion</a>
+        <a class="" href="../bounded_execution/">Bounded Execution</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../overview/bounded_execution/">Bounded Execution</a>
+        <a class="" href="../deterministic_execution/">Deterministic Execution</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../overview/deterministic_execution/">Deterministic Execution</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../overview/internal_reactions/">Internal Reactions</a>
+        <a class="" href="../internal_reactions/">Internal Reactions</a>
         
     </li>
 
@@ -248,91 +255,84 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../">Statements</a>
+        <a class="" href="../../statements/">Statements</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../declarations/">Declatations</a>
+        <a class="" href="../../statements/declarations/">Declatations</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../assignments/">Assignments</a>
+        <a class="" href="../../statements/assignments/">Assignments</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../event_handling/">Event Handling</a>
+        <a class="" href="../../statements/event_handling/">Event Handling</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../conditional/">Conditional</a>
+        <a class="" href="../../statements/conditional/">Conditional</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../parallel_compositions/">Parallel Compositions</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 current">
-        <a class="current" href="./">Pausing</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#pausing">Pausing</a></li>
-                
-            
-            </ul>
+        <a class="" href="../../statements/parallel_compositions/">Parallel Compositions</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../asynchronous_execution/">Asynchronous Execution</a>
+        <a class="" href="../../statements/pausing/">Pausing</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../c_integration/">C Integration</a>
+        <a class="" href="../../statements/asynchronous_execution/">Asynchronous Execution</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../lua_integration/">Lua Integration</a>
+        <a class="" href="../../statements/c_integration/">C Integration</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../abstractions/">Abstraction</a>
+        <a class="" href="../../statements/lua_integration/">Lua Integration</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../synchronous_control_statements/">Synchronous Control Statements</a>
+        <a class="" href="../../statements/abstractions/">Abstraction</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../statements/synchronous_control_statements/">Synchronous Control Statements</a>
         
     </li>
 
@@ -404,11 +404,11 @@
     
       
         
-          <li>Statements &raquo;</li>
+          <li>Overview &raquo;</li>
         
       
     
-    <li>Pausing</li>
+    <li>Environments</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -418,48 +418,17 @@
           <div role="main">
             <div class="section">
               
-                <h2 id="pausing">Pausing</h2>
-<p>The <code>pause/if</code> statement controls if its body should temporarily stop to react
-to events:</p>
-<pre><code class="ceu">Pause_If ::= pause/if (Name|ID_ext) do
-                 Block
-             end
-
-Pause_Await ::= await (pause|resume)
-</code></pre>
-
-<p>A <code>pause/if</code> determines a pausing event of type <code>bool</code> which, when emitted,
-toggles between pausing (<code>true</code>) and resuming (<code>false</code>) reactions for its body.</p>
-<p>When its body terminates, the whole <code>pause/if</code> terminates and proceeds to the
-statement in sequence.</p>
-<p>In transition points, the body can react to the special <code>pause</code> and <code>resume</code>
-events before the corresponding state applies.</p>
-<p><code>TODO: finalize/pause/resume</code></p>
-<p>Examples:</p>
-<pre><code class="ceu">event bool e;
-pause/if e do       // pauses/resumes the nested body on each &quot;e&quot;
-    every 1s do
-        &lt;...&gt;       // does something every &quot;1s&quot;
-    end
-end
-</code></pre>
-
-<pre><code class="ceu">event bool e;
-pause/if e do               // pauses/resumes the nested body on each &quot;e&quot;
-    &lt;...&gt;
-        loop do
-            await pause;
-            &lt;...&gt;           // does something before pausing
-            await resume;
-            &lt;...&gt;           // does something before resuming
-        end
-    &lt;...&gt;
-end
-</code></pre>
-
-<!--
-*Note: The timeouts for timers remain frozen while paused.*
--->
+                <h2 id="environments">Environments</h2>
+<p>As a reactive language, Céu depends on an external host platform, known as
+<em>environment</em>, which determines the <code>input</code> and <code>output</code> events programs can
+use.</p>
+<p>An environment senses the world and broadcasts <code>input</code> events to programs.
+It also intercepts emits on <code>output</code> events from programs to actuate in the
+world:</p>
+<p><img alt="" src="../environment.png" /></p>
+<p>As examples of possible environments, an embedded systems may provide button
+input and LED output, while a video game engine may provide keyboard input and
+video output.</p>
               
             </div>
           </div>
@@ -467,10 +436,10 @@ end
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../asynchronous_execution/" class="btn btn-neutral float-right" title="Asynchronous Execution">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../synchronous_execution_model/" class="btn btn-neutral float-right" title="Synchronous Execution Model">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../parallel_compositions/" class="btn btn-neutral" title="Parallel Compositions"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../" class="btn btn-neutral" title="Introduction"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -496,10 +465,10 @@ end
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../parallel_compositions/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../asynchronous_execution/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../synchronous_execution_model/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

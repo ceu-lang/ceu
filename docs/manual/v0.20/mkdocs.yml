@@ -3,9 +3,10 @@ theme:     readthedocs
 #site_dir:  site/v0.20
 
 pages:
-    - Céu v0.20 - Reference Manual:                             'index.md'
+    - Céu v0.20 - Reference Manual:             'index.md'
     - Overview:
         - Introduction:                         'overview/index.md'
+        - Environments:                         'overview/environments.md'
         - Synchronous Execution Model:          'overview/synchronous_execution_model.md'
         - Parallel Compositions and Abortion:   'overview/parallel_compositions_and_abortion.md'
         - Bounded Execution:                    'overview/bounded_execution.md'

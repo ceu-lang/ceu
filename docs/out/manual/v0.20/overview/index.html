@@ -83,6 +83,13 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="environments/">Environments</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="synchronous_execution_model/">Synchronous Execution Model</a>
         
     </li>
@@ -415,24 +422,34 @@
 <p>Céu provides <em>Structured Synchronous Reactive Programming</em>, extending classical
 structured programming with two main functionalities:</p>
 <ul>
-<li>An <code>await</code> statement to suspend a line of execution until the specified input
-  event occurs.</li>
+<li>Event Handling:<ul>
+<li>An <code>await</code> statement to suspend a line of execution and wait for an input
+  event from the environment.</li>
+<li>An <code>emit</code> statement to signal an output event back to the environment.</li>
+</ul>
+</li>
+<li>Concurrency:<ul>
 <li>A set of parallel constructs to compose concurrent lines of execution.</li>
 </ul>
-<p>The lines of execution in Céu, known as <em>trails</em>, react together to input
-events continuously and in discrete steps.
+</li>
+</ul>
+<p>The lines of execution in Céu, known as <em>trails</em>, react all together to input
+events one after another, in discrete steps.
 An input event is broadcast to all active trails, which share the event as
 their unique and global time reference.</p>
-<p>The example that follows prints "Hello World!" every second and terminates on a
-key press:</p>
-<pre><code class="ceu">input int KEY;
+<p>The program that follows blinks a LED every second and terminates on a button
+press:</p>
+<pre><code class="ceu">input  void BUTTON;
+output bool LED;
 par/or do
+    await BUTTON;
+with
     loop do
         await 1s;
-        _printf(&quot;Hello World!\n&quot;);
+        emit LED(true);
+        await 1s;
+        emit LED(false);
     end
-with
-    await KEY;
 end
 </code></pre>
 
@@ -457,7 +474,7 @@ as memory leaks and dangling pointers.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="synchronous_execution_model/" class="btn btn-neutral float-right" title="Synchronous Execution Model">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="environments/" class="btn btn-neutral float-right" title="Environments">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href=".." class="btn btn-neutral" title="Céu v0.20 - Reference Manual"><span class="icon icon-circle-arrow-left"></span> Previous</a>
@@ -489,7 +506,7 @@ as memory leaks and dangling pointers.</p>
         <span><a href=".." style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="synchronous_execution_model/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="environments/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

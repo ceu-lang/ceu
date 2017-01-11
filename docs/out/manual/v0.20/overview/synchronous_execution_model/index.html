@@ -75,6 +75,13 @@
 
         
             
+    <li class="toctree-l1 ">
+        <a class="" href="../environments/">Environments</a>
+        
+    </li>
+
+        
+            
     <li class="toctree-l1 current">
         <a class="current" href="./">Synchronous Execution Model</a>
         
@@ -421,12 +428,12 @@ physical time (see <a href="#TODO">Bounded Execution</a>).</p>
 <ol>
 <li>The program initiates the <em>boot reaction</em> from the first line of code in a
    single trail.</li>
-<li>Active trails, one after another, execute until they await or terminate.
-   This step is named a <em>reaction chain</em>, and always runs in bounded time.
-   New trails can be created with <a href="#TODO">parallel compositions</a>.</li>
-<li>The program goes idle and the environment takes control.</li>
-<li>On the occurrence of a new input event, the environment awakes <em>all</em> trails
-   awaiting that event.
+<li>Active trails<sup>1</sup>, one after another, execute until they await or
+   terminate.
+   This step is named a <em>reaction chain</em>, and always runs in bounded time.</li>
+<li>The program goes idle.</li>
+<li>On the occurrence of a new external input event, <em>all</em> trails awaiting that
+   event awake.
    It then goes to step 2.</li>
 </ol>
 <p>The synchronous execution model of Céu is based on the hypothesis that reaction
@@ -469,7 +476,7 @@ At any time, at most one trail is executing.</p>
 25:  end
 </code></pre>
 
-<p><img alt="" src="../images/010-reaction.png" /></p>
+<p><img alt="" src="../reaction.png" /></p>
 <p>The program starts in the boot reaction and forks into three trails.
 Respecting the lexical order of declaration for the trails, they are scheduled
 as follows (<em>t0</em> in the diagram):</p>
@@ -515,7 +522,7 @@ which are presented in Section~\ref{sec.ceu.ints}.
         <a href="../parallel_compositions_and_abortion/" class="btn btn-neutral float-right" title="Parallel Compositions and Abortion">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../" class="btn btn-neutral" title="Introduction"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../environments/" class="btn btn-neutral" title="Environments"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -541,7 +548,7 @@ which are presented in Section~\ref{sec.ceu.ints}.
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../environments/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
         <span style="margin-left: 15px"><a href="../parallel_compositions_and_abortion/" style="color: #fcfcfc">Next &raquo;</a></span>
