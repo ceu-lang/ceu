@@ -2,10 +2,11 @@
 
 Céu supports inter-trail communication through `await` and `emit` statements
 for *internal events*.
-A trail can `emit` an event which is broadcast to the program to awake trails
-in parallel that are blocked in an `await` statement for that same event.
+A trail can `await` an internal event to suspend it.
+Then, another trail can `emit` and broadcast an event, awaking all trails
+awaiting that event.
 
-An `emit` starts a new *internal reaction* in the program relying on a
+An `emit` starts a new *internal reaction* in the program, relying on a
 runtime stack:
 
 1. An `emit` suspends the current trail and its continuation is pushed into the
