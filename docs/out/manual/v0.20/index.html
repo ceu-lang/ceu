@@ -57,12 +57,9 @@
           
             <li>
     <li class="toctree-l1 current">
-        <a class="current" href=".">Introduction</a>
+        <a class="current" href=".">Céu v0.20 - Reference Manual</a>
         
             <ul>
-            
-                <li class="toctree-l3"><a href="#introduction">Introduction</a></li>
-                
             
             </ul>
         
@@ -72,6 +69,13 @@
             <li>
     <ul class="subnav">
     <li><span>Overview</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="overview/">Introduction</a>
+        
+    </li>
 
         
             
@@ -390,7 +394,7 @@
     
       
     
-    <li>Introduction</li>
+    <li>Céu v0.20 - Reference Manual</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -400,26 +404,7 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="introduction">Introduction</h1>
-<p>Céu provides <em>Structured Synchronous Reactive Programming</em> which supports
-safe and deterministic concurrency with side effects.
-The lines of execution in Céu, known as <em>trails</em>, react together continuously
-and in synchronous steps to external input events from the environment.
-Waiting for an event halts the running trail until that event occurs.
-The environment broadcasts an occurring event to all active trails, which share 
-a single global time reference.</p>
-<p>The synchronous concurrency model of Céu diverges from multithreading and also
-from actor-based models (e.g. <em>pthreads</em> and <em>erlang</em>).
-On the one hand, there is no real parallelism at the synchronous kernel of the
-language (i.e., no multi-core execution).
-On the other hand, trails can share variables deterministically without
-synchronization primitives (i.e., no <em>locks</em>, <em>semaphores</em>, or <em>queues</em>).</p>
-<p>Céu provides automatic memory management based on static lexical scopes (i.e.,
-no <em>free</em> or <em>delete</em>) and does not require runtime garbage collection.</p>
-<p>Céu integrates safely with C, and programs can define and make native calls
-seamlessly while avoiding memory leaks and dangling pointers when dealing with
-external resources.</p>
-<p>Céu is <a href="#TODO">free software</a>.</p>
+                <p>Céu v0.20 - Reference Manual</p>
               
             </div>
           </div>
@@ -427,7 +412,7 @@ external resources.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="overview/synchronous_execution_model/" class="btn btn-neutral float-right" title="Synchronous Execution Model">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="overview/" class="btn btn-neutral float-right" title="Introduction">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
     </div>
@@ -455,7 +440,7 @@ external resources.</p>
       
       
       
-        <span style="margin-left: 15px"><a href="overview/synchronous_execution_model/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="overview/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
@@ -465,5 +450,5 @@ external resources.</p>
 
 <!--
 MkDocs version : 0.15.3
-Build Date UTC : 2016-12-22 19:27:18.388686
+Build Date UTC : 2017-01-11 13:09:08.284634
 -->

@@ -57,7 +57,7 @@
           
             <li>
     <li class="toctree-l1 ">
-        <a class="" href="../..">Introduction</a>
+        <a class="" href="../..">Céu v0.20 - Reference Manual</a>
         
     </li>
 <li>
@@ -65,6 +65,13 @@
             <li>
     <ul class="subnav">
     <li><span>Overview</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../">Introduction</a>
+        
+    </li>
 
         
             
@@ -407,9 +414,10 @@
                 <h2 id="internal-reactions">Internal Reactions</h2>
 <p>Céu supports inter-trail communication through <code>await</code> and <code>emit</code> statements
 for <em>internal events</em>.
-A trail can <code>emit</code> an event which is broadcast to the program to awake trails
-in parallel that are blocked in an <code>await</code> statement for that same event.</p>
-<p>An <code>emit</code> starts a new <em>internal reaction</em> in the program relying on a
+A trail can <code>await</code> an internal event to suspend it.
+Then, another trail can <code>emit</code> and broadcast an event, awaking all trails
+awaiting that event.</p>
+<p>An <code>emit</code> starts a new <em>internal reaction</em> in the program, relying on a
 runtime stack:</p>
 <ol>
 <li>An <code>emit</code> suspends the current trail and its continuation is pushed into the

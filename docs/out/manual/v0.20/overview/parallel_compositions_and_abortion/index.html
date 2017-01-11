@@ -57,7 +57,7 @@
           
             <li>
     <li class="toctree-l1 ">
-        <a class="" href="../..">Introduction</a>
+        <a class="" href="../..">Céu v0.20 - Reference Manual</a>
         
     </li>
 <li>
@@ -65,6 +65,13 @@
             <li>
     <ul class="subnav">
     <li><span>Overview</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../">Introduction</a>
+        
+    </li>
 
         
             
@@ -412,18 +419,20 @@ rejoin and proceed to the statement in sequence:</p>
 <ol>
 <li>a <code>par/and</code> rejoins after all trails in parallel terminate;</li>
 <li>a <code>par/or</code> rejoins after any trail in parallel terminates, aborting all
-   other trails;</li>
+   other trails automatically;</li>
 <li>a <code>par</code> never rejoins, even if all trails terminate.</li>
 </ol>
-<p>The termination of a trail inside a <code>par/or</code> aborts the other trails in 
-parallel which are necessarily idle
-(see <a href="#synchronous-execution-model"><code>rule 2</code> for external reactions</a>).
-Before being aborted, a trail has a last opportunity to execute active 
-<a href="#TODO">finalization statements</a>.</p>
 <p>As mentioned in the introduction and emphasized in the execution model, trails
 in parallel do not execute with real parallelism.
-Therefore, parallel compositions should read as <em>awaiting in parallel</em>, rather
-than <em>executing in parallel</em>.</p>
+Therefore, parallel compositions support <em>awaiting in parallel</em>, rather than
+<em>executing in parallel</em>.</p>
+<!--
+The termination of a trail inside a `par/or` aborts the other trails in 
+parallel which are necessarily idle
+(see [`rule 2` for external reactions](#synchronous-execution-model)).
+Before being aborted, a trail has a last opportunity to execute active 
+[finalization statements](#TODO).
+-->
               
             </div>
           </div>

@@ -57,7 +57,7 @@
           
             <li>
     <li class="toctree-l1 ">
-        <a class="" href="../..">Introduction</a>
+        <a class="" href="../..">Céu v0.20 - Reference Manual</a>
         
     </li>
 <li>
@@ -65,6 +65,13 @@
             <li>
     <ul class="subnav">
     <li><span>Overview</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../">Introduction</a>
+        
+    </li>
 
         
             
@@ -406,41 +413,37 @@
               
                 <h2 id="synchronous-execution-model">Synchronous Execution Model</h2>
 <p>Céu is grounded on a precise definition of <em>logical time</em> (as opposed to
-<em>physical</em> or <em>wall-clock time</em>) as a discrete sequence of external input
-events:
+<em>physical</em>) as a discrete sequence of external input events:
 a sequence because only a single input event is handled at a logical time; 
 discrete because reactions to events are guaranteed to execute in bounded
-physical time (see <a href="#bounded-execution">Bounded Execution</a>).</p>
+physical time (see <a href="#TODO">Bounded Execution</a>).</p>
 <p>The execution model for Céu programs is as follows:</p>
 <ol>
 <li>The program initiates the <em>boot reaction</em> from the first line of code in a
-      single trail.</li>
-<li>Active trails<sup>1</sup>, one after another, execute until they await or 
-      terminate.
-      This step is named a <em>reaction chain</em>, and always runs in bounded time.</li>
+   single trail.</li>
+<li>Active trails, one after another, execute until they await or terminate.
+   This step is named a <em>reaction chain</em>, and always runs in bounded time.
+   New trails can be created with <a href="#TODO">parallel compositions</a>.</li>
 <li>The program goes idle and the environment takes control.</li>
-<li>On the occurrence of a new external input event, the environment awakes 
-      <em>all</em> trails awaiting that event.
-      It then goes to step 2.</li>
+<li>On the occurrence of a new input event, the environment awakes <em>all</em> trails
+   awaiting that event.
+   It then goes to step 2.</li>
 </ol>
-<p>(<sup>1</sup>
-<em>Trails can be created with <a href="#parallel-compositions-and-abortion">parallel 
-compositions</a>.</em>)</p>
 <p>The synchronous execution model of Céu is based on the hypothesis that reaction
-chains run <em>infinitely faster</em> in comparison to the rate of external events.
-A reaction chain is the set of computations that execute when an external 
-event occurs.
+chains run <em>infinitely faster</em> in comparison to the rate of input events.
+A reaction chain is the set of computations that execute when an input event
+occurs.
 Conceptually, a program takes no time on step 2 and is always idle on step 3.
-In practice, if a new external input event occurs while a reaction chain is 
+In practice, if a new input event occurs while a reaction chain is 
 running (step 2), it is enqueued to run in the next reaction.
 When multiple trails are active at a logical time (i.e. awaking from the same 
 event), Céu schedules them in the order they appear in the program text.
-This policy is somewhat arbitrary, but provides a priority scheme for trails, 
-and also ensures deterministic and reproducible execution for programs.
+This policy is arbitrary, but provides a priority scheme for trails, and also
+ensures deterministic and reproducible execution for programs.
 At any time, at most one trail is executing.</p>
 <p>The program and diagram below illustrate the behavior of the scheduler of Céu:</p>
-<pre><code class="ceu"> 1:  input void A, B, C;
- 2:  par/and do           // A, B, and C are external input events
+<pre><code class="ceu"> 1:  input void A, B, C;  // A, B, and C are input events
+ 2:  par/and do
  3:      // trail 1
  4:      &lt;...&gt;            // &lt;...&gt; represents non-awaiting statements
  5:      await A;
@@ -472,8 +475,8 @@ Respecting the lexical order of declaration for the trails, they are scheduled
 as follows (<em>t0</em> in the diagram):</p>
 <ul>
 <li><em>trail-1</em> executes up to the <code>await A</code> (line 5);</li>
-<li><em>trail-2</em>, up to the <code>await B</code> (line 10);</li>
-<li><em>trail-3</em>, up to <code>await A</code> (line 15).</li>
+<li><em>trail-2</em> executes up to the <code>await B</code> (line 10);</li>
+<li><em>trail-3</em> executes up to the <code>await A</code> (line 15).</li>
 </ul>
 <p>As no other trails are pending, the reaction chain terminates and the scheduler 
 remains idle until the event <code>A</code> occurs (<em>t1</em> in the diagram):</p>
@@ -492,12 +495,11 @@ The next reaction dequeues the event <code>B</code> (<em>t3</em> in the diagram)
 <li><em>trail-2</em> awakes, executes and terminates;</li>
 <li><em>trail-3</em> splits in two and they both terminate immediately.</li>
 </ul>
-<p>A <code>par/and</code> rejoins after all trails terminate.
-With all trails terminated, the program also terminates and does not react to 
-the pending event <code>C</code>.</p>
+<p>Since a <code>par/and</code> rejoins after all trails terminate, the program also
+terminates and does not react to the pending event <code>C</code>.</p>
 <p>Note that each step in the logical time line (<em>t0</em>, <em>t1</em>, etc.) is identified 
-by the unique event it handles.
-Inside a reaction, trails only react to that identifying event (or remain 
+by the unique occurring event.
+Inside a reaction, trails only react to the same shared global event (or remain 
 suspended).</p>
 <!--
 A reaction chain may also contain emissions and reactions to internal events, 
@@ -513,7 +515,7 @@ which are presented in Section~\ref{sec.ceu.ints}.
         <a href="../parallel_compositions_and_abortion/" class="btn btn-neutral float-right" title="Parallel Compositions and Abortion">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../.." class="btn btn-neutral" title="Introduction"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../" class="btn btn-neutral" title="Introduction"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -539,7 +541,7 @@ which are presented in Section~\ref{sec.ceu.ints}.
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../.." style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
         <span style="margin-left: 15px"><a href="../parallel_compositions_and_abortion/" style="color: #fcfcfc">Next &raquo;</a></span>
