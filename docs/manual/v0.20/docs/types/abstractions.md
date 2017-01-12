@@ -1,5 +1,7 @@
 ## Abstractions
 
+<!--
 `TODO (brief description)`
+-->
 
-See also [Abstractions](#TODO).
+See [Abstractions](#TODO).

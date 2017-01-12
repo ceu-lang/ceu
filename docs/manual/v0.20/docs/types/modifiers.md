@@ -1,14 +1,14 @@
 ## Modifiers
 
-Types can be suffixed with the following modifiers: `&&`, `?`.
+Types can be suffixed with the pointer modifier `&&` and the option modifier
+`?`.
 
 ### Pointer
 
-`TODO (like C)`
+`TODO (like in C)`
 
-TODO: restrictions
-    - cannot cross yielding statements
+`TODO cannot cross yielding statements`
 
 ### Option
 
-`TODO (like Maybe)`
+`TODO (like "Maybe")`
