@@ -122,7 +122,7 @@ Class ::= var    (`&´|`&?`) * Type
 // invocation
 Code_Call  ::= call  Mods Abs_Cons
 Code_Await ::= await Mods Code_Cons_Init
-Code_Spawn ::= spawn Mods Code_Cons_Init [in Name]
+Code_Spawn ::= spawn Mods Code_Cons_Init [in Loc]
 
 Mods ::= [`/´dynamic | `/´static] [`/´recursive]
 Code_Cons_Init ::= Abs_Cons [`->´ `(´ LIST(`&´ Var) `)´])

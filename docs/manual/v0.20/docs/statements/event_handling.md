@@ -8,7 +8,7 @@ The event can be an [external input event](#TODO), an [internal event](#TODO),
 a timer, a [pausing event](#TODO), or forever (i.e., never awake):
 
 ```ceu
-Await ::= await (ID_ext | Name) [until Exp]     /* events */
+Await ::= await (ID_ext | Loc) [until Exp]      /* events */
        |  await (WCLOCKK|WCLOCKE)               /* timers */
        |  await (pause|resume)                  /* pausing events */
        |  await FOREVER                         /* forever */
@@ -120,7 +120,7 @@ The event can be an [external event](#TODO), an [internal event](#TODO), or
 a timer:
 
 ```ceu
-Emit ::= emit (ID_ext | Name) [`(´ [LIST(Exp)] `)´)]
+Emit ::= emit (ID_ext | Loc) [`(´ [LIST(Exp)] `)´)]
       |  emit (WCLOCKK|WCLOCKE)
 ```
 

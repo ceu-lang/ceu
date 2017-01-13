@@ -12,7 +12,7 @@ Pars ::= (par | par/and | par/or) do
              Block }
          end
 
-Watching ::= watching LIST(ID_ext|Name|WCLOCKK|WCLOCKE|Code_Cons_Init) do
+Watching ::= watching LIST(ID_ext|Loc|WCLOCKK|WCLOCKE|Code_Cons_Init) do
                  Block
              end
 

@@ -4,7 +4,7 @@ An assignment associates the statement or expression at the right side of `=`
 with the name(s) at the left side:
 
 ```ceu
-Set ::= (Name | `(´ LIST(Name|`_´) `)´) `=´ Cons
+Set ::= (Loc | `(´ LIST(Loc|`_´) `)´) `=´ Cons
 
 Cons ::= ( Do
          | Await

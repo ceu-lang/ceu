@@ -4,7 +4,7 @@ The `pause/if` statement controls if its body should temporarily stop to react
 to events:
 
 ```ceu
-Pause_If ::= pause/if (Name|ID_ext) do
+Pause_If ::= pause/if (Loc|ID_ext) do
                  Block
              end
 

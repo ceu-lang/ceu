@@ -45,7 +45,7 @@ Stmt ::= nothing
   /* Event Handling */
 
       // Await ::=
-      | await (ID_ext | Name) [until Exp]
+      | await (ID_ext | Loc) [until Exp]
       | await (WCLOCKK|WCLOCKE)
       //
       | await (FOREVER | pause | resume)
@@ -54,9 +54,9 @@ Stmt ::= nothing
       | emit ID_ext [`(´ [LIST(Exp)] `)´]
       | emit (WCLOCKK|WCLOCKE)
       //
-      | emit Name [`(´ [LIST(Exp)] `)´]
+      | emit Loc [`(´ [LIST(Exp)] `)´]
 
-      | lock Name do
+      | lock Loc do
             Block
         end
 
@@ -88,12 +88,12 @@ Stmt ::= nothing
                       (`[´ | `]´) [`,´ Exp]
 
       /* pool iterator */
-      | loop [`/´Exp] [ `(´ LIST(Var) `)´ ] in Name do
+      | loop [`/´Exp] [ `(´ LIST(Var) `)´ ] in Loc do
             Block
         end
 
       /* event iterator */
-      | every [(Name | `(´ LIST(Name|`_´) `)´) in] (ID_ext|Name|WCLOCKK|WCLOCKE) do
+      | every [(Loc | `(´ LIST(Loc|`_´) `)´) in] (ID_ext|Loc|WCLOCKK|WCLOCKE) do
             Block
         end
 
@@ -113,7 +113,7 @@ Stmt ::= nothing
 
       /* watching */
       // Watching ::=
-      | watching LIST(ID_ext|Name|WCLOCKK|WCLOCKE|Code_Cons_Init) do
+      | watching LIST(ID_ext|Loc|WCLOCKK|WCLOCKE|Code_Cons_Init) do
             Block
         end
 
@@ -124,7 +124,7 @@ Stmt ::= nothing
 
   /* Pause */
 
-      | pause/if (Name|ID_ext) do
+      | pause/if (Loc|ID_ext) do
             Block
         end
 
@@ -156,13 +156,13 @@ Stmt ::= nothing
       | `{´ {<code in C> | `@´ Exp} `}´
 
       // Nat_Call ::=
-      | [call] (Name | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
+      | [call] (Loc | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
 
       /* finalization */
       | do [Stmt] Finalize
       | var `&?´ Type ID_int `=´ `&´ (Nat_Call | Code_Call) Finalize
         // where
-            Finalize ::= finalize `(´ LIST(Name) `)´ with
+            Finalize ::= finalize `(´ LIST(Loc) `)´ with
                              Block
                          [ pause  with Block ]
                          [ resume with Block ]
@@ -220,7 +220,7 @@ Stmt ::= nothing
       | await Mods Abs_Cons
 
       // Code_Spawn ::=
-      | spawn Mods Code_Cons_Init [in Name]
+      | spawn Mods Code_Cons_Init [in Loc]
 
         // where
             Mods ::= [`/´dynamic | `/´static] [`/´recursive]
@@ -229,7 +229,7 @@ Stmt ::= nothing
 
   /* Assignments */
 
-      | (Name | `(´ LIST(Name|`_´) `)´) `=´ Cons
+      | (Loc | `(´ LIST(Loc|`_´) `)´) `=´ Cons
         // where
             Cons ::= ( Do
                      | Emit_Ext
@@ -271,11 +271,11 @@ Type ::= ID_type { `&&´ } [`?´]
 WCLOCKK ::= [NUM h] [NUM min] [NUM s] [NUM ms] [NUM us]
 WCLOCKE ::= `(´ Exp `)´ (h|min|s|ms|us)
 
-/* Name */
+/* Loc */
 
-Name    ::= [`*´|`$´] Name_01
-Name_01 ::= Name_02 { `[´Exp`]´ | (`:´|`.´) (ID_int|ID_nat) | `!´ }
-Name_02 ::= `(´ Name [as (Type | `/´(nohold|plain|pure)) `)´
+Loc    ::= [`*´|`$´] Loc_01
+Loc_01 ::= Loc_02 { `[´Exp`]´ | (`:´|`.´) (ID_int|ID_nat) | `!´ }
+Loc_02 ::= `(´ Loc [as (Type | `/´(nohold|plain|pure)) `)´
          |  ID_int
          |  ID_nat
          |  outer
@@ -285,9 +285,9 @@ Name_02 ::= `(´ Name [as (Type | `/´(nohold|plain|pure)) `)´
 
 Exp  ::= Prim (combined with the "Operator Precedence" below)
 Prim ::= `(´ Exp `)´
-      |  `&&´ Name
-      |  Name [`?´]
-      |  `&´ (Nat_Call | Name)
+      |  `&&´ Loc
+      |  Loc [`?´]
+      |  `&´ (Nat_Call | Loc)
       |  Nat_Call | Code_Call
       |  sizeof `(´ (Type|Exp) `)´
       |  NUM | STR | null | true | false
