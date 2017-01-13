@@ -1,7 +1,7 @@
 ## Synchronous Execution Model
 
 Céu is grounded on a precise definition of *logical time* (as opposed to
-*physical*) as a discrete sequence of external input events:
+*physical*) as a discrete sequence of input events:
 a sequence because only a single input event is handled at a logical time; 
 discrete because reactions to events are guaranteed to execute in bounded
 physical time (see [Bounded Execution](#TODO)).
@@ -10,18 +10,18 @@ The execution model for Céu programs is as follows:
 
 1. The program initiates the *boot reaction* from the first line of code in a
    single trail.
-2. Active trails<sup>1</sup>, one after another, execute until they await or
-   terminate.
+2. Active trails, one after another, execute until they await or terminate.
    This step is named a *reaction chain*, and always runs in bounded time.
+   New trails can be created with [parallel compositions](#TODO).
 3. The program goes idle.
-4. On the occurrence of a new external input event, *all* trails awaiting that
-   event awake.
+4. On the occurrence of a new input event, *all* trails awaiting that event
+   awake.
    It then goes to step 2.
 
 The synchronous execution model of Céu is based on the hypothesis that reaction
 chains run *infinitely faster* in comparison to the rate of input events.
-A reaction chain is the set of computations that execute when an input event
-occurs.
+A reaction chain, aka. *external reaction*, is the set of computations that
+execute when an input event occurs.
 Conceptually, a program takes no time on step 2 and is always idle on step 3.
 In practice, if a new input event occurs while a reaction chain is 
 running (step 2), it is enqueued to run in the next reaction.

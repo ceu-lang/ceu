@@ -6,7 +6,9 @@ A trail can `await` an internal event to suspend it.
 Then, another trail can `emit` and broadcast an event, awaking all trails
 awaiting that event.
 
-An `emit` starts a new *internal reaction* in the program and relies on a
+Unlike input events, multiple internal events can coexist during an external
+reaction.
+An `emit` starts a new *internal reaction* in the program which relies on a
 runtime stack:
 
 1. The `emit` suspends the current trail and its continuation is pushed into
