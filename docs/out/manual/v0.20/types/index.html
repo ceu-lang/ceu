@@ -233,7 +233,7 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../storage_classes/names/">Names</a>
+        <a class="" href="../storage_classes/locations/">Locations</a>
         
     </li>
 
@@ -284,6 +284,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../statements/conditional/">Conditional</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../statements/loops/">Loops</a>
         
     </li>
 
@@ -419,18 +426,20 @@
             <div class="section">
               
                 <h1 id="types">Types</h1>
-<p>Céu is statically typed, requiring all variables and events to be declared
-before they are used.</p>
-<p>A type is composed of a <a href="#TODO">type identifier</a>, followed by a sequence
-of optional <em>pointer</em> modifiers <code>&amp;&amp;</code>, and an optional <em>option</em> modifier <code>?</code>:</p>
+<p>Céu is statically typed, requiring all variables, events, and other entities to
+be declared before they are used in programs.</p>
+<p>A type is composed of a <a href="#TODO">type identifier</a>, followed by an optional
+sequence of <a href="#TODO">pointer modifiers</a> <code>&amp;&amp;</code>, followed by an optional
+<a href="#TODO">option modifier</a> <code>?</code>:</p>
 <pre><code>Type ::= ID_type {`&amp;&amp;´} [`?´]
 </code></pre>
 
 <p>Examples:</p>
-<pre><code class="ceu">var u8     v;   // &quot;v&quot; is of 8-bit unsigned integer type
-var _rect  r;   // &quot;r&quot; is of external native type &quot;rect&quot;
-var byte&amp;&amp; buf; // &quot;buf&quot; is a pointer to a &quot;byte&quot;
-var Tree   t;   // &quot;t&quot; is a data of type &quot;Tree&quot;
+<pre><code class="ceu">var   u8     v;    // &quot;v&quot; is of 8-bit unsigned integer type
+var   _rect  r;    // &quot;r&quot; is of external native type &quot;rect&quot;
+var   Tree   t;    // &quot;t&quot; is a data of type &quot;Tree&quot;
+var   int?   ret;  // &quot;ret&quot; is either unset or is of integer type
+input byte&amp;&amp; RECV; // &quot;RECV&quot; is an input event carrying a pointer to a &quot;byte&quot;
 </code></pre>
               
             </div>

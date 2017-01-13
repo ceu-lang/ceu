@@ -233,7 +233,7 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../storage_classes/names/">Names</a>
+        <a class="" href="../../storage_classes/locations/">Locations</a>
         
     </li>
 
@@ -284,6 +284,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../statements/conditional/">Conditional</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../statements/loops/">Loops</a>
         
     </li>
 
@@ -424,31 +431,32 @@ for <em>internal events</em>.
 A trail can <code>await</code> an internal event to suspend it.
 Then, another trail can <code>emit</code> and broadcast an event, awaking all trails
 awaiting that event.</p>
-<p>An <code>emit</code> starts a new <em>internal reaction</em> in the program, relying on a
+<p>Unlike input events, multiple internal events can coexist during an external
+reaction.
+An <code>emit</code> starts a new <em>internal reaction</em> in the program which relies on a
 runtime stack:</p>
 <ol>
-<li>An <code>emit</code> suspends the current trail and its continuation is pushed into the
-    stack (i.e., the statement in sequence with the <code>emit</code>).</li>
-<li>All trails awaiting the emitted event awake and execute
-    (see <a href="#synchronous-execution-model"><code>rule 2</code> for external reactions</a>).</li>
+<li>The <code>emit</code> suspends the current trail and its continuation is pushed into
+    the stack (i.e., the statement in sequence with the <code>emit</code>).</li>
+<li>All trails awaiting the emitted event awake and execute in sequence
+    (see <a href="#TODO"><code>rule 2</code></a> for external reactions).
+    If an awaking trail emits another internal event, a nested internal
+    reaction starts with <code>rule 1</code>.</li>
 <li>The top of stack is popped and the last emitting trail resumes execution
     from its continuation.</li>
 </ol>
-<p>Note that if an awaking trail emits another internal event (in <code>rule 2</code>), a
-nested internal reaction starts (in <code>rule 1</code>).
-Example:</p>
-<pre><code class="ceu">1:  par/and do
+<p>Example:</p>
+<pre><code class="ceu">1:  par/and do      // trail 1
 2:      await e;
 3:      emit f;
-4:  with
+4:  with            // trail 2
 5:      await f;
-6:  with
-7:      ...
+6:  with            // trail 3
 8:      emit e;
 9:  end
 </code></pre>
 
-<p>The <code>emit e</code> in <em>trail-3</em> (line 8) starts an internal reaction that awakes the 
+<p>The <code>emit e</code> in <em>trail-3</em> (line 7) starts an internal reaction that awakes the 
 <code>await e</code> in <em>trail-1</em> (line 2).
 Then, the <code>emit f</code> (line 3) starts another internal reaction that awakes the 
 <code>await f</code> in <em>trail-2</em> (line 5).

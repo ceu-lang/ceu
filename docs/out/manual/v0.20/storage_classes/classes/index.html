@@ -231,10 +231,6 @@
                 
                     <li><a class="toctree-l4" href="#events">Events</a></li>
                 
-                    <li><a class="toctree-l4" href="#external-events">External Events</a></li>
-                
-                    <li><a class="toctree-l4" href="#internal-events">Internal Events</a></li>
-                
                     <li><a class="toctree-l4" href="#pools">Pools</a></li>
                 
             
@@ -245,7 +241,7 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../names/">Names</a>
+        <a class="" href="../locations/">Locations</a>
         
     </li>
 
@@ -296,6 +292,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../statements/conditional/">Conditional</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../statements/loops/">Loops</a>
         
     </li>
 
@@ -432,8 +435,8 @@
               
                 <h2 id="classes">Classes</h2>
 <h3 id="variables">Variables</h3>
-<p>As in typical imperative languages, a variable in Céu holds a value of a
-<a href="#TODO">declared</a> <a href="#TODO">type</a> that may vary during program execution.
+<p>A variable in Céu holds a value of a <a href="#TODO">declared</a> <a href="#TODO">type</a> that may
+vary during program execution.
 The value of a variable can be read in <a href="#TODO">expressions</a> or written in
 <a href="#TODO">assignments</a>.
 The current value of a variable is preserved until the next assignment, during
@@ -442,10 +445,11 @@ its whole lifetime.</p>
 TODO: exceptions for scope/lifetime
 - pointers have "instant" lifetime, like fleeting events, scope is unbound
 - intermediate values die after "watching", scope is unbound
+
+*Note: since blocks can contain parallel compositions, variables can be read
+       and written in trails in parallel.*
 -->
 
-<p><em>Note: since blocks can contain parallel compositions, variables can be read
-       and written in trails in parallel.</em></p>
 <p>Example:</p>
 <pre><code class="ceu">var int v = _;  // empty initializaton
 par/and do
@@ -457,14 +461,15 @@ escape v;       // read access (yields 2)
 </code></pre>
 
 <h3 id="vectors">Vectors</h3>
-<p>In Céu, a vector is a dynamic and contiguous collection of elements of the same
-type.
-A vector <a href="#TODO">declaration</a> specifies its type and the maximum number of
-elements (possibly unlimited).
+<p>A vector In Céu is a dynamic and contiguous collection of elements of the same
+type.</p>
+<p>A vector <a href="#TODO">declaration</a> specifies its type and maximum number of elements
+(possibly unlimited).
 The current size of a vector is dynamic and can be accessed through the
-<a href="#TODO">operator <code>$</code></a>.
-Individual elements of a vector can be accessed through a
-<a href="#TODO">numeric index</a> starting from <code>0</code>.</p>
+<a href="#TODO">operator <code>$</code></a>.</p>
+<p>Individual elements of a vector can be accessed through a
+<a href="#TODO">numeric index</a> starting from <code>0</code>.
+Céu generates an <a href="#TODO">error</a> for out-of-bounds vector accesses.</p>
 <p>Example:</p>
 <pre><code class="ceu">vector[9] byte buf = [1,2,3];   // write access
 buf[$buf+1] = 4;                // write access
@@ -472,23 +477,21 @@ escape buf[1];                  // read access (yields 2)
 </code></pre>
 
 <h3 id="events">Events</h3>
-<p>Events are the most fundamental concept of Céu, accounting for its reactive 
-nature.
-Programs manipulate events through the <code>await</code> and <code>emit</code> <a href="#TODO">statements</a>.
-An <code>await</code> halts the running trail until that event occurs.
+<p>Events account for the reactive nature of Céu.
+Programs manipulate events through the <a href="#TODO"><code>await</code></a> and <a href="#TODO"><code>emit</code></a>
+statements.
+An <code>await</code> halts the running trail until the specified event occurs.
 An event occurrence is broadcast to the whole program and awakes trails
 awaiting that event to resume execution.</p>
-<p>As described in the <a href="#TODO">Introduction</a>, Céu supports external and internal events
-with different behaviors.</p>
 <p>Unlike all other storage classes, the value of an event is ephemeral and does
 not persist after a reaction terminates.
 For this reason, an event identifier is not a variable: values can only
 be communicated through <code>emit</code> and <code>await</code> statements.
 A <a href="#TODO">declaration</a> includes the type of value the occurring event carries.</p>
-<p><em>Note: <tt>void</tt> is a valid type for signal-only internal events.</em></p>
+<p><em>Note: <tt>void</tt> is a valid type for signal-only events.</em></p>
 <p>Example:</p>
-<pre><code class="ceu">input  void I;           // &quot;I&quot; is an external input event that carries no valuess
-output int  O;           // &quot;O&quot; is an external output event that values of type &quot;int&quot;
+<pre><code class="ceu">input  void I;           // &quot;I&quot; is an input event that carries no values
+output int  O;           // &quot;O&quot; is an output event that carries values of type &quot;int&quot;
 event  int  e;           // &quot;e&quot; is an internal event that carries values of type &quot;int&quot;
 par/and do
     await I;             // awakes when &quot;I&quot; occurs
@@ -499,44 +502,63 @@ with
 end
 </code></pre>
 
-<h3 id="external-events">External Events</h3>
+<p>As described in <a href="#TODO">Internal Reactions</a>, Céu supports external and internal
+events with different behavior.</p>
+<h4 id="external-events">External Events</h4>
 <p>External events are used as interfaces between programs and devices from the 
 real world:</p>
 <ul>
-<li><em>input</em> events represent input devices, such as sensors, switches, etc.</li>
-<li><em>output</em> events represent output devices, such as LEDs, motors, etc.</li>
+<li><em>input events</em> represent input devices such as sensor, button, mouse, etc.</li>
+<li><em>output events</em> represent output devices such as LED, motor, screen, etc.</li>
 </ul>
-<p>The availability of external events depends on the platform in use.
+<p>The availability of external events depends on the <a href="#TODO">environment</a> in use.</p>
+<p>Programs can <code>emit</code> output events and <code>await</code> input events.</p>
+<!--
 Therefore, external declarations only make pre-existing events visible to a 
 program.
-Refer to <a href="#TODO">Environment</a> for information about interfacing with 
-external events at the platform level.</p>
-<h4 id="external-input-events">External Input Events</h4>
-<p>As a reactive language, programs in Céu have input events as entry points in
-the code through <a href="#TODO">await statements</a>.
-Input events represent the notion of <a href="#TODO">logical time</a> in Céu.</p>
-<p>Only the <a href="#TODO">environment</a> can emit inputs to the application.
-Programs can only <code>await</code> input events.</p>
-<h4 id="external-output-events">External Output Events</h4>
-<p>Output events communicate values from the program back to the
-<a href="#TODO">environment</a>.</p>
-<p>Programs can only <code>emit</code> output events.</p>
-<h3 id="internal-events">Internal Events</h3>
-<p>Internal events serve as signalling and communication mechanisms between
-trails in a program.</p>
+Refer to [Environment](#TODO) for information about interfacing with 
+external events at the platform level.
+-->
+
+<!--
+#### External Input Events
+
+As a reactive language, programs in Céu have input events as entry points in
+the code through [await statements](#TODO).
+Input events represent the notion of [logical time](#TODO) in Céu.
+
+<!-
+Only the [environment](#TODO) can emit inputs to the application.
+Programs can only `await` input events.
+->
+
+#### External Output Events
+
+Output events communicate values from the program back to the
+[environment](#TODO).
+
+Programs can only `emit` output events.
+
+-->
+
+<h4 id="internal-events">Internal Events</h4>
+<p>Internal events, unlike external events, do not represent real devices and are
+defined by the programmer.
+Internal events serve as signalling and communication mechanisms among trails
+in a program.</p>
 <p>Programs can <code>emit</code> and <code>await</code> internal events.</p>
 <h3 id="pools">Pools</h3>
-<p>A pool is a dynamic container to hold running <a href="#TODO">code abstractions</a>.
-A pool <a href="#TODO">declaration</a> specifies the type of the abstraction and maximum
+<p>A pool is a dynamic container to hold running <a href="#TODO">code abstractions</a>.</p>
+<p>A pool <a href="#TODO">declaration</a> specifies the type of the abstraction and maximum
 number of concurrent instances (possibly unlimited).
-Individual elements of a pool can only be accessed through <a href="#TODO">iterators</a>.
+Individual elements of pools can only be accessed through <a href="#TODO">iterators</a>.
 New elements are created with <a href="#TODO"><code>spawn</code></a> and are removed automatically
-when and only the code execution terminates.</p>
+when the code execution terminates.</p>
 <p>Example:</p>
-<pre><code class="ceu">code/await Anim (void) =&gt; void do       // defines a code abstraction
-    ...
+<pre><code class="ceu">code/await Anim (void) =&gt; void do       // defines the &quot;Anim&quot; code abstraction
+    &lt;...&gt;                               // body of &quot;Anim&quot;
 end
-pool[] Anim ms;                         // declares an unlimited container for &quot;Move&quot; instances
+pool[] Anim ms;                         // declares an unlimited container for &quot;Anim&quot; instances
 loop i in [0-&gt;10[ do
     spawn Anim() in ms;                 // creates 10 instances of &quot;Anim&quot; into &quot;ms&quot;
 end
@@ -544,7 +566,9 @@ end
 
 <p>When a pool declaration goes out of scope, all running code abstractions are
 automatically aborted.</p>
-<p><code>TODO: data</code></p>
+<!--
+`TODO: data`
+-->
               
             </div>
           </div>
@@ -552,7 +576,7 @@ automatically aborted.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../names/" class="btn btn-neutral float-right" title="Names">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../locations/" class="btn btn-neutral float-right" title="Locations">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href="../lexical_scope/" class="btn btn-neutral" title="Lexical Scope"><span class="icon icon-circle-arrow-left"></span> Previous</a>
@@ -584,7 +608,7 @@ automatically aborted.</p>
         <span><a href="../lexical_scope/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../names/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../locations/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

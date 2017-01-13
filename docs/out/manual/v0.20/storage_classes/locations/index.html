@@ -8,7 +8,7 @@
   
   
   
-  <title>Names - Céu v0.20 - Reference Manual</title>
+  <title>Locations - Céu v0.20 - Reference Manual</title>
   
 
   <link rel="shortcut icon" href="../../img/favicon.ico">
@@ -24,9 +24,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Names";
-    var mkdocs_page_input_path = "storage_classes/names.md";
-    var mkdocs_page_url = "/storage_classes/names/";
+    var mkdocs_page_name = "Locations";
+    var mkdocs_page_input_path = "storage_classes/locations.md";
+    var mkdocs_page_url = "/storage_classes/locations/";
   </script>
   
   <script src="../../js/jquery-2.1.1.min.js"></script>
@@ -226,11 +226,11 @@
         
             
     <li class="toctree-l1 current">
-        <a class="current" href="./">Names</a>
+        <a class="current" href="./">Locations</a>
         
             <ul>
             
-                <li class="toctree-l3"><a href="#names">Names</a></li>
+                <li class="toctree-l3"><a href="#locations">Locations</a></li>
                 
             
             </ul>
@@ -284,6 +284,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../statements/conditional/">Conditional</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../statements/loops/">Loops</a>
         
     </li>
 
@@ -408,7 +415,7 @@
         
       
     
-    <li>Names</li>
+    <li>Locations</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -418,16 +425,40 @@
           <div role="main">
             <div class="section">
               
-                <h2 id="names">Names</h2>
-<p>A storage entity has one or more names :</p>
-<pre><code>Name    ::= Name_01
-Name_01 ::= [`*´|`$´] Name_02
-Name_02 ::= Name_03 { `[´Exp`]´ | (`:´|`.´) (ID_int|ID_nat) | `!´ }
-Name_03 ::= `(´ Name_01 [as (Type | `/´(nohold|plain|pure)) `)´
+                <h2 id="locations">Locations</h2>
+<p>A location (aka. <em>l-value</em>) is a path to a memory location holding a storage
+class entity (<a href="#TODO"><code>ID_int</code></a>) or a native symbol (<a href="#TODO"><code>ID_nat</code></a>):</p>
+<pre><code>Loc    ::= Loc_01
+Loc_01 ::= [`*´|`$´] Loc_02
+Loc_02 ::= Loc_03 { `[´Exp`]´ | (`:´|`.´) (ID_int|ID_nat) | `!´ }
+Loc_03 ::= `(´ Loc_01 [as (Type | `/´(nohold|plain|pure)) `)´
          |  ID_int
          |  ID_nat
          |  outer
          |  `{´ &lt;code in C&gt; `}´
+</code></pre>
+
+<p>The list that follows enumerates all valid locations:</p>
+<ul>
+<li>storage class entity: variable, vector, internal event (but not external), or pool</li>
+<li>native expressions and symbols</li>
+<li>data field (which are storage class entities)</li>
+<li>typecast</li>
+<li>vector index</li>
+<li>vector length <code>$</code></li>
+<li>pointer dereferencing <code>*</code></li>
+<li>option dereferencing <code>!</code></li>
+</ul>
+<p>Locations appear in assignments, event manipulation, iterators, and
+expressions.</p>
+<p>Examples:</p>
+<pre><code class="ceu">emit e(1);          // &quot;e&quot; is an internal event
+_UDR = 10;          // &quot;_UDR&quot; is a native symbol
+person.age = 70;    // &quot;age&quot; is a variable in &quot;person&quot;
+vec[0] = $vec;      // &quot;vec[0]&quot; is a vector index
+$vec = 1;           // &quot;$vec&quot; is a vector length
+*ptr = 1;           // &quot;ptr&quot; is a pointer to a variable
+a! = 1;             // &quot;a&quot; is of an option type
 </code></pre>
               
             </div>

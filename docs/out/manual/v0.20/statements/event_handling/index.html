@@ -226,7 +226,7 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../storage_classes/names/">Names</a>
+        <a class="" href="../../storage_classes/locations/">Locations</a>
         
     </li>
 
@@ -290,6 +290,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../conditional/">Conditional</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../loops/">Loops</a>
         
     </li>
 
@@ -430,7 +437,7 @@
 event occurs.
 The event can be an <a href="#TODO">external input event</a>, an <a href="#TODO">internal event</a>,
 a timer, a <a href="#TODO">pausing event</a>, or forever (i.e., never awake):</p>
-<pre><code class="ceu">Await ::= await (ID_ext | Name) [until Exp]     /* events */
+<pre><code class="ceu">Await ::= await (ID_ext | Loc) [until Exp]      /* events */
        |  await (WCLOCKK|WCLOCKE)               /* timers */
        |  await (pause|resume)                  /* pausing events */
        |  await FOREVER                         /* forever */
@@ -515,7 +522,7 @@ end
 <p>The <code>emit</code> statement broadcasts an event to the whole program.
 The event can be an <a href="#TODO">external event</a>, an <a href="#TODO">internal event</a>, or
 a timer:</p>
-<pre><code class="ceu">Emit ::= emit (ID_ext | Name) [`(´ [LIST(Exp)] `)´)]
+<pre><code class="ceu">Emit ::= emit (ID_ext | Loc) [`(´ [LIST(Exp)] `)´)]
       |  emit (WCLOCKK|WCLOCKE)
 </code></pre>
 

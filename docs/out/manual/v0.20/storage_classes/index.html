@@ -233,7 +233,7 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="names/">Names</a>
+        <a class="" href="locations/">Locations</a>
         
     </li>
 
@@ -284,6 +284,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../statements/conditional/">Conditional</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../statements/loops/">Loops</a>
         
     </li>
 
@@ -419,21 +426,22 @@
             <div class="section">
               
                 <h1 id="storage-classes">Storage Classes</h1>
-<p>Storage classes represent all entities that are stored in memory at runtime.
+<p>Storage classes represent all entities that are stored in memory during
+execution.
 Céu supports <em>variables</em>, <em>vectors</em>, <em>events</em> (external and internal), and
-<em>pools</em> as storage classes.
-An entity <a href="#TODO">declaration</a> consists of a storage class,
+<em>pools</em> as storage classes.</p>
+<p>An entity <a href="#TODO">declaration</a> consists of a storage class,
 a <a href="#TODO">type</a>, and an <a href="#TODO">identifier</a>.</p>
 <p>Examples:</p>
 <pre><code class="ceu">var       int    v;     // &quot;v&quot; is a variable of type &quot;int&quot;
 vector[9] byte   buf;   // &quot;buf&quot; is a vector with at most 9 values of type &quot;byte&quot;
-input     void&amp;&amp; A;     // &quot;A&quot; is an external event that carries values of type &quot;void&amp;&amp;&quot;
+input     void&amp;&amp; A;     // &quot;A&quot; is an input event that carries values of type &quot;void&amp;&amp;&quot;
 event     bool   e;     // &quot;e&quot; is an internal event that carries values of type &quot;bool&quot;
 pool[]    Anim   anims; // &quot;anims&quot; is a dynamic &quot;pool&quot; for instances of type &quot;Anim&quot;
 </code></pre>
 
-<p>A declaration binds the identifier with a memory location to hold values of the
-associated type.</p>
+<p>A declaration binds the identifier with a memory location that holds values of
+the associated type.</p>
               
             </div>
           </div>

@@ -233,7 +233,7 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../storage_classes/names/">Names</a>
+        <a class="" href="../../storage_classes/locations/">Locations</a>
         
     </li>
 
@@ -284,6 +284,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../statements/conditional/">Conditional</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../statements/loops/">Loops</a>
         
     </li>
 
@@ -419,15 +426,14 @@
             <div class="section">
               
                 <h2 id="environments">Environments</h2>
-<p>As a reactive language, Céu depends on an external host platform, known as
-<em>environment</em>, which determines the <code>input</code> and <code>output</code> events programs can
-use.</p>
+<p>As a reactive language, Céu depends on an external host platform, known as an
+<em>environment</em>, which exposes <code>input</code> and <code>output</code> events programs can use.</p>
 <p>An environment senses the world and broadcasts <code>input</code> events to programs.
-It also intercepts emits on <code>output</code> events from programs to actuate in the
+It also intercepts programs signalling <code>output</code> events to actuate in the
 world:</p>
 <p><img alt="" src="../environment.png" /></p>
-<p>As examples of possible environments, an embedded systems may provide button
-input and LED output, while a video game engine may provide keyboard input and
+<p>As examples of typical environments, an embedded system may provide button
+input and LED output, and a video game engine may provide keyboard input and
 video output.</p>
               
             </div>

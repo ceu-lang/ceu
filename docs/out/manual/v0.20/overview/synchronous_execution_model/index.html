@@ -233,7 +233,7 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../storage_classes/names/">Names</a>
+        <a class="" href="../../storage_classes/locations/">Locations</a>
         
     </li>
 
@@ -284,6 +284,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../statements/conditional/">Conditional</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../statements/loops/">Loops</a>
         
     </li>
 
@@ -420,7 +427,7 @@
               
                 <h2 id="synchronous-execution-model">Synchronous Execution Model</h2>
 <p>Céu is grounded on a precise definition of <em>logical time</em> (as opposed to
-<em>physical</em>) as a discrete sequence of external input events:
+<em>physical</em>) as a discrete sequence of input events:
 a sequence because only a single input event is handled at a logical time; 
 discrete because reactions to events are guaranteed to execute in bounded
 physical time (see <a href="#TODO">Bounded Execution</a>).</p>
@@ -428,18 +435,18 @@ physical time (see <a href="#TODO">Bounded Execution</a>).</p>
 <ol>
 <li>The program initiates the <em>boot reaction</em> from the first line of code in a
    single trail.</li>
-<li>Active trails<sup>1</sup>, one after another, execute until they await or
-   terminate.
-   This step is named a <em>reaction chain</em>, and always runs in bounded time.</li>
+<li>Active trails, one after another, execute until they await or terminate.
+   This step is named a <em>reaction chain</em>, and always runs in bounded time.
+   New trails can be created with <a href="#TODO">parallel compositions</a>.</li>
 <li>The program goes idle.</li>
-<li>On the occurrence of a new external input event, <em>all</em> trails awaiting that
-   event awake.
+<li>On the occurrence of a new input event, <em>all</em> trails awaiting that event
+   awake.
    It then goes to step 2.</li>
 </ol>
 <p>The synchronous execution model of Céu is based on the hypothesis that reaction
 chains run <em>infinitely faster</em> in comparison to the rate of input events.
-A reaction chain is the set of computations that execute when an input event
-occurs.
+A reaction chain, aka. <em>external reaction</em>, is the set of computations that
+execute when an input event occurs.
 Conceptually, a program takes no time on step 2 and is always idle on step 3.
 In practice, if a new input event occurs while a reaction chain is 
 running (step 2), it is enqueued to run in the next reaction.

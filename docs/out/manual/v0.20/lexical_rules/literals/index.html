@@ -152,9 +152,9 @@
                 
                     <li><a class="toctree-l4" href="#floats">Floats</a></li>
                 
-                    <li><a class="toctree-l4" href="#null-pointer">Null pointer</a></li>
-                
                     <li><a class="toctree-l4" href="#strings">Strings</a></li>
+                
+                    <li><a class="toctree-l4" href="#null-pointer">Null pointer</a></li>
                 
             
             </ul>
@@ -243,7 +243,7 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../storage_classes/names/">Names</a>
+        <a class="" href="../../storage_classes/locations/">Locations</a>
         
     </li>
 
@@ -294,6 +294,13 @@
             
     <li class="toctree-l1 ">
         <a class="" href="../../statements/conditional/">Conditional</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../statements/loops/">Loops</a>
         
     </li>
 
@@ -429,33 +436,43 @@
             <div class="section">
               
                 <h2 id="literals">Literals</h2>
+<p>Céu supports literals for <em>booleans</em>, <em>integers</em>, <em>floats</em>, <em>strings</em>, and
+<em>null pointers</em>.</p>
+<!--
+A literal is a primitive and fixed value in source code.
+A literal is a source code representation of a value. 
+-->
+
 <h3 id="booleans">Booleans</h3>
-<p>The boolean type has two values, <code>true</code> and <code>false</code>.</p>
+<p>The boolean type has only two possible values: <code>true</code> and <code>false</code>.</p>
 <h3 id="integers">Integers</h3>
-<p>Integer values can be written in decimal and hexadecimal bases:</p>
+<p>Céu supports decimal and hexadecimal integers:</p>
 <ul>
-<li>Decimals are written <em>as is</em>.</li>
-<li>Hexadecimals are prefixed with <tt>0x</tt>.
-&lt;!--</li>
-<li><code>TODO: "0b---", "0o---"</code>
---&gt;</li>
+<li>Decimals: a sequence of digits (i.e., <code>[0-9]+</code>).</li>
+<li>Hexadecimals: a sequence of hexadecimal digits (i.e., <code>[0-9, a-f, A-F]+</code>)
+                prefixed by <tt>0x</tt>.</li>
 </ul>
+<!--
+* `TODO: "0b---", "0o---"`
+-->
+
 <p>Examples:</p>
 <pre><code class="ceu">// both are equal to the decimal 127
-v = 127;
-v = 0x7F;
+v = 127;    // decimal
+v = 0x7F;   // hexadecimal
 </code></pre>
 
 <h3 id="floats">Floats</h3>
 <p><code>TODO (like C)</code></p>
-<h3 id="null-pointer">Null pointer</h3>
-<p>The <code>null</code> literal represents null <a href="#TODO">pointers</a>.</p>
 <h3 id="strings">Strings</h3>
 <p>A sequence of characters surrounded by <code>"</code> is converted into a <em>null-terminated 
 string</em>, just like in C:</p>
 <p>Example:</p>
 <pre><code class="ceu">_printf(&quot;Hello World!\n&quot;);
 </code></pre>
+
+<h3 id="null-pointer">Null pointer</h3>
+<p>The <code>null</code> literal represents <a href="#TODO">null pointers</a>.</p>
               
             </div>
           </div>
