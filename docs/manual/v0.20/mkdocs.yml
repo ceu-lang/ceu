@@ -28,7 +28,7 @@ pages:
         - Storage Classes:  'storage_classes/index.md'
         - Lexical Scope:    'storage_classes/lexical_scope.md'
         - Classes:          'storage_classes/classes.md'
-        - Names:            'storage_classes/names.md'
+        - Locations:        'storage_classes/locations.md'
         - References:       'storage_classes/references.md'
     - Statements:
         - Statements:                       'statements/index.md'
@@ -36,6 +36,7 @@ pages:
         - Assignments:                      'statements/assignments.md'
         - Event Handling:                   'statements/event_handling.md'
         - Conditional:                      'statements/conditional.md'
+        - Loops:                            'statements/loops.md'
         - Parallel Compositions:            'statements/parallel_compositions.md'
         - Pausing:                          'statements/pausing.md'
         - Asynchronous Execution:           'statements/asynchronous_execution.md'
