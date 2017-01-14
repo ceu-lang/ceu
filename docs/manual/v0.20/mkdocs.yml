@@ -42,7 +42,7 @@ pages:
         - Asynchronous Execution:           'statements/asynchronous_execution.md'
         - C Integration:                    'statements/c_integration.md'
         - Lua Integration:                  'statements/lua_integration.md'
-        - Abstraction:                      'statements/abstractions.md'
+        - Abstractions:                     'statements/abstractions.md'
         - Synchronous Control Statements:   'statements/synchronous_control_statements.md'
     - Expressions:     'expressions/index.md'
     - Static Checks:   'static_checks/index.md'

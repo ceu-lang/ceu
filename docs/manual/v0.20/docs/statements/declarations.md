@@ -1,7 +1,7 @@
 ## Declarations
 
-A declaration exposes a [storage entity](#TODO) to the program.
-Declarations have [lexical scope](#TODO).
+A declaration introduces a [storage entity](#TODO) to the enclosing block.
+All declarations are subject to [lexical scope](#TODO).
 
 Céu supports variables, vectors, external events, internal events, and pools:
 
@@ -13,12 +13,16 @@ Ext  ::= input  (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
 Int  ::= event [`&´|`&?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Cons])
 Pool ::= pool [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Cons])
 
-Vec_Cons ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´) }
+Cons ::= /* (see Assignments) */
 ```
 
-See also [Storage Classes](#TODO) for an overview of storage entities.
+Most declarations support an initialization [assignment](#TODO).
 
-### Variable
+<!--
+See also [Storage Classes](#TODO) for an overview of storage entities.
+-->
+
+### Variables
 
 A [variable](#TODO) declaration has an associated [type](#TODO) and can be
 optionally [initialized](#TODO).
@@ -33,16 +37,16 @@ var  int a=0, b=3;  // "a" and "b" are integer variables initialized to 0 and 3
 var& int z = &v;    // "z" is an alias to "v"
 ```
 
-### Vector
+### Vectors
 
-A [vector](#TODO) declaration has a dimension, an associated [type](#TODO) and
-can be optionally [initialized](#TODO).
+A [vector](#TODO) declaration specifies a [dimension](#TODO) between brackets,
+an associated [type](#TODO) and can be optionally [initialized](#TODO).
 A single statement can declare multiple vectors of the same dimension and type.
 Declarations can also be [aliases](#TODO).
-The expression between the brackets specifies the [dimension](#TODO) of the
-vector.
 
-`TODO: constructor`
+<!--
+`TODO: unmacthing [] in binding`
+-->
 
 Examples:
 
@@ -54,15 +58,18 @@ vector[]   int vs3 = [];    // "vs3" is an unbounded vector
 vector&[]  int vs4 = &vs1;  // "vs4" is an alias to "vs1"
 ```
 
-### Event
+### Events
 
-An [event](#TODO) has a [type](#TODO) for the value it carries when occurring.
+An [event](#TODO) declaration specifies a [type](#TODO) for the values it
+carries when occurring.
 It can be also a list of types if the event communicates multiple values.
 A single statement can declare multiple events of the same type.
 
+<!--
 See also [Introduction](#TODO) for a general overview of events.
+-->
 
-#### External Event
+#### External Events
 
 Examples:
 
@@ -72,11 +79,11 @@ output int  MY_EVT;     // "MY_EVT" is an output event carrying integer values
 input (int,byte&&) BUF; // "BUF" is an input event carrying an "(int,byte&&)" pair
 ```
 
-### Internal Event
+#### Internal Events
 
 Declarations for internal events can also be [aliases](#TODO) or
 [option aliases](#TODO).
-Only in this case they can contain an [initialization](#TODO).
+Only in this case they can be [initialized](#TODO).
 
 Examples:
 
@@ -86,12 +93,14 @@ event& void z = &a;     // "z" is an alias to event "a"
 event (int,int) c;      // "c" is a internal event carrying an "(int,int)" pair
 ```
 
-### Pool
+### Pools
 
-A [pool](#TODO) has a dimension, an associated [type](#TODO) and can be
-optionally [initialized](#TODO).
+A [pool](#TODO) declaration specifies a dimension and an associated
+[type](#TODO).
 A single statement can declare multiple pools of the same dimension and type.
-Declarations can also be [aliases](#TODO).
+Declarations for pools can also be [aliases](#TODO).
+Only in this case they can be [initialized](#TODO).
+
 The expression between the brackets specifies the [dimension](#TODO) of the
 pool.
 
@@ -103,14 +112,18 @@ pool[10] Play plays;        // "plays" is a static pool of 10 elements max
 pool&[]  Play a = &plays;   // "a" is an alias to "plays"
 ```
 
+<!--
 See also [Code Invocation](#TODO).
+-->
 
+<!--
 `TODO: data`
+-->
 
 ### Dimension
 
-A declaration for [vector](#TODO) or [pool](#TODO) requires an expression
-between brackets to specify its [dimension](#TODO) as follows:
+Declarations for [vectors](#TODO) or [pools](#TODO) require an expression
+between brackets to specify a [dimension](#TODO) as follows:
 
 - *constant expression*: Maximum number of elements is fixed and space is
                          statically pre-allocated.
@@ -119,5 +132,4 @@ between brackets to specify its [dimension](#TODO) as follows:
                          The expression is evaulated once at declaration time.
 - *omitted*: Maximum number of elements is unbounded and space is dynamically
              allocated.
-
-The space for dynamic dimensions grow and shrink automatically.
+             The space for dynamic dimensions grow and shrink automatically.

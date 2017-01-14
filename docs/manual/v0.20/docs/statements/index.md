@@ -1,7 +1,7 @@
 # Statements
 
-A program in Céu is a sequence of statements delimited by an enclosing block as
-follows:
+A program in Céu is a sequence of statements delimited by an implicit enclosing
+block:
 
 ```ceu
 Program ::= Block
