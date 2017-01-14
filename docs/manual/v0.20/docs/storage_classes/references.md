@@ -1,19 +1,21 @@
 ## References
 
-Céu supports *aliases* and *pointers* as references to entities
-(a.k.a. as *strong* and *weak* references, respectively).
+Céu supports *aliases* and *pointers* as references to entities, aka *strong*
+and *weak* references, respectively.
 
-An alias is an alternate view for an entity---after the entity and alias are
+An alias is an alternate view for an entity: after the entity and alias are
 bounded, they are indistinguishable.
-A pointer is the address of an entity and provides indirect access to it.
+
+A pointer is a value that is the address of an entity, providing indirect
+access to it.
 
 As an analogy with a person's identity,
-a family nickname used by her family to refer to her is an alias;
-a job position used by her company to refer to her is a pointer.
+a family nickname referring to a person is an alias;
+a job position referring to a person is a pointer.
 
 ### Aliases
 
-An alias is [declared](#TODO) by suffixing the storage class with the modifier
+An alias is declared by suffixing the storage class with the modifier
 `&` and is acquired by prefixing an entity with the operator `&`.
 
 Example:
@@ -35,7 +37,7 @@ It is not possible to acquire aliases to external events or to pointer types.
 
 ### Pointers
 
-A pointer is [declared](#TODO) by suffixing the type with the modifier
+A pointer is declared by suffixing the type with the modifier
 `&&` and is acquired by prefixing an entity with the operator `&&`.
 Applying the operator `*` to a pointer provides indirect access to its
 referenced entity.
@@ -50,9 +52,12 @@ var int&& p = &&v;      // "p" holds a pointer to "v"
 _printf("%d\n", v);     // prints 1
 ```
 
-Céu only supports pointers to [primitive](#TODO) and
-[data abstraction](#TODO) types.
-Also, it is only possible to acquire pointers to variables (not to events,
-vectors, or pools).
-However, a variable of a pointer type is only visible between its declaration
-and the next [yielding statement](#TODO).
+The following restrictions apply to pointers in Céu:
+
+<!--
+- Only pointers to [primitive](#TODO) and [data abstraction](#TODO) types
+  are valid.
+-->
+- No support for pointers to events, vectors, or pools (only variables).
+- A pointer is only accessible between its declaration and the next
+  [yielding statement](#TODO).

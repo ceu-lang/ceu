@@ -20,7 +20,7 @@ The execution model for Céu programs is as follows:
 
 The synchronous execution model of Céu is based on the hypothesis that reaction
 chains run *infinitely faster* in comparison to the rate of input events.
-A reaction chain, aka. *external reaction*, is the set of computations that
+A reaction chain, aka *external reaction*, is the set of computations that
 execute when an input event occurs.
 Conceptually, a program takes no time on step 2 and is always idle on step 3.
 In practice, if a new input event occurs while a reaction chain is 

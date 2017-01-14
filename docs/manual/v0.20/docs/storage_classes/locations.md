@@ -1,6 +1,6 @@
 ## Locations
 
-A location (aka. *l-value*) is a path to a memory location holding a storage
+A location (aka *l-value*) is a path to a memory location holding a storage
 class entity ([`ID_int`](#TODO)) or a native symbol ([`ID_nat`](#TODO)):
 
 ```
