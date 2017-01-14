@@ -261,15 +261,13 @@
             
                 <li class="toctree-l3"><a href="#declarations">Declarations</a></li>
                 
-                    <li><a class="toctree-l4" href="#variable">Variable</a></li>
+                    <li><a class="toctree-l4" href="#variables">Variables</a></li>
                 
-                    <li><a class="toctree-l4" href="#vector">Vector</a></li>
+                    <li><a class="toctree-l4" href="#vectors">Vectors</a></li>
                 
-                    <li><a class="toctree-l4" href="#event">Event</a></li>
+                    <li><a class="toctree-l4" href="#events">Events</a></li>
                 
-                    <li><a class="toctree-l4" href="#internal-event">Internal Event</a></li>
-                
-                    <li><a class="toctree-l4" href="#pool">Pool</a></li>
+                    <li><a class="toctree-l4" href="#pools">Pools</a></li>
                 
                     <li><a class="toctree-l4" href="#dimension">Dimension</a></li>
                 
@@ -344,7 +342,7 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../abstractions/">Abstraction</a>
+        <a class="" href="../abstractions/">Abstractions</a>
         
     </li>
 
@@ -438,8 +436,8 @@
             <div class="section">
               
                 <h2 id="declarations">Declarations</h2>
-<p>A declaration exposes a <a href="#TODO">storage entity</a> to the program.
-Declarations have <a href="#TODO">lexical scope</a>.</p>
+<p>A declaration introduces a <a href="#TODO">storage entity</a> to the enclosing block.
+All declarations are subject to <a href="#TODO">lexical scope</a>.</p>
 <p>Céu supports variables, vectors, external events, internal events, and pools:</p>
 <pre><code class="ceu">Var  ::= var [`&amp;´|`&amp;?´] Type LIST(ID_int [`=´ Cons])
 Vec  ::= vector [`&amp;´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Cons])
@@ -448,11 +446,15 @@ Ext  ::= input  (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
 Int  ::= event [`&amp;´|`&amp;?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Cons])
 Pool ::= pool [`&amp;´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Cons])
 
-Vec_Cons ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´) }
+Cons ::= /* (see Assignments) */
 </code></pre>
 
-<p>See also <a href="#TODO">Storage Classes</a> for an overview of storage entities.</p>
-<h3 id="variable">Variable</h3>
+<p>Most declarations support an initialization <a href="#TODO">assignment</a>.</p>
+<!--
+See also [Storage Classes](#TODO) for an overview of storage entities.
+-->
+
+<h3 id="variables">Variables</h3>
 <p>A <a href="#TODO">variable</a> declaration has an associated <a href="#TODO">type</a> and can be
 optionally <a href="#TODO">initialized</a>.
 A single statement can declare multiple variables of the same type.
@@ -463,14 +465,15 @@ var  int a=0, b=3;  // &quot;a&quot; and &quot;b&quot; are integer variables ini
 var&amp; int z = &amp;v;    // &quot;z&quot; is an alias to &quot;v&quot;
 </code></pre>
 
-<h3 id="vector">Vector</h3>
-<p>A <a href="#TODO">vector</a> declaration has a dimension, an associated <a href="#TODO">type</a> and
-can be optionally <a href="#TODO">initialized</a>.
+<h3 id="vectors">Vectors</h3>
+<p>A <a href="#TODO">vector</a> declaration specifies a <a href="#TODO">dimension</a> between brackets,
+an associated <a href="#TODO">type</a> and can be optionally <a href="#TODO">initialized</a>.
 A single statement can declare multiple vectors of the same dimension and type.
-Declarations can also be <a href="#TODO">aliases</a>.
-The expression between the brackets specifies the <a href="#TODO">dimension</a> of the
-vector.</p>
-<p><code>TODO: constructor</code></p>
+Declarations can also be <a href="#TODO">aliases</a>.</p>
+<!--
+`TODO: unmacthing [] in binding`
+-->
+
 <p>Examples:</p>
 <pre><code class="ceu">var int n = 10;
 vector[10] int vs1 = [];    // &quot;vs1&quot; is a static vector of 10 elements max
@@ -479,34 +482,39 @@ vector[]   int vs3 = [];    // &quot;vs3&quot; is an unbounded vector
 vector&amp;[]  int vs4 = &amp;vs1;  // &quot;vs4&quot; is an alias to &quot;vs1&quot;
 </code></pre>
 
-<h3 id="event">Event</h3>
-<p>An <a href="#TODO">event</a> has a <a href="#TODO">type</a> for the value it carries when occurring.
+<h3 id="events">Events</h3>
+<p>An <a href="#TODO">event</a> declaration specifies a <a href="#TODO">type</a> for the values it
+carries when occurring.
 It can be also a list of types if the event communicates multiple values.
 A single statement can declare multiple events of the same type.</p>
-<p>See also <a href="#TODO">Introduction</a> for a general overview of events.</p>
-<h4 id="external-event">External Event</h4>
+<!--
+See also [Introduction](#TODO) for a general overview of events.
+-->
+
+<h4 id="external-events">External Events</h4>
 <p>Examples:</p>
 <pre><code class="ceu">input  void A,B;        // &quot;A&quot; and &quot;B&quot; are input events carrying no values
 output int  MY_EVT;     // &quot;MY_EVT&quot; is an output event carrying integer values
 input (int,byte&amp;&amp;) BUF; // &quot;BUF&quot; is an input event carrying an &quot;(int,byte&amp;&amp;)&quot; pair
 </code></pre>
 
-<h3 id="internal-event">Internal Event</h3>
+<h4 id="internal-events">Internal Events</h4>
 <p>Declarations for internal events can also be <a href="#TODO">aliases</a> or
 <a href="#TODO">option aliases</a>.
-Only in this case they can contain an <a href="#TODO">initialization</a>.</p>
+Only in this case they can be <a href="#TODO">initialized</a>.</p>
 <p>Examples:</p>
 <pre><code class="ceu">event  void a,b;        // &quot;a&quot; and &quot;b&quot; are internal events carrying no values
 event&amp; void z = &amp;a;     // &quot;z&quot; is an alias to event &quot;a&quot;
 event (int,int) c;      // &quot;c&quot; is a internal event carrying an &quot;(int,int)&quot; pair
 </code></pre>
 
-<h3 id="pool">Pool</h3>
-<p>A <a href="#TODO">pool</a> has a dimension, an associated <a href="#TODO">type</a> and can be
-optionally <a href="#TODO">initialized</a>.
+<h3 id="pools">Pools</h3>
+<p>A <a href="#TODO">pool</a> declaration specifies a dimension and an associated
+<a href="#TODO">type</a>.
 A single statement can declare multiple pools of the same dimension and type.
-Declarations can also be <a href="#TODO">aliases</a>.
-The expression between the brackets specifies the <a href="#TODO">dimension</a> of the
+Declarations for pools can also be <a href="#TODO">aliases</a>.
+Only in this case they can be <a href="#TODO">initialized</a>.</p>
+<p>The expression between the brackets specifies the <a href="#TODO">dimension</a> of the
 pool.</p>
 <p>Examples:</p>
 <pre><code class="ceu">code/await Play (...) do ... end
@@ -514,11 +522,17 @@ pool[10] Play plays;        // &quot;plays&quot; is a static pool of 10 elements
 pool&amp;[]  Play a = &amp;plays;   // &quot;a&quot; is an alias to &quot;plays&quot;
 </code></pre>
 
-<p>See also <a href="#TODO">Code Invocation</a>.</p>
-<p><code>TODO: data</code></p>
+<!--
+See also [Code Invocation](#TODO).
+-->
+
+<!--
+`TODO: data`
+-->
+
 <h3 id="dimension">Dimension</h3>
-<p>A declaration for <a href="#TODO">vector</a> or <a href="#TODO">pool</a> requires an expression
-between brackets to specify its <a href="#TODO">dimension</a> as follows:</p>
+<p>Declarations for <a href="#TODO">vectors</a> or <a href="#TODO">pools</a> require an expression
+between brackets to specify a <a href="#TODO">dimension</a> as follows:</p>
 <ul>
 <li><em>constant expression</em>: Maximum number of elements is fixed and space is
                          statically pre-allocated.</li>
@@ -526,9 +540,9 @@ between brackets to specify its <a href="#TODO">dimension</a> as follows:</p>
                          dynamically allocated.
                          The expression is evaulated once at declaration time.</li>
 <li><em>omitted</em>: Maximum number of elements is unbounded and space is dynamically
-             allocated.</li>
+             allocated.
+             The space for dynamic dimensions grow and shrink automatically.</li>
 </ul>
-<p>The space for dynamic dimensions grow and shrink automatically.</p>
               
             </div>
           </div>

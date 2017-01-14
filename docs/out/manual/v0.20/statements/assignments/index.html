@@ -336,7 +336,7 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../abstractions/">Abstraction</a>
+        <a class="" href="../abstractions/">Abstractions</a>
         
     </li>
 
@@ -430,8 +430,8 @@
             <div class="section">
               
                 <h2 id="assignments">Assignments</h2>
-<p>An assignment associates the statement or expression at the right side of <code>=</code>
-with the name(s) at the left side:</p>
+<p>An assignment associates the statement or expression at the right side of the
+symbol <code>=</code> with the location(s) at the left side:</p>
 <pre><code class="ceu">Set ::= (Loc | `(´ LIST(Loc|`_´) `)´) `=´ Cons
 
 Cons ::= ( Do
@@ -447,14 +447,20 @@ Cons ::= ( Do
          | Data_Cons
          | `_´
          | Exp )
+
+Vec_Cons ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´) }
 </code></pre>
 
+<p><code>TODO: links to Cons's</code></p>
+<p><code>TODO: examples</code></p>
+<p><code>TODO: vector constructor</code></p>
 <h3 id="copy-assignment">Copy Assignment</h3>
 <p>A <em>copy assignment</em> evaluates the statement or expression at the right side and
-copies the result(s) to the name(s).</p>
+copies the result(s) to the location(s) at the left side.</p>
 <h3 id="alias-assignment">Alias Assignment</h3>
-<p>An <em>alias assignment</em> makes the name at the left side to be a synonym to the
-expression at the right side.</p>
+<p>An <em>alias assignment</em>, aka <em>binding</em>, makes the location at the left side to be
+an <a href="#TODO">alias</a> to the expression at the right side.</p>
+<p>The right side of a binding is always prefixed by the operator <code>&amp;</code>.</p>
               
             </div>
           </div>

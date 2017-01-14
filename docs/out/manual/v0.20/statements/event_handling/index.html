@@ -338,7 +338,7 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../abstractions/">Abstraction</a>
+        <a class="" href="../abstractions/">Abstractions</a>
         
     </li>
 
@@ -433,10 +433,9 @@
               
                 <h2 id="event-handling">Event Handling</h2>
 <h3 id="await">Await</h3>
-<p>The <code>await</code> statement halts the running trail until the referred
-event occurs.
-The event can be an <a href="#TODO">external input event</a>, an <a href="#TODO">internal event</a>,
-a timer, a <a href="#TODO">pausing event</a>, or forever (i.e., never awake):</p>
+<p>The <code>await</code> statement halts the running trail until the specified event occurs.
+The event can be an <a href="#TODO">input event</a>, an <a href="#TODO">internal event</a>, a timer,
+a <a href="#TODO">pausing event</a>, or forever (i.e., never awakes):</p>
 <pre><code class="ceu">Await ::= await (ID_ext | Loc) [until Exp]      /* events */
        |  await (WCLOCKK|WCLOCKE)               /* timers */
        |  await (pause|resume)                  /* pausing events */
@@ -444,11 +443,11 @@ a timer, a <a href="#TODO">pausing event</a>, or forever (i.e., never awake):</p
 </code></pre>
 
 <p>Examples:</p>
-<pre><code class="ceu">await A;                  // awaits the input event `A`
-await a;                  // awaits the internal event `a`
+<pre><code class="ceu">await A;                  // awaits the input event &quot;A&quot;
+await a until v==10;      // awaits the internal event &quot;a&quot; until the condition is satisfied
 
 await 1min10s30ms100us;   // awaits the specified time
-await (t)ms;              // awaits the current value of the variable `t` in milliseconds
+await (t)ms;              // awaits the current value of the variable &quot;t&quot; in milliseconds
 
 await FOREVER;            // awaits forever
 </code></pre>
@@ -456,10 +455,10 @@ await FOREVER;            // awaits forever
 <p>An <code>await</code> evaluates to zero or more values which can be captured with an
 optional <a href="#TODO">assignment</a>.</p>
 <h4 id="event">Event</h4>
-<p>The <code>await</code> statement for events halts the running trail until the referred
-<a href="#TODO">external input event</a> or  <a href="#TODO">internal event</a> occurs.</p>
-<p>The <code>await</code> evaluates to a value of the type of the event.</p>
-<p>The optional clause <code>until</code> tests an additional condition required to awake.
+<p>The <code>await</code> statement for events halts the running trail until the specified
+<a href="#TODO">input event</a> or <a href="#TODO">internal event</a> occurs.
+The <code>await</code> evaluates to a value of the type of the event.</p>
+<p>The optional clause <code>until</code> tests an awaking condition.
 The condition can use the returned value from the <code>await</code>.
 It expands to a <a href="#TODO"><code>loop</code></a> as follows:</p>
 <pre><code class="ceu">loop do
@@ -471,8 +470,8 @@ end
 </code></pre>
 
 <p>Examples:</p>
-<pre><code class="ceu">input int E;                    // &quot;E&quot; is an external input event carrying &quot;int&quot; values
-var int v = await E until v&gt;10; // assigns occurring &quot;E&quot; to &quot;v&quot;, awaking when &quot;v&gt;10&quot;
+<pre><code class="ceu">input int E;                    // &quot;E&quot; is an input event carrying &quot;int&quot; values
+var int v = await E until v&gt;10; // assigns occurring &quot;E&quot; to &quot;v&quot;, awaking only when &quot;v&gt;10&quot;
 
 event (bool,int) e;             // &quot;e&quot; is an internal event carrying &quot;(bool,int)&quot; pairs
 var bool v1;
@@ -481,15 +480,18 @@ var int  v2;
 </code></pre>
 
 <h4 id="timer">Timer</h4>
-<p>The <code>await</code> statement for timers halts the running trail until the referred
-timer expires.</p>
-<p><code>WCLOCKK</code> specifies a constant time expressed as a sequence of value/unit
-pairs.
-<code>WCLOCKE</code> specifies an <a href="#TODO">integer</a> expression in parenthesis followed by a
-single unit of time.</p>
+<p>The <code>await</code> statement for timers halts the running trail until the specified
+timer expires:</p>
+<ul>
+<li><code>WCLOCKK</code> specifies a constant timer expressed as a sequence of value/unit
+  pairs.</li>
+<li><code>WCLOCKE</code> specifies an <a href="#TODO">integer</a> expression in parenthesis followed by a
+  single unit of time.</li>
+</ul>
 <p>The <code>await</code> evaluates to a value of type <code>s32</code> and is the
-<em>residual delta time (<code>dt</code>)</em> measured in microseconds.
-It is the difference between the actual elapsed time and the requested time.</p>
+<em>residual delta time (<code>dt</code>)</em> measured in microseconds:
+    the difference between the actual elapsed time and the requested time.
+The residual <code>dt</code> is always greater than or equal to 0.</p>
 <p>If a program awaits timers in sequence (or in a <code>loop</code>), the residual <code>dt</code> from
 the preceding timer is reduced from the timer in sequence.</p>
 <p>Examples:</p>
@@ -497,12 +499,11 @@ the preceding timer is reduced from the timer in sequence.</p>
 await (t)ms;                // awakes after &quot;t&quot; milliseconds
 </code></pre>
 
-<pre><code class="ceu">var int dt = await 100us;   // if 1ms elapses,  1000&gt;100, dt=900us
-await 100us;                // timer is expired, 900&gt;100, dt=800us
-await 1ms;                  // timer only awaits 200us (1000-800)
+<pre><code class="ceu">var int dt = await 100us;   // if 1000us elapses, then dt=900us (1000-100)
+await 100us;                // since dt=900, this timer is also expired, now dt=800us (900-100)
+await 1ms;                  // this timer only awaits 200us (1000-800)
 </code></pre>
 
-<p><em>Note: The residual <code>dt</code> is always greater than or equal to 0.</em></p>
 <!--
 Refer to [[#Environment]] for information about storage types for *wall-clock*
 time.
@@ -513,8 +514,9 @@ time.
 <h4 id="forever"><code>FOREVER</code></h4>
 <p>The <code>await</code> statement for <code>FOREVER</code> halts the running trail forever.
 It cannot be used in assignments because it never evaluates to anything.</p>
-<pre><code class="ceu">if &lt;cnd&gt; then
-    await FOREVER;  // this trail never awakes if the condition is true
+<p>Example:</p>
+<pre><code class="ceu">if v==10 then
+    await FOREVER;  // this trail never awakes if condition is true
 end
 </code></pre>
 
@@ -527,7 +529,7 @@ a timer:</p>
 </code></pre>
 
 <p>Examples:</p>
-<pre><code class="ceu">emit A;         // emits the external event `A` of type &quot;void&quot;
+<pre><code class="ceu">emit A;         // emits the output event `A` of type &quot;void&quot;
 emit a(1);      // emits the internal event `a` of type &quot;int&quot;
 
 emit 1s;        // emits the specified time
@@ -535,16 +537,13 @@ emit (t)ms;     // emits the current value of the variable `t` in milliseconds
 </code></pre>
 
 <h4 id="events">Events</h4>
-<p>The <code>emit</code> statement for events expects a specific number of arguments matching
-the event type (unless the event is of type <code>void</code>).</p>
-<ul>
-<li>An <code>emit</code> to an external input or timer event can only occur inside
-  <a href="#TODO">asynchronous blocks</a>.</li>
-<li>An <code>emit</code> to an external output event is also an expression that evaluates
-  to a value of type <code>s32</code> and can be captured with an optional
-  <a href="#TODO">assignment</a> (its meaning is <a href="#TODO">platform dependent</a>).</li>
-<li>An <code>emit</code> to an internal event starts a new <a href="#TODO">internal reaction</a>.</li>
-</ul>
+<p>The <code>emit</code> statement for events expects the arguments to match the event type.</p>
+<p>An <code>emit</code> to an input or timer event can only occur inside
+<a href="#TODO">asynchronous blocks</a>.</p>
+<p>An <code>emit</code> to an output event is also an expression that evaluates to a value of
+type <code>s32</code> and can be captured with an optional <a href="#TODO">assignment</a> (its
+meaning is <a href="#TODO">platform dependent</a>).</p>
+<p>An <code>emit</code> to an internal event starts a new <a href="#TODO">internal reaction</a>.</p>
 <p>Examples:</p>
 <pre><code class="ceu">input int I;
 async do
@@ -559,8 +558,7 @@ emit e(1,2);            // broadcasts &quot;e&quot; passing a pair of &quot;int&
 </code></pre>
 
 <h4 id="timer_1">Timer</h4>
-<p>The <code>emit</code> statement for timers expects an expression of time as described in
-<a href="#TODO">Await Timer</a>.</p>
+<p>The <code>emit</code> statement for timers expects a <a href="#TODO">timer expression</a>.</p>
 <p>Like input events, time can only be emitted inside <a href="#asynchronous-blocks">asynchronous 
 blocks</a>.</p>
 <p>Examples:</p>

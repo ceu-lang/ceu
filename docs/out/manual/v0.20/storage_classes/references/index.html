@@ -336,7 +336,7 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../statements/abstractions/">Abstraction</a>
+        <a class="" href="../../statements/abstractions/">Abstractions</a>
         
     </li>
 
@@ -430,16 +430,17 @@
             <div class="section">
               
                 <h2 id="references">References</h2>
-<p>Céu supports <em>aliases</em> and <em>pointers</em> as references to entities
-(a.k.a. as <em>strong</em> and <em>weak</em> references, respectively).</p>
-<p>An alias is an alternate view for an entity---after the entity and alias are
-bounded, they are indistinguishable.
-A pointer is the address of an entity and provides indirect access to it.</p>
+<p>Céu supports <em>aliases</em> and <em>pointers</em> as references to entities, aka <em>strong</em>
+and <em>weak</em> references, respectively.</p>
+<p>An alias is an alternate view for an entity: after the entity and alias are
+bounded, they are indistinguishable.</p>
+<p>A pointer is a value that is the address of an entity, providing indirect
+access to it.</p>
 <p>As an analogy with a person's identity,
-a family nickname used by her family to refer to her is an alias;
-a job position used by her company to refer to her is a pointer.</p>
+a family nickname referring to a person is an alias;
+a job position referring to a person is a pointer.</p>
 <h3 id="aliases">Aliases</h3>
-<p>An alias is <a href="#TODO">declared</a> by suffixing the storage class with the modifier
+<p>An alias is declared by suffixing the storage class with the modifier
 <code>&amp;</code> and is acquired by prefixing an entity with the operator <code>&amp;</code>.</p>
 <p>Example:</p>
 <pre><code>var  int v = 0;
@@ -455,7 +456,7 @@ declaration and first access or next <a href="#TODO">yielding statement</a>.
 It is not possible to acquire aliases to external events or to pointer types.</p>
 <p><code>TODO: &amp;?</code></p>
 <h3 id="pointers">Pointers</h3>
-<p>A pointer is <a href="#TODO">declared</a> by suffixing the type with the modifier
+<p>A pointer is declared by suffixing the type with the modifier
 <code>&amp;&amp;</code> and is acquired by prefixing an entity with the operator <code>&amp;&amp;</code>.
 Applying the operator <code>*</code> to a pointer provides indirect access to its
 referenced entity.</p>
@@ -467,12 +468,17 @@ var int&amp;&amp; p = &amp;&amp;v;      // &quot;p&quot; holds a pointer to &quo
 _printf(&quot;%d\n&quot;, v);     // prints 1
 </code></pre>
 
-<p>Céu only supports pointers to <a href="#TODO">primitive</a> and
-<a href="#TODO">data abstraction</a> types.
-Also, it is only possible to acquire pointers to variables (not to events,
-vectors, or pools).
-However, a variable of a pointer type is only visible between its declaration
-and the next <a href="#TODO">yielding statement</a>.</p>
+<p>The following restrictions apply to pointers in Céu:</p>
+<!--
+- Only pointers to [primitive](#TODO) and [data abstraction](#TODO) types
+  are valid.
+-->
+
+<ul>
+<li>No support for pointers to events, vectors, or pools (only variables).</li>
+<li>A pointer is only accessible between its declaration and the next
+  <a href="#TODO">yielding statement</a>.</li>
+</ul>
               
             </div>
           </div>
