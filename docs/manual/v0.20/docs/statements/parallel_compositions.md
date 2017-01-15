@@ -1,6 +1,6 @@
 ## Parallel Compositions
 
-The parallel statements `par/and`, `par/or`, and `par` split the running trail 
+The parallel statements `par/and`, `par/or`, and `par` fork the running trail 
 in multiple others:
 
 ```ceu
@@ -18,10 +18,11 @@ Watching ::= watching LIST(ID_ext|Loc|WCLOCKK|WCLOCKE|Code_Cons_Init) do
 
 ```
 
-They differ only on how trails rejoin and terminate the composition.
+The parallel statements differ only on how trails rejoin and terminate the
+composition.
 
-The `watching` statement terminates when one of its listed events occur.
-It evaluates to what the terminating event evaluates which can be captured with
+The `watching` statement terminates when one of its specified events occur.
+It evaluates to what the occurring event value(s), which can be captured with
 an optional [assignment](#TODO).
 
 See also [Parallel Compositions and Abortion](#TODO).
@@ -48,8 +49,8 @@ end
 
 ### par/and
 
-The `par/and` statement stands for *parallel-and* and rejoins when all trails 
-terminate.
+The `par/and` statement stands for *parallel-and* and rejoins when all nested
+trails terminate.
 
 Examples:
 
@@ -87,11 +88,11 @@ end
 ### watching
 
 The `watching` statement accepts a list of events and terminates when any of
-the events occur.
+them occur.
 
 A `watching` expands to a `par/or` with *n+1* trails:
 one to await each of the listed events,
-and one for its body, i.e.:
+and one to execute its body, i.e.:
 
 ```ceu
 watching <e1>,<e2>,... do

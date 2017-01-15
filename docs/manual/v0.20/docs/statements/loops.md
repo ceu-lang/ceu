@@ -11,7 +11,7 @@ Loop ::=
         end
 
       /* numeric iterator */
-      | loop [`/´Exp] Numeric do    /* Numeric ::= (see "Numeric Iterators") */
+      | loop [`/´Exp] Numeric do
             Block
         end
 
@@ -27,29 +27,36 @@ Loop ::=
 
 Break    ::= break [`/´ID_int]
 Continue ::= continue [`/´ID_int]
+
+Numeric ::= /* (see "Numeric Iterators") */
 ```
 
-The `Block` body of a loop executes an arbitrary number of times, depending on
+The body of a loop `Block` executes an arbitrary number of times, depending on
 the conditions imposed by each kind of loop.
 
-Except for the `every` iterator, all loops support an optional
-<code>&grave;/&acute;Exp</code> to limit the maximum number of iterations and
-avoid [infinite execution](#TODO).
+Except for the `every` iterator, all loops support an optional constant
+expression <code>&grave;/&acute;Exp</code> that limits the maximum number of
+iterations to avoid [infinite execution](#TODO).
+If the number of iterations reaches the limit, a runtime error occurs.
+
+<!--
 The expression must be a constant evaluated at compile time.
+-->
 
 ### `break` and `continue`
 
 The `break` statement aborts the deepest enclosing loop.
 
 The `continue` statement aborts the body of the deepest enclosing loop and
-restarts in the next iteration.
+restarts it in the next iteration.
 
-The optional <code>&grave;/&acute;ID_int</code> in both statements only applies
-to [numeric iterators](#TODO).
+The optional modifier <code>&grave;/&acute;ID_int</code> in both statements
+only applies to [numeric iterators](#TODO).
 
 ### Simple Loop
 
-A simple loop executes its body continually and forever.
+The simple `loop-do-end` statement executes its body forever.
+The only way to terminate a simple loop is with the `break` statement.
 
 Examples:
 
@@ -78,8 +85,8 @@ end
 
 ### Numeric Iterator
 
-The numeric loop modifies the value of a control variable on each iteration
-according to the specification of an optional interval as follows:
+The numeric loop executes its body a fixed number of times based on a numeric
+range for a control variable:
 
 ```ceu
 Numeric ::= (`_´|ID_int) in [ (`[´ | `]´)
@@ -92,18 +99,16 @@ The control variable assumes the values specified in the interval, one by one,
 for each iteration of the loop body:
 
 - **control variable:**
-    `ID_int` is a variable of a [numeric type](#TODO).
+    `ID_int` is a read-only variable of a [numeric type](#TODO).
     Alternatively, the special anonymous identifier `_` can be used if the body
     of the loop does not access the variable.
-    The control variable is marked as `read-only` and cannot be changed
-    explicitly.
 - **interval:**
     Specifies a direction, endpoints with open or closed modifiers, and a step.
     - **direction**:
         - `->`: Starts from the endpoint `Exp` on the left increasing towards `Exp` on the right.
         - `<-`: Starts from the endpoint `Exp` on the right decreasing towards `Exp` on the left.
-        Typically, the value on the left should always be smaller or equal to
-        the value on the right.
+        Typically, the value on the left is smaller or equal to the value on
+        the right.
     - **endpoints**:
         `[Exp` and `Exp]` are closed intervals which include `Exp` as the
         endpoints;
@@ -115,15 +120,18 @@ for each iteration of the loop body:
         An optional positive number added or subtracted towards the limit.
         If the step is omitted, it assumes the value `1`.
         If the direction is `->`, the step is added, otherwise it is subtracted.
+
     If the interval is not specified, it assumes the default `[0 -> _]`.
 
-The numeric iterator executes as follows:
+A numeric iterator executes as follows:
 
 - **initialization:**
     The starting endpoint is assigned to the control variable.
-    If the starting enpoint is open, the control variable accumulates a step.
+    If the starting enpoint is open, the control variable accumulates a step
+    immediately.
+
 - **iteration:**
-    1. **limits test:**
+    1. **limit check:**
         If the control variable crossed the finishing endpoint, the loop
         terminates.
     2. **body execution:**
@@ -132,8 +140,8 @@ The numeric iterator executes as follows:
         Applies a step to the control variable. Goto step `1`.
 
 The `break` and `continue` statements inside numeric iterators accept an
-optional modifier <code>&grave;/&acute;ID_int</code> to match the control
-variable of the enclosing loop to affect.
+optional modifier <code>&grave;/&acute;ID_int</code> to affect the enclosing
+loop matching the control variable.
 
 Examples:
 
@@ -172,7 +180,7 @@ end
 
 ### Event Iterator
 
-The `every` statement iterates over an event continuously and executes its
+The `every` statement iterates over an event continuously, executing its
 body whenever the event occurs.
 
 The event can be an [external or internal event](#TODO) or a [timer](#TODO).

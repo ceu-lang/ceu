@@ -13,7 +13,7 @@ Ext  ::= input  (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
 Int  ::= event [`&´|`&?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Cons])
 Pool ::= pool [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Cons])
 
-Cons ::= /* (see Assignments) */
+Cons ::= /* (see "Assignments") */
 ```
 
 Most declarations support an initialization [assignment](#TODO).

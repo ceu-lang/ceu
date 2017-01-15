@@ -1,6 +1,6 @@
 ## Conditional
 
-The `if-then-else` statement provides conditionals in Céu:
+The `if-then-else` statement provides conditional execution in Céu:
 
 ```ceu
 If ::= if Exp then
@@ -14,9 +14,9 @@ If ::= if Exp then
 
 Each condition `Exp` is tested in sequence, first for the `if` clause and then
 for each of the optional `else/if` clauses.
-For the first condition that evaluates to `true`, the `Block` following it
+On the first condition that evaluates to `true`, the `Block` following it
 executes.
 If all conditions fail, the optional `else` clause executes.
 
-All conditions must evaluate to a value of type [`bool`](#TODO), which is
-checked at compile time.
+All conditions must evaluate to a value of type [`bool`](#TODO).
+<!--, which is checked at compile time.-->

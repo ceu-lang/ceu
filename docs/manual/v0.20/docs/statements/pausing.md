@@ -11,13 +11,13 @@ Pause_If ::= pause/if (Loc|ID_ext) do
 Pause_Await ::= await (pause|resume)
 ```
 
-A `pause/if` determines a pausing event of type `bool` which, when emitted,
+A `pause/if` specifies a pausing event of type `bool` which, when emitted,
 toggles between pausing (`true`) and resuming (`false`) reactions for its body.
 
 When its body terminates, the whole `pause/if` terminates and proceeds to the
 statement in sequence.
 
-In transition points, the body can react to the special `pause` and `resume`
+In transition instants, the body can react to the special `pause` and `resume`
 events before the corresponding state applies.
 
 `TODO: finalize/pause/resume`
