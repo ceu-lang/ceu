@@ -426,7 +426,7 @@
             <div class="section">
               
                 <h2 id="conditional">Conditional</h2>
-<p>The <code>if-then-else</code> statement provides conditionals in Céu:</p>
+<p>The <code>if-then-else</code> statement provides conditional execution in Céu:</p>
 <pre><code class="ceu">If ::= if Exp then
            Block
        { else/if Exp then
@@ -438,11 +438,11 @@
 
 <p>Each condition <code>Exp</code> is tested in sequence, first for the <code>if</code> clause and then
 for each of the optional <code>else/if</code> clauses.
-For the first condition that evaluates to <code>true</code>, the <code>Block</code> following it
+On the first condition that evaluates to <code>true</code>, the <code>Block</code> following it
 executes.
 If all conditions fail, the optional <code>else</code> clause executes.</p>
-<p>All conditions must evaluate to a value of type <a href="#TODO"><code>bool</code></a>, which is
-checked at compile time.</p>
+<p>All conditions must evaluate to a value of type <a href="#TODO"><code>bool</code></a>.
+<!--, which is checked at compile time.--></p>
               
             </div>
           </div>

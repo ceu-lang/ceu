@@ -434,7 +434,7 @@
             <div class="section">
               
                 <h2 id="parallel-compositions">Parallel Compositions</h2>
-<p>The parallel statements <code>par/and</code>, <code>par/or</code>, and <code>par</code> split the running trail 
+<p>The parallel statements <code>par/and</code>, <code>par/or</code>, and <code>par</code> fork the running trail 
 in multiple others:</p>
 <pre><code class="ceu">Pars ::= (par | par/and | par/or) do
              Block
@@ -450,9 +450,10 @@ Watching ::= watching LIST(ID_ext|Loc|WCLOCKK|WCLOCKE|Code_Cons_Init) do
 
 </code></pre>
 
-<p>They differ only on how trails rejoin and terminate the composition.</p>
-<p>The <code>watching</code> statement terminates when one of its listed events occur.
-It evaluates to what the terminating event evaluates which can be captured with
+<p>The parallel statements differ only on how trails rejoin and terminate the
+composition.</p>
+<p>The <code>watching</code> statement terminates when one of its specified events occur.
+It evaluates to what the occurring event value(s), which can be captured with
 an optional <a href="#TODO">assignment</a>.</p>
 <p>See also <a href="#TODO">Parallel Compositions and Abortion</a>.</p>
 <h3 id="par">par</h3>
@@ -472,8 +473,8 @@ end
 </code></pre>
 
 <h3 id="parand">par/and</h3>
-<p>The <code>par/and</code> statement stands for <em>parallel-and</em> and rejoins when all trails 
-terminate.</p>
+<p>The <code>par/and</code> statement stands for <em>parallel-and</em> and rejoins when all nested
+trails terminate.</p>
 <p>Examples:</p>
 <pre><code class="ceu">// reacts once to &quot;1s&quot; and &quot;KEY_PRESSED&quot; and terminates
 input void KEY_PRESSED;
@@ -503,10 +504,10 @@ end
 
 <h3 id="watching">watching</h3>
 <p>The <code>watching</code> statement accepts a list of events and terminates when any of
-the events occur.</p>
+them occur.</p>
 <p>A <code>watching</code> expands to a <code>par/or</code> with <em>n+1</em> trails:
 one to await each of the listed events,
-and one for its body, i.e.:</p>
+and one to execute its body, i.e.:</p>
 <pre><code class="ceu">watching &lt;e1&gt;,&lt;e2&gt;,... do
     &lt;body&gt;
 end

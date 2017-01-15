@@ -435,11 +435,11 @@ to events:</p>
 Pause_Await ::= await (pause|resume)
 </code></pre>
 
-<p>A <code>pause/if</code> determines a pausing event of type <code>bool</code> which, when emitted,
+<p>A <code>pause/if</code> specifies a pausing event of type <code>bool</code> which, when emitted,
 toggles between pausing (<code>true</code>) and resuming (<code>false</code>) reactions for its body.</p>
 <p>When its body terminates, the whole <code>pause/if</code> terminates and proceeds to the
 statement in sequence.</p>
-<p>In transition points, the body can react to the special <code>pause</code> and <code>resume</code>
+<p>In transition instants, the body can react to the special <code>pause</code> and <code>resume</code>
 events before the corresponding state applies.</p>
 <p><code>TODO: finalize/pause/resume</code></p>
 <p>Examples:</p>

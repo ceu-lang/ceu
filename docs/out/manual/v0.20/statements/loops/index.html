@@ -445,7 +445,7 @@ iterators:</p>
         end
 
       /* numeric iterator */
-      | loop [`/´Exp] Numeric do    /* Numeric ::= (see &quot;Numeric Iterators&quot;) */
+      | loop [`/´Exp] Numeric do
             Block
         end
 
@@ -461,22 +461,29 @@ iterators:</p>
 
 Break    ::= break [`/´ID_int]
 Continue ::= continue [`/´ID_int]
+
+Numeric ::= /* (see &quot;Numeric Iterators&quot;) */
 </code></pre>
 
-<p>The <code>Block</code> body of a loop executes an arbitrary number of times, depending on
+<p>The body of a loop <code>Block</code> executes an arbitrary number of times, depending on
 the conditions imposed by each kind of loop.</p>
-<p>Except for the <code>every</code> iterator, all loops support an optional
-<code>&grave;/&acute;Exp</code> to limit the maximum number of iterations and
-avoid <a href="#TODO">infinite execution</a>.
-The expression must be a constant evaluated at compile time.</p>
+<p>Except for the <code>every</code> iterator, all loops support an optional constant
+expression <code>&grave;/&acute;Exp</code> that limits the maximum number of
+iterations to avoid <a href="#TODO">infinite execution</a>.
+If the number of iterations reaches the limit, a runtime error occurs.</p>
+<!--
+The expression must be a constant evaluated at compile time.
+-->
+
 <h3 id="break-and-continue"><code>break</code> and <code>continue</code></h3>
 <p>The <code>break</code> statement aborts the deepest enclosing loop.</p>
 <p>The <code>continue</code> statement aborts the body of the deepest enclosing loop and
-restarts in the next iteration.</p>
-<p>The optional <code>&grave;/&acute;ID_int</code> in both statements only applies
-to <a href="#TODO">numeric iterators</a>.</p>
+restarts it in the next iteration.</p>
+<p>The optional modifier <code>&grave;/&acute;ID_int</code> in both statements
+only applies to <a href="#TODO">numeric iterators</a>.</p>
 <h3 id="simple-loop">Simple Loop</h3>
-<p>A simple loop executes its body continually and forever.</p>
+<p>The simple <code>loop-do-end</code> statement executes its body forever.
+The only way to terminate a simple loop is with the <code>break</code> statement.</p>
 <p>Examples:</p>
 <pre><code class="ceu">// blinks a LED with a frequency of 1s forever
 loop do
@@ -500,8 +507,8 @@ end
 </code></pre>
 
 <h3 id="numeric-iterator">Numeric Iterator</h3>
-<p>The numeric loop modifies the value of a control variable on each iteration
-according to the specification of an optional interval as follows:</p>
+<p>The numeric loop executes its body a fixed number of times based on a numeric
+range for a control variable:</p>
 <pre><code class="ceu">Numeric ::= (`_´|ID_int) in [ (`[´ | `]´)
                                   ( (     Exp `-&gt;´ (`_´|Exp))
                                   | (`_´|Exp) `&lt;-´ Exp      ) )
@@ -512,18 +519,18 @@ according to the specification of an optional interval as follows:</p>
 for each iteration of the loop body:</p>
 <ul>
 <li><strong>control variable:</strong>
-    <code>ID_int</code> is a variable of a <a href="#TODO">numeric type</a>.
+    <code>ID_int</code> is a read-only variable of a <a href="#TODO">numeric type</a>.
     Alternatively, the special anonymous identifier <code>_</code> can be used if the body
-    of the loop does not access the variable.
-    The control variable is marked as <code>read-only</code> and cannot be changed
-    explicitly.</li>
-<li><strong>interval:</strong>
-    Specifies a direction, endpoints with open or closed modifiers, and a step.<ul>
+    of the loop does not access the variable.</li>
+<li>
+<p><strong>interval:</strong>
+    Specifies a direction, endpoints with open or closed modifiers, and a step.</p>
+<ul>
 <li><strong>direction</strong>:<ul>
 <li><code>-&gt;</code>: Starts from the endpoint <code>Exp</code> on the left increasing towards <code>Exp</code> on the right.</li>
 <li><code>&lt;-</code>: Starts from the endpoint <code>Exp</code> on the right decreasing towards <code>Exp</code> on the left.
-Typically, the value on the left should always be smaller or equal to
-the value on the right.</li>
+Typically, the value on the left is smaller or equal to the value on
+the right.</li>
 </ul>
 </li>
 <li><strong>endpoints</strong>:
@@ -536,18 +543,23 @@ the value on the right.</li>
 <li><strong>step</strong>:
     An optional positive number added or subtracted towards the limit.
     If the step is omitted, it assumes the value <code>1</code>.
-    If the direction is <code>-&gt;</code>, the step is added, otherwise it is subtracted.
-If the interval is not specified, it assumes the default <code>[0 -&gt; _]</code>.</li>
+    If the direction is <code>-&gt;</code>, the step is added, otherwise it is subtracted.</li>
 </ul>
+<p>If the interval is not specified, it assumes the default <code>[0 -&gt; _]</code>.</p>
 </li>
 </ul>
-<p>The numeric iterator executes as follows:</p>
+<p>A numeric iterator executes as follows:</p>
 <ul>
-<li><strong>initialization:</strong>
+<li>
+<p><strong>initialization:</strong>
     The starting endpoint is assigned to the control variable.
-    If the starting enpoint is open, the control variable accumulates a step.</li>
-<li><strong>iteration:</strong><ol>
-<li><strong>limits test:</strong>
+    If the starting enpoint is open, the control variable accumulates a step
+    immediately.</p>
+</li>
+<li>
+<p><strong>iteration:</strong></p>
+<ol>
+<li><strong>limit check:</strong>
     If the control variable crossed the finishing endpoint, the loop
     terminates.</li>
 <li><strong>body execution:</strong>
@@ -558,8 +570,8 @@ If the interval is not specified, it assumes the default <code>[0 -&gt; _]</code
 </li>
 </ul>
 <p>The <code>break</code> and <code>continue</code> statements inside numeric iterators accept an
-optional modifier <code>&grave;/&acute;ID_int</code> to match the control
-variable of the enclosing loop to affect.</p>
+optional modifier <code>&grave;/&acute;ID_int</code> to affect the enclosing
+loop matching the control variable.</p>
 <p>Examples:</p>
 <pre><code class="ceu">// prints &quot;i=0&quot;, &quot;i=1&quot;, ...
 var int i;
@@ -591,7 +603,7 @@ end
 <p><em>Note : the runtime asserts that the step is a positive number and that the
         control variable does not overflow.</em></p>
 <h3 id="event-iterator">Event Iterator</h3>
-<p>The <code>every</code> statement iterates over an event continuously and executes its
+<p>The <code>every</code> statement iterates over an event continuously, executing its
 body whenever the event occurs.</p>
 <p>The event can be an <a href="#TODO">external or internal event</a> or a <a href="#TODO">timer</a>.</p>
 <p>The optional assignment to a variable (or list of variables) stores the
