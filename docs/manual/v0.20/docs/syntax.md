@@ -139,6 +139,10 @@ Stmt ::= nothing
             Block
         end
 
+      | spawn async/isr `[´ LIST(Exp) `]´ [ `(´ LIST(Var) `)´ ] do
+            Block
+        end
+
       /* synchronization */
       | atomic do
             Block
