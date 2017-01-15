@@ -23,7 +23,7 @@ statements apply.
 
 ### Lua State
 
-A Lua state creates a separate state for inlined [Lua statements](#TODO).
+A Lua state creates an isolated state for inlined [Lua statements](#TODO).
 
 Example:
 

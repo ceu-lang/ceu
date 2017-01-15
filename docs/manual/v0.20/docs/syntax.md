@@ -188,7 +188,7 @@ Stmt ::= nothing
       /* Data */
 
       | data ID_abs [as (nothing|Exp)] [ with
-            { <var_set|vector_set|pool_set|event_set> `;´ {`;´} }
+            { <var_dcl_set|vector_dcl_set|pool_dcl_set|event_dcl_set> `;´ {`;´} }
         end ]
 
       /* Code */
