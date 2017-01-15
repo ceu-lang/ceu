@@ -18,9 +18,14 @@ a job position referring to a person is a pointer.
 An alias is declared by suffixing the storage class with the modifier
 `&` and is acquired by prefixing an entity with the operator `&`.
 
-Example:
+A [native resource](#TODO) maps to an option alias variable in Céu.
+An option alias is declared as `var&?` and is acquired by prefixing a
+[native call](#TODO) with the operator `&`.
+
+Examples:
 
 ```
+// alias
 var  int v = 0;
 var& int a = &v;        // "a" is an alias to "v"
 ...
@@ -28,12 +33,17 @@ a = 1;                  // "a" and "v" are indistinguishable
 _printf("%d\n", v);     // prints 1
 ```
 
+```
+// option alias
+var&? _FILE f = &_fopen(<...>) finalize with
+                    _fclose(f);
+                end;
+```
+
 An alias must have a narrower scope than the entity it refers to.
 The [assignment](#TODO) to the alias is immutable and must occur between its
 declaration and first access or next [yielding statement](#TODO).
 It is not possible to acquire aliases to external events or to pointer types.
-
-`TODO: &?`
 
 ### Pointers
 

@@ -1,8 +1,10 @@
 ## C Integration
 
+<!--
 Céu integrates safely with C, and programs can define and make native calls
 seamlessly while avoiding memory leaks and dangling pointers when dealing with
 external resources.
+-->
 
 Céu provides [native declarations](#TODO) to import C symbols,
 [native blocks](#TODO) to define new code in C,
@@ -32,19 +34,20 @@ Finalize ::= finalize `(´ LIST(Loc) `)´ with
              end
 ```
 
-Native calls and statements transfer the control of the CPU to inlined code in
-C, losing the guarantees of the [synchronous model](#TODO).
+Native calls and statements transfer execution to C, losing the guarantees of
+the [synchronous model](#TODO).
 For this reason, programs should only resort to C for asynchronous
-functionality, such as non-blocking I/O, or simple `struct` accessors, but
+functionality (e.g., non-blocking I/O) or simple `struct` accessors, but
 never for control purposes.
 
 `TODO: Nat_End`
 
 ### Native Declaration
 
-In Céu, an [identifier](#TODO) prefixed with an underscore is considered a
-native symbol that is defined externally in C.
-However, all external symbols must be declared before their first use.
+In Céu, any [identifier](#TODO) prefixed with an underscore is a native symbol
+defined externally in C.
+However, all external symbols must be declared before their first use in a
+program.
 
 Native declarations support four modifiers as follows:
 
@@ -54,11 +57,10 @@ Native declarations support four modifiers as follows:
     Also, constants cannot be [assigned](#TODO).
 - `plain`: declares the listed symbols as *plain* types, i.e., types (or
     composite types) that do not contain pointers.
-    Value of plain types passed as arguments to functions do not require
+    A value of a plain type passed as argument to a function does not require
     [finalization](#TODO).
 - `nohold`: declares the listed symbols as *non-holding* functions, i.e.,
-    a function that does not retain received pointers as arguments after
-    returning.
+    functions that do not retain received pointers after returning.
     Pointers passed to non-holding functions do not require
     [finalization](#TODO).
 - `pure`: declares the listed symbols as pure functions.
@@ -70,39 +72,36 @@ Examples:
 
 ```ceu
 // values
-native/const  _LOW, _HIGH;      // Arduino's "LOW" and "HIGH" are constants
-native        _errno;           // POSIX's "errno" is a global variable
+native/const  _LOW, _HIGH;      // Arduino "LOW" and "HIGH" are constants
+native        _errno;           // POSIX "errno" is a global variable
 
 // types
 native/plain  _char;            // "char" is a "plain" type
-native        _SDL_PixelFormat; // SDL's "SDL_PixelFormat" is a type holding a pointer
+native        _SDL_PixelFormat; // SDL "SDL_PixelFormat" is a type holding a pointer
 
 // functions
-native        _uv_read_start;   // Libuv's "uv_read_start" retains the received pointer
-native/nohold _free;            // POSIX's "free" receives a pointer but does not retain it
-native/pure   _strlen;          // POSIX's "strlen" is a "pure" function
+native        _uv_read_start;   // Libuv "uv_read_start" retains the received pointer
+native/nohold _free;            // POSIX "free" receives a pointer but does not retain it
+native/pure   _strlen;          // POSIX "strlen" is a "pure" function
 ```
 
 ### Native Block
 
-Native blocks allows programs to define new external symbols in C.
+A native block allows programs to define new external symbols in C.
 
-The [compiler of Céu](#TODO) generates as output a program in C, which is
-embedded in a host program also in C, which is further compiled to the final
-binary program.
-
-The contents of native blocks is not parsed by Céu, but copied unchanged to the
-output in C depending on the modifier specified:
+The contents of native blocks is copied unchanged to the output in C depending
+on the modifier specified:
 
 - `pre`: code is placed before the declarations for the Céu program.
     Symbols defined in `pre` blocks are visible to Céu.
 - `pos`: code is placed after the declarations for the Céu program.
-    Symbols defined by Céu are visible to `pos` blocks.
+    Symbols implicitly defined by the compiler of Céu are visible to `pos`
+    blocks.
 
 Native blocks are copied in the order they appear in the source code.
 
-Since Céu uses the [C preprocessor](#TODO), `#` directives inside native blocks
-must use `##` directives to be considered only in the C compilation phase.
+Since Céu uses the [C preprocessor](#TODO), hash directives `#` inside native
+blocks must be quoted as `##` to be considered only in the C compilation phase.
 
 Symbols defined in native blocks still need to be [declared](#TODO) for use in
 the program.
@@ -140,7 +139,7 @@ The contents of native statements in between `{` and `}` are inlined in the
 program.
 
 Native statements support interpolation of expressions in Céu which are
-expanded when preceded by a `@`.
+expanded when preceded by the symbol `@`.
 
 Examples:
 
@@ -166,7 +165,7 @@ If a call passes or returns pointers, it may require an accompanying
 Examples:
 
 ```ceu
-// all expressions evaluate to a native type and can be called
+// all expressions below evaluate to a native type and can be called
 
 _printf("Hello World!\n");
 
@@ -177,15 +176,17 @@ var _s s = <...>;
 s.f();
 ```
 
+<!--
 `TODO: ex. pointer return`
+-->
 
 ### Finalization
 
-The finalization statement unconditionally executes a series of statements when
-its corresponding enclosing block terminates, even if aborted abruptly.
+A finalization statement unconditionally executes a series of statements when
+its associated block terminates or is aborted.
 
 Céu tracks the interaction of native calls with pointers and requires 
-`finalize` clauses to accompany them:
+`finalize` clauses to accompany the calls:
 
 - If Céu **passes** a pointer to a native call, the pointer represents a
   **local resource** that requires finalization.
@@ -207,9 +208,9 @@ watching <...> do
     var _buffer_t msg;
     <...>                       // prepares msg
     do
-        _send_request(&msg);
+        _send_request(&&msg);
     finalize with
-        _send_cancel(&msg);
+        _send_cancel(&&msg);
     end
     await SEND_ACK;             // transmission is complete
 end
@@ -219,14 +220,14 @@ In the example above, the local variable `msg` is an internal resource passed
 as a pointer to `_send_request`, which is an asynchronous call that transmits
 the buffer in the background.
 If the enclosing `watching` aborts before awaking from the `await SEND_ACK`,
-the local `msg` goes out of scope and the external transmission now holds a
+the local `msg` goes out of scope and the external transmission would hold a
 *dangling pointer*.
 The `finalize` ensures that `_send_cancel` also aborts the transmission.
 
 ```ceu
 // External resource finalization
 watching <...> do
-    var&? _FILE f = _fopen(<...>) finalize with
+    var&? _FILE f = &_fopen(<...>) finalize with
                         _fclose(f);
                     end;
     _fwrite(<...>, f);
@@ -241,21 +242,20 @@ If the enclosing `watching` aborts before awaking from the `await A`, the file
 would remain open as a *memory leak*.
 The `finalize` ensures that `_fclose` closes the file properly.
 
-`TODO`
-An external resource requires an [alias assignment](#TODO) to an
-[option `&?`](#TODO) variable.
+To access an external resource from Céu requires an [alias assignment](#TODO)
+to an [option alias variable](#TODO) `var&?`.
 If the external call returns `NULL`, the alias is not set.
 
 *Note: the compiler only forces the programmer to write finalization clauses,
        but cannot check if they handle the resource properly.*
 
 [Declaration modifiers](#TODO) and [typecasts](#TODO) may suppress the
-requirement for finalization:
+requirement for finalization in calls:
 
 - `nohold` modifiers or `/nohold` typecasts make passing pointers safe.
 - `pure`   modifiers or `/pure`   typecasts make passing pointers and returning
-                                  pointers safe
-- `/plain` typecasts make returns safe
+                                  pointers safe.
+- `/plain` typecasts make return values safe.
 
 Examples:
 

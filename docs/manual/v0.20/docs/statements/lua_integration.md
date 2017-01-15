@@ -1,7 +1,7 @@
 ## Lua Integration
 
-Céu also integrates with Lua, providing [Lua states](#TODO) to delimit the
-effects of [Lua statements](#TODO) which can be inlined in programs:
+Céu provides [Lua states](#TODO) to delimit the effects of inlined
+[Lua statements](#TODO):
 
 ```ceu
 Lua_State ::= lua `[´ [Exp] `]´ do
@@ -12,11 +12,47 @@ Lua_Stmts ::= `[´ {`=´} `[´
               `]´ {`=´} `]´
 ```
 
-Lua statements transfer the control of the CPU to Lua, losing the guarantees of
-the [synchronous model](#TODO).
-Like [native statements](#TODO), programs should only resort to Lua for
-asynchronous functionality, such as non-blocking I/O, or simple `struct`
-accessors, but never for control purposes.
+Lua statements transfer execution to Lua, losing the guarantees of the
+[synchronous model](#TODO).
+For this reason, programs should only resort to C for asynchronous
+functionality (e.g., non-blocking I/O) or simple `struct` accessors, but
+never for control purposes.
+
+All programs have an implicit enclosing *global Lua state* which all orphan
+statements apply.
+
+### Lua State
+
+A Lua state creates a separate state for inlined [Lua statements](#TODO).
+
+Example:
+
+```ceu
+// "v" is not shared between the two statements
+par do
+    // global Lua state
+    [[ v = 0 ]];
+    var int v = 0;
+    every 1s do
+        [[print('Lua 1', v, @v) ]];
+        v = v + 1;
+        [[ v = v + 1 ]];
+    end
+with
+    // local Lua state
+    lua[] do
+        [[ v = 0 ]];
+        var int v = 0;
+        every 1s do
+            [[print('Lua 2', v, @v) ]];
+            v = v + 1;
+            [[ v = v + 1 ]];
+        end
+    end
+end
+```
+
+`TODO: dynamic scope, assignment/error, [dim]`
 
 ### Lua Statement
 
@@ -52,40 +88,3 @@ v_ceu = [[ v_lua + @v_ceu ]];   // yields 30
     print(@v_ceu)               -- prints 30
 ]]
 ```
-
-### Lua State
-
-A Lua state creates a separate environment for its embedded
-[Lua statements](#TODO).
-
-Programs have an implicit enclosing *global Lua state* which all orphan
-statements apply.
-
-Examples:
-
-```ceu
-// "v" is not shared between the two statements
-par do
-    // global Lua state
-    [[ v = 0 ]];
-    var int v = 0;
-    every 1s do
-        [[print('Lua 1', v, @v) ]];
-        v = v + 1;
-        [[ v = v + 1 ]];
-    end
-with
-    // local Lua state
-    lua[] do
-        [[ v = 0 ]];
-        var int v = 0;
-        every 1s do
-            [[print('Lua 2', v, @v) ]];
-            v = v + 1;
-            [[ v = v + 1 ]];
-        end
-    end
-end
-```
-
-`TODO: dynamic scope, assignment/error, [dim]`
