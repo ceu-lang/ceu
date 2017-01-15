@@ -324,9 +324,9 @@
             
                 <li class="toctree-l3"><a href="#lua-integration">Lua Integration</a></li>
                 
-                    <li><a class="toctree-l4" href="#lua-statement">Lua Statement</a></li>
-                
                     <li><a class="toctree-l4" href="#lua-state">Lua State</a></li>
+                
+                    <li><a class="toctree-l4" href="#lua-statement">Lua Statement</a></li>
                 
             
             </ul>
@@ -430,8 +430,8 @@
             <div class="section">
               
                 <h2 id="lua-integration">Lua Integration</h2>
-<p>Céu also integrates with Lua, providing <a href="#TODO">Lua states</a> to delimit the
-effects of <a href="#TODO">Lua statements</a> which can be inlined in programs:</p>
+<p>Céu provides <a href="#TODO">Lua states</a> to delimit the effects of inlined
+<a href="#TODO">Lua statements</a>:</p>
 <pre><code class="ceu">Lua_State ::= lua `[´ [Exp] `]´ do
                  Block
               end
@@ -440,11 +440,41 @@ Lua_Stmts ::= `[´ {`=´} `[´
               `]´ {`=´} `]´
 </code></pre>
 
-<p>Lua statements transfer the control of the CPU to Lua, losing the guarantees of
-the <a href="#TODO">synchronous model</a>.
-Like <a href="#TODO">native statements</a>, programs should only resort to Lua for
-asynchronous functionality, such as non-blocking I/O, or simple <code>struct</code>
-accessors, but never for control purposes.</p>
+<p>Lua statements transfer execution to Lua, losing the guarantees of the
+<a href="#TODO">synchronous model</a>.
+For this reason, programs should only resort to C for asynchronous
+functionality (e.g., non-blocking I/O) or simple <code>struct</code> accessors, but
+never for control purposes.</p>
+<p>All programs have an implicit enclosing <em>global Lua state</em> which all orphan
+statements apply.</p>
+<h3 id="lua-state">Lua State</h3>
+<p>A Lua state creates an isolated state for inlined <a href="#TODO">Lua statements</a>.</p>
+<p>Example:</p>
+<pre><code class="ceu">// &quot;v&quot; is not shared between the two statements
+par do
+    // global Lua state
+    [[ v = 0 ]];
+    var int v = 0;
+    every 1s do
+        [[print('Lua 1', v, @v) ]];
+        v = v + 1;
+        [[ v = v + 1 ]];
+    end
+with
+    // local Lua state
+    lua[] do
+        [[ v = 0 ]];
+        var int v = 0;
+        every 1s do
+            [[print('Lua 2', v, @v) ]];
+            v = v + 1;
+            [[ v = v + 1 ]];
+        end
+    end
+end
+</code></pre>
+
+<p><code>TODO: dynamic scope, assignment/error, [dim]</code></p>
 <h3 id="lua-statement">Lua Statement</h3>
 <p>The contents of Lua statements in between <code>[[</code> and <code>]]</code> are inlined in the
 program.</p>
@@ -472,38 +502,6 @@ v_ceu = [[ v_lua + @v_ceu ]];   // yields 30
     print(@v_ceu)               -- prints 30
 ]]
 </code></pre>
-
-<h3 id="lua-state">Lua State</h3>
-<p>A Lua state creates a separate environment for its embedded
-<a href="#TODO">Lua statements</a>.</p>
-<p>Programs have an implicit enclosing <em>global Lua state</em> which all orphan
-statements apply.</p>
-<p>Examples:</p>
-<pre><code class="ceu">// &quot;v&quot; is not shared between the two statements
-par do
-    // global Lua state
-    [[ v = 0 ]];
-    var int v = 0;
-    every 1s do
-        [[print('Lua 1', v, @v) ]];
-        v = v + 1;
-        [[ v = v + 1 ]];
-    end
-with
-    // local Lua state
-    lua[] do
-        [[ v = 0 ]];
-        var int v = 0;
-        every 1s do
-            [[print('Lua 2', v, @v) ]];
-            v = v + 1;
-            [[ v = v + 1 ]];
-        end
-    end
-end
-</code></pre>
-
-<p><code>TODO: dynamic scope, assignment/error, [dim]</code></p>
               
             </div>
           </div>

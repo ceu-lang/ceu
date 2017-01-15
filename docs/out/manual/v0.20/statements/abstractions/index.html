@@ -431,30 +431,30 @@
               
                 <h2 id="abstractions">Abstractions</h2>
 <p>Céu supports reuse with <code>data</code> declarations to define new types, and <code>code</code>
-declarations to define new subprograms.
-Declarations have <a href="#TODO">lexical scope</a>.</p>
+declarations to define new subprograms.</p>
+<p>Declarations are subject to <a href="#TODO">lexical scope</a>.</p>
 <h3 id="data">Data</h3>
-<p>The <code>data</code> declaration creates a new data type:</p>
+<p>A <code>data</code> declaration creates a new data type:</p>
 <pre><code class="ceu">Data ::= data ID_abs [as (nothing|Exp)] [ with
-             { &lt;var_set|vector_set|pool_set|event_set&gt; `;´ {`;´} }
+             { &lt;var_dcl_set|vector_dcl_set|pool_dcl_set|event_dcl_set&gt; `;´ {`;´} }
          end ]
 
 Data_Cons ::= (val|new) Abs_Cons
 Abs_Cons  ::= ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
 </code></pre>
 
-<p>A declaration may include fields with <a href="#TODO">storage declarations</a> which
-are included in the <code>data</code> type and are publicly accessible.
+<p>A declaration may pack fields with <a href="#TODO">storage declarations</a> which become
+publicly accessible in the new type.
 Field declarations may <a href="#TODO">assign</a> default values for uninitialized
 instances.</p>
 <p>Data types can form hierarchies using dots (<code>.</code>) in identifiers:</p>
 <ul>
-<li>An identifier like <code>A</code> makes <code>A</code> a base type.</li>
-<li>An identifier like <code>A.B</code> makes <code>A.B</code> a subtype of its supertype <code>A</code>.</li>
+<li>An isolated identifier such as <code>A</code> makes <code>A</code> a base type.</li>
+<li>A dotted identifier such as <code>A.B</code> makes <code>A.B</code> a subtype of its supertype <code>A</code>.</li>
 </ul>
 <p>A subtype inherits all fields from its supertype.</p>
-<p>The optional <code>as</code> modifier expects <code>nothing</code> or a constant expression of type
-<code>int</code>:</p>
+<p>The optional modifier <code>as</code> expects the keyword <code>nothing</code> or a constant
+expression of type <code>int</code>:</p>
 <ul>
 <li><code>nothing</code>: the <code>data</code> cannot be instantiated.</li>
 <li><em>constant expression</em>: typecasting a value of the type to <code>int</code> evaluates to
@@ -477,24 +477,26 @@ escape (dir as int);        // returns 1 or -1
 
 <p><code>TODO: new, pool, recursive types</code></p>
 <h4 id="data-constructor">Data Constructor</h4>
-<p>A new <em>static value</em> is created with the <code>data</code> name followed by a list of
-arguments matching its fields in the contexts as follows:</p>
+<p>A new static value constructor is created in the contexts as follows:</p>
 <ul>
-<li>Prefixed by <code>val</code> in an <a href="#TODO">assignment</a> to a variable.</li>
+<li>Prefixed by the keyword <code>val</code> in an <a href="#TODO">assignment</a> to a variable.</li>
 <li>As an argument to a <a href="#TODO"><code>code</code> instantiation</a>.</li>
-<li>Nested as an argument in a <code>data</code> creation.</li>
+<li>Nested as an argument in a <code>data</code> creation (i.e., a <code>data</code> that contains
+  another <code>data</code>).</li>
 </ul>
-<p>In all cases, the arguments are copied to an explicit destination with static
-storage.
-The destination must be a plain declaration, and not an alias or pointer.</p>
-<p>Variables of the exact same type can be copied in <a href="#TODO">assignments</a>.
-The rules for assignments from a subtype to a supertype are as follows:</p>
+<p>In all cases, the arguments are copied to a destination with static storage.
+The destination must be a plain declaration (i.e., not an alias or pointer).</p>
+<p>The constructor uses the <code>data</code> identifier followed by a list of arguments
+matching the fields of the type.</p>
+<p>Variables of the exact same type can be copied in <a href="#TODO">assignments</a>.</p>
+<p>For assignments from a subtype to a supertype, the rules are as follows:</p>
 <ul>
-<li><a href="#TODO">Copy assignments</a> for plain values is only allowed if the subtype
-                            is the same size as the supertype (i.e., no extra
-                            fields).</li>
-<li><a href="#TODO">Copy assignments</a> for pointers is allowed.</li>
-<li><a href="#TODO">Alias assignment</a> is allowed.</li>
+<li><a href="#TODO">Copy assignments</a><ul>
+<li>plain values: only if the subtype contains no extra fields</li>
+<li>pointers: allowed</li>
+</ul>
+</li>
+<li><a href="#TODO">Alias assignment</a>: allowed.</li>
 </ul>
 <pre><code class="ceu">data Object with
     var Rect rect;
@@ -507,7 +509,7 @@ var Object o1 = val Object(Rect(0,0,10,10,_), Dir.Right());
 </code></pre>
 
 <h3 id="code">Code</h3>
-<p>The <code>code/tight</code> and <code>code/await</code> declarations create new subprograms that can
+<p>The <code>code/tight</code> and <code>code/await</code> declarations specify new subprograms that can
 be <a href="#TODO">invoked</a> from arbitrary points in programs:</p>
 <pre><code class="ceu">// prototype declaration
 Code_Tight ::= code/tight Mods ID_abs `(´ Params `)´ `-&gt;´ Type
@@ -534,11 +536,10 @@ Class ::= var    (`&amp;´|`&amp;?`) * Type
 
 // invocation
 Code_Call  ::= call  Mods Abs_Cons
-Code_Await ::= await Mods Code_Cons_Init
-Code_Spawn ::= spawn Mods Code_Cons_Init [in Loc]
+Code_Await ::= await Mods Abs_Cons [`-&gt;´ `(´ LIST(`&amp;´ Var) `)´])
+Code_Spawn ::= spawn Mods Abs_Cons [`-&gt;´ `(´ LIST(`&amp;´ Var) `)´]) [in Loc]
 
 Mods ::= [`/´dynamic | `/´static] [`/´recursive]
-Code_Cons_Init ::= Abs_Cons [`-&gt;´ `(´ LIST(`&amp;´ Var) `)´])
 </code></pre>
 
 <p>A <code>code/tight</code> is a subprogram that cannot contain
@@ -548,14 +549,14 @@ Code_Cons_Init ::= Abs_Cons [`-&gt;´ `(´ LIST(`&amp;´ Var) `)´])
 events and use parallel compositions) and its execution may outlive multiple
 reactions.</p>
 <p>A <em>prototype declaration</em> specifies the interface parameters of the
-abstraction which code invocations must satisfy.
-A <em>full declaration</em> (a.k.a. <em>definition</em>) also specifies an implementation
+abstraction which invocations must satisfy.
+A <em>full declaration</em> (aka <em>definition</em>) also specifies an implementation
 with a block of code.
 An <em>invocation</em> specifies the name of the code abstraction and arguments
 matching its declaration.</p>
 <p>To support recursive abstractions, a code invocation can appear before the
 implementation is known, but after the prototype declaration.
-In this case, the declaration must use the modifier <code>recursive</code>.</p>
+In this case, the declaration must use the modifier <code>/recursive</code>.</p>
 <p>Examples:</p>
 <pre><code class="ceu">code/tight Absolute (var int v) -&gt; int do   // declares the prototype for &quot;Absolute&quot;
     if v &gt; 0 then                           // implements the behavior
@@ -588,12 +589,13 @@ var int fat = call/recursive Fat(10);           // invokes &quot;Fat&quot; (yiel
 
 <p><code>TODO: hold</code></p>
 <h4 id="code-declaration">Code Declaration</h4>
-<p>Code abstractions specify a list of input parameters in between <code>(</code> and <code>)</code>.
+<p>Code abstractions specify a list of input parameters in between the symbols
+<code>(</code> and <code>)</code>.
 Each parameter specifies a <a href="#TODO">storage class</a> with modifiers, a type and
 an identifier (optional in declarations).
-A <code>void</code> list specifies that the code has no parameters.</p>
+A <code>void</code> list specifies that the abstraction has no parameters.</p>
 <p>Code abstractions also specify an output return type.
-A <code>code/await</code> may use <code>FOREVER</code> to indicate that the code never returns.</p>
+A <code>code/await</code> may use <code>FOREVER</code> as output to indicate that it never returns.</p>
 <p>A <code>code/await</code> may also specify an optional <em>initialization return list</em>, which
 represents local resources created in the outermost scope of its body.
 These resources are exported and bound to aliases in the invoking context which
@@ -604,11 +606,11 @@ may access them while the code executes:</p>
   <a href="#TODO">synchronous control statement</a> executes.</li>
 </ul>
 <p>If the code does not terminate (i.e., return type is <code>FOREVER</code>), the
-initialization list specifies normal <code>&amp;</code> aliases.
-Otherwise, since the code may terminate and deallocated the resource, the list
-must specify option <code>&amp;?</code> aliases.</p>
+initialization list specifies normal aliases <code>&amp;</code>.
+Otherwise, since the code may terminate and deallocate the resource, the list
+must specify option aliases <code>&amp;?</code>.</p>
 <p>Examples:</p>
-<pre><code class="ceu">// &quot;Open&quot; abstracts
+<pre><code class="ceu">// &quot;Open&quot; abstracts &quot;_fopen&quot;/&quot;_fclose&quot;
 code/await Open (var _char&amp;&amp; path) -&gt; (var&amp; _FILE res) -&gt; FOREVER do
     var&amp;? _FILE res_ = _fopen(path, &lt;...&gt;)  // allocates resource
                        finalize with
@@ -624,14 +626,14 @@ spawn Open(&lt;...&gt;) -&gt; (&amp;res);                // initiliazes resource
 </code></pre>
 
 <h4 id="code-invocation">Code Invocation</h4>
-<p>A <code>code/tight</code> is invoked with a <code>call</code> followed by the abstraction name and
-list of arguments.
-A <code>code/await</code> is invoked with an <code>await</code> or <code>spawn</code> followed by the
+<p>A <code>code/tight</code> is invoked with the keyword <code>call</code> followed by the abstraction
+name and list of arguments.
+A <code>code/await</code> is invoked with the keywords <code>await</code> or <code>spawn</code> followed by the
 abstraction name and list of arguments.</p>
 <p>The list of arguments must satisfy the list of parameters in the
 <a href="#TODO">code declaration</a>.</p>
-<p>The <code>call</code> and <code>await</code> invocations suspend the ongoing computation and transfer
-the execution control to the code abstraction.
+<p>The <code>call</code> and <code>await</code> invocations suspend the current trail and transfer
+control to the code abstraction.
 The invoking point only resumes after the abstraction terminates and evaluates
 to a value of the <a href="#TODO">return type</a> which can be captured with an optional
 <a href="#TODO">assignment</a>.</p>
@@ -639,24 +641,25 @@ to a value of the <a href="#TODO">return type</a> which can be captured with an 
 abstraction.
 However, when the abstraction becomes idle (or terminates), the invoking point
 resumes.
-This allows the invocation point and the abstraction to execute concurrently.</p>
+This makes the invocation point and a non-terminating abstraction to execute
+concurrently.</p>
 <p>The <code>spawn</code> invocation accepts an optional list of aliases matching the
-<a href="#TODO">initialization list</a> in the code abstraction.
-These aliases are bound to local resources in the code and can be accessed
-from the invocation point.</p>
+<a href="#TODO">initialization list</a> from the code abstraction.
+These aliases are bound to local resources in the abstraction and can be
+accessed from the invocation point.</p>
 <p>The <code>spawn</code> invocation also accepts an optional <a href="#TODO">pool</a> which provides
-storage and scope for invoked abstractions.
-In this case, the invocation evaluates to a boolean that indicates if the pool
-has space to execute the code.
+storage and scope for invoked abstractions.</p>
+<p>If the <code>spawn</code> provides the pool, the invocation evaluates to a boolean that
+indicates whether the pool has space to execute the code.
 The result can be captured with an optional <a href="#TODO">assignment</a>.
-If the pool goes out of scope, all invoked abstractions invoked at that pool
-are aborted.
-If the <code>spawn</code> omits the pool, the invocation always succeed and has the same
+If the pool goes out of scope, all invoked abstractions residing in that pool
+are aborted.</p>
+<p>If the <code>spawn</code> omits the pool, the invocation always succeed and has the same
 scope as the invoking point: when the enclosing block terminates, the invoked
-code is aborted.</p>
+code is also aborted.</p>
 <h4 id="dynamic-dispatching">Dynamic Dispatching</h4>
 <p>Céu supports dynamic code dispatching based on multiple parameters.</p>
-<p>The <code>/dynamic</code> modifier in a declaration specifies that the code is dynamically
+<p>The modifier <code>/dynamic</code> in a declaration specifies that the code is dynamically
 dispatched.
 A dynamic code must have at least one <code>dynamic</code> parameter.
 Also, all dynamic parameters must be pointers or aliases to a

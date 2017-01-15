@@ -436,9 +436,12 @@
             <div class="section">
               
                 <h2 id="c-integration">C Integration</h2>
-<p>Céu integrates safely with C, and programs can define and make native calls
+<!--
+Céu integrates safely with C, and programs can define and make native calls
 seamlessly while avoiding memory leaks and dangling pointers when dealing with
-external resources.</p>
+external resources.
+-->
+
 <p>Céu provides <a href="#TODO">native declarations</a> to import C symbols,
 <a href="#TODO">native blocks</a> to define new code in C,
 <a href="#TODO">native statements</a> to inline C statements,
@@ -465,16 +468,17 @@ Finalize ::= finalize `(´ LIST(Loc) `)´ with
              end
 </code></pre>
 
-<p>Native calls and statements transfer the control of the CPU to inlined code in
-C, losing the guarantees of the <a href="#TODO">synchronous model</a>.
+<p>Native calls and statements transfer execution to C, losing the guarantees of
+the <a href="#TODO">synchronous model</a>.
 For this reason, programs should only resort to C for asynchronous
-functionality, such as non-blocking I/O, or simple <code>struct</code> accessors, but
+functionality (e.g., non-blocking I/O) or simple <code>struct</code> accessors, but
 never for control purposes.</p>
 <p><code>TODO: Nat_End</code></p>
 <h3 id="native-declaration">Native Declaration</h3>
-<p>In Céu, an <a href="#TODO">identifier</a> prefixed with an underscore is considered a
-native symbol that is defined externally in C.
-However, all external symbols must be declared before their first use.</p>
+<p>In Céu, any <a href="#TODO">identifier</a> prefixed with an underscore is a native symbol
+defined externally in C.
+However, all external symbols must be declared before their first use in a
+program.</p>
 <p>Native declarations support four modifiers as follows:</p>
 <ul>
 <li><code>const</code>: declares the listed symbols as constants.
@@ -483,11 +487,10 @@ However, all external symbols must be declared before their first use.</p>
     Also, constants cannot be <a href="#TODO">assigned</a>.</li>
 <li><code>plain</code>: declares the listed symbols as <em>plain</em> types, i.e., types (or
     composite types) that do not contain pointers.
-    Value of plain types passed as arguments to functions do not require
+    A value of a plain type passed as argument to a function does not require
     <a href="#TODO">finalization</a>.</li>
 <li><code>nohold</code>: declares the listed symbols as <em>non-holding</em> functions, i.e.,
-    a function that does not retain received pointers as arguments after
-    returning.
+    functions that do not retain received pointers after returning.
     Pointers passed to non-holding functions do not require
     <a href="#TODO">finalization</a>.</li>
 <li><code>pure</code>: declares the listed symbols as pure functions.
@@ -497,35 +500,33 @@ However, all external symbols must be declared before their first use.</p>
 </ul>
 <p>Examples:</p>
 <pre><code class="ceu">// values
-native/const  _LOW, _HIGH;      // Arduino's &quot;LOW&quot; and &quot;HIGH&quot; are constants
-native        _errno;           // POSIX's &quot;errno&quot; is a global variable
+native/const  _LOW, _HIGH;      // Arduino &quot;LOW&quot; and &quot;HIGH&quot; are constants
+native        _errno;           // POSIX &quot;errno&quot; is a global variable
 
 // types
 native/plain  _char;            // &quot;char&quot; is a &quot;plain&quot; type
-native        _SDL_PixelFormat; // SDL's &quot;SDL_PixelFormat&quot; is a type holding a pointer
+native        _SDL_PixelFormat; // SDL &quot;SDL_PixelFormat&quot; is a type holding a pointer
 
 // functions
-native        _uv_read_start;   // Libuv's &quot;uv_read_start&quot; retains the received pointer
-native/nohold _free;            // POSIX's &quot;free&quot; receives a pointer but does not retain it
-native/pure   _strlen;          // POSIX's &quot;strlen&quot; is a &quot;pure&quot; function
+native        _uv_read_start;   // Libuv &quot;uv_read_start&quot; retains the received pointer
+native/nohold _free;            // POSIX &quot;free&quot; receives a pointer but does not retain it
+native/pure   _strlen;          // POSIX &quot;strlen&quot; is a &quot;pure&quot; function
 </code></pre>
 
 <h3 id="native-block">Native Block</h3>
-<p>Native blocks allows programs to define new external symbols in C.</p>
-<p>The <a href="#TODO">compiler of Céu</a> generates as output a program in C, which is
-embedded in a host program also in C, which is further compiled to the final
-binary program.</p>
-<p>The contents of native blocks is not parsed by Céu, but copied unchanged to the
-output in C depending on the modifier specified:</p>
+<p>A native block allows programs to define new external symbols in C.</p>
+<p>The contents of native blocks is copied unchanged to the output in C depending
+on the modifier specified:</p>
 <ul>
 <li><code>pre</code>: code is placed before the declarations for the Céu program.
     Symbols defined in <code>pre</code> blocks are visible to Céu.</li>
 <li><code>pos</code>: code is placed after the declarations for the Céu program.
-    Symbols defined by Céu are visible to <code>pos</code> blocks.</li>
+    Symbols implicitly defined by the compiler of Céu are visible to <code>pos</code>
+    blocks.</li>
 </ul>
 <p>Native blocks are copied in the order they appear in the source code.</p>
-<p>Since Céu uses the <a href="#TODO">C preprocessor</a>, <code>#</code> directives inside native blocks
-must use <code>##</code> directives to be considered only in the C compilation phase.</p>
+<p>Since Céu uses the <a href="#TODO">C preprocessor</a>, hash directives <code>#</code> inside native
+blocks must be quoted as <code>##</code> to be considered only in the C compilation phase.</p>
 <p>Symbols defined in native blocks still need to be <a href="#TODO">declared</a> for use in
 the program.</p>
 <p>Examples:</p>
@@ -555,7 +556,7 @@ end
 <p>The contents of native statements in between <code>{</code> and <code>}</code> are inlined in the
 program.</p>
 <p>Native statements support interpolation of expressions in Céu which are
-expanded when preceded by a <code>@</code>.</p>
+expanded when preceded by the symbol <code>@</code>.</p>
 <p>Examples:</p>
 <pre><code class="ceu">var int v_ceu = 10;
 {
@@ -573,7 +574,7 @@ from Céu.</p>
 <p>If a call passes or returns pointers, it may require an accompanying
 <a href="#TODO">finalization statement</a>.</p>
 <p>Examples:</p>
-<pre><code class="ceu">// all expressions evaluate to a native type and can be called
+<pre><code class="ceu">// all expressions below evaluate to a native type and can be called
 
 _printf(&quot;Hello World!\n&quot;);
 
@@ -584,12 +585,15 @@ var _s s = &lt;...&gt;;
 s.f();
 </code></pre>
 
-<p><code>TODO: ex. pointer return</code></p>
+<!--
+`TODO: ex. pointer return`
+-->
+
 <h3 id="finalization">Finalization</h3>
-<p>The finalization statement unconditionally executes a series of statements when
-its corresponding enclosing block terminates, even if aborted abruptly.</p>
+<p>A finalization statement unconditionally executes a series of statements when
+its associated block terminates or is aborted.</p>
 <p>Céu tracks the interaction of native calls with pointers and requires 
-<code>finalize</code> clauses to accompany them:</p>
+<code>finalize</code> clauses to accompany the calls:</p>
 <ul>
 <li>If Céu <strong>passes</strong> a pointer to a native call, the pointer represents a
   <strong>local resource</strong> that requires finalization.
@@ -607,9 +611,9 @@ watching &lt;...&gt; do
     var _buffer_t msg;
     &lt;...&gt;                       // prepares msg
     do
-        _send_request(&amp;msg);
+        _send_request(&amp;&amp;msg);
     finalize with
-        _send_cancel(&amp;msg);
+        _send_cancel(&amp;&amp;msg);
     end
     await SEND_ACK;             // transmission is complete
 end
@@ -619,12 +623,12 @@ end
 as a pointer to <code>_send_request</code>, which is an asynchronous call that transmits
 the buffer in the background.
 If the enclosing <code>watching</code> aborts before awaking from the <code>await SEND_ACK</code>,
-the local <code>msg</code> goes out of scope and the external transmission now holds a
+the local <code>msg</code> goes out of scope and the external transmission would hold a
 <em>dangling pointer</em>.
 The <code>finalize</code> ensures that <code>_send_cancel</code> also aborts the transmission.</p>
 <pre><code class="ceu">// External resource finalization
 watching &lt;...&gt; do
-    var&amp;? _FILE f = _fopen(&lt;...&gt;) finalize with
+    var&amp;? _FILE f = &amp;_fopen(&lt;...&gt;) finalize with
                         _fclose(f);
                     end;
     _fwrite(&lt;...&gt;, f);
@@ -638,19 +642,18 @@ a pointer.
 If the enclosing <code>watching</code> aborts before awaking from the <code>await A</code>, the file
 would remain open as a <em>memory leak</em>.
 The <code>finalize</code> ensures that <code>_fclose</code> closes the file properly.</p>
-<p><code>TODO</code>
-An external resource requires an <a href="#TODO">alias assignment</a> to an
-<a href="#TODO">option <code>&amp;?</code></a> variable.
+<p>To access an external resource from Céu requires an <a href="#TODO">alias assignment</a>
+to an <a href="#TODO">option alias variable</a> <code>var&amp;?</code>.
 If the external call returns <code>NULL</code>, the alias is not set.</p>
 <p><em>Note: the compiler only forces the programmer to write finalization clauses,
        but cannot check if they handle the resource properly.</em></p>
 <p><a href="#TODO">Declaration modifiers</a> and <a href="#TODO">typecasts</a> may suppress the
-requirement for finalization:</p>
+requirement for finalization in calls:</p>
 <ul>
 <li><code>nohold</code> modifiers or <code>/nohold</code> typecasts make passing pointers safe.</li>
 <li><code>pure</code>   modifiers or <code>/pure</code>   typecasts make passing pointers and returning
-                                  pointers safe</li>
-<li><code>/plain</code> typecasts make returns safe</li>
+                                  pointers safe.</li>
+<li><code>/plain</code> typecasts make return values safe.</li>
 </ul>
 <p>Examples:</p>
 <pre><code class="ceu">// &quot;_free&quot; does not retain &quot;ptr&quot;

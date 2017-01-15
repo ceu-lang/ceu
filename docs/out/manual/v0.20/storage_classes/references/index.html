@@ -442,19 +442,28 @@ a job position referring to a person is a pointer.</p>
 <h3 id="aliases">Aliases</h3>
 <p>An alias is declared by suffixing the storage class with the modifier
 <code>&amp;</code> and is acquired by prefixing an entity with the operator <code>&amp;</code>.</p>
-<p>Example:</p>
-<pre><code>var  int v = 0;
+<p>A <a href="#TODO">native resource</a> maps to an option alias variable in Céu.
+An option alias is declared as <code>var&amp;?</code> and is acquired by prefixing a
+<a href="#TODO">native call</a> with the operator <code>&amp;</code>.</p>
+<p>Examples:</p>
+<pre><code>// alias
+var  int v = 0;
 var&amp; int a = &amp;v;        // &quot;a&quot; is an alias to &quot;v&quot;
 ...
 a = 1;                  // &quot;a&quot; and &quot;v&quot; are indistinguishable
 _printf(&quot;%d\n&quot;, v);     // prints 1
 </code></pre>
 
+<pre><code>// option alias
+var&amp;? _FILE f = &amp;_fopen(&lt;...&gt;) finalize with
+                    _fclose(f);
+                end;
+</code></pre>
+
 <p>An alias must have a narrower scope than the entity it refers to.
 The <a href="#TODO">assignment</a> to the alias is immutable and must occur between its
 declaration and first access or next <a href="#TODO">yielding statement</a>.
 It is not possible to acquire aliases to external events or to pointer types.</p>
-<p><code>TODO: &amp;?</code></p>
 <h3 id="pointers">Pointers</h3>
 <p>A pointer is declared by suffixing the type with the modifier
 <code>&amp;&amp;</code> and is acquired by prefixing an entity with the operator <code>&amp;&amp;</code>.

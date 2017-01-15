@@ -426,16 +426,15 @@
             <div class="section">
               
                 <h2 id="synchronous-control-statements">Synchronous Control Statements</h2>
-<p>The <em>synchronous control statements</em>
-<code>await</code>, <code>spawn</code>, <code>emit</code> (internal events), <code>every</code>, <code>finalize</code>, <code>pause/if</code>,
-<code>par</code>, <code>par/and</code>, <code>par/or</code>, and <code>watching</code>
-cannot appear in
+<p>The <em>synchronous control statements</em> which follow cannot appear in
 <a href="#TODO">event iterators</a>,
 <a href="#TODO">pool iterators</a>,
 <a href="#TODO">asynchronous execution</a>,
 <a href="#TODO">finalization</a>,
 and
-<a href="#TODO">tight code abstractions</a>.</p>
+<a href="#TODO">tight code abstractions</a>:
+<code>await</code>, <code>spawn</code>, <code>emit</code> (internal events), <code>every</code>, <code>finalize</code>, <code>pause/if</code>,
+<code>par</code>, <code>par/and</code>, <code>par/or</code>, and <code>watching</code>.</p>
 <p>As exceptions, an <code>every</code> can <code>emit</code> internal events, and a <code>code/tight</code> can
 contain empty <code>finalize</code> statements.</p>
               
