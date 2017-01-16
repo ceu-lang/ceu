@@ -1,32 +1,22 @@
 ## Locations
 
 A location (aka *l-value*) is a path to a memory location holding a storage
-class entity ([`ID_int`](#TODO)) or a native symbol ([`ID_nat`](#TODO)):
+class entity ([`ID_int`](#TODO)) or a native symbol ([`ID_nat`](#TODO)).
 
-```
-Loc    ::= Loc_01
-Loc_01 ::= [`*´|`$´] Loc_02
-Loc_02 ::= Loc_03 { `[´Exp`]´ | (`:´|`.´) (ID_int|ID_nat) | `!´ }
-Loc_03 ::= `(´ Loc_01 [as (Type | `/´(nohold|plain|pure)) `)´
-         |  ID_int
-         |  ID_nat
-         |  outer
-         |  `{´ <code in C> `}´
-```
+Locations appear in assignments, event manipulation, iterators, and
+expressions.
 
-The list that follows enumerates all valid locations:
+The list that follows summarizes all valid locations:
 
 - storage class entity: variable, vector, internal event (but not external), or pool
-- native expressions and symbols
+- native expression or symbol
 - data field (which are storage class entities)
-- typecast
 - vector index
 - vector length `$`
 - pointer dereferencing `*`
 - option dereferencing `!`
 
-Locations appear in assignments, event manipulation, iterators, and
-expressions.
+The syntax for locations is detailed in [Expressions](#TODO).
 
 Examples:
 
