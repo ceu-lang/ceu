@@ -285,23 +285,24 @@ Loc_02 ::= `(´ Loc [as (Type | `/´(nohold|plain|pure)) `)´
          |  outer
          |  `{´ <code in C> `}´
 
-/* Expressions */
-
-Exp  ::= Prim (combined with the "Operator Precedence" below)
-Prim ::= `(´ Exp `)´
-      |  `&&´ Loc
-      |  Loc [`?´]
-      |  `&´ (Nat_Call | Loc)
-      |  Nat_Call | Code_Call
-      |  sizeof `(´ (Type|Exp) `)´
-      |  NUM | STR | null | true | false
-
 /* Literals */
 
 NUM ::= [0-9] ([0-9]|[xX]|[A-F]|[a-f]|\.)*  // regex
 STR ::= " [^\"\n]* "                        // regex
 
-/* Operator precedence */
+/* Expressions */
+
+Exp ::= Exp <binop> Exp
+     |  <unop> Exp
+     |  `(´ Exp `)´
+     |  `&&´ Loc
+     |  Loc [`?´]
+     |  `&´ (Nat_Call | Loc)
+     |  Nat_Call | Code_Call
+     |  sizeof `(´ (Type|Exp) `)´
+     |  NUM | STR | null | true | false
+
+/* Operator precedence (binop & unop) */
 
     /* lowest priority */
     is    as
