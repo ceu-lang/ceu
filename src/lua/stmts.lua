@@ -427,6 +427,7 @@ STMTS.F = {
 
     Await_Int = function (me, tag)
         local e = unpack(me)
+        local alias, _ = unpack(e.info.dcl)
 
         -- ctx
         INFO.asr_tag(e, {'Var','Evt','Pool'}, 'invalid `await´')
@@ -436,7 +437,11 @@ STMTS.F = {
         end
 
         -- tp
-        me.tp = e.info.tp
+        if alias == '&?' then
+            me.tp = TYPES.new(e, 'void')
+        else
+            me.tp = e.info.tp
+        end
     end,
 
 -- STATEMENTS

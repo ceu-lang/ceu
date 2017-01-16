@@ -8,6 +8,28 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+-- XXX-01
+Test { [[
+data Object with
+  var int ccc = 101;
+end
+code/await Show(var Object obj) -> (var&? int rrr) -> int do
+    var int aaa = obj.ccc;
+    rrr = &aaa;
+    await 1s;
+    escape 1;
+end
+
+var&? int r;
+spawn Show(Object(_)) -> (&r);
+var& int rr = &r!;                  // TODO: should not allow this
+await 2s;
+escape rr;
+]],
+    --wrn = true,
+    run = { ['~>2s']=101 },
+}
+
 --[=====[
 do return end -- OK
 --]=====]
@@ -35273,6 +35295,30 @@ escape ret;
     run = { ['~>1s'] = 12 },
 }
 
+Test { [[
+code/await Ff (void) -> (var&? int x) -> void do
+    var int v = 10;
+    x = &v;
+end
+var&? int x;
+spawn Ff() -> (&x);
+var int v = await x;
+escape 1;
+]],
+    stmts = 'line 7 : invalid assignment : types mismatch : "(int)" <= "void"',
+}
+
+Test { [[
+var&? int x;
+do
+    var int y = 10;
+    x = &y;
+end
+escape (x? as int) + 1;
+]],
+    run = 1,
+}
+
 --<<< REACTIVE / VAR / OPT / ALIAS
 -->> CODE / AWAIT / WATCHING
 
@@ -44413,6 +44459,7 @@ escape 10;
     --wrn = true,
     run = 10,
 }
+-- XXX-01
 Test { [[
 data Object with
   var int ccc = 101;
