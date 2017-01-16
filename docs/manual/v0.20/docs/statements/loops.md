@@ -232,4 +232,4 @@ end
 
 ### Pool Iterator
 
-Pool iterator is discussed in [Code Pools](#TODO).
+`TODO`

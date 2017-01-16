@@ -180,7 +180,7 @@ s.f();
 `TODO: ex. pointer return`
 -->
 
-### Finalization
+### Resources & Finalization
 
 A finalization statement unconditionally executes a series of statements when
 its associated block terminates or is aborted.
@@ -243,13 +243,13 @@ would remain open as a *memory leak*.
 The `finalize` ensures that `_fclose` closes the file properly.
 
 To access an external resource from Céu requires an [alias assignment](#TODO)
-to an [option alias variable](#TODO) `var&?`.
-If the external call returns `NULL`, the alias is not set.
+to an [option variable alias](#TODO) `var&?`.
+If the external call returns `NULL`, the alias remains unbounded.
 
 *Note: the compiler only forces the programmer to write finalization clauses,
        but cannot check if they handle the resource properly.*
 
-[Declaration modifiers](#TODO) and [typecasts](#TODO) may suppress the
+[Declaration](#TODO) and [expression](#TODO) modifiers] may suppress the
 requirement for finalization in calls:
 
 - `nohold` modifiers or `/nohold` typecasts make passing pointers safe.
