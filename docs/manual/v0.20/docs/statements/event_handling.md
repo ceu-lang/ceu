@@ -7,7 +7,7 @@ The event can be an [input event](#TODO), an [internal event](#TODO), a timer,
 a [pausing event](#TODO), or forever (i.e., never awakes):
 
 ```ceu
-Await ::= await (ID_ext | Loc) [until Exp]      /* events */
+Await ::= await (ID_ext | Loc) [until Exp]      /* events and option aliases */
        |  await (WCLOCKK|WCLOCKE)               /* timers */
        |  await (pause|resume)                  /* pausing events */
        |  await FOREVER                         /* forever */
@@ -57,6 +57,21 @@ event (bool,int) e;             // "e" is an internal event carrying "(bool,int)
 var bool v1;
 var int  v2;
 (v1,v2) = await e;              // awakes on "e" and assigns its values to "v1" and "v2"
+```
+
+#### Option Alias
+
+The `await` statement for [option variable aliases](#TODO) halts the running
+trail until the specified alias goes out of scope.
+
+The `await` evaluates to no value.
+
+Example:
+
+```ceu
+var&? int x;
+spawn Code() -> (&x);   // "x" is bounded to a variable inside "Code"
+await x;                // awakes when the spawned "Code" terminates
 ```
 
 #### Timer

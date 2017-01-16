@@ -15,17 +15,21 @@ a job position referring to a person is a pointer.
 
 ### Aliases
 
+Céu support aliases to all storage classes, except external events and pointer
+types.
+Céu also supports option variable aliases which are aliases that may remain or
+become unassigned.
+
 An alias is declared by suffixing the storage class with the modifier
 `&` and is acquired by prefixing an entity with the operator `&`.
 
-A [native resource](#TODO) maps to an option alias variable in Céu.
-An option alias is declared as `var&?` and is acquired by prefixing a
-[native call](#TODO) with the operator `&`.
+An alias must have a narrower scope than the entity it refers to.
+The [assignment](#TODO) to the alias is immutable and must occur between its
+declaration and first access or next [yielding statement](#TODO).
 
-Examples:
+Example:
 
-```
-// alias
+```ceu
 var  int v = 0;
 var& int a = &v;        // "a" is an alias to "v"
 ...
@@ -33,17 +37,43 @@ a = 1;                  // "a" and "v" are indistinguishable
 _printf("%d\n", v);     // prints 1
 ```
 
-```
-// option alias
+An option variable alias, declared as `var&?`, serves two purposes:
+
+- Map a [native resource](#TODO) to a variable in Céu.
+  The alias is acquired by prefixing the associated [native call](#TODO) with
+  the operator `&`.
+  Since the allocation may fail, the alias may remain unassigned.
+- Track the lifetime of a variable.
+  The alias is acquired by prefixing the associated variable with
+  the operator `&`.
+  Since the tracked variable may go out of scope, the alias may become
+  unassigned.
+
+Accesses to option variable aliases must always use
+[option checking or dereferencing](#TODO).
+
+Examples:
+
+```ceu
 var&? _FILE f = &_fopen(<...>) finalize with
                     _fclose(f);
                 end;
+if f? then
+    <...>   // "f" is assigned
+else
+    <...>   // "f" is not assigned
+end
 ```
 
-An alias must have a narrower scope than the entity it refers to.
-The [assignment](#TODO) to the alias is immutable and must occur between its
-declaration and first access or next [yielding statement](#TODO).
-It is not possible to acquire aliases to external events or to pointer types.
+```ceu
+var&? int x;
+do
+    var int y = 10;
+    x = &y;
+    _printf("%d\n", x!);    // prints 10
+end
+_printf("%d\n", x!);        // error!
+```
 
 ### Pointers
 
