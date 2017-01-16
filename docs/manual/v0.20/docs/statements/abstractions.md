@@ -34,8 +34,8 @@ The optional modifier `as` expects the keyword `nothing` or a constant
 expression of type `int`:
 
 - `nothing`: the `data` cannot be instantiated.
-- *constant expression*: typecasting a value of the type to `int` evaluates to
-                         the specified expression.
+- *constant expression*: [typecasting](#TODO) a value of the type to `int`
+                         evaluates to the specified enumeration expression.
 
 Examples:
 
@@ -285,19 +285,24 @@ The exceptions are the `dynamic` parameters, which must be in the same
 hierarchy of their corresponding parameters in other declarations.
 
 To determine which declaration to execute during runtime, the actual argument
-is checked against the first formal `dynamic` parameter of each declaration.
+runtime type is checked against the first formal `dynamic` parameter of each
+declaration.
 The declaration with the most specific type matching the argument wins.
 In the case of a tie, the next dynamic parameter is checked.
 
 A *catchall* declaration with the most general dynamic types must always be
 provided.
 
-Examples:
+If the argument is explicitly [typecast](#TODO) to a supertype, then
+dispatching considers that type instead.
+
+Example:
 
 ```ceu
 data Media as nothing;
-data Media.Audio with <...> end
-data Media.Video with <...> end
+data Media.Audio     with <...> end
+data Media.Video     with <...> end
+data Media.Video.Avi with <...> end
 
 code/await/dynamic Play (dynamic var& Media media) -> void do
     _assert(0);             // never dispatched
@@ -307,6 +312,10 @@ code/await/dynamic Play (dynamic var& Media.Audio media) -> void do
 end
 code/await/dynamic Play (dynamic var& Media.Video media) -> void do
     <...>                   // plays a video
+end
+code/await/dynamic Play (dynamic var& Media.Video.Avi media) -> void do
+    <...>                                   // prepare the avi video
+    await/dynamic Play(&m as Media.Video);  // dispatches the supertype
 end
 
 var& Media m = <...>;       // receives one of "Media.Audio" or "Media.Video"
