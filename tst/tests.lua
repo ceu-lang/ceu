@@ -901,7 +901,7 @@ var void&& ptr = _;
 native/nohold _free1;
 _free1(ptr);
 
-native/nohold _free2;
+native _free2;
 (_free2 as /nohold)(ptr);
 
 native/pure _strchr1;
@@ -42275,7 +42275,8 @@ end
 var Dx d = val Dx(10);
 escape (d as Ex).x;
 ]],
-    names = 'line 8 : invalid operand to `as´ : unexpected plain `data´ : got "Dx"',
+    names = 'line 8 : invalid operand to `as´ : unmatching `data´ abstractions',
+    --names = 'line 8 : invalid operand to `as´ : unexpected plain `data´ : got "Dx"',
 }
 
 Test { [[
@@ -42507,6 +42508,140 @@ escape (e as Ee.Xx).d:x;
 ]],
     wrn = true,
     run = 10,
+}
+
+Test { [[
+data Ee;
+data Ee.Xx with
+    var int x;
+end
+var Ee ex = val Ee();
+var Ee&& e = &&ex;
+escape (e as Ee.Xx&&):x;
+]],
+    wrn = true,
+    run = '7] runtime error: invalid cast `as´',
+}
+
+Test { [[
+data Ee;
+data Xx with
+    var int x;
+end
+var Ee ex = val Ee();
+var& Ee e = &ex;
+escape (e as Xx):x;
+]],
+    wrn = true,
+    names = 'line 7 : invalid operand to `as´ : unmatching `data´ abstractions',
+}
+
+Test { [[
+data Ee;
+data Xx with
+    var int x;
+end
+var Ee ex = val Ee();
+var& Ee e = &ex;
+escape (e is Xx) as int;
+]],
+    wrn = true,
+    exps = 'line 7 : invalid operand to `is´ : expected `data´ type in some hierarchy : got "Ee"',
+}
+
+Test { [[
+data Aa;
+var Aa a = _;
+escape a as int;
+]],
+    exps = 'line 3 : invalid operand to `as´ : expected `data´ type in a hierarchy : got "Aa"',
+}
+
+Test { [[
+data Aa;
+escape (1 as Aa) as int;
+]],
+    exps = 'line 2 : invalid operand to `as´ : expected `data´ type in a hierarchy : got "Aa"',
+}
+
+Test { [[
+escape null as int;
+]],
+    cc = 'error: cast from pointer to integer of different size [-Werror=pointer-to-int-cast]',
+}
+
+Test { [[
+data Ee;
+data Ee.Xx with
+    var int x;
+end
+var Ee ex = val Ee();
+var Ee&& e = &&ex;
+escape ((*e is Ee.Xx) as int) + 1;
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+data Ee;
+data Ee.Xx;
+var Ee ex = val Ee.Xx();
+var Ee&& e = &&ex;
+escape ((*e is Ee.Xx) as int) + 1;
+]],
+    wrn = true,
+    run = 2,
+}
+Test { [[
+data Ee;
+data Ee.Xx;
+var Ee.Xx ex = val Ee.Xx();
+escape ((ex is Ee) as int) + 1;
+]],
+    wrn = true,
+    exps = 'line 4 : invalid operand to `is´ : unmatching `data´ abstractions',
+}
+Test { [[
+data Ee;
+data Ee.Xx;
+var Ee ex = val Ee.Xx();
+escape ((ex is Ee.Xx) as int) + 1;
+]],
+    wrn = true,
+    run = 2,
+}
+Test { [[
+data Ee;
+var Ee ex = val Ee();
+escape ((ex is Ee) as int) + 1;
+]],
+    wrn = true,
+    exps = 'line 3 : invalid operand to `is´ : expected `data´ type in some hierarchy : got "Ee"',
+}
+Test { [[
+data Ee;
+data Ee.Xx with
+    var int x;
+end
+var Ee ex = val Ee();
+var Ee&& e = &&ex;
+escape (e is Ee.Xx&&) as int;
+]],
+    wrn = true,
+    exps = 'line 7 : invalid operand to `is´ : expected plain `data´ type : got "Ee&&"',
+}
+
+Test { [[
+data Ee;
+data Xx with
+    var int x;
+end
+var Ee ex = val Ee();
+var Ee&& e = &&ex;
+escape (e as Xx&&):x;
+]],
+    wrn = true,
+    names = 'line 7 : invalid operand to `as´ : unmatching `data´ abstractions',
 }
 
 Test { [[

@@ -78,15 +78,18 @@ NAMES.F = {
             'invalid operand to `'..op..'´ : unexpected option type : got "'..
             TYPES.tostring(e.info.tp)..'"')
 
-        local plain = TYPES.ID_plain(e.info.tp)
-        if plain and plain.dcl and plain.dcl.tag=='Data' then
+        local dcl = e.info.tp[1].dcl
+
+        if dcl and dcl.tag=='Data' then
             if TYPES.check(Type,'int') then
                 -- OK: "d as int"
+                ASR(dcl.hier, me,
+                    'invalid operand to `'..op..'´ : expected `data´ type in a hierarchy : got "'..TYPES.tostring(e.info.tp)..'"')
             else
-                -- NO:
+                -- NO: not alias
                 --  var Dx d = ...;
                 --  (d as Ex)...
-                local is_alias = unpack(e.info.dcl)
+                local is_alias = unpack(dcl)
                 ASR(is_alias, me,
                     'invalid operand to `'..op..'´ : unexpected plain `data´ : got "'..
                     TYPES.tostring(e.info.tp)..'"')
@@ -97,11 +100,11 @@ NAMES.F = {
                 -- YES:
                 --  var Dx& d = ...;
                 --  (d as Dx.Sub)...
-                local cast = TYPES.ID_plain(Type)
-                if cast and cast.dcl and cast.dcl.tag=='Data' then
-                    local ok = cast.dcl.hier and plain.dcl.hier and
-                                (DCLS.is_super(cast.dcl,plain.dcl) or
-                                 DCLS.is_super(plain.dcl,cast.dcl))
+                local cast = Type[1].dcl
+                if cast and cast.tag=='Data' then
+                    local ok = cast.hier and dcl.hier and
+                                (DCLS.is_super(cast,dcl) or     -- to dyn/call super
+                                 DCLS.is_super(dcl,cast))
                     ASR(ok, me,
                         'invalid operand to `'..op..'´ : unmatching `data´ abstractions')
                 end

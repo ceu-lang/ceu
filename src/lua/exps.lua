@@ -481,7 +481,7 @@ error'TODO: remove below'
     Exp_as = NAMES.F.Exp_as,
 
     Exp_is = function (me)
-        local op,e = unpack(me)
+        local op,e,cast = unpack(me)
 
         -- ctx
         INFO.asr_tag(e, {'Val','Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
@@ -492,6 +492,10 @@ error'TODO: remove below'
             'invalid operand to `'..op..'´ : expected plain `data´ type : got "'..TYPES.tostring(e.info.tp)..'"')
         ASR(plain and plain.dcl.hier, me,
             'invalid operand to `'..op..'´ : expected `data´ type in some hierarchy : got "'..TYPES.tostring(e.info.tp)..'"')
+
+        cast = cast[1].dcl
+        ASR(cast and cast.hier and DCLS.is_super(plain.dcl,cast), me,
+            'invalid operand to `'..op..'´ : unmatching `data´ abstractions')
 
         -- info
         me.info = INFO.new(me, 'Val', nil, 'bool')
