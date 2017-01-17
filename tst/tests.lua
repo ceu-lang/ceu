@@ -42997,6 +42997,16 @@ var& Xx xxx  = &x_;
 escape xxx as int;
 ]],
     wrn = true,
+    exps = 'line 4 : invalid operand to `as´ : expected `data´ type in a hierarchy : got "Xx"',
+}
+
+Test { [[
+data Xx as 1;
+var  Xx x_ = val Xx();
+var& Xx xxx  = &x_;
+escape 1;
+]],
+    wrn = true,
     props_ = 'line 1 : invalid `as´ declaration : expected `data´ hierarchy',
 }
 
@@ -43047,7 +43057,7 @@ Test { [[
 var int a = 0;
 data Xx as a;
 var Xx x = _;
-escape x as int;
+escape 1;
 ]],
     wrn = true,
     consts = 'line 2 : invalid `data´ declaration : after `is´ : expected integer constant',
