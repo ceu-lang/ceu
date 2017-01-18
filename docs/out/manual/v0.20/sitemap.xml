@@ -335,30 +335,6 @@
 
     
     <url>
-     <loc>None/static_checks/</loc>
-     <lastmod>2017-01-18</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-    
-
-    
-    <url>
-     <loc>None/environment/</loc>
-     <lastmod>2017-01-18</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-    
-
-    
-    <url>
-     <loc>None/errors/</loc>
-     <lastmod>2017-01-18</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-    
-
-    
-    <url>
      <loc>None/syntax/</loc>
      <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
