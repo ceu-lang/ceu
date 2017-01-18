@@ -16,7 +16,7 @@ The list that follows summarizes all valid locations:
 - pointer dereferencing `*`
 - option unwrapping `!`
 
-The syntax for locations is detailed in [Expressions](#TODO).
+Locations are detailed in [Locations and Expressions](#TODO).
 
 Examples:
 

@@ -1,6 +1,6 @@
-# Expressions
+# Locations & Expressions
 
-Céu supports the following expressions:
+Céu specifies locations and expressions as follows:
 
 ```ceu
 Exp ::= NUM | STR | null | true | false

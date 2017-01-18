@@ -37,11 +37,11 @@ type.
 
 A vector [declaration](#TODO) specifies its type and maximum number of elements
 (possibly unlimited).
-The current size of a vector is dynamic and can be accessed through the
+The current length of a vector is dynamic and can be accessed through the
 [operator `$`](#TODO).
 
-Individual elements of a vector can be accessed through a
-[numeric index](#TODO) starting from `0`.
+Individual elements of a vector can be accessed through an [index](#TODO)
+starting from `0`.
 Céu generates an [error](#TODO) for out-of-bounds vector accesses.
 
 Example:
