@@ -77,7 +77,7 @@ F = {
                 node('Set_Alias', me.ln,
                     node('Exp_1&', Nat_Call.ln, '&',
                         Nat_Call),
-                    node('Exp_Name', Type.ln,
+                    node('Loc', Type.ln,
                         node('ID_int', Type.ln, __ID_int))),
                 unpack(me,4))
     end,

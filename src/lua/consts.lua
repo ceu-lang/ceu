@@ -50,7 +50,7 @@ F = {
     end,
 
     ['Exp_$$'] = function (me)
-        local dcl = AST.asr(me,'', 2,'Exp_Name').info.dcl
+        local dcl = AST.asr(me,'', 2,'Loc').info.dcl
         local _,_,_,len = unpack(dcl)
         me.is_const = (len ~= '[]' and 'int')
     end,
@@ -60,7 +60,7 @@ F = {
         me.is_const = e.is_const
     end,
 
-    Exp_Name = function (me)
+    Loc = function (me)
         local e = unpack(me)
         me.is_const = e.is_const
     end,

@@ -60,7 +60,7 @@ STMTS.F = {
         for _, e in ipairs(fr) do
             if e.tag=='Vec_Tup' or e.tag=='STRING' or
                e.tag=='Exp_as'  or e.tag=='Lua' or
-               AST.get(e,'Exp_Name',1,'Exp_as')
+               AST.get(e,'Loc',1,'Exp_as')
             then
                 -- ok
             else
@@ -85,7 +85,7 @@ STMTS.F = {
                 EXPS.check_tp(fr, to_info.tp, tp,
                     'invalid constructor : item #'..i)
             elseif e.tag == 'Lua' then
-            elseif e.tag=='Exp_as' or AST.get(e,'Exp_Name',1,'Exp_as') then
+            elseif e.tag=='Exp_as' or AST.get(e,'Loc',1,'Exp_as') then
             else
                 assert(e.info and e.info.tag == 'Vec')
                 EXPS.check_tp(fr, to_info.tp, e.info.tp,
@@ -102,7 +102,7 @@ STMTS.F = {
             'invalid constructor : expected internal type : got "'..TYPES.tostring(to.info.tp)..'"')
 
         for i, e in ipairs(fr) do
-            if e.tag == 'Exp_Name' then
+            if e.tag == 'Loc' then
                 -- OK: v1 = v1 ..
                 -- NO: v1 = v2 ..
                 -- NO: v1 = .. v1
@@ -129,9 +129,9 @@ STMTS.F = {
         -- NO: var int x = &...
         -- NO: d.x = &...
         -- NO: x! = &...
-        local Exp_Name = AST.asr(to,'Exp_Name')
-        local ID_int = AST.get(Exp_Name,'', 1,'ID_int')
-        local op = unpack(Exp_Name[1])
+        local Loc = AST.asr(to,'Loc')
+        local ID_int = AST.get(Loc,'', 1,'ID_int')
+        local op = unpack(Loc[1])
         ASR(ID_int, me, 'invalid binding : unexpected context for operator `'..op..'´')
         ASR(ID_int.dcl[1], me, 'invalid binding : expected declaration with `&´')
 
@@ -296,9 +296,9 @@ STMTS.F = {
         local fr, to = unpack(me)
 
         -- ctx
-        for _, Exp_Name in ipairs(to) do
-            if Exp_Name.tag ~= 'ID_any' then
-                INFO.asr_tag(Exp_Name, {'Nat','Var'}, 'invalid assignment')
+        for _, Loc in ipairs(to) do
+            if Loc.tag ~= 'ID_any' then
+                INFO.asr_tag(Loc, {'Nat','Var'}, 'invalid assignment')
             end
         end
 
@@ -597,7 +597,7 @@ STMTS.F = {
         me.tp = Typelist
     end,
 
-    List_Name = function (me)
+    List_Loc = function (me)
         -- ctx
         for _, var in ipairs(me) do
             if var.tag ~= 'ID_any' then

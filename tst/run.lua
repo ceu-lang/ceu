@@ -283,7 +283,7 @@ end
     if not check(T,'adjs')   then return end
     dofile(DIR..'types.lua')
     if not check(T,'dcls')   then return end
-    if not check(T,'names')  then return end
+    if not check(T,'locs')   then return end
     if not check(T,'exps')   then return end
 --do return end
     if not check(T,'consts') then return end

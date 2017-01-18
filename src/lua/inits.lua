@@ -187,7 +187,7 @@ stmt[4] = Y
         end
 
         -- equalize all with Set_Await_many
-        if to.tag ~= 'List_Name' then
+        if to.tag ~= 'List_Loc' then
             to = { to }
         end
 
@@ -215,7 +215,7 @@ stmt[4] = Y
                     end
                 else
                     -- ID = ...;
-                    local ID_int = AST.asr(sub,'Exp_Name', 1,'ID_int')
+                    local ID_int = AST.asr(sub,'Loc', 1,'ID_int')
                     if ID_int.dcl == Dcl then
                         if me.tag == 'Set_Any' then
                             local _, tp = unpack(Dcl)
@@ -246,9 +246,9 @@ stmt[4] = Y
         end
     elseif me.tag == 'Do' then
         -- a = do ... end
-        local _,body,Exp_Name = unpack(me)
-        if Exp_Name then
-            local ID_int = AST.asr(Exp_Name,'Exp_Name', 1,'ID_int')
+        local _,body,Loc = unpack(me)
+        if Loc then
+            local ID_int = AST.asr(Loc,'Loc', 1,'ID_int')
             if ID_int.dcl == Dcl then
 --[[
 -- TODO-DO:
@@ -287,7 +287,7 @@ local function run_ptrs (par, i, Dcl, stop)
         local ok = false
         if set then
             local _,to = unpack(set)
-            if to.tag ~= 'List_Name' then
+            if to.tag ~= 'List_Loc' then
                 to = { to }
             end
             for _, v in ipairs(to) do
@@ -324,10 +324,10 @@ local function run_ptrs (par, i, Dcl, stop)
 
     -- skip all |a = do ... end|
     elseif me.tag == 'Do' then
-        local _,_,Exp_Name = unpack(me)
-        if Exp_Name then
-            assert(Exp_Name.info.dcl, 'bug found')
-            if Exp_Name.info.dcl == Dcl then
+        local _,_,Loc = unpack(me)
+        if Loc then
+            assert(Loc.info.dcl, 'bug found')
+            if Loc.info.dcl == Dcl then
                 return run_ptrs(me, #me, Dcl, stop)   -- skip
             end
         end
@@ -409,7 +409,7 @@ F = {
     Stmts__PRE = function (me)
         local Set_Exp, Escape = unpack(me, #me-1)
         if #me>=2 and Set_Exp.tag=='Set_Exp' and Escape.tag=='Escape' then
-            local ID_int = AST.get(Set_Exp,'', 2,'Exp_Name', 1,'ID_int')
+            local ID_int = AST.get(Set_Exp,'', 2,'Loc', 1,'ID_int')
             if ID_int then
                 ID_int.__run_ptrs_ok = true
             end
@@ -501,7 +501,7 @@ F = {
     end,
 
     -- NO: a = do ... a ... end
-    Exp_Name = function (me)
+    Loc = function (me)
         -- OK
         do
             -- a = do escape 1 end  // a=1
@@ -519,14 +519,14 @@ F = {
         -- NO
         for par in AST.iter() do
             if par.tag == 'Do' then
-                local _,_,Exp_Name = unpack(par)
-                if Exp_Name then
-                    --ASR(not AST.is_equal(Exp_Name.dcl,me.dcl), me,
-                    ASR(Exp_Name.info.dcl ~= me.info.dcl, me,
+                local _,_,Loc = unpack(par)
+                if Loc then
+                    --ASR(not AST.is_equal(Loc.dcl,me.dcl), me,
+                    ASR(Loc.info.dcl ~= me.info.dcl, me,
                         'invalid access to '..AST.tag2id[me.info.dcl.tag]
                             ..' "'..me.info.dcl.id..'" : '
                             ..'assignment in enclosing `do` ('
-                            ..Exp_Name.ln[1]..':'..Exp_Name.ln[2]..')')
+                            ..Loc.ln[1]..':'..Loc.ln[2]..')')
                 end
             end
         end

@@ -1,8 +1,8 @@
-NAMES = {}
-INFO  = {}
+LOCS = {}
+INFO = {}
 
 function INFO.asr_tag (e, cnds, err_msg)
-    ASR(e.info, e, err_msg..' : expected name expression')
+    ASR(e.info, e, err_msg..' : expected location')
     --assert(e.info.obj.tag ~= 'Val')
     local ok do
         for _, tag in ipairs(cnds) do
@@ -40,7 +40,7 @@ function INFO.new (me, tag, id, tp, ...)
     }
 end
 
-NAMES.F = {
+LOCS.F = {
 -- IDs
 
     ID_nat = function (me)
@@ -210,7 +210,7 @@ DBG'TODO: type annotation'
         end
 
         if e.tag == 'Outer' then
-            NAMES.F.ID_int(me)
+            LOCS.F.ID_int(me)
             me.info.id = 'outer.'..member
         else
             ASR(TYPES.ID_plain(e.info.tp), me,
@@ -259,4 +259,4 @@ assert(e.info.dcl)
     end,
 }
 
-AST.visit(NAMES.F)
+AST.visit(LOCS.F)

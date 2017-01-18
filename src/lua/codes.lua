@@ -1043,7 +1043,7 @@ __ceu_ret_]]..code.n..' = '..V(fr)..[[;
 }
 ]])
             end
-        elseif AST.get(to,'Exp_Name',1,'Exp_$') then
+        elseif AST.get(to,'Loc',1,'Exp_$') then
             -- $vec = ...
             local _,vec = unpack(to[1])
             LINE(me, [[
@@ -1121,16 +1121,16 @@ _ceu_mem->_trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
             if ID_ext then
                 id = 'tceu_input_'..ID_ext.dcl.id
             else
-                local Exp_Name = AST.asr(Await,'Await_Int', 1,'Exp_Name')
-                local sufix = TYPES.noc(TYPES.tostring(Exp_Name.info.dcl[2]))
+                local Loc = AST.asr(Await,'Await_Int', 1,'Loc')
+                local sufix = TYPES.noc(TYPES.tostring(Loc.info.dcl[2]))
                 id = 'tceu_event_'..sufix
             end
         end
         CONC(me, Await)
-        for i, name in ipairs(List) do
-            if name.tag ~= 'ID_any' then
+        for i, loc in ipairs(List) do
+            if loc.tag ~= 'ID_any' then
                 local ps = '(('..id..'*)(_ceu_occ->params))'
-                SET(me, name, ps..'->_'..i, true)
+                SET(me, loc, ps..'->_'..i, true)
             end
         end
     end,
@@ -1155,7 +1155,7 @@ _ceu_mem->_trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
         for i, fr in ipairs(Vec_Cons) do
             -- concat or set?
             if i == 1 then
-                if fr.tag == 'Exp_Name' then
+                if fr.tag == 'Loc' then
                     -- vec = vec..
                     LINE(me, [[
     __ceu_nxt = ]]..V(to)..[[.len;
@@ -1185,7 +1185,7 @@ _ceu_mem->_trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
 ]])
 
             -- vec1 = ..vec2
-            elseif fr.tag == 'Exp_Name' then
+            elseif fr.tag == 'Loc' then
                 if i > 1 then
                     -- NO:
                     -- vector&[] v2 = &v1;
@@ -1372,16 +1372,16 @@ ceu_input_one(]]..V(ID_ext)..'.id, '..ps..[[);
     ---------------------------------------------------------------------------
 
     Await_Int = function (me)
-        local Exp_Name = unpack(me)
-        local alias, tp = unpack(Exp_Name.info.dcl)
+        local Loc = unpack(me)
+        local alias, tp = unpack(Loc.info.dcl)
         if alias == '&?' then
-            assert(not (Exp_Name.info.dcl.tag=='Var' and TYPES.is_nat(tp)), 'bug found')
+            assert(not (Loc.info.dcl.tag=='Var' and TYPES.is_nat(tp)), 'bug found')
             LINE(me, [[
-if (]]..V(Exp_Name)..[[.alias != NULL) {
+if (]]..V(Loc)..[[.alias != NULL) {
 ]])
             HALT(me, {
                 { ['evt.id']  = 'CEU_INPUT__CLEAR' },
-                { ['clr_range'] = V(Exp_Name)..'.range' },
+                { ['clr_range'] = V(Loc)..'.range' },
                 { lbl = me.lbl_out.id },
                 lbl = me.lbl_out.id,
             })
@@ -1390,7 +1390,7 @@ if (]]..V(Exp_Name)..[[.alias != NULL) {
 ]])
         else
             HALT(me, {
-                { evt = V(Exp_Name) },
+                { evt = V(Loc) },
                 { seq = 'CEU_APP.seq+1' },
                 { lbl = me.lbl_out.id },
                 lbl = me.lbl_out.id,
@@ -1399,14 +1399,14 @@ if (]]..V(Exp_Name)..[[.alias != NULL) {
     end,
 
     Emit_Evt = function (me)
-        local Exp_Name, List_Exp = unpack(me)
-        local Typelist = unpack(Exp_Name.info.dcl)
+        local Loc, List_Exp = unpack(me)
+        local Typelist = unpack(Loc.info.dcl)
         LINE(me, [[
 {
 ]])
         local ps = 'NULL'
         if List_Exp then
-            local sufix = TYPES.noc(TYPES.tostring(Exp_Name.info.dcl[2]))
+            local sufix = TYPES.noc(TYPES.tostring(Loc.info.dcl[2]))
             LINE(me, [[
     tceu_event_]]..sufix..[[
         __ceu_ps = { ]]..table.concat(V(List_Exp),',')..[[ };
@@ -1414,7 +1414,7 @@ if (]]..V(Exp_Name)..[[.alias != NULL) {
             ps = '&__ceu_ps'
         end
         LINE(me, [[
-    tceu_evt_occ __ceu_occ = { ]]..V(Exp_Name)..[[, CEU_APP.seq+1, &__ceu_ps,
+    tceu_evt_occ __ceu_occ = { ]]..V(Loc)..[[, CEU_APP.seq+1, &__ceu_ps,
                                {(tceu_code_mem*)&CEU_APP.root,
                                 0, (tceu_ntrl)(CEU_APP.root._mem.trails_n-1)}
                              };

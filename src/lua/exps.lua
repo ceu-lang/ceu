@@ -23,14 +23,14 @@ function EXPS.check_dim (to, fr)
 end
 
 EXPS.F = {
-    Exp_Name = function (me)
+    Loc = function (me)
         local e = unpack(me)
         me.info = e.info
     end,
     ID_int = function (me)
         if me.dcl.is_mid_idx then
             local Set_Alias = AST.get(me.__par.__par,'Set_Alias')
-            local ok = Set_Alias and AST.get(Set_Alias,'',2,'Exp_Name',1,'ID_int')==me
+            local ok = Set_Alias and AST.get(Set_Alias,'',2,'Loc',1,'ID_int')==me
             ok = ok or AST.par(me, 'List_Var')
             ASR(ok, me, 'invalid access to output variable "'..me.dcl.id..'"')
         end
@@ -247,7 +247,7 @@ error'TODO: remove below'
         me.info.tag = 'Alias'
     end,
 
--- INDEX ("idx" is Exp, not Exp_Name)
+-- INDEX ("idx" is Exp, not Loc)
 
     ['Exp_idx'] = function (me)
         local _,_,idx = unpack(me)
@@ -300,7 +300,7 @@ error'TODO: remove below'
 
 -- VECTOR LENGTH: $$
 
-    ['Exp_$$'] = NAMES.F['Exp_$'],
+    ['Exp_$$'] = LOCS.F['Exp_$'],
 
 -- NOT
 
@@ -478,7 +478,7 @@ error'TODO: remove below'
 
 -- IS, AS/CAST
 
-    Exp_as = NAMES.F.Exp_as,
+    Exp_as = LOCS.F.Exp_as,
 
     Exp_is = function (me)
         local op,e,cast = unpack(me)

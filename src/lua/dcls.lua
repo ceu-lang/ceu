@@ -705,7 +705,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
                 xxx = data
                 yyy = node('Set_Abs_Val', v.ln,
                         node('Abs_Val', v.ln, 'val', v),
-                        node('Exp_Name', v.ln,
+                        node('Loc', v.ln,
                             node('ID_int', v.ln, id)))
             elseif v.tag == 'ID_any' then
                 local vars = AST.asr(code.dcl,'Code', 4,'Block', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
@@ -714,7 +714,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
                     xxx = tp[1]
                     yyy = node('Set_Any', v.ln,
                             v,
-                            node('Exp_Name', v.ln,
+                            node('Loc', v.ln,
                                 node('ID_int', v.ln, id)))
                 end
             end

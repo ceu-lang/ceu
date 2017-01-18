@@ -18,15 +18,15 @@ local function check_blk (to_blk, fr_blk)
 end
 
 local function f2mod (f)
-    local Exp_Name = AST.asr(f,'Exp_Name')
-    local Node = unpack(Exp_Name)
+    local Loc = AST.asr(f,'Loc')
+    local Node = unpack(Loc)
     if Node.tag == 'Exp_as' then
         local _,_,mod = unpack(Node)
         return mod
     else
-        local nat = AST.get(Exp_Name.info.dcl,'Nat')
+        local nat = AST.get(Loc.info.dcl,'Nat')
         if nat then
-            local mod = unpack(AST.asr(Exp_Name.info.dcl,'Nat'))
+            local mod = unpack(AST.asr(Loc.info.dcl,'Nat'))
             return mod
         else
             return nil
@@ -50,7 +50,7 @@ F = {
 
         -- ptr = _f()
         if fr.tag=='Nat_Call' and (to_ptr or to_nat) then
-            local mod = f2mod(AST.asr(fr,'',2,'Exp_Name'))
+            local mod = f2mod(AST.asr(fr,'',2,'Loc'))
             ASR(mod=='nohold' or mod=='pure' or mod=='plain', me,
                 'invalid assignment : expected binding for "'..fr.info.dcl.id..'"')
         end
@@ -195,9 +195,9 @@ F = {
                 Stmt_Call=true },
 
     Finalize = function (me)
-        local Stmt, List_Name = unpack(me)
+        local Stmt, List_Loc = unpack(me)
         if not Stmt then
-            ASR(List_Name==false, me,
+            ASR(List_Loc==false, me,
                 'invalid `finalize´ : unexpected `varlist´')
             me.blk = AST.par(me, 'Block')
             return
@@ -212,7 +212,7 @@ F = {
 
         ASR(me.__fin_vars, me,
             'invalid `finalize´ : nothing to finalize')
-        ASR(List_Name and List_Name.tag=='List_Name', List_Name or me,
+        ASR(List_Loc and List_Loc.tag=='List_Loc', List_Loc or me,
             'invalid `finalize´ : expected `varlist´')
 
         for _, v1 in ipairs(me.__fin_vars) do
@@ -220,14 +220,14 @@ F = {
                 'invalid `finalize´ : expected identifier : got "'..v1.id..'"')
 
             local ok = false
-            for _, v2 in ipairs(List_Name) do
+            for _, v2 in ipairs(List_Loc) do
                 if v2.info.dcl==v1 or v2.info.dcl==v1.orig then
                                         -- TODO: HACK_3
                     ok = true
                     break
                 end
             end
-            ASR(ok, List_Name,
+            ASR(ok, List_Loc,
                 'invalid `finalize´ : unmatching identifiers : expected "'..
                 v1.id..'" (vs. '..Stmt.ln[1]..':'..Stmt.ln[2]..')')
         end

@@ -95,7 +95,7 @@ F = {
                         lock,
                         ret,
                         node('_Set', me.ln,
-                            node('Exp_Name', me.ln,
+                            node('Loc', me.ln,
                                 node('ID_int', me.ln, '_ret')),
                             node('_Set_Do', me.ln,
                                 node('Do', me.ln,
@@ -181,7 +181,7 @@ error'TODO: luacov never executes this?'
             else
                 AST.set(stmts_new, 1,
                         node('_Set', me.ln,
-                            node('Exp_Name', me.ln,
+                            node('Loc', me.ln,
                                 node('ID_int', me.ln, '_ret')),
                             node('_Set_Do', me.ln,
                                 do_)))
@@ -301,12 +301,12 @@ error'TODO'
             max_chk = node('Stmt_Call', me.ln,
                         node('Nat_Call', me.ln,
                             'call',
-                            node('Exp_Name', me.ln,
+                            node('Loc', me.ln,
                                 node('ID_nat', me.ln,
                                     '_ceu_callback_assert_msg')),
                             node('List_Exp', me.ln,
                                 node('Exp_<', me.ln, '<',
-                                    node('Exp_Name', me.ln,
+                                    node('Loc', me.ln,
                                         node('ID_int', me.ln, '__max_'..me.n)),
                                     AST.copy(max)),
                                 node('STRING', me.ln,
@@ -443,7 +443,7 @@ error'TODO'
                             node('Block', me.ln,
                                 node('Stmts', me.ln,
                                     node('If', me.ln,
-                                        node('Exp_Name', me.ln,
+                                        node('Loc', me.ln,
                                             node('Exp_.', me.ln,
                                                 '.',
                                                 AST.copy(exp),
@@ -452,7 +452,7 @@ error'TODO'
                                             node('Stmts', me.ln,
                                                 node('Await_Until', me.ln,
                                                     node('Await_Int', me.ln,
-                                                        node('Exp_Name', me.ln,
+                                                        node('Loc', me.ln,
                                                             node('Exp_.', me.ln,
                                                                 '.',
                                                                 AST.copy(exp),
@@ -464,7 +464,7 @@ error'TODO'
                                                 node('Break', me.ln))))))),
                         node('Set_Exp', me.ln,
                             node('BOOL', me.ln, '1'),
-                            node('Exp_Name', me.ln,
+                            node('Loc', me.ln,
                                 node('Exp_.', me.ln,
                                     '.',
                                     AST.copy(exp),
@@ -476,13 +476,13 @@ error'TODO'
                                 node('Stmts', me.ln,
                                     node('Set_Exp', me.ln,
                                         node('BOOL', me.ln, '0'),
-                                        node('Exp_Name', me.ln,
+                                        node('Loc', me.ln,
                                             node('Exp_.', me.ln,
                                                 '.',
                                                 AST.copy(exp),
                                                 'is_locked'))),
                                     node('Emit_Evt', me.ln,
-                                        node('Exp_Name', me.ln,
+                                        node('Loc', me.ln,
                                             node('Exp_.', me.ln,
                                                 '.',
                                                 AST.copy(exp),
@@ -629,12 +629,12 @@ error'TODO'
 --|| TODO: join
         local exp
         do
-            local base = AST.asr(Set,'', 2,'Exp_Name', 1,'')
+            local base = AST.asr(Set,'', 2,'Loc', 1,'')
             local ret = AST.copy(base)
             for _, idx in ipairs(T) do
                 ret = AST.node('Exp_.', me.ln, '.', ret, idx)
             end
-            exp = AST.node('Exp_Name', me.ln, ret)
+            exp = AST.node('Loc', me.ln, ret)
         end
 --<< TODO: join
 
@@ -781,7 +781,7 @@ error'TODO'
 
             if set then
                 local _,v = unpack(set)
-                local to = node('Exp_Name', me.ln,
+                local to = node('Loc', me.ln,
                             node('ID_int', me.ln, id))
                 AST.set(ret, #ret+1,
                         node('_Set', me.ln, to, unpack(set)))
@@ -853,8 +853,8 @@ error'TODO: luacov never executes this?'
 
     Set_Await_many__PRE = function (me)
         local _,var,_ = unpack(me)
-        if var.tag == 'Exp_Name' then
-            AST.set(me, 2, node('List_Name', var.ln, var))
+        if var.tag == 'Loc' then
+            AST.set(me, 2, node('List_Loc', var.ln, var))
         end
     end,
 

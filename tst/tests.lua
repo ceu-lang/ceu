@@ -8,6 +8,13 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+Test { [[
+var int x = 1;
+escape *(&&x);
+]],
+    parser = 'line 2 : after `(´ : expected location',
+}
+
 -- XXX-01
 Test { [[
 data Object with
@@ -264,16 +271,16 @@ escape x + 0.5;
 Test { [[
 escape *1;
 ]],
-    parser = 'line 1 : after `*´ : expected name expression',
-    --exps = 'line 1 : invalid operand to `*´ : expected name expression',
+    parser = 'line 1 : after `*´ : expected location',
+    --exps = 'line 1 : invalid operand to `*´ : expected location',
     --exps = 'line 1 : invalid operand to `*´ : expected pointer type',
 }
 
 Test { [[
 escape &&1;
 ]],
-    parser = 'line 1 : after `&&´ : expected name expression',
-    --exps = 'line 1 : invalid operand to `&&´ : expected name expression',
+    parser = 'line 1 : after `&&´ : expected location',
+    --exps = 'line 1 : invalid operand to `&&´ : expected location',
     --exps = 'line 1 : invalid expression : operand to `&&´ must be a name',
 }
 
@@ -289,8 +296,8 @@ Test { [[
 var int x = 1;
 escape *&&x;
 ]],
-    parser = 'line 2 : after `*´ : expected name expression',
-    --exps = 'line 2 : invalid operand to `*´ : expected name expression',
+    parser = 'line 2 : after `*´ : expected location',
+    --exps = 'line 2 : invalid operand to `*´ : expected location',
     --run = 1,
 }
 
@@ -298,8 +305,8 @@ Test { [[
 var int x = 1;
 escape *&&*&&x;
 ]],
-    parser = 'line 2 : after `*´ : expected name expression',
-    --exps = 'line 2 : invalid operand to `*´ : expected name expression',
+    parser = 'line 2 : after `*´ : expected location',
+    --exps = 'line 2 : invalid operand to `*´ : expected location',
     --run = 1,
 }
 
@@ -1756,14 +1763,14 @@ Test { [[await -1ms; escape 0;]],
     --ast = "line 1 : after `await´ : expected event",
     --parser = 'line 1 : after `1´ : expected `;´',
     --parser = 'line 1 : after `1´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `until´ or `;´',
-    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or name expression or `{´ or `pause´ or `resume´ or `async´ or `async/thread´ or `FOREVER´',
+    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or location or `{´ or `pause´ or `resume´ or `async´ or `async/thread´ or `FOREVER´',
 }
 
 Test { [[await 1; escape 0;]],
     parser = 'line 1 : after `1´ : expected `h´ or `min´ or `s´ or `ms´ or `us´',
 }
 Test { [[await -1; escape 0;]],
-    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or name expression or `{´ or `pause´ or `resume´ or `async´ or `async/thread´ or `FOREVER´',
+    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or location or `{´ or `pause´ or `resume´ or `async´ or `async/thread´ or `FOREVER´',
     --env = 'line 1 : event "?" is not declared',
 }
 
@@ -18443,7 +18450,7 @@ var& int v;
 v = &&vv;
 escape *v;
 ]],
-    names = 'line 4 : invalid operand to `*´ : expected pointer type',
+    locs = 'line 4 : invalid operand to `*´ : expected pointer type',
     --env = 'line 6 : types mismatch (`int&´ <= `int&&´)'
 }
 Test { [[
@@ -18660,7 +18667,7 @@ finalize () with
     _SDL_FreeSurface(&&(sfc!));
 end
 ]],
-    parser = 'line 3 : after `(´ : expected name expression',
+    parser = 'line 3 : after `(´ : expected location',
 }
 
 Test { [[
@@ -19693,7 +19700,7 @@ var int v = 10;
 var& void p = &v;
 escape *((&&p) as int&&);
 ]],
-    parser = 'line 3 : after `(´ : expected name expression',
+    parser = 'line 3 : after `(´ : expected location',
 }
 Test { [[
 var int v = 10;
@@ -21046,8 +21053,8 @@ with
 end
 escape v;
 ]],
-    parser = 'line 5 : after `(´ : expected name expression',
-    --exps = 'line 5 : invalid operand to `*´ : expected name expression',
+    parser = 'line 5 : after `(´ : expected location',
+    --exps = 'line 5 : invalid operand to `*´ : expected location',
     --run = 1,
 }
 
@@ -23391,7 +23398,7 @@ Test { [[
 output/input/tight Z  (var int)->int;
 escape call Z(1);
 ]],
-    parser = 'line 2 : after `call´ : expected name expression',
+    parser = 'line 2 : after `call´ : expected location',
     --parser = 'line 2 : after `call´ : expected expression',
     --parser = 'line 2 : after `Z´ : expected `;´',
     --parser = 'line 2 : after `Z´ : expected `(´',
@@ -24003,7 +24010,7 @@ Test { [[var int&&p; escape p+10 and 0;]],
 
 -- ptr
 Test { [[var int a; escape *a;]],
-    names = 'line 1 : invalid operand to `*´ : expected pointer type',
+    locs = 'line 1 : invalid operand to `*´ : expected pointer type',
 }
 Test { [[var int a; var int&&pa; (pa+10)=&&a; escape a;]],
     parser = 'line 1 : after `)´ : expected `(´',
@@ -24025,7 +24032,7 @@ native _V;
 *(0x100 as u32&&) = _V;
 escape 1;
 ]],
-    parser = 'line 2 : after `(´ : expected name expression',
+    parser = 'line 2 : after `(´ : expected location',
     --gcc = 'error: ‘V’ undeclared (first use in this function)',
 }
 
@@ -27044,7 +27051,7 @@ Test { [[
 escape 1;
 ]],
     opts_pre = true,
-    parser = 'line 3 : after `(´ : expected name expression',
+    parser = 'line 3 : after `(´ : expected location',
 }
 
 Test { [[
@@ -28187,7 +28194,7 @@ Test { [[
 var u8 v;
 escape ($v) as int;
 ]],
-    names = 'line 2 : invalid operand to `$´ : unexpected context for variable "v"',
+    locs = 'line 2 : invalid operand to `$´ : unexpected context for variable "v"',
 }
 
 Test { [[
@@ -28616,7 +28623,7 @@ vector[] int x = [1]..2;
 escape 1;
 ]],
     stmts = 'line 1 : invalid constructor : unexpected context for value "2"',
-    --stmts = 'line 1 : invalid constructor : expected name expression',
+    --stmts = 'line 1 : invalid constructor : expected location',
     --env = 'line 1 : wrong argument #2 : source is not a vector',
 }
 
@@ -28898,7 +28905,7 @@ Test { [[
 vector[] int v;
 escape v!;
 ]],
-    names = 'line 2 : invalid operand to `!´ : unexpected context for vector "v"',
+    locs = 'line 2 : invalid operand to `!´ : unexpected context for vector "v"',
 }
 Test { [[
 vector[] int v;
@@ -29403,8 +29410,8 @@ if false then
 end
 escape v2[0][0];
 ]],
-    names = 'line 5 : invalid vector : unexpected context for variable "v2"',
-    --exps = 'line 5 : invalid vector : expected name expression',
+    locs = 'line 5 : invalid vector : unexpected context for variable "v2"',
+    --exps = 'line 5 : invalid vector : expected location',
 }
 
 Test { [[
@@ -29925,7 +29932,7 @@ Test { [[
 var int v = 10;
 escape v!;
 ]],
-    names = 'line 2 : invalid operand to `!´ : expected option type',
+    locs = 'line 2 : invalid operand to `!´ : expected option type',
 }
 
 Test { [[
@@ -30459,7 +30466,7 @@ var SDL_Color clr = val SDL_Color(10);
 var SDL_Color? bg_clr = clr;
 escape bg_clr.v;
 ]],
-    names = 'line 6 : invalid operand to `.´ : expected plain type : got "SDL_Color?"',
+    locs = 'line 6 : invalid operand to `.´ : expected plain type : got "SDL_Color?"',
     --exps = 'line 6 : invalid member access : "bg_clr" must be of plain type',
     --env = 'line 6 : invalid `.´ operation : cannot be an option type',
 }
@@ -32616,7 +32623,7 @@ var u8 v = 0;
 call Set(_);
 escape v as int;
 ]],
-    exps = 'line 5 : invalid call : invalid binding : argument #1 : expected name expression',
+    exps = 'line 5 : invalid call : invalid binding : argument #1 : expected location',
     --exps = 'line 5 : invalid constructor : argument #1 : unexpected `_´',
 }
 
@@ -33067,7 +33074,7 @@ escape call Fx(5);
 Test { [[
 call 1;
 ]],
-    parser = 'line 1 : after `call´ : expected external identifier or name expression',
+    parser = 'line 1 : after `call´ : expected external identifier or location',
     --env = 'TODO: not a call',
     --ast = 'line 1 : invalid call',
     --env = 'TODO: 1 not func',
@@ -33452,7 +33459,7 @@ end
 vector[] byte str = [].."Ola Mundo!";
 escape call Strlen((&&str[0]) as _char&&);
 ]],
-    names = 'line 3 : invalid vector : unexpected context for variable "str"',
+    locs = 'line 3 : invalid vector : unexpected context for variable "str"',
     --run = 10,
 }
 
@@ -34108,13 +34115,13 @@ Test { [[
 every do
 end
 ]],
-    parser = 'line 1 : after `every´ : expected name expression or external identifier or number',
+    parser = 'line 1 : after `every´ : expected location or external identifier or number',
 }
 Test { [[
 every Code(1) do
 end
 ]],
-    parser = 'line 1 : after `every´ : expected name expression or number',
+    parser = 'line 1 : after `every´ : expected location or number',
 }
 Test { [[
 code/await Code (void)->void;
@@ -40695,7 +40702,7 @@ end
 escape ret;
 ]],
     wrn = true,
-    names = 'line 20 : invalid operand to `.´ : unexpected option alias',
+    locs = 'line 20 : invalid operand to `.´ : unexpected option alias',
 }
 
 Test { [[
@@ -42229,7 +42236,7 @@ end
 var Ee ex = val Ee(_);
 escape 1;
 ]],
-    exps = 'line 7 : invalid constructor : invalid binding : argument #1 : expected name expression',
+    exps = 'line 7 : invalid constructor : invalid binding : argument #1 : expected location',
     --exps = 'line 7 : invalid constructor : argument #1 : unexpected `_´',
 }
 
@@ -42275,8 +42282,8 @@ end
 var Dx d = val Dx(10);
 escape (d as Ex).x;
 ]],
-    names = 'line 8 : invalid operand to `as´ : unmatching `data´ abstractions',
-    --names = 'line 8 : invalid operand to `as´ : unexpected plain `data´ : got "Dx"',
+    locs = 'line 8 : invalid operand to `as´ : unmatching `data´ abstractions',
+    --locs = 'line 8 : invalid operand to `as´ : unexpected plain `data´ : got "Dx"',
 }
 
 Test { [[
@@ -42533,7 +42540,7 @@ var& Ee e = &ex;
 escape (e as Xx):x;
 ]],
     wrn = true,
-    names = 'line 7 : invalid operand to `as´ : unmatching `data´ abstractions',
+    locs = 'line 7 : invalid operand to `as´ : unmatching `data´ abstractions',
 }
 
 Test { [[
@@ -42641,7 +42648,7 @@ var Ee&& e = &&ex;
 escape (e as Xx&&):x;
 ]],
     wrn = true,
-    names = 'line 7 : invalid operand to `as´ : unmatching `data´ abstractions',
+    locs = 'line 7 : invalid operand to `as´ : unmatching `data´ abstractions',
 }
 
 Test { [[
@@ -42760,7 +42767,7 @@ var Aa a = val Aa(10);
 
 escape a.a + a.b;
 ]],
-    names = 'line 7 : invalid member access : "a" has no member "b" : `data´ "Aa" (/tmp/tmp.ceu:1)',
+    locs = 'line 7 : invalid member access : "a" has no member "b" : `data´ "Aa" (/tmp/tmp.ceu:1)',
 }
 
 Test { [[
@@ -42792,7 +42799,7 @@ var Aa.Bb b = val Aa.Bb(10,20);
 
 escape a.a + b.a + b.b + b.c;
 ]],
-    names = 'line 11 : invalid member access : "b" has no member "c" : `data´ "Aa.Bb" (/tmp/tmp.ceu:4)',
+    locs = 'line 11 : invalid member access : "b" has no member "c" : `data´ "Aa.Bb" (/tmp/tmp.ceu:4)',
 }
 
 Test { [[
@@ -42987,7 +42994,7 @@ var& Xx x  = &x_;
 escape (x as Yy) as int;
 ]],
     wrn = true,
-    names = 'line 5 : invalid operand to `as´ : unmatching `data´ abstractions',
+    locs = 'line 5 : invalid operand to `as´ : unmatching `data´ abstractions',
 }
 
 Test { [[
@@ -44212,7 +44219,7 @@ data Dd;
 pool[] Dd dds;
 escape dds!;
 ]],
-    names = 'line 3 : invalid operand to `!´ : unexpected context for pool "dds"',
+    locs = 'line 3 : invalid operand to `!´ : unexpected context for pool "dds"',
 }
 
 Test { [[

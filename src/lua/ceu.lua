@@ -14,7 +14,7 @@ if CEU.opts.ceu then
     dofile 'adjs.lua'
     dofile 'types.lua'
     dofile 'dcls.lua'
-    dofile 'names.lua'
+    dofile 'locs.lua'
     dofile 'exps.lua'
     dofile 'consts.lua'
     dofile 'fins.lua'

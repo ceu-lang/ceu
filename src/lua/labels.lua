@@ -86,8 +86,8 @@ F = {
         me.lbl_out = new{'Await_'..ID_ext.dcl.id..'__OUT'}
     end,
     Await_Int = function (me)
-        local Exp_Name = unpack(me)
-        me.lbl_out = new{'Await_'..Exp_Name.info.dcl.id..'__OUT'}
+        local Loc = unpack(me)
+        me.lbl_out = new{'Await_'..Loc.info.dcl.id..'__OUT'}
     end,
 
     Emit_Wclock = function (me)
