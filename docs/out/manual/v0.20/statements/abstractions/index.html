@@ -352,10 +352,109 @@
 <li>
           
             <li>
+    <ul class="subnav">
+    <li><span>Locations & Expressions</span></li>
+
+        
+            
     <li class="toctree-l1 ">
-        <a class="" href="../../expressions/">Expressions</a>
+        <a class="" href="../../expressions/">Locations & Expressions</a>
         
     </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/primary/">Primary</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/arithmetic/">Arithmetic</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/bitwise/">Bitwise</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/relational/">Relational</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/logical/">Logical</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/types/">Types</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/modifiers/">Modifiers</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/references/">References</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/option/">Option</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/sizeof/">Sizeof</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/calls/">Calls</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/vectors/">Vectors</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/vectors/">Fields</a>
+        
+    </li>
+
+        
+    </ul>
 <li>
           
             <li>
@@ -457,8 +556,8 @@ instances.</p>
 expression of type <code>int</code>:</p>
 <ul>
 <li><code>nothing</code>: the <code>data</code> cannot be instantiated.</li>
-<li><em>constant expression</em>: typecasting a value of the type to <code>int</code> evaluates to
-                         the specified expression.</li>
+<li><em>constant expression</em>: <a href="#TODO">typecasting</a> a value of the type to <code>int</code>
+                         evaluates to the specified enumeration expression.</li>
 </ul>
 <p>Examples:</p>
 <pre><code class="ceu">data Rect with
@@ -669,15 +768,19 @@ same name, modifiers, parameters, and return type.
 The exceptions are the <code>dynamic</code> parameters, which must be in the same
 hierarchy of their corresponding parameters in other declarations.</p>
 <p>To determine which declaration to execute during runtime, the actual argument
-is checked against the first formal <code>dynamic</code> parameter of each declaration.
+runtime type is checked against the first formal <code>dynamic</code> parameter of each
+declaration.
 The declaration with the most specific type matching the argument wins.
 In the case of a tie, the next dynamic parameter is checked.</p>
 <p>A <em>catchall</em> declaration with the most general dynamic types must always be
 provided.</p>
-<p>Examples:</p>
+<p>If the argument is explicitly <a href="#TODO">typecast</a> to a supertype, then
+dispatching considers that type instead.</p>
+<p>Example:</p>
 <pre><code class="ceu">data Media as nothing;
-data Media.Audio with &lt;...&gt; end
-data Media.Video with &lt;...&gt; end
+data Media.Audio     with &lt;...&gt; end
+data Media.Video     with &lt;...&gt; end
+data Media.Video.Avi with &lt;...&gt; end
 
 code/await/dynamic Play (dynamic var&amp; Media media) -&gt; void do
     _assert(0);             // never dispatched
@@ -687,6 +790,10 @@ code/await/dynamic Play (dynamic var&amp; Media.Audio media) -&gt; void do
 end
 code/await/dynamic Play (dynamic var&amp; Media.Video media) -&gt; void do
     &lt;...&gt;                   // plays a video
+end
+code/await/dynamic Play (dynamic var&amp; Media.Video.Avi media) -&gt; void do
+    &lt;...&gt;                                   // prepare the avi video
+    await/dynamic Play(&amp;m as Media.Video);  // dispatches the supertype
 end
 
 var&amp; Media m = &lt;...&gt;;       // receives one of &quot;Media.Audio&quot; or &quot;Media.Video&quot;

@@ -352,10 +352,109 @@
 <li>
           
             <li>
+    <ul class="subnav">
+    <li><span>Locations & Expressions</span></li>
+
+        
+            
     <li class="toctree-l1 ">
-        <a class="" href="../../expressions/">Expressions</a>
+        <a class="" href="../../expressions/">Locations & Expressions</a>
         
     </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/primary/">Primary</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/arithmetic/">Arithmetic</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/bitwise/">Bitwise</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/relational/">Relational</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/logical/">Logical</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/types/">Types</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/modifiers/">Modifiers</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/references/">References</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/option/">Option</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/sizeof/">Sizeof</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/calls/">Calls</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/vectors/">Vectors</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/vectors/">Fields</a>
+        
+    </li>
+
+        
+    </ul>
 <li>
           
             <li>
@@ -440,30 +539,57 @@ access to it.</p>
 a family nickname referring to a person is an alias;
 a job position referring to a person is a pointer.</p>
 <h3 id="aliases">Aliases</h3>
+<p>Céu support aliases to all storage classes, except external events and pointer
+types.
+Céu also supports option variable aliases which are aliases that may remain or
+become unassigned.</p>
 <p>An alias is declared by suffixing the storage class with the modifier
 <code>&amp;</code> and is acquired by prefixing an entity with the operator <code>&amp;</code>.</p>
-<p>A <a href="#TODO">native resource</a> maps to an option alias variable in Céu.
-An option alias is declared as <code>var&amp;?</code> and is acquired by prefixing a
-<a href="#TODO">native call</a> with the operator <code>&amp;</code>.</p>
-<p>Examples:</p>
-<pre><code>// alias
-var  int v = 0;
+<p>An alias must have a narrower scope than the entity it refers to.
+The <a href="#TODO">assignment</a> to the alias is immutable and must occur between its
+declaration and first access or next <a href="#TODO">yielding statement</a>.</p>
+<p>Example:</p>
+<pre><code class="ceu">var  int v = 0;
 var&amp; int a = &amp;v;        // &quot;a&quot; is an alias to &quot;v&quot;
 ...
 a = 1;                  // &quot;a&quot; and &quot;v&quot; are indistinguishable
 _printf(&quot;%d\n&quot;, v);     // prints 1
 </code></pre>
 
-<pre><code>// option alias
-var&amp;? _FILE f = &amp;_fopen(&lt;...&gt;) finalize with
+<p>An option variable alias, declared as <code>var&amp;?</code>, serves two purposes:</p>
+<ul>
+<li>Map a <a href="#TODO">native resource</a> to a variable in Céu.
+  The alias is acquired by prefixing the associated <a href="#TODO">native call</a> with
+  the operator <code>&amp;</code>.
+  Since the allocation may fail, the alias may remain unassigned.</li>
+<li>Track the lifetime of a variable.
+  The alias is acquired by prefixing the associated variable with
+  the operator <code>&amp;</code>.
+  Since the tracked variable may go out of scope, the alias may become
+  unassigned.</li>
+</ul>
+<p>Accesses to option variable aliases must always use
+<a href="#TODO">option checking or unwrapping</a>.</p>
+<p>Examples:</p>
+<pre><code class="ceu">var&amp;? _FILE f = &amp;_fopen(&lt;...&gt;) finalize with
                     _fclose(f);
                 end;
+if f? then
+    &lt;...&gt;   // &quot;f&quot; is assigned
+else
+    &lt;...&gt;   // &quot;f&quot; is not assigned
+end
 </code></pre>
 
-<p>An alias must have a narrower scope than the entity it refers to.
-The <a href="#TODO">assignment</a> to the alias is immutable and must occur between its
-declaration and first access or next <a href="#TODO">yielding statement</a>.
-It is not possible to acquire aliases to external events or to pointer types.</p>
+<pre><code class="ceu">var&amp;? int x;
+do
+    var int y = 10;
+    x = &amp;y;
+    _printf(&quot;%d\n&quot;, x!);    // prints 10
+end
+_printf(&quot;%d\n&quot;, x!);        // error!
+</code></pre>
+
 <h3 id="pointers">Pointers</h3>
 <p>A pointer is declared by suffixing the type with the modifier
 <code>&amp;&amp;</code> and is acquired by prefixing an entity with the operator <code>&amp;&amp;</code>.

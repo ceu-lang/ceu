@@ -341,10 +341,109 @@
 <li>
           
             <li>
+    <ul class="subnav">
+    <li><span>Locations & Expressions</span></li>
+
+        
+            
     <li class="toctree-l1 ">
-        <a class="" href="../expressions/">Expressions</a>
+        <a class="" href="../expressions/">Locations & Expressions</a>
         
     </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../expressions/primary/">Primary</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../expressions/arithmetic/">Arithmetic</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../expressions/bitwise/">Bitwise</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../expressions/relational/">Relational</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../expressions/logical/">Logical</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../expressions/types/">Types</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../expressions/modifiers/">Modifiers</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../expressions/references/">References</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../expressions/option/">Option</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../expressions/sizeof/">Sizeof</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../expressions/calls/">Calls</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../expressions/vectors/">Vectors</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../expressions/vectors/">Fields</a>
+        
+    </li>
+
+        
+    </ul>
 <li>
           
             <li>
@@ -696,36 +795,47 @@ Type ::= ID_type { `&amp;&amp;´ } [`?´]
 WCLOCKK ::= [NUM h] [NUM min] [NUM s] [NUM ms] [NUM us]
 WCLOCKE ::= `(´ Exp `)´ (h|min|s|ms|us)
 
-/* Loc */
-
-Loc    ::= [`*´|`$´] Loc_01
-Loc_01 ::= Loc_02 { `[´Exp`]´ | (`:´|`.´) (ID_int|ID_nat) | `!´ }
-Loc_02 ::= `(´ Loc [as (Type | `/´(nohold|plain|pure)) `)´
-         |  ID_int
-         |  ID_nat
-         |  outer
-         |  `{´ &lt;code in C&gt; `}´
-
-/* Expressions */
-
-Exp  ::= Prim (combined with the &quot;Operator Precedence&quot; below)
-Prim ::= `(´ Exp `)´
-      |  `&amp;&amp;´ Loc
-      |  Loc [`?´]
-      |  `&amp;´ (Nat_Call | Loc)
-      |  Nat_Call | Code_Call
-      |  sizeof `(´ (Type|Exp) `)´
-      |  NUM | STR | null | true | false
-
 /* Literals */
 
 NUM ::= [0-9] ([0-9]|[xX]|[A-F]|[a-f]|\.)*  // regex
 STR ::= &quot; [^\&quot;\n]* &quot;                        // regex
 
-/* Operator precedence */
+/* Expressions */
+
+Exp ::= NUM | STR | null | true | false
+     |  `(´ Exp `)´
+     |  Exp &lt;binop&gt; Exp
+     |  &lt;unop&gt; Exp
+     |  Exp is Type
+     |  Exp as Type
+     |  Exp as `/´(nohold|plain|pure)
+     |  `&amp;´ (Nat_Call | Loc)
+     |  `&amp;&amp;´ Loc
+     |  Loc [`?´]
+     |  sizeof `(´ (Type|Exp) `)´
+     |  Nat_Call | Code_Call
+
+/* Locations */
+
+Loc ::= [`*´|`$´] Loc
+     |  Loc { `[´Exp`]´ | (`:´|`.´) (ID_int|ID_nat) | `!´ }
+     |  `(´ Loc [as (Type | `/´(nohold|plain|pure)) `)´
+     |  ID_int
+     |  ID_nat
+     |  outer
+     |  `{´ &lt;code in C&gt; `}´
+
+/* Operator Precedence */
 
     /* lowest priority */
-    is    as
+
+    // locations
+    *     $
+    :     .     !
+    as
+
+    // expressions
+    is    as                            // binops
     or
     and
     !=    ==    &lt;=    &gt;=    &lt;     &gt;
@@ -735,7 +845,8 @@ STR ::= &quot; [^\&quot;\n]* &quot;                        // regex
     &lt;&lt;    &gt;&gt;
     +     -
     *     /     %
-    not   +    -    ~    $$
+    not   +    -    ~    $$             // unops
+
     /* highest priority */
 
 /* Other */

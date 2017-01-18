@@ -325,7 +325,7 @@
                 
                     <li><a class="toctree-l4" href="#native-call">Native Call</a></li>
                 
-                    <li><a class="toctree-l4" href="#finalization">Finalization</a></li>
+                    <li><a class="toctree-l4" href="#resources-finalization">Resources &amp; Finalization</a></li>
                 
             
             </ul>
@@ -358,10 +358,109 @@
 <li>
           
             <li>
+    <ul class="subnav">
+    <li><span>Locations & Expressions</span></li>
+
+        
+            
     <li class="toctree-l1 ">
-        <a class="" href="../../expressions/">Expressions</a>
+        <a class="" href="../../expressions/">Locations & Expressions</a>
         
     </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/primary/">Primary</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/arithmetic/">Arithmetic</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/bitwise/">Bitwise</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/relational/">Relational</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/logical/">Logical</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/types/">Types</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/modifiers/">Modifiers</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/references/">References</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/option/">Option</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/sizeof/">Sizeof</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/calls/">Calls</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/vectors/">Vectors</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/vectors/">Fields</a>
+        
+    </li>
+
+        
+    </ul>
 <li>
           
             <li>
@@ -589,7 +688,7 @@ s.f();
 `TODO: ex. pointer return`
 -->
 
-<h3 id="finalization">Finalization</h3>
+<h3 id="resources-finalization">Resources &amp; Finalization</h3>
 <p>A finalization statement unconditionally executes a series of statements when
 its associated block terminates or is aborted.</p>
 <p>Céu tracks the interaction of native calls with pointers and requires 
@@ -643,11 +742,11 @@ If the enclosing <code>watching</code> aborts before awaking from the <code>awai
 would remain open as a <em>memory leak</em>.
 The <code>finalize</code> ensures that <code>_fclose</code> closes the file properly.</p>
 <p>To access an external resource from Céu requires an <a href="#TODO">alias assignment</a>
-to an <a href="#TODO">option alias variable</a> <code>var&amp;?</code>.
-If the external call returns <code>NULL</code>, the alias is not set.</p>
+to an <a href="#TODO">option variable alias</a> <code>var&amp;?</code>.
+If the external call returns <code>NULL</code>, the alias remains unbounded.</p>
 <p><em>Note: the compiler only forces the programmer to write finalization clauses,
        but cannot check if they handle the resource properly.</em></p>
-<p><a href="#TODO">Declaration modifiers</a> and <a href="#TODO">typecasts</a> may suppress the
+<p><a href="#TODO">Declaration</a> and <a href="#TODO">expression</a> modifiers] may suppress the
 requirement for finalization in calls:</p>
 <ul>
 <li><code>nohold</code> modifiers or <code>/nohold</code> typecasts make passing pointers safe.</li>

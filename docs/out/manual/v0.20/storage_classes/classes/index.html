@@ -356,10 +356,109 @@
 <li>
           
             <li>
+    <ul class="subnav">
+    <li><span>Locations & Expressions</span></li>
+
+        
+            
     <li class="toctree-l1 ">
-        <a class="" href="../../expressions/">Expressions</a>
+        <a class="" href="../../expressions/">Locations & Expressions</a>
         
     </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/primary/">Primary</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/arithmetic/">Arithmetic</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/bitwise/">Bitwise</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/relational/">Relational</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/logical/">Logical</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/types/">Types</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/modifiers/">Modifiers</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/references/">References</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/option/">Option</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/sizeof/">Sizeof</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/calls/">Calls</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/vectors/">Vectors</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/vectors/">Fields</a>
+        
+    </li>
+
+        
+    </ul>
 <li>
           
             <li>
@@ -465,10 +564,10 @@ escape v;       // read access (yields 2)
 type.</p>
 <p>A vector <a href="#TODO">declaration</a> specifies its type and maximum number of elements
 (possibly unlimited).
-The current size of a vector is dynamic and can be accessed through the
+The current length of a vector is dynamic and can be accessed through the
 <a href="#TODO">operator <code>$</code></a>.</p>
-<p>Individual elements of a vector can be accessed through a
-<a href="#TODO">numeric index</a> starting from <code>0</code>.
+<p>Individual elements of a vector can be accessed through an <a href="#TODO">index</a>
+starting from <code>0</code>.
 Céu generates an <a href="#TODO">error</a> for out-of-bounds vector accesses.</p>
 <p>Example:</p>
 <pre><code class="ceu">vector[9] byte buf = [1,2,3];   // write access

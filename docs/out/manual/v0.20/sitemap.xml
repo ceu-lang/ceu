@@ -4,7 +4,7 @@
     
     <url>
      <loc>None/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -13,43 +13,43 @@
         
     <url>
      <loc>None/overview/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/overview/environments/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/overview/synchronous_execution_model/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/overview/parallel_compositions_and_abortion/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/overview/bounded_execution/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/overview/deterministic_execution/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/overview/internal_reactions/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -59,25 +59,25 @@
         
     <url>
      <loc>None/lexical_rules/keywords/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/lexical_rules/identifiers/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/lexical_rules/literals/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/lexical_rules/comments/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -87,31 +87,31 @@
         
     <url>
      <loc>None/types/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/types/primitives/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/types/natives/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/types/abstractions/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/types/modifiers/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -121,31 +121,31 @@
         
     <url>
      <loc>None/storage_classes/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/storage_classes/lexical_scope/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/storage_classes/classes/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/storage_classes/locations/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/storage_classes/references/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -155,79 +155,167 @@
         
     <url>
      <loc>None/statements/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/statements/declarations/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/statements/assignments/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/statements/event_handling/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/statements/conditional/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/statements/loops/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/statements/parallel_compositions/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/statements/pausing/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/statements/asynchronous_execution/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/statements/c_integration/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/statements/lua_integration/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/statements/abstractions/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>None/statements/synchronous_control_statements/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    
+
+    
+        
+    <url>
+     <loc>None/expressions/</loc>
+     <lastmod>2017-01-18</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/expressions/primary/</loc>
+     <lastmod>2017-01-18</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/expressions/arithmetic/</loc>
+     <lastmod>2017-01-18</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/expressions/bitwise/</loc>
+     <lastmod>2017-01-18</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/expressions/relational/</loc>
+     <lastmod>2017-01-18</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/expressions/logical/</loc>
+     <lastmod>2017-01-18</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/expressions/types/</loc>
+     <lastmod>2017-01-18</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/expressions/modifiers/</loc>
+     <lastmod>2017-01-18</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/expressions/references/</loc>
+     <lastmod>2017-01-18</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/expressions/option/</loc>
+     <lastmod>2017-01-18</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/expressions/sizeof/</loc>
+     <lastmod>2017-01-18</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/expressions/calls/</loc>
+     <lastmod>2017-01-18</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/expressions/vectors/</loc>
+     <lastmod>2017-01-18</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/expressions/vectors/</loc>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -235,16 +323,8 @@
 
     
     <url>
-     <loc>None/expressions/</loc>
-     <lastmod>2017-01-15</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-    
-
-    
-    <url>
      <loc>None/static_checks/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -252,7 +332,7 @@
     
     <url>
      <loc>None/environment/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -260,7 +340,7 @@
     
     <url>
      <loc>None/errors/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -268,7 +348,7 @@
     
     <url>
      <loc>None/syntax/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
@@ -276,7 +356,7 @@
     
     <url>
      <loc>None/license/</loc>
-     <lastmod>2017-01-15</lastmod>
+     <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>
     </url>
     

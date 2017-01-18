@@ -354,10 +354,109 @@
 <li>
           
             <li>
+    <ul class="subnav">
+    <li><span>Locations & Expressions</span></li>
+
+        
+            
     <li class="toctree-l1 ">
-        <a class="" href="../../expressions/">Expressions</a>
+        <a class="" href="../../expressions/">Locations & Expressions</a>
         
     </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/primary/">Primary</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/arithmetic/">Arithmetic</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/bitwise/">Bitwise</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/relational/">Relational</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/logical/">Logical</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/types/">Types</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/modifiers/">Modifiers</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/references/">References</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/option/">Option</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/sizeof/">Sizeof</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/calls/">Calls</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/vectors/">Vectors</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../expressions/vectors/">Fields</a>
+        
+    </li>
+
+        
+    </ul>
 <li>
           
             <li>
@@ -436,7 +535,7 @@
 <p>The <code>await</code> statement halts the running trail until the specified event occurs.
 The event can be an <a href="#TODO">input event</a>, an <a href="#TODO">internal event</a>, a timer,
 a <a href="#TODO">pausing event</a>, or forever (i.e., never awakes):</p>
-<pre><code class="ceu">Await ::= await (ID_ext | Loc) [until Exp]      /* events */
+<pre><code class="ceu">Await ::= await (ID_ext | Loc) [until Exp]      /* events and option aliases */
        |  await (WCLOCKK|WCLOCKE)               /* timers */
        |  await (pause|resume)                  /* pausing events */
        |  await FOREVER                         /* forever */
@@ -477,6 +576,16 @@ event (bool,int) e;             // &quot;e&quot; is an internal event carrying &
 var bool v1;
 var int  v2;
 (v1,v2) = await e;              // awakes on &quot;e&quot; and assigns its values to &quot;v1&quot; and &quot;v2&quot;
+</code></pre>
+
+<h4 id="option-alias">Option Alias</h4>
+<p>The <code>await</code> statement for <a href="#TODO">option variable aliases</a> halts the running
+trail until the specified alias goes out of scope.</p>
+<p>The <code>await</code> evaluates to no value.</p>
+<p>Example:</p>
+<pre><code class="ceu">var&amp;? int x;
+spawn Code() -&gt; (&amp;x);   // &quot;x&quot; is bounded to a variable inside &quot;Code&quot;
+await x;                // awakes when the spawned &quot;Code&quot; terminates
 </code></pre>
 
 <h4 id="timer">Timer</h4>
