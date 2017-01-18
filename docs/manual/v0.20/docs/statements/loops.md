@@ -233,3 +233,13 @@ end
 ### Pool Iterator
 
 `TODO`
+
+<!--
+For iterators in which `Exp` evaluates to a pool of organisms, `ID_var`
+evaluates to pointers to instances in the pool, one at a time, from the oldest 
+to the newest created.
+`ID_var` is automatically declared read-only, with visibility restricted to the 
+loop body.
+
+`TODO (example)`
+-->

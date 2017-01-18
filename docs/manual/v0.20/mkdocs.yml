@@ -32,6 +32,8 @@ pages:
         - References:       'storage_classes/references.md'
     - Statements:
         - Statements:                       'statements/index.md'
+        - Nothing:                          'statements/nothing.md'
+        - Blocks:                           'statements/blocks.md'
         - Declatations:                     'statements/declarations.md'
         - Assignments:                      'statements/assignments.md'
         - Event Handling:                   'statements/event_handling.md'

@@ -103,6 +103,9 @@ Native blocks are copied in the order they appear in the source code.
 Since Céu uses the [C preprocessor](#TODO), hash directives `#` inside native
 blocks must be quoted as `##` to be considered only in the C compilation phase.
 
+If the code in C contains the terminating `end` keyword of Céu, the `native`
+block should be delimited with matching comments to avoid confusing the parser:
+
 Symbols defined in native blocks still need to be [declared](#TODO) for use in
 the program.
 
@@ -130,6 +133,14 @@ end
 native/nohold _printf;
 native/pre do
     ##include <stdio.h>         // include the relevant header for "printf"
+end
+```
+
+```ceu
+native/pos do
+    /******/
+    char str = "This `end` confuses the parser";
+    /******/
 end
 ```
 
