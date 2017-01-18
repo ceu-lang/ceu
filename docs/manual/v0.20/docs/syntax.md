@@ -275,16 +275,6 @@ Type ::= ID_type { `&&´ } [`?´]
 WCLOCKK ::= [NUM h] [NUM min] [NUM s] [NUM ms] [NUM us]
 WCLOCKE ::= `(´ Exp `)´ (h|min|s|ms|us)
 
-/* Loc */
-
-Loc    ::= [`*´|`$´] Loc_01
-Loc_01 ::= Loc_02 { `[´Exp`]´ | (`:´|`.´) (ID_int|ID_nat) | `!´ }
-Loc_02 ::= `(´ Loc [as (Type | `/´(nohold|plain|pure)) `)´
-         |  ID_int
-         |  ID_nat
-         |  outer
-         |  `{´ <code in C> `}´
-
 /* Literals */
 
 NUM ::= [0-9] ([0-9]|[xX]|[A-F]|[a-f]|\.)*  // regex
@@ -292,20 +282,40 @@ STR ::= " [^\"\n]* "                        // regex
 
 /* Expressions */
 
-Exp ::= Exp <binop> Exp
-     |  <unop> Exp
+Exp ::= NUM | STR | null | true | false
      |  `(´ Exp `)´
+     |  Exp <binop> Exp
+     |  <unop> Exp
+     |  Exp is Type
+     |  Exp as Type
+     |  Exp as `/´(nohold|plain|pure)
+     |  `&´ (Nat_Call | Loc)
      |  `&&´ Loc
      |  Loc [`?´]
-     |  `&´ (Nat_Call | Loc)
-     |  Nat_Call | Code_Call
      |  sizeof `(´ (Type|Exp) `)´
-     |  NUM | STR | null | true | false
+     |  Nat_Call | Code_Call
 
-/* Operator precedence (binop & unop) */
+/* Locations */
+
+Loc ::= [`*´|`$´] Loc
+     |  Loc { `[´Exp`]´ | (`:´|`.´) (ID_int|ID_nat) | `!´ }
+     |  `(´ Loc [as (Type | `/´(nohold|plain|pure)) `)´
+     |  ID_int
+     |  ID_nat
+     |  outer
+     |  `{´ <code in C> `}´
+
+/* Operator Precedence */
 
     /* lowest priority */
-    is    as
+
+    // locations
+    *     $
+    :     .     !
+    as
+
+    // expressions
+    is    as                            // binops
     or
     and
     !=    ==    <=    >=    <     >
@@ -315,7 +325,8 @@ Exp ::= Exp <binop> Exp
     <<    >>
     +     -
     *     /     %
-    not   +    -    ~    $$
+    not   +    -    ~    $$             // unops
+
     /* highest priority */
 
 /* Other */

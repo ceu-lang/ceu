@@ -16,19 +16,26 @@ Exp ::= NUM | STR | null | true | false
      |  sizeof `(´ (Type|Exp) `)´
      |  Nat_Call | Code_Call
 
-Loc    ::= Loc_01
-Loc_01 ::= [`*´|`$´] Loc_02
-Loc_02 ::= Loc_03 { `[´Exp`]´ | (`:´|`.´) (ID_int|ID_nat) | `!´ }
-Loc_03 ::= `(´ Loc_01 [as (Type | `/´(nohold|plain|pure)) `)´
-        |  ID_int
-        |  ID_nat
-        |  outer
-        |  `{´ <code in C> `}´
+Loc ::= [`*´|`$´] Loc
+     |  Loc { `[´Exp`]´ | (`:´|`.´) (ID_int|ID_nat) | `!´ }
+     |  `(´ Loc [as (Type | `/´(nohold|plain|pure)) `)´
+     |  ID_int
+     |  ID_nat
+     |  outer
+     |  `{´ <code in C> `}´
 
-    /* operator precedence (binop & unop) */
+/* Operator Precedence */
 
     /* lowest priority */
-    or                                  /* binops */
+
+    // locations
+    *     $
+    :     .     !
+    as
+
+    // expressions
+    is    as                            // binops
+    or
     and
     !=    ==    <=    >=    <     >
     |
@@ -37,7 +44,8 @@ Loc_03 ::= `(´ Loc_01 [as (Type | `/´(nohold|plain|pure)) `)´
     <<    >>
     +     -
     *     /     %
-    not   +    -    ~    $$             /* unops */
+    not   +    -    ~    $$             // unops
+
     /* highest priority */
 ```
 
