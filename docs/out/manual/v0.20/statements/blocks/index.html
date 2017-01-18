@@ -8,7 +8,7 @@
   
   
   
-  <title>Keywords - Céu v0.20 - Reference Manual</title>
+  <title>Blocks - Céu v0.20 - Reference Manual</title>
   
 
   <link rel="shortcut icon" href="../../img/favicon.ico">
@@ -24,9 +24,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Keywords";
-    var mkdocs_page_input_path = "lexical_rules/keywords.md";
-    var mkdocs_page_url = "/lexical_rules/keywords/";
+    var mkdocs_page_name = "Blocks";
+    var mkdocs_page_input_path = "statements/blocks.md";
+    var mkdocs_page_url = "/statements/blocks/";
   </script>
   
   <script src="../../js/jquery-2.1.1.min.js"></script>
@@ -125,36 +125,29 @@
 
         
             
-    <li class="toctree-l1 current">
-        <a class="current" href="./">Keywords</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#keywords">Keywords</a></li>
-                
-            
-            </ul>
+    <li class="toctree-l1 ">
+        <a class="" href="../../lexical_rules/keywords/">Keywords</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../identifiers/">Identifiers</a>
+        <a class="" href="../../lexical_rules/identifiers/">Identifiers</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../literals/">Literals</a>
+        <a class="" href="../../lexical_rules/literals/">Literals</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../comments/">Comments</a>
+        <a class="" href="../../lexical_rules/comments/">Comments</a>
         
     </li>
 
@@ -255,105 +248,116 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../statements/">Statements</a>
+        <a class="" href="../">Statements</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../statements/nothing/">Nothing</a>
+        <a class="" href="../nothing/">Nothing</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Blocks</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#blocks">Blocks</a></li>
+                
+                    <li><a class="toctree-l4" href="#do-end-and-escape">do-end and escape</a></li>
+                
+                    <li><a class="toctree-l4" href="#pre-do-end">pre-do-end</a></li>
+                
+            
+            </ul>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../statements/blocks/">Blocks</a>
+        <a class="" href="../declarations/">Declatations</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../statements/declarations/">Declatations</a>
+        <a class="" href="../assignments/">Assignments</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../statements/assignments/">Assignments</a>
+        <a class="" href="../event_handling/">Event Handling</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../statements/event_handling/">Event Handling</a>
+        <a class="" href="../conditional/">Conditional</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../statements/conditional/">Conditional</a>
+        <a class="" href="../loops/">Loops</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../statements/loops/">Loops</a>
+        <a class="" href="../parallel_compositions/">Parallel Compositions</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../statements/parallel_compositions/">Parallel Compositions</a>
+        <a class="" href="../pausing/">Pausing</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../statements/pausing/">Pausing</a>
+        <a class="" href="../asynchronous_execution/">Asynchronous Execution</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../statements/asynchronous_execution/">Asynchronous Execution</a>
+        <a class="" href="../c_integration/">C Integration</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../statements/c_integration/">C Integration</a>
+        <a class="" href="../lua_integration/">Lua Integration</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../statements/lua_integration/">Lua Integration</a>
+        <a class="" href="../abstractions/">Abstractions</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../statements/abstractions/">Abstractions</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../statements/synchronous_control_statements/">Synchronous Control Statements</a>
+        <a class="" href="../synchronous_control_statements/">Synchronous Control Statements</a>
         
     </li>
 
@@ -524,11 +528,11 @@
     
       
         
-          <li>Lexical Rules &raquo;</li>
+          <li>Statements &raquo;</li>
         
       
     
-    <li>Keywords</li>
+    <li>Blocks</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -538,43 +542,69 @@
           <div role="main">
             <div class="section">
               
-                <h2 id="keywords">Keywords</h2>
-<p>Keywords in Céu are reserved names that cannot be used as identifiers (e.g., 
-variable names):</p>
-<pre><code class="ceu">    and             as              async           atomic          await           
+                <h2 id="blocks">Blocks</h2>
+<p>A <code>Block</code> creates a new lexical scope for
+<a href="#TODO">storage entities</a>
+and
+<a href="#TODO">abstractions</a>,
+which are visible only for statements inside the block.</p>
+<p>Compound statements (e.g. <em>do-end</em>, <em>if-then-else</em>, <em>loops</em>, etc.) create new
+blocks and can be nested to an arbitrary level.</p>
+<h3 id="do-end-and-escape"><code>do-end</code> and <code>escape</code></h3>
+<p>The <code>do-end</code> statement creates an explicit block with an optional identifier.
+The <code>escape</code> statement aborts the deepest enclosing <code>do-end</code> matching its
+identifier:</p>
+<pre><code class="ceu">Do ::= do [`/´ (`_´|ID_int)]
+           Block
+       end
 
-    break           call            code            const           continue        
-
-    data            deterministic   do              dynamic         else            
-
-    emit            end             escape          event           every           
-
-    false           finalize        FOREVER         hold            if              
-
-    in              input           is              isr             kill            
-
-    lock            loop            lua             native          new
-
-    nohold          not             nothing         null            or
-
-    outer           output          par             pause           plain
-
-    pool            pos             pre             pure            recursive
-
-    request         resume          sizeof          spawn           static
-
-    then            thread          tight           traverse        true
-
-    until           val             var             vector          watching
-
-    with            bool            byte            f32             f64
-
-    float           int             s16             s32             s64
-
-    s8              ssize           u16             u32             u64
-
-    u8              uint            usize           void
+Escape ::= escape [`/´ID_int] [Exp]
 </code></pre>
+
+<p><code>do-end</code> supports the neutral identifier <code>_</code> which is guaranteed not to match
+any <code>escape</code> statement.</p>
+<p>A <code>do-end</code> can be <a href="#TODO">assigned</a> to a variable whose type must be matched
+by nested <code>escape</code> statements.
+The whole block evaluates to the value of a reached <code>escape</code>.
+If the variable is of <a href="#TODO">option type</a>, the <code>do-end</code> is allowed to
+terminate without an <code>escape</code>, otherwise it raises a runtime error.</p>
+<p>Programs have an implicit enclosing <code>do-end</code> that assigns to a
+<em>program status variable</em> of type <code>int</code> whose meaning is
+<a href="#TODO">platform dependent</a>.</p>
+<p>Examples:</p>
+<pre><code class="ceu">do
+    do/a
+        do/_
+            escape;     // matches line 1
+        end
+        escape/a;       // matches line 2
+    end
+end
+</code></pre>
+
+<pre><code class="ceu">var int? v =
+    do
+        if &lt;cnd&gt; then
+            escape 10;  // assigns 10 to &quot;v&quot;
+        else
+            nothing;    // &quot;v&quot; remains unassigned
+        end
+    end;
+</code></pre>
+
+<pre><code class="ceu">escape 0;               // program terminates with a status value of 0
+</code></pre>
+
+<h3 id="pre-do-end"><code>pre-do-end</code></h3>
+<p>The <code>pre-do-end</code> statement prepends its statements in the beginning of the
+program:</p>
+<pre><code class="ceu">Pre_Do ::= pre do
+               Block
+           end
+</code></pre>
+
+<p>All <code>pre-do-end</code> statements are concatenated together in the order they appear
+and moved to the beginning of the top-level block, before all other statements.</p>
               
             </div>
           </div>
@@ -582,10 +612,10 @@ variable names):</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../identifiers/" class="btn btn-neutral float-right" title="Identifiers">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../declarations/" class="btn btn-neutral float-right" title="Declatations">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../../overview/internal_reactions/" class="btn btn-neutral" title="Internal Reactions"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../nothing/" class="btn btn-neutral" title="Nothing"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -611,10 +641,10 @@ variable names):</p>
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../../overview/internal_reactions/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../nothing/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../identifiers/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../declarations/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

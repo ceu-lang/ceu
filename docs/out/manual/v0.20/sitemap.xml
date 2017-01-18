@@ -160,6 +160,18 @@
     </url>
         
     <url>
+     <loc>None/statements/nothing/</loc>
+     <lastmod>2017-01-18</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/statements/blocks/</loc>
+     <lastmod>2017-01-18</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
      <loc>None/statements/declarations/</loc>
      <lastmod>2017-01-18</lastmod>
      <changefreq>daily</changefreq>

@@ -255,6 +255,20 @@
         
             
     <li class="toctree-l1 ">
+        <a class="" href="../nothing/">Nothing</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../blocks/">Blocks</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
         <a class="" href="../declarations/">Declatations</a>
         
     </li>
@@ -626,6 +640,8 @@ on the modifier specified:</p>
 <p>Native blocks are copied in the order they appear in the source code.</p>
 <p>Since Céu uses the <a href="#TODO">C preprocessor</a>, hash directives <code>#</code> inside native
 blocks must be quoted as <code>##</code> to be considered only in the C compilation phase.</p>
+<p>If the code in C contains the terminating <code>end</code> keyword of Céu, the <code>native</code>
+block should be delimited with matching comments to avoid confusing the parser:</p>
 <p>Symbols defined in native blocks still need to be <a href="#TODO">declared</a> for use in
 the program.</p>
 <p>Examples:</p>
@@ -648,6 +664,13 @@ end
 <pre><code class="ceu">native/nohold _printf;
 native/pre do
     ##include &lt;stdio.h&gt;         // include the relevant header for &quot;printf&quot;
+end
+</code></pre>
+
+<pre><code class="ceu">native/pos do
+    /******/
+    char str = &quot;This `end` confuses the parser&quot;;
+    /******/
 end
 </code></pre>
 
