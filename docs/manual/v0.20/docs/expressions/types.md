@@ -9,19 +9,19 @@ Cast  ::= Exp as Type
 
 ### Type Check
 
-In a type check, the static type of the expression must be a supertype of the
-checked type.
-The check evaluates to *true* or *false* and checks if the runtime type of the
-expression is of the checked type.
+A type check evaluates to *true* or *false* depending on whether the runtime
+type of the expression is a subtype of the checked type or not.
+
+The static type of the expression must be a supertype of the checked type.
 
 Example:
 
 ```ceu
 data Aa;
 data Aa.Bb;
-var Aa a = <...>;       // "a" has static type "Aa"
+var Aa a = <...>;       // "a" is of static type "Aa"
 <...>
-if a is Aa.Bb then      // has "a" runtime type "Aa.Bb"?
+if a is Aa.Bb then      // is the runtime type of "a" a subtype of "Aa.Bb"?
     <...>
 end
 ```

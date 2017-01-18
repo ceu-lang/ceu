@@ -14,7 +14,7 @@ The list that follows summarizes all valid locations:
 - vector index
 - vector length `$`
 - pointer dereferencing `*`
-- option dereferencing `!`
+- option unwrapping `!`
 
 The syntax for locations is detailed in [Expressions](#TODO).
 

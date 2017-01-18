@@ -50,7 +50,7 @@ An option variable alias, declared as `var&?`, serves two purposes:
   unassigned.
 
 Accesses to option variable aliases must always use
-[option checking or dereferencing](#TODO).
+[option checking or unwrapping](#TODO).
 
 Examples:
 
