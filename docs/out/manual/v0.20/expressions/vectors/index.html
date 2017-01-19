@@ -462,6 +462,8 @@
                 
                     <li><a class="toctree-l4" href="#length">Length</a></li>
                 
+                    <li><a class="toctree-l4" href="#constructor">Constructor</a></li>
+                
             
             </ul>
         
@@ -524,7 +526,7 @@
                 <h2 id="vectors">Vectors</h2>
 <h3 id="index">Index</h3>
 <p>Céu uses square brackets to index <a href="#Vectors">vectors</a>:</p>
-<pre><code>Index ::= Loc `[´ Exp `]´
+<pre><code>Vec_Idx ::= Loc `[´ Exp `]´
 </code></pre>
 
 <p>The index expression must be of type <a href="#TODO"><code>usize</code></a>.</p>
@@ -533,11 +535,15 @@ Céu generates an <a href="#TODO">error</a> for out-of-bounds vector accesses.</
 <h3 id="length">Length</h3>
 <p>The operator <code>$</code> returns the current length of a vector, while the operator
 <code>$$</code> returns the max length:</p>
-<pre><code>Cur ::= `$´  Loc
-Max ::= `$$´ Loc
+<pre><code>Vec_Len ::= `$´  Loc
+Vec_Max ::= `$$´ Loc
 </code></pre>
 
 <p><code>TODO: max</code></p>
+<h3 id="constructor">Constructor</h3>
+<p>Vector constructors are only valid in <a href="#TODO">assignments</a>:</p>
+<pre><code class="ceu">Vec_Cons ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´) }
+</code></pre>
               
             </div>
           </div>

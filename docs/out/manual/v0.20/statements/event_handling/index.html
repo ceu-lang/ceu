@@ -626,8 +626,9 @@ end
 <p>The <code>emit</code> statement broadcasts an event to the whole program.
 The event can be an <a href="#TODO">external event</a>, an <a href="#TODO">internal event</a>, or
 a timer:</p>
-<pre><code class="ceu">Emit ::= emit (ID_ext | Loc) [`(´ [LIST(Exp)] `)´)]
-      |  emit (WCLOCKK|WCLOCKE)
+<pre><code class="ceu">Emit_Int ::= emit Loc [`(´ [LIST(Exp)] `)´]
+Emit_Ext ::= emit ID_ext [`(´ [LIST(Exp)] `)´]
+          |  emit (WCLOCKK|WCLOCKE)
 </code></pre>
 
 <p>Examples:</p>
