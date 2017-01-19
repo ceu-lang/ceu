@@ -1,24 +1,8 @@
+## C API
+
+`TODO`
+
 <!--
-The [compiler](#TODO) of Céu generates as output a program in C, which is
-embedded in a host program also in C, which is further compiled to the final
-binary program.
-
-MOVE to #compiler?
--->
-
-Environment
-===========
-
-As a reactive language, Céu depends on an external environment (the host 
-platform) to provide input and output events to programs.
-The environment is responsible for sensing the world and notifying Céu about changes.
-The actual events vary from environment to environment, as well as the 
-implementation for the notification mechanism (e.g. *polling* or 
-*interrupt-driven*).
-
-The C API
----------
-
 The final output of the compiler of Céu is a program in C that follows a 
 standard application programming interface.
 The interface specifies some types, macros, and functions, which the 
@@ -206,31 +190,3 @@ These types are used internally by the language runtime, and can also be used by
 For instance, Céu internally uses a <tt>u64</tt> type to represent wall-clock time.
 
 -->
-
-
-Compiler
---------
-
-Céu provides a command line compiler that generates C code for a given input program.
-The compiler is independent of the target platform.
-
-The generated C output should be included in the main application, and is supposed to be integrated with the specific platform through the presented [[#sec.env.api|API]].
-
-The command line options for the compiler are as follows:
-
-    ./ceu <filename>              # Ceu input file, or `-` for stdin
-    
-        --output <filename>       # C output file (stdout)
-    
-        --defs-file <filename>    # define constants in a separate output file (no)
-    
-        --join (--no-join)        # join lines enclosed by /*{-{*/ and /*}-}*/ (join)
-    
-        --dfa (--no-dfa)          # perform DFA analysis (no-dfa)
-        --dfa-viz (--no-dfa-viz)  # generate DFA graph (no-dfa-viz)
-    
-        --m4 (--no-m4)            # preprocess the input with `m4` (no-m4)
-        --m4-args                 # preprocess the input with `m4` passing arguments in between `"` (no)
-
-The values in parenthesis show the defaults for the options that are omitted.
-

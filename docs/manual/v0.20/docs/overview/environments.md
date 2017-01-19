@@ -12,3 +12,7 @@ world:
 As examples of typical environments, an embedded system may provide button
 input and LED output, and a video game engine may provide keyboard input and
 video output.
+
+<!--
+`TODO: link to compilation`
+-->

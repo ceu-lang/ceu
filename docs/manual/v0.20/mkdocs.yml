@@ -62,7 +62,10 @@ pages:
         - Vectors:                  'expressions/vectors.md'
         - Fields:                   'expressions/vectors.md'
     #- Static Checks:    'static_checks/index.md'
-    #- Environment:      'environment/index.md'
+    - Compilation:
+        - Compilation:  'compilation/index.md'
+        - Command Line: 'compilation/command_line.md'
+        - C API:        'compilation/c_api.md'
     #- Errors:           'errors/index.md'
     - Syntax:           'syntax.md'
     - License:          'license.md'
