@@ -1,33 +1,45 @@
 ## Assignments
 
 An assignment associates the statement or expression at the right side of the
-symbol `=` with the location(s) at the left side:
+symbol `=` with the [location(s)](#TODO) at the left side:
 
 ```ceu
-Set ::= (Loc | `(´ LIST(Loc|`_´) `)´) `=´ Cons
+Assignment ::= (Loc | `(´ LIST(Loc|`_´) `)´) `=´ Sources
 
-Cons ::= ( Do
-         | Await
-         | Emit_Ext
-         | Watching
-         | Async_Thread
-         | Lua_State
-         | Lua_Stmts
-         | Code_Await
-         | Code_Spawn
-         | Vec_Cons
-         | Data_Cons
-         | `_´
-         | Exp )
-
-Vec_Cons ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´) }
+Sources ::= ( Do
+            | Emit_Ext
+            | Await
+            | Watching
+            | Thread
+            | Lua_State
+            | Lua_Stmts
+            | Code_Await
+            | Code_Spawn
+            | Vec_Cons
+            | Data_Cons
+            | Exp
+            | `_´ )
 ```
 
-`TODO: links to Cons's`
+Céu supports the following constructs as assignment sources:
 
-`TODO: examples`
+- [`do-end` blocks](#TODO)
+- [external emits](#TODO)
+- [awaits](#TODO)
+- [watching statements](#TODO)
+- [threads](#TODO)
+- [lua states](#TODO)
+- [lua statements](#TODO)
+- [code awaits](#TODO)
+- [code spawns](#TODO)
+- [vector constructors](#TODO)
+- [data constructors](#TODO)
+- [expressions](#TODO)
+- the neutral identifier `_`
 
-`TODO: vector constructor`
+The anonymous identifier makes the assignment innocuous.
+
+`TODO: required for uninitialized variables`
 
 ### Copy Assignment
 

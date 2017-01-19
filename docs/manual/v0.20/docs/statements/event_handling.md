@@ -135,8 +135,9 @@ The event can be an [external event](#TODO), an [internal event](#TODO), or
 a timer:
 
 ```ceu
-Emit ::= emit (ID_ext | Loc) [`(´ [LIST(Exp)] `)´)]
-      |  emit (WCLOCKK|WCLOCKE)
+Emit_Int ::= emit Loc [`(´ [LIST(Exp)] `)´]
+Emit_Ext ::= emit ID_ext [`(´ [LIST(Exp)] `)´]
+          |  emit (WCLOCKK|WCLOCKE)
 ```
 
 Examples:

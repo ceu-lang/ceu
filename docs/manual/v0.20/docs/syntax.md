@@ -35,10 +35,10 @@ Stmt ::= nothing
 
   /* Storage Classes */
 
-      | var [`&´|`&?´] Type LIST(ID_int [`=´ Cons])
-      | vector [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Cons])
-      | pool [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Cons])
-      | event [`&´|`&?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Cons])
+      | var [`&´|`&?´] Type LIST(ID_int [`=´ Sources])
+      | vector [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Sources])
+      | pool [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Sources])
+      | event [`&´|`&?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Sources])
       | input (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
       | output (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
 
@@ -134,7 +134,7 @@ Stmt ::= nothing
             Block
         end
 
-      // Async_Thread ::=
+      // Thread ::=
       | await async/thread [ `(´ LIST(Var) `)´ ] do
             Block
         end
@@ -233,21 +233,21 @@ Stmt ::= nothing
 
   /* Assignments */
 
-      | (Loc | `(´ LIST(Loc|`_´) `)´) `=´ Cons
+      | (Loc | `(´ LIST(Loc|`_´) `)´) `=´ Sources
         // where
-            Cons ::= ( Do
-                     | Emit_Ext
-                     | Watching
-                     | Async_Thread
-                     | Await
-                     | Lua_State
-                     | Lua_Stmts
-                     | Code_Await
-                     | Code_Spawn
-                     | Vec_Cons
-                     | Data_Cons
-                     | `_´
-                     | Exp )
+            Sources ::= ( Do
+                        | Emit_Ext
+                        | Await
+                        | Watching
+                        | Thread
+                        | Lua_State
+                        | Lua_Stmts
+                        | Code_Await
+                        | Code_Spawn
+                        | Vec_Cons
+                        | Data_Cons
+                        | Exp
+                        | `_´ )
             Vec_Cons  ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´) }
             Data_Cons ::= (val|new) Abs_Cons
 
