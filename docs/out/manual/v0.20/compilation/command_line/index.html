@@ -8,7 +8,7 @@
   
   
   
-  <title>Natives - Céu v0.20 - Reference Manual</title>
+  <title>Command Line - Céu v0.20 - Reference Manual</title>
   
 
   <link rel="shortcut icon" href="../../img/favicon.ico">
@@ -24,9 +24,9 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Natives";
-    var mkdocs_page_input_path = "types/natives.md";
-    var mkdocs_page_url = "/types/natives/";
+    var mkdocs_page_name = "Command Line";
+    var mkdocs_page_input_path = "compilation/command_line.md";
+    var mkdocs_page_url = "/compilation/command_line/";
   </script>
   
   <script src="../../js/jquery-2.1.1.min.js"></script>
@@ -162,42 +162,35 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../">Types</a>
+        <a class="" href="../../types/">Types</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../primitives/">Primitives</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 current">
-        <a class="current" href="./">Natives</a>
-        
-            <ul>
-            
-                <li class="toctree-l3"><a href="#natives">Natives</a></li>
-                
-            
-            </ul>
+        <a class="" href="../../types/primitives/">Primitives</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../abstractions/">Abstractions</a>
+        <a class="" href="../../types/natives/">Natives</a>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../modifiers/">Modifiers</a>
+        <a class="" href="../../types/abstractions/">Abstractions</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../types/modifiers/">Modifiers</a>
         
     </li>
 
@@ -474,21 +467,28 @@
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../compilation/">Compilation</a>
+        <a class="" href="../">Compilation</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Command Line</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#command-line">Command Line</a></li>
+                
+            
+            </ul>
         
     </li>
 
         
             
     <li class="toctree-l1 ">
-        <a class="" href="../../compilation/command_line/">Command Line</a>
-        
-    </li>
-
-        
-            
-    <li class="toctree-l1 ">
-        <a class="" href="../../compilation/c_api/">C API</a>
+        <a class="" href="../c_api/">C API</a>
         
     </li>
 
@@ -532,11 +532,11 @@
     
       
         
-          <li>Types &raquo;</li>
+          <li>Compilation &raquo;</li>
         
       
     
-    <li>Natives</li>
+    <li>Command Line</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -546,14 +546,56 @@
           <div role="main">
             <div class="section">
               
-                <h2 id="natives">Natives</h2>
-<p>Types defined externally in C can be prefixed by <code>_</code> to be used in Céu programs.</p>
-<p>Example:</p>
-<pre><code class="ceu">var _message_t msg;      // &quot;message_t&quot; is a C type defined in an external library
-</code></pre>
+                <h2 id="command-line">Command Line</h2>
+<!--
+Céu provides a command line compiler that generates C code for a given input program.
+The compiler is independent of the target platform.
 
-<p>Native types support <a href="#TODO">annotations</a> to provide additional information to
-the compiler.</p>
+The generated C output should be included in the main application, and is supposed to be integrated with the specific platform through the presented [[#sec.env.api|API]].
+-->
+
+<p><code>TODO</code></p>
+<p>The command line options for the compiler are as follows:</p>
+<pre><code>Usage: ceu [&lt;options&gt;] &lt;file&gt;...
+
+Options:
+
+    --help                      display this help, then exit
+    --version                   display version information, then exit
+
+    --pre                       Preprocessor phase: preprocess Céu into Céu
+    --pre-exe=FILE                  preprocessor executable
+    --pre-args=ARGS                 preprocessor arguments
+    --pre-input=FILE                input file to compile (Céu source)
+    --pre-output=FILE               output file to generate (Céu source)
+
+    --ceu                       Céu phase: compiles Céu into C
+    --ceu-input=FILE                input file to compile (Céu source)
+    --ceu-output=FILE               output source file to generate (C source)
+    --ceu-line-directives=BOOL      insert `#line´ directives in the C output
+
+    --ceu-features-lua=BOOL         enable `lua´ support
+    --ceu-features-thread=BOOL      enable `async/thread´ support
+    --ceu-features-isr=BOOL         enable `async/isr´ support
+
+    --ceu-err-unused=OPT            effect for unused identifier: error|warning|pass
+    --ceu-err-unused-native=OPT                unused native identifier
+    --ceu-err-unused-code=OPT                  unused code identifier
+    --ceu-err-uninitialized=OPT     effect for uninitialized variable: error|warning|pass
+
+    --env                       Environment phase: packs all C files together
+    --env-types=FILE                header file with type declarations (C source)
+    --env-threads=FILE              header file with thread declarations (C source)
+    --env-ceu=FILE                  output file from Céu phase (C source)
+    --env-main=FILE                 source file with main function (C source)
+    --env-output=FILE               output file to generate (C source)
+
+    --cc                        C phase: compiles C into binary
+    --cc-exe=FILE                   C compiler executable
+    --cc-args=ARGS                  compiler arguments
+    --cc-input=FILE                 input file to compile (C source)
+    --cc-output=FILE                output file to generate (binary)
+</code></pre>
               
             </div>
           </div>
@@ -561,10 +603,10 @@ the compiler.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../abstractions/" class="btn btn-neutral float-right" title="Abstractions">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../c_api/" class="btn btn-neutral float-right" title="C API">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
-        <a href="../primitives/" class="btn btn-neutral" title="Primitives"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../" class="btn btn-neutral" title="Compilation"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -590,10 +632,10 @@ the compiler.</p>
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../primitives/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../abstractions/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../c_api/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>

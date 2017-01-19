@@ -822,7 +822,7 @@
         }, 
         {
             "location": "/expressions/vectors/", 
-            "text": "Vectors\n\n\nIndex\n\n\nC\u00e9u uses square brackets to index \nvectors\n:\n\n\nVec_Idx ::= Loc `[\u00b4 Exp `]\u00b4\n\n\n\n\nThe index expression must be of type \nusize\n.\n\n\nVectors start at index zero.\nC\u00e9u generates an \nerror\n for out-of-bounds vector accesses.\n\n\nLength\n\n\nThe operator \n$\n returns the current length of a vector, while the operator\n\n$$\n returns the max length:\n\n\nVec_Len ::= `$\u00b4  Loc\nVec_Max ::= `$$\u00b4 Loc\n\n\n\n\nTODO: max\n\n\nConstructor\n\n\nVector constructors are only valid in \nassignments\n:\n\n\nVec_Cons ::= (Exp | `[\u00b4 [LIST(Exp)] `]\u00b4) { `..\u00b4 (Exp | Lua_Stmts | `[\u00b4 [LIST(Exp)] `]\u00b4) }", 
+            "text": "Vectors\n\n\nIndex\n\n\nC\u00e9u uses square brackets to index \nvectors\n:\n\n\nVec_Idx ::= Loc `[\u00b4 Exp `]\u00b4\n\n\n\n\nThe index expression must be of type \nusize\n.\n\n\nVectors start at index zero.\nC\u00e9u generates an \nerror\n for out-of-bounds vector accesses.\n\n\nLength\n\n\nThe operator \n$\n returns the current length of a vector, while the operator\n\n$$\n returns the max length:\n\n\nVec_Len ::= `$\u00b4  Loc\nVec_Max ::= `$$\u00b4 Loc\n\n\n\n\nTODO: max\n\n\nConstructor\n\n\nVector constructors are only valid in \nassignments\n:\n\n\nVec_Cons ::= (Exp | `[\u00b4 [LIST(Exp)] `]\u00b4) { `..\u00b4 (Exp | Lua_Stmts | `[\u00b4 [LIST(Exp)] `]\u00b4) }\n\n\n\n\nExamples:\n\n\nvector[3] int v;     // declare an empty vector of length 3     (v = [])\nv = v .. [8];        // append value '8' to the empty vector    (v = [8])\nv = v .. [1] .. [5]; // append values '1' and '5' to the vector (v = [8, 1, 5])", 
             "title": "Vectors"
         }, 
         {
@@ -842,12 +842,12 @@
         }, 
         {
             "location": "/expressions/vectors/#constructor", 
-            "text": "Vector constructors are only valid in  assignments :  Vec_Cons ::= (Exp | `[\u00b4 [LIST(Exp)] `]\u00b4) { `..\u00b4 (Exp | Lua_Stmts | `[\u00b4 [LIST(Exp)] `]\u00b4) }", 
+            "text": "Vector constructors are only valid in  assignments :  Vec_Cons ::= (Exp | `[\u00b4 [LIST(Exp)] `]\u00b4) { `..\u00b4 (Exp | Lua_Stmts | `[\u00b4 [LIST(Exp)] `]\u00b4) }  Examples:  vector[3] int v;     // declare an empty vector of length 3     (v = [])\nv = v .. [8];        // append value '8' to the empty vector    (v = [8])\nv = v .. [1] .. [5]; // append values '1' and '5' to the vector (v = [8, 1, 5])", 
             "title": "Constructor"
         }, 
         {
             "location": "/expressions/vectors/", 
-            "text": "Vectors\n\n\nIndex\n\n\nC\u00e9u uses square brackets to index \nvectors\n:\n\n\nVec_Idx ::= Loc `[\u00b4 Exp `]\u00b4\n\n\n\n\nThe index expression must be of type \nusize\n.\n\n\nVectors start at index zero.\nC\u00e9u generates an \nerror\n for out-of-bounds vector accesses.\n\n\nLength\n\n\nThe operator \n$\n returns the current length of a vector, while the operator\n\n$$\n returns the max length:\n\n\nVec_Len ::= `$\u00b4  Loc\nVec_Max ::= `$$\u00b4 Loc\n\n\n\n\nTODO: max\n\n\nConstructor\n\n\nVector constructors are only valid in \nassignments\n:\n\n\nVec_Cons ::= (Exp | `[\u00b4 [LIST(Exp)] `]\u00b4) { `..\u00b4 (Exp | Lua_Stmts | `[\u00b4 [LIST(Exp)] `]\u00b4) }", 
+            "text": "Vectors\n\n\nIndex\n\n\nC\u00e9u uses square brackets to index \nvectors\n:\n\n\nVec_Idx ::= Loc `[\u00b4 Exp `]\u00b4\n\n\n\n\nThe index expression must be of type \nusize\n.\n\n\nVectors start at index zero.\nC\u00e9u generates an \nerror\n for out-of-bounds vector accesses.\n\n\nLength\n\n\nThe operator \n$\n returns the current length of a vector, while the operator\n\n$$\n returns the max length:\n\n\nVec_Len ::= `$\u00b4  Loc\nVec_Max ::= `$$\u00b4 Loc\n\n\n\n\nTODO: max\n\n\nConstructor\n\n\nVector constructors are only valid in \nassignments\n:\n\n\nVec_Cons ::= (Exp | `[\u00b4 [LIST(Exp)] `]\u00b4) { `..\u00b4 (Exp | Lua_Stmts | `[\u00b4 [LIST(Exp)] `]\u00b4) }\n\n\n\n\nExamples:\n\n\nvector[3] int v;     // declare an empty vector of length 3     (v = [])\nv = v .. [8];        // append value '8' to the empty vector    (v = [8])\nv = v .. [1] .. [5]; // append values '1' and '5' to the vector (v = [8, 1, 5])", 
             "title": "Fields"
         }, 
         {
@@ -867,8 +867,33 @@
         }, 
         {
             "location": "/expressions/vectors/#constructor", 
-            "text": "Vector constructors are only valid in  assignments :  Vec_Cons ::= (Exp | `[\u00b4 [LIST(Exp)] `]\u00b4) { `..\u00b4 (Exp | Lua_Stmts | `[\u00b4 [LIST(Exp)] `]\u00b4) }", 
+            "text": "Vector constructors are only valid in  assignments :  Vec_Cons ::= (Exp | `[\u00b4 [LIST(Exp)] `]\u00b4) { `..\u00b4 (Exp | Lua_Stmts | `[\u00b4 [LIST(Exp)] `]\u00b4) }  Examples:  vector[3] int v;     // declare an empty vector of length 3     (v = [])\nv = v .. [8];        // append value '8' to the empty vector    (v = [8])\nv = v .. [1] .. [5]; // append values '1' and '5' to the vector (v = [8, 1, 5])", 
             "title": "Constructor"
+        }, 
+        {
+            "location": "/compilation/", 
+            "text": "The compiler of C\u00e9u \ntranspiles\n an input to an output program in C, which is\nfurther embedded in an \nenvironment\n satisfying a \nC API\n, which\nis finally compiled to an executable:", 
+            "title": "Compilation"
+        }, 
+        {
+            "location": "/compilation/command_line/", 
+            "text": "Command Line\n\n\n\n\n\nTODO\n\n\nThe command line options for the compiler are as follows:\n\n\nUsage: ceu [\noptions\n] \nfile\n...\n\nOptions:\n\n    --help                      display this help, then exit\n    --version                   display version information, then exit\n\n    --pre                       Preprocessor phase: preprocess C\u00e9u into C\u00e9u\n    --pre-exe=FILE                  preprocessor executable\n    --pre-args=ARGS                 preprocessor arguments\n    --pre-input=FILE                input file to compile (C\u00e9u source)\n    --pre-output=FILE               output file to generate (C\u00e9u source)\n\n    --ceu                       C\u00e9u phase: compiles C\u00e9u into C\n    --ceu-input=FILE                input file to compile (C\u00e9u source)\n    --ceu-output=FILE               output source file to generate (C source)\n    --ceu-line-directives=BOOL      insert `#line\u00b4 directives in the C output\n\n    --ceu-features-lua=BOOL         enable `lua\u00b4 support\n    --ceu-features-thread=BOOL      enable `async/thread\u00b4 support\n    --ceu-features-isr=BOOL         enable `async/isr\u00b4 support\n\n    --ceu-err-unused=OPT            effect for unused identifier: error|warning|pass\n    --ceu-err-unused-native=OPT                unused native identifier\n    --ceu-err-unused-code=OPT                  unused code identifier\n    --ceu-err-uninitialized=OPT     effect for uninitialized variable: error|warning|pass\n\n    --env                       Environment phase: packs all C files together\n    --env-types=FILE                header file with type declarations (C source)\n    --env-threads=FILE              header file with thread declarations (C source)\n    --env-ceu=FILE                  output file from C\u00e9u phase (C source)\n    --env-main=FILE                 source file with main function (C source)\n    --env-output=FILE               output file to generate (C source)\n\n    --cc                        C phase: compiles C into binary\n    --cc-exe=FILE                   C compiler executable\n    --cc-args=ARGS                  compiler arguments\n    --cc-input=FILE                 input file to compile (C source)\n    --cc-output=FILE                output file to generate (binary)", 
+            "title": "Command Line"
+        }, 
+        {
+            "location": "/compilation/command_line/#command-line", 
+            "text": "TODO  The command line options for the compiler are as follows:  Usage: ceu [ options ]  file ...\n\nOptions:\n\n    --help                      display this help, then exit\n    --version                   display version information, then exit\n\n    --pre                       Preprocessor phase: preprocess C\u00e9u into C\u00e9u\n    --pre-exe=FILE                  preprocessor executable\n    --pre-args=ARGS                 preprocessor arguments\n    --pre-input=FILE                input file to compile (C\u00e9u source)\n    --pre-output=FILE               output file to generate (C\u00e9u source)\n\n    --ceu                       C\u00e9u phase: compiles C\u00e9u into C\n    --ceu-input=FILE                input file to compile (C\u00e9u source)\n    --ceu-output=FILE               output source file to generate (C source)\n    --ceu-line-directives=BOOL      insert `#line\u00b4 directives in the C output\n\n    --ceu-features-lua=BOOL         enable `lua\u00b4 support\n    --ceu-features-thread=BOOL      enable `async/thread\u00b4 support\n    --ceu-features-isr=BOOL         enable `async/isr\u00b4 support\n\n    --ceu-err-unused=OPT            effect for unused identifier: error|warning|pass\n    --ceu-err-unused-native=OPT                unused native identifier\n    --ceu-err-unused-code=OPT                  unused code identifier\n    --ceu-err-uninitialized=OPT     effect for uninitialized variable: error|warning|pass\n\n    --env                       Environment phase: packs all C files together\n    --env-types=FILE                header file with type declarations (C source)\n    --env-threads=FILE              header file with thread declarations (C source)\n    --env-ceu=FILE                  output file from C\u00e9u phase (C source)\n    --env-main=FILE                 source file with main function (C source)\n    --env-output=FILE               output file to generate (C source)\n\n    --cc                        C phase: compiles C into binary\n    --cc-exe=FILE                   C compiler executable\n    --cc-args=ARGS                  compiler arguments\n    --cc-input=FILE                 input file to compile (C source)\n    --cc-output=FILE                output file to generate (binary)", 
+            "title": "Command Line"
+        }, 
+        {
+            "location": "/compilation/c_api/", 
+            "text": "C API\n\n\nTODO", 
+            "title": "C API"
+        }, 
+        {
+            "location": "/compilation/c_api/#c-api", 
+            "text": "TODO", 
+            "title": "C API"
         }, 
         {
             "location": "/syntax/", 

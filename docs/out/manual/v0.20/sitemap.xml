@@ -334,6 +334,28 @@
     
 
     
+        
+    <url>
+     <loc>None/compilation/</loc>
+     <lastmod>2017-01-19</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/compilation/command_line/</loc>
+     <lastmod>2017-01-19</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>None/compilation/c_api/</loc>
+     <lastmod>2017-01-19</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    
+
+    
     <url>
      <loc>None/syntax/</loc>
      <lastmod>2017-01-19</lastmod>

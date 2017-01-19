@@ -474,6 +474,35 @@
 <li>
           
             <li>
+    <ul class="subnav">
+    <li><span>Compilation</span></li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../compilation/">Compilation</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../compilation/command_line/">Command Line</a>
+        
+    </li>
+
+        
+            
+    <li class="toctree-l1 ">
+        <a class="" href="../../compilation/c_api/">C API</a>
+        
+    </li>
+
+        
+    </ul>
+<li>
+          
+            <li>
     <li class="toctree-l1 ">
         <a class="" href="../../syntax/">Syntax</a>
         
@@ -544,6 +573,12 @@ Vec_Max ::= `$$´ Loc
 <p>Vector constructors are only valid in <a href="#TODO">assignments</a>:</p>
 <pre><code class="ceu">Vec_Cons ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´) }
 </code></pre>
+
+<p>Examples:</p>
+<pre><code class="ceu">vector[3] int v;     // declare an empty vector of length 3     (v = [])
+v = v .. [8];        // append value '8' to the empty vector    (v = [8])
+v = v .. [1] .. [5]; // append values '1' and '5' to the vector (v = [8, 1, 5])
+</code></pre>
               
             </div>
           </div>
@@ -551,7 +586,7 @@ Vec_Max ::= `$$´ Loc
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../../syntax/" class="btn btn-neutral float-right" title="Syntax">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../../compilation/" class="btn btn-neutral float-right" title="Compilation">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href="./" class="btn btn-neutral" title="Vectors"><span class="icon icon-circle-arrow-left"></span> Previous</a>
@@ -583,7 +618,7 @@ Vec_Max ::= `$$´ Loc
         <span><a href="./" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../../syntax/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../../compilation/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
