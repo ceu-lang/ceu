@@ -169,7 +169,7 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="overview">Overview</h1>
+                <h1 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h1>
 <p>Céu provides <em>Structured Synchronous Reactive Programming</em>, extending classical
 structured programming with two main functionalities:</p>
 <ul>
@@ -218,7 +218,7 @@ require a garbage collector.</p>
 Programs can make native calls seamlessly while avoiding common pitfalls such
 as memory leaks and dangling pointers.</p>
 <p>Céu is <a href="#TODO">free software</a>.</p>
-<h2 id="environments">Environments</h2>
+<h2 id="environments">Environments<a class="headerlink" href="#environments" title="Permanent link">&para;</a></h2>
 <p>As a reactive language, Céu depends on an external host platform, known as an
 <em>environment</em>, which exposes <code>input</code> and <code>output</code> events programs can use.</p>
 <p>An environment senses the world and broadcasts <code>input</code> events to programs.
@@ -232,7 +232,7 @@ video output.</p>
 `TODO: link to compilation`
 -->
 
-<h2 id="synchronous-execution-model">Synchronous Execution Model</h2>
+<h2 id="synchronous-execution-model">Synchronous Execution Model<a class="headerlink" href="#synchronous-execution-model" title="Permanent link">&para;</a></h2>
 <p>Céu is grounded on a precise definition of <em>logical time</em> (as opposed to
 <em>physical</em>) as a discrete sequence of input events:
 a sequence because only a single input event is handled at a logical time; 
@@ -327,7 +327,7 @@ A reaction chain may also contain emissions and reactions to internal events,
 which are presented in Section~\ref{sec.ceu.ints}.
 -->
 
-<h2 id="parallel-compositions-and-abortion">Parallel Compositions and Abortion</h2>
+<h2 id="parallel-compositions-and-abortion">Parallel Compositions and Abortion<a class="headerlink" href="#parallel-compositions-and-abortion" title="Permanent link">&para;</a></h2>
 <p>The use of trails in parallel allows programs to wait for multiple events at 
 the same time.
 Céu supports three kinds of parallel compositions that differ in how they
@@ -350,7 +350,7 @@ Before being aborted, a trail has a last opportunity to execute active
 [finalization statements](#TODO).
 -->
 
-<h2 id="bounded-execution">Bounded Execution</h2>
+<h2 id="bounded-execution">Bounded Execution<a class="headerlink" href="#bounded-execution" title="Permanent link">&para;</a></h2>
 <p>Reaction chains must run in bounded time to guarantee that programs are 
 responsive and can handle incoming input events.
 For this reason, Céu requires every path inside the body of a <code>loop</code> statement
@@ -369,9 +369,9 @@ end
 For time-consuming algorithms that require unrestricted loops (e.g., 
 cryptography, image processing), Céu provides <a href="#TODO">Asynchronous 
 Execution</a>.</p>
-<h2 id="deterministic-execution">Deterministic Execution</h2>
+<h2 id="deterministic-execution">Deterministic Execution<a class="headerlink" href="#deterministic-execution" title="Permanent link">&para;</a></h2>
 <p><code>TODO (shared memory + deterministic scheduler + optional static analysis)</code></p>
-<h2 id="internal-reactions">Internal Reactions</h2>
+<h2 id="internal-reactions">Internal Reactions<a class="headerlink" href="#internal-reactions" title="Permanent link">&para;</a></h2>
 <p>Céu supports inter-trail communication through <code>await</code> and <code>emit</code> statements
 for <em>internal events</em>.
 A trail can <code>await</code> an internal event to suspend it.
@@ -455,5 +455,5 @@ Finally, the <code>par/and</code> rejoins and the program terminates.</p>
 
 <!--
 MkDocs version : 0.15.3
-Build Date UTC : 2017-01-20 14:34:53.898408
+Build Date UTC : 2017-01-20 22:28:59.840045
 -->

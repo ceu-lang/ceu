@@ -165,7 +165,7 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="storage-classes">Storage Classes</h1>
+                <h1 id="storage-classes">Storage Classes<a class="headerlink" href="#storage-classes" title="Permanent link">&para;</a></h1>
 <p>Storage classes represent all entities that are stored in memory during
 execution.
 Céu supports <em>variables</em>, <em>vectors</em>, <em>events</em> (external and internal), and
@@ -182,15 +182,15 @@ pool[]    Anim   anims; // &quot;anims&quot; is a dynamic &quot;pool&quot; for i
 
 <p>A declaration binds the identifier with a memory location that holds values of
 the associated type.</p>
-<h2 id="lexical-scope">Lexical Scope</h2>
+<h2 id="lexical-scope">Lexical Scope<a class="headerlink" href="#lexical-scope" title="Permanent link">&para;</a></h2>
 <p>Storage entities have lexical scope, i.e., they are visible only in the
 <a href="#TODO">block</a> in which they are declared.</p>
 <p>The lifetime of entities, which is the period between allocation and
 deallocation in memory, is also limited to the scope of the enclosing block.
 However, individual elements inside <em>vector</em> and <em>pool</em> entities have dynamic
 lifetime, but which never outlive the scope of the declaration.</p>
-<h2 id="classes">Classes</h2>
-<h3 id="variables">Variables</h3>
+<h2 id="classes">Classes<a class="headerlink" href="#classes" title="Permanent link">&para;</a></h2>
+<h3 id="variables">Variables<a class="headerlink" href="#variables" title="Permanent link">&para;</a></h3>
 <p>A variable in Céu holds a value of a <a href="#TODO">declared</a> <a href="#TODO">type</a> that may
 vary during program execution.
 The value of a variable can be read in <a href="#TODO">expressions</a> or written in
@@ -216,7 +216,7 @@ end
 escape v;       // read access (yields 2)
 </code></pre>
 
-<h3 id="vectors">Vectors</h3>
+<h3 id="vectors">Vectors<a class="headerlink" href="#vectors" title="Permanent link">&para;</a></h3>
 <p>A vector In Céu is a dynamic and contiguous collection of elements of the same
 type.</p>
 <p>A vector <a href="#TODO">declaration</a> specifies its type and maximum number of elements
@@ -232,7 +232,7 @@ buf[$buf+1] = 4;                // write access
 escape buf[1];                  // read access (yields 2)
 </code></pre>
 
-<h3 id="events">Events</h3>
+<h3 id="events">Events<a class="headerlink" href="#events" title="Permanent link">&para;</a></h3>
 <p>Events account for the reactive nature of Céu.
 Programs manipulate events through the <a href="#TODO"><code>await</code></a> and <a href="#TODO"><code>emit</code></a>
 statements.
@@ -260,7 +260,7 @@ end
 
 <p>As described in <a href="#TODO">Internal Reactions</a>, Céu supports external and internal
 events with different behavior.</p>
-<h4 id="external-events">External Events</h4>
+<h4 id="external-events">External Events<a class="headerlink" href="#external-events" title="Permanent link">&para;</a></h4>
 <p>External events are used as interfaces between programs and devices from the 
 real world:</p>
 <ul>
@@ -297,13 +297,13 @@ Programs can only `emit` output events.
 
 -->
 
-<h4 id="internal-events">Internal Events</h4>
+<h4 id="internal-events">Internal Events<a class="headerlink" href="#internal-events" title="Permanent link">&para;</a></h4>
 <p>Internal events, unlike external events, do not represent real devices and are
 defined by the programmer.
 Internal events serve as signalling and communication mechanisms among trails
 in a program.</p>
 <p>Programs can <code>emit</code> and <code>await</code> internal events.</p>
-<h3 id="pools">Pools</h3>
+<h3 id="pools">Pools<a class="headerlink" href="#pools" title="Permanent link">&para;</a></h3>
 <p>A pool is a dynamic container to hold running <a href="#TODO">code abstractions</a>.</p>
 <p>A pool <a href="#TODO">declaration</a> specifies the type of the abstraction and maximum
 number of concurrent instances (possibly unlimited).
@@ -326,7 +326,7 @@ automatically aborted.</p>
 `TODO: data`
 -->
 
-<h2 id="locations">Locations</h2>
+<h2 id="locations">Locations<a class="headerlink" href="#locations" title="Permanent link">&para;</a></h2>
 <p>A location (aka <em>l-value</em>) is a path to a memory location holding a storage
 class entity (<a href="#TODO"><code>ID_int</code></a>) or a native symbol (<a href="#TODO"><code>ID_nat</code></a>).</p>
 <p>Locations appear in assignments, event manipulation, iterators, and
@@ -352,7 +352,7 @@ $vec = 1;           // &quot;$vec&quot; is a vector length
 a! = 1;             // &quot;a&quot; is of an option type
 </code></pre>
 
-<h2 id="references">References</h2>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
 <p>Céu supports <em>aliases</em> and <em>pointers</em> as references to entities, aka <em>strong</em>
 and <em>weak</em> references, respectively.</p>
 <p>An alias is an alternate view for an entity: after the entity and alias are
@@ -362,7 +362,7 @@ access to it.</p>
 <p>As an analogy with a person's identity,
 a family nickname referring to a person is an alias;
 a job position referring to a person is a pointer.</p>
-<h3 id="aliases">Aliases</h3>
+<h3 id="aliases">Aliases<a class="headerlink" href="#aliases" title="Permanent link">&para;</a></h3>
 <p>Céu support aliases to all storage classes, except external events and pointer
 types.
 Céu also supports option variable aliases which are aliases that may remain or
@@ -414,7 +414,7 @@ end
 _printf(&quot;%d\n&quot;, x!);        // error!
 </code></pre>
 
-<h3 id="pointers">Pointers</h3>
+<h3 id="pointers">Pointers<a class="headerlink" href="#pointers" title="Permanent link">&para;</a></h3>
 <p>A pointer is declared by suffixing the type with the modifier
 <code>&amp;&amp;</code> and is acquired by prefixing an entity with the operator <code>&amp;&amp;</code>.
 Applying the operator <code>*</code> to a pointer provides indirect access to its

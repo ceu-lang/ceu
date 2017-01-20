@@ -183,7 +183,7 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="locations-expressions">Locations &amp; Expressions</h1>
+                <h1 id="locations-expressions">Locations &amp; Expressions<a class="headerlink" href="#locations-expressions" title="Permanent link">&para;</a></h1>
 <p>Céu specifies locations and expressions as follows:</p>
 <pre><code class="ceu">Exp ::= NUM | STR | null | true | false
      |  `(´ Exp `)´
@@ -232,14 +232,14 @@ Loc ::= [`*´|`$´] Loc
 </code></pre>
 
 <p>Locations are introduced in <a href="#TODO">Storage Classes</a>.</p>
-<h2 id="primary">Primary</h2>
+<h2 id="primary">Primary<a class="headerlink" href="#primary" title="Permanent link">&para;</a></h2>
 <p><code>TODO</code></p>
 <!--
 global, this, outer, ID_var, ID_nat, null, NUM, String, true, false, 
 call/call/rec/finalize, C, parens`
 -->
 
-<h2 id="arithmetic">Arithmetic</h2>
+<h2 id="arithmetic">Arithmetic<a class="headerlink" href="#arithmetic" title="Permanent link">&para;</a></h2>
 <p>Céu supports the arithmetic expressions <em>addition</em>, <em>subtraction</em>,
 <em>modulo (remainder)</em>, <em>multiplication</em>, <em>division</em>, <em>unary-plus</em>, and
 <em>unary-minus</em> through the operators that follow:</p>
@@ -248,13 +248,13 @@ call/call/rec/finalize, C, parens`
 
 <!-- *Note: Céu has no support for pointer arithmetic.* -->
 
-<h2 id="bitwise">Bitwise</h2>
+<h2 id="bitwise">Bitwise<a class="headerlink" href="#bitwise" title="Permanent link">&para;</a></h2>
 <p>Céu supports the bitwise expressions <em>not</em>, <em>and</em>, <em>or</em>, <em>xor</em>, <em>left-shift</em>,
 and <em>right-shift</em> through the operators that follow:</p>
 <pre><code class="ceu">    ~      &amp;      |      ^      &lt;&lt;      &gt;&gt;
 </code></pre>
 
-<h2 id="relational">Relational</h2>
+<h2 id="relational">Relational<a class="headerlink" href="#relational" title="Permanent link">&para;</a></h2>
 <p>Céu supports the relational expressions <em>equal-to</em>, <em>not-equal-to</em>,
 <em>greater-than</em>, <em>less-than</em>, <em>greater-than-or-equal-to</em>, and
 <em>less-than-or-equal-to</em> through the operators that follow:</p>
@@ -262,20 +262,20 @@ and <em>right-shift</em> through the operators that follow:</p>
 </code></pre>
 
 <p>Relational expressions evaluate to <em>true</em> or <em>false</em>.</p>
-<h2 id="logical">Logical</h2>
+<h2 id="logical">Logical<a class="headerlink" href="#logical" title="Permanent link">&para;</a></h2>
 <p>Céu supports the logical expressions <em>not</em>, <em>and</em>, and <em>or</em> through the
 operators that follow:</p>
 <pre><code class="ceu">    not      and      or
 </code></pre>
 
 <p>Logical expressions evaluate to <em>true</em> or <em>false</em>.</p>
-<h2 id="types">Types</h2>
+<h2 id="types">Types<a class="headerlink" href="#types" title="Permanent link">&para;</a></h2>
 <p>Céu supports type checks and casts:</p>
 <pre><code class="ceu">Check ::= Exp is Type
 Cast  ::= Exp as Type
 </code></pre>
 
-<h3 id="type-check">Type Check</h3>
+<h3 id="type-check">Type Check<a class="headerlink" href="#type-check" title="Permanent link">&para;</a></h3>
 <p>A type check evaluates to <em>true</em> or <em>false</em> depending on whether the runtime
 type of the expression is a subtype of the checked type or not.</p>
 <p>The static type of the expression must be a supertype of the checked type.</p>
@@ -289,7 +289,7 @@ if a is Aa.Bb then      // is the runtime type of &quot;a&quot; a subtype of &qu
 end
 </code></pre>
 
-<h3 id="type-cast">Type Cast</h3>
+<h3 id="type-cast">Type Cast<a class="headerlink" href="#type-cast" title="Permanent link">&para;</a></h3>
 <p>A type cast converts the type of an expression into a new type as follows:</p>
 <ol>
 <li>The expression type is a <a href="#TODO">data type</a>:<ol>
@@ -323,29 +323,29 @@ var bool b = &lt;...&gt;;
 _printf(&quot;b= %d\n&quot;, b as int);
 </code></pre>
 
-<h2 id="modifiers">Modifiers</h2>
+<h2 id="modifiers">Modifiers<a class="headerlink" href="#modifiers" title="Permanent link">&para;</a></h2>
 <p>Expressions that evaluate to native types can be modified as follows:</p>
 <pre><code class="ceu">Mod ::= Exp as `/´(nohold|plain|pure)
 </code></pre>
 
 <p>Modifiers may suppress the requirement for <a href="#TODO">resource finalization</a>.</p>
-<h2 id="references">References</h2>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
 <p>Céu supports <em>aliases</em> and <em>pointers</em> as <a href="#TODO">references</a>.</p>
-<h3 id="aliases">Aliases</h3>
+<h3 id="aliases">Aliases<a class="headerlink" href="#aliases" title="Permanent link">&para;</a></h3>
 <p>An alias is acquired by prefixing a <a href="#TODO">native call</a> or a <a href="#TODO">location</a>
 with the operator <code>&amp;</code>:</p>
 <pre><code class="ceu">Alias ::= `&amp;´ (Nat_Call | Loc)
 </code></pre>
 
 <p>See also the <a href="#TODO">unwrapping operator</a> <code>!</code> for option variable aliases.</p>
-<h3 id="pointers">Pointers</h3>
+<h3 id="pointers">Pointers<a class="headerlink" href="#pointers" title="Permanent link">&para;</a></h3>
 <p>The operator <code>&amp;&amp;</code> returns the address of a <a href="#TODO">location</a>, while the
 operator <code>*</code> dereferences a pointer:</p>
 <pre><code>Addr  ::= `&amp;&amp;´ Loc
 Deref ::= `*´ Loc
 </code></pre>
 
-<h2 id="option">Option</h2>
+<h2 id="option">Option<a class="headerlink" href="#option" title="Permanent link">&para;</a></h2>
 <p>The operator <code>?</code> checks if the <a href="#TODO">location</a> of an <a href="#TODO">option type</a> is
 set, while the operator <code>!</code> unwraps the location, raising an <a href="#TODO">error</a> if
 it is unset:</p>
@@ -353,7 +353,7 @@ it is unset:</p>
 Unwrap ::= Loc `!´
 </code></pre>
 
-<h2 id="sizeof">Sizeof</h2>
+<h2 id="sizeof">Sizeof<a class="headerlink" href="#sizeof" title="Permanent link">&para;</a></h2>
 <p>A <code>sizeof</code> expression returns the size of a type or expression, in bytes:</p>
 <pre><code class="ceu">Sizeof ::= sizeof `(´ (Type|Exp) `)´
 </code></pre>
@@ -362,10 +362,10 @@ Unwrap ::= Loc `!´
 The expression is evaluated at compile time.
 -->
 
-<h2 id="calls">Calls</h2>
+<h2 id="calls">Calls<a class="headerlink" href="#calls" title="Permanent link">&para;</a></h2>
 <p>See <a href="#TODO">Native Call</a> and <a href="#TODO">Code Invocation</a>.</p>
-<h2 id="vectors">Vectors</h2>
-<h3 id="index">Index</h3>
+<h2 id="vectors">Vectors<a class="headerlink" href="#vectors" title="Permanent link">&para;</a></h2>
+<h3 id="index">Index<a class="headerlink" href="#index" title="Permanent link">&para;</a></h3>
 <p>Céu uses square brackets to index <a href="#Vectors">vectors</a>:</p>
 <pre><code>Vec_Idx ::= Loc `[´ Exp `]´
 </code></pre>
@@ -373,7 +373,7 @@ The expression is evaluated at compile time.
 <p>The index expression must be of type <a href="#TODO"><code>usize</code></a>.</p>
 <p>Vectors start at index zero.
 Céu generates an <a href="#TODO">error</a> for out-of-bounds vector accesses.</p>
-<h3 id="length">Length</h3>
+<h3 id="length">Length<a class="headerlink" href="#length" title="Permanent link">&para;</a></h3>
 <p>The operator <code>$</code> returns the current length of a vector, while the operator
 <code>$$</code> returns the max length:</p>
 <pre><code>Vec_Len ::= `$´  Loc
@@ -381,7 +381,7 @@ Vec_Max ::= `$$´ Loc
 </code></pre>
 
 <p><code>TODO: max</code></p>
-<h3 id="constructor">Constructor</h3>
+<h3 id="constructor">Constructor<a class="headerlink" href="#constructor" title="Permanent link">&para;</a></h3>
 <p>Vector constructors are only valid in <a href="#TODO">assignments</a>:</p>
 <pre><code class="ceu">Vec_Cons ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´) }
 </code></pre>
@@ -392,8 +392,8 @@ v = v .. [8];        // append value '8' to the empty vector    (v = [8])
 v = v .. [1] .. [5]; // append values '1' and '5' to the vector (v = [8, 1, 5])
 </code></pre>
 
-<h2 id="vectors_1">Vectors</h2>
-<h3 id="index_1">Index</h3>
+<h2 id="vectors_1">Vectors<a class="headerlink" href="#vectors_1" title="Permanent link">&para;</a></h2>
+<h3 id="index_1">Index<a class="headerlink" href="#index_1" title="Permanent link">&para;</a></h3>
 <p>Céu uses square brackets to index <a href="#Vectors">vectors</a>:</p>
 <pre><code>Vec_Idx ::= Loc `[´ Exp `]´
 </code></pre>
@@ -401,7 +401,7 @@ v = v .. [1] .. [5]; // append values '1' and '5' to the vector (v = [8, 1, 5])
 <p>The index expression must be of type <a href="#TODO"><code>usize</code></a>.</p>
 <p>Vectors start at index zero.
 Céu generates an <a href="#TODO">error</a> for out-of-bounds vector accesses.</p>
-<h3 id="length_1">Length</h3>
+<h3 id="length_1">Length<a class="headerlink" href="#length_1" title="Permanent link">&para;</a></h3>
 <p>The operator <code>$</code> returns the current length of a vector, while the operator
 <code>$$</code> returns the max length:</p>
 <pre><code>Vec_Len ::= `$´  Loc
@@ -409,7 +409,7 @@ Vec_Max ::= `$$´ Loc
 </code></pre>
 
 <p><code>TODO: max</code></p>
-<h3 id="constructor_1">Constructor</h3>
+<h3 id="constructor_1">Constructor<a class="headerlink" href="#constructor_1" title="Permanent link">&para;</a></h3>
 <p>Vector constructors are only valid in <a href="#TODO">assignments</a>:</p>
 <pre><code class="ceu">Vec_Cons ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´) }
 </code></pre>

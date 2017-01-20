@@ -185,7 +185,7 @@
           <div role="main">
             <div class="section">
               
-                <h1 id="statements">Statements</h1>
+                <h1 id="statements">Statements<a class="headerlink" href="#statements" title="Permanent link">&para;</a></h1>
 <p>A program in Céu is a sequence of statements delimited by an implicit enclosing
 block:</p>
 <pre><code class="ceu">Program ::= Block
@@ -194,12 +194,12 @@ Block   ::= {Stmt `;´} {`;´}
 
 <p><em>Note: statements terminated with the <code>end</code> keyword do not require a
 terminating semicolon.</em></p>
-<h2 id="nothing">Nothing</h2>
+<h2 id="nothing">Nothing<a class="headerlink" href="#nothing" title="Permanent link">&para;</a></h2>
 <p><code>nothing</code> is an innocuous statement:</p>
 <pre><code class="ceu">Nothing ::= nothing
 </code></pre>
 
-<h2 id="blocks">Blocks</h2>
+<h2 id="blocks">Blocks<a class="headerlink" href="#blocks" title="Permanent link">&para;</a></h2>
 <p>A <code>Block</code> creates a new lexical scope for
 <a href="#TODO">storage entities</a>
 and
@@ -207,7 +207,7 @@ and
 which are visible only for statements inside the block.</p>
 <p>Compound statements (e.g. <em>do-end</em>, <em>if-then-else</em>, <em>loops</em>, etc.) create new
 blocks and can be nested to an arbitrary level.</p>
-<h3 id="do-end-and-escape"><code>do-end</code> and <code>escape</code></h3>
+<h3 id="do-end-and-escape"><code>do-end</code> and <code>escape</code><a class="headerlink" href="#do-end-and-escape" title="Permanent link">&para;</a></h3>
 <p>The <code>do-end</code> statement creates an explicit block with an optional identifier.
 The <code>escape</code> statement aborts the deepest enclosing <code>do-end</code> matching its
 identifier:</p>
@@ -252,7 +252,7 @@ end
 <pre><code class="ceu">escape 0;               // program terminates with a status value of 0
 </code></pre>
 
-<h3 id="pre-do-end"><code>pre-do-end</code></h3>
+<h3 id="pre-do-end"><code>pre-do-end</code><a class="headerlink" href="#pre-do-end" title="Permanent link">&para;</a></h3>
 <p>The <code>pre-do-end</code> statement prepends its statements in the beginning of the
 program:</p>
 <pre><code class="ceu">Pre_Do ::= pre do
@@ -262,7 +262,7 @@ program:</p>
 
 <p>All <code>pre-do-end</code> statements are concatenated together in the order they appear
 and moved to the beginning of the top-level block, before all other statements.</p>
-<h2 id="declarations">Declarations</h2>
+<h2 id="declarations">Declarations<a class="headerlink" href="#declarations" title="Permanent link">&para;</a></h2>
 <p>A declaration introduces a <a href="#TODO">storage entity</a> to the enclosing block.
 All declarations are subject to <a href="#TODO">lexical scope</a>.</p>
 <p>Céu supports variables, vectors, external events, internal events, and pools:</p>
@@ -281,7 +281,7 @@ Cons ::= /* (see &quot;Assignments&quot;) */
 See also [Storage Classes](#TODO) for an overview of storage entities.
 -->
 
-<h3 id="variables">Variables</h3>
+<h3 id="variables">Variables<a class="headerlink" href="#variables" title="Permanent link">&para;</a></h3>
 <p>A <a href="#TODO">variable</a> declaration has an associated <a href="#TODO">type</a> and can be
 optionally <a href="#TODO">initialized</a>.
 A single statement can declare multiple variables of the same type.
@@ -292,7 +292,7 @@ var  int a=0, b=3;  // &quot;a&quot; and &quot;b&quot; are integer variables ini
 var&amp; int z = &amp;v;    // &quot;z&quot; is an alias to &quot;v&quot;
 </code></pre>
 
-<h3 id="vectors">Vectors</h3>
+<h3 id="vectors">Vectors<a class="headerlink" href="#vectors" title="Permanent link">&para;</a></h3>
 <p>A <a href="#TODO">vector</a> declaration specifies a <a href="#TODO">dimension</a> between brackets,
 an associated <a href="#TODO">type</a> and can be optionally <a href="#TODO">initialized</a>.
 A single statement can declare multiple vectors of the same dimension and type.
@@ -309,7 +309,7 @@ vector[]   int vs3 = [];    // &quot;vs3&quot; is an unbounded vector
 vector&amp;[]  int vs4 = &amp;vs1;  // &quot;vs4&quot; is an alias to &quot;vs1&quot;
 </code></pre>
 
-<h3 id="events">Events</h3>
+<h3 id="events">Events<a class="headerlink" href="#events" title="Permanent link">&para;</a></h3>
 <p>An <a href="#TODO">event</a> declaration specifies a <a href="#TODO">type</a> for the values it
 carries when occurring.
 It can be also a list of types if the event communicates multiple values.
@@ -318,14 +318,14 @@ A single statement can declare multiple events of the same type.</p>
 See also [Introduction](#TODO) for a general overview of events.
 -->
 
-<h4 id="external-events">External Events</h4>
+<h4 id="external-events">External Events<a class="headerlink" href="#external-events" title="Permanent link">&para;</a></h4>
 <p>Examples:</p>
 <pre><code class="ceu">input  void A,B;        // &quot;A&quot; and &quot;B&quot; are input events carrying no values
 output int  MY_EVT;     // &quot;MY_EVT&quot; is an output event carrying integer values
 input (int,byte&amp;&amp;) BUF; // &quot;BUF&quot; is an input event carrying an &quot;(int,byte&amp;&amp;)&quot; pair
 </code></pre>
 
-<h4 id="internal-events">Internal Events</h4>
+<h4 id="internal-events">Internal Events<a class="headerlink" href="#internal-events" title="Permanent link">&para;</a></h4>
 <p>Declarations for internal events can also be <a href="#TODO">aliases</a> or
 <a href="#TODO">option aliases</a>.
 Only in this case they can be <a href="#TODO">initialized</a>.</p>
@@ -335,7 +335,7 @@ event&amp; void z = &amp;a;     // &quot;z&quot; is an alias to event &quot;a&qu
 event (int,int) c;      // &quot;c&quot; is a internal event carrying an &quot;(int,int)&quot; pair
 </code></pre>
 
-<h3 id="pools">Pools</h3>
+<h3 id="pools">Pools<a class="headerlink" href="#pools" title="Permanent link">&para;</a></h3>
 <p>A <a href="#TODO">pool</a> declaration specifies a dimension and an associated
 <a href="#TODO">type</a>.
 A single statement can declare multiple pools of the same dimension and type.
@@ -354,7 +354,7 @@ See also [Code Invocation](#TODO).
 -->
 
 <p><code>TODO: data</code></p>
-<h3 id="dimension">Dimension</h3>
+<h3 id="dimension">Dimension<a class="headerlink" href="#dimension" title="Permanent link">&para;</a></h3>
 <p>Declarations for <a href="#TODO">vectors</a> or <a href="#TODO">pools</a> require an expression
 between brackets to specify a <a href="#TODO">dimension</a> as follows:</p>
 <ul>
@@ -367,7 +367,7 @@ between brackets to specify a <a href="#TODO">dimension</a> as follows:</p>
              allocated.
              The space for dynamic dimensions grow and shrink automatically.</li>
 </ul>
-<h2 id="assignments">Assignments</h2>
+<h2 id="assignments">Assignments<a class="headerlink" href="#assignments" title="Permanent link">&para;</a></h2>
 <p>An assignment associates the statement or expression at the right side of the
 symbol <code>=</code> with the <a href="#TODO">location(s)</a> at the left side:</p>
 <pre><code class="ceu">Assignment ::= (Loc | `(´ LIST(Loc|`_´) `)´) `=´ Sources
@@ -405,15 +405,15 @@ Sources ::= ( Do
 </ul>
 <p>The anonymous identifier makes the assignment innocuous.</p>
 <p><code>TODO: required for uninitialized variables</code></p>
-<h3 id="copy-assignment">Copy Assignment</h3>
+<h3 id="copy-assignment">Copy Assignment<a class="headerlink" href="#copy-assignment" title="Permanent link">&para;</a></h3>
 <p>A <em>copy assignment</em> evaluates the statement or expression at the right side and
 copies the result(s) to the location(s) at the left side.</p>
-<h3 id="alias-assignment">Alias Assignment</h3>
+<h3 id="alias-assignment">Alias Assignment<a class="headerlink" href="#alias-assignment" title="Permanent link">&para;</a></h3>
 <p>An <em>alias assignment</em>, aka <em>binding</em>, makes the location at the left side to be
 an <a href="#TODO">alias</a> to the expression at the right side.</p>
 <p>The right side of a binding is always prefixed by the operator <code>&amp;</code>.</p>
-<h2 id="event-handling">Event Handling</h2>
-<h3 id="await">Await</h3>
+<h2 id="event-handling">Event Handling<a class="headerlink" href="#event-handling" title="Permanent link">&para;</a></h2>
+<h3 id="await">Await<a class="headerlink" href="#await" title="Permanent link">&para;</a></h3>
 <p>The <code>await</code> statement halts the running trail until the specified event occurs.
 The event can be an <a href="#TODO">input event</a>, an <a href="#TODO">internal event</a>, a timer,
 a <a href="#TODO">pausing event</a>, or forever (i.e., never awakes):</p>
@@ -435,7 +435,7 @@ await FOREVER;            // awaits forever
 
 <p>An <code>await</code> evaluates to zero or more values which can be captured with an
 optional <a href="#TODO">assignment</a>.</p>
-<h4 id="event">Event</h4>
+<h4 id="event">Event<a class="headerlink" href="#event" title="Permanent link">&para;</a></h4>
 <p>The <code>await</code> statement for events halts the running trail until the specified
 <a href="#TODO">input event</a> or <a href="#TODO">internal event</a> occurs.
 The <code>await</code> evaluates to a value of the type of the event.</p>
@@ -460,7 +460,7 @@ var int  v2;
 (v1,v2) = await e;              // awakes on &quot;e&quot; and assigns its values to &quot;v1&quot; and &quot;v2&quot;
 </code></pre>
 
-<h4 id="option-alias">Option Alias</h4>
+<h4 id="option-alias">Option Alias<a class="headerlink" href="#option-alias" title="Permanent link">&para;</a></h4>
 <p>The <code>await</code> statement for <a href="#TODO">option variable aliases</a> halts the running
 trail until the specified alias goes out of scope.</p>
 <p>The <code>await</code> evaluates to no value.</p>
@@ -470,7 +470,7 @@ spawn Code() -&gt; (&amp;x);   // &quot;x&quot; is bounded to a variable inside 
 await x;                // awakes when the spawned &quot;Code&quot; terminates
 </code></pre>
 
-<h4 id="timer">Timer</h4>
+<h4 id="timer">Timer<a class="headerlink" href="#timer" title="Permanent link">&para;</a></h4>
 <p>The <code>await</code> statement for timers halts the running trail until the specified
 timer expires:</p>
 <ul>
@@ -500,9 +500,9 @@ Refer to [[#Environment]] for information about storage types for *wall-clock*
 time.
 -->
 
-<h4 id="pausing">Pausing</h4>
+<h4 id="pausing">Pausing<a class="headerlink" href="#pausing" title="Permanent link">&para;</a></h4>
 <p>Pausing events are dicussed in <a href="#TODO">Pausing</a>.</p>
-<h4 id="forever"><code>FOREVER</code></h4>
+<h4 id="forever"><code>FOREVER</code><a class="headerlink" href="#forever" title="Permanent link">&para;</a></h4>
 <p>The <code>await</code> statement for <code>FOREVER</code> halts the running trail forever.
 It cannot be used in assignments because it never evaluates to anything.</p>
 <p>Example:</p>
@@ -511,7 +511,7 @@ It cannot be used in assignments because it never evaluates to anything.</p>
 end
 </code></pre>
 
-<h3 id="emit">Emit</h3>
+<h3 id="emit">Emit<a class="headerlink" href="#emit" title="Permanent link">&para;</a></h3>
 <p>The <code>emit</code> statement broadcasts an event to the whole program.
 The event can be an <a href="#TODO">external event</a>, an <a href="#TODO">internal event</a>, or
 a timer:</p>
@@ -528,7 +528,7 @@ emit 1s;        // emits the specified time
 emit (t)ms;     // emits the current value of the variable `t` in milliseconds
 </code></pre>
 
-<h4 id="events_1">Events</h4>
+<h4 id="events_1">Events<a class="headerlink" href="#events_1" title="Permanent link">&para;</a></h4>
 <p>The <code>emit</code> statement for events expects the arguments to match the event type.</p>
 <p>An <code>emit</code> to an input or timer event can only occur inside
 <a href="#TODO">asynchronous blocks</a>.</p>
@@ -549,7 +549,7 @@ event (int,int) e;
 emit e(1,2);            // broadcasts &quot;e&quot; passing a pair of &quot;int&quot; values
 </code></pre>
 
-<h4 id="timer_1">Timer</h4>
+<h4 id="timer_1">Timer<a class="headerlink" href="#timer_1" title="Permanent link">&para;</a></h4>
 <p>The <code>emit</code> statement for timers expects a <a href="#TODO">timer expression</a>.</p>
 <p>Like input events, time can only be emitted inside <a href="#asynchronous-blocks">asynchronous 
 blocks</a>.</p>
@@ -559,9 +559,9 @@ blocks</a>.</p>
 end
 </code></pre>
 
-<h3 id="lock">Lock</h3>
+<h3 id="lock">Lock<a class="headerlink" href="#lock" title="Permanent link">&para;</a></h3>
 <p><code>TODO</code></p>
-<h2 id="conditional">Conditional</h2>
+<h2 id="conditional">Conditional<a class="headerlink" href="#conditional" title="Permanent link">&para;</a></h2>
 <p>The <code>if-then-else</code> statement provides conditional execution in Céu:</p>
 <pre><code class="ceu">If ::= if Exp then
            Block
@@ -579,7 +579,7 @@ executes.
 If all conditions fail, the optional <code>else</code> clause executes.</p>
 <p>All conditions must evaluate to a value of type <a href="#TODO"><code>bool</code></a>.
 <!--, which is checked at compile time.--></p>
-<h2 id="loops">Loops</h2>
+<h2 id="loops">Loops<a class="headerlink" href="#loops" title="Permanent link">&para;</a></h2>
 <p>Céu supports simple loops, numeric iterators, event iterators, and pool
 iterators:</p>
 <pre><code class="ceu">Loop ::=
@@ -619,13 +619,13 @@ If the number of iterations reaches the limit, a runtime error occurs.</p>
 The expression must be a constant evaluated at compile time.
 -->
 
-<h3 id="break-and-continue"><code>break</code> and <code>continue</code></h3>
+<h3 id="break-and-continue"><code>break</code> and <code>continue</code><a class="headerlink" href="#break-and-continue" title="Permanent link">&para;</a></h3>
 <p>The <code>break</code> statement aborts the deepest enclosing loop.</p>
 <p>The <code>continue</code> statement aborts the body of the deepest enclosing loop and
 restarts it in the next iteration.</p>
 <p>The optional modifier <code>&grave;/&acute;ID_int</code> in both statements
 only applies to <a href="#TODO">numeric iterators</a>.</p>
-<h3 id="simple-loop">Simple Loop</h3>
+<h3 id="simple-loop">Simple Loop<a class="headerlink" href="#simple-loop" title="Permanent link">&para;</a></h3>
 <p>The simple <code>loop-do-end</code> statement executes its body forever.
 The only way to terminate a simple loop is with the <code>break</code> statement.</p>
 <p>Examples:</p>
@@ -650,7 +650,7 @@ end
 end
 </code></pre>
 
-<h3 id="numeric-iterator">Numeric Iterator</h3>
+<h3 id="numeric-iterator">Numeric Iterator<a class="headerlink" href="#numeric-iterator" title="Permanent link">&para;</a></h3>
 <p>The numeric loop executes its body a fixed number of times based on a numeric
 range for a control variable:</p>
 <pre><code class="ceu">Numeric ::= (`_´|ID_int) in [ (`[´ | `]´)
@@ -746,7 +746,7 @@ end
 
 <p><em>Note : the runtime asserts that the step is a positive number and that the
         control variable does not overflow.</em></p>
-<h3 id="event-iterator">Event Iterator</h3>
+<h3 id="event-iterator">Event Iterator<a class="headerlink" href="#event-iterator" title="Permanent link">&para;</a></h3>
 <p>The <code>every</code> statement iterates over an event continuously, executing its
 body whenever the event occurs.</p>
 <p>The event can be an <a href="#TODO">external or internal event</a> or a <a href="#TODO">timer</a>.</p>
@@ -786,7 +786,7 @@ every (cnd,v) in e do
 end
 </code></pre>
 
-<h3 id="pool-iterator">Pool Iterator</h3>
+<h3 id="pool-iterator">Pool Iterator<a class="headerlink" href="#pool-iterator" title="Permanent link">&para;</a></h3>
 <p><code>TODO</code></p>
 <!--
 For iterators in which `Exp` evaluates to a pool of organisms, `ID_var`
@@ -798,7 +798,7 @@ loop body.
 `TODO (example)`
 -->
 
-<h2 id="parallel-compositions">Parallel Compositions</h2>
+<h2 id="parallel-compositions">Parallel Compositions<a class="headerlink" href="#parallel-compositions" title="Permanent link">&para;</a></h2>
 <p>The parallel statements <code>par/and</code>, <code>par/or</code>, and <code>par</code> fork the running trail 
 in multiple others:</p>
 <pre><code class="ceu">Pars ::= (par | par/and | par/or) do
@@ -821,7 +821,7 @@ composition.</p>
 It evaluates to what the occurring event value(s), which can be captured with
 an optional <a href="#TODO">assignment</a>.</p>
 <p>See also <a href="#TODO">Parallel Compositions and Abortion</a>.</p>
-<h3 id="par">par</h3>
+<h3 id="par">par<a class="headerlink" href="#par" title="Permanent link">&para;</a></h3>
 <p>The <code>par</code> statement never rejoins.</p>
 <p>Examples:</p>
 <pre><code class="ceu">// reacts continuously to &quot;1s&quot; and &quot;KEY_PRESSED&quot; and never terminates
@@ -837,7 +837,7 @@ with
 end
 </code></pre>
 
-<h3 id="parand">par/and</h3>
+<h3 id="parand">par/and<a class="headerlink" href="#parand" title="Permanent link">&para;</a></h3>
 <p>The <code>par/and</code> statement stands for <em>parallel-and</em> and rejoins when all nested
 trails terminate.</p>
 <p>Examples:</p>
@@ -852,7 +852,7 @@ with
 end
 </code></pre>
 
-<h3 id="paror">par/or</h3>
+<h3 id="paror">par/or<a class="headerlink" href="#paror" title="Permanent link">&para;</a></h3>
 <p>The <code>par/or</code> statement stands for <em>parallel-or</em> and rejoins when any of the 
 trails terminate, aborting all other trails.</p>
 <p>Examples:</p>
@@ -867,7 +867,7 @@ with
 end
 </code></pre>
 
-<h3 id="watching">watching</h3>
+<h3 id="watching">watching<a class="headerlink" href="#watching" title="Permanent link">&para;</a></h3>
 <p>The <code>watching</code> statement accepts a list of events and terminates when any of
 them occur.</p>
 <p>A <code>watching</code> expands to a <code>par/or</code> with <em>n+1</em> trails:
@@ -900,7 +900,7 @@ watching 1s do
 end
 </code></pre>
 
-<h2 id="pausing_1">Pausing</h2>
+<h2 id="pausing_1">Pausing<a class="headerlink" href="#pausing_1" title="Permanent link">&para;</a></h2>
 <p>The <code>pause/if</code> statement controls if its body should temporarily stop to react
 to events:</p>
 <pre><code class="ceu">Pause_If ::= pause/if (Loc|ID_ext) do
@@ -943,7 +943,7 @@ end
 *Note: The timeouts for timers remain frozen while paused.*
 -->
 
-<h2 id="asynchronous-execution">Asynchronous Execution</h2>
+<h2 id="asynchronous-execution">Asynchronous Execution<a class="headerlink" href="#asynchronous-execution" title="Permanent link">&para;</a></h2>
 <p>Asynchronous execution allow programs to departure from the rigorous
 synchronous model and preform computations under separate scheduling rules.</p>
 <p>Céu supports <em>asynchronous blocks</em>, <em>threads</em>, and
@@ -982,7 +982,7 @@ The program awaits the termination of the asynchronous `Block` body to proceed t
 statement in sequence.
 -->
 
-<h3 id="asynchronous-block">Asynchronous Block</h3>
+<h3 id="asynchronous-block">Asynchronous Block<a class="headerlink" href="#asynchronous-block" title="Permanent link">&para;</a></h3>
 <p>Asynchronous blocks, aka <em>asyncs</em>, intercalate execution with the synchronous
 side as follows:</p>
 <ol>
@@ -1009,7 +1009,7 @@ watching 1s do
 end
 </code></pre>
 
-<h4 id="simulation">Simulation</h4>
+<h4 id="simulation">Simulation<a class="headerlink" href="#simulation" title="Permanent link">&para;</a></h4>
 <p>An <code>async</code> block can emit <a href="#TODO">input and timer events</a> towards the
 synchronous side, providing a way to test programs in the language itself.
 Every time an <code>async</code> emits an event, it suspends until the synchronous side
@@ -1041,7 +1041,7 @@ end
 // The example prints the message `v = &lt;v+i&gt;` exactly 103 times.
 </code></pre>
 
-<h3 id="thread">Thread</h3>
+<h3 id="thread">Thread<a class="headerlink" href="#thread" title="Permanent link">&para;</a></h3>
 <p>Threads provide real parallelism for applications in Céu.
 Once started, a thread executes completely detached from the synchronous side.
 For this reason, thread execution is non deterministic and require explicit
@@ -1064,9 +1064,9 @@ watching 1s do
 end
 </code></pre>
 
-<h3 id="asynchronous-interrupt-service-routine">Asynchronous Interrupt Service Routine</h3>
+<h3 id="asynchronous-interrupt-service-routine">Asynchronous Interrupt Service Routine<a class="headerlink" href="#asynchronous-interrupt-service-routine" title="Permanent link">&para;</a></h3>
 <p><code>TODO</code></p>
-<h3 id="atomic-block">Atomic Block</h3>
+<h3 id="atomic-block">Atomic Block<a class="headerlink" href="#atomic-block" title="Permanent link">&para;</a></h3>
 <p>Atomic blocks provide mutual exclusion among threads, interrupts, and the
 synchronous side of application.
 Once an atomic block starts to execute, no other atomic block in the program
@@ -1100,7 +1100,7 @@ with
 end
 </code></pre>
 
-<h2 id="c-integration">C Integration</h2>
+<h2 id="c-integration">C Integration<a class="headerlink" href="#c-integration" title="Permanent link">&para;</a></h2>
 <!--
 Céu integrates safely with C, and programs can define and make native calls
 seamlessly while avoiding memory leaks and dangling pointers when dealing with
@@ -1139,7 +1139,7 @@ For this reason, programs should only resort to C for asynchronous
 functionality (e.g., non-blocking I/O) or simple <code>struct</code> accessors, but
 never for control purposes.</p>
 <p><code>TODO: Nat_End</code></p>
-<h3 id="native-declaration">Native Declaration</h3>
+<h3 id="native-declaration">Native Declaration<a class="headerlink" href="#native-declaration" title="Permanent link">&para;</a></h3>
 <p>In Céu, any <a href="#TODO">identifier</a> prefixed with an underscore is a native symbol
 defined externally in C.
 However, all external symbols must be declared before their first use in a
@@ -1178,7 +1178,7 @@ native/nohold _free;            // POSIX &quot;free&quot; receives a pointer but
 native/pure   _strlen;          // POSIX &quot;strlen&quot; is a &quot;pure&quot; function
 </code></pre>
 
-<h3 id="native-block">Native Block</h3>
+<h3 id="native-block">Native Block<a class="headerlink" href="#native-block" title="Permanent link">&para;</a></h3>
 <p>A native block allows programs to define new external symbols in C.</p>
 <p>The contents of native blocks is copied unchanged to the output in C depending
 on the modifier specified:</p>
@@ -1226,7 +1226,7 @@ end
 end
 </code></pre>
 
-<h3 id="native-statement">Native Statement</h3>
+<h3 id="native-statement">Native Statement<a class="headerlink" href="#native-statement" title="Permanent link">&para;</a></h3>
 <p>The contents of native statements in between <code>{</code> and <code>}</code> are inlined in the
 program.</p>
 <p>Native statements support interpolation of expressions in Céu which are
@@ -1242,7 +1242,7 @@ v_ceu = { v_c + @v_ceu };       // yields 30
 }
 </code></pre>
 
-<h3 id="native-call">Native Call</h3>
+<h3 id="native-call">Native Call<a class="headerlink" href="#native-call" title="Permanent link">&para;</a></h3>
 <p>Locations and expressions that evaluate to a <a href="#TODO">native type</a> can be called
 from Céu.</p>
 <p>If a call passes or returns pointers, it may require an accompanying
@@ -1263,7 +1263,7 @@ s.f();
 `TODO: ex. pointer return`
 -->
 
-<h3 id="resources-finalization">Resources &amp; Finalization</h3>
+<h3 id="resources-finalization">Resources &amp; Finalization<a class="headerlink" href="#resources-finalization" title="Permanent link">&para;</a></h3>
 <p>A finalization statement unconditionally executes a series of statements when
 its associated block terminates or is aborted.</p>
 <p>Céu tracks the interaction of native calls with pointers and requires 
@@ -1348,7 +1348,7 @@ var _char&amp;&amp; found = (_strchr as /pure)(ptr);
 var _tp v = _f() as /plain;
 </code></pre>
 
-<h2 id="lua-integration">Lua Integration</h2>
+<h2 id="lua-integration">Lua Integration<a class="headerlink" href="#lua-integration" title="Permanent link">&para;</a></h2>
 <p>Céu provides <a href="#TODO">Lua states</a> to delimit the effects of inlined
 <a href="#TODO">Lua statements</a>:</p>
 <pre><code class="ceu">Lua_State ::= lua `[´ [Exp] `]´ do
@@ -1366,7 +1366,7 @@ functionality (e.g., non-blocking I/O) or simple <code>struct</code> accessors, 
 never for control purposes.</p>
 <p>All programs have an implicit enclosing <em>global Lua state</em> which all orphan
 statements apply.</p>
-<h3 id="lua-state">Lua State</h3>
+<h3 id="lua-state">Lua State<a class="headerlink" href="#lua-state" title="Permanent link">&para;</a></h3>
 <p>A Lua state creates an isolated state for inlined <a href="#TODO">Lua statements</a>.</p>
 <p>Example:</p>
 <pre><code class="ceu">// &quot;v&quot; is not shared between the two statements
@@ -1394,7 +1394,7 @@ end
 </code></pre>
 
 <p><code>TODO: dynamic scope, assignment/error, [dim]</code></p>
-<h3 id="lua-statement">Lua Statement</h3>
+<h3 id="lua-statement">Lua Statement<a class="headerlink" href="#lua-statement" title="Permanent link">&para;</a></h3>
 <p>The contents of Lua statements in between <code>[[</code> and <code>]]</code> are inlined in the
 program.</p>
 <p>Like <a href="#TODO">native statements</a>, Lua statements support interpolation of
@@ -1422,11 +1422,11 @@ v_ceu = [[ v_lua + @v_ceu ]];   // yields 30
 ]]
 </code></pre>
 
-<h2 id="abstractions">Abstractions</h2>
+<h2 id="abstractions">Abstractions<a class="headerlink" href="#abstractions" title="Permanent link">&para;</a></h2>
 <p>Céu supports reuse with <code>data</code> declarations to define new types, and <code>code</code>
 declarations to define new subprograms.</p>
 <p>Declarations are subject to <a href="#TODO">lexical scope</a>.</p>
-<h3 id="data">Data</h3>
+<h3 id="data">Data<a class="headerlink" href="#data" title="Permanent link">&para;</a></h3>
 <p>A <code>data</code> declaration creates a new data type:</p>
 <pre><code class="ceu">Data ::= data ID_abs [as (nothing|Exp)] [ with
              { &lt;var_dcl_set|vector_dcl_set|pool_dcl_set|event_dcl_set&gt; `;´ {`;´} }
@@ -1469,7 +1469,7 @@ escape (dir as int);        // returns 1 or -1
 </code></pre>
 
 <p><code>TODO: new, pool, recursive types</code></p>
-<h4 id="data-constructor">Data Constructor</h4>
+<h4 id="data-constructor">Data Constructor<a class="headerlink" href="#data-constructor" title="Permanent link">&para;</a></h4>
 <p>A new static value constructor is created in the contexts as follows:</p>
 <ul>
 <li>Prefixed by the keyword <code>val</code> in an <a href="#TODO">assignment</a> to a variable.</li>
@@ -1501,7 +1501,7 @@ var Object o1 = val Object(Rect(0,0,10,10,_), Dir.Right());
 <pre><code class="ceu">var Object o2 = o1;         // makes a deep copy of all fields from &quot;o1&quot; to &quot;o2&quot;
 </code></pre>
 
-<h3 id="code">Code</h3>
+<h3 id="code">Code<a class="headerlink" href="#code" title="Permanent link">&para;</a></h3>
 <p>The <code>code/tight</code> and <code>code/await</code> declarations specify new subprograms that can
 be <a href="#TODO">invoked</a> from arbitrary points in programs:</p>
 <pre><code class="ceu">// prototype declaration
@@ -1581,7 +1581,7 @@ var int fat = call/recursive Fat(10);           // invokes &quot;Fat&quot; (yiel
 </code></pre>
 
 <p><code>TODO: hold</code></p>
-<h4 id="code-declaration">Code Declaration</h4>
+<h4 id="code-declaration">Code Declaration<a class="headerlink" href="#code-declaration" title="Permanent link">&para;</a></h4>
 <p>Code abstractions specify a list of input parameters in between the symbols
 <code>(</code> and <code>)</code>.
 Each parameter specifies a <a href="#TODO">storage class</a> with modifiers, a type and
@@ -1618,7 +1618,7 @@ spawn Open(&lt;...&gt;) -&gt; (&amp;res);                // initiliazes resource
 &lt;...&gt;                                       // uses resource
 </code></pre>
 
-<h4 id="code-invocation">Code Invocation</h4>
+<h4 id="code-invocation">Code Invocation<a class="headerlink" href="#code-invocation" title="Permanent link">&para;</a></h4>
 <p>A <code>code/tight</code> is invoked with the keyword <code>call</code> followed by the abstraction
 name and list of arguments.
 A <code>code/await</code> is invoked with the keywords <code>await</code> or <code>spawn</code> followed by the
@@ -1650,7 +1650,7 @@ are aborted.</p>
 <p>If the <code>spawn</code> omits the pool, the invocation always succeed and has the same
 scope as the invoking point: when the enclosing block terminates, the invoked
 code is also aborted.</p>
-<h4 id="dynamic-dispatching">Dynamic Dispatching</h4>
+<h4 id="dynamic-dispatching">Dynamic Dispatching<a class="headerlink" href="#dynamic-dispatching" title="Permanent link">&para;</a></h4>
 <p>Céu supports dynamic code dispatching based on multiple parameters.</p>
 <p>The modifier <code>/dynamic</code> in a declaration specifies that the code is dynamically
 dispatched.
@@ -1694,7 +1694,7 @@ var&amp; Media m = &lt;...&gt;;       // receives one of &quot;Media.Audio&quot;
 await/dynamic Play(&amp;m);     // dispatches the appropriate subprogram to play the media
 </code></pre>
 
-<h2 id="synchronous-control-statements">Synchronous Control Statements</h2>
+<h2 id="synchronous-control-statements">Synchronous Control Statements<a class="headerlink" href="#synchronous-control-statements" title="Permanent link">&para;</a></h2>
 <p>The <em>synchronous control statements</em> which follow cannot appear in
 <a href="#TODO">event iterators</a>,
 <a href="#TODO">pool iterators</a>,
