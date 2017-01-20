@@ -3,7 +3,7 @@
 Céu supports reuse with `data` declarations to define new types, and `code`
 declarations to define new subprograms.
 
-Declarations are subject to [lexical scope](#TODO).
+Declarations are subject to [lexical scope](../storage_classes/#lexical-scope).
 
 ### Data
 
@@ -18,10 +18,11 @@ Data_Cons ::= (val|new) Abs_Cons
 Abs_Cons  ::= ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
 ```
 
-A declaration may pack fields with [storage declarations](#TODO) which become
-publicly accessible in the new type.
-Field declarations may [assign](#TODO) default values for uninitialized
-instances.
+A declaration may pack fields with
+[storage declarations](#declarations) which become publicly
+accessible in the new type.
+Field declarations may [assign](#assignments) default values for
+uninitialized instances.
 
 Data types can form hierarchies using dots (`.`) in identifiers:
 
@@ -34,8 +35,9 @@ The optional modifier `as` expects the keyword `nothing` or a constant
 expression of type `int`:
 
 - `nothing`: the `data` cannot be instantiated.
-- *constant expression*: [typecasting](#TODO) a value of the type to `int`
-                         evaluates to the specified enumeration expression.
+- *constant expression*: [typecasting](../expressions/#type-cast) a value of
+                         the type to `int` evaluates to the specified
+                         enumeration expression.
 
 Examples:
 
@@ -61,8 +63,8 @@ escape (dir as int);        // returns 1 or -1
 
 A new static value constructor is created in the contexts as follows:
 
-- Prefixed by the keyword `val` in an [assignment](#TODO) to a variable.
-- As an argument to a [`code` instantiation](#TODO).
+- Prefixed by the keyword `val` in an [assignment](#assignments) to a variable.
+- As an argument to a [`code` invocation](#code-invocation).
 - Nested as an argument in a `data` creation (i.e., a `data` that contains
   another `data`).
 
@@ -72,14 +74,14 @@ The destination must be a plain declaration (i.e., not an alias or pointer).
 The constructor uses the `data` identifier followed by a list of arguments
 matching the fields of the type.
 
-Variables of the exact same type can be copied in [assignments](#TODO).
+Variables of the exact same type can be copied in [assignments](#assignments).
 
 For assignments from a subtype to a supertype, the rules are as follows:
 
-- [Copy assignments](#TODO)
+- [Copy assignments](#copy-assignment)
     - plain values: only if the subtype contains no extra fields
     - pointers: allowed
-- [Alias assignment](#TODO): allowed.
+- [Alias assignment](#alias-assignment): allowed.
 
 ```ceu
 data Object with
@@ -96,7 +98,7 @@ var Object o2 = o1;         // makes a deep copy of all fields from "o1" to "o2"
 ### Code
 
 The `code/tight` and `code/await` declarations specify new subprograms that can
-be [invoked](#TODO) from arbitrary points in programs:
+be invoked from arbitrary points in programs:
 
 ```ceu
 // prototype declaration
@@ -131,8 +133,8 @@ Mods ::= [`/´dynamic | `/´static] [`/´recursive]
 ```
 
 A `code/tight` is a subprogram that cannot contain
-[synchronous control statements](#TODO) and runs to completion in the current
-[internal reaction](#TODO).
+[synchronous control statements](#synchronous-control-statements) and runs to
+completion in the current [internal reaction](../#internal-reactions).
 
 A `code/await` is a subprogram with no restrictions (e.g., it can manipulate
 events and use parallel compositions) and its execution may outlive multiple
@@ -189,8 +191,8 @@ var int fat = call/recursive Fat(10);           // invokes "Fat" (yields 3628800
 
 Code abstractions specify a list of input parameters in between the symbols
 `(` and `)`.
-Each parameter specifies a [storage class](#TODO) with modifiers, a type and
-an identifier (optional in declarations).
+Each parameter specifies a [storage class](../storage_classes/#storage-classes)
+with modifiers, a type and an identifier (optional in declarations).
 A `void` list specifies that the abstraction has no parameters.
 
 Code abstractions also specify an output return type.
@@ -202,8 +204,8 @@ These resources are exported and bound to aliases in the invoking context which
 may access them while the code executes:
 
 - The invoker passes a list of unbound aliases to the code.
-- The code [binds](#TODO) the aliases to the local resources before any
-  [synchronous control statement](#TODO) executes.
+- The code [binds](#alias-assignment) the aliases to the local resources before
+  any [synchronous control statement](#synchronous-control-statements) executes.
 
 If the code does not terminate (i.e., return type is `FOREVER`), the
 initialization list specifies normal aliases `&`.
@@ -236,13 +238,13 @@ A `code/await` is invoked with the keywords `await` or `spawn` followed by the
 abstraction name and list of arguments.
 
 The list of arguments must satisfy the list of parameters in the
-[code declaration](#TODO).
+[code declaration](#code-declaration).
 
 The `call` and `await` invocations suspend the current trail and transfer
 control to the code abstraction.
 The invoking point only resumes after the abstraction terminates and evaluates
-to a value of the [return type](#TODO) which can be captured with an optional
-[assignment](#TODO).
+to a value of its return type which can be captured with an optional
+[assignment](#assignment).
 
 The `spawn` invocation also suspends and transfers control to the code
 abstraction.
@@ -252,16 +254,16 @@ This makes the invocation point and a non-terminating abstraction to execute
 concurrently.
 
 The `spawn` invocation accepts an optional list of aliases matching the
-[initialization list](#TODO) from the code abstraction.
+[initialization list](#code-declaration) from the code abstraction.
 These aliases are bound to local resources in the abstraction and can be
 accessed from the invocation point.
 
-The `spawn` invocation also accepts an optional [pool](#TODO) which provides
+The `spawn` invocation also accepts an optional [pool](#pools) which provides
 storage and scope for invoked abstractions.
 
 If the `spawn` provides the pool, the invocation evaluates to a boolean that
 indicates whether the pool has space to execute the code.
-The result can be captured with an optional [assignment](#TODO).
+The result can be captured with an optional [assignment](#assignment).
 If the pool goes out of scope, all invoked abstractions residing in that pool
 are aborted.
 
@@ -277,7 +279,7 @@ The modifier `/dynamic` in a declaration specifies that the code is dynamically
 dispatched.
 A dynamic code must have at least one `dynamic` parameter.
 Also, all dynamic parameters must be pointers or aliases to a
-[data type](#TODO) in some hierarchy.
+[data type](#data) in some hierarchy.
 
 A dynamic declaration requires other compatible dynamic declarations with the
 same name, modifiers, parameters, and return type.
@@ -293,8 +295,8 @@ In the case of a tie, the next dynamic parameter is checked.
 A *catchall* declaration with the most general dynamic types must always be
 provided.
 
-If the argument is explicitly [typecast](#TODO) to a supertype, then
-dispatching considers that type instead.
+If the argument is explicitly [typecast](../expressions/#type-cast) to a
+supertype, then dispatching considers that type instead.
 
 Example:
 

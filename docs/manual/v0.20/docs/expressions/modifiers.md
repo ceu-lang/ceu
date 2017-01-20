@@ -6,4 +6,5 @@ Expressions that evaluate to native types can be modified as follows:
 Mod ::= Exp as `/´(nohold|plain|pure)
 ```
 
-Modifiers may suppress the requirement for [resource finalization](#TODO).
+Modifiers may suppress the requirement for
+[resource finalization](../statements/#resources-finalization).

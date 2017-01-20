@@ -19,5 +19,5 @@ end
 
 Céu warns about tight loops in programs at compile time.
 For time-consuming algorithms that require unrestricted loops (e.g., 
-cryptography, image processing), Céu provides [Asynchronous 
-Execution](#TODO).
+cryptography, image processing), Céu provides
+[Asynchronous Execution](../statements/#asynchronous-execution).

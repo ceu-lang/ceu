@@ -17,7 +17,7 @@ The main program depends on declarations from the Céu program.
 ### Types
 
 The type declarations must map the types of the host environment to all
-[primitive types](#TODO) of Céu.
+[primitive types](../types/#primitives) of Céu.
 
 Example:
 
@@ -48,7 +48,7 @@ typedef double   f64;
 
 ### Threads
 
-If the user program uses [threads](#TODO) and the option
+If the user program uses [threads](../statements/#thread) and the option
 `--ceu-features-thread` is set, the host environment must provide declarations
 for types and functions expected by Céu.
 
@@ -79,8 +79,9 @@ program.
 
 #### External Events
 
-For each external [input](#TODO) and [output](#TODO) event `<ID>` defined in
-Céu, the compiler generates corresponding declarations as follows:
+For each [external input and output event](../statements/#external-events)
+`<ID>` defined in Céu, the compiler generates corresponding declarations as
+follows:
 
 1. An enumeration item `CEU_INPUT_<ID>` that univocally identifies the event.
 2. A `define` macro `_CEU_INPUT_<ID>_`.
@@ -177,7 +178,7 @@ execution of Céu programs:
     Notifies the program about an input `evt_id` with a payload `evt_params`.
     Should be called whenever the event loop senses a change.
     The call to `ceu_input(CEU_INPUT__ASYNC, NULL)` makes
-    [asynchronous blocks](#TODO) to execute a step.
+    [asynchronous blocks](../statements/#asynchronous-block) to execute a step.
 
 - `int ceu_loop (void)`
 

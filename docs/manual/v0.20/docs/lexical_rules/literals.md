@@ -49,4 +49,4 @@ _printf("Hello World!\n");
 
 ### Null pointer
 
-The `null` literal represents [null pointers](#TODO).
+`TODO (like C)`

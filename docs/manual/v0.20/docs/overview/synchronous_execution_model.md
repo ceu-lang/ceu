@@ -4,7 +4,7 @@ Céu is grounded on a precise definition of *logical time* (as opposed to
 *physical*) as a discrete sequence of input events:
 a sequence because only a single input event is handled at a logical time; 
 discrete because reactions to events are guaranteed to execute in bounded
-physical time (see [Bounded Execution](#TODO)).
+physical time (see [Bounded Execution](#bounded-execution)).
 
 The execution model for Céu programs is as follows:
 
@@ -12,7 +12,8 @@ The execution model for Céu programs is as follows:
    single trail.
 2. Active trails, one after another, execute until they await or terminate.
    This step is named a *reaction chain*, and always runs in bounded time.
-   New trails can be created with [parallel compositions](#TODO).
+   New trails can be created with
+   [parallel compositions](#parallel-compositions-and-abortion).
 3. The program goes idle.
 4. On the occurrence of a new input event, *all* trails awaiting that event
    awake.

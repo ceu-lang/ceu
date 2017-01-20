@@ -30,16 +30,17 @@ end
 
 A type cast converts the type of an expression into a new type as follows:
 
-1. The expression type is a [data type](#TODO):
+1. The expression type is a [data type](../statements/#data):
     1. The new type is `int`:
-        Evaluates to the [type enumeration](#TODO) for the expression type.
+        Evaluates to the [type enumeration](../statements/#data) for the
+        expression type.
     2. The new type is a subtype of the expression static type:
         1. The expression runtime type is a subtype of the new type:
             Evaluates to the new type.
         2. Evaluates to error.
     3. The new type is a supertype of the expression static type:
         Always succeeds and evaluates to the new type.
-        See also [Dynamic Dispatching](#TODO).
+        See also [Dynamic Dispatching](../statements/#dynamic-dispatching).
     4. Evaluates to error.
 2. Evaluates to the new type (i.e., a *weak typecast*, as in C).
 

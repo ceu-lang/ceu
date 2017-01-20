@@ -1,7 +1,8 @@
 ## Fields
 
-The operators `.´ and `:´ specify fields of [data abstractions](#TODO) and
-[native structs](#TODO):
+The operators `.´ and `:´ specify fields of
+[data abstractions](../statements/#data) and
+[native](../statements/#c-integration) structs:
 
 ```
 Dot   ::= Loc `.´ (ID_int|ID_nat)

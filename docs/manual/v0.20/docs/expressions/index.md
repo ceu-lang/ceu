@@ -1,6 +1,7 @@
 # Locations & Expressions
 
-Céu specifies locations and expressions as follows:
+Céu specifies [locations](../storage_classes/#locations) and expressions as
+follows:
 
 ```ceu
 Exp ::= NUM | STR | null | true | false
@@ -49,8 +50,6 @@ Loc ::= [`*´|`$´] Loc
     /* highest priority */
 ```
 
-Locations are introduced in [Storage Classes](#TODO).
-
 {!expressions/primary.md!}
 {!expressions/arithmetic.md!}
 {!expressions/bitwise.md!}
@@ -63,4 +62,4 @@ Locations are introduced in [Storage Classes](#TODO).
 {!expressions/sizeof.md!}
 {!expressions/calls.md!}
 {!expressions/vectors.md!}
-{!expressions/vectors.md!}
+{!expressions/fields.md!}

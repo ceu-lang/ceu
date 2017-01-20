@@ -49,7 +49,7 @@ Céu integrates safely with C, particularly when manipulating external resources
 Programs can make native calls seamlessly while avoiding common pitfalls such
 as memory leaks and dangling pointers.
 
-Céu is [free software](#TODO).
+Céu is [free software](../license/#license).
 
 {!overview/environments.md!}
 {!overview/synchronous_execution_model.md!}

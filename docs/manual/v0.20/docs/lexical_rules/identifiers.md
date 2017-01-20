@@ -22,8 +22,8 @@ ID_type  ::= ( ID_nat | ID_abs
              | int   | uint  | ssize | usize )
 ```
 
-Declarations for [`code` and `data`](#TODO) create new [types](#TODO) which can
-be used as type identifiers.
+Declarations for [`code` and `data`](../statements/#abstractions) create new
+[types](../types/#types) which can be used as type identifiers.
 
 Examples:
 

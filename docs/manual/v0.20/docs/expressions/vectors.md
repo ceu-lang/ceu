@@ -8,7 +8,7 @@ Céu uses square brackets to index [vectors](#Vectors):
 Vec_Idx ::= Loc `[´ Exp `]´
 ```
 
-The index expression must be of type [`usize`](#TODO).
+The index expression must be of type [`usize`](../types/#primitives).
 
 Vectors start at index zero.
 Céu generates an [error](#TODO) for out-of-bounds vector accesses.
@@ -27,7 +27,7 @@ Vec_Max ::= `$$´ Loc
 
 ### Constructor
 
-Vector constructors are only valid in [assignments](#TODO):
+Vector constructors are only valid in [assignments](../statements/#assignments):
 
 ```ceu
 Vec_Cons ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´) }

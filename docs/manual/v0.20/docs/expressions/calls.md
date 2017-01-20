@@ -1,3 +1,4 @@
 ## Calls
 
-See [Native Call](#TODO) and [Code Invocation](#TODO).
+See [Native Call](../statements/#native-call) and
+[Code Invocation](../statements/#code-invocation).

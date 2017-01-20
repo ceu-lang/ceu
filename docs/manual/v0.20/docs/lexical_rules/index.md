@@ -1,6 +1,8 @@
 # Lexical Rules
 
+<!--
 `TODO`
+-->
 
 {!lexical_rules/keywords.md!}
 {!lexical_rules/identifiers.md!}

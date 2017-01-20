@@ -14,7 +14,7 @@ runtime stack:
 1. The `emit` suspends the current trail and its continuation is pushed into
     the stack (i.e., the statement in sequence with the `emit`).
 2. All trails awaiting the emitted event awake and execute in sequence
-    (see [`rule 2`](#TODO) for external reactions).
+    (see [`rule 2`](#synchronous-execution-model) for external reactions).
     If an awaking trail emits another internal event, a nested internal
     reaction starts with `rule 1`.
 3. The top of stack is popped and the last emitting trail resumes execution
