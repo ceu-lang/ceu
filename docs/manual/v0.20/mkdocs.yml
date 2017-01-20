@@ -2,70 +2,19 @@ site_name: Céu v0.20 - Reference Manual
 theme:     readthedocs
 #site_dir:  site/v0.20
 
+markdown_extensions:
+    - markdown_include.include:
+        base_path: docs
+
 pages:
-    - Céu v0.20 - Reference Manual:             'index.md'
-    - Overview:
-        - Introduction:                         'overview/index.md'
-        - Environments:                         'overview/environments.md'
-        - Synchronous Execution Model:          'overview/synchronous_execution_model.md'
-        - Parallel Compositions and Abortion:   'overview/parallel_compositions_and_abortion.md'
-        - Bounded Execution:                    'overview/bounded_execution.md'
-        - Deterministic Execution:              'overview/deterministic_execution.md'
-        - Internal Reactions:                   'overview/internal_reactions.md'
-    - Lexical Rules:
-        #- Lexical Rules:    'lexical_rules/index.md'
-        - Keywords:         'lexical_rules/keywords.md'
-        - Identifiers:      'lexical_rules/identifiers.md'
-        - Literals:         'lexical_rules/literals.md'
-        - Comments:         'lexical_rules/comments.md'
-    - Types:
-        - Types:            'types/index.md'
-        - Primitives:       'types/primitives.md'
-        - Natives:          'types/natives.md'
-        - Abstractions:     'types/abstractions.md'
-        - Modifiers:        'types/modifiers.md'
-    - Storage Classes:
-        - Storage Classes:  'storage_classes/index.md'
-        - Lexical Scope:    'storage_classes/lexical_scope.md'
-        - Classes:          'storage_classes/classes.md'
-        - Locations:        'storage_classes/locations.md'
-        - References:       'storage_classes/references.md'
-    - Statements:
-        - Statements:                       'statements/index.md'
-        - Nothing:                          'statements/nothing.md'
-        - Blocks:                           'statements/blocks.md'
-        - Declatations:                     'statements/declarations.md'
-        - Assignments:                      'statements/assignments.md'
-        - Event Handling:                   'statements/event_handling.md'
-        - Conditional:                      'statements/conditional.md'
-        - Loops:                            'statements/loops.md'
-        - Parallel Compositions:            'statements/parallel_compositions.md'
-        - Pausing:                          'statements/pausing.md'
-        - Asynchronous Execution:           'statements/asynchronous_execution.md'
-        - C Integration:                    'statements/c_integration.md'
-        - Lua Integration:                  'statements/lua_integration.md'
-        - Abstractions:                     'statements/abstractions.md'
-        - Synchronous Control Statements:   'statements/synchronous_control_statements.md'
-    - Locations & Expressions:
-        - Locations & Expressions:  'expressions/index.md'
-        - Primary:                  'expressions/primary.md'
-        - Arithmetic:               'expressions/arithmetic.md'
-        - Bitwise:                  'expressions/bitwise.md'
-        - Relational:               'expressions/relational.md'
-        - Logical:                  'expressions/logical.md'
-        - Types:                    'expressions/types.md'
-        - Modifiers:                'expressions/modifiers.md'
-        - References:               'expressions/references.md'
-        - Option:                   'expressions/option.md'
-        - Sizeof:                   'expressions/sizeof.md'
-        - Calls:                    'expressions/calls.md'
-        - Vectors:                  'expressions/vectors.md'
-        - Fields:                   'expressions/vectors.md'
+    - Overview:                 'index.md'
+    - Lexical Rules:            'lexical_rules/index.md'
+    - Types:                    'types/index.md'
+    - Storage Classes:          'storage_classes/index.md'
+    - Statements:               'statements/index.md'
+    - Locations & Expressions:  'expressions/index.md'
     #- Static Checks:    'static_checks/index.md'
-    - Compilation:
-        - Compilation:  'compilation/index.md'
-        - Command Line: 'compilation/command_line.md'
-        - C API:        'compilation/c_api.md'
+    - Compilation:              'compilation/index.md'
     #- Errors:           'errors/index.md'
-    - Syntax:           'syntax.md'
-    - License:          'license.md'
+    - Syntax:                   'syntax.md'
+    - License:                  'license.md'

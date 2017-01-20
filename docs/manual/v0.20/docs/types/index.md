@@ -1,5 +1,4 @@
-Types
-=====
+# Types
 
 Céu is statically typed, requiring all variables, events, and other entities to
 be declared before they are used in programs.
@@ -21,3 +20,8 @@ var   Tree   t;    // "t" is a data of type "Tree"
 var   int?   ret;  // "ret" is either unset or is of integer type
 input byte&& RECV; // "RECV" is an input event carrying a pointer to a "byte"
 ```
+
+{!types/primitives.md!}
+{!types/natives.md!}
+{!types/abstractions.md!}
+{!types/modifiers.md!}

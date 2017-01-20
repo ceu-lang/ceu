@@ -50,3 +50,17 @@ Loc ::= [`*´|`$´] Loc
 ```
 
 Locations are introduced in [Storage Classes](#TODO).
+
+{!expressions/primary.md!}
+{!expressions/arithmetic.md!}
+{!expressions/bitwise.md!}
+{!expressions/relational.md!}
+{!expressions/logical.md!}
+{!expressions/types.md!}
+{!expressions/modifiers.md!}
+{!expressions/references.md!}
+{!expressions/option.md!}
+{!expressions/sizeof.md!}
+{!expressions/calls.md!}
+{!expressions/vectors.md!}
+{!expressions/vectors.md!}

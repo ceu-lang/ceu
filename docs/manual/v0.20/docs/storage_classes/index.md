@@ -20,3 +20,8 @@ pool[]    Anim   anims; // "anims" is a dynamic "pool" for instances of type "An
 
 A declaration binds the identifier with a memory location that holds values of
 the associated type.
+
+{!storage_classes/lexical_scope.md!}
+{!storage_classes/classes.md!}
+{!storage_classes/locations.md!}
+{!storage_classes/references.md!}
