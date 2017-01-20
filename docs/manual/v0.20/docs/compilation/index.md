@@ -1,3 +1,5 @@
+# Compilation
+
 The compiler *transpiles* an input program in Céu to an output in C, which is
 further embedded in an [environment](#TODO) satisfying a [C API](#TODO), which
 is finally compiled to an executable:

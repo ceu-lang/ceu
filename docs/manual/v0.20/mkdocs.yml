@@ -5,6 +5,9 @@ theme:     readthedocs
 markdown_extensions:
     - markdown_include.include:
         base_path: docs
+    - toc:
+        permalink: True
+    #- codehilite(linenums=true)
 
 pages:
     - Overview:                 'index.md'

@@ -1,192 +1,283 @@
 ## C API
 
-`TODO`
+The environment phase of the compiler packs the transpiled Céu program and
+additional files in the order as follows:
 
-<!--
-The final output of the compiler of Céu is a program in C that follows a 
-standard application programming interface.
-The interface specifies some types, macros, and functions, which the 
-environment has to manipulate in order to guide the execution of the original 
-program in Céu.
+1. type declarations    (option `--env-types`)
+2. thread declarations  (option `--env-threads`, optional)
+3. a callback prototype (fixed, see below)
+4. Céu program          (option `--env-ceu`, auto generated)
+5. main program         (option `--env-main`)
 
-The example below illustrates a possible `main` for a host platform:
+The Céu program uses standardized types and calls, which must be previously
+mapped from the host environment in steps `1-3`.
 
-```c
-#include "_ceu_app.c"
-
-int main (void)
-{
-    char mem[sizeof(CEU_Main)];
-    tceu_app app;
-        app.data = &mem;
-    ceu_app_init(&app);
-
-    while(app->isAlive) {
-        ceu_sys_go(app, CEU_IN__ASYNC,  CEU_EVTP((void*)NULL));
-        ceu_sys_go(app, CEU_IN__WCLOCK, CEU_EVTP(<how-much-time-since-previous-iteration>));
-        if (occuring(CEU_IN_EVT1)) {
-            ceu_sys_go(app, CEU_IN__EVT1, param1);
-        }
-        ...
-        if (occuring(CEU_IN_EVTn)) {
-            ceu_sys_go(app, CEU_IN__EVTn, paramN);
-        }
-    }
-    return app->ret;
-}
-
-int occurring (int evt_id) {
-    <platform dependent>
-}
-```
-
-`tceu_app` is a type that represents an application in Céu.
-The field `app.data` expects a pointer to the memory of the application, which 
-has to be previously declared.
-
-`TODO`
+The main program depends on declarations from the Céu program.
 
 ### Types
 
-`TODO`
+The type declarations must map the types of the host environment to all
+[primitive types](#TODO) of Céu.
 
-`TODO (index clash)`
+Example:
 
-### Functions
+```c
+#include <stdint.h>
+#include <sys/types.h>
 
-`TODO`
+typedef unsigned char bool;
+typedef unsigned char byte;
+typedef unsigned int  uint;
 
-`TODO (index clash)`
+typedef ssize_t  ssize;
+typedef size_t   usize;
 
-### Macros
+typedef int8_t    s8;
+typedef int16_t  s16;
+typedef int32_t  s32;
+typedef int64_t  s64;
 
-`TODO`
+typedef uint8_t   u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
 
-### Constants and Defines
+typedef float    f32;
+typedef double   f64;
+```
 
-`TODO`
+### Threads
+
+If the user program uses [threads](#TODO) and the option
+`--ceu-features-thread` is set, the host environment must provide declarations
+for types and functions expected by Céu.
+
+Example:
+
+```c
+#include <pthread.h>
+#include <unistd.h>
+#define CEU_THREADS_T               pthread_t
+#define CEU_THREADS_MUTEX_T         pthread_mutex_t
+#define CEU_THREADS_CREATE(t,f,p)   pthread_create(t,NULL,f,p)
+#define CEU_THREADS_CANCEL(t)       ceu_dbg_assert(pthread_cancel(t)==0)
+#define CEU_THREADS_JOIN_TRY(t)     0
+#define CEU_THREADS_JOIN(t)         ceu_dbg_assert(pthread_join(t,NULL)==0)
+#define CEU_THREADS_MUTEX_LOCK(m)   ceu_dbg_assert(pthread_mutex_lock(m)==0)
+#define CEU_THREADS_MUTEX_UNLOCK(m) ceu_dbg_assert(pthread_mutex_unlock(m)==0)
+#define CEU_THREADS_SLEEP(us)       usleep(us)
+#define CEU_THREADS_PROTOTYPE(f,p)  void* f (p)
+#define CEU_THREADS_RETURN(v)       return v
+```
+
+`TODO: describe them`
+
+### Céu
+
+The transpiled program generates types and constants required by the main
+program.
+
+#### External Events
+
+For each external [input](#TODO) and [output](#TODO) event `<ID>` defined in
+Céu, the compiler generates corresponding declarations as follows:
+
+1. An enumeration item `CEU_INPUT_<ID>` that univocally identifies the event.
+2. A `define` macro `_CEU_INPUT_<ID>_`.
+3. A struct type `tceu_input_<ID>` with fields corresponding to the types in
+   of the event payload.
+
+Example:
+
+Céu program:
+
+```ceu
+input (int,u8&&) MY_EVT;
+```
+
+Transpiled program:
+
+```c
+enum {
+    ...
+    CEU_INPUT_MY_EVT,
+    ...
+};
+
+#define _CEU_INPUT_MY_EVT_                                                         
+
+typedef struct tceu_input_MY_EVT {                                               
+    int _1;                                                                     
+    u8* _2;                                                                     
+} tceu_input_MY_EVT;
+```
+
+#### Data
+
+The global `CEU_APP` of type `tceu_app` holds all program memory and runtime
+information:
+
+```
+typedef struct tceu_app {
+    bool end_ok;                /* if the program terminated */
+    int  end_val;               /* final value of the program */
+    bool async_pending;         /* if there is a pending "async" to execute */
+    ...
+    tceu_code_mem_ROOT root;    /* all Céu program memory */
+} tceu_app;
+
+static tceu_app CEU_APP;
+```
+
+The struct `tceu_code_mem_ROOT` holds the whole memory of the Céu program.
+The identifiers for global variables are preserved, making them directly
+accessible.
+
+Example:
+
+```ceu
+var int x = 10;
+```
+
+```
+typedef struct tceu_code_mem_ROOT {                                             
+    ...
+    int  x;                                                                         
+} tceu_code_mem_ROOT;    
+```
+
+### Main
+
+The main program provides the entry point for the host platform (i.e., the
+`main` function), implementing the event loop that senses the world and
+notifies the Céu program about changes.
+
+The main program interfaces with the Céu program in both directions:
+
+- Through direct calls, in the direction `main -> Céu`, typically when new input is available.
+- Through callbacks, in the direction `Céu -> main`, typically when new output is available.
+
+#### Calls
+
+The functions that follow are called by the main program to command the
+execution of Céu programs:
+
+- `void ceu_start (void)`
+
+    Initializes and starts the program.
+    Should be called once.
+
+- `void ceu_stop  (void)`
+
+    Finalizes the program.
+    Should be called once.
+
+- `void ceu_input (tceu_nevt evt_id, void* evt_params)`
+
+    Notifies the program about an input `evt_id` with a payload `evt_params`.
+    Should be called whenever the event loop senses a change.
+    The call to `ceu_input(CEU_INPUT__ASYNC, NULL)` makes
+    [asynchronous blocks](#TODO) to execute a step.
+
+- `int ceu_loop (void)`
+
+    Implements a simple loop encapsulating `ceu_start`, `ceu_input`, and
+    `ceu_stop`.
+    On each loop iteration, make a `CEU_CALLBACK_STEP` callback and generates
+    a `CEU_INPUT__ASYNC` input.
+    Should be called once.
+    Returns the final value of the program.
+
+#### Callbacks
+
+The Céu program makes callbacks to the main program in specific situations:
+
+```c
+tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2);
+
+enum {
+    CEU_CALLBACK_START,                 /* once in the beginning of `ceu_start`             */
+    CEU_CALLBACK_STOP,                  /* once in the end of `ceu_stop`                    */
+    CEU_CALLBACK_STEP,                  /* on every iteration of `ceu_loop`                 */
+    CEU_CALLBACK_ABORT,                 /* whenever an error occurs                         */
+    CEU_CALLBACK_LOG,                   /* on error and debugging messages                  */
+    CEU_CALLBACK_TERMINATING,           /* once after executing the last statement          */
+    CEU_CALLBACK_ASYNC_PENDING,         /* whenever there's a pending "async" block         */
+    CEU_CALLBACK_THREAD_TERMINATING,    /* whenever a thread terminates                     */
+    CEU_CALLBACK_ISR_ENABLE,            /* whenever interrupts should be enabled/disabled   */
+    CEU_CALLBACK_ISR_ATTACH,            /* whenever an "async/isr" starts                   */
+    CEU_CALLBACK_ISR_DETACH,            /* whenever an "async/isr" is aborted               */
+    CEU_CALLBACK_ISR_EMIT,              /* whenever an "async/isr" emits an innput          */
+    CEU_CALLBACK_WCLOCK_MIN,            /* whenever a next minimum timer is required        */
+    CEU_CALLBACK_WCLOCK_DT,             /* whenever the elapsed time is requested           */
+    CEU_CALLBACK_OUTPUT,                /* whenever an output is emitted                    */
+    CEU_CALLBACK_REALLOC,               /* whenever memory is allocated/deallocated         */
+};
+```
+
+`TODO: payloads`
+
+The main program must implement the `ceu_callback` prototype above to handle
+the enumerated commands.
 
 <!--
+WCLOCK_DT uses `CEU_WCLOCK_INACTIVE`
+- `CEU_FEATURES_ISR`
+- `CEU_FEATURES_LUA`
+- `CEU_FEATURES_THREAD`
 
-The following functions should be called by the environment to command the execution of Céu programs:
+            tceu_evt_id_params evt;
 
-* <tt>int ceu_go_init (int* ret)</tt>
-: Initializes and starts the program.
-: Should be called by the environment once, to start the Céu program.
-: If the program terminates, the function returns <tt>1</tt> and sets <tt>ret</tt> to the return value of the program.
-: Otherwise, the function returns <tt>0</tt>.
-:
-* <tt>int ceu_go_event (int* ret, int id, void* data)</tt>
-: Signals the occurrence of the given event to the Céu runtime.
-: The function receives the identifier of the input event (see [[#sec.env.api.constants|constants]]) and a pointer to its data.
-: The program resumes on the trails awaiting the event, whose awaiting expressions return the received <tt>data</tt>.
-: The return procedure of the function behaves as <tt>ceu_go_init</tt>.
-:
-* <tt>int ceu_go_async (int* ret, int* count)</tt>
-: Executes a suspended asynchronous block for a time slice.
-: The time slice is not specified, however the execution is interrupted when <tt>ceu_out_pending</tt> is true (see [[#sec.env.api.macros|macros]]).
-: The return procedure of the function behaves as <tt>ceu_go_init</tt>, but also sets <tt>count</tt> to the number of suspended asynchronous blocks.
-:
-* <tt>int ceu_go_wclock (int* ret, s32 dt)</tt>
-: Notifies the Céu runtime about the elapsed wall-clock time.
-: The function receives the elapsed time in microseconds as <tt>dt</tt>.
-: The program resumes on the trails whose wall-clock awaits have expired.
-: The return procedure of the function behaves as <tt>ceu_go_init</tt>.
-:
-
-Other functions:
-
-* <tt>int ceu_go_all ()</tt>
-: Combines <tt>ceu_go_init</tt> with an infinite loop that continuously calls <tt>ceu_go_async</tt>.
-: Expects that all events are generated from asynchronous blocks (see [[#sec.stmts.asyncs.simulation|simulation]]).
-
-<span id="sec.env.api.macros"></span>
-
---### Macros
-
-The following macros can be optionally defined by the environment to customize the behavior of the Céu runtime:
-
-* <tt>ceu_out_pending()</tt>
-: Probes the environment for the existence of pending input events.
-: The expected return value is 1 (true) or 0 (false).
-: This macro is called from the Céu runtime to interrupt the execution of asynchronous blocks when the environment has a pending input event.
-: By default <tt>ceu_out_pending()</tt> translates to <tt>(1)</tt>, meaning that asynchronous blocks execute the least possible time slice before giving control back to the environment.
-:
-* <tt>ceu_out_wclock(us)</tt>
-: Notifies the environment that the next wall-clock await will expire in <tt>us</tt> microseconds.
-: This macro must be defined in interrupt-based platforms to remind the environment to call <tt>ceu_go_wclock</tt>.
-: The special value <tt>CEU_WCLOCK_NONE</tt> represents the absence of wall-clock awaits.
-: *Note: <tt>us</tt> can be sometimes less or equal to zero.*
-: By default this macro is not defined, hence, the environment should call <tt>ceu_go_wclock</tt> periodically.
-:
-* <tt>ceu_out_event(id, len, data)</tt>
-: Executes whenever the program emits an output event.
-: This macro specifies the side effect associated with output events.
-: The returned integer becomes the result of the <tt>emit</tt> in the program.
-: <tt>id</tt> is a number that identifies the event (see [[#sec.env.api.constants|constants]]); <tt>len</tt> is the size of the event type; <tt>data</tt> is a pointer to the value emitted.
-:
-* <tt>ceu_out_event_XXX(data)</tt>
-: Per-event version of <tt>ceu_out_event(id,len,data)</tt>.
-: <tt>XXX</tt> is the name of the event.
-: If this macro is defined for a given event, only this macro is called on the occurrence of that event.
-:
-
---### Constants & Defines
-
-The following constants and defines are generated by the Céu compiler to be used by the environment.
-
-* <tt>CEU_WCLOCKS</tt>, defined if the program uses wall-clock awaits.
-: The environment can conditionally compile code for calling system timers and <tt>ceu_go_wclock</tt>.
-:
-* <tt>CEU_ASYNCS</tt>, defined if the program uses asynchronous blocks.
-: The environment can conditionally compile code for calling <tt>ceu_go_async</tt>.
-:
-* <tt>CEU_FUNC_XXX</tt>, defined for each called C function.
-: <tt>XXX</tt> is the name of the function (e.g. CEU_FUNC_printf).
-:
-* <tt>CEU_IN_XXX</tt>, defined for each input event.
-: Every external input event has a unique identifier associated with a number.
-: The identifier is the name of the event prefixed with <tt>CEU_IN_</tt> (e.g. CEU_IN_Button).
-:
-* <tt>CEU_OUT_XXX</tt>, defined for each input event.
-: Every external output event has a unique identifier associated with a number.
-: The identifier is the name of the event prefixed with <tt>CEU_OUT_</tt> (e.g. CEU_IN_Led).
-:
-: As an example, consider the following Céu definitions:
-:
-    input int A, B;
-    output void C, D;
-:
-: The compiler may generate the following constants for them:
-:
-<pre><code>#define CEU_IN_A    0;
-#define CEU_IN_B    5;
-#define CEU_OUT_C   0;
-#define CEU_OUT_D   1;
-</code></pre>
-:
-: Two input events never have the same associated value. The same holds for output events.
-: The values between input and output events are unrelated.
-: Also, the values need not to be continuous.
-
---### Types
-
-Céu expects the following scalar types to be defined by the environment: <tt>s32</tt>, <tt>s16</tt>, <tt>s8</tt>, <tt>u32</tt>, <tt>u16</tt>, and <tt>u8</tt>.
-They correspond to signed and unsigned variations of the referred sizes in bits.
-
-Follows an example of possible definitions for the scalar types:
-
-<pre><code>typedef long long  s64;
-typedef long       s32;
-typedef short      s16;
-typedef char       s8;
-typedef unsigned long long u64;
-typedef unsigned long      u32;
-typedef unsigned short     u16;
-typedef unsigned char      u8;
-</code></pre>
-
-These types are used internally by the language runtime, and can also be used by programmers in Céu programs.
-For instance, Céu internally uses a <tt>u64</tt> type to represent wall-clock time.
-
+    static volatile tceu_isr isrs[_VECTORS_SIZE];
 -->
+
+#### Example
+
+Suppose the environment supports the events that follow:
+
+```
+input  int I;
+output int O;
+```
+
+The `main.c` implements an event loop to sense occurrences of `I` and a
+callback handler for occurrences of `O`:
+
+```
+#include "types.h"      // as illustrated above in "Types"
+
+int ceu_is_running;     // detects program termination
+
+tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret ret = { .is_handled=1 };
+    switch (cmd) {
+        case CEU_CALLBACK_TERMINATING:
+            ceu_is_running = 0;
+            break;
+        case CEU_CALLBACK_OUTPUT:
+            if (p1.num == CEU_OUTPUT_O) {
+                printf("output O has been emitted with %d\n", p2.num);
+            }
+            break;
+        default:
+            ret.is_handled = 0;
+    }
+    return ret;
+}
+
+int main (void) {
+    ceu_is_running = 1;
+
+    ceu_start();
+
+    while (ceu_is_running) {
+        if detects(CEU_INPUT_A) {
+            int v = <...>;
+            ceu_input(CEU_INPUT_A, &v);
+        }
+        ceu_input(CEU_INPUT__ASYNC, NULL);
+    }
+
+    ceu_stop();
+}
+```
