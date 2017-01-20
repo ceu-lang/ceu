@@ -1,6 +1,6 @@
 ## C API
 
-The environment phase of the compiler packs the transpiled Céu program and
+The environment phase of the compiler packs the converted Céu program and
 additional files in the order as follows:
 
 1. type declarations    (option `--env-types`)
@@ -74,7 +74,7 @@ Example:
 
 ### Céu
 
-The transpiled program generates types and constants required by the main
+The converted program generates types and constants required by the main
 program.
 
 #### External Events
@@ -95,7 +95,7 @@ Céu program:
 input (int,u8&&) MY_EVT;
 ```
 
-Transpiled program:
+Converted program:
 
 ```c
 enum {

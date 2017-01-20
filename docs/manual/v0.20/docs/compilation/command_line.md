@@ -52,7 +52,7 @@ input of the succeeding phases can be omitted.
 Examples:
 
 ```
-# Preprocess "user.ceu", and transpiles the output to "user.c"
+# Preprocess "user.ceu", and converts the output to "user.c"
 $ ceu --pre --pre-input="user.ceu" --ceu --ceu-output="user.c"
 ```
 

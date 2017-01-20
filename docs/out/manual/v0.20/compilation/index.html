@@ -162,7 +162,7 @@
             <div class="section">
               
                 <h1 id="compilation">Compilation<a class="headerlink" href="#compilation" title="Permanent link">&para;</a></h1>
-<p>The compiler <em>transpiles</em> an input program in Céu to an output in C, which is
+<p>The compiler converts an input program in Céu to an output in C, which is
 further embedded in an <a href="#TODO">environment</a> satisfying a <a href="#TODO">C API</a>, which
 is finally compiled to an executable:</p>
 <p><img alt="" src="./compilation.png" /></p>
@@ -214,7 +214,7 @@ To enable a phase, the associated prefix must be enabled.
 If two consecutive phases are enabled, the output of the preceding and the
 input of the succeeding phases can be omitted.</p>
 <p>Examples:</p>
-<pre><code># Preprocess &quot;user.ceu&quot;, and transpiles the output to &quot;user.c&quot;
+<pre><code># Preprocess &quot;user.ceu&quot;, and converts the output to &quot;user.c&quot;
 $ ceu --pre --pre-input=&quot;user.ceu&quot; --ceu --ceu-output=&quot;user.c&quot;
 </code></pre>
 
@@ -224,7 +224,7 @@ $ ceu --env --env-ceu=user.c --env-types=types.h --env-main=main.c \
 </code></pre>
 
 <h2 id="c-api">C API<a class="headerlink" href="#c-api" title="Permanent link">&para;</a></h2>
-<p>The environment phase of the compiler packs the transpiled Céu program and
+<p>The environment phase of the compiler packs the converted Céu program and
 additional files in the order as follows:</p>
 <ol>
 <li>type declarations    (option <code>--env-types</code>)</li>
@@ -286,7 +286,7 @@ for types and functions expected by Céu.</p>
 
 <p><code>TODO: describe them</code></p>
 <h3 id="ceu">Céu<a class="headerlink" href="#ceu" title="Permanent link">&para;</a></h3>
-<p>The transpiled program generates types and constants required by the main
+<p>The converted program generates types and constants required by the main
 program.</p>
 <h4 id="external-events">External Events<a class="headerlink" href="#external-events" title="Permanent link">&para;</a></h4>
 <p>For each external <a href="#TODO">input</a> and <a href="#TODO">output</a> event <code>&lt;ID&gt;</code> defined in
@@ -302,7 +302,7 @@ Céu, the compiler generates corresponding declarations as follows:</p>
 <pre><code class="ceu">input (int,u8&amp;&amp;) MY_EVT;
 </code></pre>
 
-<p>Transpiled program:</p>
+<p>Converted program:</p>
 <pre><code class="c">enum {
     ...
     CEU_INPUT_MY_EVT,
