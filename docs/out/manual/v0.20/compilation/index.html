@@ -78,7 +78,7 @@
           
             <li>
     <li class="toctree-l1 ">
-        <a class="" href="../storage_classes/">Storage Classes</a>
+        <a class="" href="../storage_entities/">Storage Entities</a>
         
     </li>
 <li>
@@ -163,8 +163,8 @@
               
                 <h1 id="compilation">Compilation<a class="headerlink" href="#compilation" title="Permanent link">&para;</a></h1>
 <p>The compiler converts an input program in Céu to an output in C, which is
-further embedded in an <a href="#TODO">environment</a> satisfying a <a href="#TODO">C API</a>, which
-is finally compiled to an executable:</p>
+further embedded in an <a href="./../#environments">environment</a> satisfying a
+<a href="#c-api">C API</a>, which is finally compiled to an executable:</p>
 <p><img alt="" src="./compilation.png" /></p>
 <h2 id="command-line">Command Line<a class="headerlink" href="#command-line" title="Permanent link">&para;</a></h2>
 <p>The single command <code>ceu</code> is used for all compilation phases:</p>
@@ -238,7 +238,7 @@ mapped from the host environment in steps <code>1-3</code>.</p>
 <p>The main program depends on declarations from the Céu program.</p>
 <h3 id="types">Types<a class="headerlink" href="#types" title="Permanent link">&para;</a></h3>
 <p>The type declarations must map the types of the host environment to all
-<a href="#TODO">primitive types</a> of Céu.</p>
+<a href="./../types/#primitives">primitive types</a> of Céu.</p>
 <p>Example:</p>
 <pre><code class="c">#include &lt;stdint.h&gt;
 #include &lt;sys/types.h&gt;
@@ -265,7 +265,7 @@ typedef double   f64;
 </code></pre>
 
 <h3 id="threads">Threads<a class="headerlink" href="#threads" title="Permanent link">&para;</a></h3>
-<p>If the user program uses <a href="#TODO">threads</a> and the option
+<p>If the user program uses <a href="./../statements/#thread">threads</a> and the option
 <code>--ceu-features-thread</code> is set, the host environment must provide declarations
 for types and functions expected by Céu.</p>
 <p>Example:</p>
@@ -289,8 +289,9 @@ for types and functions expected by Céu.</p>
 <p>The converted program generates types and constants required by the main
 program.</p>
 <h4 id="external-events">External Events<a class="headerlink" href="#external-events" title="Permanent link">&para;</a></h4>
-<p>For each external <a href="#TODO">input</a> and <a href="#TODO">output</a> event <code>&lt;ID&gt;</code> defined in
-Céu, the compiler generates corresponding declarations as follows:</p>
+<p>For each <a href="./../statements/#external-events">external input and output event</a>
+<code>&lt;ID&gt;</code> defined in Céu, the compiler generates corresponding declarations as
+follows:</p>
 <ol>
 <li>An enumeration item <code>CEU_INPUT_&lt;ID&gt;</code> that univocally identifies the event.</li>
 <li>A <code>define</code> macro <code>_CEU_INPUT_&lt;ID&gt;_</code>.</li>
@@ -372,7 +373,7 @@ Should be called once.</p>
 <p>Notifies the program about an input <code>evt_id</code> with a payload <code>evt_params</code>.
 Should be called whenever the event loop senses a change.
 The call to <code>ceu_input(CEU_INPUT__ASYNC, NULL)</code> makes
-<a href="#TODO">asynchronous blocks</a> to execute a step.</p>
+<a href="./../statements/#asynchronous-block">asynchronous blocks</a> to execute a step.</p>
 </li>
 <li>
 <p><code>int ceu_loop (void)</code></p>

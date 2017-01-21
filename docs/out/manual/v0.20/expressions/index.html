@@ -78,7 +78,7 @@
           
             <li>
     <li class="toctree-l1 ">
-        <a class="" href="../storage_classes/">Storage Classes</a>
+        <a class="" href="../storage_entities/">Storage Entities</a>
         
     </li>
 <li>
@@ -122,7 +122,7 @@
                 
                     <li><a class="toctree-l4" href="#vectors">Vectors</a></li>
                 
-                    <li><a class="toctree-l4" href="#vectors_1">Vectors</a></li>
+                    <li><a class="toctree-l4" href="#fields">Fields</a></li>
                 
             
             </ul>
@@ -184,7 +184,8 @@
             <div class="section">
               
                 <h1 id="locations-expressions">Locations &amp; Expressions<a class="headerlink" href="#locations-expressions" title="Permanent link">&para;</a></h1>
-<p>Céu specifies locations and expressions as follows:</p>
+<p>Céu specifies <a href="./../storage_entities/#locations">locations</a> and expressions as
+follows:</p>
 <pre><code class="ceu">Exp ::= NUM | STR | null | true | false
      |  `(´ Exp `)´
      |  Exp &lt;binop&gt; Exp
@@ -231,7 +232,6 @@ Loc ::= [`*´|`$´] Loc
     /* highest priority */
 </code></pre>
 
-<p>Locations are introduced in <a href="#TODO">Storage Classes</a>.</p>
 <h2 id="primary">Primary<a class="headerlink" href="#primary" title="Permanent link">&para;</a></h2>
 <p><code>TODO</code></p>
 <!--
@@ -292,9 +292,10 @@ end
 <h3 id="type-cast">Type Cast<a class="headerlink" href="#type-cast" title="Permanent link">&para;</a></h3>
 <p>A type cast converts the type of an expression into a new type as follows:</p>
 <ol>
-<li>The expression type is a <a href="#TODO">data type</a>:<ol>
+<li>The expression type is a <a href="./../statements/#data">data type</a>:<ol>
 <li>The new type is <code>int</code>:
-    Evaluates to the <a href="#TODO">type enumeration</a> for the expression type.</li>
+    Evaluates to the <a href="./../statements/#data">type enumeration</a> for the
+    expression type.</li>
 <li>The new type is a subtype of the expression static type:<ol>
 <li>The expression runtime type is a subtype of the new type:
     Evaluates to the new type.</li>
@@ -303,7 +304,7 @@ end
 </li>
 <li>The new type is a supertype of the expression static type:
     Always succeeds and evaluates to the new type.
-    See also <a href="#TODO">Dynamic Dispatching</a>.</li>
+    See also <a href="./../statements/#dynamic-dispatching">Dynamic Dispatching</a>.</li>
 <li>Evaluates to error.</li>
 </ol>
 </li>
@@ -328,27 +329,30 @@ _printf(&quot;b= %d\n&quot;, b as int);
 <pre><code class="ceu">Mod ::= Exp as `/´(nohold|plain|pure)
 </code></pre>
 
-<p>Modifiers may suppress the requirement for <a href="#TODO">resource finalization</a>.</p>
+<p>Modifiers may suppress the requirement for
+<a href="./../statements/#resources-finalization">resource finalization</a>.</p>
 <h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
-<p>Céu supports <em>aliases</em> and <em>pointers</em> as <a href="#TODO">references</a>.</p>
+<p>Céu supports <em>aliases</em> and <em>pointers</em> as
+<a href="./../storage_entities/#references">references</a>.</p>
 <h3 id="aliases">Aliases<a class="headerlink" href="#aliases" title="Permanent link">&para;</a></h3>
-<p>An alias is acquired by prefixing a <a href="#TODO">native call</a> or a <a href="#TODO">location</a>
-with the operator <code>&amp;</code>:</p>
+<p>An alias is acquired by prefixing a <a href="./../statements/#native-call">native call</a>
+or a <a href="./../storage_entities/#locations">location</a> with the operator <code>&amp;</code>:</p>
 <pre><code class="ceu">Alias ::= `&amp;´ (Nat_Call | Loc)
 </code></pre>
 
-<p>See also the <a href="#TODO">unwrapping operator</a> <code>!</code> for option variable aliases.</p>
+<p>See also the <a href="#option">unwrap operator</a> <code>!</code> for option variable aliases.</p>
 <h3 id="pointers">Pointers<a class="headerlink" href="#pointers" title="Permanent link">&para;</a></h3>
-<p>The operator <code>&amp;&amp;</code> returns the address of a <a href="#TODO">location</a>, while the
-operator <code>*</code> dereferences a pointer:</p>
+<p>The operator <code>&amp;&amp;</code> returns the address of a
+<a href="./../storage_entities/#locations">location</a>, while the operator <code>*</code> dereferences
+a pointer:</p>
 <pre><code>Addr  ::= `&amp;&amp;´ Loc
 Deref ::= `*´ Loc
 </code></pre>
 
 <h2 id="option">Option<a class="headerlink" href="#option" title="Permanent link">&para;</a></h2>
-<p>The operator <code>?</code> checks if the <a href="#TODO">location</a> of an <a href="#TODO">option type</a> is
-set, while the operator <code>!</code> unwraps the location, raising an <a href="#TODO">error</a> if
-it is unset:</p>
+<p>The operator <code>?</code> checks if the <a href="./../storage_entities/#locations">location</a> of an
+<a href="./../types/#option">option type</a> is set, while the operator <code>!</code> unwraps the
+location, raising an <a href="#TODO">error</a> if it is unset:</p>
 <pre><code class="ceu">Check  ::= Loc `?´
 Unwrap ::= Loc `!´
 </code></pre>
@@ -363,14 +367,15 @@ The expression is evaluated at compile time.
 -->
 
 <h2 id="calls">Calls<a class="headerlink" href="#calls" title="Permanent link">&para;</a></h2>
-<p>See <a href="#TODO">Native Call</a> and <a href="#TODO">Code Invocation</a>.</p>
+<p>See <a href="./../statements/#native-call">Native Call</a> and
+<a href="./../statements/#code-invocation">Code Invocation</a>.</p>
 <h2 id="vectors">Vectors<a class="headerlink" href="#vectors" title="Permanent link">&para;</a></h2>
 <h3 id="index">Index<a class="headerlink" href="#index" title="Permanent link">&para;</a></h3>
 <p>Céu uses square brackets to index <a href="#Vectors">vectors</a>:</p>
 <pre><code>Vec_Idx ::= Loc `[´ Exp `]´
 </code></pre>
 
-<p>The index expression must be of type <a href="#TODO"><code>usize</code></a>.</p>
+<p>The index expression must be of type <a href="./../types/#primitives"><code>usize</code></a>.</p>
 <p>Vectors start at index zero.
 Céu generates an <a href="#TODO">error</a> for out-of-bounds vector accesses.</p>
 <h3 id="length">Length<a class="headerlink" href="#length" title="Permanent link">&para;</a></h3>
@@ -382,7 +387,7 @@ Vec_Max ::= `$$´ Loc
 
 <p><code>TODO: max</code></p>
 <h3 id="constructor">Constructor<a class="headerlink" href="#constructor" title="Permanent link">&para;</a></h3>
-<p>Vector constructors are only valid in <a href="#TODO">assignments</a>:</p>
+<p>Vector constructors are only valid in <a href="./../statements/#assignments">assignments</a>:</p>
 <pre><code class="ceu">Vec_Cons ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´) }
 </code></pre>
 
@@ -392,33 +397,22 @@ v = v .. [8];        // append value '8' to the empty vector    (v = [8])
 v = v .. [1] .. [5]; // append values '1' and '5' to the vector (v = [8, 1, 5])
 </code></pre>
 
-<h2 id="vectors_1">Vectors<a class="headerlink" href="#vectors_1" title="Permanent link">&para;</a></h2>
-<h3 id="index_1">Index<a class="headerlink" href="#index_1" title="Permanent link">&para;</a></h3>
-<p>Céu uses square brackets to index <a href="#Vectors">vectors</a>:</p>
-<pre><code>Vec_Idx ::= Loc `[´ Exp `]´
+<h2 id="fields">Fields<a class="headerlink" href="#fields" title="Permanent link">&para;</a></h2>
+<p>The operators <code>.´ and</code>:´ specify fields of
+<a href="./../statements/#data">data abstractions</a> and
+<a href="./../statements/#c-integration">native</a> structs:</p>
+<pre><code>Dot   ::= Loc `.´ (ID_int|ID_nat)
+Colon ::= Loc `:´ (ID_int|ID_nat)
 </code></pre>
 
-<p>The index expression must be of type <a href="#TODO"><code>usize</code></a>.</p>
-<p>Vectors start at index zero.
-Céu generates an <a href="#TODO">error</a> for out-of-bounds vector accesses.</p>
-<h3 id="length_1">Length<a class="headerlink" href="#length_1" title="Permanent link">&para;</a></h3>
-<p>The operator <code>$</code> returns the current length of a vector, while the operator
-<code>$$</code> returns the max length:</p>
-<pre><code>Vec_Len ::= `$´  Loc
-Vec_Max ::= `$$´ Loc
-</code></pre>
+<p>The expression <code>e:f</code> is a sugar for <code>(*e).f</code>.</p>
+<p><code>TODO: ID_nat to avoid clashing with Céu keywords.</code></p>
+<!--
+Example:
 
-<p><code>TODO: max</code></p>
-<h3 id="constructor_1">Constructor<a class="headerlink" href="#constructor_1" title="Permanent link">&para;</a></h3>
-<p>Vector constructors are only valid in <a href="#TODO">assignments</a>:</p>
-<pre><code class="ceu">Vec_Cons ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´) }
-</code></pre>
+wzxhzdk:18
 
-<p>Examples:</p>
-<pre><code class="ceu">vector[3] int v;     // declare an empty vector of length 3     (v = [])
-v = v .. [8];        // append value '8' to the empty vector    (v = [8])
-v = v .. [1] .. [5]; // append values '1' and '5' to the vector (v = [8, 1, 5])
-</code></pre>
+-->
               
             </div>
           </div>

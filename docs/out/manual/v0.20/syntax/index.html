@@ -78,7 +78,7 @@
           
             <li>
     <li class="toctree-l1 ">
-        <a class="" href="../storage_classes/">Storage Classes</a>
+        <a class="" href="../storage_entities/">Storage Entities</a>
         
     </li>
 <li>
@@ -190,7 +190,7 @@ Stmt ::= nothing
             Block
         end
 
-  /* Storage Classes */
+  /* Storage Entities */
 
       | var [`&amp;´|`&amp;?´] Type LIST(ID_int [`=´ Sources])
       | vector [`&amp;´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Sources])
@@ -356,16 +356,16 @@ Stmt ::= nothing
       // Code_Await ::=
       | code/await [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ [ `-&gt;´ `(´ Inits `)´ ] `-&gt;´ (Type | FOREVER)
         // where
-            Params ::= void | LIST(Class [ID_int])
-            Class ::= [dynamic] var    [`&amp;´] [`/´hold] * Type
-                   |            vector `&amp;´ `[´ [Exp] `]´ Type
-                   |            pool   `&amp;´ `[´ [Exp] `]´ Type
-                   |            event  `&amp;´ (Type | `(´ LIST(Type) `)´)
-            Inits ::= void | LIST(Class [ID_int])
-            Class ::= var    (`&amp;´|`&amp;?`) * Type
-                   |  vector (`&amp;´|`&amp;?`) `[´ [Exp] `]´ Type
-                   |  pool   (`&amp;´|`&amp;?`) `[´ [Exp] `]´ Type
-                   |  event  (`&amp;´|`&amp;?`) (Type | `(´ LIST(Type) `)´)
+            Params ::= void | LIST(Entity [ID_int])
+            Entity ::= [dynamic] var    [`&amp;´] [`/´hold] * Type
+                    |            vector `&amp;´ `[´ [Exp] `]´ Type
+                    |            pool   `&amp;´ `[´ [Exp] `]´ Type
+                    |            event  `&amp;´ (Type | `(´ LIST(Type) `)´)
+            Inits  ::= void | LIST(Entity [ID_int])
+            Entity ::= var    (`&amp;´|`&amp;?`) * Type
+                    |  vector (`&amp;´|`&amp;?`) `[´ [Exp] `]´ Type
+                    |  pool   (`&amp;´|`&amp;?`) `[´ [Exp] `]´ Type
+                    |  event  (`&amp;´|`&amp;?`) (Type | `(´ LIST(Type) `)´)
 
       /* code implementation */
       | (Code_Tight | Code_Await) do

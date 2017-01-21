@@ -97,7 +97,7 @@
           
             <li>
     <li class="toctree-l1 ">
-        <a class="" href="storage_classes/">Storage Classes</a>
+        <a class="" href="storage_entities/">Storage Entities</a>
         
     </li>
 <li>
@@ -217,7 +217,7 @@ require a garbage collector.</p>
 (e.g., file handles).
 Programs can make native calls seamlessly while avoiding common pitfalls such
 as memory leaks and dangling pointers.</p>
-<p>Céu is <a href="#TODO">free software</a>.</p>
+<p>Céu is <a href="./../license/#license">free software</a>.</p>
 <h2 id="environments">Environments<a class="headerlink" href="#environments" title="Permanent link">&para;</a></h2>
 <p>As a reactive language, Céu depends on an external host platform, known as an
 <em>environment</em>, which exposes <code>input</code> and <code>output</code> events programs can use.</p>
@@ -237,14 +237,15 @@ video output.</p>
 <em>physical</em>) as a discrete sequence of input events:
 a sequence because only a single input event is handled at a logical time; 
 discrete because reactions to events are guaranteed to execute in bounded
-physical time (see <a href="#TODO">Bounded Execution</a>).</p>
+physical time (see <a href="#bounded-execution">Bounded Execution</a>).</p>
 <p>The execution model for Céu programs is as follows:</p>
 <ol>
 <li>The program initiates the <em>boot reaction</em> from the first line of code in a
    single trail.</li>
 <li>Active trails, one after another, execute until they await or terminate.
    This step is named a <em>reaction chain</em>, and always runs in bounded time.
-   New trails can be created with <a href="#TODO">parallel compositions</a>.</li>
+   New trails can be created with
+   <a href="#parallel-compositions-and-abortion">parallel compositions</a>.</li>
 <li>The program goes idle.</li>
 <li>On the occurrence of a new input event, <em>all</em> trails awaiting that event
    awake.
@@ -367,8 +368,8 @@ end
 
 <p>Céu warns about tight loops in programs at compile time.
 For time-consuming algorithms that require unrestricted loops (e.g., 
-cryptography, image processing), Céu provides <a href="#TODO">Asynchronous 
-Execution</a>.</p>
+cryptography, image processing), Céu provides
+<a href="./../statements/#asynchronous-execution">Asynchronous Execution</a>.</p>
 <h2 id="deterministic-execution">Deterministic Execution<a class="headerlink" href="#deterministic-execution" title="Permanent link">&para;</a></h2>
 <p><code>TODO (shared memory + deterministic scheduler + optional static analysis)</code></p>
 <h2 id="internal-reactions">Internal Reactions<a class="headerlink" href="#internal-reactions" title="Permanent link">&para;</a></h2>
@@ -385,7 +386,7 @@ runtime stack:</p>
 <li>The <code>emit</code> suspends the current trail and its continuation is pushed into
     the stack (i.e., the statement in sequence with the <code>emit</code>).</li>
 <li>All trails awaiting the emitted event awake and execute in sequence
-    (see <a href="#TODO"><code>rule 2</code></a> for external reactions).
+    (see <a href="#synchronous-execution-model"><code>rule 2</code></a> for external reactions).
     If an awaking trail emits another internal event, a nested internal
     reaction starts with <code>rule 1</code>.</li>
 <li>The top of stack is popped and the last emitting trail resumes execution
@@ -455,5 +456,5 @@ Finally, the <code>par/and</code> rejoins and the program terminates.</p>
 
 <!--
 MkDocs version : 0.15.3
-Build Date UTC : 2017-01-20 22:36:08.605392
+Build Date UTC : 2017-01-21 12:14:23.522582
 -->

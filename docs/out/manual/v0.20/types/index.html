@@ -93,7 +93,7 @@
           
             <li>
     <li class="toctree-l1 ">
-        <a class="" href="../storage_classes/">Storage Classes</a>
+        <a class="" href="../storage_entities/">Storage Entities</a>
         
     </li>
 <li>
@@ -168,9 +168,9 @@
                 <h1 id="types">Types<a class="headerlink" href="#types" title="Permanent link">&para;</a></h1>
 <p>Céu is statically typed, requiring all variables, events, and other entities to
 be declared before they are used in programs.</p>
-<p>A type is composed of a <a href="#TODO">type identifier</a>, followed by an optional
-sequence of <a href="#TODO">pointer modifiers</a> <code>&amp;&amp;</code>, followed by an optional
-<a href="#TODO">option modifier</a> <code>?</code>:</p>
+<p>A type is composed of a <a href="./../lexical_rules/#identifiers">type identifier</a>,
+followed by an optional sequence of <a href="#pointer">pointer modifiers</a> <code>&amp;&amp;</code>,
+followed by an optional <a href="#option">option modifier</a> <code>?</code>:</p>
 <pre><code>Type ::= ID_type {`&amp;&amp;´} [`?´]
 </code></pre>
 
@@ -211,14 +211,14 @@ See also the [literals](#TODO) for these types.
 <pre><code class="ceu">var _message_t msg;      // &quot;message_t&quot; is a C type defined in an external library
 </code></pre>
 
-<p>Native types support <a href="#TODO">annotations</a> to provide additional information to
-the compiler.</p>
+<p>Native types support <a href="./../statements/#native-declaration">modifiers</a> to provide
+additional information to the compiler.</p>
 <h2 id="abstractions">Abstractions<a class="headerlink" href="#abstractions" title="Permanent link">&para;</a></h2>
 <!--
 `TODO (brief description)`
 -->
 
-<p>See <a href="#TODO">Abstractions</a>.</p>
+<p>See <a href="./../statements/#abstractions">Abstractions</a>.</p>
 <h2 id="modifiers">Modifiers<a class="headerlink" href="#modifiers" title="Permanent link">&para;</a></h2>
 <p>Types can be suffixed with the pointer modifier <code>&amp;&amp;</code> and the option modifier
 <code>?</code>.</p>
@@ -234,7 +234,7 @@ the compiler.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../storage_classes/" class="btn btn-neutral float-right" title="Storage Classes">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../storage_entities/" class="btn btn-neutral float-right" title="Storage Entities">Next <span class="icon icon-circle-arrow-right"></span></a>
       
       
         <a href="../lexical_rules/" class="btn btn-neutral" title="Lexical Rules"><span class="icon icon-circle-arrow-left"></span> Previous</a>
@@ -266,7 +266,7 @@ the compiler.</p>
         <span><a href="../lexical_rules/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
       
-        <span style="margin-left: 15px"><a href="../storage_classes/" style="color: #fcfcfc">Next &raquo;</a></span>
+        <span style="margin-left: 15px"><a href="../storage_entities/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
