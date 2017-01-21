@@ -1,7 +1,7 @@
 ## Lua Integration
 
-Céu provides [Lua states](#TODO) to delimit the effects of inlined
-[Lua statements](#TODO):
+Céu provides [Lua states](#lua-state) to delimit the effects of inlined
+[Lua statements](#lua-statement):
 
 ```ceu
 Lua_State ::= lua `[´ [Exp] `]´ do
@@ -13,7 +13,7 @@ Lua_Stmts ::= `[´ {`=´} `[´
 ```
 
 Lua statements transfer execution to Lua, losing the guarantees of the
-[synchronous model](#TODO).
+[synchronous model](../#synchronous-execution-model).
 For this reason, programs should only resort to C for asynchronous
 functionality (e.g., non-blocking I/O) or simple `struct` accessors, but
 never for control purposes.
@@ -23,7 +23,8 @@ statements apply.
 
 ### Lua State
 
-A Lua state creates an isolated state for inlined [Lua statements](#TODO).
+A Lua state creates an isolated state for inlined
+[Lua statements](#lua-statement).
 
 Example:
 
@@ -59,20 +60,21 @@ end
 The contents of Lua statements in between `[[` and `]]` are inlined in the
 program.
 
-Like [native statements](#TODO), Lua statements support interpolation of
-expressions in Céu which are expanded when preceded by a `@`.
+Like [native statements](#native-statement), Lua statements support
+interpolation of expressions in Céu which are expanded when preceded by a `@`.
 
-Lua statements only affect the [Lua state](#TODO) in which they are embedded.
+Lua statements only affect the [Lua state](#lua-state) in which they are embedded.
 
-If a Lua statement is used in an [assignment](#TODO), it is evaluated as an
-expression that either satisfies the destination or generates a runtime error.
+If a Lua statement is used in an [assignment](#assignments), it is evaluated as
+an expression that either satisfies the destination or generates a runtime
+error.
 The list that follows specifies the *Céu destination* and expected
 *Lua source*:
 
-- a `var` `bool`              expects a `boolean`
-- a [numeric](#TODO) `var`    expects a `number`
-- a pointer `var`             expects a `lightuserdata`
-- a `vector` `byte`           expects a `string`
+- a `var` `bool`                            expects a `boolean`
+- a [numeric](../types/#primitives) `var`   expects a `number`
+- a pointer `var`                           expects a `lightuserdata`
+- a `vector` `byte`                         expects a `string`
 
 `TODO: lua state captures errors`
 

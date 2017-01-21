@@ -36,7 +36,7 @@ the conditions imposed by each kind of loop.
 
 Except for the `every` iterator, all loops support an optional constant
 expression <code>&grave;/&acute;Exp</code> that limits the maximum number of
-iterations to avoid [infinite execution](#TODO).
+iterations to avoid [infinite execution](#bounded-execution).
 If the number of iterations reaches the limit, a runtime error occurs.
 
 <!--
@@ -51,7 +51,7 @@ The `continue` statement aborts the body of the deepest enclosing loop and
 restarts it in the next iteration.
 
 The optional modifier <code>&grave;/&acute;ID_int</code> in both statements
-only applies to [numeric iterators](#TODO).
+only applies to [numeric iterators](#numeric-iterator).
 
 ### Simple Loop
 
@@ -99,7 +99,7 @@ The control variable assumes the values specified in the interval, one by one,
 for each iteration of the loop body:
 
 - **control variable:**
-    `ID_int` is a read-only variable of a [numeric type](#TODO).
+    `ID_int` is a read-only variable of a [numeric type](../types/#primitives).
     Alternatively, the special anonymous identifier `_` can be used if the body
     of the loop does not access the variable.
 - **interval:**
@@ -183,7 +183,7 @@ end
 The `every` statement iterates over an event continuously, executing its
 body whenever the event occurs.
 
-The event can be an [external or internal event](#TODO) or a [timer](#TODO).
+The event can be an [external or internal event](#event) or a [timer](#timer).
 
 The optional assignment to a variable (or list of variables) stores the
 carrying value(s) of the event.
@@ -206,8 +206,8 @@ end
 ```
 
 However, the body of an `every` cannot contain
-[synchronous control statements](#TODO), ensuring that no occurrences of the
-specified event are ever missed.
+[synchronous control statements](#synchronous-control-statements), ensuring
+that no occurrences of the specified event are ever missed.
 
 Examples:
 

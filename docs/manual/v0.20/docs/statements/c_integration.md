@@ -6,11 +6,11 @@ seamlessly while avoiding memory leaks and dangling pointers when dealing with
 external resources.
 -->
 
-Céu provides [native declarations](#TODO) to import C symbols,
-[native blocks](#TODO) to define new code in C,
-[native statements](#TODO) to inline C statements,
-[native calls](#TODO) to call C functions,
-and [finalization](#TODO) to deal with C pointers safely:
+Céu provides [native declarations](#native-declaration) to import C symbols,
+[native blocks](#native-block) to define new code in C,
+[native statements](#native-statement) to inline C statements,
+[native calls](#native-call) to call C functions,
+and [finalization](#resources-finalization) to deal with C pointers safely:
 
 ```ceu
 Nat_Symbol ::= native [`/´(pure|const|nohold|plain)] `(´ List_Nat `)´
@@ -35,7 +35,7 @@ Finalize ::= finalize `(´ LIST(Loc) `)´ with
 ```
 
 Native calls and statements transfer execution to C, losing the guarantees of
-the [synchronous model](#TODO).
+the [synchronous model](../#synchronous-execution-model).
 For this reason, programs should only resort to C for asynchronous
 functionality (e.g., non-blocking I/O) or simple `struct` accessors, but
 never for control purposes.
@@ -44,29 +44,29 @@ never for control purposes.
 
 ### Native Declaration
 
-In Céu, any [identifier](#TODO) prefixed with an underscore is a native symbol
-defined externally in C.
+In Céu, any [identifier](../lexical_rules/#identifiers) prefixed with an
+underscore is a native symbol defined externally in C.
 However, all external symbols must be declared before their first use in a
 program.
 
 Native declarations support four modifiers as follows:
 
 - `const`: declares the listed symbols as constants.
-    Constants can be used as [bounded limits](#TODO) in [vectors](#TODO),
-    [pools](#TODO), and [numeric loops](#TODO).
-    Also, constants cannot be [assigned](#TODO).
+    Constants can be used as bounded limits in [vectors](#vectors),
+    [pools](#pools), and [numeric loops](../statements/#numeric-iterator).
+    Also, constants cannot be [assigned](#assignments).
 - `plain`: declares the listed symbols as *plain* types, i.e., types (or
     composite types) that do not contain pointers.
     A value of a plain type passed as argument to a function does not require
-    [finalization](#TODO).
+    [finalization](../statements/#resources-finalization).
 - `nohold`: declares the listed symbols as *non-holding* functions, i.e.,
     functions that do not retain received pointers after returning.
     Pointers passed to non-holding functions do not require
-    [finalization](#TODO).
+    [finalization](../statements/#resources-finalization).
 - `pure`: declares the listed symbols as pure functions.
     In addition to the `nohold` properties, pure functions never allocate
-    resources that require [finalization](#TODO) and have no side effects to
-    take into account for the [safety checks](#TODO).
+    resources that require [finalization](../statements/#resources-finalization)
+    and have no side effects to take into account for the [safety checks](#TODO).
 
 Examples:
 
@@ -100,14 +100,15 @@ on the modifier specified:
 
 Native blocks are copied in the order they appear in the source code.
 
-Since Céu uses the [C preprocessor](#TODO), hash directives `#` inside native
-blocks must be quoted as `##` to be considered only in the C compilation phase.
+Since Céu uses the [C preprocessor](../compilation/#compilation), hash
+directives `#` inside native blocks must be quoted as `##` to be considered
+only in the C compilation phase.
 
 If the code in C contains the terminating `end` keyword of Céu, the `native`
 block should be delimited with matching comments to avoid confusing the parser:
 
-Symbols defined in native blocks still need to be [declared](#TODO) for use in
-the program.
+Symbols defined in native blocks still need to be
+[declared](#native-declaration) for use in the program.
 
 Examples:
 
@@ -167,11 +168,11 @@ v_ceu = { v_c + @v_ceu };       // yields 30
 
 ### Native Call
 
-Locations and expressions that evaluate to a [native type](#TODO) can be called
-from Céu.
+Locations and expressions that evaluate to a [native type](../types/#natives)
+can be called from Céu.
 
 If a call passes or returns pointers, it may require an accompanying
-[finalization statement](#TODO).
+[finalization statement](#resources-finalization).
 
 Examples:
 
@@ -209,7 +210,8 @@ Céu tracks the interaction of native calls with pointers and requires
 
 In both cases, the program does not compile without the `finalize` statement.
 
-A `finalize` cannot contain [synchronous control statements](#TODO).
+A `finalize` cannot contain
+[synchronous control statements](#synchronous-control-statements).
 
 Examples:
 
@@ -253,15 +255,16 @@ If the enclosing `watching` aborts before awaking from the `await A`, the file
 would remain open as a *memory leak*.
 The `finalize` ensures that `_fclose` closes the file properly.
 
-To access an external resource from Céu requires an [alias assignment](#TODO)
-to an [option variable alias](#TODO) `var&?`.
+To access an external resource from Céu requires an
+[alias assignment](#alias-assignment) to an
+[option variable alias](../storage_classes/#aliases) `var&?`.
 If the external call returns `NULL`, the alias remains unbounded.
 
 *Note: the compiler only forces the programmer to write finalization clauses,
        but cannot check if they handle the resource properly.*
 
-[Declaration](#TODO) and [expression](#TODO) modifiers] may suppress the
-requirement for finalization in calls:
+[Declaration](#native-declaration) and [expression](../expressions/#modifiers)
+modifiers may suppress the requirement for finalization in calls:
 
 - `nohold` modifiers or `/nohold` typecasts make passing pointers safe.
 - `pure`   modifiers or `/pure`   typecasts make passing pointers and returning

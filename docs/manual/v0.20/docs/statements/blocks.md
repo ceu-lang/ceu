@@ -1,9 +1,9 @@
 ## Blocks
 
 A `Block` creates a new lexical scope for
-[storage entities](#TODO)
+[storage entities](../storage_classes/#classes)
 and
-[abstractions](#TODO),
+[abstractions](#abstractions),
 which are visible only for statements inside the block.
 
 Compound statements (e.g. *do-end*, *if-then-else*, *loops*, etc.) create new
@@ -26,15 +26,14 @@ Escape ::= escape [`/´ID_int] [Exp]
 `do-end` supports the neutral identifier `_` which is guaranteed not to match
 any `escape` statement.
 
-A `do-end` can be [assigned](#TODO) to a variable whose type must be matched
+A `do-end` can be [assigned](#assignments) to a variable whose type must be matched
 by nested `escape` statements.
 The whole block evaluates to the value of a reached `escape`.
-If the variable is of [option type](#TODO), the `do-end` is allowed to
+If the variable is of [option type](../types/#option), the `do-end` is allowed to
 terminate without an `escape`, otherwise it raises a runtime error.
 
 Programs have an implicit enclosing `do-end` that assigns to a
-*program status variable* of type `int` whose meaning is
-[platform dependent](#TODO).
+*program status variable* of type `int` whose meaning is platform dependent.
 
 Examples:
 

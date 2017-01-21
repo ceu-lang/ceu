@@ -1,7 +1,7 @@
 ## Assignments
 
 An assignment associates the statement or expression at the right side of the
-symbol `=` with the [location(s)](#TODO) at the left side:
+symbol `=` with the [location(s)](../storage_classes/#locations) at the left side:
 
 ```ceu
 Assignment ::= (Loc | `(´ LIST(Loc|`_´) `)´) `=´ Sources
@@ -23,18 +23,18 @@ Sources ::= ( Do
 
 Céu supports the following constructs as assignment sources:
 
-- [`do-end` blocks](#TODO)
-- [external emits](#TODO)
-- [awaits](#TODO)
-- [watching statements](#TODO)
-- [threads](#TODO)
-- [lua states](#TODO)
-- [lua statements](#TODO)
-- [code awaits](#TODO)
-- [code spawns](#TODO)
-- [vector constructors](#TODO)
-- [data constructors](#TODO)
-- [expressions](#TODO)
+- [`do-end` blocks](#do-end-and-escape)
+- [external emits](#events_1)
+- [awaits](#await)
+- [watching statements](#watching)
+- [threads](#thread)
+- [lua states](#lua-state)
+- [lua statements](#lua-statement)
+- [code awaits](#code-invocation)
+- [code spawns](#code-invocation)
+- [vector constructors](../expressions/#constructor)
+- [data constructors](#data-constructor)
+- [expressions](../expressions/#locations-expressions)
 - the neutral identifier `_`
 
 The anonymous identifier makes the assignment innocuous.
@@ -49,6 +49,6 @@ copies the result(s) to the location(s) at the left side.
 ### Alias Assignment
 
 An *alias assignment*, aka *binding*, makes the location at the left side to be
-an [alias](#TODO) to the expression at the right side.
+an [alias](../storage_classes/#aliases) to the expression at the right side.
 
 The right side of a binding is always prefixed by the operator `&`.

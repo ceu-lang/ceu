@@ -3,8 +3,9 @@
 ### Await
 
 The `await` statement halts the running trail until the specified event occurs.
-The event can be an [input event](#TODO), an [internal event](#TODO), a timer,
-a [pausing event](#TODO), or forever (i.e., never awakes):
+The event can be an [input event](../storage_classes/#external-events), an
+[internal event](../storage_classes/#internal-events), a timer, a
+[pausing event](#pausing_1), or forever (i.e., never awakes):
 
 ```ceu
 Await ::= await (ID_ext | Loc) [until Exp]      /* events and option aliases */
@@ -26,17 +27,18 @@ await FOREVER;            // awaits forever
 ```
 
 An `await` evaluates to zero or more values which can be captured with an
-optional [assignment](#TODO).
+optional [assignment](#assignments).
 
 #### Event
 
 The `await` statement for events halts the running trail until the specified
-[input event](#TODO) or [internal event](#TODO) occurs.
+[input event](../storage_classes/#external-events) or
+[internal event](../storage_classes/#internal-events) occurs.
 The `await` evaluates to a value of the type of the event.
 
 The optional clause `until` tests an awaking condition.
 The condition can use the returned value from the `await`.
-It expands to a [`loop`](#TODO) as follows:
+It expands to a [`loop`](#simple-loop) as follows:
 
 ```ceu
 loop do
@@ -61,8 +63,8 @@ var int  v2;
 
 #### Option Alias
 
-The `await` statement for [option variable aliases](#TODO) halts the running
-trail until the specified alias goes out of scope.
+The `await` statement for [option variable aliases](../storage_classes/#aliases)
+halts the running trail until the specified alias goes out of scope.
 
 The `await` evaluates to no value.
 
@@ -81,8 +83,8 @@ timer expires:
 
 - `WCLOCKK` specifies a constant timer expressed as a sequence of value/unit
   pairs.
-- `WCLOCKE` specifies an [integer](#TODO) expression in parenthesis followed by a
-  single unit of time.
+- `WCLOCKE` specifies an [integer](../types/#primitives) expression in
+  parenthesis followed by a single unit of time.
 
 The `await` evaluates to a value of type `s32` and is the
 *residual delta time (`dt`)* measured in microseconds:
@@ -113,7 +115,7 @@ time.
 
 #### Pausing
 
-Pausing events are dicussed in [Pausing](#TODO).
+Pausing events are dicussed in [Pausing](#pausing_1).
 
 #### `FOREVER`
 
@@ -131,8 +133,8 @@ end
 ### Emit
 
 The `emit` statement broadcasts an event to the whole program.
-The event can be an [external event](#TODO), an [internal event](#TODO), or
-a timer:
+The event can be an [external event](../storage_classes/#external-events), an
+[internal event](../storage_classes/#internal-events), or a timer:
 
 ```ceu
 Emit_Int ::= emit Loc [`(´ [LIST(Exp)] `)´]
@@ -155,13 +157,14 @@ emit (t)ms;     // emits the current value of the variable `t` in milliseconds
 The `emit` statement for events expects the arguments to match the event type.
 
 An `emit` to an input or timer event can only occur inside
-[asynchronous blocks](#TODO).
+[asynchronous blocks](#asynchronous-block).
 
 An `emit` to an output event is also an expression that evaluates to a value of
-type `s32` and can be captured with an optional [assignment](#TODO) (its
-meaning is [platform dependent](#TODO)).
+type `s32` and can be captured with an optional [assignment](#assignments) (its
+meaning is platform dependent).
 
-An `emit` to an internal event starts a new [internal reaction](#TODO).
+An `emit` to an internal event starts a new
+[internal reaction](../#internal-reactions).
 
 Examples:
 
@@ -180,7 +183,7 @@ emit e(1,2);            // broadcasts "e" passing a pair of "int" values
 
 #### Timer
 
-The `emit` statement for timers expects a [timer expression](#TODO).
+The `emit` statement for timers expects a [timer expression](#timer).
 
 Like input events, time can only be emitted inside [asynchronous 
 blocks](#asynchronous-blocks).

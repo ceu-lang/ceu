@@ -5,8 +5,8 @@ execution.
 Céu supports *variables*, *vectors*, *events* (external and internal), and
 *pools* as storage classes.
 
-An entity [declaration](#TODO) consists of a storage class,
-a [type](#TODO), and an [identifier](#TODO).
+An [entity declaration](../statements/#declarations) consists of a storage
+class, a [type](../types/#types), and an [identifier](../lexical_rules/#identifiers).
 
 Examples:
 

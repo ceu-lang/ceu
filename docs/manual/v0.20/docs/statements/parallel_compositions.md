@@ -23,9 +23,9 @@ composition.
 
 The `watching` statement terminates when one of its specified events occur.
 It evaluates to what the occurring event value(s), which can be captured with
-an optional [assignment](#TODO).
+an optional [assignment](#assignments).
 
-See also [Parallel Compositions and Abortion](#TODO).
+See also [Parallel Compositions and Abortion](../#parallel-compositions-and-abortion).
 
 ### par
 

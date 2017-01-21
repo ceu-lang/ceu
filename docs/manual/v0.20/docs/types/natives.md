@@ -8,5 +8,5 @@ Example:
 var _message_t msg;      // "message_t" is a C type defined in an external library
 ```
 
-Native types support [annotations](#TODO) to provide additional information to
-the compiler.
+Native types support [modifiers](../statements/#native-declaration) to provide
+additional information to the compiler.

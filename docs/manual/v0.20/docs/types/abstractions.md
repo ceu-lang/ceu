@@ -4,4 +4,4 @@
 `TODO (brief description)`
 -->
 
-See [Abstractions](#TODO).
+See [Abstractions](../statements/#abstractions).

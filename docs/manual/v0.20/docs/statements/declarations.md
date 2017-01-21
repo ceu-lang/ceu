@@ -1,7 +1,8 @@
 ## Declarations
 
-A declaration introduces a [storage entity](#TODO) to the enclosing block.
-All declarations are subject to [lexical scope](#TODO).
+A declaration introduces a [storage entity](../storage_classes/#storage-classes)
+to the enclosing block.
+All declarations are subject to [lexical scope](../storage_classes/#lexical-scope).
 
 Céu supports variables, vectors, external events, internal events, and pools:
 
@@ -16,7 +17,7 @@ Pool ::= pool [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Cons])
 Cons ::= /* (see "Assignments") */
 ```
 
-Most declarations support an initialization [assignment](#TODO).
+Most declarations support an initialization [assignment](#assignments).
 
 <!--
 See also [Storage Classes](#TODO) for an overview of storage entities.
@@ -24,10 +25,11 @@ See also [Storage Classes](#TODO) for an overview of storage entities.
 
 ### Variables
 
-A [variable](#TODO) declaration has an associated [type](#TODO) and can be
-optionally [initialized](#TODO).
+A [variable](../storage_classes/#variables) declaration has an associated
+[type](../types/#types) and can be optionally [initialized](#assignments).
 A single statement can declare multiple variables of the same type.
-Declarations can also be [aliases](#TODO) or [option aliases](#TODO).
+Declarations can also be
+[aliases or option aliases](../storage_classes/#aliases).
 
 Examples:
 
@@ -39,10 +41,12 @@ var& int z = &v;    // "z" is an alias to "v"
 
 ### Vectors
 
-A [vector](#TODO) declaration specifies a [dimension](#TODO) between brackets,
-an associated [type](#TODO) and can be optionally [initialized](#TODO).
+A [vector](../storage_classes/#vectors) declaration specifies a
+[dimension](#dimension) between brackets,
+an associated [type](../types/#types) and can be optionally
+[initialized](#assignments).
 A single statement can declare multiple vectors of the same dimension and type.
-Declarations can also be [aliases](#TODO).
+Declarations can also be [aliases](../storage_classes/#aliases).
 
 <!--
 `TODO: unmacthing [] in binding`
@@ -60,8 +64,8 @@ vector&[]  int vs4 = &vs1;  // "vs4" is an alias to "vs1"
 
 ### Events
 
-An [event](#TODO) declaration specifies a [type](#TODO) for the values it
-carries when occurring.
+An [event](../storage_classes/#events) declaration specifies a
+[type](../types/#types) for the values it carries when occurring.
 It can be also a list of types if the event communicates multiple values.
 A single statement can declare multiple events of the same type.
 
@@ -81,9 +85,9 @@ input (int,byte&&) BUF; // "BUF" is an input event carrying an "(int,byte&&)" pa
 
 #### Internal Events
 
-Declarations for internal events can also be [aliases](#TODO) or
-[option aliases](#TODO).
-Only in this case they can be [initialized](#TODO).
+Declarations for internal events can also be
+[aliases or option aliases](../storage_classes/#aliases).
+Only in this case they can be [initialized](#assignments).
 
 Examples:
 
@@ -95,13 +99,13 @@ event (int,int) c;      // "c" is a internal event carrying an "(int,int)" pair
 
 ### Pools
 
-A [pool](#TODO) declaration specifies a dimension and an associated
-[type](#TODO).
+A [pool](../storage_classes/#pools) declaration specifies a dimension and an
+associated [type](../types/#types).
 A single statement can declare multiple pools of the same dimension and type.
-Declarations for pools can also be [aliases](#TODO).
-Only in this case they can be [initialized](#TODO).
+Declarations for pools can also be [aliases](../storage_classes/#aliases).
+Only in this case they can be [initialized](#assignments).
 
-The expression between the brackets specifies the [dimension](#TODO) of the
+The expression between the brackets specifies the [dimension](#dimension) of the
 pool.
 
 Examples:
@@ -120,8 +124,8 @@ See also [Code Invocation](#TODO).
 
 ### Dimension
 
-Declarations for [vectors](#TODO) or [pools](#TODO) require an expression
-between brackets to specify a [dimension](#TODO) as follows:
+Declarations for [vectors](#vectors) or [pools](#pools) require an expression
+between brackets to specify a dimension as follows:
 
 - *constant expression*: Maximum number of elements is fixed and space is
                          statically pre-allocated.

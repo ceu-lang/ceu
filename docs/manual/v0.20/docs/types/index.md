@@ -3,9 +3,9 @@
 Céu is statically typed, requiring all variables, events, and other entities to
 be declared before they are used in programs.
 
-A type is composed of a [type identifier](#TODO), followed by an optional
-sequence of [pointer modifiers](#TODO) `&&`, followed by an optional
-[option modifier](#TODO) `?`:
+A type is composed of a [type identifier](../lexical_rules/#identifiers),
+followed by an optional sequence of [pointer modifiers](#pointer) `&&`,
+followed by an optional [option modifier](#option) `?`:
 
 ```
 Type ::= ID_type {`&&´} [`?´]

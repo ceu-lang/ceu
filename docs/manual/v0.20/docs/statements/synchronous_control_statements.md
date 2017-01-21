@@ -1,12 +1,12 @@
 ## Synchronous Control Statements
 
 The *synchronous control statements* which follow cannot appear in
-[event iterators](#TODO),
-[pool iterators](#TODO),
-[asynchronous execution](#TODO),
-[finalization](#TODO),
+[event iterators](#event-iterator),
+[pool iterators](#pool-iterator),
+[asynchronous execution](#asynchronous-execution),
+[finalization](#resources-finalization),
 and
-[tight code abstractions](#TODO):
+[tight code abstractions](#code):
 `await`, `spawn`, `emit` (internal events), `every`, `finalize`, `pause/if`,
 `par`, `par/and`, `par/or`, and `watching`.
 

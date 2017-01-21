@@ -24,8 +24,9 @@ An alias is declared by suffixing the storage class with the modifier
 `&` and is acquired by prefixing an entity with the operator `&`.
 
 An alias must have a narrower scope than the entity it refers to.
-The [assignment](#TODO) to the alias is immutable and must occur between its
-declaration and first access or next [yielding statement](#TODO).
+The [assignment](../statements/#assignments) to the alias is immutable and must
+occur between its declaration and first access or next
+[yielding statement](../statements/#synchronous-control-statements).
 
 Example:
 
@@ -39,9 +40,10 @@ _printf("%d\n", v);     // prints 1
 
 An option variable alias, declared as `var&?`, serves two purposes:
 
-- Map a [native resource](#TODO) to a variable in Céu.
-  The alias is acquired by prefixing the associated [native call](#TODO) with
-  the operator `&`.
+- Map a [native resource](../statements/#resources-finalization) to a variable
+  in Céu.
+  The alias is acquired by prefixing the associated
+  [native call](../statements/#native-call) with the operator `&`.
   Since the allocation may fail, the alias may remain unassigned.
 - Track the lifetime of a variable.
   The alias is acquired by prefixing the associated variable with
@@ -50,7 +52,7 @@ An option variable alias, declared as `var&?`, serves two purposes:
   unassigned.
 
 Accesses to option variable aliases must always use
-[option checking or unwrapping](#TODO).
+[option checking or unwrapping](../expressions/#option).
 
 Examples:
 
@@ -100,4 +102,4 @@ The following restrictions apply to pointers in Céu:
 -->
 - No support for pointers to events, vectors, or pools (only variables).
 - A pointer is only accessible between its declaration and the next
-  [yielding statement](#TODO).
+  [yielding statement](../statements/#synchronous-control-statements).

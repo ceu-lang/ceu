@@ -24,9 +24,10 @@ Atomic ::= atomic do
            end
 ```
 
-Asynchronous execution supports [tight loops](#TODO) while keeping the rest of
-the application, aka the *synchronous side*, reactive to incoming events.
-However, it does not support any [synchronous control statement](#TODO) (e.g.,
+Asynchronous execution supports [tight loops](../#bounded-execution) while
+keeping the rest of the application, aka the *synchronous side*, reactive to
+incoming events.  However, it does not support any
+[synchronous control statement](#synchronous-control-statements) (e.g.,
 parallel compositions, event handling, pausing, etc.).
 
 By default, asynchronous bodies do not share variables with their enclosing
@@ -52,7 +53,7 @@ side as follows:
 1. Start/Resume whenever the synchronous side is idle.
    When multiple *asyncs* are active, they execute in lexical order.
 2. Suspend after each `loop` iteration.
-3. Suspend on every input `emit` (see [Simulation](#TODO)).
+3. Suspend on every input `emit` (see [Simulation](#simulation)).
 4. Execute atomically and to completion unless rules `2` and `3` apply.
 
 This rules imply that *asyncs* never execute with real parallelism with the
@@ -77,10 +78,10 @@ end
 
 #### Simulation
 
-An `async` block can emit [input and timer events](#TODO) towards the
+An `async` block can emit [input and timer events](#events_1) towards the
 synchronous side, providing a way to test programs in the language itself.
 Every time an `async` emits an event, it suspends until the synchronous side
-reacts to the event (see [`rule 1`](#TODO) above).
+reacts to the event (see [`rule 1`](#asynchronous-block) above).
 
 Examples:
 
@@ -116,11 +117,12 @@ end
 Threads provide real parallelism for applications in Céu.
 Once started, a thread executes completely detached from the synchronous side.
 For this reason, thread execution is non deterministic and require explicit
-[atomic blocks](#TODO) on accesses to variables to avoid race conditions.
+[atomic blocks](#atomic-block) on accesses to variables to avoid race
+conditions.
 
 A thread evaluates to a boolean value which indicates whether it started
 successfully or not.
-The value can be captured with an optional [assignment](#TODO).
+The value can be captured with an optional [assignment](#assignment).
 
 Examples:
 

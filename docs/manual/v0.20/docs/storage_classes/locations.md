@@ -1,7 +1,8 @@
 ## Locations
 
 A location (aka *l-value*) is a path to a memory location holding a storage
-class entity ([`ID_int`](#TODO)) or a native symbol ([`ID_nat`](#TODO)).
+class entity ([`ID_int`](../lexical_rules/#identifiers)) or a native symbol
+([`ID_nat`](../lexical_rules/#identifiers)).
 
 Locations appear in assignments, event manipulation, iterators, and
 expressions.
@@ -16,7 +17,7 @@ The list that follows summarizes all valid locations:
 - pointer dereferencing `*`
 - option unwrapping `!`
 
-Locations are detailed in [Locations and Expressions](#TODO).
+Locations are detailed in [Locations and Expressions](../expressions/#locations-expressions).
 
 Examples:
 

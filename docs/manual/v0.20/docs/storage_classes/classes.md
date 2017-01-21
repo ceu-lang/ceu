@@ -2,10 +2,11 @@
 
 ### Variables
 
-A variable in Céu holds a value of a [declared](#TODO) [type](#TODO) that may
-vary during program execution.
-The value of a variable can be read in [expressions](#TODO) or written in
-[assignments](#TODO).
+A variable in Céu holds a value of a [declared](../statements/#variables)
+[type](../types/#types) that may vary during program execution.
+The value of a variable can be read in
+[expressions](../expressions/#locations-expressions) or written in
+[assignments](#assignments).
 The current value of a variable is preserved until the next assignment, during
 its whole lifetime.
 
@@ -35,13 +36,13 @@ escape v;       // read access (yields 2)
 A vector In Céu is a dynamic and contiguous collection of elements of the same
 type.
 
-A vector [declaration](#TODO) specifies its type and maximum number of elements
-(possibly unlimited).
+A [vector declaration](../statements/#vectors) specifies its type and maximum
+number of elements (possibly unlimited).
 The current length of a vector is dynamic and can be accessed through the
-[operator `$`](#TODO).
+[operator `$`](../expressions/#length).
 
-Individual elements of a vector can be accessed through an [index](#TODO)
-starting from `0`.
+Individual elements of a vector can be accessed through an
+[index](../expressions/#index) starting from `0`.
 Céu generates an [error](#TODO) for out-of-bounds vector accesses.
 
 Example:
@@ -55,7 +56,8 @@ escape buf[1];                  // read access (yields 2)
 ### Events
 
 Events account for the reactive nature of Céu.
-Programs manipulate events through the [`await`](#TODO) and [`emit`](#TODO)
+Programs manipulate events through the [`await`](../statements/#event) and
+[`emit`](../statements/#events_1)
 statements.
 An `await` halts the running trail until the specified event occurs.
 An event occurrence is broadcast to the whole program and awakes trails
@@ -65,7 +67,8 @@ Unlike all other storage classes, the value of an event is ephemeral and does
 not persist after a reaction terminates.
 For this reason, an event identifier is not a variable: values can only
 be communicated through `emit` and `await` statements.
-A [declaration](#TODO) includes the type of value the occurring event carries.
+A [declaration](../statements/#events) includes the type of value the occurring
+event carries.
 
 *Note: <tt>void</tt> is a valid type for signal-only events.*
 
@@ -84,8 +87,8 @@ with
 end
 ```
 
-As described in [Internal Reactions](#TODO), Céu supports external and internal
-events with different behavior.
+As described in [Internal Reactions](../#internal-reactions), Céu supports
+external and internal events with different behavior.
 
 #### External Events
 
@@ -95,7 +98,8 @@ real world:
 * *input events* represent input devices such as sensor, button, mouse, etc.
 * *output events* represent output devices such as LED, motor, screen, etc.
 
-The availability of external events depends on the [environment](#TODO) in use.
+The availability of external events depends on the
+[environment](../#environments) in use.
 
 Programs can `emit` output events and `await` input events.
 
@@ -138,13 +142,14 @@ Programs can `emit` and `await` internal events.
 
 ### Pools
 
-A pool is a dynamic container to hold running [code abstractions](#TODO).
+A pool is a dynamic container to hold running [code abstractions](../statements/#code).
 
-A pool [declaration](#TODO) specifies the type of the abstraction and maximum
-number of concurrent instances (possibly unlimited).
-Individual elements of pools can only be accessed through [iterators](#TODO).
-New elements are created with [`spawn`](#TODO) and are removed automatically
-when the code execution terminates.
+A [pool declaration](../statements/#pools) specifies the type of the
+abstraction and maximum number of concurrent instances (possibly unlimited).
+Individual elements of pools can only be accessed through
+[iterators](../statements/#pool-iterator).
+New elements are created with [`spawn`](../statements/#code-invocation) and are
+removed automatically when the code execution terminates.
 
 Example:
 

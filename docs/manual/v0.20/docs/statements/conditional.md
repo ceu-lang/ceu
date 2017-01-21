@@ -18,5 +18,5 @@ On the first condition that evaluates to `true`, the `Block` following it
 executes.
 If all conditions fail, the optional `else` clause executes.
 
-All conditions must evaluate to a value of type [`bool`](#TODO).
+All conditions must evaluate to a value of type [`bool`](../types/#primitives).
 <!--, which is checked at compile time.-->
