@@ -1,11 +1,11 @@
-# Storage Classes
+# Storage Entities
 
-Storage classes represent all entities that are stored in memory during
+Storage entities represent all objects that are stored in memory during
 execution.
 Céu supports *variables*, *vectors*, *events* (external and internal), and
-*pools* as storage classes.
+*pools* as entity classes.
 
-An [entity declaration](../statements/#declarations) consists of a storage
+An [entity declaration](../statements/#declarations) consists of an entity
 class, a [type](../types/#types), and an [identifier](../lexical_rules/#identifiers).
 
 Examples:
@@ -21,7 +21,7 @@ pool[]    Anim   anims; // "anims" is a dynamic "pool" for instances of type "An
 A declaration binds the identifier with a memory location that holds values of
 the associated type.
 
-{!storage_classes/lexical_scope.md!}
-{!storage_classes/classes.md!}
-{!storage_classes/locations.md!}
-{!storage_classes/references.md!}
+{!storage_entities/lexical_scope.md!}
+{!storage_entities/entity_classes.md!}
+{!storage_entities/locations.md!}
+{!storage_entities/references.md!}

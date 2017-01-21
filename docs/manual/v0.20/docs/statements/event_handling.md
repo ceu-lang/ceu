@@ -3,8 +3,8 @@
 ### Await
 
 The `await` statement halts the running trail until the specified event occurs.
-The event can be an [input event](../storage_classes/#external-events), an
-[internal event](../storage_classes/#internal-events), a timer, a
+The event can be an [input event](../storage_entities/#external-events), an
+[internal event](../storage_entities/#internal-events), a timer, a
 [pausing event](#pausing_1), or forever (i.e., never awakes):
 
 ```ceu
@@ -32,8 +32,8 @@ optional [assignment](#assignments).
 #### Event
 
 The `await` statement for events halts the running trail until the specified
-[input event](../storage_classes/#external-events) or
-[internal event](../storage_classes/#internal-events) occurs.
+[input event](../storage_entities/#external-events) or
+[internal event](../storage_entities/#internal-events) occurs.
 The `await` evaluates to a value of the type of the event.
 
 The optional clause `until` tests an awaking condition.
@@ -63,7 +63,7 @@ var int  v2;
 
 #### Option Alias
 
-The `await` statement for [option variable aliases](../storage_classes/#aliases)
+The `await` statement for [option variable aliases](../storage_entities/#aliases)
 halts the running trail until the specified alias goes out of scope.
 
 The `await` evaluates to no value.
@@ -133,8 +133,8 @@ end
 ### Emit
 
 The `emit` statement broadcasts an event to the whole program.
-The event can be an [external event](../storage_classes/#external-events), an
-[internal event](../storage_classes/#internal-events), or a timer:
+The event can be an [external event](../storage_entities/#external-events), an
+[internal event](../storage_entities/#internal-events), or a timer:
 
 ```ceu
 Emit_Int ::= emit Loc [`(´ [LIST(Exp)] `)´]

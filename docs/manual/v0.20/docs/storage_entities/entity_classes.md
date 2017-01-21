@@ -1,4 +1,4 @@
-## Classes
+## Entity Classes
 
 ### Variables
 
@@ -63,7 +63,7 @@ An `await` halts the running trail until the specified event occurs.
 An event occurrence is broadcast to the whole program and awakes trails
 awaiting that event to resume execution.
 
-Unlike all other storage classes, the value of an event is ephemeral and does
+Unlike all other entity classes, the value of an event is ephemeral and does
 not persist after a reaction terminates.
 For this reason, an event identifier is not a variable: values can only
 be communicated through `emit` and `await` statements.

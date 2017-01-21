@@ -15,12 +15,12 @@ a job position referring to a person is a pointer.
 
 ### Aliases
 
-Céu support aliases to all storage classes, except external events and pointer
-types.
+Céu support aliases to all storage entity classes, except external events and
+pointer types.
 Céu also supports option variable aliases which are aliases that may remain or
 become unassigned.
 
-An alias is declared by suffixing the storage class with the modifier
+An alias is declared by suffixing the entity class with the modifier
 `&` and is acquired by prefixing an entity with the operator `&`.
 
 An alias must have a narrower scope than the entity it refers to.

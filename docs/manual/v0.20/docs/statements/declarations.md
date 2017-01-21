@@ -1,8 +1,8 @@
 ## Declarations
 
-A declaration introduces a [storage entity](../storage_classes/#storage-classes)
+A declaration introduces a [storage entity](../storage_entities/#storage-entities)
 to the enclosing block.
-All declarations are subject to [lexical scope](../storage_classes/#lexical-scope).
+All declarations are subject to [lexical scope](../storage_entities/#lexical-scope).
 
 Céu supports variables, vectors, external events, internal events, and pools:
 
@@ -25,11 +25,11 @@ See also [Storage Classes](#TODO) for an overview of storage entities.
 
 ### Variables
 
-A [variable](../storage_classes/#variables) declaration has an associated
+A [variable](../storage_entities/#variables) declaration has an associated
 [type](../types/#types) and can be optionally [initialized](#assignments).
 A single statement can declare multiple variables of the same type.
 Declarations can also be
-[aliases or option aliases](../storage_classes/#aliases).
+[aliases or option aliases](../storage_entities/#aliases).
 
 Examples:
 
@@ -41,12 +41,12 @@ var& int z = &v;    // "z" is an alias to "v"
 
 ### Vectors
 
-A [vector](../storage_classes/#vectors) declaration specifies a
+A [vector](../storage_entities/#vectors) declaration specifies a
 [dimension](#dimension) between brackets,
 an associated [type](../types/#types) and can be optionally
 [initialized](#assignments).
 A single statement can declare multiple vectors of the same dimension and type.
-Declarations can also be [aliases](../storage_classes/#aliases).
+Declarations can also be [aliases](../storage_entities/#aliases).
 
 <!--
 `TODO: unmacthing [] in binding`
@@ -64,7 +64,7 @@ vector&[]  int vs4 = &vs1;  // "vs4" is an alias to "vs1"
 
 ### Events
 
-An [event](../storage_classes/#events) declaration specifies a
+An [event](../storage_entities/#events) declaration specifies a
 [type](../types/#types) for the values it carries when occurring.
 It can be also a list of types if the event communicates multiple values.
 A single statement can declare multiple events of the same type.
@@ -86,7 +86,7 @@ input (int,byte&&) BUF; // "BUF" is an input event carrying an "(int,byte&&)" pa
 #### Internal Events
 
 Declarations for internal events can also be
-[aliases or option aliases](../storage_classes/#aliases).
+[aliases or option aliases](../storage_entities/#aliases).
 Only in this case they can be [initialized](#assignments).
 
 Examples:
@@ -99,10 +99,10 @@ event (int,int) c;      // "c" is a internal event carrying an "(int,int)" pair
 
 ### Pools
 
-A [pool](../storage_classes/#pools) declaration specifies a dimension and an
+A [pool](../storage_entities/#pools) declaration specifies a dimension and an
 associated [type](../types/#types).
 A single statement can declare multiple pools of the same dimension and type.
-Declarations for pools can also be [aliases](../storage_classes/#aliases).
+Declarations for pools can also be [aliases](../storage_entities/#aliases).
 Only in this case they can be [initialized](#assignments).
 
 The expression between the brackets specifies the [dimension](#dimension) of the

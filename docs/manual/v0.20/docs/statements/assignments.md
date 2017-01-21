@@ -1,7 +1,7 @@
 ## Assignments
 
 An assignment associates the statement or expression at the right side of the
-symbol `=` with the [location(s)](../storage_classes/#locations) at the left side:
+symbol `=` with the [location(s)](../storage_entities/#locations) at the left side:
 
 ```ceu
 Assignment ::= (Loc | `(´ LIST(Loc|`_´) `)´) `=´ Sources
@@ -49,6 +49,6 @@ copies the result(s) to the location(s) at the left side.
 ### Alias Assignment
 
 An *alias assignment*, aka *binding*, makes the location at the left side to be
-an [alias](../storage_classes/#aliases) to the expression at the right side.
+an [alias](../storage_entities/#aliases) to the expression at the right side.
 
 The right side of a binding is always prefixed by the operator `&`.

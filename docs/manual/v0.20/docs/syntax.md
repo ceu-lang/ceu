@@ -33,7 +33,7 @@ Stmt ::= nothing
             Block
         end
 
-  /* Storage Classes */
+  /* Storage Entities */
 
       | var [`&´|`&?´] Type LIST(ID_int [`=´ Sources])
       | vector [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Sources])
@@ -199,16 +199,16 @@ Stmt ::= nothing
       // Code_Await ::=
       | code/await [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ [ `->´ `(´ Inits `)´ ] `->´ (Type | FOREVER)
         // where
-            Params ::= void | LIST(Class [ID_int])
-            Class ::= [dynamic] var    [`&´] [`/´hold] * Type
-                   |            vector `&´ `[´ [Exp] `]´ Type
-                   |            pool   `&´ `[´ [Exp] `]´ Type
-                   |            event  `&´ (Type | `(´ LIST(Type) `)´)
-            Inits ::= void | LIST(Class [ID_int])
-            Class ::= var    (`&´|`&?`) * Type
-                   |  vector (`&´|`&?`) `[´ [Exp] `]´ Type
-                   |  pool   (`&´|`&?`) `[´ [Exp] `]´ Type
-                   |  event  (`&´|`&?`) (Type | `(´ LIST(Type) `)´)
+            Params ::= void | LIST(Entity [ID_int])
+            Entity ::= [dynamic] var    [`&´] [`/´hold] * Type
+                    |            vector `&´ `[´ [Exp] `]´ Type
+                    |            pool   `&´ `[´ [Exp] `]´ Type
+                    |            event  `&´ (Type | `(´ LIST(Type) `)´)
+            Inits  ::= void | LIST(Entity [ID_int])
+            Entity ::= var    (`&´|`&?`) * Type
+                    |  vector (`&´|`&?`) `[´ [Exp] `]´ Type
+                    |  pool   (`&´|`&?`) `[´ [Exp] `]´ Type
+                    |  event  (`&´|`&?`) (Type | `(´ LIST(Type) `)´)
 
       /* code implementation */
       | (Code_Tight | Code_Await) do

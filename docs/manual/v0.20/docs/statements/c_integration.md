@@ -257,7 +257,7 @@ The `finalize` ensures that `_fclose` closes the file properly.
 
 To access an external resource from Céu requires an
 [alias assignment](#alias-assignment) to an
-[option variable alias](../storage_classes/#aliases) `var&?`.
+[option variable alias](../storage_entities/#aliases) `var&?`.
 If the external call returns `NULL`, the alias remains unbounded.
 
 *Note: the compiler only forces the programmer to write finalization clauses,

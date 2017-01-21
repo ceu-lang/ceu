@@ -1,6 +1,6 @@
 # Locations & Expressions
 
-Céu specifies [locations](../storage_classes/#locations) and expressions as
+Céu specifies [locations](../storage_entities/#locations) and expressions as
 follows:
 
 ```ceu

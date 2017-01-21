@@ -13,7 +13,7 @@ pages:
     - Overview:                 'index.md'
     - Lexical Rules:            'lexical_rules/index.md'
     - Types:                    'types/index.md'
-    - Storage Classes:          'storage_classes/index.md'
+    - Storage Entities:         'storage_entities/index.md'
     - Statements:               'statements/index.md'
     - Locations & Expressions:  'expressions/index.md'
     #- Static Checks:    'static_checks/index.md'

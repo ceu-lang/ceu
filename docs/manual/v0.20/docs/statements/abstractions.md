@@ -3,7 +3,7 @@
 Céu supports reuse with `data` declarations to define new types, and `code`
 declarations to define new subprograms.
 
-Declarations are subject to [lexical scope](../storage_classes/#lexical-scope).
+Declarations are subject to [lexical scope](../storage_entities/#lexical-scope).
 
 ### Data
 
@@ -191,7 +191,7 @@ var int fat = call/recursive Fat(10);           // invokes "Fat" (yields 3628800
 
 Code abstractions specify a list of input parameters in between the symbols
 `(` and `)`.
-Each parameter specifies a [storage class](../storage_classes/#storage-classes)
+Each parameter specifies a [entity class](../storage_entities/#entity-classes)
 with modifiers, a type and an identifier (optional in declarations).
 A `void` list specifies that the abstraction has no parameters.
 

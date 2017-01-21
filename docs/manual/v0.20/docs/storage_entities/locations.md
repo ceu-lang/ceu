@@ -1,7 +1,7 @@
 ## Locations
 
 A location (aka *l-value*) is a path to a memory location holding a storage
-class entity ([`ID_int`](../lexical_rules/#identifiers)) or a native symbol
+entity ([`ID_int`](../lexical_rules/#identifiers)) or a native symbol
 ([`ID_nat`](../lexical_rules/#identifiers)).
 
 Locations appear in assignments, event manipulation, iterators, and
@@ -9,9 +9,9 @@ expressions.
 
 The list that follows summarizes all valid locations:
 
-- storage class entity: variable, vector, internal event (but not external), or pool
+- storage entity: variable, vector, internal event (but not external), or pool
 - native expression or symbol
-- data field (which are storage class entities)
+- data field (which are storage entities)
 - vector index
 - vector length `$`
 - pointer dereferencing `*`

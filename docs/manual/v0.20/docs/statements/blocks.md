@@ -1,7 +1,7 @@
 ## Blocks
 
 A `Block` creates a new lexical scope for
-[storage entities](../storage_classes/#classes)
+[storage entities](../storage_entities/#entity-classes)
 and
 [abstractions](#abstractions),
 which are visible only for statements inside the block.
