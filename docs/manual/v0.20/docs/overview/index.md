@@ -52,8 +52,13 @@ as memory leaks and dangling pointers.
 Céu is [free software](../license/#license).
 
 {!overview/environments.md!}
+
 {!overview/synchronous_execution_model.md!}
+
 {!overview/parallel_compositions_and_abortion.md!}
+
 {!overview/bounded_execution.md!}
+
 {!overview/deterministic_execution.md!}
+
 {!overview/internal_reactions.md!}

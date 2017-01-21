@@ -7,4 +7,5 @@ further embedded in an [environment](../#environments) satisfying a
 ![](compilation.png)
 
 {!compilation/command_line.md!}
+
 {!compilation/c_api.md!}

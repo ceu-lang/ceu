@@ -22,6 +22,9 @@ A declaration binds the identifier with a memory location that holds values of
 the associated type.
 
 {!storage_entities/lexical_scope.md!}
+
 {!storage_entities/entity_classes.md!}
+
 {!storage_entities/locations.md!}
+
 {!storage_entities/references.md!}

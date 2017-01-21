@@ -22,6 +22,9 @@ input byte&& RECV; // "RECV" is an input event carrying a pointer to a "byte"
 ```
 
 {!types/primitives.md!}
+
 {!types/natives.md!}
+
 {!types/abstractions.md!}
+
 {!types/modifiers.md!}
