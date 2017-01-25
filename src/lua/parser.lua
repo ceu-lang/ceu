@@ -552,7 +552,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     , Nat_End = K'native' * KK'/' * K'end'
     , Nat_Block = K'native' * (CK'/pre'+CK'/pos') * (#K'do')*'do' *
-                ( C(V'_C') + C((P(1)-(S'\t\n\r '*'end'*P';'^0*'\n'))^0) ) *
+                ( C(V'_C') + C((P(1)-(S'\t\n\r '*'end'*P';'^0*P'\n'^-1))^0) ) *
              x* K'end'
 
     , Nat_Stmt = KK'{' * V'__nat1' * KK'}'
