@@ -3756,7 +3756,7 @@ Loc ::= [`*´|`$´] Loc
 Céu is distributed under the MIT license reproduced below:
 
 ```
- Copyright (C) 2012-2016 Francisco Sant'Anna
+ Copyright (C) 2012-2017 Francisco Sant'Anna
 
  Permission is hereby granted, free of charge, to any person obtaining a copy of
  this software and associated documentation files (the "Software"), to deal in
