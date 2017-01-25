@@ -1,32 +1,31 @@
 # Contributing to Céu
 
-## Wiki
+## Language
 
-The wiki is open and anyone can write anything on it:
+`TODO`
 
-http://www.ceu-lang.org/wiki/
+## Environments
 
-```
-User: guest
-Password: ceu-lang.org
-```
+- Céu-Arduino
+    - add more sensors and actuators
+- Céu-libuv
+    - add support for UDP, pipes, tty, and signals.
+- Céu-SDL
+    - add more input events
+    - add support for Android
+- Céu-TinyOS
+    - needs a maintainer
 
-(It only requires the user/password to avoid SPAM.)
+## Web Site
 
-## Manual
+- Extend the online tutorial of Céu with Emscripten and SDL:
+  <http://www.lua.inf.puc-rio.br/gsoc/ideas2016.html#ceu>
 
-The manual is in the main repository of Céu on github:
+## Project Ideas
 
-https://github.com/fsantanna/ceu/tree/master/manual
-
-## Website and On-line Tutorial
-
-http://www.ceu-lang.org/
-
-http://www.ceu-lang.org/try.php
-
-The website with the tutorial is also available on github:
-
-https://github.com/fsantanna/ceu-site/
-
-I believe it only requires Linux+Apache+PHP to run.
+- A C-based Widget Toolkit environment
+    - [IUP](http://webserver2.tecgraf.puc-rio.br/iup/) or
+      [GTK](https://www.gtk.org/) (?)
+    - Then, implement the [7GUIs](https://github.com/eugenkiss/7guis/wiki)
+      programming usability benchmark
+- [Handmade Hero](https://handmadehero.org/) in Céu-SDL
