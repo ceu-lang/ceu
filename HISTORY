@@ -1,3 +1,6 @@
+* v0.20 (jan'17)
+    (*) full rewrite of the language (too many changes to list)
+
 * v0.10 (sep'15)
     (+) `kill´ statement for organisms
     (+) `escape´ statement for organisms
