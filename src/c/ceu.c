@@ -704,7 +704,7 @@ void ceu_input_one (tceu_nevt evt_id, void* evt_params)
 }
 #endif
 
-    tceu_evt_occ occ = { {evt_id,{NULL}}, CEU_APP.seq+1, evt_params,
+    tceu_evt_occ occ = { {evt_id,{NULL}}, (tceu_nseq)(CEU_APP.seq+1), evt_params,
                          {(tceu_code_mem*)&CEU_APP.root,
                           0, (tceu_ntrl)(CEU_APP.root._mem.trails_n-1)}
                        };
