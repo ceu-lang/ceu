@@ -1184,31 +1184,6 @@ _ceu_mem->_trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
     }
 ]])
 
-            -- vec1 = ..vec2
-            elseif fr.tag == 'Loc' then
-                if i > 1 then
-                    -- NO:
-                    -- vector&[] v2 = &v1;
-                    -- v1 = []..v2;
-                    LINE(me, [[
-    ceu_callback_assert_msg(&]]..V(fr)..' != &'..V(to)..[[, "source is the same as destination");
-]])
-                    LINE_DIRECTIVE(me)
-                    LINE(me, [[
-    ceu_vector_setlen(&]]..V(to)..', ('..V(to)..'.len + '..V(fr)..[[.len), 1);
-    ceu_vector_buf_set(&]]..V(to)..[[,
-                       __ceu_nxt,
-                       ]]..V(fr)..[[.buf,
-                       ceu_vector_buf_len(&]]..V(fr)..[[));
-]])
-                else
-                    -- v1 = v1....
-                    -- nothing to to
-                end
-                LINE(me, [[
-    __ceu_nxt = ]]..V(to)..[[.len;
-]])
-
             -- vec1 = ..[a,b,c]
             elseif fr.tag == 'Vec_Tup' then
                 local List_Exp = unpack(fr)
@@ -1247,8 +1222,34 @@ _ceu_mem->_trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
     }
 ]])
                 LINE(me, fr.code_after)
-            else
-                error'bug found'
+
+            -- vec1 = ..vec2
+            else--if fr.tag == 'Loc' then
+                if i > 1 then
+                    -- NO:
+                    -- vector&[] v2 = &v1;
+                    -- v1 = []..v2;
+                    LINE(me, [[
+    ceu_callback_assert_msg(&]]..V(fr)..' != &'..V(to)..[[, "source is the same as destination");
+]])
+                    LINE_DIRECTIVE(me)
+                    LINE(me, [[
+    ceu_vector_setlen(&]]..V(to)..', ('..V(to)..'.len + '..V(fr)..[[.len), 1);
+    ceu_vector_buf_set(&]]..V(to)..[[,
+                       __ceu_nxt,
+                       ]]..V(fr)..[[.buf,
+                       ceu_vector_buf_len(&]]..V(fr)..[[));
+]])
+                else
+                    -- v1 = v1....
+                    -- nothing to to
+                end
+                LINE(me, [[
+    __ceu_nxt = ]]..V(to)..[[.len;
+]])
+
+            --else
+                --error'bug found'
             end
         end
 

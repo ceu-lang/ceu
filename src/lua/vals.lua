@@ -92,7 +92,7 @@ F = {
 
 -- CALL
 
-    Nat_Call = function (me)
+    Exp_call = function (me)
         local _, e, ps = unpack(me)
         return V(e)..'('..table.concat(V(ps),',')..')'
     end,
@@ -366,7 +366,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
         local dcl = e.info.dcl
         if dcl and dcl.tag == 'Evt' then
             return V(e)
-        elseif e.tag=='Nat_Call' or e.tag=='Abs_Call' then
+        elseif e.tag=='Exp_call' or e.tag=='Abs_Call' then
             -- x = &_f();
             return V(e)
         elseif dcl[1] == '&?' then
@@ -382,7 +382,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
         local _,arr,idx = unpack(me)
         if TYPES.is_nat(TYPES.get(arr.info.tp,1)) then
             return '('..V(arr)..'['..V(idx)..'])'
-        elseif AST.get(me,2,'Exp_&&',2,'Loc',1,'')==me then
+        elseif AST.get(me,1,'Exp_&&',2,'')==me then
             return [[
 (*(]]..TYPES.toc(me.info.tp)..[[*) ceu_vector_buf_get(&]]..V(arr)..','..V(idx)..[[))
 ]]

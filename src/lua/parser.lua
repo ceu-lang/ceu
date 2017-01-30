@@ -79,53 +79,30 @@ local T = {
     },
 
     {
-        '`%(´ or internal identifier or native identifier or `outer´ or `{´',
-        'location'
-    },
-    {
-        '`%*´ or `%$´ or location',
-        'location'
-    },
-    {
         '`%*´ or `%$´ or internal identifier or native identifier or `outer´',
         'location'
     },
-    {
-        'abstraction identifier or location',
-        'location'
-    },
-    {
-        '`/dynamic´ or `/static´ or `/recursive´ or abstraction identifier',
-        'abstraction identifier'
-    },
 
     {
-        '`do´ or `await´ or `%[´ or `call´ or location or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `emit´ or `call/recursive´ or `val´ or `new´ or `spawn´ or `_´ or `request´ or `watching´',
+        '`do´ or `await´ or `%[´ or location or `{´ or `%(´ or `not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `&&´ or `&´ or `call´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `emit´ or `call/recursive´ or `val´ or `new´ or `spawn´ or `_´ or `request´ or `watching´',
         'expression'
     },
     {
-        '`call´ or location or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `not´ or `%-´ or `%+´ or `~´ or `%$%$´',
-        'expression'
-    },
-    {
-        'location or `call´ or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `not´ or `%-´ or `%+´ or `~´ or `%$%$´',
-        'expression'
-    },
-    {
-        '`not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `call´ or location or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal',
+        '`not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `%*´ or `%$´ or `&&´ or `&´ or `call´ or internal identifier or native identifier or `outer´ or `{´ or `%(´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal',
         'expression'
     },
 
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or location or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `lock´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `atomic´ or `pre´ or `%[´ or `lua´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
+        --'`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or location or `{´ or `%(´ or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `do´ or `if´ or `loop´ or `every´ or `lock´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `atomic´ or `pre´ or `%[´ or `lua´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
+        '`code´ or `input/output´ or `output/input´ or `data´ or `native´ or `do´ or `if´ or `loop´ or `every´ or `lock´ or `spawn´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `await´ or `atomic´ or `pre´ or `{´ or `%[´ or `lua´ or `var´ or `nothing´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `deterministic´ or location or `%(´ or `emit´ or `call/recursive´ or `call´ or `request´ or `kill´ or `not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `escape´ or `break´ or `continue´ or `par´ or end of file',
         'statement'
     },
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or location or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `lock´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `atomic´ or `pre´ or `%[´ or `lua´ or `escape´ or `break´ or `continue´ or `par´ or `end´',
+        '`code´ or `input/output´ or `output/input´ or `data´ or `native´ or `do´ or `if´ or `loop´ or `every´ or `lock´ or `spawn´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `await´ or `atomic´ or `pre´ or `{´ or `%[´ or `lua´ or `var´ or `nothing´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `deterministic´ or location or `%(´ or `emit´ or `call/recursive´ or `call´ or `request´ or `kill´ or `not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `escape´ or `break´ or `continue´ or `par´ or `with´',
         'statement'
     },
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or `%*´ or location or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `lock´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `atomic´ or `pre´ or `%[´ or `lua´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
+        '`code´ or `input/output´ or `output/input´ or `data´ or `native´ or `do´ or `if´ or `loop´ or `every´ or `lock´ or `spawn´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `await´ or `atomic´ or `pre´ or `{´ or `%[´ or `lua´ or `var´ or `nothing´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `deterministic´ or location or `%(´ or `emit´ or `call/recursive´ or `call´ or `request´ or `kill´ or `not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `escape´ or `break´ or `continue´ or `par´ or `end´',
         'statement'
     },
 }
@@ -431,7 +408,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     , _Lock = K'lock' * V'Loc' * V'__Do'
 
-    , Stmt_Call = V'Abs_Call' + V'Nat_Call'
+    , Stmt_Call = V'Abs_Call' + V'__Nat_Call'
 
     , __fin_stmt  = V'___fin_stmt' * V'__seqs'
     , ___fin_stmt = V'Nothing'
@@ -447,7 +424,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     , _Var_set_fin = K'var' * KK'&?' * V'Type' * V'__ID_int'
                    * (KK'='-'==') * KK'&'
-                    * (V'Nat_Call' + V'Abs_Call')
+                    * (V'__Nat_Call' + V'Abs_Call')
                      * V'__finalize'
 
     , Pause_If = K'pause/if' * (V'Loc'+V'ID_ext') * V'__Do'
@@ -560,8 +537,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , __nat1   = (V'__nat2' + C'{'*V'__nat1'*C'}')^0
     , __nat2   = C((1-S'{}'-V'__exp')^1) + V'__exp'
 
-    , Nat_Call = (CK'call' + Cc'call') * (V'Loc'+PARENS(V'__Exp')) *
-                                            PARENS(OPT(V'List_Exp'))
+    , __Nat_Call = K'call'^-1 * V'__Exp'
 
     -- Lua
 
@@ -723,8 +699,8 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     , __vec_concat = KK'..' * (V'__Exp' + V'_Lua' + #KK'['*V'Vec_Tup')
     , Vec_Tup  = V'__vec_pre' * OPT(V'List_Exp') * KK']'
-    , Vec_Cons = V'__Exp'   * V'__vec_concat'^1
-               + V'Vec_Tup' * V'__vec_concat'^0
+    , Vec_Cons = (V'Loc'+V'__Exp') * V'__vec_concat'^1
+               + V'Vec_Tup'        * V'__vec_concat'^0
 
 -- IDS
 
@@ -773,26 +749,27 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     -- Loc
 
-    , Loc   = V'__01_Loc'
-    , __01_Loc  = (Cc('pre') * (CKK'*'+(CKK'$'-'$$')))^-1 * V'__02_Loc'
-    , __02_Loc  = V'__03_Loc' *
+    , Loc      = V'__01_Loc'
+    , __01_Loc = V'__02_Loc' * CK'as' * (V'Type' + KK'/'*(CK'nohold'+CK'plain'+CK'pure'))
+               + V'__02_Loc'
+    , __02_Loc = (Cc('pre') * (CKK'*'+(CKK'$'-'$$')))^-1 * V'__03_Loc'
+    , __03_Loc = V'__04_Loc' *
                     (Cc'pos' * (
-                        KK'[' * Cc'idx' * V'__Exp' * KK']' +
+                        KK'[' * Cc'idx' * V'__Exp' * KK']'                   +
                         (CKK':' + (CKK'.'-'..')) * (V'__ID_int'+V'__ID_nat') +
                         (CKK'!'-'!=') * Cc(false)
                       )
                     )^0
-    , __03_Loc  = PARENS(V'__01_Loc' *
-                    (CK'as' * (V'Type' + KK'/'*(CK'nohold'+CK'plain'+CK'pure')))^-1
-                   )
-                 + V'ID_int'  + V'ID_nat'
-                 + V'Outer'
-                 + V'_Nat_Exp'
+    , __04_Loc = V'ID_int'  + V'ID_nat'
+               + V'Outer'
+               + V'_Nat_Exp'
+               + PARENS(V'__01_Loc')
+
 
     -- Exp
 
     , __Exp  = V'__01'
-    , __01   = V'__12' * ( CK'is' * V'Type'
+    , __01   = V'__11' * ( CK'is' * V'Type'
                          + CK'as' * (V'Type' + KK'/'*(CK'nohold'+CK'plain'+CK'pure'))
                          )
              + V'__02'
@@ -809,13 +786,21 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , __09   = V'__10' * ((CKK'+'+(CKK'-'-'->')) * V'__10')^0
     , __10   = V'__11' * ((CKK'*'+(CKK'/'-'//'-'/*')+CKK'%') * V'__11')^0
     , __11   = ( Cc('pre') *
-                    ( CK'not'+(CKK'-'-'->')+CKK'+'+CKK'~'+CKK'$$' )
+                    ( CK'not'+(CKK'-'-'->')+CKK'+'+CKK'~'+CKK'$$'+CKK'*'+CKK'$'+CKK'&&'+CKK'&' )
                )^0 * V'__12'
-    , __12   = V'Nat_Call'  -- TODO: ambiguous w/ PARENS,Loc
-             + V'Abs_Call'
-             + V'Loc' * (Cc'pos' * (CKK'?' * Cc(false)))^-1
-             + Cc('pre') * CKK'&&'       * V'Loc'
-             + Cc('pre') * (CKK'&'-'&&') * (V'Nat_Call'+V'Loc')
+    , __12  = V'__13' *
+                    (Cc'pos' * (
+                        KK'[' * Cc'idx' * V'__Exp' * KK']'                   +
+                        (CKK':' + (CKK'.'-'..')) * (V'__ID_int'+V'__ID_nat') +
+                        (CKK'!'-'!=') * Cc(false)                            +
+                        (CKK'?') * Cc(false)                                 +
+                        (Cc'call') * PARENS(OPT(V'List_Exp'))
+                      )
+                    )^0
+    , __13   = V'Abs_Call'
+             + V'ID_int'  + V'ID_nat'
+             + V'Outer'
+             + V'_Nat_Exp'
              + PARENS(V'__Exp')
              + V'SIZEOF'
              + V'NULL' + V'NUMBER' + V'BOOL' + V'STRING'
@@ -836,8 +821,8 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
 ---------
                 -- "Ct" as a special case to avoid "too many captures" (HACK_1)
-    , _Stmts  = Ct (( V'__Stmt_Simple' * V'__seqs' +
-                      V'__Stmt_Block' * (KK';'^0)
+    , _Stmts  = Ct (( V'__Stmt_Block' * (KK';'^0) +
+                      V'__Stmt_Simple' * V'__seqs'
                    )^0
                  * ( V'__Stmt_Last' * V'__seqs' +
                      V'__Stmt_Last_Block' * (KK';'^0)

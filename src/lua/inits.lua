@@ -173,7 +173,7 @@ stmt[4] = Y
         local fr, to = unpack(me)
         if me.tag == 'Set_Exp' then
             -- var int a = a+1;
-            run_inits(fr, 1, Dcl, fr)
+            run_inits(me, 1, Dcl, fr)
         end
 
         -- some assertions
@@ -425,6 +425,25 @@ F = {
             return
         end
 
+        -- NO
+        for par in AST.iter() do
+            if par.tag == 'Do' then
+                local lbl,_,to = unpack(par)
+                if to then
+                    --ASR(not AST.is_equal(to.dcl,me.dcl), me,
+--AST.dump(me.__par.__par)
+--AST.dump(to)
+                    local set = AST.par(me, 'Set_Exp')
+                    set = set and set.__dcls_is_escape and AST.is_par(set[2],me)
+                    ASR(me.__par.tag=='Escape' or lbl==me or AST.is_par(to,me) or set or to.info.dcl~=me.info.dcl, me,
+                        'invalid access to '..AST.tag2id[me.info.dcl.tag]
+                            ..' "'..me.info.dcl.id..'" : '
+                            ..'assignment in enclosing `do` ('
+                            ..to.ln[1]..':'..to.ln[2]..')')
+                end
+            end
+        end
+
         -- loop <NO> in <OK> do <NO> end
         if AST.par(me, 'Loop_Num_Range') then
             return
@@ -512,22 +531,6 @@ F = {
             local do_ = AST.par(me, 'Do')
             if do_ and do_[3]==me then
                 return
-            end
-        end
-
-
-        -- NO
-        for par in AST.iter() do
-            if par.tag == 'Do' then
-                local _,_,Loc = unpack(par)
-                if Loc then
-                    --ASR(not AST.is_equal(Loc.dcl,me.dcl), me,
-                    ASR(Loc.info.dcl ~= me.info.dcl, me,
-                        'invalid access to '..AST.tag2id[me.info.dcl.tag]
-                            ..' "'..me.info.dcl.id..'" : '
-                            ..'assignment in enclosing `do` ('
-                            ..Loc.ln[1]..':'..Loc.ln[2]..')')
-                end
             end
         end
     end,

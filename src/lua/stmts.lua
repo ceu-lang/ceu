@@ -101,21 +101,22 @@ STMTS.F = {
         ASR(not TYPES.is_nat(TYPES.get(to.info.tp,1)), me,
             'invalid constructor : expected internal type : got "'..TYPES.tostring(to.info.tp)..'"')
 
-        for i, e in ipairs(fr) do
-            if e.tag == 'Loc' then
-                -- OK: v1 = v1 ..
-                -- NO: v1 = v2 ..
-                -- NO: v1 = .. v1
-                if i == 1 then
-                    ASR(AST.is_equal(to,e), me,
-                            'invalid constructor : item #'..i..' : '..
-                            'expected destination as source')
-                else
-                    ASR(not AST.is_equal(to,e), me,
-                            'invalid constructor : item #'..i..' : '..
-                            'unexpected destination as source')
-                end
-            end
+        -- OK: v1 = v1 ..
+        -- NO: v1 = v2 ..
+        -- NO: v1 = .. v1
+
+        local loc = AST.get(fr,'',1,'Loc')
+        if loc then
+            ASR(AST.is_equal(to,loc), me,
+                'invalid constructor : item #1 : '..
+                'expected destination as source')
+        end
+
+        for i=2, #fr do
+            local e = fr[i]
+            ASR(not AST.is_equal(AST.asr(to,'Loc',1,''),e), me,
+                'invalid constructor : item #'..i..' : '..
+                'unexpected destination as source')
         end
     end,
 
@@ -144,9 +145,9 @@ STMTS.F = {
         EXPS.check_tp(me, to.info.tp, fr.info.tp, 'invalid binding', true)
 
         local is_call = false
-        if fr[2].tag=='Nat_Call' or fr[2].tag=='Abs_Call' then
+        if fr[2].tag=='Exp_call' or fr[2].tag=='Abs_Call' then
             is_call = true
-            if fr[2].tag == 'Nat_Call' then
+            if fr[2].tag == 'Exp_call' then
                 assert(fr.info.dcl and fr.info.dcl.tag=='Nat')
                 ASR(TYPES.is_nat(to.info.tp), me,
                     'invalid binding : expected `native´ type')
@@ -563,7 +564,11 @@ STMTS.F = {
         EXPS.check_tp(me, Typelist, ps.tp, 'invalid call')
     end,
 
-    Nat_Call = function (me)
+    Stmt_Call = function (me)
+        local f = unpack(me)
+        ASR(f.tag=='Exp_call' or f.tag=='Abs_Call', me, 'invalid call')
+    end,
+    Exp_call = function (me)
         local _, e, ps = unpack(me)
 
         -- tp

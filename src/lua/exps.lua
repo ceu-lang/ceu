@@ -1,5 +1,50 @@
 EXPS = {}
 
+-------------------------------------------------------------------------------
+
+INFO = {}
+
+function INFO.asr_tag (e, cnds, err_msg)
+    ASR(e.info, e, err_msg..' : expected location')
+    --assert(e.info.obj.tag ~= 'Val')
+    local ok do
+        for _, tag in ipairs(cnds) do
+            if tag == e.info.tag then
+                ok = true
+                break
+            end
+        end
+    end
+    ASR(ok, e, err_msg..' : '..
+                'unexpected context for '..AST.tag2id[e.info.tag]
+                                         ..' "'..e.info.id..'"')
+end
+
+function INFO.copy (old)
+    local new = {}
+    for k,v in pairs(old) do
+        new[k] = v
+    end
+    return new
+end
+
+function INFO.new (me, tag, id, tp, ...)
+    if AST.is_node(tp) and (tp.tag=='Type' or tp.tag=='Typelist') then
+        assert(not ...)
+    else
+        assert(type(tp) == 'string')
+        tp = TYPES.new(me, tp, ...)
+    end
+    return {
+        id  = id or 'unknown',
+        tag = tag,
+        tp  = tp,
+        --dcl
+    }
+end
+
+-------------------------------------------------------------------------------
+
 function EXPS.check_tp (me, to_tp, fr_tp, err_msg, is_alias)
     local to_str = TYPES.tostring(to_tp)
     local fr_str = TYPES.tostring(fr_tp)
@@ -22,12 +67,33 @@ function EXPS.check_dim (to, fr)
     end
 end
 
-EXPS.F = {
+F = {
     Loc = function (me)
         local e = unpack(me)
         me.info = e.info
     end,
+
+-- IDs
+
+    ID_nat = function (me)
+        local id = unpack(me)
+        me.info = {
+            id  = id,
+            tag = me.dcl.tag,
+            tp  = me.dcl[2],
+            dcl = me.dcl,
+        }
+    end,
+
     ID_int = function (me)
+        local id = unpack(me)
+        me.info = {
+            id  = id,
+            tag = me.dcl.tag,
+            tp  = me.dcl[2],
+            dcl = me.dcl,
+        }
+
         if me.dcl.is_mid_idx then
             local Set_Alias = AST.get(me.__par.__par,'Set_Alias')
             local ok = Set_Alias and AST.get(Set_Alias,'',2,'Loc',1,'ID_int')==me
@@ -82,7 +148,7 @@ EXPS.F = {
 
 -- CALL
 
-    Nat_Call = function (me)
+    Exp_call = function (me)
         local _, e = unpack(me)
 
         -- ctx
@@ -93,7 +159,7 @@ EXPS.F = {
             'invalid call : expected native type')
 
         -- info
-        me.info = e.info
+        me.info = e.info --INFO.new(me, 'Nat', nil, '_')
     end,
 
     Abs_Call = function (me)
@@ -190,7 +256,7 @@ EXPS.F = {
             elseif val.tag == 'Vec_Cons' then
 assert(ID_abs.dcl.tag == 'Data', 'TODO')
 error'TODO: remove below'
-                EXPS.F.__set_vec(val, var)
+                F.__set_vec(val, var)
 
             else
                 -- ctx
@@ -231,6 +297,9 @@ error'TODO: remove below'
         local op, e = unpack(me)
 
         -- ctx
+        -- all?
+        --INFO.asr_tag(e, {'Var','Evt','Pool','Nat','Vec'}, 'invalid operand to `'..op..'´')
+
         local par = me.__par
         if par.tag == 'Exp_as' then
             -- &y as X; (y is X.Y)
@@ -238,6 +307,10 @@ error'TODO: remove below'
         end
         ASR(par.tag=='Set_Alias' or par.tag=='List_Exp' or par.tag=='Abslist', me,
             'invalid expression : unexpected context for operation `&´')
+
+        if e.info.tag == 'Nat' then
+            ASR(e.tag == 'Exp_call', me, 'invalid operand to `'..op..'´ : expected native call')
+        end
 
         -- tp
         -- any
@@ -247,10 +320,54 @@ error'TODO: remove below'
         me.info.tag = 'Alias'
     end,
 
--- INDEX ("idx" is Exp, not Loc)
+-- OPTION: !
+
+    ['Exp_!'] = function (me)
+        local op,e = unpack(me)
+
+        -- ctx
+        INFO.asr_tag(e, {'Nat','Var','Evt'}, 'invalid operand to `'..op..'´')
+
+        -- tp
+        ASR((e.info.dcl[1]=='&?') or TYPES.check(e.info.tp,'?'), me,
+            'invalid operand to `'..op..'´ : expected option type : got "'..
+            TYPES.tostring(e.info.tp)..'"')
+
+        -- info
+        me.info = INFO.copy(e.info)
+        if e.info.dcl[1] == '&?' then
+            me.info.dcl = AST.copy(e.info.dcl,nil,true)
+            me.info.dcl[1] = '&'
+            me.info.dcl.orig = e.info.dcl.orig or e.info.dcl   -- TODO: HACK_3
+        else
+            me.info.tp = TYPES.pop(e.info.tp)
+        end
+    end,
+
+-- INDEX
 
     ['Exp_idx'] = function (me)
-        local _,_,idx = unpack(me)
+        local _,vec,idx = unpack(me)
+
+        -- ctx, tp
+
+        local tp = AST.copy(vec.info.tp)
+        tp[2] = nil
+        if (vec.info.tag=='Var' or vec.info.tag=='Nat') and TYPES.is_nat(tp) then
+            -- _V[0][0]
+            -- var _char&&&& argv; argv[1][0]
+            -- v[1]._plain[0]
+            INFO.asr_tag(vec, {'Nat','Var'}, 'invalid vector')
+        else
+            INFO.asr_tag(vec, {'Vec'}, 'invalid vector')
+        end
+
+        -- info
+        me.info = INFO.copy(vec.info)
+        me.info.tag = 'Var'
+        if vec.info.tag=='Var' and TYPES.check(vec.info.tp,'&&') then
+            me.info.tp = TYPES.pop(vec.info.tp)
+        end
 
         -- ctx
         INFO.asr_tag(idx, {'Val','Nat','Var'}, 'invalid index')
@@ -260,22 +377,98 @@ error'TODO: remove below'
             'invalid index : expected integer type')
     end,
 
+-- MEMBER: .
+
+    ['Exp_.'] = function (me)
+        local _, e, member = unpack(me)
+
+        if type(member) == 'number' then
+            local abs = TYPES.abs_dcl(e.info.dcl[2], 'Data')
+            ASR(abs, me, 'invalid constructor : TODO')
+            local vars = AST.asr(abs,'Data', 3,'Block').dcls
+            local _,_,id = unpack(vars[member])
+            member = id
+            me[3] = id
+        end
+
+        if e.tag == 'Outer' then
+            F.ID_int(me)
+            me.info.id = 'outer.'..member
+        else
+            ASR(TYPES.ID_plain(e.info.tp), me,
+                'invalid operand to `.´ : expected plain type : got "'..
+                TYPES.tostring(e.info.tp)..'"')
+
+            if e.info.dcl then
+                local alias = unpack(e.info.dcl)
+                ASR(alias~='&?', me,
+                    'invalid operand to `.´ : unexpected option alias')
+
+                local ID_abs = unpack(e.info.tp)
+                if ID_abs and ID_abs.dcl.tag=='Data' then
+                    -- data.member
+                    local data = AST.asr(ID_abs.dcl,'Data')
+                    local Dcl = DCLS.asr(me,data,member,false,e.info.id)
+                    me.info = {
+                        id  = e.info.id..'.'..member,
+                        tag = Dcl.tag,
+                        tp  = Dcl[2],
+                        dcl = Dcl,
+                        dcl_obj = e.info.dcl,
+                    }
+                else
+                    me.info = INFO.copy(e.info)
+                    me.info.id = e.info.id..'.'..member
+                end
+            else
+                ASR(TYPES.is_nat(e.info.tp), me,
+                    'invalid operand to `.´ : expected native or data type')
+            end
+        end
+    end,
+
 -- POINTERS
 
     ['Exp_&&'] = function (me)
         local op, e = unpack(me)
 
         -- ctx
-        INFO.asr_tag(e, {'Nat','Var','Pool','Vec'}, 'invalid operand to `'..op..'´')
+        INFO.asr_tag(e, {'Nat','Var','Pool','Vec','Val'}, 'invalid operand to `'..op..'´')
 
         -- tp
-        ASR(not (e.info.dcl[1]=='&?' or TYPES.check(e.info.tp,'?')), me,
-            'invalid operand to `'..op..'´ : unexpected option type')
+        if e.info.tag == 'Val' then
+            ASR(TYPES.is_nat(e.info.tp), me, 'expected native type')
+        else
+            ASR(not (e.info.dcl[1]=='&?' or TYPES.check(e.info.tp,'?')), me,
+                'invalid operand to `'..op..'´ : unexpected option type')
+        end
 
         -- info
         me.info = INFO.copy(e.info)
         me.info.tag = 'Val'
         me.info.tp = TYPES.push(e.info.tp,'&&')
+    end,
+
+    ['Exp_1*'] = function (me)
+        local op,e = unpack(me)
+
+        -- ctx
+        INFO.asr_tag(e, {'Nat','Var','Pool','Val'}, 'invalid operand to `'..op..'´')
+--DBG('TODO: remove pool')
+
+        -- tp
+        local _,mod = unpack(e.info.tp)
+        local is_ptr = TYPES.check(e.info.tp,'&&')
+        local is_nat = TYPES.is_nat(e.info.tp)
+        ASR(is_ptr or is_nat, me,
+            'invalid operand to `'..op..'´ : expected pointer type : got "'..
+            TYPES.tostring(e.info.tp)..'"')
+
+        -- info
+        me.info = INFO.copy(e.info)
+        if is_ptr then
+            me.info.tp = TYPES.pop(e.info.tp)
+        end
     end,
 
 -- OPTION: ?
@@ -300,7 +493,21 @@ error'TODO: remove below'
 
 -- VECTOR LENGTH: $$
 
-    ['Exp_$$'] = LOCS.F['Exp_$'],
+    ['Exp_$$'] = 'Exp_$',
+    ['Exp_$'] = function (me)
+        local op,vec = unpack(me)
+
+        -- ctx
+        INFO.asr_tag(vec, {'Vec'}, 'invalid operand to `'..op..'´')
+
+        -- tp
+        -- any
+
+        -- info
+        me.info = INFO.copy(vec.info)
+        me.info.tp = TYPES.new(me, 'usize')
+        me.info.tag = 'Var'
+    end,
 
 -- NOT
 
@@ -478,7 +685,61 @@ error'TODO: remove below'
 
 -- IS, AS/CAST
 
-    Exp_as = LOCS.F.Exp_as,
+    Exp_as = function (me)
+        local op,e,Type = unpack(me)
+        if not e.info then return end   -- see EXPS below
+
+        -- ctx
+        INFO.asr_tag(e, {'Alias','Val','Nat','Var','Pool'},
+                     'invalid operand to `'..op..'´')
+
+        -- tp
+        ASR(not TYPES.check(e.info.tp,'?'), me,
+            'invalid operand to `'..op..'´ : unexpected option type : got "'..
+            TYPES.tostring(e.info.tp)..'"')
+
+        local dcl = e.info.tp[1].dcl
+
+        if dcl and dcl.tag=='Data' then
+            if TYPES.check(Type,'int') then
+                -- OK: "d as int"
+                ASR(dcl.hier, me,
+                    'invalid operand to `'..op..'´ : expected `data´ type in a hierarchy : got "'..TYPES.tostring(e.info.tp)..'"')
+            else
+                -- NO: not alias
+                --  var Dx d = ...;
+                --  (d as Ex)...
+                local is_alias = unpack(dcl)
+                ASR(is_alias, me,
+                    'invalid operand to `'..op..'´ : unexpected plain `data´ : got "'..
+                    TYPES.tostring(e.info.tp)..'"')
+
+                -- NO:
+                --  var Dx& d = ...;
+                --  (d as Ex)...        // "Ex" is not a subtype of Dx
+                -- YES:
+                --  var Dx& d = ...;
+                --  (d as Dx.Sub)...
+                local cast = Type[1].dcl
+                if cast and cast.tag=='Data' then
+                    local ok = cast.hier and dcl.hier and
+                                (DCLS.is_super(cast,dcl) or     -- to dyn/call super
+                                 DCLS.is_super(dcl,cast))
+                    ASR(ok, me,
+                        'invalid operand to `'..op..'´ : unmatching `data´ abstractions')
+                end
+            end
+        end
+
+        -- info
+        me.info = INFO.copy(e.info)
+        if AST.is_node(Type) then
+            me.info.tp = AST.copy(Type)
+        else
+            -- annotation (/plain, etc)
+DBG'TODO: type annotation'
+        end
+    end,
 
     Exp_is = function (me)
         local op,e,cast = unpack(me)
@@ -502,4 +763,4 @@ error'TODO: remove below'
     end,
 }
 
-AST.visit(EXPS.F)
+AST.visit(F)

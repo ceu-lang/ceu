@@ -192,10 +192,11 @@ function AST.asr (me, tag, ...)
 end
 
 function AST.set (par, i, child)
-    assert(AST.is_node(child))
     par[i] = child
-    child.__par = par
-    child.__i   = i
+    if AST.is_node(child) then
+        child.__par = par
+        child.__i   = i
+    end
 end
 
 function AST.insert (par, i, child)

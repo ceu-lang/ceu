@@ -299,7 +299,7 @@ error'TODO'
         local max_chk = node('Nothing', me.ln)
         if max then
             max_chk = node('Stmt_Call', me.ln,
-                        node('Nat_Call', me.ln,
+                        node('Exp_call', me.ln,
                             'call',
                             node('Loc', me.ln,
                                 node('ID_nat', me.ln,
@@ -838,7 +838,7 @@ error'TODO'
         end
         return ret
     end,
-    Nat_Call__PRE = function (me)
+    Exp_call = function (me)
         local _,_, ps = unpack(me)
         if ps and ps.tag == 'List_Exp' then
             -- ok
@@ -872,7 +872,8 @@ error'TODO: luacov never executes this?'
 -------------------------------------------------------------------------------
 
     _Nat_Exp__PRE = function (me)
-        return node('ID_nat', me.ln, '_{}', unpack(me))
+        me.tag = 'ID_nat'
+        AST.insert(me, 1, '_{}')
     end,
 
     ['Exp_:__PRE'] = function (me)

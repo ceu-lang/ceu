@@ -18,15 +18,13 @@ local function check_blk (to_blk, fr_blk)
 end
 
 local function f2mod (f)
-    local Loc = AST.asr(f,'Loc')
-    local Node = unpack(Loc)
-    if Node.tag == 'Exp_as' then
-        local _,_,mod = unpack(Node)
+    if f.tag == 'Exp_as' then
+        local _,_,mod = unpack(f)
         return mod
     else
-        local nat = AST.get(Loc.info.dcl,'Nat')
+        local nat = AST.get(f.info.dcl,'Nat')
         if nat then
-            local mod = unpack(AST.asr(Loc.info.dcl,'Nat'))
+            local mod = unpack(AST.asr(f.info.dcl,'Nat'))
             return mod
         else
             return nil
@@ -49,8 +47,8 @@ F = {
                                 ID.dcl.tag=='Data' and ID.dcl.weaker~='plain'
 
         -- ptr = _f()
-        if fr.tag=='Nat_Call' and (to_ptr or to_nat) then
-            local mod = f2mod(AST.asr(fr,'',2,'Loc'))
+        if fr.tag=='Exp_call' and (to_ptr or to_nat) then
+            local mod = f2mod(fr[2])
             ASR(mod=='nohold' or mod=='pure' or mod=='plain', me,
                 'invalid assignment : expected binding for "'..fr.info.dcl.id..'"')
         end
@@ -104,7 +102,7 @@ F = {
         local fr, to = unpack(me)
 
         local _, call = unpack(fr)
-        if (call.tag=='Nat_Call' or call.tag=='Abs_Call') then
+        if (call.tag=='Exp_call' or call.tag=='Abs_Call') then
             ASR(to.info.dcl[1] == '&?', me,
                 'invalid binding : expected option alias `&?´ as destination : got "'
                 ..TYPES.tostring(to.info.tp)..'"')
@@ -149,7 +147,7 @@ F = {
         end
     end,
 
-    Nat_Call = function (me)
+    Exp_call = function (me)
         local _,f,ps = unpack(me)
 
         -- ignore if "f" is "nohold" or "pure"
@@ -165,7 +163,7 @@ F = {
             then
                 local fin = AST.par(me, 'Finalize')
                 local ok = fin and (
-                            (AST.get(fin,'',1,'Stmt_Call',1,'')            == me) or
+                            (AST.get(fin,'',1,'Stmt_Call',1,'Exp_call')    == me) or
                             (AST.get(fin,'',1,'Set_Alias',1,'Exp_1&',2,'') == me) or
                             (AST.get(fin,'',1,'Set_Exp',1,'')              == me) )
 
