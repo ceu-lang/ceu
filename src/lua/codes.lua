@@ -52,7 +52,7 @@ local function CLEAR (me)
     tceu_evt_range __ceu_range = { _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[ };
 
     /* HACK_8: _ceu_occ holds __ceu_ret */
-    tceu_evt_occ __ceu_occ = { {CEU_INPUT__CLEAR,{_ceu_occ}}, CEU_APP.seq+1, &__ceu_range,
+    tceu_evt_occ __ceu_occ = { {CEU_INPUT__CLEAR,{_ceu_occ}}, (tceu_nseq)(CEU_APP.seq+1), &__ceu_range,
                                {(tceu_code_mem*)&CEU_APP.root,
                                 0, (tceu_ntrl)(CEU_APP.root._mem.trails_n-1)}
                              };
@@ -788,7 +788,7 @@ ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
 ]])
             HALT(me, {
                 { ['evt.id'] = 'CEU_INPUT__ASYNC' },
-                { seq        = 'CEU_APP.seq+1' },
+                { seq        = '(tceu_nseq)(CEU_APP.seq+1)' },
                 { lbl        = me.lbl_asy.id },
                 lbl = me.lbl_asy.id,
             })
@@ -1300,7 +1300,7 @@ do {
         local ID_ext = unpack(me)
         HALT(me, {
             { evt = V(ID_ext) },
-            { seq = 'CEU_APP.seq+1' },
+            { seq = '(tceu_nseq)(CEU_APP.seq+1)' },
             { lbl = me.lbl_out.id },
             lbl = me.lbl_out.id,
         })
@@ -1345,7 +1345,7 @@ ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..'.id, '..ps..[[).value.
 CEU_APP.async_pending = 1;
 ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
 _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__ASYNC;
-_ceu_mem->_trails[]]..me.trails[1]..[[].seq    = CEU_APP.seq+1;
+_ceu_mem->_trails[]]..me.trails[1]..[[].seq    = (tceu_nseq)(CEU_APP.seq+1);
 _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
 ceu_input_one(]]..V(ID_ext)..'.id, '..ps..[[);
 ]])
@@ -1392,7 +1392,7 @@ if (]]..V(Loc)..[[.alias != NULL) {
         else
             HALT(me, {
                 { evt = V(Loc) },
-                { seq = 'CEU_APP.seq+1' },
+                { seq = '(tceu_nseq)(CEU_APP.seq+1)' },
                 { lbl = me.lbl_out.id },
                 lbl = me.lbl_out.id,
             })
@@ -1415,7 +1415,7 @@ if (]]..V(Loc)..[[.alias != NULL) {
             ps = '&__ceu_ps'
         end
         LINE(me, [[
-    tceu_evt_occ __ceu_occ = { ]]..V(Loc)..[[, CEU_APP.seq+1, &__ceu_ps,
+    tceu_evt_occ __ceu_occ = { ]]..V(Loc)..[[, (tceu_nseq)(CEU_APP.seq+1), &__ceu_ps,
                                {(tceu_code_mem*)&CEU_APP.root,
                                 0, (tceu_ntrl)(CEU_APP.root._mem.trails_n-1)}
                              };
@@ -1442,7 +1442,7 @@ _CEU_HALT_]]..me.n..[[_:
 ]])
         HALT(me, {
             { ['evt.id'] = 'CEU_INPUT__WCLOCK' },
-            { seq        = 'CEU_APP.seq+1' },
+            { seq        = '(tceu_nseq)(CEU_APP.seq+1)' },
             { lbl        = me.lbl_out.id },
             lbl = me.lbl_out.id,
         })
@@ -1476,7 +1476,7 @@ ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
 ]])
             HALT(me, {
                 { ['evt.id'] = 'CEU_INPUT__ASYNC' },
-                { seq        = 'CEU_APP.seq+1' },
+                { seq        = '(tceu_nseq)(CEU_APP.seq+1)' },
                 { lbl        = me.lbl_out.id },
                 lbl = me.lbl_out.id,
             })
@@ -1504,7 +1504,7 @@ ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
 ]])
         HALT(me, {
             { ['evt.id'] = 'CEU_INPUT__ASYNC' },
-            { seq        = 'CEU_APP.seq+1' },
+            { seq        = '(tceu_nseq)(CEU_APP.seq+1)' },
             { lbl        = me.lbl_in.id },
             lbl = me.lbl_in.id,
         })
