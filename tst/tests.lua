@@ -103,7 +103,12 @@ escape rr;
     run = { ['~>2s']=101 },
 }
 
+    vector[] byte right1 = [] .. "pingus/player"
+                           .. (call Pingu_Get_Owner_Str(&pingu) as _char&&)
+                           .. "/walker/right";
+
 do return end -- OK
+
 --]=====]
 
 ----------------------------------------------------------------------------
@@ -27471,6 +27476,33 @@ escape 1;
     tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
 }
 
+Test { [[
+loop do
+    var int name = do
+        await 1s;
+        escape 1;
+    end;
+    if name == 1 then
+        break;
+    end
+end
+escape 1;
+]],
+    run = { ['~>1s']=1 },
+}
+Test { [[
+loop do
+    var int name = do
+        escape 1;
+    end;
+    if name == 1 then
+        break;
+    end
+end
+escape 1;
+]],
+    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+}
 -- INFINITE LOOP/EXECUTION
 Test { [[
 event void e, f;

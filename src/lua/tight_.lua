@@ -41,8 +41,6 @@ local function run (me, Loop)
     elseif me.tag=='Break' or me.tag=='Escape' then
         if AST.depth(Loop) >= AST.depth(me.outer) then
             return 'breaks'
-else
-error'TODO'
         end
 
     elseif me.tag=='If' or me.tag=='Par_Or' then
@@ -82,7 +80,7 @@ error'TODO'
         for _, child in ipairs(me) do
             if AST.is_node(child) then
                 local ret = run(child, Loop)
-                if ret ~= 'tight' then
+                if ret and ret~='tight' then
                     return ret
                 end
             end
