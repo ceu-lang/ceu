@@ -38,8 +38,15 @@ MEMS = {
 local EVENT_SUFIX_EXISTS = {}
 
 local function CUR ()
-    return (AST.iter'Async_Isr'() or AST.iter'Code'() or
-            AST.iter'Data'() or AST.root).mems
+    for n in AST.iter() do
+        if n.tag == 'Async_Isr' or
+           n.tag == 'Code'      or
+           n.tag == 'Data'
+        then
+            return n.mems
+        end
+    end
+    return AST.root.mems
 end
 
 F = {

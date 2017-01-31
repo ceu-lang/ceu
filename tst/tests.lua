@@ -107,7 +107,7 @@ escape rr;
                            .. (call Pingu_Get_Owner_Str(&pingu) as _char&&)
                            .. "/walker/right";
 
---do return end -- OK
+do return end -- OK
 --]=====]
 
 ----------------------------------------------------------------------------
@@ -44927,6 +44927,19 @@ code/await Ff (void) -> Dd do
 end
 var Dd d = await Ff();
 escape d.x;
+]],
+    run = 10,
+}
+
+Test { [[
+code/tight Ff (void) -> int do
+    data Dd with
+        var int x;
+    end
+    var Dd d = val Dd(10);
+    escape d.x;
+end
+escape call Ff();
 ]],
     run = 10,
 }
