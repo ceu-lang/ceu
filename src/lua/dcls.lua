@@ -48,9 +48,6 @@ function DCLS.get (blk, id, can_cross)
     AST.asr(blk, 'Block')
     local n = 1             -- how many "code/*" crosses?
     for blk in iter_boundary(blk,id,can_cross) do
-        if AST.get(blk,1,'Code') then
-            n = n + 1
-        end
         local dcl = blk.dcls[id]
         if dcl then
             local no = AST.iter'Vec_Init'() or AST.iter'Pool_Init'()
@@ -58,6 +55,9 @@ function DCLS.get (blk, id, can_cross)
                 dcl.is_used = true
             end
             return dcl,n
+        end
+        if AST.get(blk,1,'Code') then
+            n = n + 1
         end
     end
     return nil

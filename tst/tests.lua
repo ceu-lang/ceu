@@ -47600,6 +47600,20 @@ escape zzz;
     run = 20,
 }
 
+Test { [[
+code/tight Ff (var int xxx) -> int do
+    var int b = 0;
+    var int yyy = xxx;
+    code/tight Get (void) -> int do
+        escape outer.yyy + outer.xxx;
+    end
+    escape b + call Get();
+end
+escape call Ff(10);
+]],
+    run = 20,
+}
+
 --<<< OUTER
 
 -->>> CEU_FEATURES_*
