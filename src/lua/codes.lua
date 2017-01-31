@@ -112,7 +112,7 @@ function SET (me, to, fr, fr_ok, fr_ctx)
 
 -- TODO: unify-01
     -- Base <- Super
-    do
+    if not fr_ok then
         local to_tp = to.info.tp
         if to_is_opt then
             to_tp = TYPES.pop(to.info.tp,'?')
@@ -359,8 +359,13 @@ if (0)
             LINE(me, [[
     _ceu_mem->trails_n = ]]..me.trails_n..[[;
     memset(&_ceu_mem->_trails, 0, ]]..me.trails_n..[[*sizeof(tceu_trl));
-    int __ceu_ret_]]..me.n..[[;
 ]])
+            local ret = AST.get(me,'', 4,'Block', 1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
+            if ret and (not TYPES.check(ret,'void')) then
+                LINE(me, [[
+    ]]..TYPES.toc(ret)..[[ __ceu_ret_]]..me.n..[[;
+]])
+            end
         end
 
         -- copy args
@@ -733,8 +738,13 @@ ceu_callback_assert_msg(0, "reached end of `do´");
         local mods = code and code[2]
         local evt do
             if code and mods.await then
-                -- HACK_8
-                evt = '(tceu_evt_occ*) &__ceu_ret_'..code.n
+                local ret = AST.get(code,'', 4,'Block', 1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
+                if ret and (not TYPES.check(ret,'void')) then
+                    -- HACK_8
+                    evt = '(tceu_evt_occ*) &__ceu_ret_'..code.n
+                else
+                    evt = 'NULL'
+                end
             else
                 evt = 'NULL'
             end
@@ -1111,7 +1121,7 @@ _ceu_mem->_trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
             assert(fr.tag == 'Abs_Await')
             -- see "Set_Exp: _ret"
             -- HACK_8
-            SET(me, to, '*((int*)_ceu_occ->evt.mem)' ,true)
+            SET(me, to, '*(('..TYPES.toc(fr.tp)..'*)_ceu_occ->evt.mem)' ,true)
         end
     end,
     Set_Await_many = function (me)

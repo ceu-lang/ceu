@@ -107,7 +107,7 @@ escape rr;
                            .. (call Pingu_Get_Owner_Str(&pingu) as _char&&)
                            .. "/walker/right";
 
-do return end -- OK
+--do return end -- OK
 --]=====]
 
 ----------------------------------------------------------------------------
@@ -44846,6 +44846,92 @@ escape 1;
 }
 
 --<< DATA / CODE / SCOPE
+
+-->> CODE / RETURN / DATA
+
+Test { [[
+data Dd;
+
+code/await Ff (void) -> Dd do
+    var Dd d = _;
+    escape d;
+end
+
+var Dd d = await Ff();
+
+escape 10;
+]],
+    run = 10,
+}
+Test { [[
+data Dd with
+    var int x = 10;
+end
+
+code/await Ff (void) -> Dd do
+    var Dd d = val Dd(_);
+    escape d;
+end
+
+var Dd d = await Ff();
+
+escape d.x;
+]],
+    run = 10,
+}
+Test { [[
+data Dd with
+    var int x = 10;
+end
+
+code/tight Ff (void) -> Dd do
+    var Dd d = val Dd(_);
+    escape d;
+end
+
+var Dd d = call Ff();
+
+escape d.x;
+]],
+    run = 10,
+}
+
+Test { [[
+data Dd with
+    var int x = 10;
+end
+code/await Ff (void) -> Dd do
+    code/tight Gg (void) -> Dd do
+        var Dd d = _;
+        escape d;
+    end
+    var Dd d = call Gg();
+    escape d;
+end
+var Dd d = await Ff();
+escape d.x;
+]],
+    run = 10,
+}
+
+Test { [[
+data Dd with
+    var int x = 10;
+end
+code/await Ff (void) -> Dd do
+    code/tight Gg (void) -> Dd do
+        var Dd d = _;
+        escape d;
+    end
+    escape call Gg();
+end
+var Dd d = await Ff();
+escape d.x;
+]],
+    run = 10,
+}
+
+--<< CODE / RETURN / DATA
 
 --<<< DATA
 
