@@ -279,14 +279,15 @@ usize params = offsetof(tceu_code_mem_]]..me.id_..[[,_params);
         if mods.tight then
             me.mems.wrapper = me.mems.wrapper .. [[
 static ]]..TYPES.toc(assert(Type))..[[ /* space */
-CEU_CODE_]]..me.id_..[[ (tceu_stk* stk, tceu_ntrl trlK,
-                         tceu_code_args_]]..me.id_..[[ ps
+CEU_CODE_]]..me.id_..[[ (tceu_code_args_]]..me.id_..[[ ps,
+                         tceu_code_mem* up_mem
 #ifdef CEU_FEATURES_LUA
                         , lua_State* lua
 #endif
                        )
 {
     tceu_code_mem_]]..me.id_..[[ mem;
+    mem._mem.up_mem = up_mem;
 #ifdef CEU_FEATURES_LUA
     mem._mem.lua = lua;
 #endif
@@ -299,7 +300,7 @@ CEU_CODE_]]..me.id_..[[ (tceu_stk* stk, tceu_ntrl trlK,
 ]]
             end
             me.mems.wrapper = me.mems.wrapper .. [[
-    ceu_lbl((tceu_evt_occ*)&ps, stk, (tceu_code_mem*)&mem, trlK, lbl);
+    ceu_lbl((tceu_evt_occ*)&ps, NULL, (tceu_code_mem*)&mem, 0, lbl);
 ]]
             if Type and (not TYPES.check(Type,'void')) then
                 me.mems.wrapper = me.mems.wrapper..[[

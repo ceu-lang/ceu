@@ -46,14 +46,18 @@ end
 
 function DCLS.get (blk, id, can_cross)
     AST.asr(blk, 'Block')
+    local n = 1             -- how many "code/*" crosses?
     for blk in iter_boundary(blk,id,can_cross) do
+        if AST.get(blk,1,'Code') then
+            n = n + 1
+        end
         local dcl = blk.dcls[id]
         if dcl then
             local no = AST.iter'Vec_Init'() or AST.iter'Pool_Init'()
             if not no then
                 dcl.is_used = true
             end
-            return dcl
+            return dcl,n
         end
     end
     return nil
@@ -62,9 +66,9 @@ end
 function DCLS.asr (me, blk_or_data, id, can_cross, err)
     local data = AST.get(blk_or_data, 'Data')
     local blk = (data and AST.asr(data,'',3,'Block')) or blk_or_data
-    local ret = DCLS.get(blk, id, can_cross)
+    local ret,n = DCLS.get(blk, id, can_cross)
     if ret then
-        return ret
+        return ret,n
     else
         if data then
             ASR(false, me, 
@@ -534,8 +538,8 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
     Code = function (me)
         local _,mods1,id,body1 = unpack(me)
 
-        ASR(not AST.par(me,'Code'), me,
-            'invalid `code´ declaration : nesting is not allowed')
+        --ASR(not AST.par(me,'Code'), me,
+            --'invalid `code´ declaration : nesting is not allowed')
 
         local blk = AST.par(me, 'Block')
 
@@ -777,13 +781,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
     ID_abs = function (me)
         local id = unpack(me)
-
-        -- search outside current "code/data"
-        local code_or_data = AST.par(me,'Code') or AST.par(me,'Data')
-        local blk = (code_or_data and AST.par(code_or_data,'Block'))
-                        or AST.par(me,'Block')
-
-        me.dcl = DCLS.asr(me, blk, id, false, 'abstraction')
+        me.dcl = DCLS.asr(me, AST.par(me,'Block'), id, true, 'abstraction')
     end,
 
     ID_int = function (me)
@@ -803,10 +801,12 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
     ['Exp_.'] = function (me)
         local _, e, member = unpack(me)
         if e.tag == 'Outer' then
+            local n
             local out = AST.par(me,'_Async_Isr') or ASR(AST.par(me,'Code'), me,
                             'invalid `outer´ : expected enclosing `code´ declaration')
-            me.dcl = DCLS.asr(me, AST.par(out,'Block'),
-                              member, false, 'internal identifier')
+            me.dcl,n = DCLS.asr(me, AST.par(out,'Block'),
+                                member, true, 'internal identifier')
+            e.__dcls_n = n  -- how many "code" crosses?
         end
     end,
 

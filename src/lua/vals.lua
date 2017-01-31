@@ -10,11 +10,25 @@ function CUR (field, ctx)
     local Code = AST.iter'Code'()
     local Isr  = AST.iter'Async_Isr'()
     local data do
-        if ctx.is_outer then
+        if ctx.outer then
             if Isr and Code then
                 data = '(*((tceu_code_mem_'..Code.id_..'*)_ceu_mem))'
             else
-                data = 'CEU_APP.root'
+                local mem = '_ceu_mem'
+                if Code then
+                    assert(ctx.outer > 0)
+                    local n = ctx.outer
+                    while n > 0 do
+                        n = n - 1
+                        mem = mem..'->up_mem'
+                        Code = AST.par(Code, 'Code')
+                    end
+                end
+                if Code then
+                    data = '(*(tceu_code_mem_'..Code.id_..'*)('..mem..'))'
+                else
+                    data = 'CEU_APP.root'
+                end
             end
         elseif Isr then
             data = '_ceu_loc'
@@ -104,13 +118,11 @@ F = {
         assert(mods.tight)
         if CEU.opts.ceu_features_lua then
             return [[
-CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
-                             ]]..V(Abs_Cons)..[[, ]]..LUA(me)..[[)
+CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..[[, _ceu_mem, ]]..LUA(me)..[[)
 ]]
         else
             return [[
-CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
-                             ]]..V(Abs_Cons)..[[)
+CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..[[, _ceu_mem)
 ]]
         end
     end,
@@ -345,7 +357,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
                 return '((tceu_evt){ '..me.info.dcl.id_..', {&'..V(e)..'} })'
             end
         elseif e.tag == 'Outer' then
-            return F.ID_int(me,{is_outer=true})
+            return F.ID_int(me,{outer=e.__dcls_n})
         else
             local ptr = ''
             if not TYPES.is_nat(e.info.tp) then

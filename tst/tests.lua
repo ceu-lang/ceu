@@ -108,7 +108,6 @@ escape rr;
                            .. "/walker/right";
 
 do return end -- OK
-
 --]=====]
 
 ----------------------------------------------------------------------------
@@ -33663,119 +33662,6 @@ escape cs[0];
 
 --<< VECTOR / CODE
 
--->> CODE / TIGHT / OUTER
-
-Test { [[
-var int x;
-code/tight Ff (void)->void do
-end
-x = 1;
-escape x;
-]],
-    wrn = true,
-    --inits = 'line 1 : uninitialized variable "x" : reached `code´ (/tmp/tmp.ceu:2)',
-    inits = 'line 1 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:2)',
-}
-
-Test { [[
-var int x = 0;
-code/tight Ff (void)->void do
-    outer.y = 1;
-end
-var int y = 10;
-call Ff();
-escape x;
-]],
-    dcls = 'line 3 : internal identifier "y" is not declared',
-}
-
-Test { [[
-var int ret = 0;
-do
-    var int x = 0;
-    code/tight Ff (void)->void do
-        outer.x = 1;
-    end
-    call Ff();
-    ret = x;
-end
-call Ff();
-escape ret;
-]],
-    dcls = 'line 10 : abstraction "Ff" is not declared',
-}
-
-Test { [[
-var int x = 0;
-code/tight Ff (void)->void do
-    code/tight Gg (void)->void do end
-    outer.x = 1;
-end
-call Ff();
-escape x;
-]],
-    dcls = 'line 3 : invalid `code´ declaration : nesting is not allowed',
-}
-Test { [[
-var int x = 0;
-data Dd with
-    code/tight Ff (void)->void do
-        outer.x = 1;
-    end
-end
-call Ff();
-escape x;
-]],
-    parser = 'line 2 : after `with´ : expected `var´ or `vector´ or `pool´ or `event´',
-}
-Test { [[
-var int x = 0;
-data Dd with
-    data Ee;
-end
-call Ff();
-escape x;
-]],
-    parser = 'line 2 : after `with´ : expected `var´ or `vector´ or `pool´ or `event´',
-}
-
-Test { [[
-var int x = 0;
-code/tight Ff (void)->void do
-    outer.x = 1;
-end
-call Ff();
-escape x;
-]],
-    run = 1,
-}
-
-Test { [[
-var int ret = 0;
-do
-    var int x = 0;
-    code/tight Ff (void)->void do
-        outer.x = 1;
-    end
-    call Ff();
-    ret = x;
-end
-escape ret;
-]],
-    run = 1,
-}
-
-Test { [[
-native _int, _f;
-var& _int ren;
-_f(&&outer.ren);
-escape 0;
-]],
-    dcls = 'line 3 : invalid `outer´ : expected enclosing `code´ declaration',
-}
-
---<< CODE / TIGHT / OUTER
-
 Test { [[
 code/tight Rect (void) -> void
 do
@@ -46367,16 +46253,16 @@ code/tight Fx (void)->int do
 end
 var int v = call Fx();
 par/or do
-    await async/thread do
-        call Fx();
+    await async/thread (v) do
+        v = v + call Fx();
     end
 with
 end
 escape v;
 ]],
     --isr = 'line 7 : call breaks the static check for `atomic´ sections',
-    dcls = 'line 6 : abstraction inside `async´ : not implemented',
-    run = 2,
+    --dcls = 'line 6 : abstraction inside `async´ : not implemented',
+    run = 4,
     _opts = { ceu_features_thread='true' },
 }
 
@@ -46973,7 +46859,7 @@ with
 end
 escape v;
 ]],
-    dcls = 'line 25 : abstraction inside `async´ : not implemented',
+    --dcls = 'line 25 : abstraction inside `async´ : not implemented',
     --isr = 'line 7 : call breaks the static check for `atomic´ sections',
     run = 2,
     _opts = { ceu_features_isr='true' },
@@ -47358,7 +47244,7 @@ escape v;
     --isr = 'line 4 : access to "Fx" must be atomic',
     run = 2,
     _opts = { ceu_features_isr='true' },
-    dcls = 'line 25 : abstraction inside `async´ : not implemented',
+    --dcls = 'line 25 : abstraction inside `async´ : not implemented',
 }
 
 Test { [[
@@ -47452,6 +47338,170 @@ escape 1;
 }
 
 --<<< ASYNCS / ISR / ATOMIC
+
+-->>> OUTER
+
+Test { [[
+var int x;
+code/tight Ff (void)->void do
+end
+x = 1;
+escape x;
+]],
+    wrn = true,
+    --inits = 'line 1 : uninitialized variable "x" : reached `code´ (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:2)',
+}
+
+Test { [[
+var int x = 0;
+code/tight Ff (void)->void do
+    outer.y = 1;
+end
+var int y = 10;
+call Ff();
+escape x;
+]],
+    dcls = 'line 3 : internal identifier "y" is not declared',
+}
+
+Test { [[
+var int ret = 0;
+do
+    var int x = 0;
+    code/tight Ff (void)->void do
+        outer.x = 1;
+    end
+    call Ff();
+    ret = x;
+end
+call Ff();
+escape ret;
+]],
+    dcls = 'line 10 : abstraction "Ff" is not declared',
+}
+
+Test { [[
+var int x = 0;
+code/tight Ff (void)->void do
+    code/tight Gg (void)->void do end
+    outer.x = 1;
+end
+call Ff();
+escape x;
+]],
+    wrn = true,
+    --dcls = 'line 3 : invalid `code´ declaration : nesting is not allowed',
+    run = 1,
+}
+Test { [[
+var int x = 0;
+data Dd with
+    code/tight Ff (void)->void do
+        outer.x = 1;
+    end
+end
+call Ff();
+escape x;
+]],
+    parser = 'line 2 : after `with´ : expected `var´ or `vector´ or `pool´ or `event´',
+}
+Test { [[
+var int x = 0;
+data Dd with
+    data Ee;
+end
+call Ff();
+escape x;
+]],
+    parser = 'line 2 : after `with´ : expected `var´ or `vector´ or `pool´ or `event´',
+}
+
+Test { [[
+var int x = 0;
+code/tight Ff (void)->void do
+    outer.x = 1;
+end
+call Ff();
+escape x;
+]],
+    run = 1,
+}
+
+Test { [[
+var int ret = 0;
+do
+    var int x = 0;
+    code/tight Ff (void)->void do
+        outer.x = 1;
+    end
+    call Ff();
+    ret = x;
+end
+escape ret;
+]],
+    run = 1,
+}
+
+Test { [[
+native _int, _f;
+var& _int ren;
+_f(&&outer.ren);
+escape 0;
+]],
+    dcls = 'line 3 : invalid `outer´ : expected enclosing `code´ declaration',
+}
+
+Test { [[
+code/await Ff (void) -> int do
+    var int xxx = 10;
+    code/await Gg (void) -> int do
+        escape xxx;
+    end
+    var int yyy = await Gg();
+    escape yyy;
+end
+var int zzz = await Ff();
+escape zzz;
+]],
+    dcls = 'line 4 : internal identifier "xxx" is not declared',
+}
+
+Test { [[
+code/await Ff (void) -> int do
+    var int xxx = 10;
+    code/await Gg (void) -> int do
+        escape outer.xxx;
+    end
+    var int yyy = await Gg();
+    escape yyy;
+end
+var int zzz = await Ff();
+escape zzz;
+]],
+    run = 10,
+}
+
+Test { [[
+code/await Ff (void) -> int do
+    var int xxx = 10;
+    code/await Gg (void) -> int do
+        var int aaa = 10;
+        code/tight Hh (void) -> int do
+            escape outer.xxx + outer.aaa;
+        end
+        escape call Hh();
+    end
+    var int yyy = await Gg();
+    escape yyy;
+end
+var int zzz = await Ff();
+escape zzz;
+]],
+    run = 20,
+}
+
+--<<< OUTER
 
 -->>> CEU_FEATURES_*
 
