@@ -183,6 +183,7 @@ CODES.F = {
     ROOT__PRE = function (me)
         CASE(me, me.lbl_in)
         LINE(me, [[
+_ceu_mem->out_mem  = NULL;
 _ceu_mem->up_mem   = NULL;
 #ifdef CEU_FEATURES_LUA
 _ceu_mem->lua      = NULL;
@@ -458,10 +459,26 @@ CLEAR(me) -- TODO-NOW
 {
     tceu_code_args_]]..ID_abs.dcl.id_..[[ __ceu_ps = ]]..V(Abs_Cons,{mid=mid})..[[;
 
-    ]]..mem..[[->pak    = ]]..pak..[[;
-    ]]..mem..[[->up_mem = ]]..((pak=='NULL' and '_ceu_mem')   or (pak..'->up_mem'))..[[;
-    ]]..mem..[[->up_trl = ]]..((pak=='NULL' and me.trails[1]) or (pak..'->up_trl'))..[[;
+    ]]..mem..[[->pak     = ]]..pak..[[;
+    ]]..mem..[[->up_mem  = ]]..((pak=='NULL' and '_ceu_mem')   or (pak..'->up_mem'))..[[;
+    ]]..mem..[[->up_trl  = ]]..((pak=='NULL' and me.trails[1]) or (pak..'->up_trl'))..[[;
 ]]
+        if pak == 'NULL' then
+            local ups do
+                local n = 0
+                local c1 = AST.par(ID_abs.dcl, 'Code')
+                local c2 = AST.par(me, 'Code')
+                while c1 ~= c2 do
+                    n = n + 1
+                    c2 = AST.par(c2, 'Code')
+                end
+                ups = '_ceu_mem'..string.rep('->up_mem', n)
+            end
+
+            ret = ret .. [[
+    ]]..mem..[[->out_mem = ]]..ups..[[;
+]]
+        end
         if CEU.opts.ceu_features_lua then
             ret = ret .. [[
     ]]..mem..[[->lua    = ]]..LUA(me)..[[;

@@ -14,14 +14,17 @@ function CUR (field, ctx)
             if Isr and Code then
                 data = '(*((tceu_code_mem_'..Code.id_..'*)_ceu_mem))'
             else
-                local mem = '_ceu_mem'
+                local mem = '_ceu_mem->out_mem'
                 if Code then
                     assert(ctx.outer > 0)
                     local n = ctx.outer
-                    while n > 0 do
+                    while true do
                         n = n - 1
-                        mem = mem..'->up_mem'
                         Code = AST.par(Code, 'Code')
+                        if n == 0 then
+                            break
+                        end
+                        mem = mem..'->up_mem'
                     end
                 end
                 if Code then
@@ -116,13 +119,25 @@ F = {
         local ID_abs, _ = unpack(Abs_Cons)
         local _,mods,_,Code_Pars = unpack(ID_abs.dcl)
         assert(mods.tight)
+
+        local ups do
+            local n = 0
+            local c1 = AST.par(ID_abs.dcl, 'Code')
+            local c2 = AST.par(me, 'Code')
+            while c1 ~= c2 do
+                n = n + 1
+                c2 = AST.par(c2, 'Code')
+            end
+            ups = '_ceu_mem'..string.rep('->up_mem', n)
+        end
+
         if CEU.opts.ceu_features_lua then
             return [[
-CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..[[, _ceu_mem, ]]..LUA(me)..[[)
+CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..ups..',_ceu_mem,'..LUA(me)..[[)
 ]]
         else
             return [[
-CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..[[, _ceu_mem)
+CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..ups..[[, _ceu_mem)
 ]]
         end
     end,

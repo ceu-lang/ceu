@@ -47614,6 +47614,115 @@ escape call Ff(10);
     run = 20,
 }
 
+Test { [[
+var int x = 10;
+code/tight Gg (void) -> int do
+    escape outer.x;
+end
+escape call Gg();
+]],
+    run = 10,
+}
+Test { [[
+code/tight Ff (void) -> int do
+    var int x = 10;
+    code/tight Gg (void) -> int do
+        escape outer.x;
+    end
+    escape call Gg();
+end
+escape call Ff();
+]],
+    run = 10,
+}
+Test { [[
+code/tight Ff (void) -> int do
+    var int x = 10;
+    code/tight Gg (void) -> int do
+        escape outer.x;
+    end
+    code/tight Hh (void) -> int do
+        escape call Gg();
+    end
+    escape call Hh();
+end
+escape call Ff();
+]],
+    run = 10,
+}
+Test { [[
+code/tight Ff (void) -> int do
+    var int x = 10;
+    code/tight Gg (void) -> int do
+        escape outer.x;
+    end
+    code/tight Hh (void) -> int do
+        code/tight Ii (void) -> int do
+            escape call Gg();
+        end
+        escape call Ii();
+    end
+    escape call Hh();
+end
+escape call Ff();
+]],
+    run = 10,
+}
+Test { [[
+    var int x = 10;
+    code/tight Gg (void) -> int do
+        escape outer.x;
+    end
+    code/tight Hh (void) -> int do
+        code/tight Ii (void) -> int do
+            escape call Gg();
+        end
+        escape call Ii();
+    end
+    escape call Hh();
+]],
+    run = 10,
+}
+Test { [[
+code/await Ff (void) -> int do
+    var int x = 10;
+    code/await Gg (void) -> int do
+        escape outer.x;
+    end
+    code/await Hh (void) -> int do
+        code/await Ii (void) -> int do
+            var int a = await Gg();
+            escape a;
+        end
+        var int b = await Ii();
+        escape b;
+    end
+    var int c = await Hh();
+    escape c;
+end
+var int d = await Ff();
+escape d;
+]],
+    run = 10,
+}
+Test { [[
+    var int x = 10;
+    code/await Gg (void) -> int do
+        escape outer.x;
+    end
+    code/await Hh (void) -> int do
+        code/await Ii (void) -> int do
+            var int c = await Gg();
+            escape c;
+        end
+        var int d = await Ii();
+        escape d;
+    end
+    var int e = await Hh();
+    escape e;
+]],
+    run = 10,
+}
 --<<< OUTER
 
 -->>> CEU_FEATURES_*

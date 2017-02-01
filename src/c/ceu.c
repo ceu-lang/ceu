@@ -96,6 +96,7 @@ typedef struct tceu_trl {
 struct tceu_pool_pak;
 typedef struct tceu_code_mem {
     struct tceu_pool_pak* pak;
+    struct tceu_code_mem* out_mem;
     struct tceu_code_mem* up_mem;
     tceu_ntrl  up_trl;
 #ifdef CEU_FEATURES_LUA
