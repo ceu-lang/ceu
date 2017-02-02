@@ -103,9 +103,13 @@ escape rr;
     run = { ['~>2s']=101 },
 }
 
+--
     vector[] byte right1 = [] .. "pingus/player"
-                           .. (call Pingu_Get_Owner_Str(&pingu) as _char&&)
+                           .. (call Pingu_Get_Owner_Str(&pingu) as _char&&) // requires as _char&&
                            .. "/walker/right";
+
+--
+            if (call Get_Velocity().y > 5.0) then
 
 do return end -- OK
 --]=====]
@@ -47723,6 +47727,60 @@ Test { [[
 ]],
     run = 10,
 }
+
+Test { [[
+code/tight Pingus (void) -> int do
+    var int x = 10;
+    code/tight GetVelocity (void) -> int do
+        escape outer.x;
+    end
+    escape call GetVelocity();
+end
+escape call Pingus();
+]],
+    run = 10,
+}
+Test { [[
+code/tight Pingus (void) -> int do
+    var int x = 10;
+    code/tight GetVelocity (void) -> int do
+        escape outer.x;
+    end
+    code/tight LinearMover (void) -> int do
+        escape call GetVelocity();
+    end
+    code/tight Faller (void) -> int do
+        escape call LinearMover();
+    end
+    escape call Faller();
+end
+escape call Pingus();
+]],
+    run = 10,
+}
+Test { [[
+code/await Pingus (void) -> int do
+    var int xxx = 10;
+    code/await GetVelocity (void) -> int do
+        escape outer.xxx;
+    end
+    code/await LinearMover (void) -> int do
+        var int x = await GetVelocity();
+        escape x;
+    end
+    code/await Faller (void) -> int do
+        var int x = await LinearMover();
+        escape x;
+    end
+    var int x = await Faller();
+    escape x;
+end
+var int x = await Pingus();
+escape x;
+]],
+    run = 10,
+}
+
 --<<< OUTER
 
 -->>> CEU_FEATURES_*

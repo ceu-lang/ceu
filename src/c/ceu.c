@@ -96,9 +96,9 @@ typedef struct tceu_trl {
 struct tceu_pool_pak;
 typedef struct tceu_code_mem {
     struct tceu_pool_pak* pak;
-    struct tceu_code_mem* out_mem;
     struct tceu_code_mem* up_mem;
     tceu_ntrl  up_trl;
+    u8         depth;
 #ifdef CEU_FEATURES_LUA
     lua_State* lua;
 #endif
@@ -277,6 +277,11 @@ typedef struct tceu_stk {
     struct tceu_stk* down;
     tceu_evt_range   range;
 } tceu_stk;
+
+static tceu_code_mem* ceu_outer (tceu_code_mem* mem, u8 n) {
+    for (; mem->depth!=n; mem=mem->up_mem);
+    return mem;
+}
 
 static int ceu_mem_is_child (tceu_code_mem* me, tceu_code_mem* par_mem,
                              tceu_ntrl par_trl1, tceu_ntrl par_trl2)

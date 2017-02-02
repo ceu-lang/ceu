@@ -14,21 +14,9 @@ function CUR (field, ctx)
             if Isr and Code then
                 data = '(*((tceu_code_mem_'..Code.id_..'*)_ceu_mem))'
             else
-                local mem = '_ceu_mem->out_mem'
-                if Code then
-                    assert(ctx.outer > 0)
-                    local n = ctx.outer
-                    while true do
-                        n = n - 1
-                        Code = AST.par(Code, 'Code')
-                        if n == 0 then
-                            break
-                        end
-                        mem = mem..'->up_mem'
-                    end
-                end
-                if Code then
-                    data = '(*(tceu_code_mem_'..Code.id_..'*)('..mem..'))'
+                if ctx.outer.depth then
+                    local mem = 'ceu_outer(_ceu_mem, '..(ctx.outer.depth or 0)..')'
+                    data = '(*(tceu_code_mem_'..ctx.outer.id_..'*)('..mem..'))'
                 else
                     data = 'CEU_APP.root'
                 end
@@ -120,24 +108,13 @@ F = {
         local _,mods,_,Code_Pars = unpack(ID_abs.dcl)
         assert(mods.tight)
 
-        local ups do
-            local n = 0
-            local c1 = AST.par(ID_abs.dcl, 'Code')
-            local c2 = AST.par(me, 'Code')
-            while c1 ~= c2 do
-                n = n + 1
-                c2 = AST.par(c2, 'Code')
-            end
-            ups = '_ceu_mem'..string.rep('->up_mem', n)
-        end
-
         if CEU.opts.ceu_features_lua then
             return [[
-CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..ups..',_ceu_mem,'..LUA(me)..[[)
+CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..',_ceu_mem,'..LUA(me)..[[)
 ]]
         else
             return [[
-CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..ups..[[, _ceu_mem)
+CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..[[, _ceu_mem)
 ]]
         end
     end,
@@ -372,7 +349,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..ups..[[, _ceu_mem)
                 return '((tceu_evt){ '..me.info.dcl.id_..', {&'..V(e)..'} })'
             end
         elseif e.tag == 'Outer' then
-            return F.ID_int(me,{outer=e.__dcls_n})
+            return F.ID_int(me,{outer=e.__dcls_outer or AST.root})
         else
             local ptr = ''
             if not TYPES.is_nat(e.info.tp) then

@@ -287,7 +287,6 @@ usize params = offsetof(tceu_code_mem_]]..me.id_..[[,_params);
             me.mems.wrapper = me.mems.wrapper .. [[
 static ]]..TYPES.toc(assert(Type))..[[ /* space */
 CEU_CODE_]]..me.id_..[[ (tceu_code_args_]]..me.id_..[[ ps,
-                         tceu_code_mem* out_mem,
                          tceu_code_mem* up_mem
 #ifdef CEU_FEATURES_LUA
                         , lua_State* lua
@@ -295,8 +294,8 @@ CEU_CODE_]]..me.id_..[[ (tceu_code_args_]]..me.id_..[[ ps,
                        )
 {
     tceu_code_mem_]]..me.id_..[[ mem;
-    mem._mem.out_mem = out_mem;
-    mem._mem.up_mem  = up_mem;
+    mem._mem.up_mem = up_mem;
+    mem._mem.depth  = ]]..me.depth..[[;
 #ifdef CEU_FEATURES_LUA
     mem._mem.lua = lua;
 #endif

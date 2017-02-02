@@ -46,7 +46,6 @@ end
 
 function DCLS.get (blk, id, can_cross)
     AST.asr(blk, 'Block')
-    local n = 1             -- how many "code/*" crosses?
     for blk in iter_boundary(blk,id,can_cross) do
         local dcl = blk.dcls[id]
         if dcl then
@@ -54,10 +53,7 @@ function DCLS.get (blk, id, can_cross)
             if not no then
                 dcl.is_used = true
             end
-            return dcl,n
-        end
-        if AST.get(blk,1,'Code') then
-            n = n + 1
+            return dcl, AST.par(blk,'Code')
         end
     end
     return nil
@@ -541,6 +537,13 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         --ASR(not AST.par(me,'Code'), me,
             --'invalid `code´ declaration : nesting is not allowed')
 
+        me.depth = 0
+        local par = AST.par(me, 'Code')
+        while par do
+            par = AST.par(par, 'Code')
+            me.depth = me.depth + 1
+        end
+
         local blk = AST.par(me, 'Block')
 
         if (not me.is_dyn_base) and mods1.dynamic and me.is_impl then
@@ -801,12 +804,12 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
     ['Exp_.'] = function (me)
         local _, e, member = unpack(me)
         if e.tag == 'Outer' then
-            local n
+            local code
             local out = AST.par(me,'_Async_Isr') or ASR(AST.par(me,'Code'), me,
                             'invalid `outer´ : expected enclosing `code´ declaration')
-            me.dcl,n = DCLS.asr(me, AST.par(out,'Block'),
+            me.dcl,code = DCLS.asr(me, AST.par(out,'Block'),
                                 member, true, 'internal identifier')
-            e.__dcls_n = n  -- how many "code" crosses?
+            e.__dcls_outer = code  -- how many "code" crosses?
         end
     end,
 
