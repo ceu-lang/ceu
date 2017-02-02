@@ -111,8 +111,33 @@ escape rr;
 --
             if (call Get_Velocity().y > 5.0) then
 
-do return end -- OK
 --]=====]
+Test { [[
+data Dd;
+data Dd.Aa;
+
+code/await Ff (var& Dd vis) -> FOREVER do
+    await FOREVER;
+end
+
+pool[] Ff fs;
+
+code/await Gg (void) -> FOREVER do
+    var int x1 = 0;
+    var int x2 = 0;
+    var int x3 = 0;
+    var int x4 = 0;
+    await FOREVER;
+end
+
+spawn Gg() in fs;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+--do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested

@@ -515,7 +515,7 @@ ceu_stack_clear(_ceu_stk, _ceu_mem,
     Abs_Spawn_Pool = function (me)
         local _, Abs_Cons, _, _, pool = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
-        local alias,tp,_,dim = unpack(pool.info.dcl)
+        local alias,_,_,dim = unpack(pool.info.dcl)
 
         local code = CODES.F.__abs(me, '__ceu_new_mem', '(&'..V(pool)..')')
         LINE(me, [[
@@ -528,7 +528,7 @@ ceu_stack_clear(_ceu_stk, _ceu_mem,
         __ceu_new = (tceu_code_mem_dyn*) ceu_callback_ptr_num(
                                             CEU_CALLBACK_REALLOC,
                                             NULL,
-                                            sizeof(tceu_code_mem_dyn) + sizeof(]]..TYPES.toc(tp)..[[)
+                                            sizeof(tceu_code_mem_dyn) + sizeof(tceu_code_mem_]]..ID_abs.dcl.id_..[[)
                                          ).value.ptr;
     } else {
         __ceu_new = (tceu_code_mem_dyn*) ceu_pool_alloc(&]]..V(pool)..[[.pool);
@@ -539,7 +539,7 @@ ceu_stack_clear(_ceu_stk, _ceu_mem,
     __ceu_new = (tceu_code_mem_dyn*) ceu_callback_ptr_num(
                                         CEU_CALLBACK_REALLOC,
                                         NULL,
-                                        sizeof(tceu_code_mem_dyn) + sizeof(]]..TYPES.toc(tp)..[[)
+                                        sizeof(tceu_code_mem_dyn) + sizeof(tceu_code_mem_]]..ID_abs.dcl.id_..[[)
                                      ).value.ptr;
 ]])
         else
