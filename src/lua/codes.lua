@@ -335,7 +335,7 @@ if (0)
                 -- HACK_4
                 LINE(me, [[
 _ceu_mem->_trails[]]..ID_int.dcl.trails[1]..[[].evt.id = CEU_INPUT__NONE;
-]]..V(ID_int.dcl)..[[.range.mem = (void*) &_ceu_mem->_trails[]]..ID_int.dcl.trails[1]..[[];
+]]..V(ID_int.dcl)..[[.range.mem = (tceu_code_mem*) &_ceu_mem->_trails[]]..ID_int.dcl.trails[1]..[[];
 ]])
             end
         end
@@ -633,12 +633,15 @@ if (0) {
             for i, arg in ipairs(list) do
                 if arg.tag ~= 'ID_any' then
                     local par = mids[i]
-                    ps[#ps+1] = '._'..par.is_mid_idx..' = &'..V(arg,{is_bind=true})
+                    ps[#ps+1] = '__ceu_ps._'..par.is_mid_idx..' = &'..V(arg,{is_bind=true})..';\n'
                 end
             end
             LINE(me, [[
-        tceu_code_args_]]..Code.id_..[[ __ceu_ps = { ]]..table.concat(ps,',').. [[};
-        CEU_CODE_WATCH_]]..Code.id_..[[(]]..cur..[[->mem, &__ceu_ps);
+        {
+            tceu_code_args_]]..Code.id_..[[ __ceu_ps;
+            ]]..table.concat(ps)..[[;
+            CEU_CODE_WATCH_]]..Code.id_..[[(]]..cur..[[->mem, &__ceu_ps);
+        }
 ]])
         end
 

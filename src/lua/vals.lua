@@ -421,7 +421,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..[[, _ceu_mem)
                 if TYPES.is_nat(tp) then
                     return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e,{is_bind=true})..', __FILE__, __LINE__))'
                 else
-                    return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e)..'.alias, __FILE__, __LINE__))'
+                    return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'(('..TYPES.toc(e.info.tp)..'*)'..V(e)..'.alias, __FILE__, __LINE__))'
                 end
             elseif e.info.dcl.tag == 'Evt' then
                 return '(*CEU_OPTION_EVT('..V(e)..'.alias, __FILE__, __LINE__))'
