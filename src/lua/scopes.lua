@@ -38,7 +38,7 @@ F = {
 
         local fr_ptr = TYPES.check(fr.info.tp,'&&')
         local to_ptr = TYPES.check(TYPES.pop(to.info.tp,'?'),'&&')
-        local to_nat = TYPES.is_nat(TYPES.pop(to.info.tp,'?'))
+        local to_nat = TYPES.is_nat_not_plain(TYPES.pop(to.info.tp,'?'))
 
         -- NO:
         --  d1; do d2=d1 end;   // d1>d2 and d1-has-pointers

@@ -111,29 +111,73 @@ escape rr;
 --
             if (call Get_Velocity().y > 5.0) then
 
+--
+    var IPingu pingu = val IPingu(rect_, _, _);
+    pingu.direction = do
+        if direction_? then
+            escape direction_!;
+        else
+            escape {LEFT};
+        end
+    end;
+
 --]=====]
 Test { [[
-data Dd;
-data Dd.Aa;
+code/await Ff (var int x) -> FOREVER do
+    code/tight Get_X (void) -> int do
+        escape outer.x;
+    end
+    await FOREVER;
+end
+pool[] Ff fs;
+call Get_X() in fs;
+escape 0;
+]],
+    todo = 'error',
+}
 
-code/await Ff (var& Dd vis) -> FOREVER do
+Test { [[
+code/await Ff (var int x) -> FOREVER do
+    code/tight Get_X (void) -> int do
+        escape outer.x;
+    end
     await FOREVER;
 end
 
 pool[] Ff fs;
+spawn Ff(1) in fs;
+spawn Ff(2) in fs;
 
-code/await Gg (void) -> FOREVER do
-    var int x1 = 0;
-    var int x2 = 0;
-    var int x3 = 0;
-    var int x4 = 0;
-    await FOREVER;
+var int ret = 0;
+loop in fs do
+    ret = ret + (call Get_X() in fs);
 end
 
-spawn Gg() in fs;
-escape 1;
+escape ret;
 ]],
-    wrn = true,
+    wrn = true,     -- TODO
+    run = 3,
+}
+
+Test { [[
+data Dd with
+    var int x;
+end
+var Dd d = val Dd(10);
+escape d.x;
+]],
+    run = 10,
+}
+
+Test { [[
+native/plain _xxx;
+native/pre do
+    typedef int xxx;
+    ##define f(x) x
+end
+var _xxx x = {f}(1);
+escape x;
+]],
     run = 1,
 }
 
@@ -40732,6 +40776,31 @@ end
 escape ret + _V;
 ]],
     run = 60,
+}
+
+Test { [[
+data Dd;
+data Dd.Aa;
+
+code/await Ff (var& Dd vis) -> FOREVER do
+    await FOREVER;
+end
+
+pool[] Ff fs;
+
+code/await Gg (void) -> FOREVER do
+    var int x1 = 0;
+    var int x2 = 0;
+    var int x3 = 0;
+    var int x4 = 0;
+    await FOREVER;
+end
+
+spawn Gg() in fs;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
 }
 
 -->> POOL/SPAWN/OPTION
