@@ -655,6 +655,13 @@ error'TODO'
         end
     end,
 
+    _Abs_Call__PRE = function (me)
+        me.tag = 'Abs_Call'
+        local _, abs, pool = unpack(me)
+        AST.set(me, 2, pool)
+        AST.set(me, 3, abs)
+    end,
+
 -------------------------------------------------------------------------------
 
     _Lua = function (me)

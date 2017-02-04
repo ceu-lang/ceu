@@ -784,7 +784,16 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
     ID_abs = function (me)
         local id = unpack(me)
-        me.dcl = DCLS.asr(me, AST.par(me,'Block'), id, true, 'abstraction')
+        local blk do
+            local pool = AST.get(me,2,'Abs_Call', 2,'Loc')
+            if pool then
+                local Code = AST.asr(pool.dcl,'Pool', 2,'Type', 1,'ID_abs').dcl
+                blk = AST.asr(Code,'Code', 4,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 1,'Do', 2,'Block')
+            else
+                blk = AST.par(me,'Block')
+            end
+        end
+        me.dcl = DCLS.asr(me, blk, id, true, 'abstraction')
     end,
 
     ID_int = function (me)
@@ -801,15 +810,26 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         me.dcl = DCLS.asr(me, blk, id, false, 'internal identifier')
     end,
 
+    Loc = function (me)
+        local e = unpack(me)
+        me.dcl = e.dcl
+    end,
+
     ['Exp_.'] = function (me)
         local _, e, member = unpack(me)
         if e.tag == 'Outer' then
             local code
             local out = AST.par(me,'_Async_Isr') or ASR(AST.par(me,'Code'), me,
                             'invalid `outer´ : expected enclosing `code´ declaration')
-            me.dcl,code = DCLS.asr(me, AST.par(out,'Block'),
-                                member, true, 'internal identifier')
+            me.dcl,code = DCLS.asr(me, AST.par(out,'Block'), member, true, 'internal identifier')
             e.__dcls_outer = code  -- how many "code" crosses?
+        elseif e.dcl and e.dcl.tag == 'Var' then
+            local abs = AST.get(e.dcl,'Var', 2,'Type', 1,'ID_abs')
+            if abs then
+                me.dcl = DCLS.asr(me, AST.asr(abs.dcl,'Data',3,'Block'), member, false, 'field')
+            else
+                AST.asr(e.dcl,'Var', 2,'Type', 1,'ID_nat')
+            end
         end
     end,
 

@@ -103,18 +103,32 @@ F = {
     end,
 
     Abs_Call = function (me)
-        local _, Abs_Cons = unpack(me)
+        local _, pool, Abs_Cons = unpack(me)
         local ID_abs, _ = unpack(Abs_Cons)
         local _,mods,_,Code_Pars = unpack(ID_abs.dcl)
         assert(mods.tight)
 
+        local mem do
+            if pool then
+                for loop in AST.iter'Loop_Pool' do
+                    local _,_,pool2 = unpack(loop)
+                    if AST.is_equal(pool,pool2) then
+                        mem = CUR('__cur_'..loop.n..'->mem')
+                    end
+                end
+            else
+                mem = '_ceu_mem'
+            end
+        end
+        assert(mem)
+
         if CEU.opts.ceu_features_lua then
             return [[
-CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..',_ceu_mem,'..LUA(me)..[[)
+CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..','..LUA(me)..[[)
 ]]
         else
             return [[
-CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..[[, _ceu_mem)
+CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
 ]]
         end
     end,

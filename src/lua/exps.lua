@@ -163,7 +163,7 @@ F = {
     end,
 
     Abs_Call = function (me)
-        local ID_abs = AST.asr(me,'', 2,'Abs_Cons', 1,'ID_abs')
+        local ID_abs = AST.asr(me,'', 3,'Abs_Cons', 1,'ID_abs')
         local _,mods_dcl  = unpack(ID_abs.dcl)
         local mods_call = unpack(me)
 

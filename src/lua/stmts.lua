@@ -152,7 +152,7 @@ STMTS.F = {
                 ASR(TYPES.is_nat(to.info.tp), me,
                     'invalid binding : expected `native´ type')
             else
-                local ID_abs = AST.asr(fr,'', 2,'Abs_Call', 2,'Abs_Cons',
+                local ID_abs = AST.asr(fr,'', 2,'Abs_Call', 3,'Abs_Cons',
                                               1,'ID_abs')
                 local tp = AST.asr(ID_abs.dcl,'Code', 4,'Block', 1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
                 EXPS.check_tp(me, to.info.tp, tp, 'invalid binding', true)
