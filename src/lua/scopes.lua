@@ -55,7 +55,7 @@ F = {
 
         if to_ptr or fr_ptr or fr_data_ptr then
             local fr_nat = TYPES.is_nat(fr.info.tp)
-            assert((to_ptr or to_nat) and (fr_ptr or fr_nat) or fr_data_ptr, 'bug found')
+            --assert((to_ptr or to_nat) and (fr_ptr or fr_nat) or fr_data_ptr, 'bug found')
 
             local to_blk, fr_blk
             local ok do

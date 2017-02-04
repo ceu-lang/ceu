@@ -638,7 +638,7 @@ if (0) {
             end
             LINE(me, [[
         {
-            tceu_code_args_]]..Code.id_..[[ __ceu_ps;
+            tceu_code_args_]]..Code.id_..[[ __ceu_ps = {};
             ]]..table.concat(ps)..[[;
             CEU_CODE_WATCH_]]..Code.id_..[[(]]..cur..[[->mem, &__ceu_ps);
         }

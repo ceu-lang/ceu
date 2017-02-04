@@ -122,64 +122,6 @@ escape rr;
     end;
 
 --]=====]
-Test { [[
-code/await Ff (var int x) -> FOREVER do
-    code/tight Get_X (void) -> int do
-        escape outer.x;
-    end
-    await FOREVER;
-end
-pool[] Ff fs;
-call Get_X() in fs;
-escape 0;
-]],
-    todo = 'error',
-}
-
-Test { [[
-code/await Ff (var int x) -> FOREVER do
-    code/tight Get_X (void) -> int do
-        escape outer.x;
-    end
-    await FOREVER;
-end
-
-pool[] Ff fs;
-spawn Ff(1) in fs;
-spawn Ff(2) in fs;
-
-var int ret = 0;
-loop in fs do
-    ret = ret + (call Get_X() in fs);
-end
-
-escape ret;
-]],
-    wrn = true,     -- TODO
-    run = 3,
-}
-
-Test { [[
-data Dd with
-    var int x;
-end
-var Dd d = val Dd(10);
-escape d.x;
-]],
-    run = 10,
-}
-
-Test { [[
-native/plain _xxx;
-native/pre do
-    typedef int xxx;
-    ##define f(x) x
-end
-var _xxx x = {f}(1);
-escape x;
-]],
-    run = 1,
-}
 
 --do return end -- OK
 
@@ -3141,6 +3083,29 @@ end;
 escape v;
 ]],
     wrn = true,
+    run = 1,
+}
+
+Test { [[
+native/plain _char_const_ptr;
+native/pre do
+    typedef char* char_const_ptr;
+end
+var _char_const_ptr file = "xxx";
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native/plain _xxx;
+native/pre do
+    typedef int xxx;
+    ##define f(x) x
+end
+var _xxx x = {f}(1);
+escape x;
+]],
     run = 1,
 }
 
@@ -47873,6 +47838,29 @@ var int x = await Pingus();
 escape x;
 ]],
     run = 10,
+}
+
+Test { [[
+code/await Ff (var int x) -> FOREVER do
+    code/tight Get_X (void) -> int do
+        escape outer.x;
+    end
+    await FOREVER;
+end
+
+pool[] Ff fs;
+spawn Ff(1) in fs;
+spawn Ff(2) in fs;
+
+var int ret = 0;
+loop in fs do
+    ret = ret + (call Get_X() in fs);
+end
+
+escape ret;
+]],
+    wrn = true,     -- TODO
+    run = 3,
 }
 
 --<<< OUTER
