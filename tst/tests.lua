@@ -47969,6 +47969,38 @@ escape ret;
     run = 3,
 }
 
+Test { [[
+spawn () do
+    var bool v = true;
+    code/tight Is_At (var int x, var int y) -> bool do
+        escape outer.v;
+    end
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+var int a = 1;
+par/or do
+with
+    var int a = 1;
+    code/await Ff (void) -> FOREVER do
+        code/tight Gg (void) -> void do
+            var int b = outer.a;
+        end
+        await FOREVER;
+    end
+    spawn Ff();
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
 --<<< OUTER
 
 -->>> CEU_FEATURES_*

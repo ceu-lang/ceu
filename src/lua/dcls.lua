@@ -50,11 +50,19 @@ local __do = function (me)
 end
 
 function DCLS.outer (me)
-    return AST.par(me,'_Async_Isr') or
-           AST.par(me,'Async_Isr')  or
-           AST.iter(__do)()         or
-           AST.par(me,'Code')       or
-           ASR(false, me, 'invalid `outer´')
+    local async = AST.par(me,'_Async_Isr') or AST.par(me,'Async_Isr')
+    local do_   = AST.iter(__do)()
+    local code  = AST.par(me,'Code')
+    ASR(async or do_ or code, me, 'invalid `outer´')
+
+    local ret = async
+    if do_ and ((not ret) or AST.depth(do_)>AST.depth(ret)) then
+        ret = do_
+    end
+    if code and ((not ret) or AST.depth(code)>AST.depth(ret)) then
+        ret = code
+    end
+    return ret
 end
 
 function DCLS.get (blk, id, can_cross)
