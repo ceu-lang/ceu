@@ -46,7 +46,7 @@ visible (a,b);
     ...
 end
 
---do return end -- OK
+do return end -- OK
 --]=====]
 
 ----------------------------------------------------------------------------
@@ -2769,6 +2769,17 @@ do/_
 end
 ]],
     run = { ['~>10s']=10 },
+}
+
+Test { [[
+spawn () do
+    code/tight Ff (void) -> void do end
+    await FOREVER;
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
 }
 
 --<< DO / VISIBLE
@@ -40976,7 +40987,7 @@ escape 10;
 Test { [[
 spawn i;
 ]],
-    parser = 'line 1 : after `spawn´ : expected `do´ or `async/isr´ or abstraction identifier',
+    parser = 'line 1 : after `spawn´ : expected `(´ or `do´ or `async/isr´ or abstraction identifier',
 }
 
 Test { [[
