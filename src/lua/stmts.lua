@@ -127,6 +127,10 @@ STMTS.F = {
         INFO.asr_tag(to, {'Var','Vec','Pool','Evt'}, 'invalid binding')
         INFO.asr_tag(fr, {'Alias'}, 'invalid binding')
 
+        if fr[2].info.tag == 'Val' then
+            ASR(fr[2].tag == 'Abs_Call', me, 'invalid binding : expected native type')
+        end
+
         -- NO: var int x = &...
         -- NO: d.x = &...
         -- NO: x! = &...

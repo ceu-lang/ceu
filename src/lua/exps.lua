@@ -261,6 +261,9 @@ error'TODO: remove below'
             else
                 -- ctx
                 INFO.asr_tag(val, {'Alias','Val','Nat','Var'}, err_str..' : argument #'..i)
+                if val.info.tag == 'Alias' then
+                    INFO.asr_tag(val[2], {'Alias','Var','Vec','Pool','Evt'}, 'invalid binding')
+                end
 
                 -- tp
                 if var_is_alias then

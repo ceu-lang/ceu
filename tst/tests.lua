@@ -9,100 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
-Test { [[
-native _f, _int;
-var&? _int v1 = &_f() finalize (v1) with end;
-var&? _int v2 = &{f()} finalize (v2) with end;
-escape v1! + v2!;
-]],
-    run = 2,
-}
-
-Test { [[
-data Dd with
-    var int x = 10;
-end
-code/tight Ff (void) -> Dd do
-    var Dd d = _;
-    escape d;
-end
-escape call Ff().x;
-]],
-    run = 10,
-}
-
-Test { [[
-code/tight Ff (var& int x) -> int do
-    escape x + 1;
-end
-escape call Ff(&1);
-]],
-    run = 1,
-}
-
-Test { [[
-data Dd with
-    var int x;
-end
-code/await Ff (var& Dd x) -> int do
-    escape x.x + 1;
-end
-escape await Ff(&Dd(1));
-]],
-    run = 1,
-}
-
-Test { [[
-code/await Ff (void) -> FOREVER do
-    await FOREVER;
-end
-
-pool[] Ff fs;
-
-var int i;
-loop i in [1->10] do
-    spawn Ff() in fs;
-end
-
-var int tot = 0;
-loop in fs do
-    tot = tot + 1;
-end
-
-escape tot;
-]],
-    run = 10,
-}
-
-Test { [[
-var int x = 1;
-escape *(&&x);
-]],
-    parser = 'line 2 : after `(´ : expected location',
-}
-
--- XXX-01
-Test { [[
-data Object with
-  var int ccc = 101;
-end
-code/await Show(var Object obj) -> (var&? int rrr) -> int do
-    var int aaa = obj.ccc;
-    rrr = &aaa;
-    await 1s;
-    escape 1;
-end
-
-var&? int r;
-spawn Show(Object(_)) -> (&r);
-var& int rr = &r!;                  // TODO: should not allow this
-await 2s;
-escape rr;
-]],
-    --wrn = true,
-    run = { ['~>2s']=101 },
-}
-
 --
     vector[] byte right1 = [] .. "pingus/player"
                            .. (call Pingu_Get_Owner_Str(&pingu) as _char&&) // requires as _char&&
@@ -121,9 +27,27 @@ escape rr;
         end
     end;
 
---]=====]
+do/_
 
---do return end -- OK
+block/a do
+
+block (a,b) do
+
+do (a, b)
+
+spawn (a,b) do
+end
+
+end
+
+visible (a,b);
+
+ do
+    ...
+end
+
+do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -3095,6 +3019,13 @@ var _char_const_ptr file = "xxx";
 escape 1;
 ]],
     run = 1,
+}
+
+Test { [[
+native/plain _u8;
+var _u8&& cbuffer = {1}.get_data();
+]],
+    scopes = 'line 2 : invalid assignment : expected binding for call"',
 }
 
 Test { [[
@@ -18475,6 +18406,15 @@ escape v1! + v2!;
 }
 
 Test { [[
+native _f, _int;
+var&? _int v1 = &_f() finalize (v1) with end;
+var&? _int v2 = &{f()} finalize (v2) with end;
+escape v1! + v2!;
+]],
+    fins = 'line 3 : invalid operand to `&´ : expected native call',
+}
+
+Test { [[
 native _V, _f;
 native/pos do
     int V = 0;
@@ -19949,6 +19889,56 @@ escape (x? as int) + 1;
 }
 
 --<< ALIAS / ESCAPE / DO
+
+-- TODO: support aliases to constants
+
+Test { [[
+data Dd with
+    var int x = 10;
+end
+code/tight Ff (void) -> Dd do
+    var Dd d = _;
+    escape d;
+end
+escape call Ff().x;
+]],
+    run = 10,
+    todo = 'support indexing calls',
+}
+
+Test { [[
+var& int x = &1;
+escape x;
+]],
+    stmts = 'line 1 : invalid binding : unexpected context for value "1"',
+    --run = 1,
+    --todo = 'support aliases to constants',
+}
+
+Test { [[
+code/tight Ff (var& int x) -> int do
+    escape x + 1;
+end
+escape call Ff(&1);
+]],
+    run = 1,
+    exps = 'line 4 : invalid binding : unexpected context for value "1"',
+    --todo = 'support aliases to constants',
+}
+
+Test { [[
+data Dd with
+    var int x;
+end
+code/await Ff (var& Dd x) -> int do
+    escape x.x + 1;
+end
+escape await Ff(&Dd(1));
+]],
+    parser = 'line 7 : after `escape´ : expected expression or `;´',
+    --todo = 'support aliases to data',
+    --run = 1,
+}
 
 --<<< ALIASES / REFERENCES / REFS / &
 
@@ -25118,6 +25108,14 @@ var _int_ptr p = _X(&&x);
 escape *p;
 ]],
     run = 10,
+}
+
+Test { [[
+var int x = 1;
+escape *(&&x);
+]],
+    run = 1,
+    --parser = 'line 2 : after `(´ : expected location',
 }
 
 --<<< NATIVE/POINTERS/VECTORS
@@ -33722,7 +33720,8 @@ var&? _void ptr = & call Ff()
         end;
 escape 0;
 ]],
-    stmts = 'line 4 : invalid binding : types mismatch : "_void" <= "void"',
+    stmts = 'line 4 : invalid binding : expected native type',
+    --stmts = 'line 4 : invalid binding : types mismatch : "_void" <= "void"',
 }
 
 Test { [[
@@ -42892,7 +42891,8 @@ var Aa a = val Aa(10);
 
 escape a.a + a.b;
 ]],
-    exps = 'line 7 : invalid member access : "a" has no member "b" : `data´ "Aa" (/tmp/tmp.ceu:1)',
+    dcls = 'line 7 : field "b" is not declared',
+    --exps = 'line 7 : invalid member access : "a" has no member "b" : `data´ "Aa" (/tmp/tmp.ceu:1)',
 }
 
 Test { [[
@@ -42924,6 +42924,7 @@ var Aa.Bb b = val Aa.Bb(10,20);
 
 escape a.a + b.a + b.b + b.c;
 ]],
+    dcls = 'line 11 : field "c" is not declared',
     exps = 'line 11 : invalid member access : "b" has no member "c" : `data´ "Aa.Bb" (/tmp/tmp.ceu:4)',
 }
 
@@ -44736,7 +44737,28 @@ escape 10;
     --wrn = true,
     run = 10,
 }
--- XXX-01
+
+Test { [[
+data Object with
+  var int ccc = 101;
+end
+code/await Show(var Object obj) -> (var&? int rrr) -> int do
+    var int aaa = obj.ccc;
+    rrr = &aaa;
+    await 1s;
+    escape 1;
+end
+
+var&? int r;
+spawn Show(Object(_)) -> (&r);
+var& int rr = &r!;                  // TODO: should not allow this
+await 2s;
+escape rr;
+]],
+    --wrn = true,
+    run = { ['~>2s']=101 },
+}
+
 Test { [[
 data Object with
   var int ccc = 101;
