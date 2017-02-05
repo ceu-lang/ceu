@@ -122,6 +122,20 @@ error'TODO: luacov never executes this?'
         me.tag = 'Do'
     end,
 
+    _Spawn_Block__PRE = function (me)
+        local vars, blk = unpack(me)
+        if not AST.get(vars,'Block') then
+            if vars then
+                return node('_Spawn_Block', me.ln,
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('_Do', me.ln, true, vars, blk))))
+            else
+                AST.remove(me,1)
+            end
+        end
+    end,
+
 -------------------------------------------------------------------------------
 
     -- TODO: "__PRE" because of "continue"

@@ -2657,6 +2657,50 @@ var int a = do/a end;
 
 --<<< DO/_, SETBLOCK, ESCAPE
 
+-->>> SPAWN / BLOCK
+
+Test { [[
+var int ret = 0;
+spawn do
+    ret = 1;
+    await FOREVER;
+end
+escape ret;
+]],
+    run = 1,
+}
+
+Test { [[
+native _CEU_APP;
+spawn do
+end
+escape _CEU_APP.root.__mem.trails_n;
+]],
+    run = 2,
+}
+Test { [[
+native _CEU_APP;
+do finalize with
+end
+spawn do
+end
+escape _CEU_APP.root.__mem.trails_n;
+]],
+    run = 2,
+}
+Test { [[
+native _CEU_APP;
+do finalize with
+    nothing;
+end
+spawn do
+end
+escape _CEU_APP.root.__mem.trails_n;
+]],
+    run = 3,
+}
+--<<< SPAWN / BLOCK
+
 -->> DO / VISIBLE
 
 Test { [[
@@ -2711,51 +2755,23 @@ end
     run = 1,
 }
 
+Test { [[
+do/_
+    var int a = 0;
+    var int b = 1;
+    spawn (b) do
+        every 1s do
+            outer.a = outer.a + b;
+        end
+    end
+    await 10s;
+    escape a;
+end
+]],
+    run = { ['~>10s']=10 },
+}
+
 --<< DO / VISIBLE
-
--->>> SPAWN / BLOCK
-
-Test { [[
-var int ret = 0;
-spawn do
-    ret = 1;
-    await FOREVER;
-end
-escape ret;
-]],
-    run = 1,
-}
-
-Test { [[
-native _CEU_APP;
-spawn do
-end
-escape _CEU_APP.root.__mem.trails_n;
-]],
-    run = 2,
-}
-Test { [[
-native _CEU_APP;
-do finalize with
-end
-spawn do
-end
-escape _CEU_APP.root.__mem.trails_n;
-]],
-    run = 2,
-}
-Test { [[
-native _CEU_APP;
-do finalize with
-    nothing;
-end
-spawn do
-end
-escape _CEU_APP.root.__mem.trails_n;
-]],
-    run = 3,
-}
---<<< SPAWN / BLOCK
 
 Test { [[
 input void A,B;
