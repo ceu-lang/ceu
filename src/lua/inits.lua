@@ -15,7 +15,7 @@ local function run_watch (par, i, stop)
     end
 
     if me.tag == 'Escape' then
-        local blk = AST.asr(me.outer,'',2,'Block')
+        local blk = AST.asr(me.outer,'',3,'Block')
         if AST.depth(blk) <= AST.depth(stop) then
             return true
         end
@@ -67,7 +67,7 @@ local function run_inits (par, i, Dcl, stop)
     --__detect_cycles[me] = true
 
     if me.tag == 'Escape' then
-        local blk = AST.asr(me.outer,'',2,'Block')
+        local blk = AST.asr(me.outer,'',3,'Block')
         local depth = AST.depth(Dcl.blk)
         if Dcl.is_mid_idx then
             depth = depth + 5
@@ -246,7 +246,7 @@ stmt[4] = Y
         end
     elseif me.tag == 'Do' then
         -- a = do ... end
-        local _,body,Loc = unpack(me)
+        local _,_,body,Loc = unpack(me)
         if Loc then
             local ID_int = AST.asr(Loc,'Loc', 1,'ID_int')
             if ID_int.dcl == Dcl then
@@ -324,7 +324,7 @@ local function run_ptrs (par, i, Dcl, stop)
 
     -- skip all |a = do ... end|
     elseif me.tag == 'Do' then
-        local _,_,Loc = unpack(me)
+        local _,_,_,Loc = unpack(me)
         if Loc then
             assert(Loc.info.dcl, 'bug found')
             if Loc.info.dcl == Dcl then
@@ -388,7 +388,7 @@ F = {
     ['Exp_.'] = function (me)
         local _, e, member = unpack(me)
         if e.tag=='Outer' and me.info.tag=='Var' then
-            local out = assert(AST.par(me,'Code') or AST.par(me,'Async_Isr'))
+            local out = DCLS.outer(me)
             local is_ptr = TYPES.check(me.info.tp,'&&') or TYPES.is_nat_not_plain(me.info.tp)
             if not is_ptr then
                 local ID = TYPES.ID_plain(me.info.tp)
@@ -428,7 +428,7 @@ F = {
         -- NO
         for par in AST.iter() do
             if par.tag == 'Do' then
-                local lbl,_,to = unpack(par)
+                local lbl,_,_,to = unpack(par)
                 if to then
                     --ASR(not AST.is_equal(to.dcl,me.dcl), me,
 --AST.dump(me.__par.__par)
@@ -529,7 +529,7 @@ F = {
             end
             -- 3rd field of Do
             local do_ = AST.par(me, 'Do')
-            if do_ and do_[3]==me then
+            if do_ and do_[4]==me then
                 return
             end
         end

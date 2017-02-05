@@ -725,7 +725,7 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].pse_paused = 0;
     Do = function (me)
         CONC_ALL(me)
 
-        local _,blk,set = unpack(me)
+        local _,_,blk,set = unpack(me)
         if set and set.info.dcl[1]~='&?' and (not TYPES.check(set.info.tp,'?')) then
             LINE(me, [[
 ceu_callback_assert_msg(0, "reached end of `do´");

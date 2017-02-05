@@ -46,7 +46,7 @@ visible (a,b);
     ...
 end
 
-do return end -- OK
+--do return end -- OK
 --]=====]
 
 ----------------------------------------------------------------------------
@@ -2657,6 +2657,62 @@ var int a = do/a end;
 
 --<<< DO/_, SETBLOCK, ESCAPE
 
+-->> DO / VISIBLE
+
+Test { [[
+var int a = 0;
+do ()
+    a = 1;
+end
+escape a;
+]],
+    dcls = 'line 3 : internal identifier "a" is not declared',
+}
+
+Test { [[
+var int a = 0;
+do (a)
+    a = 1;
+end
+escape a;
+]],
+    run = 1
+}
+
+Test { [[
+var int a = 0;
+do
+    a = 1;
+end
+escape a;
+]],
+    run = 1
+}
+
+Test { [[
+var int a = 0;
+do ()
+    outer.a = 1;
+end
+escape a;
+]],
+    run = 1,
+}
+
+Test { [[
+do/_
+    var int a = 0;
+    do ()
+        outer.a = 1;
+    end
+    escape a;
+end
+]],
+    run = 1,
+}
+
+--<< DO / VISIBLE
+
 -->>> SPAWN / BLOCK
 
 Test { [[
@@ -3025,7 +3081,7 @@ Test { [[
 native/plain _u8;
 var _u8&& cbuffer = {1}.get_data();
 ]],
-    scopes = 'line 2 : invalid assignment : expected binding for call"',
+    scopes = 'line 2 : invalid assignment : expected binding for "_{}"',
 }
 
 Test { [[
@@ -19910,7 +19966,8 @@ Test { [[
 var& int x = &1;
 escape x;
 ]],
-    stmts = 'line 1 : invalid binding : unexpected context for value "1"',
+    --stmts = 'line 1 : invalid binding : unexpected context for value "1"',
+    stmts = 'line 1 : invalid binding : expected native type',
     --run = 1,
     --todo = 'support aliases to constants',
 }
@@ -33720,8 +33777,8 @@ var&? _void ptr = & call Ff()
         end;
 escape 0;
 ]],
-    stmts = 'line 4 : invalid binding : expected native type',
-    --stmts = 'line 4 : invalid binding : types mismatch : "_void" <= "void"',
+    --stmts = 'line 4 : invalid binding : expected native type',
+    stmts = 'line 4 : invalid binding : types mismatch : "_void" <= "void"',
 }
 
 Test { [[
@@ -47633,7 +47690,7 @@ var& _int ren;
 _f(&&outer.ren);
 escape 0;
 ]],
-    dcls = 'line 3 : invalid `outer´ : expected enclosing `code´ declaration',
+    dcls = 'line 3 : invalid `outer´',
 }
 
 Test { [[

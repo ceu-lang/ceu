@@ -99,7 +99,7 @@ F = {
                                 node('ID_int', me.ln, '_ret')),
                             node('_Set_Do', me.ln,
                                 node('Do', me.ln,
-                                    true,
+                                    true, false,
                                     node('Block', me.ln, lua)))))))
         return AST.root
     end,
@@ -111,6 +111,15 @@ error'TODO: luacov never executes this?'
     _Dopre__POS = function (me)
         AST.set(Pre_Stmts, #Pre_Stmts+1, AST.asr(me,'', 1,'Block', 1,'Stmts'))
         return AST.node('Nothing', me.ln)
+    end,
+
+    _Do__PRE = function (me)
+        local _,vars = unpack(me)
+        if vars == true then
+            AST.set(me, 2,
+                node('Var_List', me.ln))
+        end
+        me.tag = 'Do'
     end,
 
 -------------------------------------------------------------------------------
@@ -173,7 +182,7 @@ error'TODO: luacov never executes this?'
             local ID_prim,mod = unpack(Type)
             local is_void = (ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod))
             local do_ = node('Do', me.ln,
-                            true,
+                            true, false,
                             node('Block', me.ln,
                                 stmts_old))
             if is_void then
@@ -191,6 +200,7 @@ error'TODO: luacov never executes this?'
             AST.set(stmts_new, 1,
                         node('Do', me.ln,
                             node('ID_any', me.ln),
+                            false,
                             node('Block', me.ln,
                                 stmts_old)))
         end
@@ -436,6 +446,7 @@ error'TODO'
         local exp = unpack(exp)
         return node('Do', me.ln,
                 node('ID_any', me.ln),
+                false,
                 node('Block', me.ln,
                     node('Stmts', me.ln,
                         node('Loop', me.ln,

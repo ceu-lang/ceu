@@ -6,12 +6,13 @@ local function iter_boundary (cur, id, can_cross)
     return function ()
         while cur do
             local c = cur
+            local do_ = AST.get(c, 'Do')
             cur = cur.__par
             if c.tag == 'Block' then
                 return c
             elseif can_cross then
                 -- continue
-            elseif string.match(c.tag, '^.?Async') then
+            elseif string.match(c.tag,'^.?Async') or (do_ and do_[2]) then
                 -- see if varlist matches id to can_cross the boundary
                 -- async (a,b,c) do ... end
                 local can_cross2 = false
@@ -42,6 +43,18 @@ local function iter_boundary (cur, id, can_cross)
             end
         end
     end
+end
+
+local __do = function (me)
+    return me.tag=='Do' and me[2]~=false
+end
+
+function DCLS.outer (me)
+    return AST.par(me,'_Async_Isr') or
+           AST.par(me,'Async_Isr')  or
+           AST.iter(__do)()         or
+           AST.par(me,'Code')       or
+           ASR(false, me, 'invalid `outer´')
 end
 
 function DCLS.get (blk, id, can_cross)
@@ -326,7 +339,7 @@ DCLS.F = {
         if AST.par(me,'_Code_Pars_X') and is_top then
             local stmts = AST.get(AST.par(me,'Code'),'',
                                     4,'Block', 1,'Stmts', 2,'Block',
-                                    1,'Stmts', 1,'Do', 2,'Block', 1,'Stmts')
+                                    1,'Stmts', 1,'Do', 3,'Block', 1,'Stmts')
             if stmts then
                 AST.asr(stmts,'', 1,'Code_Args')
                 AST.insert(stmts, 1, t.stmts)
@@ -788,7 +801,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             local pool = AST.get(me,2,'Abs_Call', 2,'Loc')
             if pool then
                 local Code = AST.asr(pool.dcl,'Pool', 2,'Type', 1,'ID_abs').dcl
-                blk = AST.asr(Code,'Code', 4,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 1,'Do', 2,'Block')
+                blk = AST.asr(Code,'Code', 4,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 1,'Do', 3,'Block')
             else
                 blk = AST.par(me,'Block')
             end
@@ -819,8 +832,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         local _, e, member = unpack(me)
         if e.tag == 'Outer' then
             local code
-            local out = AST.par(me,'_Async_Isr') or ASR(AST.par(me,'Code'), me,
-                            'invalid `outer´ : expected enclosing `code´ declaration')
+            local out = DCLS.outer(me)
             me.dcl,code = DCLS.asr(me, AST.par(out,'Block'), member, true, 'internal identifier')
             e.__dcls_outer = code  -- how many "code" crosses?
         elseif e.dcl and e.dcl.tag == 'Var' then
@@ -890,7 +902,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             end
             ASR(do_, esc, 'invalid `escape´ : no matching enclosing `do´')
             esc.outer = do_
-            local _,_,to = unpack(do_)
+            local _,_,_,to = unpack(do_)
             local set = AST.get(me.__par,'Set_Exp') or AST.asr(me.__par,'Set_Alias')
             set.__dcls_is_escape = true
             local fr = unpack(set)

@@ -475,7 +475,7 @@ STMTS.F = {
     end,
 
     Do = function (me)
-        local _,_,e = unpack(me)
+        local _,_,_,e = unpack(me)
         if e then
             INFO.asr_tag(e, {'Nat','Var'}, 'invalid assignment')
         end

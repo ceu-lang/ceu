@@ -358,9 +358,9 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , Continue = K'continue' * OPT('/'*V'ID_int')
 
     -- do/A ... end
-    , Do = K'do' * ('/'*(V'ID_int'+V'ID_any') + Cc(true)) *
+    , _Do = K'do' * ('/'*(V'ID_int'+V'ID_any') + Cc(true)) * OPT(PARENS(V'List_Var'+Cc(true))) *
                 V'Block' *
-           K'end'
+            K'end'
 
     , __Do  = K'do' * V'Block' * K'end'
     , _Dopre = K'pre' * V'__Do'
@@ -670,7 +670,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     -- after `=´
 
-    , _Set_Do             = #K'do'            * V'Do'
+    , _Set_Do             = #K'do'            * V'_Do'
 
     , _Set_Await_one      = #K'await'         * V'__Awaits_one'
     , _Set_Await_many     = #K'await'         * V'__Awaits_many'
@@ -855,7 +855,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , __Stmt_Block = V'_Code_impl' + V'_Ext_Code_impl' + V'_Ext_Req_impl'
               + V'_Data_block'
               + V'Nat_Block'
-              + V'Do'    + V'_If'
+              + V'_Do'    + V'_If'
               + V'Loop' + V'_Loop_Num' + V'Loop_Pool'
               + V'_Every' + V'_Lock'
               + V'_Spawn_Block'
