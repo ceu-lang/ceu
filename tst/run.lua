@@ -280,8 +280,8 @@ end
     if not check(T,'parser') then return end
     --dofile 'ast.lua'
     if not check(T,'ast')    then return end
---AST.dump(AST.root)
     if not check(T,'adjs')   then return end
+--AST.dump(AST.root)
     dofile(DIR..'types.lua')
     if not check(T,'dcls')   then return end
     if not check(T,'exps')   then return end

@@ -820,15 +820,17 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
     ID_int = function (me)
         local id = unpack(me)
         local blk = AST.par(me,'Block')
+        local can_cross = false
         do
             -- escape should refer to the parent "a"
             -- var int a = do var int a; ... escape ...; end;
             local set = AST.par(me,'Set_Exp')
             if set and set.__dcls_is_escape and AST.is_par(set[2],me) then
                 blk = AST.par(blk, 'Block')
+                can_cross = true
             end
         end
-        me.dcl = DCLS.asr(me, blk, id, false, 'internal identifier')
+        me.dcl = DCLS.asr(me, blk, id, can_cross, 'internal identifier')
     end,
 
     Loc = function (me)
@@ -910,7 +912,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             end
             ASR(do_, esc, 'invalid `escape´ : no matching enclosing `do´')
             esc.outer = do_
-            local _,_,_,to = unpack(do_)
+            local _,outer,_,to = unpack(do_)
             local set = AST.get(me.__par,'Set_Exp') or AST.asr(me.__par,'Set_Alias')
             set.__dcls_is_escape = true
             local fr = unpack(set)

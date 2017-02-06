@@ -27,24 +27,20 @@ end
         end
     end;
 
-do/_
+pause Ff;
+resume Ff;
 
-block/a do
-
-block (a,b) do
-
-do (a, b)
-
-spawn (a,b) do
+code/await Ff (var int x) -> int
+with
+do
+    await 1s;
+    escape x+10;
 end
 
-end
-
-visible (a,b);
-
- do
-    ...
-end
+var&? Ff f = spawn Ff();
+var int x1 = f!.x;
+var int x2 = f;
+escape x1+x2;
 
 do return end -- OK
 --]=====]
@@ -2779,6 +2775,62 @@ end
 escape 1;
 ]],
     wrn = true,
+    run = 1,
+}
+
+Test { [[
+var bool x = do ()
+    escape true;
+end;
+escape x as int;
+]],
+    run = 1,
+}
+
+Test { [[
+var bool x = do ()
+    par do
+        escape true;
+    with
+    end
+end;
+escape x as int;
+]],
+    run = 1,
+}
+
+Test { [[
+native/pre do
+    typedef struct t {
+        int x;
+    } t;
+    t x;
+end
+native _x;
+_x.x = do ()
+    par do
+        escape 1;
+    with
+    end
+end;
+escape _x.x;
+]],
+    run = 1,
+}
+
+Test { [[
+data Dd with
+    var int x = 10;
+end
+var Dd x = _;
+x.x = do ()
+    par do
+        escape 1;
+    with
+    end
+end;
+escape x.x;
+]],
     run = 1,
 }
 
