@@ -47,7 +47,7 @@ F = {
                             '_ceu_callback_assert_msg'))
         nats[3].is_predefined = true
 
-        local ret = node('_Vars', me.ln,
+        local ret = node('Var', me.ln,
                         false,
                         node('Type', me.ln,
                             node('ID_prim', me.ln, 'int')),
@@ -59,7 +59,7 @@ F = {
                         false,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
-                                node('_Vars_set', me.ln,
+                                node('_Var_set', me.ln,
                                     false,
                                     node('Type', me.ln,
                                         node('ID_prim', me.ln, 'bool')),
@@ -67,7 +67,7 @@ F = {
                                     {node('_Set_Exp',me.ln,
                                         node('BOOL',me.ln,'0'))}
                                     ),
-                                node('_Evts_set', me.ln,
+                                node('_Evt_set', me.ln,
                                     false,
                                     node('Type', me.ln,
                                         node('ID_prim', me.ln, 'void')),
@@ -225,7 +225,7 @@ error'TODO: luacov never executes this?'
 
     _Code__PRE = function (me)
         local Y, mods, id, ins, mid, out, blk, eoc = unpack(me)
-        mid = mid or AST.node('_Code_Pars', me.ln)
+        mid = mid or AST.node('Code_Pars', me.ln)
 
         local Type = AST.get(out,'Code_Ret', 1,'Type')
         if Type then
@@ -255,6 +255,7 @@ error'TODO: luacov never executes this?'
         return ret
     end,
 
+--[[
     _Code_Pars_Init__PRE = function (me)
         me.tag = '_Code_Pars'
         return F._Code_Pars__PRE(me)
@@ -311,6 +312,7 @@ error'TODO'
             end
         end
     end,
+]]
 
 -------------------------------------------------------------------------------
 
@@ -404,7 +406,7 @@ error'TODO'
         if AST.is_node(i) then
             AST.asr(i, 'ID_any')
             i = '__i_'..me.n    -- invent an ID not referenceable
-            i_dcl = node('_Vars', me.ln,
+            i_dcl = node('Var', me.ln,
                         false,
                         node('Type', me.ln,
                             node('ID_prim', me.ln, 'int')),
@@ -626,9 +628,6 @@ error'TODO'
                             watch)),
                     block))
     end,
-    _List_Var_Ref = function (me)
-        me.tag = 'List_Var'
-    end,
 
 -------------------------------------------------------------------------------
 
@@ -730,107 +729,59 @@ error'TODO'
 
 -------------------------------------------------------------------------------
 
-    -- single declaration with multiple ids
-    --      -> multiple declarations with single ids
-
-    __dcls__PRE = function (me)
-        local alias, dim, tp
-        local tag = string.sub(me.tag,2,-2)
-        local idx do
-            if tag=='Pool' or tag=='Vec' then
-                idx = 3
-                alias, dim, tp = unpack(me)
-            else
-                idx = 2
-                alias, tp = unpack(me)
-            end
+    __dcl_set__PRE = function (me)
+        local is_alias, dim, tp, id, set
+        local tag = string.sub(me.tag,2,-5)
+        if tag=='Pool' or tag=='Vec' then
+            idx = 3
+            is_alias, dim, tp, id, set = unpack(me)
+            AST.set(me, 2, tp)
+            AST.set(me, 3, id)
+            AST.set(me, 4, dim)
+        else
+            idx = 2
+            is_alias, tp, id, set = unpack(me)
         end
 
-        local ids = { unpack(me, idx+1) }
-        local ret = node('Stmts', me.ln)
-        for i,id in ipairs(ids) do
-            if tag=='Pool' or tag=='Vec' then
-                AST.set(ret, #ret+1,
-                        node(tag, me.ln, alias, AST.copy(tp), id, AST.copy(dim)))
-            else
-                AST.set(ret, #ret+1,
-                        node(tag, me.ln, alias, AST.copy(tp), id))
-            end
+        if set then
+            set = node('_Set', me.ln,
+                    node('Loc', me.ln,
+                        node('ID_int', me.ln, id)),
+                    unpack(set))
+            me[#me] = nil
         end
 
-        return ret
+        me.tag = tag
+        return node('Stmts', me.ln, me, set or nil)
     end,
 
-    _Vars__PRE = '__dcls__PRE',
-    _Vecs__PRE = '__dcls__PRE',
-    _Pools__PRE = '__dcls__PRE',
-    _Evts__PRE = function (me)
-        local _,tp = unpack(me)
-        if tp.tag == 'Type' then
-            AST.set(me, 2, node('_Typelist', me.ln, tp))
-        end
-        return F.__dcls__PRE(me)
-    end,
-    _Exts__PRE = function (me)
-        local _,tp = unpack(me)
-        if tp.tag == 'Type' then
-            AST.set(me, 2, node('_Typelist', me.ln, tp))
-        end
-        return F.__dcls__PRE(me)
-    end,
-    _Nats__PRE = function (me)
-        AST.insert(me, 2,
-            node('Type', me.ln,
-                node('ID_prim', me.ln, '_')))
-        return F.__dcls__PRE(me)
-    end,
-
-    __dcls_set__PRE = function (me, tag, idx)
-        local is_alias, dim, tp, id
-        local tag = string.sub(me.tag,2,-6)
-        local idx do
-            if tag=='Pool' or tag=='Vec' then
-                idx = 3
-                is_alias, dim, tp, id = unpack(me)
-            else
-                idx = 2
-                is_alias, tp, id = unpack(me)
-            end
-        end
-
-        local ret = node('Stmts', me.ln)
-        local sets = { unpack(me, idx+1) }
-        for i=1, #sets, 2 do
-            local id, set = unpack(sets,i)
-
-            if tag=='Pool' or tag=='Vec' then
-                AST.set(ret, #ret+1,
-                        node('_'..tag..'s', me.ln, is_alias, AST.copy(dim), AST.copy(tp), id))
-            else
-                AST.set(ret, #ret+1,
-                        node('_'..tag..'s', me.ln, is_alias, AST.copy(tp), id))
-            end
-
-            if set then
-                local _,v = unpack(set)
-                local to = node('Loc', me.ln,
-                            node('ID_int', me.ln, id))
-                AST.set(ret, #ret+1,
-                        node('_Set', me.ln, to, unpack(set)))
-            end
-        end
-        return ret
-    end,
-
-    _Vars_set__PRE = '__dcls_set__PRE',
-    _Vecs_set__PRE = '__dcls_set__PRE',
-    _Pools_set__PRE = '__dcls_set__PRE',
-    _Evts_set__PRE = function (me)
+    _Var_set__PRE = '__dcl_set__PRE',
+    _Vec_set__PRE = '__dcl_set__PRE',
+    _Pool_set__PRE = '__dcl_set__PRE',
+    _Evt_set__PRE = function (me)
         local _,tp = unpack(me)
         if tp.tag == 'Type' then
             tp = node('_Typelist', me.ln, tp)
         end
-        return F.__dcls_set__PRE(me)
+        return F.__dcl_set__PRE(me)
+    end,
+
+    -- single declaration with multiple ids
+    --      -> multiple declarations with single ids
+    _Nats__PRE = function (me)
+        local mod = unpack(me)
+        local ids = { unpack(me, 2) }
+
+        local ret = node('Stmts', me.ln)
+        for i,id in ipairs(ids) do
+            AST.set(ret, #ret+1,
+                node('Nat', me.ln, mod,
+                    node('Type', me.ln,
+                        node('ID_prim', me.ln, '_')),
+                    id))
+        end
+
+        return ret
     end,
 
 -------------------------------------------------------------------------------

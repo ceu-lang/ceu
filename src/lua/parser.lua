@@ -448,15 +448,15 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                              Cg(K'/dynamic'*Cc'dynamic','dynamic')^-1 *
                              Cg(K'/recursive'*Cc'recursive','recursive')^-1 ) *
                 (V'__ID_abs'-V'__id_data') *
-                    V'_Code_Pars' * KK'->' *
+                    V'Code_Pars' * KK'->' *
                         Cc(false) *
                             (#V'Type' * V'Code_Ret')
              + K'code' * Ct( Cg(K'/await'*Cc'await','await') *
                              Cg(K'/dynamic'*Cc'dynamic','dynamic')^-1 *
                              Cg(K'/recursive'*Cc'recursive','recursive')^-1 ) *
                 (V'__ID_abs'-V'__id_data') *
-                    V'_Code_Pars' * KK'->' *
-                        OPT(V'_Code_Pars_Init' * KK'->') *
+                    V'Code_Pars' * KK'->' *
+                        OPT(V'Code_Pars' * KK'->') *
                             V'Code_Ret'
 
     , _Code_proto = V'Y' * V'__code' * Cc(false)
@@ -469,7 +469,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     -- call
     , __extcode = (CK'input/output' + CK'output/input') * K'/tight'
                     * OPT(CK'/recursive')
-                    * V'__ID_ext' * V'_Code_Pars' * KK'->' * V'Type'
+                    * V'__ID_ext' * V'Code_Pars' * KK'->' * V'Type'
 * EE'TODO-PARSER: extcode'
     , _Ext_Code_proto = V'__extcode'
     , _Ext_Code_impl  = V'__extcode' * V'__Do'
@@ -477,46 +477,23 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     -- req
     , __extreq = (CK'input/output' + CK'output/input') * K'/await'
                    * OPT('[' * (V'__Exp'+Cc(true)) * KK']')
-                   * V'__ID_ext' * V'_Code_Pars' * KK'->' * V'Type'
+                   * V'__ID_ext' * V'Code_Pars' * KK'->' * V'Type'
 * EE'TODO-PARSER: request'
     , _Ext_Req_proto = V'__extreq'
     , _Ext_Req_impl  = V'__extreq' * V'__Do'
 
     -- TYPEPARS
 
-    -- (var& int, var/nohold void&&)
-    -- (var& int v, var/nohold void&& ptr)
-    , __typepars = Cc{} * CK'vector' * CKK'&' * V'__Dim' * V'Type'
-                 + Cc{} * CK'pool'   * CKK'&' * V'__Dim' * V'Type'
-                 + Cc{} * CK'event'  * CKK'&' * Cc(false) * (PARENS(V'_Typelist') + V'Type')
-                 + Ct(Cg(K'dynamic','dynamic')^-1)
-                        * CK'var'    * OPT(CKK'&') * OPT(KK'/'*CK'hold') * V'Type'
-    , _Code_Pars_Item  = V'__typepars' * OPT(V'__ID_int')
+    --+ Ct(Cg(K'dynamic','dynamic')^-1) * CK'var' * OPT(CKK'&') * OPT(KK'/'*CK'hold') * V'Type'
 
-    , __typepars_init = Cc{} * CK'vector' * CKK'&' * V'__Dim' * V'Type'
-                      + Cc{} * CK'pool'   * CKK'&' * V'__Dim' * V'Type'
-                      + Cc{} * CK'event'  * (V'__ALS') * Cc(false) * (PARENS(V'_Typelist') + V'Type')
-                      + Cc{} * CK'var'    * (V'__ALS') * Cc(false) * V'Type'
-    , _Code_Pars_Init_Item = V'__typepars_init' * OPT(V'__ID_int')
-
-    , _Code_Pars = #KK'(' * (
-                    PARENS(P'void') +
-                    PARENS(LIST(V'_Code_Pars_Item'))
-                  )
-    , _Code_Pars_Init = #KK'(' * (
-                    PARENS(P'void') +
-                    PARENS(LIST(V'_Code_Pars_Init_Item'))
-                  )
+    , Code_Pars = #KK'(' * (PARENS(P'void') + PARENS(LIST(V'__Dcls')))
     , Code_Ret = (V'Type' + CK'FOREVER')
 
 -- DATA
 
     , __data       = K'data' * V'__ID_abs' * OPT(KK'as' * (V'__Exp'+CK'nothing'))
     , _Data_simple = V'__data'
-    , _Data_block  = V'__data' * K'with' * (
-                        (V'_Vars_set'+V'_Vecs_set'+V'_Pools_set'+V'_Evts_set') *
-                            V'__seqs'
-                     )^1 * K'end'
+    , _Data_block  = V'__data' * K'with' * (V'__Dcls' * V'__seqs')^1 * K'end'
 
 -- NATIVE, C, LUA
 
@@ -558,22 +535,23 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     , __ALS = (CKK'&?' + CKK'&')
 
-    , __vars_set  = V'__ID_int' * OPT(Ct(V'__Sets_one'+V'__Sets_many'))
+    , __var_set = V'__ID_int' * OPT(Ct(V'__Sets_one'+V'__Sets_many'))
 
-    , _Vars_set  = K'var' * OPT(V'__ALS') * V'Type' *
-                    LIST(V'__vars_set')
-    , _Vecs_set  = K'vector' * OPT(CKK'&') * V'__Dim' * V'Type' *
-                    LIST(V'__vars_set')
+    , _Var_set  = K'var' * OPT(V'__ALS') * V'Type' *
+                    OPT(V'__var_set')
+    , _Vec_set  = K'vector' * OPT(CKK'&') * V'__Dim' * V'Type' *
+                    OPT(V'__var_set')
                         -- TODO: only vec constr
-    , _Pools_set = K'pool' * OPT(CKK'&') * V'__Dim' * V'Type' *
-                    LIST(V'__vars_set')
-    , _Evts_set  = K'event' * OPT(V'__ALS') * (PARENS(V'_Typelist')+V'Type') *
-                    LIST(V'__vars_set')
+    , _Pool_set = K'pool' * OPT(CKK'&') * V'__Dim' * V'Type' *
+                    OPT(V'__var_set')
+    , _Evt_set  = K'event' * OPT(V'__ALS') * (PARENS(V'_Typelist')+V'Type') *
+                    OPT(V'__var_set')
 
-    , _Exts      = (CK'input'+CK'output') * (PARENS(V'_Typelist')+V'Type') *
-                    LIST(V'__ID_ext')
-    , _Typelist  = LIST(V'Type')
+    , Ext       = (CK'input'+CK'output') * (PARENS(V'_Typelist')+V'Type') *
+                    V'__ID_ext'
+    , _Typelist = LIST(V'Type')
 
+    , __Dcls    = V'_Var_set' + V'_Vec_set' + V'_Pool_set' + V'_Evt_set'
 -- AWAIT, EMIT
 
     , __Awaits_one  = K'await' * (V'Await_Wclock' + V'Abs_Await')
@@ -637,8 +615,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , _Abs_Spawn_Single = K'spawn' * V'__Abs_Cons_Code' * (-KK'in') * Cc(false)
     , Abs_Spawn_Pool    = K'spawn' * V'__Abs_Cons_Code' * KK'in' * V'Loc'
 
-    , __Abs_Cons_Code = V'__abs_mods' * (V'Abs_Cons' -I(V'__id_data')) *
-                            OPT(KK'->' * PARENS(V'_List_Var_Ref')) * V'Y'
+    , __Abs_Cons_Code = V'__abs_mods' * (V'Abs_Cons' -I(V'__id_data')) * V'Y'
     , Abs_Cons   = V'ID_abs' * PARENS(OPT(V'Abslist'))
     , Abslist    = LIST(V'__abs_item')^-1
     , __abs_item = (V'Abs_Cons' + V'Vec_Cons' + V'__Exp' + V'ID_any')
@@ -662,6 +639,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
         + V'_Set_Emit_Ext_emit' + V'_Set_Emit_Ext_call'
         + V'_Set_Abs_Val'
         + V'_Set_Abs_New'
+        + V'_Set_Abs_Spawn_Single'
         + V'_Set_Abs_Spawn_Pool'
         + V'_Set_Any'
         + V'_Set_Exp'
@@ -670,28 +648,29 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     -- after `=´
 
-    , _Set_Do             = #K'do'            * V'_Do'
+    , _Set_Do               = #K'do'            * V'_Do'
 
-    , _Set_Await_one      = #K'await'         * V'__Awaits_one'
-    , _Set_Await_many     = #K'await'         * V'__Awaits_many'
-    , _Set_Watching       = #K'watching'      * V'_Watching'
+    , _Set_Await_one        = #K'await'         * V'__Awaits_one'
+    , _Set_Await_many       = #K'await'         * V'__Awaits_many'
+    , _Set_Watching         = #K'watching'      * V'_Watching'
 
-    , _Set_Async_Thread   = #(K'await' * K'async/thread') * V'Async_Thread'
-    , _Set_Lua            = #V'__lua_pre'     * V'_Lua'
-    , _Set_Lua_Do         =                     V'_Lua_Do'
-    , _Set_Vec            =                     V'Vec_Cons'
+    , _Set_Async_Thread     = #(K'await' * K'async/thread') * V'Async_Thread'
+    , _Set_Lua              = #V'__lua_pre'     * V'_Lua'
+    , _Set_Lua_Do           =                     V'_Lua_Do'
+    , _Set_Vec              =                     V'Vec_Cons'
 
-    , _Set_Emit_Wclock    = #K'emit'          * V'Emit_Wclock'
-    , _Set_Emit_Ext_emit  = #K'emit'          * V'Emit_Ext_emit'
-    , _Set_Emit_Ext_req   = #K'request'       * V'Emit_Ext_req'
-    , _Set_Emit_Ext_call  = #V'__extcode_pre' * V'Emit_Ext_call'
+    , _Set_Emit_Wclock      = #K'emit'          * V'Emit_Wclock'
+    , _Set_Emit_Ext_emit    = #K'emit'          * V'Emit_Ext_emit'
+    , _Set_Emit_Ext_req     = #K'request'       * V'Emit_Ext_req'
+    , _Set_Emit_Ext_call    = #V'__extcode_pre' * V'Emit_Ext_call'
 
-    , _Set_Abs_Val        = #K'val'           * V'Abs_Val'
-    , _Set_Abs_New        = #K'new'           * V'Abs_New'
-    , _Set_Abs_Spawn_Pool = #K'spawn'         * V'Abs_Spawn_Pool'
+    , _Set_Abs_Val          = #K'val'           * V'Abs_Val'
+    , _Set_Abs_New          = #K'new'           * V'Abs_New'
+    , _Set_Abs_Spawn_Single = #K'spawn'         * V'_Abs_Spawn_Single'
+    , _Set_Abs_Spawn_Pool   = #K'spawn'         * V'Abs_Spawn_Pool'
 
-    , _Set_Any            = #K'_'             * V'ID_any'
-    , _Set_Exp            =                     V'__Exp'
+    , _Set_Any              = #K'_'             * V'ID_any'
+    , _Set_Exp              =                     V'__Exp'
 
     , __extcode_pre = (K'call/recursive'+K'call') * V'ID_ext'
     , __lua_pre     = KK'[' * (P'='^0) * '['
@@ -735,7 +714,6 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , List_Loc = LIST(V'Loc' + V'ID_any')
     , List_Exp = LIST(V'__Exp')
     , List_Var = LIST(V'ID_int' + V'ID_any')
-    , _List_Var_Ref = LIST(KK'&'*V'ID_int' + V'ID_any')
 
  --<<<
 
@@ -832,11 +810,8 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , __Stmt_Last  = V'_Escape' + V'Break' + V'Continue' + V'Await_Forever'
     , __Stmt_Last_Block = V'Y' * V'Par'
     , __Stmt_Simple = V'Nothing'
-                    + V'_Vars_set'
-                    + V'_Vecs_set'
-                    + V'_Pools_set'
-                    + V'_Evts_set'
-                    + V'_Exts'
+                    + V'__Dcls'
+                    + V'Ext'
                     + V'_Data_simple'
                     + V'_Code_proto' + V'_Ext_Code_proto' + V'_Ext_Req_proto'
                     + V'_Nats'  + V'Nat_End'
