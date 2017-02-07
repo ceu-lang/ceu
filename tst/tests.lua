@@ -46,6 +46,7 @@ var/nohold int x;
 dynamic var int x;
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -23665,6 +23666,17 @@ Test { [[
 output/input/tight Z  (var int)->int;
 escape call Z(1);
 ]],
+    parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
+    --parser = 'line 2 : after `call´ : expected location',
+    --parser = 'line 2 : after `call´ : expected expression',
+    --parser = 'line 2 : after `Z´ : expected `;´',
+    --parser = 'line 2 : after `Z´ : expected `(´',
+}
+
+Test { [[
+output/input/tight Z  (var int a)->int;
+escape call Z(1);
+]],
     parser = 'line 2 : after `call´ : expected location',
     --parser = 'line 2 : after `call´ : expected expression',
     --parser = 'line 2 : after `Z´ : expected `;´',
@@ -23672,7 +23684,7 @@ escape call Z(1);
 }
 
 Test { [[
-output/input/tight Z  (var int)->int;
+output/input/tight Z  (var int a)->int;
 call Z(1);
 escape 1;
 ]],
@@ -23680,7 +23692,7 @@ escape 1;
 }
 
 Test { [[
-output/input/tight Z  (var int)->int;
+output/input/tight Z  (var int a)->int;
 emit Z(1);
 escape 1;
 ]],
@@ -23695,7 +23707,7 @@ native/pos do
         escape v+1;
     }
 end
-output/input/tight Z  (var int)->int;
+output/input/tight Z  (var int a)->int;
 call Z(1);
 escape 1;
 ]],
@@ -23710,7 +23722,7 @@ native/pos do
         escape *v+1;
     }
 end
-output/input/tight Z  (var int)->int;
+output/input/tight Z  (var int a)->int;
 call Z(1);
 escape 1;
 ]],
@@ -23724,7 +23736,7 @@ native/pos do
         escape *v+1;
     }
 end
-output/input/tight Z  (var int)->int;
+output/input/tight Z  (var int a)->int;
 var int ret = call Z(1);
 escape ret;
 ]],
@@ -23738,7 +23750,7 @@ native/pos do
         escape v+1;
     }
 end
-output/input/tight Z  (var int)->int;
+output/input/tight Z  (var int a)->int;
 var int ret = call Z(1,2);
 escape ret;
 ]],
@@ -23806,7 +23818,7 @@ native/pos do
         escape p->_1 + p->_2;
     }
 end
-output/input/tight Z  (var int, var int)->int;
+output/input/tight Z  (var int a, var int b)->int;
 var int ret = call Z(1,2);
 escape ret;
 ]],
@@ -23826,7 +23838,7 @@ native/pos do
         escape (evt == CEU_OUTPUT_Z) + *p;
     }
 end
-output/input/tight Z  (var int)->int;
+output/input/tight Z  (var int b)->int;
 var int ret = (call Z(2));
 escape ret;
 ]],
@@ -23905,7 +23917,7 @@ native/pos do
         return (evt == CEU_OUTPUT_Z) + *p;
     }
 end
-output/input/tight Z  (var int)->int;
+output/input/tight Z  (var int b)->int;
 par/and do
     call Z(1);
 with
@@ -32409,14 +32421,6 @@ end
 -->>> CODE / TIGHT / FUNCTIONS
 
 Test { [[
-var int;
-escape 1;
-]],
-    adjs = 'line 1 : invalid declaration : expected identifier',
-    run = 1,
-}
-
-Test { [[
 code/tight Code (var int)->void
 do
 end
@@ -32424,8 +32428,20 @@ escape 1;
 ]],
     --wrn = true,
     --adj = 'line 1 : missing parameter identifier',
-    adjs = 'line 1 : invalid declaration : expected identifier',
+    --adjs = 'line 1 : invalid declaration : expected identifier',
     --adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
+}
+
+Test { [[
+code/tight Code (var int)->void;
+escape 1;
+]],
+    --wrn = true,
+    --adj = 'line 1 : missing parameter identifier',
+    --adjs = 'line 1 : invalid declaration : expected identifier',
+    --adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
 }
 
 Test { [[
@@ -32434,7 +32450,8 @@ do
 end
 escape 1;
 ]],
-    adjs = 'line 1 : invalid declaration : expected identifier',
+    parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
+    --adjs = 'line 1 : invalid declaration : expected identifier',
     --adjs = 'line 1 : invalid declaration : parameter #2 : expected identifier',
 }
 
@@ -32444,7 +32461,8 @@ do
 end
 escape 1;
 ]],
-    adjs = 'line 1 : invalid declaration : expected identifier',
+    parser = 'line 1 : after `void´ : expected type modifier or internal identifier',
+    --adjs = 'line 1 : invalid declaration : expected identifier',
     --adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
     --parser = 'line 1 : after `int´ : expected type modifier or `,´ or `)´',
     --adj = 'line 1 : wrong argument #1 : cannot be `void´',
@@ -32460,7 +32478,8 @@ escape 1;
     --adj = 'line 1 : wrong argument #1 : cannot be `void´',
     --parser = 'line 1 : after `void´ : expected type modifier or `;´',
     --adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
-    adjs = 'line 1 : invalid declaration : expected identifier',
+    --adjs = 'line 1 : invalid declaration : expected identifier',
+    parser = 'line 1 : after `void´ : expected type modifier or internal identifier',
 }
 
 Test { [[
@@ -32652,7 +32671,8 @@ escape 1;
     --env = 'line 1 : missing parameter identifier',
     --parser = 'line 1 : after `void´ : expected type modifier or `;´',
     --adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
-    adjs = 'line 1 : invalid declaration : expected identifier',
+    --adjs = 'line 1 : invalid declaration : expected identifier',
+    parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
 }
 
 Test { [[
@@ -32760,7 +32780,7 @@ escape 1;
 
 Test { [[
 code/tight Fx (void) -> int;
-code/tight Fx (var int)  -> int;
+code/tight Fx (var int a)  -> int;
 escape 1;
 ]],
     wrn = true,
@@ -32779,7 +32799,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var void, var int) -> int;
+code/tight Fx (var void a, var int b) -> int;
 escape 1;
 ]],
     dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
@@ -32787,16 +32807,15 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var int) -> void;
+code/tight Fx (var int a) -> void;
 escape 1;
 ]],
     wrn = true,
     run = 1,
 }
 
---]=====]
 Test { [[
-code/tight Fx (var int, var int) -> int;
+code/tight Fx (var int a, var int b) -> int;
 code/tight Fx (var int a, var  int b) -> int do
     escape a + b;
 end
@@ -32807,7 +32826,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var int, var int) -> int;
+code/tight Fx (var int a, var int b) -> int;
 code/tight Fx (var int a, var  u8 b) -> int do
     escape a + b;
 end
@@ -32817,7 +32836,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var int, var int) -> int;
+code/tight Fx (var int a, var int b) -> int;
 code/tight Fx (var int a, var  int b) -> int do
     escape a + b;
 end
@@ -32827,7 +32846,7 @@ escape call Fx(1,2);
 }
 
 Test { [[
-code/tight Fx (var int, var int) -> int;
+code/tight Fx (var int a, var int b) -> int;
 code/tight Fx (var int a, var  int b) -> int do
     escape a + b;
 end
@@ -32871,7 +32890,7 @@ end
 Test { [[
 class Tx with
 do
-    code/tight Fx (var int)->int;
+    code/tight Fx (var int a)->int;
     code/tight Fx (var int x)->int do
         escape x;
     end
@@ -33056,7 +33075,7 @@ escape call Fx(1) + this.x;
 }
 
 Test { [[
-code/tight Code (var int)->void;
+code/tight Code (var int a)->void;
 code/tight Code (var int a)->void
 do
     escape 1;
@@ -33198,7 +33217,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var void, var int)->int do
+code/tight Fx (var void a, var int b)->int do
 end
 escape 1;
 ]],

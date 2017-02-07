@@ -535,20 +535,14 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     , __var_set = V'__ID_int' * OPT(Ct(V'__Sets_one'+V'__Sets_many'))
 
-    , _Var_set  = K'var' * OPT(V'__ALS')
-                         * Ct((Cg(K'/dynamic','dynamic') + Cg(K'/nohold','nohold'))^-1)
-                         * V'Type' *
-                    OPT(V'__var_set')
-    , _Vec_set  = K'vector' * OPT(CKK'&') * V'__Dim' * V'Type' *
-                    OPT(V'__var_set')
-                        -- TODO: only vec constr
-    , _Pool_set = K'pool' * OPT(CKK'&') * V'__Dim' * V'Type' *
-                    OPT(V'__var_set')
-    , _Evt_set  = K'event' * OPT(V'__ALS') * (PARENS(V'_Typelist')+V'Type') *
-                    OPT(V'__var_set')
+    , _Var_set  = K'var'    * OPT(V'__ALS')
+                            * Ct((Cg(K'/dynamic','dynamic') + Cg(K'/nohold','nohold'))^-1)
+                                                       * V'Type'             * V'__var_set'
+    , _Vec_set  = K'vector' * OPT(CKK'&')   * V'__Dim' * V'Type'             * V'__var_set'
+    , _Pool_set = K'pool'   * OPT(CKK'&')   * V'__Dim' * V'Type'             * V'__var_set'
+    , _Evt_set  = K'event'  * OPT(V'__ALS') * (PARENS(V'_Typelist')+V'Type') * V'__var_set'
 
-    , Ext       = (CK'input'+CK'output') * (PARENS(V'_Typelist')+V'Type') *
-                    V'__ID_ext'
+    , Ext       = (CK'input'+CK'output') * (PARENS(V'_Typelist')+V'Type') * V'__ID_ext'
     , _Typelist = LIST(V'Type')
 
     , __Dcls    = V'_Var_set' + V'_Vec_set' + V'_Pool_set' + V'_Evt_set'

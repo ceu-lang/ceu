@@ -559,12 +559,6 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         return s
     end,
 
-    __proto_ignore = function (n1, n2)
-        return (type(n1)=='string' and string.sub(n1,1,6)=='_anon_')
-            or (type(n2)=='string' and string.sub(n2,1,6)=='_anon_')
-            --or (AST.get(n1,'Block') and n2==nil)
-    end,
-
     Code = function (me)
         local _,mods1,id,body1 = unpack(me)
 
@@ -617,7 +611,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             -- compare ins
             local proto1 = AST.asr(body1,'Block',1,'Stmts',1,'Code_Pars_Stmts')
             local proto2 = AST.asr(body2,'Block',1,'Stmts',1,'Code_Pars_Stmts')
-            local ok = AST.is_equal(proto1, proto2, DCLS.F.__proto_ignore)
+            local ok = AST.is_equal(proto1, proto2)
 
             -- compare mods
             do

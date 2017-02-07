@@ -735,33 +735,14 @@ error'TODO'
         local is_alias, mods, dim, tp, id, set
         local tag = string.sub(me.tag,2,-5)
         if tag=='Var' or tag=='Pool' or tag=='Vec' then
-            idx = 3
             is_alias, dim_or_mods, tp, id, set = unpack(me)
             AST.set(me, 2, tp)
             AST.set(me, 3, id)
             AST.set(me, 4, dim_or_mods)
+            AST.set(me, 5, nil)
         else
-            idx = 2
             is_alias, tp, id, set = unpack(me)
-        end
-
-        if not id then
-            local code = AST.par(me,'Code')
-            local err do
-                if code then
-                    if code.is_impl then
-                        -- TODO
-                        --local pars = AST.par(me, 'Code_Pars')
-                        --err = 'invalid declaration : parameter #'..i..' : expected identifier'
-                        err = 'invalid declaration : expected identifier'
-                    else
-                        err = false
-                    end
-                else
-                    err = 'invalid declaration : expected identifier'
-                end
-            end
-            ASR(not err, me, err)
+            AST.set(me, 4, nil)
         end
 
         if set then
@@ -769,7 +750,6 @@ error'TODO'
                     node('Loc', me.ln,
                         node('ID_int', me.ln, id)),
                     unpack(set))
-            me[#me] = nil
         end
 
         me.tag = tag
@@ -782,7 +762,7 @@ error'TODO'
     _Evt_set__PRE = function (me)
         local _,tp = unpack(me)
         if tp.tag == 'Type' then
-            tp = node('_Typelist', me.ln, tp)
+            AST.set(me, 2, node('_Typelist',me.ln,tp))
         end
         return F.__dcl_set__PRE(me)
     end,
