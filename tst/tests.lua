@@ -46,7 +46,6 @@ var/nohold int x;
 dynamic var int x;
 
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -34297,7 +34296,7 @@ Test { [[
 code/await Code (void)->void;
 await Code(1) until true;
 ]],
-    parser = 'line 2 : after `)´ : expected `->´ or `;´',
+    parser = 'line 2 : after `)´ : expected `;´',
 }
 Test { [[
 await 1s until true;
@@ -34985,6 +34984,22 @@ escape ret;
 
 -->> CODE / AWAIT / INITIALIZATION / PUBLIC
 
+Test { [[
+code/await UV_TCP_Open (void) -> (var int v) -> void
+do
+    if false then
+        escape;
+    end
+
+    v = 10;
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+--]=====]
 Test { [[
 code/await UV_TCP_Open (void) -> (var& int v) -> void
 do

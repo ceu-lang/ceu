@@ -159,8 +159,6 @@ STMTS.F = {
                 local ID_abs = AST.asr(fr,'', 2,'Abs_Call', 3,'Abs_Cons',
                                               1,'ID_abs')
                 local tp = AST.asr(ID_abs.dcl,'Code', 4,'Block', 1,'Stmts',
-                                                      2,'Block', 1,'Stmts',
-                                                      2,'Block', 1,'Stmts',
                                                       1,'Code_Ret', 1,'', 2,'Type')
                 EXPS.check_tp(me, to.info.tp, tp, 'invalid binding', true)
             end
@@ -387,9 +385,7 @@ STMTS.F = {
         ASR(AST.par(me,'Code') ~= me.__code, me,
             'invalid `'..AST.tag2id[me.tag]..'´ : unexpected recursive invocation')
 
-        local ret = AST.asr(me.__code,'', 4,'Block', 1,'Stmts',
-                                          2,'Block', 1,'Stmts',
-                                          2,'Block', 1,'Stmts',
+        local ret = AST.get(me.__code,'', 4,'Block', 1,'Stmts',
                                           1,'Code_Ret', 1,'', 2,'Type')
         me.tp = ret and AST.copy(ret)
 

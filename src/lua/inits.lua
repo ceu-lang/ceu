@@ -68,11 +68,7 @@ local function run_inits (par, i, Dcl, stop)
 
     if me.tag == 'Escape' then
         local blk = AST.asr(me.outer,'',3,'Block')
-        local depth = AST.depth(Dcl.blk)
-        if Dcl.is_mid_idx then
-            depth = depth + 5
-        end
-        if AST.depth(blk) <= depth then
+        if AST.depth(blk) <= AST.depth(Dcl.blk) then
             return false
         else
             return run_inits(blk, #blk+1, Dcl, stop)
@@ -350,7 +346,7 @@ F = {
 
         -- RUN_INITS
         if me.is_implicit           or              -- compiler defined
-           me.blk.__par.tag=='Code' or              -- "code" parameter
+           AST.get(me.blk,4,'Code') or              -- "code" parameter
            AST.par(me,'Data')       or              -- "data" member
            TYPES.check(tp,'?') and (not is_alias)   -- optional initialization
         then

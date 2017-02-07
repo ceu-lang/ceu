@@ -595,6 +595,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         local blk = AST.par(me, 'Block')
 
         if (not me.is_dyn_base) and mods1.dynamic and me.is_impl then
+error'oi'
             local ins1 = AST.asr(body1,'Block', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
             me.id = id..ins1.ids_dyn
             me.dyn_base = DCLS.asr(me,blk,id)
@@ -613,6 +614,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
                 _n = '_'..((old and old.n) or me.n)
             end
             if me.dyn_base then
+error'oi'
                 local ins1 = AST.asr(body1,'Block', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
                 me.id_ = id.._n..ins1.ids_dyn
             else
@@ -629,8 +631,8 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             end
 
             -- compare ins
-            local proto1 = AST.asr(body1,'Block',1,'Stmts',1,'Code_Pars_Stmts')
-            local proto2 = AST.asr(body2,'Block',1,'Stmts',1,'Code_Pars_Stmts')
+            local proto1 = AST.asr(body1,'Block',1,'Stmts',2,'Do',3,'Block',1,'Stmts',1,'Code_Pars_Stmts')
+            local proto2 = AST.asr(body2,'Block',1,'Stmts',2,'Do',3,'Block',1,'Stmts',1,'Code_Pars_Stmts')
             local ok = AST.is_equal(proto1, proto2)
 
             -- compare mods
@@ -763,7 +765,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
                         node('Loc', v.ln,
                             node('ID_int', v.ln, id)))
             elseif v.tag == 'ID_any' then
-                local vars = AST.asr(code.dcl,'Code', 4,'Block').dcls
+                local vars = AST.asr(code.dcl,'Code', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block').dcls
                 local _,tp = unpack(vars[i])
                 if TYPES.abs_dcl(tp,'Data') then
                     xxx = tp[1]

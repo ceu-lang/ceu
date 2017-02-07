@@ -178,6 +178,7 @@ tceu_pool_pak]]..ptr..' '..id2..[[;
 
         local multis = {}
         if mods.dynamic then
+error'oi'
             local Code_Pars = AST.asr(body,'', 1,'Stmts', 1,'Code_Pars')
             for i, dcl in ipairs(Code_Pars) do
                 if dcl.mods.dynamic then
@@ -288,7 +289,7 @@ usize params = offsetof(tceu_code_mem_]]..me.id_..[[,_params);
 
         -- CEU_CODE_xxx
 
-        local Type = AST.get(body,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 1,'Code_Ret', 1,'', 2,'Type')
+        local Type = AST.get(body,'Block', 1,'Stmts', 1,'Code_Ret', 1,'', 2,'Type')
         if mods.tight then
             me.mems.wrapper = me.mems.wrapper .. [[
 static ]]..TYPES.toc(assert(Type))..[[ /* space */
@@ -436,7 +437,9 @@ static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
 
         local mem = {}
 
-        local toplevel = (AST.get(me,1,'Data') or AST.get(me,1,'Code'))
+        local toplevel = ( AST.get(me,1,'Data') or
+                           code and AST.depth(me)<=AST.depth(AST.asr(code,'',4,'Block',1,'Stmts',2,'Do',3,'Block',1,'Stmts',2,'Block')) )
+                                    -- block of pars/mids
 
         for _, dcl in ipairs(me.dcls) do
 if dcl.tag ~= 'Prim' then

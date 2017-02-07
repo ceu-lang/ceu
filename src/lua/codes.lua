@@ -360,7 +360,7 @@ if (0)
     _ceu_mem->trails_n = ]]..me.trails_n..[[;
     memset(&_ceu_mem->_trails, 0, ]]..me.trails_n..[[*sizeof(tceu_trl));
 ]])
-            local ret = AST.get(me,'', 4,'Block', 1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
+            local ret = AST.get(me,'', 4,'Block', 1,'Stmts', 1,'Code_Ret', 1,'', 2,'Type')
             if ret and (not TYPES.check(ret,'void')) then
                 LINE(me, [[
     ]]..TYPES.toc(ret)..[[ __ceu_ret_]]..me.n..[[;
@@ -417,7 +417,7 @@ if (0)
 
         CONC(me, body)
 
-        local Type = AST.get(body,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 1,'Code_Ret', 1,'', 2,'Type')
+        local Type = AST.get(body,'Block', 1,'Stmts', 1,'Code_Ret', 1,'', 2,'Type')
         if not Type then
             LINE(me, [[
 ceu_callback_assert_msg(0, "reached end of `code´");
@@ -609,6 +609,7 @@ if (0) {
 
         if list then
             CONC(me, list)
+error'oi'
             local mids = AST.asr(Code,'Code', 4,'Block', 1,'Stmts', 2,'Code_Pars')
             local ps = {}
             for i, arg in ipairs(list) do
@@ -722,27 +723,13 @@ ceu_callback_assert_msg(0, "reached end of `do´");
     Escape = function (me)
         local code = AST.par(me, 'Code')
         local mods = code and code[2]
-        local evt do
-            if code and mods.await then
-                local ret = AST.get(code,'', 4,'Block', 1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
-                if ret and (not TYPES.check(ret,'void')) then
-error'oi'
-                    -- HACK_8
-                    evt = '(tceu_evt_occ*) &__ceu_ret_'..code.n
-                else
-                    evt = 'NULL'
-                end
-            else
-                evt = 'NULL'
-            end
-        end
         if AST.par(me, 'Async_Thread') then
             LINE(me, [[
 goto ]]..me.outer.lbl_out.id..[[;
 ]])
         else
             LINE(me, [[
-ceu_lbl(]]..evt..[[, _ceu_stk,
+ceu_lbl(NULL, _ceu_stk,
         _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
 ]])
             HALT(me)
@@ -978,10 +965,6 @@ ceu_lbl(_ceu_occ, _ceu_stk,
 ]])
                 end
                 LINE(me, [[
-/*
-HACK_8
-ceu_lbl(NULL, _ceu_stk,
-*/
 ceu_lbl(_ceu_occ, _ceu_stk,
         _ceu_mem, ]]..me.trails[1]..','..me.lbl_out.id..[[);
 ]])

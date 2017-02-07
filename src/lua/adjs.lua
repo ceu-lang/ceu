@@ -174,65 +174,22 @@ error'TODO: luacov never executes this?'
                         unpack(me, 3))))
     end,
 
-    _Ext_Req_proto__PRE  = '_Code_proto__PRE',
-    _Ext_Code_proto__PRE = '_Code_proto__PRE',
+    _Code_impl__PRE = '_Code_proto__PRE',
     _Code_proto__PRE = function (me)
-        local tag = string.match(me.tag,'(.*)_proto')
-        return node(tag, me.ln, unpack(me))
-    end,
-
-    _Ext_Req_impl__PRE  = '_Code_impl__PRE',
-    _Ext_Code_impl__PRE = '_Code_impl__PRE',
-    _Code_impl__PRE = function (me)
-        local _,_,_,_,_,out,blk = unpack(me)
-
-        local stmts_old = AST.asr(blk,'Block', 1,'Stmts')
-        local stmts_new = node('Stmts', me.ln)
-        AST.set(blk, 1, stmts_new)
-
-        local Type = AST.get(out,'Code_Ret', 1,'Type')
-        if Type then
-            -- enclose "blk" with "_ret = do ... end"
-
-            local ID_prim,mod = unpack(Type)
-            local is_void = (ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod))
-            local do_ = node('Do', me.ln,
-                            true, false,
-                            node('Block', me.ln,
-                                stmts_old))
-            if is_void then
-                AST.set(stmts_new, 1, do_)
-            else
-                AST.set(stmts_new, 1,
-                        node('_Set', me.ln,
-                            node('Loc', me.ln,
-                                node('ID_int', me.ln, '_ret')),
-                            node('_Set_Do', me.ln,
-                                do_)))
-            end
-        else
-            -- ok
-            AST.set(stmts_new, 1,
-                        node('Do', me.ln,
-                            node('ID_any', me.ln),
-                            false,
-                            node('Block', me.ln,
-                                stmts_old)))
-        end
-
-        local tag = string.match(me.tag,'(.*)_impl')
-        return node(tag, me.ln, unpack(me))
-    end,
-
-    _Code__PRE = function (me)
         local Y, mods, id, ins, mid, out, blk, eoc = unpack(me)
+        me.tag = 'Code'
 
         mid = mid or AST.node('Code_Pars_Stmts', me.ln)
 
         local Type = AST.get(out,'Code_Ret', 1,'Type')
+        local is_void do
+            if Type then
+                local ID_prim,mod = unpack(Type)
+                is_void = (ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod))
+            end
+        end
+
         if Type then
-            local ID_prim,mod = unpack(Type)
-            local is_void = (ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod))
             if is_void then
                 out = node('Var_', me.ln, false, AST.copy(Type), '_ret')
                     -- TODO: HACK_5 (Var_)
@@ -244,22 +201,36 @@ error'TODO: luacov never executes this?'
             out = node('Nothing', me.ln)
         end
 
+        local set_or_do = node('Do', me.ln,
+                            (Type and true) or node('ID_any', me.ln),
+                            false,
+                            node('Block', me.ln,
+                                node('Stmts', me.ln,
+                                    ins,
+                                    node('Block', me.ln,
+                                        node('Stmts', me.ln,
+                                            mid,
+                                            (blk or node('Stmts',me.ln)))))))
+
+        if Type and (not is_void) then
+            set_or_do = node('_Set', me.ln,
+                            node('Loc', me.ln,
+                                node('ID_int', me.ln, '_ret')),
+                            node('_Set_Do', me.ln,
+                                set_or_do))
+        end
+
         local ret = node('Code', me.ln, Y, mods, id,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
-                                ins,
-                                node('Block', me.ln,
-                                    node('Stmts', me.ln,
-                                        mid,
-                                        node('Block', me.ln,
-                                            node('Stmts', me.ln,
-                                                node('Code_Ret', me.ln,
-                                                    out),
-                                                (blk or node('Stmts',me.ln)))),
-                                        eoc)))))
+                                node('Code_Ret', me.ln,
+                                    out),
+                                set_or_do)),
+                        eoc)
         ret.is_impl = (blk ~= false)
         return ret
     end,
+
 
 --[[
     _Code_Pars__PRE = function (me)
