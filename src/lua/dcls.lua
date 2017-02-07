@@ -615,8 +615,8 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             end
 
             -- compare ins
-            local proto1 = AST.asr(body1,'Block',1,'Stmts',1,'Stmts')
-            local proto2 = AST.asr(body2,'Block',1,'Stmts',1,'Stmts')
+            local proto1 = AST.asr(body1,'Block',1,'Stmts',1,'Code_Pars_Stmts')
+            local proto2 = AST.asr(body2,'Block',1,'Stmts',1,'Code_Pars_Stmts')
             local ok = AST.is_equal(proto1, proto2, DCLS.F.__proto_ignore)
 
             -- compare mods

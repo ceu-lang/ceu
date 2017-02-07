@@ -46,7 +46,6 @@ var/nohold int x;
 dynamic var int x;
 
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -32795,6 +32794,7 @@ escape 1;
     run = 1,
 }
 
+--]=====]
 Test { [[
 code/tight Fx (var int, var int) -> int;
 code/tight Fx (var int a, var  int b) -> int do

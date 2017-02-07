@@ -448,15 +448,15 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                              Cg(K'/dynamic'*Cc'dynamic','dynamic')^-1 *
                              Cg(K'/recursive'*Cc'recursive','recursive')^-1 ) *
                 (V'__ID_abs'-V'__id_data') *
-                    V'_Code_Pars_Stmts' * KK'->' *
+                    V'Code_Pars_Stmts' * KK'->' *
                         Cc(false) *
                             (#V'Type' * V'Code_Ret')
              + K'code' * Ct( Cg(K'/await'*Cc'await','await') *
                              Cg(K'/dynamic'*Cc'dynamic','dynamic')^-1 *
                              Cg(K'/recursive'*Cc'recursive','recursive')^-1 ) *
                 (V'__ID_abs'-V'__id_data') *
-                    V'_Code_Pars_Stmts' * KK'->' *
-                        OPT(V'_Code_Pars_Stmts' * KK'->') *
+                    V'Code_Pars_Stmts' * KK'->' *
+                        OPT(V'Code_Pars_Stmts' * KK'->') *
                             V'Code_Ret'
 
     , _Code_proto = V'Y' * V'__code' * Cc(false)
@@ -469,7 +469,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     -- call
     , __extcode = (CK'input/output' + CK'output/input') * K'/tight'
                     * OPT(CK'/recursive')
-                    * V'__ID_ext' * V'_Code_Pars_Stmts' * KK'->' * V'Type'
+                    * V'__ID_ext' * V'Code_Pars_Stmts' * KK'->' * V'Type'
 * EE'TODO-PARSER: extcode'
     , _Ext_Code_proto = V'__extcode'
     , _Ext_Code_impl  = V'__extcode' * V'__Do'
@@ -477,14 +477,14 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     -- req
     , __extreq = (CK'input/output' + CK'output/input') * K'/await'
                    * OPT('[' * (V'__Exp'+Cc(true)) * KK']')
-                   * V'__ID_ext' * V'_Code_Pars_Stmts' * KK'->' * V'Type'
+                   * V'__ID_ext' * V'Code_Pars_Stmts' * KK'->' * V'Type'
 * EE'TODO-PARSER: request'
     , _Ext_Req_proto = V'__extreq'
     , _Ext_Req_impl  = V'__extreq' * V'__Do'
 
     -- TYPEPARS
 
-    , _Code_Pars_Stmts = #KK'(' * (PARENS(P'void') + PARENS(LIST(V'__Dcls')))
+    , Code_Pars_Stmts = #KK'(' * (PARENS(P'void') + PARENS(LIST(V'__Dcls')))
     , Code_Ret = (V'Type' + CK'FOREVER')
 
 -- DATA

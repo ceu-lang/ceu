@@ -227,9 +227,7 @@ error'TODO: luacov never executes this?'
     _Code__PRE = function (me)
         local Y, mods, id, ins, mid, out, blk, eoc = unpack(me)
 
-        mid = mid or AST.node('_Code_Pars_Stmts', me.ln)
-        ins.tag = 'Stmts'
-        mid.tag = 'Stmts'
+        mid = mid or AST.node('Code_Pars_Stmts', me.ln)
 
         local Type = AST.get(out,'Code_Ret', 1,'Type')
         if Type then
