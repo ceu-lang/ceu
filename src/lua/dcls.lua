@@ -241,10 +241,17 @@ DCLS.F = {
 
     -- LOC
 
-    __no_abs = function (tp, no_what)
+    __no_abs = function (tp, no_code_tight)
         local ID = unpack(tp)
         if ID.tag == 'ID_abs' then
-            ASR(no_what and ID.dcl.tag~=no_what, tp,
+            local ok do
+                if no_code_tight then
+                    ok = (ID.dcl.tag~='Code' or (not ID.dcl[2].tight))
+                else
+                    ok = false
+                end
+            end
+            ASR(ok, tp,
                 'invalid declaration : unexpected context for `'..AST.tag2id[ID.dcl.tag]..'´ "'..
                     (ID.dcl.id or ID.dcl[3])..'"')
         end
@@ -255,7 +262,7 @@ DCLS.F = {
 
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
-        DCLS.F.__no_abs(Type, 'Code')
+        DCLS.F.__no_abs(Type, true)
 
         if alias == '&?' then
             me.is_read_only = true
@@ -276,21 +283,25 @@ DCLS.F = {
                 'invalid declaration : variable cannot be of type `void´') 
         end
 
+--[[
         local inits = DCLS.F.Var__POS__POS(me)
         if inits then
             return node('Stmts', me.ln, me, inits)
         end
+]]
     end,
 
 -------------------------------------------------------------------------------
 
+--[[
     Var__POS__POS = function (me, t)
         local is_alias,Type,id = unpack(me)
 
         if ((not t) and AST.par(me,'Data')) or is_alias
             or AST.par(me,'Code_Ret')
-            or AST.par(me,'_Code_Pars_X')
+            --or AST.par(me,'_Code_Pars_X')
         then
+error'oi'
             return
         end
 
@@ -361,6 +372,7 @@ DCLS.F = {
             return t.stmts
         end
     end,
+]]
 
     Pool__PRE = 'Vec__PRE',
     Vec__PRE = function (me)
@@ -386,7 +398,7 @@ DCLS.F = {
         local is_alias,Type,id,dim = unpack(me)
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
-        DCLS.F.__no_abs(Type, 'Code')
+        DCLS.F.__no_abs(Type, true)
 
         -- vector[] void vec;
         local ID_prim,mod = unpack(Type)
@@ -458,7 +470,7 @@ DCLS.F = {
 
     _Code_Pars_X = function (me)
         me.tag = 'Code_Pars'
-        local Code = AST.asr(me,4,'Code')
+        local Code = AST.asr(me,5,'Code')
         local _,mods = unpack(Code)
 
         -- check types only
@@ -480,17 +492,18 @@ DCLS.F = {
 assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             end
         end
-]]
 
         local stmts = AST.asr(me,1,'Stmts')
         if stmts[2] == me then
             return  -- initialization list
         end
+]]
 
         -- multi-methods: changes "me.id" on Code
         me.ids_dyn = ''
         for i, dcl in ipairs(me) do
-            if dcl.mods.dynamic then
+            local _,_,_,dcl_mods = unpack(dcl)
+            if dcl_mods and dcl_mods.dynamic then
                 ASR(mods.dynamic, me,
                     'invalid `dynamic´ modifier : expected enclosing `code/dynamic´')
                 local is_alias,Type = unpack(dcl)

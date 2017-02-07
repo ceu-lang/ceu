@@ -349,9 +349,9 @@ F = {
         end
 
         -- RUN_INITS
-        if me.is_implicit       or                  -- compiler defined
-           me.is_param          or                  -- "code" parameter
-           AST.par(me,'Data')   or                  -- "data" member
+        if me.is_implicit           or              -- compiler defined
+           me.blk.__par.tag=='Code' or              -- "code" parameter
+           AST.par(me,'Data')       or              -- "data" member
            TYPES.check(tp,'?') and (not is_alias)   -- optional initialization
         then
             -- ok: don't need initialization

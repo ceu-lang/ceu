@@ -42,7 +42,6 @@ var int x1 = f!.x;
 var int x2 = f;
 escape x1+x2;
 
-var int;
 var/nohold int x;
 dynamic var int x;
 
@@ -2775,17 +2774,6 @@ do/_
 end
 ]],
     run = { ['~>10s']=10 },
-}
-
-Test { [[
-spawn () do
-    code/tight Ff (void) -> void do end
-    await FOREVER;
-end
-escape 1;
-]],
-    wrn = true,
-    run = 1,
 }
 
 Test { [[
@@ -15198,7 +15186,6 @@ escape v;
 }
 
 -- Testa prio em DFA.lua
---]=====]
 Test { [[
 input int A;
 var int b=0; var int c=0; var int d=0;
@@ -20063,17 +20050,6 @@ escape x;
 }
 
 Test { [[
-code/tight Ff (var& int x) -> int do
-    escape x + 1;
-end
-escape call Ff(&1);
-]],
-    run = 1,
-    exps = 'line 4 : invalid binding : unexpected context for value "1"',
-    --todo = 'support aliases to constants',
-}
-
-Test { [[
 data Dd with
     var int x;
 end
@@ -23440,7 +23416,7 @@ Test { [[
 native/pos do
     #define ceu_out_emit(a,b,c,d)  __ceu_nothing(d)
 end
-output void A, B;
+output void A; output void B;
 par/or do
     emit A;
 with
@@ -23460,7 +23436,7 @@ native/pos do
     #define ceu_out_emit(a,b,c,d)  __ceu_nothing(d)
 end
 deterministic A with B;
-output void A, B;
+output void A; output void B;
 par/or do
     emit A;
 with
@@ -23475,7 +23451,7 @@ Test { [[
 native/pos do
     #define ceu_out_emit(a,b,c,d)  __ceu_nothing(d)
 end
-output void A, B;
+output void A; output void B;
 deterministic A with B;
 par/or do
     emit A;
@@ -23568,7 +23544,7 @@ end
 
 Test { [[
 native _Fx;
-output int Z,W;
+output int Z; output int W;
 native/pos do
     void Z() {};
 end
@@ -23591,7 +23567,7 @@ end
 Test { [[
 native _Fx;
 deterministic _Fx with Z,W;
-output int Z,W;
+output int Z; output int W;
 native/pos do
     void Z() {};
 end
@@ -23661,7 +23637,7 @@ end
 Test { [[
 native _Fx;
 deterministic Z with W;
-output void Z,W;
+output void Z; output voidW;
 par do
     emit Z;
 with
@@ -25702,7 +25678,7 @@ escape (_V==null) as int;
 
 Test { [[
 do/_
-    var int&& p=_, p1=_;
+    var int&& p=_; var int&& p1=_;
     input int&& E;
     p = await E;
     p1 = p;
@@ -28194,7 +28170,7 @@ escape ret;
 
 Test { [[
 input int A; input int  B; input int  Z;
-event bool a, b;
+event bool a; event bool b;
 var int ret = 0;
 par/or do
     loop do
@@ -28776,7 +28752,7 @@ escape v2[0] + v2[1] + v2[2];
 }
 
 Test { [[
-vector[] byte v1, v2, v3;
+vector[] byte v1; vector[] byte v2; vector[] byte v3;
 v1 = v2;
 v1 = v2..v3;
 escape $v1+1;
@@ -29729,7 +29705,7 @@ escape 0;
 }
 Test { [[
 vector[2] int v;
-var int i=0,j=0;
+var int i=0; var int j=0;
 par/or do
     v[j] = 1;
 with
@@ -30554,7 +30530,7 @@ escape 1;
 Test { [[
 native _SDL_Texture;
 native/nohold _g;
-var&? _SDL_Texture t_enemy_0, t_enemy_1;
+var&? _SDL_Texture t_enemy_0; var&? _SDL_Texture t_enemy_1;
 native _f;
     do t_enemy_1 = &_f();
 finalize (t_enemy_1) with
@@ -31807,7 +31783,7 @@ var& _SDL_Window win =
         end
 escape 0;
 ]],
-    parser = 'line 5 : after `)´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `..´ or `,´ or `;´',
+    parser = 'line 5 : after `)´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `..´ or `;´',
     --scopes = 'line 4 : invalid binding : expected option alias `&?´ as destination : got "_SDL_Window"',
     --fin = 'line 6 : must assign to a option reference (declared with `&?´)',
 }
@@ -32200,7 +32176,7 @@ escape a!+b;
 
 Test { [[
 input (int,int) E;
-var int? a,b;
+var int? a; var int? b;
 (a,b) =
     watching E do
     end;
@@ -32212,7 +32188,7 @@ escape (a? as int) + (b? as int) + 1;
 Test { [[
 par/or do
     input (int,int) E;
-    var int? a,b;
+    var int? a; var int? b;
     (a,b) =
         watching E do
             await FOREVER;
@@ -32433,6 +32409,14 @@ end
 -->>> CODE / TIGHT / FUNCTIONS
 
 Test { [[
+var int;
+escape 1;
+]],
+    adjs = 'line 1 : invalid declaration : expected identifier',
+    run = 1,
+}
+
+Test { [[
 code/tight Code (var int)->void
 do
 end
@@ -32440,7 +32424,8 @@ escape 1;
 ]],
     --wrn = true,
     --adj = 'line 1 : missing parameter identifier',
-    adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    adjs = 'line 1 : invalid declaration : expected identifier',
+    --adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
 }
 
 Test { [[
@@ -32449,7 +32434,8 @@ do
 end
 escape 1;
 ]],
-    adjs = 'line 1 : invalid declaration : parameter #2 : expected identifier',
+    adjs = 'line 1 : invalid declaration : expected identifier',
+    --adjs = 'line 1 : invalid declaration : parameter #2 : expected identifier',
 }
 
 Test { [[
@@ -32458,7 +32444,8 @@ do
 end
 escape 1;
 ]],
-    adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    adjs = 'line 1 : invalid declaration : expected identifier',
+    --adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
     --parser = 'line 1 : after `int´ : expected type modifier or `,´ or `)´',
     --adj = 'line 1 : wrong argument #1 : cannot be `void´',
 }
@@ -32472,7 +32459,8 @@ escape 1;
     --wrn = true,
     --adj = 'line 1 : wrong argument #1 : cannot be `void´',
     --parser = 'line 1 : after `void´ : expected type modifier or `;´',
-    adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    --adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    adjs = 'line 1 : invalid declaration : expected identifier',
 }
 
 Test { [[
@@ -32546,9 +32534,10 @@ do
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `(´ : expected `vector´ or `pool´ or `event´ or `var´',
+    parser = 'line 1 : after `(´ : expected `var´ or `vector´ or `pool´ or `event´',
 }
 
+--]=====]
 Test { [[
 code/tight Code (var int xxx) -> int
 do
@@ -33249,6 +33238,28 @@ call Fx(5);
 escape (_V==5) as int;
 ]],
     run = 1,
+}
+
+Test { [[
+spawn () do
+    code/tight Ff (void) -> void do end
+    await FOREVER;
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+code/tight Ff (var& int x) -> int do
+    escape x + 1;
+end
+escape call Ff(&1);
+]],
+    run = 1,
+    exps = 'line 4 : invalid binding : unexpected context for value "1"',
+    --todo = 'support aliases to constants',
 }
 
 -->>> RECURSIVE

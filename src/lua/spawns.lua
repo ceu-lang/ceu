@@ -18,7 +18,7 @@ SPAWNS.F = {
         return new
     end,
 }
-AST.visit(SPAWNS.F)
+--AST.visit(SPAWNS.F)
 
 SPAWNS.G = {
     _SPAWN = function (par, I, spawn)

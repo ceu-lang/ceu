@@ -358,34 +358,8 @@ STMTS.F = {
         me.tp = TYPES.new(me, 'int')
     end,
 
-    __check_watching_list = function (me, pars, list, must_be_opt)
-        local tag = (me.tag=='Abs_Await' and 'Watching') or me.tag
-        ASR(pars and #pars==#list, me,
-            'invalid `'..AST.tag2id[tag]..'´ : expected '..#pars..' argument(s)')
-        for i, par in ipairs(pars) do
-            local par_alias,par_tp = unpack(par)
-            assert(par_alias)
-            local arg = list[i]
-            if arg.tag ~= 'ID_any' then
-                local arg_alias,arg_tp = unpack(arg.dcl)
-                local err = 'invalid binding : argument #'..i
-                ASR(arg_alias, me,
-                    err..' : expected alias `&´ declaration')
-                ASR(arg_alias == par_alias, me,
-                    err..' : unmatching alias `&´ declaration')
-                EXPS.check_tag(me, par.tag, arg.info.dcl.tag, err)
-                EXPS.check_tp(me, par_tp, arg_tp, err)
-
-                if must_be_opt then
-                    ASR(arg_alias=='&?', me,
-                        err..' : terminating `code´ : expected alias `&?´ declaration')
-                end
-            end
-        end
-    end,
-
     Abs_Spawn_Pool = function (me)
-        local mods_call,Abs_Cons,list = unpack(me)
+        local mods_call,Abs_Cons = unpack(me)
         local ID_abs = AST.asr(Abs_Cons,'Abs_Cons', 1,'ID_abs')
         me.__code = AST.asr(ID_abs.dcl,'Code')
 
@@ -401,15 +375,6 @@ STMTS.F = {
             local mod = (mods_call.dynamic or mods_call.static)
             ASR(not mod, me, mod and
                 'invalid `'..AST.tag2id[me.tag]..'´ : unexpected `/'..mod..'´ modifier')
-        end
-
-        if list then
-            local must_be_opt = (me.tag~='Abs_Await' or me.__adjs_is_spawn) and
-                                 AST.get(me.__code,'', 4,'Block',
-                                                       1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
-
-            local pars = AST.asr(me.__code,'', 4,'Block', 1,'Stmts', 2,'Code_Pars')
-            STMTS.F.__check_watching_list(me, pars, list, must_be_opt)
         end
     end,
 
@@ -508,12 +473,6 @@ STMTS.F = {
 
         -- ctx
         INFO.asr_tag(pool, {'Pool'}, 'invalid `pool´ iterator')
-
-        if list then
-            local Code = AST.asr(pool.info.tp[1].dcl, 'Code')
-            local pars = AST.asr(Code,'', 4,'Block', 1,'Stmts', 2,'Code_Pars')
-            STMTS.F.__check_watching_list(me, pars, list)
-        end
     end,
 
 -- CALL, EMIT

@@ -140,7 +140,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
             if ID_abs.dcl.tag == 'Data' then
                 id_struct = 'tceu_data_'..ID_abs.dcl.id_
             else
-                id_struct = 'tceu_code_args_'..ID_abs.dcl.id_
+                id_struct = 'tceu_code_mem_'..ID_abs.dcl.id_
             end
             if ctx.to_tp then
                 id_struct = ctx.to_tp
@@ -162,10 +162,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
             local var = me.vars[i]
             local val = Abslist[i]
 
-            local var_is_alias, var_tp, var_id, var_dim = unpack(var)
-            if ID_abs.dcl.tag == 'Code' then
-                var_id = '_'..i
-            end
+            local var_is_alias, var_tp = unpack(var)
 
             -- var Ee.Xx ex = ...;
             -- code Ff (var& Ee e)
@@ -196,9 +193,9 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
                (not (val.info and TYPES.check(val.info.tp,'?')))
             then
                 if val.tag == 'ID_any' then
-                    ps[#ps+1] = '.'..var_id..' = { .is_set=0 }'
+                    ps[#ps+1] = '.'..var.id_..' = { .is_set=0 }'
                 else
-                    ps[#ps+1] = '.'..var_id..' = { .is_set=1, .value='..V(val)..'}'
+                    ps[#ps+1] = '.'..var.id_..' = { .is_set=1, .value='..V(val)..'}'
                 end
             else
                 local to_val = ctx.to_val
@@ -214,7 +211,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
                             --  event ...;
                             --  vector[] _int x;
                         else
-                            ps[#ps+1] = '.'..var_id..' = '..to_val..'.'..var_id
+                            ps[#ps+1] = '.'..var.id_..' = '..to_val..'.'..var.id_
                         end
                     end
                 else
@@ -224,7 +221,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
                         --ctx.to_tp  = TYPES.toc(var_tp)
                         ctx.to_tp  = TYPES.toc(val.info.tp)
                         if to_val then  -- only set for Set_Abs_Val ("data")
-                            ctx.to_val = '('..to_val..'.'..var_id..')'
+                            ctx.to_val = '('..to_val..'.'..var.id_..')'
                         end
                     end
 
@@ -261,18 +258,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
                         end
                     end
 
-                    ps[#ps+1] = '.'..var_id..' = '..val_val
-                end
-            end
-        end
-
-        if ctx.mid then
-            for i, var in ipairs(ctx.mid) do
-                -- extra indirection for mid's
-                if var.tag == 'ID_any' then
-                    ps[#ps+1] = '._'..(i+#me.vars)..' = NULL'
-                else
-                    ps[#ps+1] = '._'..(i+#me.vars)..' = &'..V(var,{is_bind=true})
+                    ps[#ps+1] = '.'..var.id_..' = '..val_val
                 end
             end
         end

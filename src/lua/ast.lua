@@ -138,6 +138,18 @@ function AST.is_equal (n1, n2, ignore)
         else
             return false
         end
+    elseif type(n1)=='table' and type(n2)=='table' then
+        for k,v in pairs(n1) do
+            if n2[k] ~= v then
+                return false
+            end
+        end
+        for k,v in pairs(n2) do
+            if n1[k] ~= v then
+                return false
+            end
+        end
+        return true
     else
         return false
     end

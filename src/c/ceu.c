@@ -234,7 +234,9 @@ static void* ceu_data_as (tceu_ndata* supers, tceu_ndata* me, tceu_ndata cmp,
 /*****************************************************************************/
 
 === CODES_MEMS ===
+#if 0
 === CODES_ARGS ===
+#endif
 
 === EXTS_TYPES ===
 === EVTS_TYPES ===

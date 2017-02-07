@@ -13,8 +13,8 @@ MEMS = {
     codes = {
         mems     = '',
         wrappers = '',
-        args     = '',
 --[[
+        args     = '',
         [1] = {
             mem     = '',
             wrapper = '',
@@ -102,11 +102,12 @@ typedef struct tceu_code_mem_]]..me.id_..[[ {
         me.mems.wrapper = ''
 
         if (not me.is_dyn_base) and ((not me.is_impl) or mods.dynamic) then
-            me.mems.args = ''
+            --me.mems.args = ''
             --me.mems.wrapper = ''
             return
         end
 
+--[=[
         -- args
         me.mems.args = 'typedef struct tceu_code_args_'..me.id_..' {\n'
 
@@ -173,6 +174,7 @@ tceu_pool_pak]]..ptr..' '..id2..[[;
                 error'bug found'
             end
         end
+]=]
 
         local multis = {}
         if mods.dynamic then
@@ -183,9 +185,11 @@ tceu_pool_pak]]..ptr..' '..id2..[[;
                     local data = AST.asr(Type,'',1,'ID_abs')
                     ASR(data.dcl.hier and (not data.dcl.hier.up), me,
                         'invalid `code´ declaration : missing base case')
+--[=[
                     me.mems.args = me.mems.args .. [[
 tceu_ndata _data_]]..i..[[;     /* force multimethod arg data id */
 ]]
+]=]
 
                     -- arg "i" is dynamic:
                     multis[#multis+1] = {
@@ -229,9 +233,10 @@ usize params = multis_params
             end
         end
 
-        me.mems.args = me.mems.args..'} tceu_code_args_'..me.id_..';\n'
+        --me.mems.args = me.mems.args..'} tceu_code_args_'..me.id_..';\n'
 
         -- CEU_CODE_WATCH_xxx
+--[=[
         local mid = AST.asr(body,'', 1,'Stmts', 2,'Code_Pars')
         if #mid>0 and mods.await then
             me.mems.wrapper = me.mems.wrapper .. [[
@@ -279,21 +284,21 @@ usize params = offsetof(tceu_code_mem_]]..me.id_..[[,_params);
 }
 ]]
         end
+]=]
 
         -- CEU_CODE_xxx
 
-        local Type = AST.get(body,'Block', 1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
+        local Type = AST.get(body,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 1,'Code_Ret', 1,'', 2,'Type')
         if mods.tight then
             me.mems.wrapper = me.mems.wrapper .. [[
 static ]]..TYPES.toc(assert(Type))..[[ /* space */
-CEU_CODE_]]..me.id_..[[ (tceu_code_args_]]..me.id_..[[ ps,
-                         tceu_code_mem* up_mem
+CEU_CODE_]]..me.id_..[[ (tceu_code_mem_]]..me.id_..[[ mem,
+                        tceu_code_mem* up_mem
 #ifdef CEU_FEATURES_LUA
-                        , lua_State* lua
+                      , lua_State* lua
 #endif
-                       )
+                        )
 {
-    tceu_code_mem_]]..me.id_..[[ mem;
     mem._mem.up_mem = up_mem;
     mem._mem.depth  = ]]..me.depth..[[;
 #ifdef CEU_FEATURES_LUA
@@ -308,11 +313,11 @@ CEU_CODE_]]..me.id_..[[ (tceu_code_args_]]..me.id_..[[ ps,
 ]]
             end
             me.mems.wrapper = me.mems.wrapper .. [[
-    ceu_lbl((tceu_evt_occ*)&ps, NULL, (tceu_code_mem*)&mem, 0, lbl);
+    ceu_lbl(NULL, NULL, (tceu_code_mem*)&mem, 0, lbl);
 ]]
             if Type and (not TYPES.check(Type,'void')) then
                 me.mems.wrapper = me.mems.wrapper..[[
-    return ps._ret;
+    return mem._ret;
 ]]
             end
             me.mems.wrapper = me.mems.wrapper..[[
@@ -321,7 +326,6 @@ CEU_CODE_]]..me.id_..[[ (tceu_code_args_]]..me.id_..[[ ps,
         else
             me.mems.wrapper = me.mems.wrapper .. [[
 static void CEU_CODE_]]..me.id_..[[ (tceu_stk* stk, tceu_ntrl trlK,
-                                       tceu_code_args_]]..me.id_..[[ ps,
                                        tceu_code_mem* mem)
 {
 ]]
@@ -334,12 +338,13 @@ static void CEU_CODE_]]..me.id_..[[ (tceu_stk* stk, tceu_ntrl trlK,
             end
             me.mems.wrapper = me.mems.wrapper .. [[
     tceu_stk __ceu_stk = { 1, stk, {mem,]]..me.trails[1]..','..me.trails[2]..[[} };
-    ceu_lbl((tceu_evt_occ*)&ps, &__ceu_stk, mem, trlK, lbl);
+    ceu_lbl(NULL, &__ceu_stk, mem, trlK, lbl);
     if (!__ceu_stk.is_alive) {
         return; /* skips WATCH below */
     }
 ]]
             if #mid>0 and mods.await then
+error'oi'
             --if me.mems.watch ~= '' then
                 me.mems.wrapper = me.mems.wrapper .. [[
     CEU_CODE_WATCH_]]..me.id_..[[(mem, &ps);
@@ -472,16 +477,16 @@ if dcl.tag ~= 'Prim' then
 
             -- VAR
             elseif dcl.tag == 'Var' then
-                if dcl.id == '_ret' then
-                    dcl.id_ = dcl.id
-                else
+                --if dcl.id == '_ret' then
+                    --dcl.id_ = dcl.id
+                --else
                     local alias, tp = unpack(dcl)
                     if alias then
                         mem[#mem+1] = TYPES.toc(tp)..'* '..dcl.id_..';\n'
                     else
                         mem[#mem+1] = TYPES.toc(tp)..'  '..dcl.id_..';\n'
                     end
-                end
+                --end
 
             -- EVT
             elseif dcl.tag == 'Evt' then
@@ -740,7 +745,7 @@ for i, code in ipairs(MEMS.codes) do
     end
 
     if i < #MEMS.codes then
-        MEMS.codes.args = MEMS.codes.args..code.args
+        --MEMS.codes.args = MEMS.codes.args..code.args
         if code.wrapper then
             MEMS.codes.wrappers = MEMS.codes.wrappers..code.wrapper
         end

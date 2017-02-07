@@ -370,12 +370,13 @@ if (0)
         end
 
         -- copy args
+--[=[
         do
             local args_id        = me.id_
-            local args_Code_Pars = AST.asr(body,'', 1,'Stmts', 1,'Code_Pars')
+            local args_Code_Pars = AST.asr(body,'', 1,'Stmts', 1,'Block', 1,'Code_Pars')
             if me.dyn_base then
                 args_id = me.dyn_base.id_
-                args_Code_Pars = AST.asr(me.dyn_base,'Code', 4,'Block', 1,'Stmts', 1,'Code_Pars')
+                args_Code_Pars = AST.asr(me.dyn_base,'Code', 4,'Block', 1,'Stmts', 1,'Block', 1,'Code_Pars')
             end
 
             for i,dcl in ipairs(body.dcls) do
@@ -413,10 +414,11 @@ if (0)
                 end
             end
         end
+]=]
 
         CONC(me, body)
 
-        local Type = AST.get(body,'Block', 1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
+        local Type = AST.get(body,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 1,'Code_Ret', 1,'', 2,'Type')
         if not Type then
             LINE(me, [[
 ceu_callback_assert_msg(0, "reached end of `code´");
@@ -450,14 +452,12 @@ CLEAR(me) -- TODO-NOW
     --------------------------------------------------------------------------
 
     __abs = function (me, mem, pak)
-        local _, Abs_Cons, mid = unpack(me)
+        local _, Abs_Cons = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
 
-        local ret = (mid and mid.code) or ''
-
-        ret = ret .. [[
+        local ret = [[
 {
-    tceu_code_args_]]..ID_abs.dcl.id_..[[ __ceu_ps = ]]..V(Abs_Cons,{mid=mid})..[[;
+    tceu_code_args_]]..ID_abs.dcl.id_..[[ __ceu_ps = ]]..V(Abs_Cons)..[[;
 
     ]]..mem..[[->pak     = ]]..pak..[[;
     ]]..mem..[[->up_mem  = ]]..((pak=='NULL' and '_ceu_mem')   or (pak..'->up_mem'))..[[;
@@ -478,22 +478,6 @@ CLEAR(me) -- TODO-NOW
     }
 }
 ]]
-
-        -- Passing "x" from "code" mid to "spawn":
-        --  code Ff (...) => (var& int x) => ... do
-        if mid then
-            for _, ID_int in ipairs(mid) do
-                if ID_int.tag~='ID_any' and ID_int.dcl.is_mid_idx then
-                    local Code = AST.par(me,'Code')
-                    ret = ret .. [[
-if (((tceu_code_args_]]..Code.id_..[[*)_ceu_occ)->_]]..ID_int.dcl.is_mid_idx..[[ != NULL) {
-    *(((tceu_code_args_]]..Code.id_..[[*)_ceu_occ)->_]]..ID_int.dcl.is_mid_idx..[[) = ]]..V(ID_int, {is_bind=true})..[[;
-}
-]]
-                end
-            end
-        end
-
         return ret
     end,
 
@@ -513,7 +497,7 @@ ceu_stack_clear(_ceu_stk, _ceu_mem,
     end,
 
     Abs_Spawn_Pool = function (me)
-        local _, Abs_Cons, _, _, pool = unpack(me)
+        local _, Abs_Cons, _, pool = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
         local alias,_,_,dim = unpack(pool.info.dcl)
 
@@ -1035,6 +1019,8 @@ if (! ]]..CUR('__and_'..me.n..'_'..i)..[[) {
     Set_Exp = function (me)
         local fr, to = unpack(me)
 
+        if false then
+--[=[
         if to.info.dcl.id == '_ret' then
             local code = AST.par(me, 'Code')
             if code then
@@ -1058,6 +1044,7 @@ __ceu_ret_]]..code.n..' = '..V(fr)..[[;
 }
 ]])
             end
+]=]
         elseif AST.get(to,'Loc',1,'Exp_$') then
             -- $vec = ...
             local _,vec = unpack(to[1])
@@ -1067,6 +1054,14 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
 
         else
             SET(me, to, fr)
+
+            if to.info.dcl.id=='_ret' and (not AST.par(me,'Code')) then
+                LINE(me, [[
+{   CEU_APP.end_ok=1; CEU_APP.end_val=]]..V(fr)..[[;
+    ceu_callback_void_void(CEU_CALLBACK_TERMINATING);
+}
+]])
+            end
         end
     end,
 
@@ -1904,7 +1899,7 @@ local c = SUB(c, '=== EXTS_ENUM_OUTPUT ===', MEMS.exts.enum_output)
 local c = SUB(c, '=== TCEU_NTRL ===',        TYPES.n2uint(AST.root.trails_n))
 local c = SUB(c, '=== TCEU_NLBL ===',        TYPES.n2uint(#LABELS.list))
 local c = SUB(c, '=== CODES_MEMS ===',       MEMS.codes.mems)
-local c = SUB(c, '=== CODES_ARGS ===',       MEMS.codes.args)
+--local c = SUB(c, '=== CODES_ARGS ===',       MEMS.codes.args)
 local c = SUB(c, '=== EXTS_TYPES ===',       MEMS.exts.types)
 local c = SUB(c, '=== EVTS_TYPES ===',       MEMS.evts.types)
 local c = SUB(c, '=== LABELS ===',           labels)
