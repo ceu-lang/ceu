@@ -61,6 +61,7 @@ F = {
                             node('Stmts', me.ln,
                                 node('_Var_set', me.ln,
                                     false,
+                                    {},
                                     node('Type', me.ln,
                                         node('ID_prim', me.ln, 'bool')),
                                     'is_locked',
@@ -225,7 +226,10 @@ error'TODO: luacov never executes this?'
 
     _Code__PRE = function (me)
         local Y, mods, id, ins, mid, out, blk, eoc = unpack(me)
-        mid = mid or AST.node('Code_Pars', me.ln)
+
+        mid = mid or AST.node('_Code_Pars_Stmts', me.ln)
+        ins.tag = 'Stmts'
+        mid.tag = 'Stmts'
 
         local Type = AST.get(out,'Code_Ret', 1,'Type')
         if Type then
@@ -245,29 +249,28 @@ error'TODO: luacov never executes this?'
         local ret = node('Code', me.ln, Y, mods, id,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
-                                node('Stmts', me.ln,
-                                    ins,
-                                    mid,
-                                    node('Code_Ret', me.ln, out)),
-                                (blk or node('Stmts',me.ln)))),
-                        eoc)
+                                ins,
+                                node('Block', me.ln,
+                                    node('Stmts', me.ln,
+                                        mid,
+                                        node('Block', me.ln,
+                                            node('Stmts', me.ln,
+                                                out,
+                                                (blk or node('Stmts',me.ln)))),
+                                        eoc)))))
         ret.is_impl = (blk ~= false)
         return ret
     end,
 
 --[[
-    _Code_Pars_Init__PRE = function (me)
-        me.tag = '_Code_Pars'
-        return F._Code_Pars__PRE(me)
-    end,
     _Code_Pars__PRE = function (me)
         me.tag = '_Code_Pars_X'
         local Code = AST.par(me,'Code')
 
         local params, mids = unpack(AST.asr(me,1,'Stmts'))
 
-        local is_param = (params == me)
-        local is_mid   = (mids == me)
+        local is_param = (me.__i == 1)
+        --local is_mid   = (mids == me)
 
         for i, v in ipairs(me) do
             if v == 'void' then
@@ -303,8 +306,8 @@ error'TODO'
                     error'TODO'
                 end
                 me[i].is_param   = is_param
-                me[i].is_mid_idx = is_mid and ((params and #params or 0) + i)
-                me[i].mods       = mods
+                --me[i].is_mid_idx = is_mid and ((params and #params or 0) + i)
+                --me[i].mods       = mods
                 if Code.is_impl then
                     ASR(id ~= '_anon_'..i, me,
                         'invalid declaration : parameter #'..i..' : expected identifier')
@@ -730,17 +733,32 @@ error'TODO'
 -------------------------------------------------------------------------------
 
     __dcl_set__PRE = function (me)
-        local is_alias, dim, tp, id, set
+        local is_alias, mods, dim, tp, id, set
         local tag = string.sub(me.tag,2,-5)
-        if tag=='Pool' or tag=='Vec' then
+        if tag=='Var' or tag=='Pool' or tag=='Vec' then
             idx = 3
-            is_alias, dim, tp, id, set = unpack(me)
+            is_alias, dim_or_mods, tp, id, set = unpack(me)
             AST.set(me, 2, tp)
             AST.set(me, 3, id)
-            AST.set(me, 4, dim)
+            AST.set(me, 4, dim_or_mods)
         else
             idx = 2
             is_alias, tp, id, set = unpack(me)
+        end
+
+        if not id then
+            local code = AST.par(me,'Code')
+            local err do
+                if code and (not code.is_impl) then
+                    -- TODO
+                    --local pars = AST.par(me, 'Code_Pars')
+                    --err = 'invalid declaration : parameter #'..i..' : expected identifier'
+                    err = 'invalid declaration : expected identifier'
+                else
+                    err = 'invalid declaration : expected identifier'
+                end
+            end
+            ASR(not err, me, err)
         end
 
         if set then
