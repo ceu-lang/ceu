@@ -46,7 +46,6 @@ var/nohold int x;
 dynamic var int x;
 
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -33217,12 +33216,13 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var void a, var int b)->int do
+code/tight Fx (var void, var int b)->int do
 end
 escape 1;
 ]],
+    parser = 'line 1 : after `void´ : expected type modifier or internal identifier',
     --parser = 'line 1 : after `int´ : expected type modifier or `;´',
-    adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    --adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
 }
 
 Test { [[
@@ -33530,7 +33530,8 @@ end
 
 escape call Fx(&str);
 ]],
-    parser = 'line 3 : after `vector´ : expected `&´',
+    --parser = 'line 3 : after `vector´ : expected `&´',
+    dcls = 'line 3 : invalid declaration : vector inside `code/tight´',
 }
 Test { [[
 vector[] byte str = [0,1,2];
@@ -33660,7 +33661,8 @@ end
 
 escape call Fx(str);
 ]],
-    parser = 'line 3 : after `vector´ : expected `&´',
+    dcls = 'line 3 : invalid declaration : vector inside `code/tight´',
+    --parser = 'line 3 : after `vector´ : expected `&´',
     --env = 'line 3 : wrong argument #2 : vectors are not supported',
     --env = 'line 7 : wrong argument #1 : types mismatch (`int[]´ <= `byte[]´)',
 }
@@ -33729,8 +33731,9 @@ code/tight Build (vector[] u8 bytes)->void do
 end
 escape 1;
 ]],
-    wrn = true,
-    parser = 'line 1 : after `vector´ : expected `&´',
+    dcls = 'line 1 : invalid declaration : vector inside `code/tight´',
+    --wrn = true,
+    --parser = 'line 1 : after `vector´ : expected `&´',
     --env = 'line 1 : wrong argument #1 : vectors are not supported',
 }
 
@@ -33858,8 +33861,9 @@ code/tight Fx (void)->void do
 end
 escape 1;
 ]],
-    wrn = true,
-    props = 'line 4 : not permitted inside `function´',
+    dcls = 'line 4 : invalid declaration : vector inside `code/tight´',
+    --wrn = true,
+    --props = 'line 4 : not permitted inside `function´',
     --props_ = 'line 4 : invalid `await´ : unexpected enclosing `code´',
 }
 
@@ -33999,118 +34003,6 @@ escape ret;
 --<< CODE / ALIAS / FINALIZE
 
 --<<< CODE / TIGHT / FUNCTIONS
-
--->> C FIELDS / DIRECT ACCESS / TCEU_MEM
-Test { [[
-native __ceu_mem, _tceu_code_mem_ROOT;
-var int xxx = 10;
-escape (__ceu_mem as _tceu_code_mem_ROOT&&):xxx;
-]],
-    run = 10,
-}
-
-Test { [[
-native __ceu_mem, _tceu_code_mem_ROOT;
-do/_
-    var int xxx = 10;
-    escape (__ceu_mem as _tceu_code_mem_ROOT&&):xxx;
-end
-]],
-    cc = '5:2: error: ‘tceu_code_mem_ROOT {aka struct tceu_code_mem_ROOT}’ has no member named ‘xxx’',
-}
-
-Test { [[
-par/and do
-    var int xxx = 10;
-with
-    var int xxx = 10;
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native __ceu_mem, _tceu_code_mem_Ff;
-code/await Ff (void) -> int do
-    var int yyy = 10;
-    escape (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
-end
-var int v = await Ff();
-escape v;
-]],
-    run = 10,
-}
-
-Test { [[
-native __ceu_mem, _tceu_code_mem_Ff;
-code/await Ff (void) -> int do
-    do/_
-        var int yyy = 10;
-        escape (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
-    end
-end
-var int v = await Ff();
-escape v;
-]],
-    cc = '6:2: error: ‘tceu_code_mem_Ff {aka struct tceu_code_mem_Ff}’ has no member named ‘yyy’',
-}
-
-Test { [[
-native __ceu_mem, _tceu_code_mem_Ff;
-code/await Ff (void) -> FOREVER do
-    do/_
-        var int yyy = 10;
-        var int zzz = (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
-    end
-    await FOREVER;
-end
-spawn Ff();
-escape 10;
-]],
-    cc = '6:2: error: ‘tceu_code_mem_Ff {aka struct tceu_code_mem_Ff}’ has no member named ‘yyy’',
-}
-
-Test { [[
-native __ceu_mem, _tceu_code_mem_Ff;
-code/await Ff (var int xxx) -> int do
-    escape (__ceu_mem as _tceu_code_mem_Ff&&):xxx;
-end
-var int yyy = await Ff(10);
-escape yyy;
-]],
-    wrn = true,
-    run = 10,
-}
-
-Test { [[
-code/await Ff (void) -> FOREVER do
-    par do
-        var int e=_;
-    with
-        var int e=_;
-    end
-end
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-code/await Ff (void) -> FOREVER do
-    par do
-        var int yyy = 10;
-    with
-        var int yyy = 10;
-    end
-end
-spawn Ff();
-escape 10;
-]],
-    run = 10,
-}
---<< C FIELDS / DIRECT ACCESS / TCEU_MEM
 
 -->>> CODE / AWAIT
 
@@ -34295,6 +34187,7 @@ await FOREVER;
     },
 }
 
+--]=====]
 Test { [[
 code/await Tx (void)->void do
     await FOREVER;
@@ -39676,6 +39569,118 @@ escape 0;
 }
 
 --<< CODE / AWAIT / RECURSIVE
+
+-->> C FIELDS / DIRECT ACCESS / TCEU_MEM
+Test { [[
+native __ceu_mem, _tceu_code_mem_ROOT;
+var int xxx = 10;
+escape (__ceu_mem as _tceu_code_mem_ROOT&&):xxx;
+]],
+    run = 10,
+}
+
+Test { [[
+native __ceu_mem, _tceu_code_mem_ROOT;
+do/_
+    var int xxx = 10;
+    escape (__ceu_mem as _tceu_code_mem_ROOT&&):xxx;
+end
+]],
+    cc = '5:2: error: ‘tceu_code_mem_ROOT {aka struct tceu_code_mem_ROOT}’ has no member named ‘xxx’',
+}
+
+Test { [[
+par/and do
+    var int xxx = 10;
+with
+    var int xxx = 10;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native __ceu_mem, _tceu_code_mem_Ff;
+code/await Ff (void) -> int do
+    var int yyy = 10;
+    escape (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
+end
+var int v = await Ff();
+escape v;
+]],
+    run = 10,
+}
+
+Test { [[
+native __ceu_mem, _tceu_code_mem_Ff;
+code/await Ff (void) -> int do
+    do/_
+        var int yyy = 10;
+        escape (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
+    end
+end
+var int v = await Ff();
+escape v;
+]],
+    cc = '6:2: error: ‘tceu_code_mem_Ff {aka struct tceu_code_mem_Ff}’ has no member named ‘yyy’',
+}
+
+Test { [[
+native __ceu_mem, _tceu_code_mem_Ff;
+code/await Ff (void) -> FOREVER do
+    do/_
+        var int yyy = 10;
+        var int zzz = (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
+    end
+    await FOREVER;
+end
+spawn Ff();
+escape 10;
+]],
+    cc = '6:2: error: ‘tceu_code_mem_Ff {aka struct tceu_code_mem_Ff}’ has no member named ‘yyy’',
+}
+
+Test { [[
+native __ceu_mem, _tceu_code_mem_Ff;
+code/await Ff (var int xxx) -> int do
+    escape (__ceu_mem as _tceu_code_mem_Ff&&):xxx;
+end
+var int yyy = await Ff(10);
+escape yyy;
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    par do
+        var int e=_;
+    with
+        var int e=_;
+    end
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    par do
+        var int yyy = 10;
+    with
+        var int yyy = 10;
+    end
+end
+spawn Ff();
+escape 10;
+]],
+    run = 10,
+}
+--<< C FIELDS / DIRECT ACCESS / TCEU_MEM
 
 --<<< CODE / AWAIT / FUNCTIONS
 

@@ -400,6 +400,12 @@ error'oi'
         dcls_new(AST.par(me,'Block'), me)
         DCLS.F.__no_abs(Type, true)
 
+        local code = AST.par(me, 'Code')
+        if code and code[2].tight and (not is_alias) then
+            ASR(false, me,
+                'invalid declaration : vector inside `code/tight´')
+        end
+
         -- vector[] void vec;
         local ID_prim,mod = unpack(Type)
         if ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod) then
@@ -743,7 +749,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
                         node('Loc', v.ln,
                             node('ID_int', v.ln, id)))
             elseif v.tag == 'ID_any' then
-                local vars = AST.asr(code.dcl,'Code', 4,'Block', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
+                local vars = AST.asr(code.dcl,'Code', 4,'Block').dcls
                 local _,tp = unpack(vars[i])
                 if TYPES.abs_dcl(tp,'Data') then
                     xxx = tp[1]

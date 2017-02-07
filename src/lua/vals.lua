@@ -258,7 +258,8 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
                         end
                     end
 
-                    ps[#ps+1] = '.'..var.id_..' = '..val_val
+                    ps[#ps+1] = '.'..var.id..' = '..val_val
+                                    -- proto has no var.id_
                 end
             end
         end
