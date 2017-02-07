@@ -241,12 +241,24 @@ DCLS.F = {
 
     -- LOC
 
-    __no_abs = function (tp, no_code_tight)
+    __no_abs = function (tp, class, mod)
         local ID = unpack(tp)
         if ID.tag == 'ID_abs' then
             local ok do
-                if no_code_tight then
-                    ok = (ID.dcl.tag~='Code' or (not ID.dcl[2].tight))
+                if class then
+                    if ID.dcl.tag==class then
+                        if mod then
+                            if ID.dcl[2][mod] then
+                                ok = false
+                            else
+                                ok = true
+                            end
+                        else
+                            ok = false
+                        end
+                    else
+                        ok = true
+                    end
                 else
                     ok = false
                 end
@@ -262,12 +274,14 @@ DCLS.F = {
 
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
-        DCLS.F.__no_abs(Type, true)
 
         if alias == '&?' then
+            DCLS.F.__no_abs(Type, 'Code', 'tight')
             me.is_read_only = true
             ASR(not TYPES.check(Type,'?'), me,
                 'invalid declaration : option type : not implemented')
+        else
+            DCLS.F.__no_abs(Type, 'Code')
         end
 
         if alias then
@@ -398,7 +412,7 @@ error'oi'
         local is_alias,Type,id,dim = unpack(me)
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
-        DCLS.F.__no_abs(Type, true)
+        DCLS.F.__no_abs(Type, 'Code', 'tight')
 
         local code = AST.par(me, 'Code')
         if code and code[2].tight and (not is_alias) then

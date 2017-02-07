@@ -343,13 +343,15 @@ static void CEU_CODE_]]..me.id_..[[ (tceu_stk* stk, tceu_ntrl trlK,
         return; /* skips WATCH below */
     }
 ]]
-            if #mid>0 and mods.await then
+--[=[
 error'oi'
+            if #mid>0 and mods.await then
             --if me.mems.watch ~= '' then
                 me.mems.wrapper = me.mems.wrapper .. [[
     CEU_CODE_WATCH_]]..me.id_..[[(mem, &ps);
 ]]
             end
+]=]
             me.mems.wrapper = me.mems.wrapper .. [[
 }
 ]]
@@ -434,6 +436,8 @@ static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
 
         local mem = {}
 
+        local toplevel = (AST.get(me,1,'Data') or AST.get(me,1,'Code'))
+
         for _, dcl in ipairs(me.dcls) do
 if dcl.tag ~= 'Prim' then
             local alias, Type = unpack(dcl)
@@ -453,7 +457,7 @@ if dcl.tag ~= 'Prim' then
                 if ok then
                     local blk1 = AST.par(dcl, 'Block')
                     local blk2 = AST.par(blk1,'Block') or blk1
-                    if AST.par(me,'Data') then
+                    if toplevel then
                         --ok = true
                     elseif blk1.__par.tag == 'Code' then
                         --ok = true
@@ -523,7 +527,7 @@ if dcl.tag ~= 'Prim' then
                 local is_alias, tp, _, dim = unpack(dcl)
                 local ptr = (is_alias and '*' or '')
                 dcl.id_ = dcl.id
-                if not AST.par(me,'Data') then
+                if not toplevel then
                     dcl.id_ = dcl.id..'_'..dcl.n
                 end
                 if TYPES.is_nat(TYPES.get(tp,1)) then
@@ -546,7 +550,7 @@ tceu_vector]]..ptr..' '..dcl.id_..[[;
                 local is_alias, tp, _, dim = unpack(dcl)
                 local ptr = (is_alias and '*' or '')
                 dcl.id_ = dcl.id
-                if not AST.par(me,'Data') then
+                if not toplevel then
                     dcl.id_ = dcl.id..'_'..dcl.n
                 end
                 if dim.is_const and (not is_alias) then

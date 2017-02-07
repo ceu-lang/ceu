@@ -46,6 +46,7 @@ var/nohold int x;
 dynamic var int x;
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -34187,7 +34188,6 @@ await FOREVER;
     },
 }
 
---]=====]
 Test { [[
 code/await Tx (void)->void do
     await FOREVER;

@@ -51,8 +51,7 @@ local function CLEAR (me)
                     ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
     tceu_evt_range __ceu_range = { _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[ };
 
-    /* HACK_8: _ceu_occ holds __ceu_ret */
-    tceu_evt_occ __ceu_occ = { {CEU_INPUT__CLEAR,{_ceu_occ}}, (tceu_nseq)(CEU_APP.seq+1), &__ceu_range,
+    tceu_evt_occ __ceu_occ = { {CEU_INPUT__CLEAR,{NULL}}, (tceu_nseq)(CEU_APP.seq+1), &__ceu_range,
                                {(tceu_code_mem*)&CEU_APP.root,
                                 0, (tceu_ntrl)(CEU_APP.root._mem.trails_n-1)}
                              };
@@ -457,8 +456,7 @@ CLEAR(me) -- TODO-NOW
 
         local ret = [[
 {
-    tceu_code_args_]]..ID_abs.dcl.id_..[[ __ceu_ps = ]]..V(Abs_Cons)..[[;
-
+    *((tceu_code_mem_]]..ID_abs.dcl.id_..'*)'..mem..') = '..V(Abs_Cons)..[[;
     ]]..mem..[[->pak     = ]]..pak..[[;
     ]]..mem..[[->up_mem  = ]]..((pak=='NULL' and '_ceu_mem')   or (pak..'->up_mem'))..[[;
     ]]..mem..[[->up_trl  = ]]..((pak=='NULL' and me.trails[1]) or (pak..'->up_trl'))..[[;
@@ -471,8 +469,7 @@ CLEAR(me) -- TODO-NOW
         end
         ret = ret .. [[
     tceu_stk __ceu_stk  = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
-    CEU_CODE_]]..ID_abs.dcl.id_..[[(&__ceu_stk, 0, __ceu_ps,
-                                   (tceu_code_mem*)]]..mem..[[);
+    CEU_CODE_]]..ID_abs.dcl.id_..[[(&__ceu_stk, 0, (tceu_code_mem*)]]..mem..[[);
     if (!__ceu_stk.is_alive) {
         return;
     }
@@ -729,6 +726,7 @@ ceu_callback_assert_msg(0, "reached end of `do´");
             if code and mods.await then
                 local ret = AST.get(code,'', 4,'Block', 1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
                 if ret and (not TYPES.check(ret,'void')) then
+error'oi'
                     -- HACK_8
                     evt = '(tceu_evt_occ*) &__ceu_ret_'..code.n
                 else
@@ -1119,9 +1117,7 @@ _ceu_mem->_trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
             SET(me, to, 'CEU_APP.wclk_late', true)
         else
             assert(fr.tag == 'Abs_Await')
-            -- see "Set_Exp: _ret"
-            -- HACK_8
-            SET(me, to, '*(('..TYPES.toc(fr.tp)..'*)_ceu_occ->evt.mem)' ,true)
+            SET(me, to, CUR('__mem_'..fr.n)..'._ret', true)
         end
     end,
     Set_Await_many = function (me)
