@@ -46,6 +46,7 @@ var/nohold int x;
 dynamic var int x;
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -487,7 +488,7 @@ Test { [[
 native _V, _f;
 escape _f(_V);
 ]],
-    cc = '2:41: error: ‘V’ undeclared (first use in this function)',
+    cc = '2:27: error: ‘V’ undeclared (first use in this function)',
 }
 
 --<<< NATIVE
@@ -32537,7 +32538,6 @@ escape 1;
     parser = 'line 1 : after `(´ : expected `var´ or `vector´ or `pool´ or `event´',
 }
 
---]=====]
 Test { [[
 code/tight Code (var int xxx) -> int
 do
@@ -32652,7 +32652,8 @@ escape 1;
     --wrn = true,
     --env = 'line 1 : missing parameter identifier',
     --parser = 'line 1 : after `void´ : expected type modifier or `;´',
-    adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    --adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    adjs = 'line 1 : invalid declaration : expected identifier',
 }
 
 Test { [[

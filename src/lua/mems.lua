@@ -427,6 +427,11 @@ static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
     ---------------------------------------------------------------------------
 
     Block__PRE = function (me)
+        local code = AST.par(me, 'Code')
+        if code and (not code.is_impl) then
+            return
+        end
+
         local mem = {}
 
         for _, dcl in ipairs(me.dcls) do

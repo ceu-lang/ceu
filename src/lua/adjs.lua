@@ -750,11 +750,15 @@ error'TODO'
         if not id then
             local code = AST.par(me,'Code')
             local err do
-                if code and (not code.is_impl) then
-                    -- TODO
-                    --local pars = AST.par(me, 'Code_Pars')
-                    --err = 'invalid declaration : parameter #'..i..' : expected identifier'
-                    err = 'invalid declaration : expected identifier'
+                if code then
+                    if code.is_impl then
+                        -- TODO
+                        --local pars = AST.par(me, 'Code_Pars')
+                        --err = 'invalid declaration : parameter #'..i..' : expected identifier'
+                        err = 'invalid declaration : expected identifier'
+                    else
+                        err = false
+                    end
                 else
                     err = 'invalid declaration : expected identifier'
                 end
