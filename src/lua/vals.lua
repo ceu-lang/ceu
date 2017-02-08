@@ -353,7 +353,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
             return F.ID_int(me,{outer=e.__dcls_outer or AST.root})
         else
             local ptr = ''
-            if not TYPES.is_nat(e.info.tp) then
+            if not TYPES.is_nat(me.info.tp) then
                 if is_alias and me.info.dcl.tag~='Evt' then
                     ptr = '*'
                 end

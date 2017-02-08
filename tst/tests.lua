@@ -35139,7 +35139,8 @@ var int x = f!.x;
 
 escape x;
 ]],
-    run = 10;
+    run = '6] runtime error: value is not set',
+    --run = 10;
 }
 
 Test { [[
@@ -35187,40 +35188,23 @@ pool[] Ff ffs;
 }
 
 Test { [[
-code/await Ff (void) -> (var& int x) -> void do
-    var int v = 10;
-    x = &v;
+native _void_ptr, _malloc;
+native/nohold _free;
+native/pre do
+    typedef void* void_ptr;
 end
-pool[] Ff ffs;
-var& int x;
-spawn Ff() -> (&x) in ffs;
-escape 0;
-]],
-    stmts = 'line 7 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
-}
-
-Test { [[
-code/await Ff (void) -> (var& int x) -> void do
-    var int v = 10;
-    x = &v;
+code/await Ff (void) -> (var&? _void_ptr xxx) -> void do
+    do
+        xxx = &_malloc(10);
+    finalize (xxx) with
+        _free(&&xxx!);
+    end
+    await FOREVER;
 end
-var&? int x;
-spawn Ff() -> (&x);
-escape 0;
+var&? Ff fff = spawn Ff();
+escape (fff!.xxx? as int) + 1;
 ]],
-    stmts = 'line 6 : invalid binding : argument #1 : unmatching alias `&´ declaration',
-}
-
-Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
-    var int v = 10;
-    x = &v;
-end
-var&? int x;
-spawn Ff() -> (&x);
-escape (x? as int) + 1;
-]],
-    run = 1,
+    run = 2,
 }
 
 Test { [[

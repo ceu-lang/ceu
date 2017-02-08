@@ -481,7 +481,7 @@ CLEAR(me) -- TODO-NOW
     end,
 
     Abs_Await = function (me)
-        local set = AST.par(me,'Set_Abs_Spawn')
+        local set = AST.par(me,'Set_Abs_Await')
         if set then
             local _, to = unpack(set)
             SET(me, to, '&'..CUR('__mem_'..me.n), true)
@@ -1139,7 +1139,7 @@ _ceu_mem->_trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
     end,
 
     Set_Emit_Ext_emit = CONC_ALL,   -- see Emit_Ext_emit
-    Set_Abs_Spawn     = CONC_ALL,   -- see Abs_Await
+    Set_Abs_Await     = CONC_ALL,   -- see Abs_Await
 
     Set_Abs_Val = function (me)
         local fr, to = unpack(me)
