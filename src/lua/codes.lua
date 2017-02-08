@@ -1381,11 +1381,11 @@ ceu_input_one(]]..V(ID_ext)..'.id, '..ps..[[);
         if alias == '&?' then
             assert(not (Loc.info.dcl.tag=='Var' and TYPES.is_nat(tp)), 'bug found')
             LINE(me, [[
-if (]]..V(Loc)..[[.alias != NULL) {
+if (]]..V(Loc)..[[ != NULL) {
 ]])
             HALT(me, {
-                { ['evt.id']  = 'CEU_INPUT__CLEAR' },
-                { ['clr_range'] = V(Loc)..'.range' },
+                { ['evt.id']  = 'CEU_INPUT__CODE' },
+                { ['evt.mem'] = V(Loc) },
                 { lbl = me.lbl_out.id },
                 lbl = me.lbl_out.id,
             })

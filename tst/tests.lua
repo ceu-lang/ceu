@@ -46,7 +46,6 @@ var/nohold int x;
 dynamic var int x;
 
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -35208,58 +35207,55 @@ escape (fff!.xxx? as int) + 1;
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
     await 1s;
 end
-var&? int zzz;
-spawn Ff() -> (&zzz);
-escape zzz! + 1;
+var&? Ff f = spawn Ff();
+escape f!.x + 1;
 ]],
     run = 11,
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
 end
 pool[] Ff ffs;
-var&? int x;
-spawn Ff() -> (&x) in ffs;
-escape (x? as int) + 1;
+var&? Ff f = spawn Ff() in ffs;
+escape (f? as int) + 1;
 ]],
     run = 1,
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
 end
 var int n = 0;
 pool[n] Ff ffs;
-var&? int x;
-spawn Ff() -> (&x) in ffs;
-escape (x? as int) + 1;
+var&? Ff f = spawn Ff() in ffs;
+escape (f? as int) + 1;
 ]],
     consts = 'line 6 : not implemented : dynamic limit for pools',
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
 end
-var&? int x;
-spawn Ff() -> (&x);
+var&? Ff x = spawn Ff();
 await x;
 escape 1;
 ]],
     run = 1,
 }
 
+--]=====]
 Test { [[
 code/await Ff (void) -> (var&? int yyy) -> void do
     var int v = 10;
