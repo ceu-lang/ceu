@@ -310,6 +310,7 @@ ceu_dbg_assert(]]..V(ID_int,ctx)..[[.pool.queue == NULL);
 }
 ]])
     end,
+--[=[
     Await_Alias = function (me)
         local dcl = AST.ns[unpack(me)]
         -- HACK_4
@@ -327,6 +328,7 @@ if (0)
 }
 ]])
     end,
+]=]
 
     List_Var = function (me)
         for _,ID_int in ipairs(me) do
@@ -479,6 +481,12 @@ CLEAR(me) -- TODO-NOW
     end,
 
     Abs_Await = function (me)
+        local set = AST.par(me,'Set_Abs_Spawn_Single')
+        if set then
+            local _, to = unpack(set)
+            SET(me, to, '&'..CUR('__mem_'..me.n), true)
+        end
+
         HALT(me, {
             { ['evt.id']  = 'CEU_INPUT__CODE' },
             { ['evt.mem'] = '(tceu_code_mem*) &'..CUR('__mem_'..me.n) },
@@ -486,6 +494,11 @@ CLEAR(me) -- TODO-NOW
             lbl = me.lbl_out.id,
             exec = CODES.F.__abs(me, '(&'..CUR(' __mem_'..me.n)..'._mem)', 'NULL'),
         })
+
+        if set then
+            local _, to = unpack(set)
+            SET(me, to, 'NULL', true)
+        end
 
         LINE(me, [[
 ceu_stack_clear(_ceu_stk, _ceu_mem,
@@ -1124,8 +1137,9 @@ _ceu_mem->_trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
         end
     end,
 
-    Set_Emit_Ext_emit  = CONC_ALL,   -- see Emit_Ext_emit
-    Set_Abs_Spawn_Pool = CONC_ALL,   -- see Abs_Spawn_Pool
+    Set_Emit_Ext_emit    = CONC_ALL,   -- see Emit_Ext_emit
+    Set_Abs_Spawn_Pool   = CONC_ALL,   -- see Abs_Spawn_Pool
+    Set_Abs_Spawn_Single = CONC_ALL,   -- see Abs_Await
 
     Set_Abs_Val = function (me)
         local fr, to = unpack(me)

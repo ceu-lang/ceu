@@ -46,7 +46,6 @@ var/nohold int x;
 dynamic var int x;
 
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -35058,6 +35057,19 @@ escape 0;
 }
 
 Test { [[
+data Dd with
+    var bool x;
+end
+
+var Dd? d = val Dd(true);
+var bool x = d!.x;
+
+escape x as int;
+]],
+    run = 1;
+}
+
+Test { [[
 code/await Ff (void) -> (var int x) -> void do
     var int v = 0;
     x = v;
@@ -35068,21 +35080,20 @@ var bool x = f!.x;
 
 escape 0;
 ]],
-    stmts = 'line 7 : invalid binding : argument #1 : types mismatch : "int" <= "bool"',
+    stmts = 'line 7 : invalid assignment : types mismatch : "bool" <= "int"',
 }
 
 Test { [[
-code/await Ff (void) -> (var& int x) -> void do
-    var int v = 0;
-    x = &v;
+code/await Ff (void) -> (var int x) -> void do
+    x = 10;
 end
 
-vector&[] int x;
-spawn Ff() -> (&x);
+var&? Ff f = spawn Ff();
+var int x = f!.x;
 
-escape 0;
+escape x;
 ]],
-    stmts = 'line 7 : invalid binding : argument #1 : types mismatch : "Var" <= "Vec"',
+    run = 10;
 }
 
 Test { [[
@@ -35095,10 +35106,9 @@ code/await Ff (var int xxx) -> (var& int yyy) -> FOREVER do
 end
 
 var int aaa = 10;
-var& int bbb;
-spawn Ff(aaa) -> (&bbb);
+var&? Ff f = spawn Ff(aaa);
 
-escape bbb;
+escape f!.yyy;
 ]],
     run = 10,
 }
@@ -35109,16 +35119,18 @@ end
 ]],
     parser = 'line 1 : after `->´ : expected type',
 }
+
+--]=====]
 Test { [[
 code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
 end
-var& int x;
-spawn Ff() -> (&x);
-escape 0;
+var&? Ff f = spawn Ff();
+escape f!.x;
 ]],
-    stmts = 'line 6 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
+    --stmts = 'line 6 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
+    run = '6] runtime error: value is not set',
 }
 
 Test { [[

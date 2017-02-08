@@ -408,10 +408,18 @@ error'TODO: remove below'
                     'invalid operand to `.´ : unexpected option alias')
 
                 local ID_abs = unpack(e.info.tp)
-                if ID_abs and ID_abs.dcl.tag=='Data' then
-                    -- data.member
-                    local data = AST.asr(ID_abs.dcl,'Data')
-                    local Dcl = DCLS.asr(me,data,member,false,e.info.id)
+                if ID_abs then
+                    local Dcl
+                    if ID_abs.dcl.tag == 'Data' then
+                        -- data.member
+                        local data = AST.asr(ID_abs.dcl,'Data')
+                        Dcl = DCLS.asr(me,data,member,false,e.info.id)
+                    else
+                        local code = AST.asr(ID_abs.dcl,'Code')
+                        Dcl = DCLS.asr(me,
+                                       AST.asr(code,'',4,'Block',1,'Stmts',2,'Do', 3,'Block',1,'Stmts',2,'Block'),
+                                       member,false,e.info.id)
+                    end
                     me.info = {
                         id  = e.info.id..'.'..member,
                         tag = Dcl.tag,

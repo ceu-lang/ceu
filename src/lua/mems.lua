@@ -406,7 +406,8 @@ assert(me.hier)
             local c = TYPES.toc(TYPES.pop(tp,'?'))
             if alias == '&?' then
                 MEMS.datas.mems = MEMS.datas.mems..[[
-static ]]..cc..'* CEU_OPTION_'..cc..[[ (]]..cc..[[* alias, char* file, int line) {
+struct ]]..cc..[[;
+static struct ]]..cc..'* CEU_OPTION_'..cc..[[ (struct ]]..cc..[[* alias, char* file, int line) {
     ceu_callback_assert_msg_ex(alias != NULL, "value is not set", file, line);
     return alias;
 }
@@ -481,11 +482,14 @@ if dcl.tag ~= 'Prim' then
             end
 
             -- &?
+            if false then
+--[[
             if (alias == '&?') and (not (dcl.tag=='Var' and TYPES.is_nat(Type))) then
                 mem[#mem+1] = 'tceu_opt_alias '..dcl.id_..';\n'
                 if dcl.tag == 'Evt' then
                     MEMS.evts[#MEMS.evts+1] = dcl
                 end
+]]
 
             -- VAR
             elseif dcl.tag == 'Var' then

@@ -404,11 +404,11 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
         local _, e = unpack(me)
         local alias, tp = unpack(e.info.dcl)
         if alias == '&?' then
-            if e.info.dcl.tag=='Var' and TYPES.is_nat(tp) then
+            --if e.info.dcl.tag=='Var' and TYPES.is_nat(tp) then
                 return '('..V(e)..' != NULL)'
-            else
-                return '('..V(e)..'.alias != NULL)'
-            end
+            --else
+                --return '('..V(e)..'.alias != NULL)'
+            --end
         else
             return '('..V(e)..'.is_set)'
         end
@@ -419,11 +419,11 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
         local alias, tp = unpack(e.info.dcl)
         if alias == '&?' then
             if e.info.dcl.tag == 'Var' then
-                if TYPES.is_nat(tp) then
+                --if TYPES.is_nat(tp) then
                     return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e,{is_bind=true})..', __FILE__, __LINE__))'
-                else
-                    return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'(('..TYPES.toc(e.info.tp)..'*)'..V(e)..'.alias, __FILE__, __LINE__))'
-                end
+                --else
+                    --return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'(('..TYPES.toc(e.info.tp)..'*)'..V(e)..'.alias, __FILE__, __LINE__))'
+                --end
             elseif e.info.dcl.tag == 'Evt' then
                 return '(*CEU_OPTION_EVT('..V(e)..'.alias, __FILE__, __LINE__))'
             else

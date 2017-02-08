@@ -45,7 +45,11 @@ SPAWNS.G = {
     _Abs_Spawn_Single__PRE = function (me)
         me.tag = 'Abs_Await'
         me.__adjs_is_spawn = true
-        return SPAWNS.G._SPAWN(me.__par, me.__i, me)
+        if me.__par.tag == 'Set_Abs_Spawn_Single' then
+            return SPAWNS.G._SPAWN(me.__par.__par, me.__par.__i, me)
+        else
+            return SPAWNS.G._SPAWN(me.__par, me.__i, me)
+        end
     end,
 
     _Finalize_X__PRE = function (me)

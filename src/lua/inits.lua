@@ -202,7 +202,7 @@ stmt[4] = Y
                     if me.tag == 'Set_Exp' then
                         ASR(false, me,
                             'invalid binding : expected operator `&´ in the right side')
-                    else
+                    elseif not (me.tag=='Set_Abs_Spawn_Single' or me.tag=='Set_Abs_Spawn_Pool') then
                         ASR(false, me,
                             'invalid binding : unexpected statement in the right side')
                     end
