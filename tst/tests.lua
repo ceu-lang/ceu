@@ -20014,7 +20014,7 @@ var int x=0;
 var&? int xxx = &x;
 escape 2;
 ]],
-    dcls = 'line 2 : invalid declaration : option alias : expected native type',
+    dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
     --run = 1,
 }
 
@@ -20025,7 +20025,7 @@ var&? int xxx = do
 end;
 escape (xxx? as int) + 1;
 ]],
-    dcls = 'line 1 : invalid declaration : option alias : expected native type',
+    dcls = 'line 1 : invalid declaration : option alias : expected native or `code/await´ type',
     --run = 1,
 }
 
