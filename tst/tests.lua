@@ -35535,7 +35535,7 @@ var int v = await x;
 escape v;
 ]],
     --run = 10,
-    stmts = 'line 6 : invalid assignment : types mismatch : "(int)" <= "(void)"',
+    stmts = 'line 6 : invalid assignment : types mismatch : "(int)" <= "(void?)"',
 }
 
 Test { [[
@@ -35550,7 +35550,6 @@ escape v;
     stmts = 'line 6 : invalid assignment : types mismatch : "(int)" <= "(int?)"',
 }
 
---]=====]
 Test { [[
 code/await Ff (void) -> int do
     await async do end
@@ -35561,17 +35560,6 @@ var int? v = await x;
 escape v!;
 ]],
     run = 10,
-}
-
-Test { [[
-var&? int x;
-do
-    var int y = 10;
-    x = &y;
-end
-escape (x? as int) + 1;
-]],
-    run = 1,
 }
 
 --<< CODE / AWAIT / INITIALIZATION / PUBLIC
@@ -35646,22 +35634,6 @@ escape a!;
 }
 
 Test { [[
-code/await Code (void) -> (var& int y) -> void do
-    var int x = 0;
-    y = &x;
-end
-
-var int y;
-watching Code() -> (&y) do
-    escape 1;
-end
-
-escape 0;
-]],
-    stmts = 'line 7 : invalid binding : argument #1 : expected alias `&´ declaration',
-}
-
-Test { [[
 code/await Code (var& int x) -> (var& int y) -> int
 do
     y = &x;
@@ -35670,11 +35642,11 @@ do
     escape x;
 end
 
-var& int y;
 var int x = 10;
+var&? Code c = spawn Code(&x);
 var int? a =
-    watching Code(&x) -> (&y) do
-        y = y + 1;
+    watching c do
+        c!.y = c!.y + 1;
         await 5s;
         escape 1;
     end;
@@ -35690,18 +35662,20 @@ code/await Code (void) -> (var& int y) -> void do
     y = &x;
 end
 
-var& int y;
+var&? Code c;
 do
-    watching Code() -> (&y) do
+    c = spawn Code();
+    watching c do
     end
 end
 do
     vector[10] int x = [];
 end
 
-escape y;
+escape c!.y;
 ]],
-    props_ = 'line 15 : invalid access to internal identifier "y" : crossed `watching´ (/tmp/tmp.ceu:8)',
+    run = '16] runtime error: value is not set',
+    --props_ = 'line 15 : invalid access to internal identifier "y" : crossed `watching´ (/tmp/tmp.ceu:8)',
     --props_ = 'line 15 : invalid access to internal identifier "y" : crossed yielding statement (/tmp/tmp.ceu:8)',
 }
 
@@ -35714,11 +35688,11 @@ do
     await 1s;
     escape x+x;
 end
-var& int y, z;
 var int x = 10;
+var&? Code c = spawn Code(&x);
 var int? a =
-    watching Code(&x) -> (&y,&z) do
-        y = y + 1;
+    watching c do
+        c!.y = c!.y + 1;
         await 5s;
         escape 1;
     end;
@@ -35736,12 +35710,13 @@ do
     await 10s;
     escape x;
 end
-var& int y;
+var&? Code c;
 var int x = 10;
-watching Code(&x) -> (&y) do
-    y = y + 1;
+c = spawn Code(&x);
+watching c do
+    c!.y = c!.y + 1;
     await 5s;
-    escape y;
+    escape c!.y;
 end;
 
 escape x;
@@ -35782,10 +35757,10 @@ do
     win = &win_!;
 end
 
-var& _SDL_Window win;
-watching SDL_Go() -> (&win) do
+var&? SDL_Go sdl = spawn SDL_Go();
+watching sdl do
     await 1s;
-    _printf("%p\n", win);
+    _printf("%p\n", sdl!.win);
 end
 
 escape 0;
@@ -35847,7 +35822,8 @@ var int x = await Fx();
 
 escape x;
 ]],
-    exps = 'line 17 : invalid access to output variable "vv"',
+    run = 10,
+    --exps = 'line 17 : invalid access to output variable "vv"',
 }
 
 Test { [[
@@ -35922,10 +35898,10 @@ code/await Fx (void) -> (var& _int vv) -> int do
 end
 
 var int ret = 0;
-var& _int vvv;
+var&? Fx f = spawn Fx();
 var int? x =
-    watching Fx() -> (&vvv) do
-        ret = ret + vvv;
+    watching f do
+        ret = ret + f!.vv;
         await 1s;
     end;
 
@@ -35935,52 +35911,6 @@ escape ret+x!;
 }
 
 Test { [[
-code/await Ff (void) -> (var int x) -> void do
-    x = 1;
-    await FOREVER;
-end
-
-watching Ff() -> (&a) do
-    escape a + 1;
-end
-
-escape 0;
-]],
-    --dcls = 'line 1 : invalid `code´ declaration : `watching´ parameter #1 : expected `&´',
-    parser = 'line 1 : after `var´ : expected `&?´ or `&´',
-}
-Test { [[
-code/await Ff (void) -> (var& int x) -> void do
-    var int xx = 0;
-    x = &xx;
-    await FOREVER;
-end
-
-var& int a,b;
-watching Ff() -> (&a,&b) do
-end
-
-escape 0;
-]],
-    stmts = 'line 8 : invalid `watching´ : expected 1 argument(s)',
-}
-Test { [[
-code/await Ff (void) -> (var& int x, var& int y) -> void do
-    var int xx = 0;
-    x = &xx;
-    y = &xx;
-    await FOREVER;
-end
-
-var& int a;
-watching Ff() -> (&a) do
-end
-
-escape 0;
-]],
-    stmts = 'line 9 : invalid `watching´ : expected 2 argument(s)',
-}
-Test { [[
 code/await Ff (void) -> (var& int x, var& int y) -> void do
     var int xx = 10;
     x = &xx;
@@ -35988,9 +35918,9 @@ code/await Ff (void) -> (var& int x, var& int y) -> void do
     await FOREVER;
 end
 
-var& int a;
-watching Ff() -> (_,&a) do
-    escape a + 1;
+var&? Ff f = spawn Ff();
+watching f do
+    escape f!.y + 1;
 end
 
 escape 0;
@@ -36010,9 +35940,9 @@ do
     await FOREVER;
 end
 
-vector&[10] Int nums;
-watching Texs() -> (&nums) do
-    vector&[10] Int nums_ = &nums;
+var&? Texs t = spawn Texs();
+watching t do
+    vector&[10] Int nums_ = &t!.nums;
 end
 
 escape 1;
@@ -36097,11 +36027,12 @@ do
     await FOREVER;
 end
 
-var& int x;
-spawn Ff() -> (&x);
-escape x;
+var&? Ff f = spawn Ff();
+spawn Ff();
+escape f!.x;
 ]],
-    stmts = 'line 9 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
+    run = 10;
+    --stmts = 'line 9 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
 }
 Test { [[
 code/await Ff (void) -> (var& int x) -> FOREVER
@@ -36111,9 +36042,8 @@ do
     await FOREVER;
 end
 
-var& int x;
-spawn Ff() -> (&x);
-escape x;
+var&? Ff f = spawn Ff();
+escape f!.x;
 ]],
     run = 10,
 }
@@ -36126,10 +36056,9 @@ do
     await FOREVER;
 end
 
-var& int x;
-spawn Ff() -> (&x);
+var&? Ff f = spawn Ff();
 await 1s;
-escape x;
+escape f!.x;
 ]],
     run = { ['~>1s']=10 },
 }
@@ -36152,22 +36081,21 @@ escape _V;
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void
+code/await Ff (void) -> (var& int x) -> void
 do
     var int x_ = 10;
     x = &x_;
 end
 
-var&? int x;
-spawn Ff() -> (&x);
+var&? Ff f = spawn Ff();
 await 1s;
-escape x!;
+escape f!.x;
 ]],
-    run = { ['~>1s']='10] runtime error: value is not set' },
+    run = { ['~>1s']='9] runtime error: value is not set' },
 }
 
 Test { [[
-code/await Show (void) -> (var&? int ret) -> void do
+code/await Show (void) -> (var& int ret) -> void do
     var int a = 0;
     ret = &a;
 end
@@ -36177,7 +36105,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-code/await Show (var int obj) -> (var&? int ret) -> int do
+code/await Show (var int obj) -> (var& int ret) -> int do
     var int a = obj;
     ret = &a;
     escape a;
@@ -36213,7 +36141,7 @@ Test { [[
 data Object with
   var int c;
 end
-code/await Show (var Object obj) -> (var&? int ret) -> int do
+code/await Show (var Object obj) -> (var& int ret) -> int do
     var int a = obj.c;
     ret = &a;
     escape a;
@@ -36235,47 +36163,32 @@ code/await Ff (void) -> (var& int v) -> void do
 end
 
 var  int vv = 0;
-var& int v;
-watching Ff() -> (&v) do
-    v = &vv;
-    escape v;
+var&? Ff f = spawn Ff();
+watching f do
+    f!.v = &vv;
+    escape f!.v;
 end
 escape 0;
 ]],
-    inits = 'line 10 : invalid binding : variable "v" is already bound (/tmp/tmp.ceu:9)',
+    stmts = 'line 10 : invalid binding : unexpected context for operator `.´',
+    --inits = 'line 10 : invalid binding : variable "v" is already bound (/tmp/tmp.ceu:9)',
 }
 Test { [[
 code/await Ff (void) -> (var& int v) -> void do
-    var int vv = 0;
+    var int vv = 10;
     v = &vv;
     await FOREVER;
 end
 
 var  int vv = 0;
-var& int v  = &vv;
-watching Ff() -> (&v) do
-    escape v;
+var&? Ff f = spawn Ff();
+watching f do
+    escape f!.v;
 end
 escape 0;
 ]],
-    inits = 'line 9 : invalid binding : variable "v" is already bound (/tmp/tmp.ceu:8)',
-
-}
-Test { [[
-code/await Ff (void) -> (var& int v1, var& int v2) -> void do
-    var int vv = 10;
-    v1 = &vv;
-    v2 = &vv;
-    await FOREVER;
-end
-
-var& int v;
-watching Ff() -> (&v,&v) do
-    escape v;
-end
-escape 0;
-]],
-    inits = 'line 9 : invalid binding : variable "v" is already bound (/tmp/tmp.ceu:9)',
+    run = 10,
+    --inits = 'line 9 : invalid binding : variable "v" is already bound (/tmp/tmp.ceu:8)',
 
 }
 Test { [[
@@ -36285,9 +36198,9 @@ code/await Ff (void) -> (var& int v) -> void do
     await FOREVER;
 end
 
-var& int v;
-watching Ff() -> (&v) do
-    escape v;
+var&? Ff f = spawn Ff();
+watching f do
+    escape f!.v;
 end
 escape 0;
 ]],
@@ -36302,9 +36215,9 @@ code/await Ff (void) -> (vector&[1] int vec) -> void do
     await FOREVER;
 end
 
-vector&[1] int vec;
-watching Ff() -> (&vec) do
-    escape vec[0];
+var&? Ff f = spawn Ff();
+watching f do
+    escape f!.vec[0];
 end
 escape 0;
 ]],
@@ -36360,36 +36273,6 @@ code/await Gg (void) -> (var& int y) -> void do
     await FOREVER;
 end
 
-code/await Ff (var int v) -> (var& int x) -> void do
-    var& int y;
-    watching Gg() -> (&y) do
-        x = &y;
-        await FOREVER;
-    end
-end
-
-var& int x;
-var int x1;
-watching Ff(x1) -> (&x) do
-    escape x;
-end
-
-escape 0;
-]],
-    wrn = true,
-    inits = 'line 16 : uninitialized variable "x1" : reached read access (/tmp/tmp.ceu:17)',
-    --inits = 'line 16 : uninitialized variable "x1" : reached `par/or´ (/tmp/tmp.ceu:17)',
-    --inits = 'line 16 : uninitialized variable "x1" : reached yielding statement (/tmp/tmp.ceu:17)',
-    --inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:9)',
-}
-
-Test { [[
-code/await Gg (void) -> (var& int y) -> void do
-    var int yy = 10;
-    y = &yy;
-    await FOREVER;
-end
-
 code/await Ff (void) -> (var& int x) -> void do
     watching Gg() -> (&x) do
         await FOREVER;
@@ -36427,6 +36310,7 @@ await 1s;
     inits = 'line 7 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:12)',
 }
 
+--]=====]
 Test { [[
 code/await Gg (void) -> (var& int y) -> void do
     var int yy = 10;
@@ -36435,14 +36319,16 @@ code/await Gg (void) -> (var& int y) -> void do
 end
 
 code/await Ff (void) -> (var& int kkk) -> void do
-    watching Gg() -> (&kkk) do
+    var&? Gg g = spawn Gg();
+    kkk = &g!.y;
+    watching g do
         await FOREVER;
     end
 end
 
-var& int xxx;
-watching Ff() -> (&xxx) do
-    escape xxx;
+var&? Ff f = spawn Ff();
+watching f do
+    escape f!.kkk;
 end
 
 escape 0;
