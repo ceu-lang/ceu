@@ -260,15 +260,15 @@ STMTS.F = {
         -- ctx
         INFO.asr_tag(to, {'Var','Pool'}, 'invalid constructor')
     end,
-    Set_Abs_Spawn_Pool = function (me)
-        local _, to = unpack(me)
+    Set_Abs_Await = function (me)
+        local fr, to = unpack(me)
 
         -- ctx
         INFO.asr_tag(to, {'Var'}, 'invalid constructor')
 
         -- tp
-        ASR(TYPES.check(to.info.tp,'bool'), me,
-            'invalid constructor : expected `bool´ destination')
+        local cons = AST.asr(fr,'Abs_Await', 2,'Abs_Cons')
+        EXPS.check_tp(me, to.info.tp, cons.info.tp, 'invalid constructor')
     end,
 
 -- EMIT
@@ -359,7 +359,7 @@ STMTS.F = {
         me.tp = TYPES.new(me, 'int')
     end,
 
-    Abs_Spawn_Pool = function (me)
+    Abs_Await = function (me)
         local mods_call,Abs_Cons = unpack(me)
         local ID_abs = AST.asr(Abs_Cons,'Abs_Cons', 1,'ID_abs')
         me.__code = AST.asr(ID_abs.dcl,'Code')
@@ -377,10 +377,6 @@ STMTS.F = {
             ASR(not mod, me, mod and
                 'invalid `'..AST.tag2id[me.tag]..'´ : unexpected `/'..mod..'´ modifier')
         end
-    end,
-
-    Abs_Await = function (me)
-        STMTS.F.Abs_Spawn_Pool(me)
 
         ASR(AST.par(me,'Code') ~= me.__code, me,
             'invalid `'..AST.tag2id[me.tag]..'´ : unexpected recursive invocation')

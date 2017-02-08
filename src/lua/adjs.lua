@@ -549,12 +549,14 @@ error'TODO'
             --      _Set_*
             --          fr
             -->>>
-            --  _Set_*
+            --  Set_*
             --      fr
             --      to
 
             assert(#set==1 or #set==2, 'bug found')
-            set.tag = string.sub(set.tag,2)
+            if set.tag ~= '_Set_Abs_Await' then
+                set.tag = string.sub(set.tag,2)
+            end
             AST.set(set, 2, to)
 
             -- a = &b   (Set_Exp->Set_Alias)

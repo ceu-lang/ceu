@@ -481,7 +481,7 @@ CLEAR(me) -- TODO-NOW
     end,
 
     Abs_Await = function (me)
-        local set = AST.par(me,'Set_Abs_Spawn_Single')
+        local set = AST.par(me,'Set_Abs_Spawn')
         if set then
             local _, to = unpack(set)
             SET(me, to, '&'..CUR('__mem_'..me.n), true)
@@ -506,6 +506,7 @@ ceu_stack_clear(_ceu_stk, _ceu_mem,
 ]])
     end,
 
+-- TODO: mover p/ Abs_Await
     Abs_Spawn_Pool = function (me)
         local _, Abs_Cons, _, pool = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
@@ -1137,9 +1138,8 @@ _ceu_mem->_trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
         end
     end,
 
-    Set_Emit_Ext_emit    = CONC_ALL,   -- see Emit_Ext_emit
-    Set_Abs_Spawn_Pool   = CONC_ALL,   -- see Abs_Spawn_Pool
-    Set_Abs_Spawn_Single = CONC_ALL,   -- see Abs_Await
+    Set_Emit_Ext_emit = CONC_ALL,   -- see Emit_Ext_emit
+    Set_Abs_Spawn     = CONC_ALL,   -- see Abs_Await
 
     Set_Abs_Val = function (me)
         local fr, to = unpack(me)

@@ -98,7 +98,7 @@ error'oi'
                 'invalid binding : active scope reached yielding statement '..
                 '('..yield.ln[1]..':'..yield.ln[2]..')')
 
-        elseif me.tag=='Abs_Await' or me.tag=='Abs_Spawn_Pool' then
+        elseif me.tag=='Abs_Await' then
             stmt = me
         end
 
@@ -202,7 +202,7 @@ stmt[4] = Y
                     if me.tag == 'Set_Exp' then
                         ASR(false, me,
                             'invalid binding : expected operator `&´ in the right side')
-                    elseif not (me.tag=='Set_Abs_Spawn_Single' or me.tag=='Set_Abs_Spawn_Pool') then
+                    elseif me.tag ~= 'Set_Abs_Await' then
                         ASR(false, me,
                             'invalid binding : unexpected statement in the right side')
                     end

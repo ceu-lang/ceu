@@ -408,7 +408,7 @@ error'TODO: remove below'
                     'invalid operand to `.´ : unexpected option alias')
 
                 local ID_abs = unpack(e.info.tp)
-                if ID_abs then
+                if ID_abs and (ID_abs.dcl.tag=='Data' or ID_abs.dcl.tag=='Code') then
                     local Dcl
                     if ID_abs.dcl.tag == 'Data' then
                         -- data.member

@@ -42,14 +42,15 @@ SPAWNS.G = {
         return SPAWNS.G._SPAWN(me.__par, me.__i, me)
     end,
 
-    _Abs_Spawn_Single__PRE = function (me)
+    _Set_Abs_Await__PRE = function (me)
+        me.tag = 'Set_Abs_Await'
+        local spawn = AST.asr(me,'', 1,'_Abs_Spawn')
+        spawn.tag = 'Abs_Await'
+        return SPAWNS.G._SPAWN(me.__par, me.__i, me)
+    end,
+    _Abs_Spawn__PRE = function (me)
         me.tag = 'Abs_Await'
-        me.__adjs_is_spawn = true
-        if me.__par.tag == 'Set_Abs_Spawn_Single' then
-            return SPAWNS.G._SPAWN(me.__par.__par, me.__par.__i, me)
-        else
-            return SPAWNS.G._SPAWN(me.__par, me.__i, me)
-        end
+        return SPAWNS.G._SPAWN(me.__par, me.__i, me)
     end,
 
     _Finalize_X__PRE = function (me)

@@ -46,6 +46,7 @@ var/nohold int x;
 dynamic var int x;
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -35088,6 +35089,32 @@ code/await Ff (void) -> (var int x) -> void do
     x = 10;
 end
 
+var&? bool f = spawn Ff();
+var int x = f!.x;
+
+escape x;
+]],
+    stmts = 'line 5 : invalid constructor : types mismatch : "bool" <= "Ff"',
+}
+
+Test { [[
+code/await Ff (void) -> (var int x) -> void do
+    x = 10;
+end
+
+var Ff f = spawn Ff();
+var int x = f!.x;
+
+escape x;
+]],
+    dcls = 'line 5 : invalid declaration : unexpected context for `code´ "Ff"',
+}
+
+Test { [[
+code/await Ff (void) -> (var int x) -> void do
+    x = 10;
+end
+
 var&? Ff f = spawn Ff();
 var int x = f!.x;
 
@@ -35120,7 +35147,6 @@ end
     parser = 'line 1 : after `->´ : expected type',
 }
 
---]=====]
 Test { [[
 code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
