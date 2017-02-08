@@ -35255,15 +35255,13 @@ escape 1;
     run = 1,
 }
 
---]=====]
 Test { [[
-code/await Ff (void) -> (var&? int yyy) -> void do
+code/await Ff (void) -> (var& int yyy) -> void do
     var int v = 10;
     yyy = &v;
     await async do end;
 end
-var&? int x;
-spawn Ff() -> (&x);
+var&? Ff x = spawn Ff();
 await x;
 escape 1;
 ]],
@@ -35271,14 +35269,13 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
     vector[] byte c = [1,2,3];
     await async do end;
 end
-var&? int x;
-spawn Ff() -> (&x);
+var&? Ff x = spawn Ff();
 await x;
 escape 1;
 ]],
@@ -35286,14 +35283,13 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int xxx) -> void do
+code/await Ff (void) -> (var& int xxx) -> void do
     var int v = 10;
     xxx = &v;
     await async do end;
 end
 
-var&? int x_;
-spawn Ff() -> (&x_);
+var&? Ff x_ = spawn Ff();
 
 await x_;
 
@@ -35303,7 +35299,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int xxx) -> void do
+code/await Ff (void) -> (var& int xxx) -> void do
     var int v = 10;
     xxx = &v;
     await async do end;
@@ -35317,15 +35313,14 @@ escape 1;
 
 -- test valgrind used to fail
 Test { [[
-code/await Ff (void) -> (var&? int xxx) -> void do
+code/await Ff (void) -> (var& int xxx) -> void do
     var int v = 10;
     xxx = &v;
     await async do end;
 end
 
 pool[] Ff ffs;
-var&? int x_;
-spawn Ff() -> (&x_) in ffs;
+var&? Ff x_ = spawn Ff() in ffs;
 
 await x_;
 
@@ -35340,9 +35335,8 @@ code/await Ff (void) -> (var& int x) -> FOREVER do
     x = &v;
     await FOREVER;
 end
-var& int x;
-spawn Ff() -> (&x);
-escape x + 1;
+var&? Ff x = spawn Ff();
+escape x!.x + 1;
 ]],
     run = 11,
 }
@@ -35354,23 +35348,21 @@ code/await Ff (void) -> (var& int x) -> FOREVER do
     await FOREVER;
 end
 pool[] Ff ffs;
-var& int x;
-spawn Ff() -> (&x) in ffs;
-escape x + 1;
+var&? Ff x = spawn Ff() in ffs;
+escape x!.x + 1;
 ]],
     run = 11,
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
     await 1s;
 end
 pool[] Ff ffs;
-var&? int x;
-spawn Ff() -> (&x) in ffs;
-escape x! + 1;
+var&? Ff x = spawn Ff() in ffs;
+escape x!.x + 1;
 ]],
     run = 11,
 }
@@ -35385,20 +35377,20 @@ end
 
 var int ret = 0;
 
-var&? int x;
-spawn Ff() -> (&x);
+var&? Ff x = spawn Ff();
 
-ret = x!;
-await x!;
+ret = x!.x;
+await x;
 ret = ret + (x? as int) + 1;
 
-escape x!;
+escape x!.x;
 ]],
-    stmts = 'line 11 : invalid binding : argument #1 : unmatching alias `&´ declaration',
+    --stmts = 'line 11 : invalid binding : argument #1 : unmatching alias `&´ declaration',
+    run = {['~>1s']=10};
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
     await FOREVER;
@@ -35406,25 +35398,23 @@ end
 
 var int ret = 0;
 
-var&? int x;
-spawn Ff() -> (&x);
+var&? Ff x = spawn Ff();
 
-escape x!;
+escape x!.x;
 ]],
     run = 10,
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
     await async do end;
 end
 
-var&? int x;
-spawn Ff() -> (&x);
+var&? Ff x = spawn Ff();
 
-var int ret = x!;
+var int ret = x!.x;
 await async do end;
 ret = ret + (x? as int) + 1;
 escape ret;
@@ -35433,15 +35423,14 @@ escape ret;
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
 end
 
 var int ret = 0;
 
-var&? int x;
-spawn Ff() -> (&x);
+var&? Ff x = spawn Ff();
 
 escape (x? as int) + 1;
 ]],
@@ -35457,7 +35446,7 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
     await 1s;
@@ -35465,20 +35454,20 @@ end
 
 var int ret = 0;
 
-var&? int x;
-spawn Ff() -> (&x);
+var&? Ff x = spawn Ff();
 
-ret = x!;
-await x!;    // err
+ret = x!.x;
+await x;    // err
 ret = ret + (x? as int) + 1;
 
-escape x!;
+escape ret;//x!.x;
 ]],
-    stmts = 'line 13 : invalid `await´ : expected `var´ with `&?´ modifier',
+    run = {['~>1s']=12},
+    --stmts = 'line 13 : invalid `await´ : expected `var´ with `&?´ modifier',
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
     await 1s;
@@ -35486,10 +35475,9 @@ end
 
 var int ret = 0;
 
-var&? int x;
-spawn Ff() -> (&x);
+var&? Ff x = spawn Ff();
 
-ret = x!;
+ret = x!.x;
 await x;
 ret = ret + (x? as int) + 1;
 
@@ -35499,15 +35487,14 @@ escape ret;
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
 end
 
 var int ret = 0;
 
-var&? int x;
-spawn Ff() -> (&x);
+var&? Ff x = spawn Ff();
 await x;
 ret = ret + (x? as int) + 1;
 
@@ -35517,7 +35504,7 @@ escape ret;
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
     await 1s;
@@ -35527,10 +35514,9 @@ var int ret = 0;
 
 pool[] Ff fs;
 
-var&? int x;
-spawn Ff() -> (&x) in fs;
+var&? Ff x = spawn Ff() in fs;
 
-ret = x!;
+ret = x!.x;
 await x;
 ret = ret + (x? as int) + 1;
 
@@ -35539,17 +35525,18 @@ escape ret;
     run = { ['~>1s'] = 12 },
 }
 
+--]=====]
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
 end
-var&? int x;
-spawn Ff() -> (&x);
+var&? Ff x = spawn Ff();
 var int v = await x;
-escape 1;
+escape v;
 ]],
-    stmts = 'line 7 : invalid assignment : types mismatch : "(int)" <= "void"',
+    run = 10,
+    --stmts = 'line 7 : invalid assignment : types mismatch : "(int)" <= "void"',
 }
 
 Test { [[
