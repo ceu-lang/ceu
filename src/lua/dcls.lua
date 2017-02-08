@@ -279,7 +279,16 @@ DCLS.F = {
         dcls_new(AST.par(me,'Block'), me)
 
         if alias == '&?' then
-            DCLS.F.__no_abs(Type, 'Code', 'tight')
+            local ID = unpack(Type)
+            if ID.tag=='ID_abs' and ID.dcl.tag=='Code' and ID.dcl[2].await then
+                -- ok
+            elseif TYPES.is_nat(Type) then
+                -- ok
+            else
+                ASR(false, me,
+                    'invalid declaration : option alias : expected native or `code/await´ type')
+            end
+
             me.is_read_only = true
             ASR(not TYPES.check(Type,'?'), me,
                 'invalid declaration : option type : not implemented')

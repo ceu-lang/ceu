@@ -18218,7 +18218,7 @@ Test { [[
 event a;
 escape 0;
 ]],
-    parser = 'line 1 : after `event´ : expected type',
+    parser = 'line 1 : after `event´ : expected `&´ or `(´ or type',
 }
 
 Test { [[
@@ -20005,7 +20005,17 @@ var& int x = do
 end;
 escape x;
 ]],
-    stmts = 'line 1 : invalid binding : expected `&?´ modifier',
+    --stmts = 'line 1 : invalid binding : expected `&?´ modifier',
+    scopes = 'line 3 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+var int x=0;
+var&? int xxx = &x;
+escape 2;
+]],
+    dcls = 'line 2 : invalid declaration : option alias : expected native type',
+    --run = 1,
 }
 
 Test { [[
@@ -20015,7 +20025,8 @@ var&? int xxx = do
 end;
 escape (xxx? as int) + 1;
 ]],
-    run = 1,
+    dcls = 'line 1 : invalid declaration : option alias : expected native type',
+    --run = 1,
 }
 
 Test { [[
@@ -30714,7 +30725,8 @@ finalize(v1) with
     nothing;
 end
 ]],
-    stmts = 'line 4 : invalid binding : expected `native´ type',
+    dcls = 'line 1 : invalid declaration : option alias : expected native or `code/await´ type',
+    --stmts = 'line 4 : invalid binding : expected `native´ type',
     --cc = 'error: implicit declaration of function ‘fff’',
     --stmts = 'line 4 : invalid binding : types mismatch : "int?" <= "_"',
 }
@@ -31541,7 +31553,8 @@ end
 
 escape &ptr! == &ptr!;  // ptr.SOME fails
 ]],
-    exps = 'line 14 : invalid expression : unexpected context for operation `&´',
+    dcls = 'line 8 : invalid declaration : option alias : expected native or `code/await´ type',
+    --exps = 'line 14 : invalid expression : unexpected context for operation `&´',
     --env = 'line 14 : invalid use of operator "&" : not a binding assignment',
 }
 
@@ -34921,7 +34934,8 @@ end
 ret = ret + (ppp? as int);
 escape ret;
 ]],
-    run = 10,
+    dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
+    --run = 10,
 }
 
 Test { [[
@@ -34935,7 +34949,8 @@ end
 ret = ret + (p? as int);
 escape ret;
 ]],
-    dcls = 'line 2 : invalid declaration : option type : not implemented',
+    dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
+    --dcls = 'line 2 : invalid declaration : option type : not implemented',
     --stmts = 'line 5 : invalid binding : types mismatch : "int?" <= "int"',
 }
 
@@ -34950,7 +34965,8 @@ end
 ret = ret + (p? as int);
 escape ret;
 ]],
-    dcls = 'line 2 : invalid declaration : option type : not implemented',
+    dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
+    --dcls = 'line 2 : invalid declaration : option type : not implemented',
     --run = 10,
 }
 
@@ -34966,7 +34982,8 @@ end
 ret = ret + (p? as int);
 escape ret;
 ]],
-    dcls = 'line 2 : invalid declaration : option type : not implemented',
+    dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
+    --dcls = 'line 2 : invalid declaration : option type : not implemented',
     --run = 'err acc to p!!',
 }
 
@@ -34983,8 +35000,9 @@ end
 ret = ret + (p? as int);
 escape ret;
 ]],
+    dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
     --inits = 'line 2 : uninitialized variable "p" : reached `par/or´ (/tmp/tmp.ceu:3)',
-    inits = 'line 2 : uninitialized variable "p" : reached yielding statement (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "p" : reached yielding statement (/tmp/tmp.ceu:3)',
 }
 
 -->> CODE / AWAIT / INITIALIZATION / PUBLIC
@@ -35094,7 +35112,8 @@ var int x = f!.x;
 
 escape x;
 ]],
-    stmts = 'line 5 : invalid constructor : types mismatch : "bool" <= "Ff"',
+    dcls = 'line 5 : invalid declaration : option alias : expected native or `code/await´ type',
+    --stmts = 'line 5 : invalid constructor : types mismatch : "bool" <= "Ff"',
 }
 
 Test { [[

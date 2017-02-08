@@ -140,9 +140,13 @@ STMTS.F = {
         ASR(ID_int, me, 'invalid binding : unexpected context for operator `'..op..'´')
         ASR(ID_int.dcl[1], me, 'invalid binding : expected declaration with `&´')
 
+-- TODO-remove
+--[[
         if to.__dcls_is_escape then
+error'oi'
             ASR(to.info.dcl[1] == '&?', to, 'invalid binding : expected `&?´ modifier')
         end
+]]
 
         -- tp
 

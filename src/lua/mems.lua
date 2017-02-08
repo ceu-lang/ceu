@@ -405,9 +405,17 @@ assert(me.hier)
             local cc = TYPES.toc(tp)
             local c = TYPES.toc(TYPES.pop(tp,'?'))
             if alias == '&?' then
-                MEMS.datas.mems = MEMS.datas.mems..[[
+                if TYPES.abs_dcl(tp,'Code') then
+                    MEMS.datas.mems = MEMS.datas.mems..[[
 struct ]]..cc..[[;
 static struct ]]..cc..'* CEU_OPTION_'..cc..[[ (struct ]]..cc..[[* alias, char* file, int line) {
+]]
+                else
+                    MEMS.datas.mems = MEMS.datas.mems..[[
+static ]]..cc..'* CEU_OPTION_'..cc..[[ (]]..cc..[[* alias, char* file, int line) {
+]]
+                end
+                MEMS.datas.mems = MEMS.datas.mems..[[
     ceu_callback_assert_msg_ex(alias != NULL, "value is not set", file, line);
     return alias;
 }
