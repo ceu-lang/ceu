@@ -65,13 +65,13 @@ function DCLS.outer (me)
     return ret
 end
 
-function DCLS.get (blk, id, can_cross)
+function DCLS.get (blk, id, can_cross, dont_use)
     AST.asr(blk, 'Block')
     for blk in iter_boundary(blk,id,can_cross) do
         local dcl = blk.dcls[id]
         if dcl then
             local no = AST.iter'Vec_Init'() or AST.iter'Pool_Init'()
-            if not no then
+            if (not no) and (not dont_use) then
                 dcl.is_used = true
             end
             return dcl, AST.par(blk,'Code')
@@ -115,7 +115,7 @@ assert(can_cross==nil)
 
     local id = (opts and opts.id) or me.id
 
-    local old = DCLS.get(blk, id, can_cross)
+    local old = DCLS.get(blk, id, can_cross, true)
     local implicit = (me.is_implicit and 'implicit ') or ''
     if old and (not old.is_predefined) then
         local F do
@@ -228,8 +228,11 @@ DCLS.F = {
                 elseif dcl.tag=='Code' and CEU.opts.ceu_err_unused_code then
                     f = ASR_WRN_PASS(CEU.opts.ceu_err_unused_code)
                 end
-                f(dcl.is_used or dcl.is_predefined, dcl,
-                  AST.tag2id[dcl.tag]..' "'..dcl.id..'" declared but not used')
+                if not (dcl.is_used or dcl.is_predefined) then
+                    dcl.__dcls_unused = true
+                    f(false, dcl,
+                      AST.tag2id[dcl.tag]..' "'..dcl.id..'" declared but not used')
+                end
             end
         end
     end,

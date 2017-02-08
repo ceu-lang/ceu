@@ -46,6 +46,7 @@ var/nohold int x;
 dynamic var int x;
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -500,6 +501,7 @@ Test { [[var int a;]],
     wrn = true,
     inits = 'uninitialized variable "a" : reached yielding statement (/tmp/tmp.ceu:1)',
     --inits = 'uninitialized variable "a" : reached `end of file´ (/tmp/tmp.ceu:1)',
+    run = false,
 }
 
 Test { [[var int a=0;]],
@@ -1384,8 +1386,8 @@ else
     a=1;a=2; escape 3;
 end;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:2)',
-    --inits = 'line 1 : uninitialized variable "a" : reached `escape´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached `escape´ (/tmp/tmp.ceu:3)',
     --ref = 'line 5 : invalid extra access to variable "a" inside the initializing `if-then-else´ (/tmp/tmp.ceu:2)',
 }
 Test { [[
@@ -1427,7 +1429,9 @@ end
 x = 10;
 escape x;
 ]],
-    run = 10,
+    --run = 10,
+    --inits = 'line 1 : uninitialized variable "x" : reached `escape´ (/tmp/tmp.ceu:3)',
+    inits = 'line 1 : uninitialized variable "x" : reached end of `if´ (/tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -1441,6 +1445,7 @@ x = 10;
 escape x;
 ]],
     inits = 'line 1 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:5)',
+    --inits = 'line 1 : uninitialized variable "x" : reached `escape´ (/tmp/tmp.ceu:3)',
 }
 
     -- EVENTS
@@ -34996,24 +35001,46 @@ end
 escape 1;
 ]],
     wrn = true,
-    run = 1,
+    inits = 'line 1 : uninitialized variable "v" : reached end of `if´ (/tmp/tmp.ceu:3)',
+    --run = 1,
 }
 
---]=====]
 Test { [[
 code/await UV_TCP_Open (void) -> (var& int v) -> void
 do
-    if false then
-        escape;
-    end
+end
+var int x = 1;
+escape x;
+]],
+    wrn = true,
+    inits = 'line 1 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:4)',
+}
 
+Test { [[
+code/await UV_TCP_Open (void) -> (var& int v) -> void
+do
+    if false then escape; end
     var int vv = 10;
     v = &vv;
 end
 escape 1;
 ]],
     wrn = true,
-    run = 1,
+    --run = 1,
+    inits = 'line 1 : uninitialized variable "v" : reached end of `if´ (/tmp/tmp.ceu:3)',
+}
+
+Test { [[
+code/await UV_TCP_Open (void) -> (var& int v) -> void
+do
+    do/_ escape; end
+    var int vv = 10;
+    v = &vv;
+end
+escape 1;
+]],
+    wrn = true,
+    inits = 'line 1 : uninitialized variable "v" : reached `escape´ (/tmp/tmp.ceu:3)',
 }
 
 Test { [[

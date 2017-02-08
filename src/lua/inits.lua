@@ -52,11 +52,18 @@ local function is_loop (me)
     return me.tag=='Loop' or me.tag=='Loop_Num'
 end
 
+local function err_inits (dcl, stmt, msg)
+    ASR(false, dcl,
+        'uninitialized '..AST.tag2id[dcl.tag]..' "'..dcl.id..'" : '..
+        'reached '..(msg or ('`'..AST.tag2id[stmt.tag]..'´'))..
+                ' ('..stmt.ln[1]..':'..stmt.ln[2]..')')
+end
+
 local function run_inits (par, i, Dcl, stop)
     local me = par[i]
     if me == nil then
         if par == stop then
-            return false                        -- stop, not found
+            return false
         else
             return run_inits(par.__par, par.__i+1, Dcl, stop)
         end
@@ -69,7 +76,7 @@ local function run_inits (par, i, Dcl, stop)
     if me.tag == 'Escape' then
         local blk = AST.asr(me.outer,'',3,'Block')
         if AST.depth(blk) <= AST.depth(Dcl.blk) then
-            return false
+            return 'escape', me
         else
             return run_inits(blk, #blk+1, Dcl, stop)
         end
@@ -80,6 +87,7 @@ local function run_inits (par, i, Dcl, stop)
     if is_alias then
         local stmt
         if me.tag == 'Watching' then
+error'oi'
             stmt = AST.get(me,'',1,'Par_Or',1,'Block',1,'Stmts',
                                  1,'Set_Await_one', 1,'Abs_Await')
                 or AST.get(me,'',1,'Par_Or',1,'Block',1,'Stmts',
@@ -90,32 +98,24 @@ local function run_inits (par, i, Dcl, stop)
                 'invalid binding : active scope reached yielding statement '..
                 '('..yield.ln[1]..':'..yield.ln[2]..')')
 
-        elseif me.tag=='Abs_Await' or me.tag=='Abs_Spawn_Pool'
-        then
+        elseif me.tag=='Abs_Await' or me.tag=='Abs_Spawn_Pool' then
             stmt = me
         end
 
         if stmt then
 local Y = stmt[4]
 stmt[4] = nil
-            local ok = run_inits(stmt, 1, Dcl)
+            local ok,stmt = run_inits(stmt, 1, Dcl)
 stmt[4] = Y
-            ASR(ok, Dcl,
-                'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
-                'reached `'..AST.tag2id[me.tag]..'´ '..
-                '('..me.ln[1]..':'..me.ln[2]..')')
-            return true
+            return ok,stmt
         end
     end
 
     -- error: yielding statement
     if (me.tag == 'Y') or (is_loop(me) and is_alias) then
         local tag = unpack(me)
-        ASR(false, Dcl,
-            'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
-            'reached yielding statement '..
-            --'reached `'..AST.tag2id[me.tag]..'´ '..
-            '('..me.ln[1]..':'..me.ln[2]..')')
+        err_inits(Dcl, me, 'yielding statement')
+        --return false
 
     -- error: access to Dcl
     elseif me.tag == 'ID_int' then
@@ -124,25 +124,29 @@ stmt[4] = Y
         elseif me.dcl == Dcl then
             local ok = AST.par(me,'Vec_Init') or AST.par(me,'Vec_Finalize')
             local set = AST.par(me,'Set_Exp') or AST.par(me,'Set_Any') or AST.par(me,'Set_Abs_Val')
-            ASR(ok or (set and set.__dcls_defaults), Dcl,
-            --ASR(is_default, Dcl,
-                'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
-                'reached read access '..
-                '('..me.ln[1]..':'..me.ln[2]..')')
+            if not (ok or (set and set.__dcls_defaults)) then
+                err_inits(Dcl, me, 'read access')
+            end
         end
 
     elseif me.tag == 'If' then
         local _, t, f = unpack(me)
-        local ok1 = run_inits(t, 1, Dcl, t)
-        local ok2 = run_inits(f, 1, Dcl, f)
+        local ok1,stmt1 = run_inits(t, 1, Dcl, t)
+        local ok2,stmt2 = run_inits(f, 1, Dcl, f)
         if ok1 or ok2 then
-            ASR(ok1 and ok2, Dcl,
-                'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
-                'reached end of `if´ '..
-                '('..me.ln[1]..':'..me.ln[2]..')')
-            return true                         -- stop, found init
+            if ok1 and ok2 then
+                if ok1=='escape' or ok2=='escape' then
+                    return 'if', (stmt1 or stmt2)
+                else
+                    return true
+                end
+            else
+                -- don't allow only one because of alias binding (2x)
+                err_inits(Dcl, me, 'end of `if´')
+            end
+        else
+            return run_inits(me, #me, Dcl, stop)
         end
-        return run_inits(me, #me, Dcl, stop)
 
     -- ok: found assignment
     elseif me.tag == 'List_Var' then
@@ -169,7 +173,10 @@ stmt[4] = Y
         local fr, to = unpack(me)
         if me.tag == 'Set_Exp' then
             -- var int a = a+1;
-            run_inits(me, 1, Dcl, fr)
+            local ok = run_inits(me, 1, Dcl, fr)
+            if ok then
+                return ok
+            end
         end
 
         -- some assertions
@@ -204,10 +211,7 @@ stmt[4] = Y
                 if sub[1].tag ~= 'ID_int' then
                     -- ID.field = ...;  // ERR: counts as read, not write
                     if sub.info.dcl == Dcl then
-                        ASR(false, Dcl,
-                            'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
-                            'reached read access '..
-                            '('..sub.ln[1]..':'..sub.ln[2]..')')
+                        err_inits(Dcl, sub, 'read access')
                     end
                 else
                     -- ID = ...;
@@ -359,7 +363,14 @@ F = {
                 -- var x = ...
                 -- event& e = ...
                 --__detect_cycles = {}
-                run_inits(me, #me+1, me)
+                local ok,stmt = run_inits(me, #me+1, me)
+                if ok and ok~=true then
+                    if ok=='escape' and me.__dcls_unused then
+                        -- ok, warning generated
+                    else
+                        err_inits(me, stmt) --, 'end of '..AST.tag2id[me.tag])
+                    end
+                end
             end
         end
 

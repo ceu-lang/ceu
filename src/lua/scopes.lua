@@ -2,6 +2,12 @@
 local function check_blk (to_blk, fr_blk)
     local Code = AST.par(fr_blk,'Code')
     local Stmts = Code and AST.get(Code,'',4,'Block',1,'Stmts',4,'Block',1,'Stmts')
+
+    -- changes fr_blk from body->mid
+    if fr_blk == AST.get(Code,'', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 2,'Block') then
+        fr_blk = AST.asr(Code,'', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block')
+    end
+
     if AST.depth(to_blk) >= AST.depth(fr_blk) then
         assert(AST.is_par(fr_blk,to_blk), 'bug found')
         return true
