@@ -1130,10 +1130,26 @@ _ceu_mem->_trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
             end
         end
         CONC(me, Await)
-        for i, loc in ipairs(List) do
-            if loc.tag ~= 'ID_any' then
-                local ps = '(('..id..'*)(_ceu_occ->params))'
-                SET(me, loc, ps..'->_'..i, true)
+
+        local fr = AST.get(Await,'Await_Int', 1,'')
+        local abs = fr and TYPES.abs_dcl(fr.info.tp, 'Code')
+        if abs then
+            assert(#List == 1)
+            local to = unpack(List)
+            LINE(me, [[
+if (]]..V(fr)..[[ == NULL) {
+    ]]..V(to)..[[.is_set = 0;
+} else {
+    ]]..V(to)..[[.is_set = 1;
+    ]]..V(to)..[[.value=]]..V(fr)..[[->_ret;
+}
+]])
+        else
+            for i, loc in ipairs(List) do
+                if loc.tag ~= 'ID_any' then
+                    local ps = '(('..id..'*)(_ceu_occ->params))'
+                    SET(me, loc, ps..'->_'..i, true)
+                end
             end
         end
     end,

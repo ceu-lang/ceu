@@ -408,8 +408,13 @@ error'oi'
         end
 
         -- tp
-        if alias == '&?' then
-            me.tp = TYPES.new(e, 'void')
+        local abs = TYPES.abs_dcl(e.info.tp, 'Code')
+        if abs then
+            assert(alias == '&?')
+            local tp = AST.asr(abs,'Code', 4,'Block', 1,'Stmts',
+                                           1,'Code_Ret', 1,'', 2,'Type')
+            tp = TYPES.push(tp, '?')
+            me.tp = AST.node('Typelist', me.ln, tp)
         else
             me.tp = e.info.tp
         end

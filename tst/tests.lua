@@ -35525,7 +35525,6 @@ escape ret;
     run = { ['~>1s'] = 12 },
 }
 
---]=====]
 Test { [[
 code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
@@ -35535,8 +35534,33 @@ var&? Ff x = spawn Ff();
 var int v = await x;
 escape v;
 ]],
+    --run = 10,
+    stmts = 'line 6 : invalid assignment : types mismatch : "(int)" <= "(void)"',
+}
+
+Test { [[
+code/await Ff (void) -> int do
+    await async do end
+    escape 10;
+end
+var&? Ff x = spawn Ff();
+var int v = await x;
+escape v;
+]],
+    stmts = 'line 6 : invalid assignment : types mismatch : "(int)" <= "(int?)"',
+}
+
+--]=====]
+Test { [[
+code/await Ff (void) -> int do
+    await async do end
+    escape 10;
+end
+var&? Ff x = spawn Ff();
+var int? v = await x;
+escape v!;
+]],
     run = 10,
-    --stmts = 'line 7 : invalid assignment : types mismatch : "(int)" <= "void"',
 }
 
 Test { [[
