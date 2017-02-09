@@ -430,6 +430,8 @@ error'TODO: remove below'
                 else
                     me.info = INFO.copy(e.info)
                     me.info.id = e.info.id..'.'..member
+                    me.info.dcl = AST.copy(e.info.dcl)
+                    me.info.dcl[1] = false
                 end
             else
                 ASR(TYPES.is_nat(e.info.tp), me,

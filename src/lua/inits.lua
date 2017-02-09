@@ -437,12 +437,11 @@ F = {
             if par.tag == 'Do' then
                 local lbl,_,_,to = unpack(par)
                 if to then
-                    --ASR(not AST.is_equal(to.dcl,me.dcl), me,
---AST.dump(me.__par.__par)
---AST.dump(to)
                     local set = AST.par(me, 'Set_Exp')
                     set = set and set.__dcls_is_escape and AST.is_par(set[2],me)
-                    ASR(me.__par.tag=='Escape' or lbl==me or AST.is_par(to,me) or set or to.info.dcl~=me.info.dcl, me,
+                    ASR(me.__par.tag=='Escape' or lbl==me or AST.is_par(to,me) or
+                        set or (not AST.is_equal(to.info.dcl,me.info.dcl)),
+                        me,
                         'invalid access to '..AST.tag2id[me.info.dcl.tag]
                             ..' "'..me.info.dcl.id..'" : '
                             ..'assignment in enclosing `do` ('
