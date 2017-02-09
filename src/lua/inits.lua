@@ -48,7 +48,8 @@ local function run_inits (par, i, Dcl, stop)
             -- ok: async(a) do ... end
         elseif me.dcl == Dcl then
             local ok = AST.par(me,'Vec_Init') or AST.par(me,'Vec_Finalize')
-            local set = AST.par(me,'Set_Exp') or AST.par(me,'Set_Any') or AST.par(me,'Set_Abs_Val')
+            local set = AST.par(me,'Set_Exp') or AST.par(me,'Set_Any') or
+                        AST.par(me,'Set_Abs_Val') or AST.par(me,'Set_Abs_Await')
             if not (ok or (set and set.__dcls_defaults)) then
                 err_inits(Dcl, me, 'read access')
             end
@@ -67,7 +68,12 @@ local function run_inits (par, i, Dcl, stop)
 
         local ok1,stmt1 = run_inits(s1, 1, Dcl, s1)
         local ok2,stmt2
-        if AST.get(me,'Par_Or', 1,'Stmts', 1,'Finalize') then
+
+        if AST.get(me,'Par_Or', 1,'Stmts', 1,'Finalize') or
+           AST.get(me,'Par_Or', 1,'Stmts', 1,'Set_Abs_Await')
+        then
+            -- Finalize/Set_Abs_Await: ignore trail-2
+            -- (only trail-1 initializes and never terminates)
             ok2, stmt2 = true, me
         else
             ok2,stmt2 = run_inits(s2, 1, Dcl, s2)
@@ -134,7 +140,7 @@ local function run_inits (par, i, Dcl, stop)
                                 ASR(AST.depth(loop) < AST.depth(Dcl), me,
                                     'invalid binding : crossing `loop´ ('..loop.ln[1]..':'..loop.ln[2]..')')
                             end
-                            ASR(me.tag == 'Set_Alias', me,
+                            ASR(me.tag=='Set_Alias' or me.tag=='Set_Abs_Await', me,
                                 'invalid binding : expected operator `&´ in the right side')
                         else
                             assert(me.tag ~= 'Set_Alias')
@@ -190,8 +196,10 @@ F = {
                 --__detect_cycles = {}
                 local ok,stmt = run_inits(me, #me+1, me)
                 if ok and ok~=true then
-                    if ok=='Escape' and me.__dcls_unused then
-                        -- ok, warning generated
+                    if ok=='Escape' and me.__dcls_unused
+                        and (not AST.get(me.blk,6,'Code'))
+                    then
+                        -- ok, warning generated (unless in init list)
                     else
                         err_inits(me, stmt) --, 'end of '..AST.tag2id[me.tag])
                     end

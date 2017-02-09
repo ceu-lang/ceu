@@ -67,7 +67,6 @@ local function run_ptrs (par, i, Dcl, stop)
     return run_ptrs(me, 1, Dcl, stop)
 end
 
--->>
 F = {
     Vec  = 'Var',
     Var  = function (me)

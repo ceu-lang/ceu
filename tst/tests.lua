@@ -35073,7 +35073,6 @@ escape 1;
     --run = 1,
 }
 
---]=====]
 Test { [[
 code/await UV_TCP_Open (void) -> (var& int v) -> void
 do
@@ -35082,7 +35081,8 @@ var int x = 1;
 escape x;
 ]],
     wrn = true,
-    inits = 'line 1 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:4)',
+    --inits = 'line 1 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:4)',
+    inits = 'line 1 : uninitialized variable "v" : reached `escape´ (/tmp/tmp.ceu:5)',
 }
 
 Test { [[
@@ -35820,6 +35820,7 @@ escape 0;
     cc = '8: error: unknown type name ‘SDL_Window’',
 }
 
+--]=====]
 Test { [[
 native _int, _myalloc;
 native/pre do
