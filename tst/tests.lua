@@ -46,6 +46,7 @@ var/nohold int x;
 dynamic var int x;
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -35820,7 +35821,6 @@ escape 0;
     cc = '8: error: unknown type name ‘SDL_Window’',
 }
 
---]=====]
 Test { [[
 native _int, _myalloc;
 native/pre do
@@ -36123,7 +36123,8 @@ await 1s;
 escape ret;
 ]],
     --inits = 'line 4 : uninitialized variable "ret" : reached `par/or´ (/tmp/tmp.ceu:5)',
-    inits = 'line 4 : uninitialized variable "ret" : reached yielding statement (/tmp/tmp.ceu:5)',
+    --inits = 'line 4 : uninitialized variable "ret" : reached yielding statement (/tmp/tmp.ceu:5)',
+    inits = 'line 4 : uninitialized variable "ret" : reached end of `par/or´ (/tmp/tmp.ceu:5)',
 }
 
 Test { [[
@@ -36250,7 +36251,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    inits = 'line 3 : uninitialized variable "ret" : reached yielding statement (/tmp/tmp.ceu:5)',
+    --inits = 'line 3 : uninitialized variable "ret" : reached yielding statement (/tmp/tmp.ceu:5)',
+    run = 1,
 }
 Test { [[
 data Object with
@@ -36362,7 +36364,8 @@ escape 0;
 ]],
     wrn = true,
     --inits = 'line 1 : uninitialized vector "b" : reached `end of code´ (/tmp/tmp.ceu:7)',
-    inits = 'line 1 : uninitialized vector "b" : reached yielding statement (/tmp/tmp.ceu:7)',
+    --inits = 'line 1 : uninitialized vector "b" : reached yielding statement (/tmp/tmp.ceu:7)',
+    inits = 'line 1 : uninitialized vector "b" : reached end of `code´ (/tmp/tmp.ceu:1)',
 }
 
 Test { [[
@@ -36374,9 +36377,9 @@ end
 escape ret;
 ]],
     --inits = 'line 2 : uninitialized variable "x" : reached `par/or´ (/tmp/tmp.ceu:3)',
-    inits = 'line 2 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:3)',
     --inits = 'line 2 : uninitialized variable "x" : reached `watching´ (/tmp/tmp.ceu:3)',
-    --inits = 'line 2 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:4)',
+    inits = 'line 2 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:4)',
 }
 
 Test { [[
@@ -36388,8 +36391,8 @@ end
 ret = x;
 escape ret;
 ]],
-    --inits = 'line 2 : uninitialized variable "x" : reached `par/or´ (/tmp/tmp.ceu:3)',
-    inits = 'line 2 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:3)',
+    inits = 'line 2 : uninitialized variable "x" : reached end of `par/or´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:3)',
     --run = 10,
 }
 

@@ -1,7 +1,8 @@
-local function err_inits (dcl, stmt, msg)
+local function err_inits (dcl, stmt, msg, endof)
+    endof = (endof and 'end of ') or ''
     ASR(false, dcl,
         'uninitialized '..AST.tag2id[dcl.tag]..' "'..dcl.id..'" : '..
-        'reached '..(msg or ('`'..AST.tag2id[stmt.tag]..'´'))..
+        'reached '..(msg or (endof..'`'..AST.tag2id[stmt.tag]..'´'))..
                 ' ('..stmt.ln[1]..':'..stmt.ln[2]..')')
 end
 
@@ -12,6 +13,8 @@ local function run_inits (par, i, Dcl, stop)
             return false
         elseif par.__par == nil then
             return false
+        elseif par.tag == 'Code' then
+            return 'Code', par, true
         else
             return run_inits(par.__par, par.__i+1, Dcl, stop)
         end
@@ -72,9 +75,16 @@ local function run_inits (par, i, Dcl, stop)
         if AST.get(me,'Par_Or', 1,'Stmts', 1,'Finalize') or
            AST.get(me,'Par_Or', 1,'Stmts', 1,'Set_Abs_Await')
         then
-            -- Finalize/Set_Abs_Await: ignore trail-2
-            -- (only trail-1 initializes and never terminates)
-            ok2, stmt2 = true, me
+            -- Finalize/Set_Abs_Await
+            if ok1 then
+                -- first trail correctly and immediately initialized Dcl
+                -- don't need to try trail-2
+                ok2, stmt2 = true, me
+            else
+                -- first trail didn't, so try trail-2
+                ok1, stmt1 = true, me
+                ok2,stmt2 = run_inits(s2, 1, Dcl, s2)
+            end
         else
             ok2,stmt2 = run_inits(s2, 1, Dcl, s2)
         end
@@ -194,14 +204,14 @@ F = {
                 -- var x = ...
                 -- event& e = ...
                 --__detect_cycles = {}
-                local ok,stmt = run_inits(me, #me+1, me)
+                local ok,stmt,endof = run_inits(me, #me+1, me)
                 if ok and ok~=true then
                     if ok=='Escape' and me.__dcls_unused
                         and (not AST.get(me.blk,6,'Code'))
                     then
                         -- ok, warning generated (unless in init list)
                     else
-                        err_inits(me, stmt) --, 'end of '..AST.tag2id[me.tag])
+                        err_inits(me, stmt, nil, endof) --, 'end of '..AST.tag2id[me.tag])
                     end
                 end
             end
