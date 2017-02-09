@@ -140,6 +140,14 @@ STMTS.F = {
         ASR(ID_int, me, 'invalid binding : unexpected context for operator `'..op..'´')
         ASR(ID_int.dcl[1], me, 'invalid binding : expected declaration with `&´')
 
+        -- NO: x = &f!.*            // f may die
+        if fr.info.dcl_obj then
+            ASR(fr.info.dcl_obj.orig[1] ~= '&?', me, 'invalid binding : unexpected destination with `&?´')
+        end
+
+        -- NO: f1 = &f              // f may die
+        ASR(not TYPES.abs_dcl(to.info.tp,'Code'), me, 'invalid binding : expected `spawn´')
+
 -- TODO-remove
 --[[
         if to.__dcls_is_escape then
