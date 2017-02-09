@@ -72,8 +72,29 @@ local function run_inits (par, i, Dcl, stop)
         local ok1,stmt1 = run_inits(s1, 1, Dcl, s1)
         local ok2,stmt2
 
+        local last_is_watching do
+            if me.tag=='Par_Or' and me.__par.tag=='Watching' then
+                local x = me
+                last_is_watching = true
+                while x.__par.tag ~= 'Code' do
+                    if x.__i ~= #x.__par then
+                        local do_int = AST.get(x.__par,'Do',4,'Loc',1,'ID_int')
+                        if do_int and do_int[1]=='_ret' and x.__i==3 then
+                            break   -- ok, last in ROOT
+                        end
+                        last_is_watching = false
+                        break
+                    end
+                    x = x.__par
+                end
+            end
+        end
+
         if AST.get(me,'Par_Or', 1,'Stmts', 1,'Finalize') or
-           AST.get(me,'Par_Or', 1,'Stmts', 1,'Set_Abs_Await')
+           AST.get(me,'Par_Or', 1,'Stmts', 1,'Set_Abs_Await') or
+-- TODO: remove 2 above (FOREVER below covers them)
+           AST.get(me,'Par_Or', 1,'Stmts', -1,'Await_Forever') or
+           last_is_watching
         then
             -- Finalize/Set_Abs_Await
             if ok1 then

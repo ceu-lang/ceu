@@ -36572,8 +36572,42 @@ code/await Gg (void) -> (var& int y) -> void do
 end
 
 code/await Ff (void) -> (var& int x, var& int y) -> void do
+    var&? Gg g = spawn Gg();
     var& int a;
-    watching Gg() -> (&a) do
+    watching g do
+        a = &g!.y;
+        x = &a;
+        y = &a;
+        await FOREVER;
+    end
+end
+
+var& int x;
+var&? Ff f = spawn Ff();
+watching f do
+    x = &f!.x;
+    var& int y;
+    y = &f!.y;
+    watching f do
+        escape x+y;
+    end
+    escape 0;
+end
+]],
+    run = 20,
+}
+Test { [[
+code/await Gg (void) -> (var& int y) -> void do
+    var int yy = 10;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x, var& int y) -> void do
+    var&? Gg g = spawn Gg();
+    var& int a;
+    watching g do
+        a = &g!.y;
         x = &a;
         y = &a;
         await FOREVER;

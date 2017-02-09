@@ -9,7 +9,6 @@ F = {
     ['1__PRE'] = function (me)
         local stmts, eof = unpack(me)
         AST.asr(stmts, 'Stmts')
-        AST.set(stmts, #stmts+1, eof)
 
         --  Stmts
         --      to
@@ -101,7 +100,8 @@ F = {
                             node('_Set_Do', me.ln,
                                 node('Do', me.ln,
                                     true, false,
-                                    node('Block', me.ln, lua)))))))
+                                    node('Block', me.ln, lua)))),
+                        eof)))
         return AST.root
     end,
     _Stmts__PRE = function (me)

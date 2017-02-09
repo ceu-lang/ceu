@@ -189,6 +189,7 @@ function AST.get (me, tag, ...)
     end
 
     if idx then
+        idx = (idx>=0 and idx or (#me+idx+1))
         return AST.get(me[idx], tag2, select(3,...))
     else
         return me
