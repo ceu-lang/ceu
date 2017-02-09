@@ -92,7 +92,7 @@ local function run_inits (par, i, Dcl, stop)
         if ok1 or ok2 then
             if ok1 and ok2 then
                 if ok1=='Escape' or ok2=='Escape' then
-                    return me.tag, (stmt2 or stmt1)
+                    return me.tag, (ok1=='Escape' and stmt1 or stmt2)
                 else
                     return true, me
                 end
@@ -197,7 +197,7 @@ F = {
                 local ok,stmt,endof = run_inits(me, #me+1, me)
                 if ok and ok~=true then
                     if (ok=='Code' or ok=='Escape') and me.__dcls_unused
-                        and (not (code[2].await and AST.get(me.blk,6,'Code')))
+                        and (not (code and code[2].await and AST.get(me.blk,6,'Code')))
                     then
                         -- ok, warning generated (unless in init list)
                     else

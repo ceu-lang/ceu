@@ -1391,6 +1391,18 @@ end;
     --ref = 'line 5 : invalid extra access to variable "a" inside the initializing `if-then-else´ (/tmp/tmp.ceu:2)',
 }
 Test { [[
+var int a;
+if false then
+    a=1;a=2; escape 3;
+else
+    escape 1;
+end;
+]],
+    --inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached `escape´ (/tmp/tmp.ceu:5)',
+    --ref = 'line 5 : invalid extra access to variable "a" inside the initializing `if-then-else´ (/tmp/tmp.ceu:2)',
+}
+Test { [[
 var int a=1;
 if false then
     escape 1;
