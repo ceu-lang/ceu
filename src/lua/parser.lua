@@ -602,13 +602,13 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , _Abs_Call = K'call' * V'__abs_mods' * (V'Abs_Cons' -I(V'__id_data')) * OPT(KK'in' * V'Loc')
     , Abs_Val   = CK'val' * V'Abs_Cons'
     , Abs_New   = CK'new' * V'Abs_Cons'
-    , Abs_Await = V'__Abs_Cons_Code'
+    , Abs_Await = V'__Abs_Cons_Code' * V'Y'
         -- TODO: "await Abs_Await" should not accept "-> (...)"
         --       but "watching Abs_Await" does
 
     , _Abs_Spawn = K'spawn' * V'__Abs_Cons_Code' * OPT(KK'in' * V'Loc')
 
-    , __Abs_Cons_Code = V'__abs_mods' * (V'Abs_Cons' -I(V'__id_data')) * V'Y'
+    , __Abs_Cons_Code = V'__abs_mods' * (V'Abs_Cons' -I(V'__id_data'))
     , Abs_Cons   = V'ID_abs' * PARENS(OPT(V'Abslist'))
     , Abslist    = LIST(V'__abs_item')^-1
     , __abs_item = (V'Abs_Cons' + V'Vec_Cons' + V'__Exp' + V'ID_any')

@@ -36315,6 +36315,22 @@ Test { [[
 code/await Gg (void) -> (var& int y) -> void do
     var int yy = 10;
     y = &yy;
+end
+
+code/await Ff (void) -> (var& int kkk) -> void do
+    var&? Gg g = spawn Gg();
+    kkk = &g!.y;
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+code/await Gg (void) -> (var& int y) -> void do
+    var int yy = 10;
+    y = &yy;
     await FOREVER;
 end
 

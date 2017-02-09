@@ -105,9 +105,9 @@ error'oi'
         if stmt then
 local Y = stmt[4]
 stmt[4] = nil
-            local ok,stmt = run_inits(stmt, 1, Dcl)
+            local ok,stmt2 = run_inits(stmt, 1, Dcl)
 stmt[4] = Y
-            return ok,stmt
+            return ok,stmt2
         end
     end
 

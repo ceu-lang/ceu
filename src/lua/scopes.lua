@@ -4,12 +4,14 @@ local function check_blk (to_blk, fr_blk)
     local Stmts = Code and AST.get(Code,'',4,'Block',1,'Stmts',4,'Block',1,'Stmts')
 
     -- changes fr_blk from body->mid
+    local ok = false
     if fr_blk == AST.get(Code,'', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 2,'Block') then
+        ok = true
         fr_blk = AST.asr(Code,'', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block')
     end
 
     if AST.depth(to_blk) >= AST.depth(fr_blk) then
-        assert(AST.is_par(fr_blk,to_blk), 'bug found')
+        assert(ok or AST.is_par(fr_blk,to_blk), 'bug found')
         return true
     elseif Stmts and (
                 AST.get(Stmts,'',1,'Do', 3,'Block')==fr_blk -- code ... -> ...
@@ -130,7 +132,7 @@ F = {
                 fin.__fin_vars = { blk=blk, assert(to.info.dcl) }
             end
         else
-            local ok = is_call or check_blk(to.info.dcl.blk, fr.info.dcl.blk)
+            local ok = is_call or check_blk(to.info.dcl.blk, (fr.info.dcl_obj or fr.info.dcl).blk)
             if not ok then
                 if to.info.dcl.is_mid_idx then
 -- TODO-remove
