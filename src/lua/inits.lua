@@ -440,7 +440,8 @@ F = {
                     local set = AST.par(me, 'Set_Exp')
                     set = set and set.__dcls_is_escape and AST.is_par(set[2],me)
                     ASR(me.__par.tag=='Escape' or lbl==me or AST.is_par(to,me) or
-                        set or (not AST.is_equal(to.info.dcl,me.info.dcl)),
+                        set or (not (AST.is_equal(to.info.dcl,me.info.dcl) and to.info.dcl.blk==me.info.dcl.blk)),
+                        --set or (to.info.dcl~=me.info.dcl),
                         me,
                         'invalid access to '..AST.tag2id[me.info.dcl.tag]
                             ..' "'..me.info.dcl.id..'" : '
