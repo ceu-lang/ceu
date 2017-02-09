@@ -30615,8 +30615,8 @@ escape 1;
 ]],
     wrn = true,
     --cc = 'error: unknown type name ‘SDL_Texture’',
-    --inits = 'line 3 : uninitialized variable "t_enemy_0" : reached `escape´ (/tmp/tmp.ceu:9)',
-    inits = 'line 3 : uninitialized variable "t_enemy_0" : reached end of `par/or´ (/tmp/tmp.ceu:5)',
+    inits = 'line 3 : uninitialized variable "t_enemy_0" : reached `escape´ (/tmp/tmp.ceu:9)',
+    --inits = 'line 3 : uninitialized variable "t_enemy_0" : reached end of `par/or´ (/tmp/tmp.ceu:5)',
 }
 
 Test { [[
@@ -35083,7 +35083,8 @@ escape x;
 ]],
     wrn = true,
     --inits = 'line 1 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:4)',
-    inits = 'line 1 : uninitialized variable "v" : reached `escape´ (/tmp/tmp.ceu:5)',
+    --inits = 'line 1 : uninitialized variable "v" : reached `escape´ (/tmp/tmp.ceu:5)',
+    inits = 'line 1 : uninitialized variable "v" : reached end of `code´ (/tmp/tmp.ceu:1)',
 }
 
 Test { [[

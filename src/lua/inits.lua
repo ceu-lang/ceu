@@ -92,7 +92,7 @@ local function run_inits (par, i, Dcl, stop)
         if ok1 or ok2 then
             if ok1 and ok2 then
                 if ok1=='Escape' or ok2=='Escape' then
-                    return me.tag, (stmt1 or stmt2)
+                    return me.tag, (stmt2 or stmt1)
                 else
                     return true, me
                 end
@@ -103,17 +103,6 @@ local function run_inits (par, i, Dcl, stop)
         else
             return run_inits(me, #me, Dcl, stop)
         end
-
-    -- ok: found assignment
---[[
-    elseif me.tag == 'List_Var' then
-        for _,ID_int in ipairs(me) do
-            if ID_int.dcl == Dcl then
-                ID_int.dcl.inits = {me}
-                return true, me
-            end
-        end
-]]
 
     -- ok: found assignment
     elseif me.tag == 'Loop_Num' then
@@ -188,6 +177,7 @@ F = {
     Evt  = 'Var',
     Var  = function (me)
         local is_alias,tp = unpack(me)
+        local code = AST.par(me, 'Code')
 
         -- RUN_INITS
         if me.is_implicit           or              -- compiler defined
@@ -206,8 +196,8 @@ F = {
                 --__detect_cycles = {}
                 local ok,stmt,endof = run_inits(me, #me+1, me)
                 if ok and ok~=true then
-                    if ok=='Escape' and me.__dcls_unused
-                        and (not AST.get(me.blk,6,'Code'))
+                    if (ok=='Code' or ok=='Escape') and me.__dcls_unused
+                        and (not (code[2].await and AST.get(me.blk,6,'Code')))
                     then
                         -- ok, warning generated (unless in init list)
                     else
@@ -258,4 +248,3 @@ F = {
 }
 
 AST.visit(F)
-
