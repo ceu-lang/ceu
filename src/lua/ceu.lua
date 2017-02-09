@@ -20,6 +20,7 @@ if CEU.opts.ceu then
     dofile 'spawns.lua'
     dofile 'stmts.lua'
     dofile 'inits.lua'
+    dofile 'ptrs.lua'
     dofile 'scopes.lua'
     dofile 'tight_.lua'
     dofile 'props_.lua'

@@ -37,6 +37,7 @@ AST.tag2id = {
     Ext_Code         = 'external code',
     Ext              = 'external',
     Finalize         = 'finalize',
+    If               = 'if',
     Kill             = 'kill',
     Loop             = 'loop',
     Loop_Num         = 'loop',
