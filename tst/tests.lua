@@ -46,7 +46,6 @@ var/nohold int x;
 dynamic var int x;
 
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -35999,7 +35998,8 @@ end
 
 escape 1;
 ]],
-    stmts = 'line 14 : invalid binding : unexpected destination with `&?´',
+    --stmts = 'line 14 : invalid binding : unexpected source with `&?´',
+    run = 1,
 }
 
 Test { [[
@@ -36340,6 +36340,7 @@ escape ret;
     --run = 10,
 }
 
+--]=====]
 Test { [[
 code/await Ff (void) -> (var int x) -> FOREVER do
     x = 10;
@@ -36351,7 +36352,7 @@ var& int x = &f!.x;
 
 escape x;
 ]],
-    stmts = 'line 7 : invalid binding : unexpected destination with `&?´',
+    stmts = 'line 7 : invalid binding : unexpected source with `&?´',
     --run = 11,
     --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
     --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
@@ -36382,7 +36383,7 @@ end
 
 escape 0;
 ]],
-    stmts = 'line 9 : invalid binding : unexpected destination with `&?´',
+    stmts = 'line 9 : invalid binding : unexpected source with `&?´',
     --run = false,
     --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
     --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
@@ -36448,7 +36449,8 @@ end
 
 await 1s;
 ]],
-    run = false,
+    stmts = 'line 7 : invalid binding : unexpected source with `&?´',
+    --run = false,
     --inits = 'line 7 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:12)',
     --inits = 'line 7 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:12)',
 }
@@ -36467,7 +36469,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    run = 1,
+    --run = 1,
+    stmts = 'line 8 : invalid binding : unexpected source with `&?´',
 }
 Test { [[
 code/await Gg (void) -> (var& int y) -> void do
@@ -36478,8 +36481,8 @@ end
 
 code/await Ff (void) -> (var& int kkk) -> void do
     var&? Gg g = spawn Gg();
-    kkk = &g!.y;
     watching g do
+        kkk = &g!.y;
         await FOREVER;
     end
 end
