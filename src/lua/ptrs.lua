@@ -13,7 +13,7 @@ local function run_ptrs (par, i, Dcl, stop)
     end
 
     -- yielding statement: stop?
-    if me.tag == 'Y' then
+    if me.tag=='Y' or me.tag=='A' then
         local set = AST.par(me,__is_set)
         local ok = false
         if set then

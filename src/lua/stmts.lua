@@ -140,14 +140,6 @@ STMTS.F = {
         ASR(ID_int, me, 'invalid binding : unexpected context for operator `'..op..'´')
         ASR(ID_int.dcl[1], me, 'invalid binding : expected declaration with `&´')
 
-        -- NO: x = &f!.*            // f may die (unless surrounded by "watching f")
-        if fr.info.dcl_obj and fr.info.dcl_obj.orig[1]=='&?'then
-            local watch = AST.par(me, 'Watching')
-            local awt = watch and AST.get(watch,'', 1,'Par_Or', 1,'Block', 1,'Stmts', 1,'Await_Int', 1,'')
-            ASR(awt and awt.info.dcl==fr.info.dcl_obj.orig, me,
-                'invalid binding : unexpected source with `&?´')
-        end
-
         -- NO: f1 = &f              // f may die
         ASR(not TYPES.abs_dcl(to.info.tp,'Code'), me, 'invalid binding : expected `spawn´')
 

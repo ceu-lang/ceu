@@ -30626,8 +30626,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    --cc = 'error: unknown type name ‘SDL_Texture’',
-    inits = 'line 3 : uninitialized variable "t_enemy_0" : reached `escape´ (/tmp/tmp.ceu:9)',
+    cc = 'error: unknown type name ‘SDL_Texture’',
+    --inits = 'line 3 : uninitialized variable "t_enemy_0" : reached `escape´ (/tmp/tmp.ceu:9)',
     --inits = 'line 3 : uninitialized variable "t_enemy_0" : reached end of `par/or´ (/tmp/tmp.ceu:5)',
 }
 
@@ -35094,9 +35094,9 @@ var int x = 1;
 escape x;
 ]],
     wrn = true,
-    --inits = 'line 1 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:4)',
+    inits = 'line 1 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:4)',
     --inits = 'line 1 : uninitialized variable "v" : reached `escape´ (/tmp/tmp.ceu:5)',
-    inits = 'line 1 : uninitialized variable "v" : reached end of `code´ (/tmp/tmp.ceu:1)',
+    --inits = 'line 1 : uninitialized variable "v" : reached end of `code´ (/tmp/tmp.ceu:1)',
 }
 
 Test { [[
@@ -36138,6 +36138,7 @@ escape ret;
     --inits = 'line 4 : uninitialized variable "ret" : reached `par/or´ (/tmp/tmp.ceu:5)',
     --inits = 'line 4 : uninitialized variable "ret" : reached yielding statement (/tmp/tmp.ceu:5)',
     inits = 'line 4 : uninitialized variable "ret" : reached end of `par/or´ (/tmp/tmp.ceu:5)',
+    --inits = 'line 5 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:9)',
 }
 
 Test { [[
@@ -36377,8 +36378,8 @@ escape 0;
 ]],
     wrn = true,
     --inits = 'line 1 : uninitialized vector "b" : reached `end of code´ (/tmp/tmp.ceu:7)',
-    --inits = 'line 1 : uninitialized vector "b" : reached yielding statement (/tmp/tmp.ceu:7)',
-    inits = 'line 1 : uninitialized vector "b" : reached end of `code´ (/tmp/tmp.ceu:1)',
+    inits = 'line 1 : uninitialized vector "b" : reached yielding statement (/tmp/tmp.ceu:7)',
+    --inits = 'line 1 : uninitialized vector "b" : reached end of `code´ (/tmp/tmp.ceu:1)',
 }
 
 Test { [[
@@ -36420,11 +36421,56 @@ var& int x = &f!.x;
 
 escape x;
 ]],
-    stmts = 'line 7 : invalid binding : unexpected source with `&?´',
+    scopes = 'line 7 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+    --stmts = 'line 7 : invalid binding : unexpected source with `&?´',
     --run = 11,
     --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
     --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
     --scopes = 'line 8 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Ff (void) -> void do
+end
+
+var int x;
+var &? Ff f = spawn Ff();
+await 1s;
+x = 10;
+escape x;
+]],
+    run = {['~>1s']=10},
+}
+
+Test { [[
+code/await Ff (void) -> void do
+    await FOREVER;
+end
+
+var int x;
+var &? Ff f = spawn Ff();
+watching f do
+    x = 10;
+    escape x;
+end
+]],
+    run = 10,
+}
+
+Test { [[
+code/await Ff (void) -> void do
+end
+
+var int x;
+var &? Ff f = spawn Ff();
+watching f do
+    await 1s;
+    x = 10;
+end
+escape x;
+]],
+    inits = 'line 4 : uninitialized variable "x" : reached end of `par/or´ (/tmp/tmp.ceu:6)',
+    --run = 1,
 }
 
 Test { [[
@@ -36440,6 +36486,126 @@ code/await Ff (void) -> (var& int x) -> void do
     watching g do
         await FOREVER;
     end
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x = &f!.x;
+    escape f!.x;
+end
+
+escape 0;
+]],
+    scopes = 'line 9 : invalid binding : unexpected source with `&?´ : destination may outlive source'
+}
+
+Test { [[
+code/await Gg (void) -> (var& int y) -> void do
+    var int yy = 10;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var&? Gg g = spawn Gg();
+    watching g do
+        x = &g!.y;
+        await FOREVER;
+    end
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x = &f!.x;
+    escape f!.x;
+end
+
+escape 1;
+]],
+    run = 10,
+    --stmts = 'line 9 : invalid binding : unexpected source with `&?´',
+    --run = false,
+    --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
+    --scopes = 'line 8 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Gg (void) -> (var& int y) -> void do
+    var int yy = 10;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> int do
+    var&? Gg g = spawn Gg();
+    watching g do
+        x = &g!.y;
+        await FOREVER;
+    end
+    escape x;
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x = &f!.x;
+    escape f!.x;
+end
+
+escape 0;
+]],
+    --stmts = 'line 9 : invalid binding : unexpected source with `&?´',
+    --run = false,
+    --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
+    inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:9)',
+    --scopes = 'line 8 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Gg (void) -> (var& int y) -> void do
+    var int yy = 10;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var&? Gg g = spawn Gg();
+    watching g do
+        x = &g!.y;
+        await FOREVER;
+    end
+end
+
+var&? Ff f = spawn Ff();
+var& int x = &f!.x;
+watching f do
+    escape f!.x;
+end
+
+escape 0;
+]],
+    scopes = 'line 16 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+    --stmts = 'line 9 : invalid binding : unexpected source with `&?´',
+    --run = false,
+    --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
+    --scopes = 'line 8 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Gg (void) -> (var& int y) -> void do
+    var int yy = 10;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var&? Gg g = spawn Gg();
+    x = &g!.y;                  // no, outside watching g
+    watching g do
+        await FOREVER;
+    end
     await 1s;
 end
 
@@ -36451,8 +36617,40 @@ end
 
 escape 0;
 ]],
-    stmts = 'line 9 : invalid binding : unexpected source with `&?´',
+    scopes = 'line 9 : invalid binding : unexpected source with `&?´ : destination may outlive source',
     --run = false,
+    --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
+    --scopes = 'line 8 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Gg (void) -> (var& int y) -> void do
+    var int yy = 10;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var&? Gg g = spawn Gg();
+    watching g do
+        await 1s;
+        x = &g!.y;              // no, crossing await
+        await FOREVER;
+    end
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x = &f!.x;
+    escape f!.x;
+end
+
+escape 0;
+]],
+    --stmts = 'line 9 : invalid binding : unexpected source with `&?´',
+    --run = false,
+    inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:10)',
     --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
     --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
     --scopes = 'line 8 : invalid binding : incompatible scopes',
@@ -36517,7 +36715,7 @@ end
 
 await 1s;
 ]],
-    stmts = 'line 7 : invalid binding : unexpected source with `&?´',
+    scopes = 'line 7 : invalid binding : unexpected source with `&?´ : destination may outlive source',
     --run = false,
     --inits = 'line 7 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:12)',
     --inits = 'line 7 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:12)',
@@ -36538,7 +36736,7 @@ escape 1;
 ]],
     wrn = true,
     --run = 1,
-    stmts = 'line 8 : invalid binding : unexpected source with `&?´',
+    scopes = 'line 8 : invalid binding : unexpected source with `&?´ : destination may outlive source',
 }
 Test { [[
 code/await Gg (void) -> (var& int y) -> void do
@@ -36595,6 +36793,37 @@ watching f do
 end
 ]],
     run = 20,
+    scopes = 'line 11 : invalid binding : incompatible scopes',
+}
+Test { [[
+code/await Gg (void) -> (var& int y) -> void do
+    var int yy = 10;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x, var& int y) -> void do
+    var&? Gg g = spawn Gg();
+    watching g do
+        x = &g!.y;
+        y = &g!.y;
+        await FOREVER;
+    end
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x;
+    x = &f!.x;
+    var& int y;
+    y = &f!.y;
+    watching f do
+        escape x+y;
+    end
+    escape 0;
+end
+]],
+    run = 20,
 }
 Test { [[
 code/await Gg (void) -> (var& int y) -> void do
@@ -36625,7 +36854,9 @@ end
 
 escape 0;
 ]],
-    run = 20,
+    scopes = 'line 11 : invalid binding : incompatible scopes',
+    --scopes = 'line 20 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+    --stmts = 'line 20 : invalid binding : unexpected source with `&?´',
 }
 Test { [[
 code/await Gg (void) -> (var& int a) -> void do
@@ -36635,24 +36866,117 @@ code/await Gg (void) -> (var& int a) -> void do
 end
 
 code/await Ff (void) -> (var& int x) -> void do
-    var& int a1;
-    watching Gg() -> (&a1) do
-        var& int a2;
-        watching Gg() -> (&a2) do
-            x = &a1;
+    var&? Gg g1 = spawn Gg();
+    var&? Gg g2;
+    watching g1 do
+        var& int a1;
+        a1 = &g1!.a;
+        //x = &a1;
+        g2 = spawn Gg();
+        watching g2 do
+            x = &g2!.a;
             await FOREVER;
         end
     end
 end
 
-var& int x;
-watching Ff() -> (&x) do
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x;
+    x = &f!.x;
     escape x;
 end
-
-escape 0;
 ]],
     run = 10,
+}
+
+Test { [[
+code/await Gg (void) -> (var& int a) -> void do
+    var int v = 10;
+    a = &v;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var&? Gg g1 = spawn Gg();
+    watching g1 do
+        //x = &a1;
+        var&? Gg g2 = spawn Gg();
+        watching g2 do
+            x = &g2!.a;
+            await FOREVER;
+        end
+    end
+end
+
+var&? Ff f = spawn Ff();
+var& int x;
+watching f do
+    x = &f!.x;
+    escape x;
+end
+]],
+    scopes = 'line 13 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Gg (void) -> (var& int a) -> void do
+    var int v = 10;
+    a = &v;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var&? Gg g1 = spawn Gg();
+    var&? Gg g2;
+    watching g1 do
+        //x = &a1;
+        g2 = spawn Gg();
+        watching g2 do
+            x = &g2!.a;
+            await FOREVER;
+        end
+    end
+end
+
+var&? Ff f = spawn Ff();
+var& int x;
+watching f do
+    x = &f!.x;
+    escape x;
+end
+]],
+    scopes = 'line 23 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Gg (void) -> (var& int a) -> void do
+    var int v = 10;
+    a = &v;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var&? Gg g1 = spawn Gg();
+    var&? Gg g2;
+    watching g1 do
+        g2 = spawn Gg();
+        watching g2 do
+            x = &g2!.a;
+            await FOREVER;
+        end
+    end
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x;
+    x = &f!.x;
+    escape x;
+end
+]],
+    run = 10,
+    --scopes = 'line 17 : invalid binding : incompatible scopes',
 }
 
 Test { [[
@@ -36664,22 +36988,35 @@ end
 
 code/await Ff (void) -> (var& int x) -> void do
     nothing;
-    var& int y;
-    watching Gg() -> (&y) do
-        x = &y;
+    var&? Gg g = spawn Gg();
+    watching g do
+        x = &g!.y;
         await FOREVER;
     end
 end
 
-var& int x;
-watching Ff() -> (&x) do
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x;
+    x = &f!.x;
     escape x;
 end
-
-escape 0;
 ]],
     run = 10,
     --scopes = 'line 10 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Gg (void) -> FOREVER do
+    await FOREVER;
+end
+
+var&? Gg g;
+g = spawn Gg();
+g = spawn Gg();
+escape 0;
+]],
+    inits = 'line 7 : invalid binding : variable "g" is already bound',
 }
 
 Test { [[
@@ -36690,11 +37027,22 @@ code/await Gg (var int x) -> (var& int y) -> void do
 end
 
 code/await Ff (void) -> (var& int x) -> void do
-    var& int y1,y2,y3;
-    watching Gg(1) -> (&y1) do
-        watching Gg(2) -> (&y2) do
-            watching Gg(3) -> (&y3) do
-                var int v = y1+y2+y3;
+    var int y1;
+    var int y2;
+    var int y3;
+    var int v;
+    var&? Gg g1 = spawn Gg(1);
+    var&? Gg g2;
+    var&? Gg g3;
+    watching g1 do
+        y1 = g1!.y;
+        g2 = spawn Gg(2);
+        watching g2 do
+            g3 = spawn Gg(3);
+            y2 = g2!.y;
+            watching g3 do
+                y3 = g3!.y;
+                v = y1+y2+y3;
                 x = &v;
                 await FOREVER;
             end
@@ -36702,12 +37050,86 @@ code/await Ff (void) -> (var& int x) -> void do
     end
 end
 
-var& int x;
-watching Ff() -> (&x) do
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x;
+    x = &f!.x;
     escape x;
 end
+]],
+    run = 36,
+}
 
-escape 0;
+Test { [[
+code/await Gg (var int x) -> (var& int y) -> void do
+    var int yy = 10+x;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var int y1;
+    var int y2;
+    var int y3;
+    var int v;
+    var&? Gg g1 = spawn Gg(1);
+    var&? Gg g2 = spawn Gg(2);
+    var&? Gg g3 = spawn Gg(3);
+    watching g1 do
+        y1 = g1!.y;
+        watching g2 do
+            y2 = g2!.y;
+            watching g3 do
+                y3 = g3!.y;
+                v = y1+y2+y3;
+                x = &v;
+                await FOREVER;
+            end
+        end
+    end
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x;
+    x = &f!.x;
+    escape x;
+end
+]],
+    run = 36,
+}
+
+Test { [[
+code/await Gg (var int x) -> (var& int y) -> void do
+    var int yy = 10+x;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var int y1;
+    var int y2;
+    var int y3;
+    var int v;
+    var&? Gg g1 = spawn Gg(1);
+    var&? Gg g2 = spawn Gg(2);
+    var&? Gg g3 = spawn Gg(3);
+    watching g1,g2,g3 do
+        y1 = g1!.y;
+        y2 = g2!.y;
+        y3 = g3!.y;
+        v = y1+y2+y3;
+        x = &v;
+        await FOREVER;
+    end
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x;
+    x = &f!.x;
+    escape x;
+end
 ]],
     run = 36,
 }
@@ -36719,8 +37141,10 @@ code/await Gg (var int x) -> (var& int y) -> void do
 end
 
 code/await Ff (void) -> (var& int x) -> void do
-    var& int y1;
-    watching Gg(1) -> (&y1) do
+    var int y1;
+    var&? Gg g = spawn Gg(1);
+    watching g do
+        y1 = g!.y;
         do
             var int v = y1;
             x = &v;
@@ -36732,7 +37156,7 @@ end
 escape 0;
 ]],
     wrn = true,
-    scopes = 'line 11 : invalid binding : incompatible scopes',
+    scopes = 'line 13 : invalid binding : incompatible scopes',
 }
 
 Test { [[
@@ -36743,23 +37167,30 @@ code/await Gg (var int x) -> (var& int y) -> void do
 end
 
 code/await Ff (void) -> (var& int x) -> void do
-    var& int y1,y2;
-    watching Gg(1) -> (&y1) do
+    var int y1;
+    var int y2;
+    var&? Gg g1 = spawn Gg(1);
+    var&? Gg g2;
+    var int v;
+    watching g1 do
+        y1 = g1!.y;
         nothing;
-        watching Gg(2) -> (&y2) do
-            var int v = y1+y2;
+        g2 = spawn Gg(2);
+        watching g2 do
+            y2 = g2!.y;
+            v = y1+y2;
             x = &v;
             await FOREVER;
         end
     end
 end
 
-var& int x;
-watching Ff() -> (&x) do
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x;
+    x = &f!.x;
     escape x;
 end
-
-escape 0;
 ]],
     run = 23,
     --scopes = 'line 12 : invalid binding : incompatible scopes',
@@ -36772,27 +37203,24 @@ code/await Gg (var int x) -> (var& int y) -> void do
     await FOREVER;
 end
 
-code/await Ff (void) -> (var& int x) -> void do
-    var& int y1,y2;
-    watching Gg(1) -> (&y1) do
+code/await Ff (void) -> void do
+    var int y1;
+    var int y2;
+    var&? Gg g1 = spawn Gg(1);
+    var&? Gg g2 = spawn Gg(2);
+    watching g1,g2 do
+        y1 = g1!.y;
         await 1s;
-        watching Gg(2) -> (&y2) do
-            var int v = y1+y2;
-            x = &v;
-            await FOREVER;
-        end
+        y2 = g2!.y;
     end
 end
 
-var& int x;
-watching Ff() -> (&x) do
-    escape x;
-end
-
-escape 0;
+escape 1;
 ]],
+    wrn = true,
     --inits = 'line 7 : uninitialized variable "x" : reached `await´ (/tmp/tmp.ceu:10)',
-    inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:10)',
+    --inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:15)',
+    run = 1,
     --run = 23,
     --scopes = 'line 12 : invalid binding : incompatible scopes',
 }
@@ -36805,23 +37233,28 @@ code/await Gg (var int x) -> (var& int y) -> void do
 end
 
 code/await Ff (void) -> (var& int x) -> void do
-    var& int y1, y2;
-    watching Gg(1) -> (&y1) do
-        watching Gg(2) -> (&y2) do
-            var int v = y1+y2;
+    var int y1;
+    var int y2;
+    var&? Gg g1 = spawn Gg(1);
+    var&? Gg g2 = spawn Gg(2);
+    var int v;
+    watching g1 do
+        y1 = g1!.y;
+        watching g2 do
+            y2 = g2!.y;
+            v = y1+y2;
             x = &v;
             await FOREVER;
         end
-        nothing;
     end
 end
 
-var& int x;
-watching Ff() -> (&x) do
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x;
+    x = &f!.x;
     escape x;
 end
-
-escape 0;
 ]],
     run = 23,
     --scopes = 'line 11 : invalid binding : incompatible scopes',
@@ -36835,10 +37268,56 @@ code/await Gg (var int x) -> (var& int y) -> void do
 end
 
 code/await Ff (void) -> (var& int x) -> void do
-    var& int y1, y2;
-    watching Gg(1) -> (&y1) do
-        watching Gg(2) -> (&y2) do
-            var int v = y1+y2;
+    var& int y1;
+    var& int y2;
+    var&? Gg g1 = spawn Gg(1);
+    var&? Gg g2 = spawn Gg(2);
+    var int v;
+    watching g1 do
+        y1 = &g1!.y;
+        watching g2 do
+            y2 = &g2!.y;
+            v = y1+y2;
+            x = &v;
+            await FOREVER;
+        end
+        nothing;
+    end
+end
+
+var& int x;
+var&? Ff f = spawn Ff();
+watching f do
+    x = &f!.x;
+    escape x;
+end
+
+escape 0;
+]],
+    --inits = 'line 7 : uninitialized variable "x" : reached end of `par/or´ (/tmp/tmp.ceu:15)',
+    inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:15)',
+    --run = 23,
+    --scopes = 'line 11 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Gg (var int x) -> (var& int y) -> void do
+    var int yy = 10+x;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var& int y1;
+    var& int y2;
+    var&? Gg g1 = spawn Gg(1);
+    var&? Gg g2 = spawn Gg(2);
+    var int v;
+    watching g1 do
+        y1 = &g1!.y;
+        watching g2 do
+            y2 = &g2!.y;
+            v = y1+y2;
             x = &v;
             await FOREVER;
         end
@@ -36846,15 +37325,13 @@ code/await Ff (void) -> (var& int x) -> void do
     end
 end
 
-var& int x;
-watching Ff() -> (&x) do
-    escape x;
-end
-
 escape 0;
 ]],
+    wrn = true,
     --inits = 'line 10 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:15)',
-    inits = 'line 10 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:15)',
+    --inits = 'line 10 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:15)',
+    --inits = 'line 7 : uninitialized variable "x" : reached end of `par/or´ (/tmp/tmp.ceu:15)',
+    inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:15)',
 }
 
 Test { [[
@@ -36876,7 +37353,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    cc = '6:43: error: implicit declaration of function ‘g’',
+    cc = '6:47: error: implicit declaration of function ‘g’',
 }
 
 Test { [[
@@ -36887,23 +37364,29 @@ code/await Gg (var int x) -> (var& int y) -> void do
 end
 
 code/await Ff (void) -> (var& int x) -> void do
-    var& int y1, y2, y3;
-    watching Gg(1) -> (&y1)
-           , Gg(2) -> (&y2)
-           , Gg(3) -> (&y3)
-    do
-        var int v = y1+y2+y3;
+    var int y1;
+    var int y2;
+    var int y3;
+    var int v;
+    var&? Gg g1 = spawn Gg(1);
+    var&? Gg g2 = spawn Gg(2);
+    var&? Gg g3 = spawn Gg(3);
+    watching g1, g2, g3 do
+        y1 = g1!.y;
+        y2 = g2!.y;
+        y3 = g3!.y;
+        v = y1+y2+y3;
         x = &v;
         await FOREVER;
     end
 end
 
-var& int x;
-watching Ff() -> (&x) do
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x;
+    x = &f!.x;
     escape x;
 end
-
-escape 0;
 ]],
     run = 36,
 }
@@ -36914,10 +37397,120 @@ code/await Ff (var int x) -> (event& int e) -> void do
     e = &e_;
     await e;
 end
-escape 0;
+escape 1;
 ]],
     wrn = true,
-    exps = 'line 4 : invalid access to output variable "e"',
+    --exps = 'line 4 : invalid access to output variable "e"',
+    run = 1,
+}
+
+Test { [[
+code/await Ff (var int x) -> (event& int e) -> int do
+    event int e_;
+    e = &e_;
+    var int v = await e_;
+    escape v + x;
+end
+
+var&? Ff f = spawn Ff(10);
+    watching f do
+        event& int e;
+        e = &f!.e;
+        emit e(100);
+        escape 0;
+    end;
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (var int x) -> (event& int e) -> int do
+    event int e_;
+    e = &e_;
+    var int v = await e_;
+    await 1s;
+    escape v + x;
+end
+
+var&? Ff f = spawn Ff(10);
+    watching f do
+        event& int e;
+        e = &f!.e;
+        par/or do
+            await e;
+        with
+            emit e(100);
+        end
+        escape 10;
+    end;
+
+escape 1;
+]],
+    run = 10,
+}
+
+Test { [[
+code/await Ff (var int x) -> (var& int y) -> int do
+    y = &x;
+    await 1s;
+    escape y + x;
+end
+
+var&? Ff f = spawn Ff(10);
+var int? ret =
+    watching f do
+        var& int y = &f!.y;
+        await 2s;
+        escape y;
+    end;
+
+escape ret!;
+]],
+    run = {['~>5s']=20},
+}
+
+Test { [[
+code/await Ff (var int x) -> (var& int y) -> int do
+    y = &x;
+    await 2s;
+    escape y + x;
+end
+
+var&? Ff f = spawn Ff(10);
+var int? ret =
+    watching f do
+        var& int y = &f!.y;
+        await 1s;
+        escape y;
+    end;
+
+escape ret!;
+]],
+    run = {['~>5s']=10},
+}
+
+Test { [[
+code/await Ff (var int x) -> (event& int e) -> int do
+    event int e_;
+    e = &e_;
+    var int v = await e_;
+    escape v + x;
+end
+
+var&? Ff f = spawn Ff(10);
+var int? ret =
+    watching f do
+        event& int e;
+        e = &f!.e;
+        emit e(100);
+        escape 0;
+    end;
+
+escape ret!;
+]],
+    run = 110,
 }
 
 Test { [[
@@ -36929,15 +37522,19 @@ code/await Ff (var int x) -> (event& int e) -> int do
 end
 
 event& int e;
+var&? Ff f = spawn Ff(10);
 var int? ret =
-    watching Ff(10) -> (&e) do
+    watching f do
+        e = &f!.e;
         emit e(100);
         escape 0;
     end;
 
 escape ret!;
 ]],
-    run = 110,
+    --run = 110,
+    --inits = 'line 8 : uninitialized event "e" : reached end of `par/or´ (/tmp/tmp.ceu:11)',
+    inits = 'line 8 : uninitialized event "e" : reached end of `par/or´ (/tmp/tmp.ceu:11)',
 }
 
 Test { [[
@@ -36950,10 +37547,11 @@ code/await Ff (var int x) -> (event& void e, var& int v) -> int do
     escape x;
 end
 
-event& void e;
-var& int v;
+var&? Ff f = spawn Ff(10);
 var int? ret =
-    watching Ff(10) -> (&e,&v) do
+    watching f do
+        event& void e = &f!.e;
+        var& int v = &f!.v;
         emit e;
         escape 0;
     end;
@@ -37011,11 +37609,16 @@ code/await Gg (void) -> void do
     await FOREVER;
 end
 
-var& int ctrl1, ctrl2;
+var&? Ff f1 = spawn Ff(2);
+var&? Ff f2 = spawn Ff(1);
 
-watching Ff(2) -> (&ctrl1) do
+watching f1 do
+    var& int ctrl1;
+    ctrl1 = &f1!.x;
     watching Gg() do
-        watching Ff(1) -> (&ctrl2) do
+        watching f2 do
+            var& int ctrl2;
+            ctrl2 = &f2!.x;
             escape ctrl1+ctrl2;
         end
     end
@@ -37032,20 +37635,14 @@ code/await Ff (var int v) -> (var& int x) -> void do
     x = &v;
     await FOREVER;
 end
-
-code/await Gg (void) -> void do
-    await FOREVER;
-end
-
-var& int ctrl1, ctrl2;
-
-spawn Ff(1) -> (&ctrl1);
-spawn Gg();
-spawn Ff(2) -> (&ctrl2);
-
-escape ctrl1+ctrl2;
+var& int ctrl1;
+var&? Ff f1 = spawn Ff(1);
+ctrl1 = &f1!.x;
+escape 0;
 ]],
-    stmts = 'line 12 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
+    scopes = 'line 7 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+    --stmts = 'line 7 : invalid binding : unexpected source with `&?´',
+    --stmts = 'line 12 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
 }
 Test { [[
 code/await Ff (var int v) -> (var& int x) -> FOREVER do
@@ -37057,13 +37654,11 @@ code/await Gg (void) -> void do
     await FOREVER;
 end
 
-var& int ctrl1, ctrl2;
-
-spawn Ff(1) -> (&ctrl1);
+var&? Ff f1 = spawn Ff(1);
 spawn Gg();
-spawn Ff(2) -> (&ctrl2);
+var&? Ff f2 = spawn Ff(2);
 
-escape ctrl1+ctrl2;
+escape f1!.x + f2!.x;
 ]],
     run = 3,
 }
@@ -37078,16 +37673,55 @@ end
 
 var int ret = 0;
 var& int nn;
-var& int n;
-watching Ff(10) -> (&n) do
-    ret = ret + n;
-    nn = &n;
+var&? Ff f = spawn Ff(10);
+watching f do
+    nn = &f!.y;
 end
 
 escape nn;
 ]],
-    props_ = 'line 16 : invalid access to internal identifier "nn" : crossed `watching´ (/tmp/tmp.ceu:11)',
+    inits = 'line 9 : uninitialized variable "nn" : reached end of `par/or´ (/tmp/tmp.ceu:11)',
+    --scopes = 'line 12 : invalid binding : incompatible scopes',
+    --run = 10,
+    --inits = 'line 9 : uninitialized variable "nn" : reached end of `par/or´ (/tmp/tmp.ceu:11)',
+    --props_ = 'line 16 : invalid access to internal identifier "nn" : crossed `watching´ (/tmp/tmp.ceu:11)',
     --props_ = 'line 16 : invalid access to internal identifier "nn" : crossed yielding statement (/tmp/tmp.ceu:11)',
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> int
+do
+    var int xx = 10;
+    x = &xx;
+{printf(">>> %d\n", @x);}
+    escape 10;
+end
+
+var&? Ff fff = spawn Ff();
+var int? ret = await fff;
+escape ret!;
+]],
+    run = 10,
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> int
+do
+    var int xx = 10;
+    x = &xx;
+{printf(">>> %d\n", @x);}
+    escape 10;
+end
+
+var&? Ff fff = spawn Ff();
+var int? ret =
+    watching fff do
+{printf("<2< %d\n", @fff!.x);}
+    end;
+{printf("<1< %d\n", @ret!);}
+escape ret!;
+]],
+    run = 10,
 }
 
 Test { [[
@@ -37100,10 +37734,10 @@ end
 
 code/await Gg (void) -> (var& int x) -> int
 do
-    var& int xx;
+    var&? Ff f = spawn Ff();
     var int? ret =
-        watching Ff() -> (&xx) do
-            x = &xx;
+        watching f do
+            x = &f!.x;
         end;
     escape ret!;
 end

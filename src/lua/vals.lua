@@ -353,7 +353,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
             return F.ID_int(me,{outer=e.__dcls_outer or AST.root})
         else
             local ptr = ''
-            if is_alias=='&' and (not ctx.is_bind) then
+            if is_alias=='&' and (not ctx.is_bind) and (me.info.dcl.tag~='Evt') then
                 ptr = '*'
             end
             local suf = (ctx and ctx.id_suf) or ''

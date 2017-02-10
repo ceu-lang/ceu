@@ -119,15 +119,6 @@ PROPS_.F = {
             to.info.dcl.__no_access = watch -- no access outside watch
         end
     end,
-    ID_int = function (me)
-        local no = me.dcl[1]~='&?' and me.dcl.__no_access
-        if no then
-            ASR(AST.is_par(no, me), me,
-                'invalid access to internal identifier "'..me.dcl.id..'"'..
-                ' : crossed `'..AST.tag2id[no.tag]..'´'..
-                ' ('..no.ln[1]..':'..no.ln[2]..')')
-        end
-    end,
 
     --------------------------------------------------------------------------
 

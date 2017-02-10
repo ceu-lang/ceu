@@ -6,7 +6,7 @@ local function err_inits (dcl, stmt, msg, endof)
                 ' ('..stmt.ln[1]..':'..stmt.ln[2]..')')
 end
 
-local function run_inits (par, i, Dcl, stop)
+local function run_inits (par, i, Dcl, stop, dont_await)
     local me = par[i]
     if me == nil then
         if par == stop then
@@ -16,20 +16,41 @@ local function run_inits (par, i, Dcl, stop)
         elseif par.tag == 'Code' then
             return 'Code', par, true
         else
-            return run_inits(par.__par, par.__i+1, Dcl, stop)
+            return run_inits(par.__par, par.__i+1, Dcl, stop, dont_await)
         end
     elseif not AST.is_node(me) then
-        return run_inits(par, i+1, Dcl, stop)
+        return run_inits(par, i+1, Dcl, stop, dont_await)
     end
     --assert(not __detect_cycles[me], me.n)
     --__detect_cycles[me] = true
 
-    if me.tag == 'Escape' then
+    local is_last_watching do
+        if me.tag=='Par_Or' and me.__par.tag=='Watching' then
+            local x = me
+            is_last_watching = true
+            while x.__par.tag ~= 'Code' do
+                if x.__i ~= #x.__par then
+                    local do_int = AST.get(x.__par,'Do',4,'Loc',1,'ID_int')
+                    if do_int and do_int[1]=='_ret' and x.__i==3 then
+                        break   -- ok, last in ROOT
+                    end
+                    is_last_watching = false
+                    break
+                end
+                x = x.__par
+            end
+        end
+    end
+
+    if dont_await and (me.tag=='A' or me.tag=='Y') then
+        err_inits(Dcl, me, 'yielding statement')
+
+    elseif me.tag == 'Escape' then
         local blk = AST.asr(me.outer,'',3,'Block')
         if AST.depth(blk) <= AST.depth(Dcl.blk) then
             return 'Escape', me
         else
-            return run_inits(blk, #blk+1, Dcl, stop)
+            return run_inits(blk, #blk+1, Dcl, stop, dont_await)
         end
 
     elseif me.tag == 'Break' then
@@ -37,9 +58,8 @@ local function run_inits (par, i, Dcl, stop)
         if AST.depth(blk) <= AST.depth(Dcl.blk) then
             return 'Break', me
         else
-            return run_inits(blk, #blk+1, Dcl, stop)
+            return run_inits(blk, #blk+1, Dcl, stop, dont_await)
         end
-
 
     -- error: access to Dcl
     elseif me.tag == 'ID_int' then
@@ -58,6 +78,31 @@ local function run_inits (par, i, Dcl, stop)
             end
         end
 
+    elseif AST.get(me,'Par_Or', 1,'Stmts', 1,'Finalize') then
+        local s1, s2 = unpack(me)
+        local ok1,stmt1 = run_inits(s1, 1, Dcl, s1, dont_await)
+        if ok1 then
+            return true, me
+        end
+        return run_inits(s2, 1, Dcl, stop, dont_await)
+
+    elseif AST.get(me,'Par_Or', 1,'Stmts', 2,'Await_Alias')   or
+           is_last_watching
+    then
+        -- spawn Ff();
+        -- do ... watching f do ... end end
+        local s1, s2 = unpack(me)
+        return run_inits(s2, 1, Dcl, stop, dont_await)
+
+    elseif AST.get(me,'Par_Or', 1,'Stmts', 1,'Set_Abs_Await') then
+        -- f = spawn Ff();
+        local s1, s2 = unpack(me)
+        local ok1,stmt1 = run_inits(s1, 1, Dcl, s1, dont_await)
+        if ok1 then
+            return true, me
+        end
+        return run_inits(s2, 1, Dcl, stop, dont_await)
+
     elseif me.tag=='If' or me.tag=='Par_Or' or me.tag=='Par_And' or me.tag=='Par' then
         local s1, s2 do
             if me.tag == 'If' then
@@ -69,46 +114,8 @@ local function run_inits (par, i, Dcl, stop)
             end
         end
 
-        local ok1,stmt1 = run_inits(s1, 1, Dcl, s1)
-        local ok2,stmt2
-
-        local last_is_watching do
-            if me.tag=='Par_Or' and me.__par.tag=='Watching' then
-                local x = me
-                last_is_watching = true
-                while x.__par.tag ~= 'Code' do
-                    if x.__i ~= #x.__par then
-                        local do_int = AST.get(x.__par,'Do',4,'Loc',1,'ID_int')
-                        if do_int and do_int[1]=='_ret' and x.__i==3 then
-                            break   -- ok, last in ROOT
-                        end
-                        last_is_watching = false
-                        break
-                    end
-                    x = x.__par
-                end
-            end
-        end
-
-        if AST.get(me,'Par_Or', 1,'Stmts', 1,'Finalize') or
-           AST.get(me,'Par_Or', 1,'Stmts', 1,'Set_Abs_Await') or
--- TODO: remove 2 above (FOREVER below covers them)
-           AST.get(me,'Par_Or', 1,'Stmts', -1,'Await_Forever') or
-           last_is_watching
-        then
-            -- Finalize/Set_Abs_Await
-            if ok1 then
-                -- first trail correctly and immediately initialized Dcl
-                -- don't need to try trail-2
-                ok2, stmt2 = true, me
-            else
-                -- first trail didn't, so try trail-2
-                ok1, stmt1 = true, me
-                ok2,stmt2 = run_inits(s2, 1, Dcl, s2)
-            end
-        else
-            ok2,stmt2 = run_inits(s2, 1, Dcl, s2)
-        end
+        local ok1,stmt1 = run_inits(s1, 1, Dcl, s1, dont_await)
+        local ok2,stmt2 = run_inits(s2, 1, Dcl, s2, dont_await)
 
         if ok1 or ok2 then
             if ok1 and ok2 then
@@ -122,7 +129,7 @@ local function run_inits (par, i, Dcl, stop)
                 err_inits(Dcl, me, 'end of `'..AST.tag2id[me.tag]..'´')
             end
         else
-            return run_inits(me, #me, Dcl, stop)
+            return run_inits(me, #me, Dcl, stop, dont_await)
         end
 
     -- ok: found assignment
@@ -139,7 +146,7 @@ local function run_inits (par, i, Dcl, stop)
         local fr, to = unpack(me)
         if me.tag == 'Set_Exp' then
             -- var int a = a+1;
-            local ok = run_inits(me, 1, Dcl, fr)
+            local ok = run_inits(me, 1, Dcl, fr, dont_await)
             assert(not ok)
         end
 
@@ -189,7 +196,7 @@ local function run_inits (par, i, Dcl, stop)
         end
     end
 
-    return run_inits(me, 1, Dcl, stop)
+    return run_inits(me, 1, Dcl, stop, dont_await)
 end
 
 F = {
@@ -215,7 +222,8 @@ F = {
                 -- var x = ...
                 -- event& e = ...
                 --__detect_cycles = {}
-                local ok,stmt,endof = run_inits(me, #me+1, me)
+                local dont_await = AST.get(me.blk,6,'Code') -- mid param
+                local ok,stmt,endof = run_inits(me, #me+1, me, AST.par(me,'Code'), dont_await)
                 if ok and ok~=true then
                     if (ok=='Code' or ok=='Escape') and me.__dcls_unused
                         and (not (code and code[2].await and AST.get(me.blk,6,'Code')))
@@ -240,6 +248,7 @@ F = {
             AST.tag2id[to.info.dcl.tag]..
             ' "'..to.info.dcl.id..'" is already bound')
     end,
+    Set_Abs_Await = 'Set_Alias',
 
     ID_int = function (me)
         local is_alias = unpack(me.dcl)
