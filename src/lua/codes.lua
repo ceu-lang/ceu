@@ -1156,13 +1156,11 @@ _ceu_mem->_trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
                 SET(me, to, CUR('__mem_'..spawn.n)..'._ret', true)
             else
                 LINE(me, [[
-if (_ceu_occ->evt.id == CEU_INPUT__CLEAR) {
-    ceu_dbg_assert(0);
-    ]]..V(to)..[[.is_set = 0;
-} else {
-    ceu_dbg_assert(_ceu_occ->evt.id == CEU_INPUT__CODE_TERMINATED);
+if (_ceu_occ!=NULL && _ceu_occ->evt.id==CEU_INPUT__CODE_TERMINATED) {
     ]]..V(to)..[[.is_set = 1;
     ]]..V(to)..[[.value  = ((tceu_code_mem_]]..abs.id_..[[*)_ceu_occ->evt.mem)->_ret;
+} else {
+    ]]..V(to)..[[.is_set = 0;
 }
 ]])
             end

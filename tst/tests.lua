@@ -46,7 +46,6 @@ var/nohold int x;
 dynamic var int x;
 
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -37706,14 +37705,12 @@ escape ret! + (fff? as int);
 ]],
     run = 100,
 }
-do return end
 
 Test { [[
 code/await Ff (void) -> (var& int x) -> int
 do
     var int xx = 10;
     x = &xx;
-{printf(">>> %d\n", @x);}
     escape 10;
 end
 
@@ -37721,7 +37718,7 @@ var&? Ff fff = spawn Ff();
 var int? ret = await fff;
 escape ret!;
 ]],
-    run = 10,
+    run = '10] runtime error: value is not set',
 }
 
 Test { [[
@@ -37729,19 +37726,16 @@ code/await Ff (void) -> (var& int x) -> int
 do
     var int xx = 10;
     x = &xx;
-{printf(">>> %d\n", @x);}
     escape 10;
 end
 
 var&? Ff fff = spawn Ff();
 var int? ret =
     watching fff do
-{printf("<2< %d\n", @fff!.x);}
     end;
-{printf("<1< %d\n", @ret!);}
 escape ret!;
 ]],
-    run = 10,
+    run = '12] runtime error: value is not set',
 }
 
 Test { [[
@@ -37766,7 +37760,8 @@ var int ret = await Gg();
 
 escape ret;
 ]],
-    run = 10,
+    --run = 10,
+    inits = 'line 8 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:12)',
 }
 
 --<< CODE / WATCHING / SCOPES
@@ -37933,6 +37928,7 @@ escape a;
     run = { ['~>2s']=20 },
 }
 
+--]=====]
 Test { [[
 code/await Tx (var& int aaa)->void do
     await 1s;
