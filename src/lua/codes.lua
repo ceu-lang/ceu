@@ -432,7 +432,7 @@ ceu_callback_assert_msg(0, "reached end of `code´");
 CLEAR(me) -- TODO-NOW
             LINE(me, [[
     tceu_evt_occ __ceu_occ = {
-        { CEU_INPUT__CODE_TERMINATED, {NULL} },
+        { CEU_INPUT__CODE_TERMINATED, {_ceu_mem} },
         (tceu_nseq)(CEU_APP.seq+1),
         _ceu_mem,
         { (tceu_code_mem*)&CEU_APP.root, 0,
@@ -490,26 +490,6 @@ CLEAR(me) -- TODO-NOW
 ]]
         return ret
     end,
-
---[=[
-        local fr = AST.get(Await,'Await_Int', 1,'')
-        local abs = fr and TYPES.abs_dcl(fr.info.tp, 'Code')
-        if abs then
-            assert(#List == 1)
-            local to = unpack(List)
-            LINE(me, [[
-if (_ceu_occ->id == CEU_INPUT__CLEAR) {
-    ]]..V(to)..[[.is_set = 0;
-} else {
-    ceu_dbg_assert(_ceu_occ->id == CEU_INPUT__CODE_TERMINATED);
-    ]]..V(to)..[[.is_set = 1;
-    ]]..V(to)..[[.value=]]..V(fr)..[[->_ret;
-}
-]])
-        else
-        end
-    end,
-]=]
 
     Set_Abs_Spawn = CONC_ALL,
     Abs_Spawn = function (me)
@@ -1163,6 +1143,8 @@ _ceu_mem->_trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
         local abs = loc and TYPES.abs_dcl(loc.info.tp,'Code')
         if abs then
             assert(not (loc.info.dcl.tag=='Var' and TYPES.is_nat(loc.info.tp)), 'bug found')
+            assert(#List == 1)
+            local to = unpack(List)
             local code = TYPES.abs_dcl(loc.info.tp, 'Code')
 
             local spawn = AST.get(me,2,'Par_Or', 1,'Stmts', 1,'Set_Abs_Spawn', 1,'Abs_Spawn')
@@ -1171,14 +1153,18 @@ _ceu_mem->_trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
                 --  to
                 -- _spw = spawn Ff();
                 -- x = await _spw;
-                SET(me, List[1], CUR('__mem_'..spawn.n)..'._ret', true)
+                SET(me, to, CUR('__mem_'..spawn.n)..'._ret', true)
             else
-error'oi'
                 LINE(me, [[
-/* may fail if code is aborted, then make is_set=0 */
-ceu_dbg_assert(_ceu_occ->evt.id == CEU_INPUT__CODE_TERMINATED);
+if (_ceu_occ->evt.id == CEU_INPUT__CLEAR) {
+    ceu_dbg_assert(0);
+    ]]..V(to)..[[.is_set = 0;
+} else {
+    ceu_dbg_assert(_ceu_occ->evt.id == CEU_INPUT__CODE_TERMINATED);
+    ]]..V(to)..[[.is_set = 1;
+    ]]..V(to)..[[.value  = ((tceu_code_mem_]]..abs.id_..[[*)_ceu_occ->evt.mem)->_ret;
+}
 ]])
-                SET(me, List[1], V(loc)..'->_ret', true)
             end
         else
             local id do

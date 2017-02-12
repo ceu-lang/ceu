@@ -34210,7 +34210,6 @@ escape 1;
     run = 1,
 }
 
---]=====]
 Test { [[
 native/pre do
     ##include <stdio.h>
@@ -34474,7 +34473,7 @@ end
 escape 0;
 ]],
     wrn = true,
-    stmts = 'line 2 : invalid `await´ : unexpected recursive invocation',
+    stmts = 'line 2 : invalid `spawn´ : unexpected recursive invocation',
     --dcls = 'line 2 : abstraction "Tx" is not declared',
 }
 Test { [[
@@ -34484,7 +34483,7 @@ end
 escape 0;
 ]],
     wrn = true,
-    stmts = 'line 2 : invalid `await´ : unexpected recursive invocation',
+    stmts = 'line 2 : invalid `spawn´ : unexpected recursive invocation',
     --dcls = 'line 2 : abstraction "Tx" is not declared',
 }
 
@@ -34863,8 +34862,8 @@ every 1s do
 end
 escape 0;
 ]],
-    props_ = 'line 4 : invalid `await´ : unexpected enclosing `every´',
-    --props_ = 'line 4 : invalid `spawn´ : unexpected enclosing `every´',
+    --props_ = 'line 4 : invalid `await´ : unexpected enclosing `every´',
+    props_ = 'line 4 : invalid `spawn´ : unexpected enclosing `every´',
     --run = { ['~>1s']=1 },
 }
 
@@ -35616,6 +35615,7 @@ escape v;
     stmts = 'line 6 : invalid assignment : types mismatch : "(int)" <= "(int?)"',
 }
 
+--]=====]
 Test { [[
 code/await Ff (void) -> int do
     await async do end
