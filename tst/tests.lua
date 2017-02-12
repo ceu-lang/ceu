@@ -46,6 +46,7 @@ var/nohold int x;
 dynamic var int x;
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -480,7 +481,7 @@ end
 escape _get_A_id();
 ]],
     wrn = true,
-    run = 12,
+    run = 13,
 }
 
 Test { [[
@@ -33968,7 +33969,8 @@ await Rect();
 
 escape 0;
 ]],
-    stmts = 'line 4 : invalid `await´ : expected `code/await´ declaration (/tmp/tmp.ceu:1)',
+    dcls = 'line 4 : invalid declaration : option alias : expected native or `code/await´ type',
+    --stmts = 'line 4 : invalid `await´ : expected `code/await´ declaration (/tmp/tmp.ceu:1)',
 }
 
 -->> CODE / ALIAS / FINALIZE
@@ -34970,7 +34972,8 @@ var int? x = watching Ff() do
 end;
 escape 0;
 ]],
-    stmts = 'line 3 : invalid assignment : `code´ executes forever',
+    stmts = 'line 3 : invalid `watching´ : `code´ executes forever',
+    --stmts = 'line 3 : invalid assignment : `code´ executes forever',
 }
 
 Test { [[
@@ -35450,8 +35453,29 @@ ret = ret + (x? as int) + 1;
 
 escape x!.x;
 ]],
+    run = {['~>1s']='16] runtime error: value is not set'};
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
+                        // err
+    var int v = 10;
+    x = &v;
+    await 1s;
+end
+
+var int ret = 0;
+
+var&? Ff x = spawn Ff();
+
+ret = x!.x;
+await x;
+ret = ret + (x? as int) + 1;
+
+escape ret;
+]],
     --stmts = 'line 11 : invalid binding : argument #1 : unmatching alias `&´ declaration',
-    run = {['~>1s']=10};
+    run = {['~>1s']=11};
 }
 
 Test { [[
@@ -35491,6 +35515,27 @@ Test { [[
 code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
+    await 1s;
+end
+
+var int ret = 0;
+
+var&? Ff x = spawn Ff();
+
+ret = x!.x;
+await x;    // err
+ret = ret + (x? as int) + 1;
+
+escape ret;//x!.x;
+]],
+    run = {['~>1s']=11},
+    --stmts = 'line 13 : invalid `await´ : expected `var´ with `&?´ modifier',
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
+    var int v = 10;
+    x = &v;
 end
 
 var int ret = 0;
@@ -35508,47 +35553,6 @@ await x;
 escape 0;
 ]],
     stmts = 'line 2 : invalid `await´ : expected `var´ with `&?´ modifier',
-}
-
-Test { [[
-code/await Ff (void) -> (var& int x) -> void do
-    var int v = 10;
-    x = &v;
-    await 1s;
-end
-
-var int ret = 0;
-
-var&? Ff x = spawn Ff();
-
-ret = x!.x;
-await x;    // err
-ret = ret + (x? as int) + 1;
-
-escape ret;//x!.x;
-]],
-    run = {['~>1s']=12},
-    --stmts = 'line 13 : invalid `await´ : expected `var´ with `&?´ modifier',
-}
-
-Test { [[
-code/await Ff (void) -> (var& int x) -> void do
-    var int v = 10;
-    x = &v;
-    await 1s;
-end
-
-var int ret = 0;
-
-var&? Ff x = spawn Ff();
-
-ret = x!.x;
-await x;
-ret = ret + (x? as int) + 1;
-
-escape ret;
-]],
-    run = { ['~>1s'] = 12 },
 }
 
 Test { [[
@@ -35587,7 +35591,7 @@ ret = ret + (x? as int) + 1;
 
 escape ret;
 ]],
-    run = { ['~>1s'] = 12 },
+    run = { ['~>1s'] = 11 },
 }
 
 Test { [[
@@ -35615,7 +35619,6 @@ escape v;
     stmts = 'line 6 : invalid assignment : types mismatch : "(int)" <= "(int?)"',
 }
 
---]=====]
 Test { [[
 code/await Ff (void) -> int do
     await async do end
@@ -35646,7 +35649,7 @@ var int&& a =
 escape 0;
 ]],
     wrn = true,
-    stmts = 'line 4 : invalid assignment : types mismatch : "int&&" <= "int"',
+    stmts = 'line 4 : invalid assignment : types mismatch : "(int&&)" <= "(int)"',
 }
 
 Test { [[

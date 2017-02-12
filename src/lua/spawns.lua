@@ -61,12 +61,8 @@ SPAWNS.G = {
         return SPAWNS.G._SPAWN(me.__par, me.__i, me)
     end,
 
-    Finalize__PRE = function (me)
-        if me.__spawns_ok then
-            return
-        else
-            me.__spawns_ok = true
-        end
+    _Finalize_X__PRE = function (me)
+        me.tag = 'Finalize'
         return SPAWNS.G._SPAWN(me.__par, me.__i, me)
     end,
 
