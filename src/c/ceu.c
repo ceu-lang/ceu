@@ -290,14 +290,14 @@ static int ceu_mem_is_child (tceu_code_mem* me, tceu_code_mem* par_mem,
                              tceu_ntrl par_trl1, tceu_ntrl par_trl2)
 {
     if (me == par_mem) {
-        return (par_trl1==0 && par_trl2==me->trails_n-1);
+        return (par_trl1==0 && par_trl2==me->trails_n-1) ? 1 : 0;
     }
 
     tceu_code_mem* cur_mem;
     for (cur_mem=me; cur_mem!=NULL; cur_mem=cur_mem->up_mem) {
         if (cur_mem->up_mem == par_mem) {
             if (cur_mem->up_trl>=par_trl1 && cur_mem->up_trl<=par_trl2) {
-                return 1;
+                return 2;
             }
         }
     }
@@ -633,10 +633,18 @@ ceu_dbg_assert(0);
             {
                 if (ceu_mem_is_child((tceu_code_mem*)trl->evt.mem,
                                      clr_range->mem,
-                                     clr_range->trl0, clr_range->trlF))
+                                     clr_range->trl0, clr_range->trlF) == 2)
                 {
                     goto _CEU_AWAKE_YES_;
                 }
+            }
+        }
+
+        if (occ->evt.id==CEU_INPUT__CODE_TERMINATED &&
+            (trl->evt.id==CEU_INPUT__CODE_TERMINATED || trl->evt.id==CEU_INPUT__PROPAGATE_CODE))
+        {
+            if (trl->evt.mem == occ->evt.mem) {
+                goto _CEU_AWAKE_YES_;
             }
         } else if (trl->evt.id == occ->evt.id) {
             if (occ->evt.id==CEU_INPUT__PAUSE || occ->evt.id==CEU_INPUT__RESUME) {
@@ -646,7 +654,7 @@ ceu_dbg_assert(0);
                 ((tceu_nseq)(occ->seq-CEU_APP.seq_base))) {
                 goto _CEU_AWAKE_NO_;
             }
-            if (trl->evt.id>CEU_EVENT__MIN || trl->evt.id==CEU_INPUT__CODE_TERMINATED) {
+            if (trl->evt.id>CEU_EVENT__MIN) {
                 if (trl->evt.mem == occ->evt.mem) {
                     goto _CEU_AWAKE_YES_;   /* internal event matches "mem" */
                 }
