@@ -22,6 +22,7 @@ TRAILS.F = {
             MAX_all(me)
         end
 
+-- TODO-remove
         if me.tag=='Code' and me[2].await then
             me.trails_n = me.trails_n + 1   -- TODO-NOW
         end

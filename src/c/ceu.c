@@ -52,8 +52,8 @@ struct tceu_evt_occ;
 typedef struct tceu_evt {
     tceu_nevt id;
     union {
-        void* mem;                              /* CEU_INPUT__CODE, CEU_EVENT__MIN */
-        struct tceu_code_mem_dyn* pool_first;   /* CEU_INPUT__CODE_POOL */
+        void* mem;                              /* CEU_INPUT__PROPAGATE_CODE, CEU_EVENT__MIN */
+        struct tceu_code_mem_dyn* pool_first;   /* CEU_INPUT__PROPAGATE_POOL */
     };
 } tceu_evt;
 
@@ -179,11 +179,12 @@ enum {
     CEU_INPUT__NONE = 0,
     CEU_INPUT__FINALIZE,
     CEU_INPUT__PAUSE_BLOCK,
-    CEU_INPUT__CODE,
-    CEU_INPUT__CODE_POOL,
+    CEU_INPUT__PROPAGATE_CODE,
+    CEU_INPUT__PROPAGATE_POOL,
 
     /* emitable */
     CEU_INPUT__CLEAR,           /* 5 */
+    CEU_INPUT__CODE_TERMINATED,
     CEU_INPUT__PAUSE,
     CEU_INPUT__RESUME,
 CEU_INPUT__SEQ,
@@ -513,17 +514,29 @@ fprintf(stderr, "??? trlK=%d, evt=%d, seq=%d\n", trlK, trl->evt.id, trl->seq);
         switch (trl->evt.id)
         {
             /* propagate "occ" to nested "code/pool" */
-            case CEU_INPUT__CODE: {
-                tceu_evt_range _range = { (tceu_code_mem*)trl->evt.mem,
-                                          0, (tceu_ntrl)(((tceu_code_mem*)trl->evt.mem)->trails_n-1) };
-                occ->range = _range;
-                ceu_bcast(occ, &_stk);
-                if (!_stk.is_alive) {
-                    goto _CEU_BREAK_;
+            case CEU_INPUT__PROPAGATE_CODE: {
+#if 0
+                // TODO: simple optimization that could be done
+                //          - do it also for POOL?
+                if (occ->evt.id==CEU_INPUT__CODE_TERMINATED && occ->params==trl->evt.mem ) {
+                    // dont propagate when I am terminating
+                } else
+#endif
+                {
+                    tceu_evt_range _range = {
+                        (tceu_code_mem*)trl->evt.mem,
+                        0,
+                        (tceu_ntrl)(((tceu_code_mem*)trl->evt.mem)->trails_n-1)
+                    };
+                    occ->range = _range;
+                    ceu_bcast(occ, &_stk);
+                    if (!_stk.is_alive) {
+                        goto _CEU_BREAK_;
+                    }
                 }
                 break;
             }
-            case CEU_INPUT__CODE_POOL: {
+            case CEU_INPUT__PROPAGATE_POOL: {
                 tceu_code_mem_dyn* cur = trl->evt.pool_first->nxt;
 #if 0
 printf(">>> BCAST[%p]:\n", trl->pool_first);
@@ -610,11 +623,14 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                          clr_range->trl0 <= trl->clr_range.trl0 &&
                          clr_range->trlF >= trl->clr_range.trlF);
                 if (matches_clear_vs_clear) {
+ceu_dbg_assert(0);
                     goto _CEU_AWAKE_YES_;
                 }
 
             /* clear matches CODE? */
-            } else if (trl->evt.id == CEU_INPUT__CODE) {
+            } else if (trl->evt.id==CEU_INPUT__CODE_TERMINATED ||
+                       trl->evt.id==CEU_INPUT__PROPAGATE_CODE)
+            {
                 if (ceu_mem_is_child((tceu_code_mem*)trl->evt.mem,
                                      clr_range->mem,
                                      clr_range->trl0, clr_range->trlF))
@@ -630,7 +646,7 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                 ((tceu_nseq)(occ->seq-CEU_APP.seq_base))) {
                 goto _CEU_AWAKE_NO_;
             }
-            if (trl->evt.id > CEU_EVENT__MIN) {
+            if (trl->evt.id>CEU_EVENT__MIN || trl->evt.id==CEU_INPUT__CODE_TERMINATED) {
                 if (trl->evt.mem == occ->evt.mem) {
                     goto _CEU_AWAKE_YES_;   /* internal event matches "mem" */
                 }

@@ -12,6 +12,7 @@ end
 
 AST.tag2id = {
     Abs_Await        = 'await',
+    Abs_Spawn        = 'spawn',
     Abs_Spawn_Pool   = 'spawn',
     Alias            = 'alias',
     Async            = 'async',

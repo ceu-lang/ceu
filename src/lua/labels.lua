@@ -33,6 +33,7 @@ F = {
         me.lbl_in = new{'Finalize_Case__IN'}
     end,
     Await_Alias = function (me)
+error'await_alias'
         me.lbl = new{'Await_Alias'}
     end,
 
@@ -69,8 +70,8 @@ F = {
 
     ---------------------------------------------------------------------------
 
-    Abs_Await = function (me)
-        me.lbl_out = new{'Await_Abs__OUT'}
+    Abs_Spawn = function (me)
+        me.lbl_out = new{'Await_Spawn__OUT'}
     end,
     Await_Wclock = function (me)
         me.lbl_out = new{'Await_Wclock__OUT'}

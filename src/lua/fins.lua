@@ -30,7 +30,7 @@ F = {
             x = node('Par', me.ln, unpack(t))
         end
 
-        return node('_Finalize_X',me.ln,now,list,x)
+        return node('Finalize',me.ln,now,list,x)
     end,
 
     Vec_Init__PRE = function (me)

@@ -617,7 +617,7 @@ end
         CUR().mem = CUR().mem..'s32 __wclk_'..me.n..';\n'
     end,
 
-    Abs_Await = function (me)
+    Abs_Spawn = function (me)
         local _,Abs_Cons = unpack(me)
         CUR().mem = CUR().mem..'tceu_code_mem_'..Abs_Cons.id_..' __mem_'..me.n..';\n'
     end,

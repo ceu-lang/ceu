@@ -267,14 +267,14 @@ error'oi'
         -- ctx
         INFO.asr_tag(to, {'Var','Pool'}, 'invalid constructor')
     end,
-    Set_Abs_Await = function (me)
-        local fr, to = unpack(me)
+    Set_Abs_Spawn = function (me)
+        local _, to = unpack(me)
 
         -- ctx
         INFO.asr_tag(to, {'Var'}, 'invalid constructor')
 
         -- tp
-        local cons = AST.asr(fr,'Abs_Await', 2,'Abs_Cons')
+        local cons = AST.asr(me,'', 1,'Abs_Spawn', 2,'Abs_Cons')
         EXPS.check_tp(me, to.info.tp, cons.info.tp, 'invalid constructor')
     end,
 
@@ -289,12 +289,7 @@ error'oi'
 
     Set_Await_one = function (me)
         local fr, to = unpack(me)
-        assert(fr.tag=='Await_Wclock' or fr.tag=='Abs_Await' or fr.tag=='Await_Int')
-
-        if fr.tag == 'Abs_Await' then
-            ASR(fr.tp, me,
-                'invalid assignment : `code´ executes forever')
-        end
+        assert(fr.tag=='Await_Wclock' or fr.tag=='Abs_Spawn' or fr.tag=='Await_Int')
 
         EXPS.check_tp(me, to.info.tp, fr.tp or fr.info.tp, 'invalid assignment')
 
@@ -316,6 +311,11 @@ error'oi'
         end
 
         -- tp
+        if fr.tag == 'Await_Int' then
+            ASR(fr.tp, me,
+                'invalid assignment : `code´ executes forever')
+        end
+
         EXPS.check_tp(me, to.tp, fr.tp, 'invalid assignment')
 
         if me.__adjs_is_watching then
@@ -366,7 +366,7 @@ error'oi'
         me.tp = TYPES.new(me, 'int')
     end,
 
-    Abs_Await = function (me)
+    Abs_Spawn = function (me)
         local mods_call,Abs_Cons = unpack(me)
         local ID_abs = AST.asr(Abs_Cons,'Abs_Cons', 1,'ID_abs')
         me.__code = AST.asr(ID_abs.dcl,'Code')
@@ -414,10 +414,17 @@ error'oi'
         local abs = TYPES.abs_dcl(e.info.tp, 'Code')
         if abs then
             assert(alias == '&?')
-            local tp = AST.asr(abs,'Code', 4,'Block', 1,'Stmts',
+            local tp = AST.get(abs,'Code', 4,'Block', 1,'Stmts',
                                            1,'Code_Ret', 1,'', 2,'Type')
-            tp = TYPES.push(tp, '?')
-            me.tp = AST.node('Typelist', me.ln, tp)
+            if tp then
+                local ID = AST.get(me,'', 1,'Loc', 1,'ID_int')
+                if string.sub(ID[1],1,5) ~= '_spw_' then
+                    tp = TYPES.push(tp, '?')
+                end
+                me.tp = AST.node('Typelist', me.ln, AST.copy(tp))
+            else
+                -- will fail in Set_Await_many
+            end
         else
             me.tp = e.info.tp
         end

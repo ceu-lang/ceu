@@ -2,7 +2,7 @@ PROPS_ = {}
 
 local sync = {
     Await_Forever=true, Await_Ext=true, Await_Int=true, Await_Wclock=true,
-    Abs_Spawn=true, Abs_Await=true,
+    Abs_Spawn=true,
     Emit_Int=true,
     Every=true, Finalize=true, Pause_If=true,
     Par=true, Par_And=true, Par_Or=true, Watching=true,
@@ -50,6 +50,7 @@ PROPS_.F = {
     end,
 
     Await_Alias = function (me)
+error'await_alias'
         AST.asr(AST.par(me,'Par_Or'),'').__props_ok = true
     end,
 

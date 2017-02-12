@@ -42,23 +42,36 @@ SPAWNS.G = {
         return SPAWNS.G._SPAWN(me.__par, me.__i, me)
     end,
 
-    _Set_Abs_Await__PRE = function (me)
-        me.tag = 'Set_Abs_Await'
-        local spawn = AST.asr(me,'', 1,'_Abs_Spawn')
-        spawn.tag = 'Abs_Await'
+    Set_Abs_Spawn__PRE = function (me)
+        if me.__spawns_ok then
+            return
+        else
+            me.__spawns_ok = true
+            AST.asr(me,'', 1,'Abs_Spawn').__spawns_ok = true
+        end
         return SPAWNS.G._SPAWN(me.__par, me.__i, me)
     end,
-    _Abs_Spawn__PRE = function (me)
-        me.tag = 'Abs_Await'
+    Abs_Spawn__PRE = function (me)
+        if me.__spawns_ok then
+            return
+        else
+            me.__spawns_ok = true
+        end
+        -- par/or do <CEU_INPUT__PROPAGATE_CODE> with ... end
         return SPAWNS.G._SPAWN(me.__par, me.__i, me)
     end,
 
-    _Finalize_X__PRE = function (me)
-        me.tag = 'Finalize'
+    Finalize__PRE = function (me)
+        if me.__spawns_ok then
+            return
+        else
+            me.__spawns_ok = true
+        end
         return SPAWNS.G._SPAWN(me.__par, me.__i, me)
     end,
 
-    Evt__PRE = 'Var__PRE',
+-- TODO: var&? Ff f1 = &f2;
+--[[
     Var__PRE = function (me)
         if me.__spawns_ok then
             return
@@ -67,16 +80,17 @@ SPAWNS.G = {
         end
 
         local alias, tp, id = unpack(me)
-        if alias == '&?' and (me.tag=='Evt' or tp[1].tag~='ID_nat' or tp[2]~=nil) then
+        if alias == '&?' and (tp[1].tag~='ID_nat' or tp[2]~=nil) then
                              -- TODO: TYPES.is_nat
-            if not AST.par(me,'Code_Pars') then
-                return SPAWNS.G._SPAWN(me.__par, me.__i,
-                        node('Stmts', me.ln,
-                            me,
-                            node('Await_Alias', me.ln, me.n)))
-            end
+            return SPAWNS.G._SPAWN(me.__par, me.__i,
+                    node('Stmts', me.ln,
+                        me,
+                        AST.node('Await_Int', me.ln,
+                            AST.node('ID_int', me.ln, id))))
+
         end
     end,
+]]
 
     Pool__PRE = function (me)
         if me.__spawns_ok then

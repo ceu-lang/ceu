@@ -498,20 +498,20 @@ error'TODO'
     _Set__PRE = function (me)
         local to,set = unpack(me)
 
-        --  _Set
-        --      to
-        --      _Set_Watching
-        --          _Watching
-        --              Await_*
-        --              Block
-        -->>>
-        --  _Watching
-        --      _Set
-        --          to
-        --          _Set_Await_many
-        --              Await_*
-        --      Block
         if set.tag == '_Set_Watching' then
+            --  _Set
+            --      to
+            --      _Set_Watching
+            --          _Watching
+            --              Await_*
+            --              Block
+            -->>>
+            --  _Watching
+            --      _Set
+            --          to
+            --          _Set_Await_many
+            --              Await_*
+            --      Block
             local watching = AST.asr(unpack(set),'_Watching')
             local awt = unpack(watching)
             local tag do
@@ -534,6 +534,50 @@ error'TODO'
                 AST.set(set, 1, awt)
                 return unt
             end
+
+            -- x = await Ff(...)
+            --  to
+            -- x = (var&? Ff f; f=spawn Ff(...); await f;)
+            --  to
+            -- var&? Ff f; f=spawn Ff(...); x=await f;
+            if AST.get(set,'', 1,'Stmts', 3,'Await_Int') then
+                local stmts = unpack(set)
+                local dcl, spw, awt = unpack(set)
+                AST.set(stmt, 3,
+                    node('_Set', me.ln,
+                        to,
+                        awt))
+                return stmts
+            end
+
+        elseif set.tag == '_Set_Await_one' then
+            local awt = unpack(set)
+            if awt.tag == '_Abs_Await' then
+                awt = F._Abs_Await__PRE(awt)
+                AST.set(awt, 3,
+                    node('_Set', me.ln,
+                        to,
+                        node('_Set_Await_many', me.ln,
+                            awt[3])))
+                return awt
+            end
+
+--[[
+        elseif set.tag == '_Set_Abs_Spawn' then
+            if set.__adjs_ok then
+            else
+                set.__adjs_ok = true
+
+                -- a = spawn Ff();
+                --  to
+                -- spawn Ff();
+                -- a = ?
+                local fr = unpack(set)
+                AST.set(set, 1, false)
+                AST.dump(node('Stmts', me.ln, fr, me))
+                return node('Stmts', me.ln, fr, me)
+            end
+]]
         end
 
         -----------------------------------------------------------------------
@@ -554,9 +598,7 @@ error'TODO'
             --      to
 
             assert(#set==1 or #set==2, 'bug found')
-            if set.tag ~= '_Set_Abs_Await' then
-                set.tag = string.sub(set.tag,2)
-            end
+            set.tag = string.sub(set.tag,2)
             AST.set(set, 2, to)
 
             -- a = &b   (Set_Exp->Set_Alias)
@@ -566,6 +608,39 @@ error'TODO'
 
             return set
         end
+    end,
+
+    Set_Await_many__PRE = function (me)
+        local _,var,_ = unpack(me)
+        if var.tag == 'Loc' then
+            AST.set(me, 2, node('List_Loc', var.ln, var))
+        end
+    end,
+
+    _Abs_Await__PRE = function (me)
+        -- await Ff(...)
+        --  to
+        -- var&? Ff f;
+        -- f = spawn Ff(...)
+        -- await f;
+        local _,abs = unpack(me)
+        return node('Stmts', me.ln,
+                node('Var', me.ln,
+                    '&?',
+                    node('Type', me.ln,
+                        AST.copy(AST.asr(abs,'Abs_Cons',1,'ID_abs'))),
+                    '_spw_'..me.n),
+                node('_Set', me.ln,
+                    node('Loc', me.ln,
+                        node('ID_int', me.ln,
+                            '_spw_'..me.n)),
+                    node('_Set_Abs_Spawn', me.ln,
+                        node('Abs_Spawn', me.ln,
+                            unpack(me)))),
+                node('Await_Int', me.ln,
+                    node('Loc', me.ln,
+                        node('ID_int', me.ln,
+                            '_spw_'..me.n))))
     end,
 
     _Escape__PRE = function (me)
@@ -805,13 +880,6 @@ error'TODO'
                 AST.set(me[3], 1, ps)
 error'TODO: luacov never executes this?'
             end
-        end
-    end,
-
-    Set_Await_many__PRE = function (me)
-        local _,var,_ = unpack(me)
-        if var.tag == 'Loc' then
-            AST.set(me, 2, node('List_Loc', var.ln, var))
         end
     end,
 

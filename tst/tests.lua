@@ -46,7 +46,6 @@ var/nohold int x;
 dynamic var int x;
 
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -34211,6 +34210,7 @@ escape 1;
     run = 1,
 }
 
+--]=====]
 Test { [[
 native/pre do
     ##include <stdio.h>
@@ -37687,6 +37687,23 @@ escape nn;
     --props_ = 'line 16 : invalid access to internal identifier "nn" : crossed `watching´ (/tmp/tmp.ceu:11)',
     --props_ = 'line 16 : invalid access to internal identifier "nn" : crossed yielding statement (/tmp/tmp.ceu:11)',
 }
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> int
+do
+    var int xx = 10;
+    x = &xx;
+    await async do end
+    escape 100;
+end
+
+var&? Ff fff = spawn Ff();
+var int? ret = await fff;
+escape ret! + (fff? as int);
+]],
+    run = 100,
+}
+do return end
 
 Test { [[
 code/await Ff (void) -> (var& int x) -> int

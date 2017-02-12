@@ -72,7 +72,7 @@ local function run_inits (par, i, Dcl, stop, dont_await)
         elseif me.dcl == Dcl then
             local ok = AST.par(me,'Vec_Init') or AST.par(me,'Vec_Finalize')
             local set = AST.par(me,'Set_Exp') or AST.par(me,'Set_Any') or
-                        AST.par(me,'Set_Abs_Val') or AST.par(me,'Set_Abs_Await')
+                        AST.par(me,'Set_Abs_Val') or AST.par(me,'Set_Abs_Spawn')
             if not (ok or (set and set.__dcls_defaults)) then
                 err_inits(Dcl, me, 'read access')
             end
@@ -86,15 +86,13 @@ local function run_inits (par, i, Dcl, stop, dont_await)
         end
         return run_inits(s2, 1, Dcl, stop, dont_await)
 
-    elseif AST.get(me,'Par_Or', 1,'Stmts', 2,'Await_Alias')   or
-           is_last_watching
-    then
+    elseif AST.get(me,'Par_Or', 1,'Stmts', 1,'Abs_Spawn') or is_last_watching then
         -- spawn Ff();
         -- do ... watching f do ... end end
         local s1, s2 = unpack(me)
         return run_inits(s2, 1, Dcl, stop, dont_await)
 
-    elseif AST.get(me,'Par_Or', 1,'Stmts', 1,'Set_Abs_Await') then
+    elseif AST.get(me,'Par_Or', 1,'Stmts', 1,'Set_Abs_Spawn') then
         -- f = spawn Ff();
         local s1, s2 = unpack(me)
         local ok1,stmt1 = run_inits(s1, 1, Dcl, s1, dont_await)
@@ -167,7 +165,7 @@ local function run_inits (par, i, Dcl, stop, dont_await)
                                 ASR(AST.depth(loop) < AST.depth(Dcl), me,
                                     'invalid binding : crossing `loop´ ('..loop.ln[1]..':'..loop.ln[2]..')')
                             end
-                            ASR(me.tag=='Set_Alias' or me.tag=='Set_Abs_Await', me,
+                            ASR(me.tag=='Set_Alias' or me.tag=='Set_Abs_Spawn', me,
                                 'invalid binding : expected operator `&´ in the right side')
                         else
                             assert(me.tag ~= 'Set_Alias')
@@ -208,9 +206,9 @@ F = {
         local code = AST.par(me, 'Code')
 
         -- RUN_INITS
-        if me.is_implicit           or              -- compiler defined
-           AST.get(me.blk,4,'Code') or              -- "code" parameter
-           AST.par(me,'Data')       or              -- "data" member
+        if me.is_implicit                   or      -- compiler defined
+           AST.get(me.blk,4,'Code')         or      -- "code" parameter
+           AST.par(me,'Data')               or      -- "data" member
            TYPES.check(tp,'?') and (not is_alias)   -- optional initialization
         then
             -- ok: don't need initialization
@@ -237,8 +235,9 @@ F = {
         end
     end,
 
+    Set_Abs_Spawn = 'Set_Alias',
     Set_Alias = function (me)
-        local fr,to = unpack(me)
+        local _,to = unpack(me)
         if me.is_init or to.__dcls_is_escape then
             return  -- I'm the one who created the binding
         end
@@ -248,7 +247,6 @@ F = {
             AST.tag2id[to.info.dcl.tag]..
             ' "'..to.info.dcl.id..'" is already bound')
     end,
-    Set_Abs_Await = 'Set_Alias',
 
     ID_int = function (me)
         local is_alias = unpack(me.dcl)

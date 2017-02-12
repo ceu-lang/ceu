@@ -549,13 +549,13 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , __Dcls    = V'_Var_set' + V'_Vec_set' + V'_Pool_set' + V'_Evt_set'
 -- AWAIT, EMIT
 
-    , __Awaits_one  = K'await' * (V'Await_Wclock' + V'Abs_Await')
+    , __Awaits_one  = K'await' * (V'Await_Wclock' + V'_Abs_Await')
     , __Awaits_many = K'await' * V'Await_Until'
 
     , Await_Until  = (V'Await_Ext' + V'Await_Int') * OPT(K'until'*V'__Exp')
 
-    , Await_Ext    = V'ID_ext'   * V'A' -I(V'Abs_Await')            -- TODO: rem
-    , Await_Int    = V'Loc' * V'A' -I(V'Await_Wclock'+V'Abs_Await') -- TODO: rem
+    , Await_Ext    = V'ID_ext'   * V'A' -I(V'_Abs_Await')            -- TODO: rem
+    , Await_Int    = V'Loc' * V'A' -I(V'Await_Wclock'+V'_Abs_Await') -- TODO: rem
     , Await_Wclock = (V'WCLOCKK' + V'WCLOCKE') * V'A'
 
     , Await_Forever = K'await' * K'FOREVER' * V'A'
@@ -571,7 +571,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') * V'Loc' * V'_Emit_ps' * V'Y'
 
-    , __watch = (V'Await_Ext' + V'Await_Int' + V'Await_Wclock' + V'Abs_Await')
+    , __watch = (V'Await_Ext' + V'Await_Int' + V'Await_Wclock' + V'_Abs_Await')
     , _Watching = K'watching'
                     * LIST(V'__watch')
                 * V'__Do'
@@ -601,13 +601,13 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                          Cg(K'/static' *Cc'static', 'static'))^-1 *
                          Cg(K'/recursive'*Cc'recursive','recursive')^-1 )
     , _Abs_Call = K'call' * V'__abs_mods' * (V'Abs_Cons' -I(V'__id_data')) * OPT(KK'in' * V'Loc')
-    , Abs_Val   = CK'val' * V'Abs_Cons'
-    , Abs_New   = CK'new' * V'Abs_Cons'
-    , Abs_Await = V'__Abs_Cons_Code' * V'A'
+    , Abs_Val    = CK'val' * V'Abs_Cons'
+    , Abs_New    = CK'new' * V'Abs_Cons'
+    , _Abs_Await = V'__Abs_Cons_Code' * V'A'
         -- TODO: "await Abs_Await" should not accept "-> (...)"
         --       but "watching Abs_Await" does
 
-    , _Abs_Spawn = K'spawn' * V'__Abs_Cons_Code' * OPT(KK'in' * V'Loc')
+    , Abs_Spawn  = K'spawn' * V'__Abs_Cons_Code' * OPT(KK'in' * V'Loc')
 
     , __Abs_Cons_Code = V'__abs_mods' * (V'Abs_Cons' -I(V'__id_data'))
     , Abs_Cons   = V'ID_abs' * PARENS(OPT(V'Abslist'))
@@ -633,7 +633,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
         + V'_Set_Emit_Ext_emit' + V'_Set_Emit_Ext_call'
         + V'_Set_Abs_Val'
         + V'_Set_Abs_New'
-        + V'_Set_Abs_Await'
+        + V'_Set_Abs_Spawn'
         + V'_Set_Any'
         + V'_Set_Exp'
 
@@ -659,7 +659,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     , _Set_Abs_Val       = #K'val'           * V'Abs_Val'
     , _Set_Abs_New       = #K'new'           * V'Abs_New'
-    , _Set_Abs_Await     = #K'spawn'         * V'_Abs_Spawn'
+    , _Set_Abs_Spawn     = #K'spawn'         * V'Abs_Spawn'
 
     , _Set_Any           = #K'_'             * V'ID_any'
     , _Set_Exp           =                     V'__Exp'
@@ -814,7 +814,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                     + V'Emit_Wclock'
                     + V'Emit_Ext_emit' + V'Emit_Ext_call' + V'Emit_Ext_req'
                     + V'Emit_Evt'
-                    + V'_Abs_Spawn' + V'Kill'
+                    + V'Abs_Spawn' + V'Kill'
 -- TODO: remove class/interface
 + I((K'class'+K'interface'+K'traverse')) * EE'TODO-PARSER: class/interface'
                     + V'Stmt_Call'

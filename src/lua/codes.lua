@@ -292,7 +292,7 @@ ceu_pool_init(&]]..V(ID_int)..'.pool, '..V(dim)..[[,
 ]])
         end
         LINE(me, [[
-_ceu_mem->_trails[]]..ID_int.dcl.trails[1]..[[].evt.id         = CEU_INPUT__CODE_POOL;
+_ceu_mem->_trails[]]..ID_int.dcl.trails[1]..[[].evt.id         = CEU_INPUT__PROPAGATE_POOL;
 _ceu_mem->_trails[]]..ID_int.dcl.trails[1]..[[].evt.pool_first = &]]..V(ID_int)..[[.first;
 ]])
     end,
@@ -428,8 +428,19 @@ ceu_callback_assert_msg(0, "reached end of `code´");
 
         -- CODE/DELAYED
         if mods.await then
+-- TODO-remove
 CLEAR(me) -- TODO-NOW
             LINE(me, [[
+    tceu_evt_occ __ceu_occ = {
+        { CEU_INPUT__CODE_TERMINATED, {NULL} },
+        (tceu_nseq)(CEU_APP.seq+1),
+        _ceu_mem,
+        { (tceu_code_mem*)&CEU_APP.root, 0,
+          (tceu_ntrl)(CEU_APP.root._mem.trails_n-1) }
+    };
+    tceu_stk __ceu_stk = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
+    ceu_bcast(&__ceu_occ, &__ceu_stk);
+
     /* free */
     if (_ceu_mem->pak != NULL) {
         tceu_code_mem_dyn* __ceu_dyn =
@@ -480,20 +491,45 @@ CLEAR(me) -- TODO-NOW
         return ret
     end,
 
-    Abs_Await = function (me)
-        local set = AST.par(me,'Set_Abs_Await')
+--[=[
+        local fr = AST.get(Await,'Await_Int', 1,'')
+        local abs = fr and TYPES.abs_dcl(fr.info.tp, 'Code')
+        if abs then
+            assert(#List == 1)
+            local to = unpack(List)
+            LINE(me, [[
+if (_ceu_occ->id == CEU_INPUT__CLEAR) {
+    ]]..V(to)..[[.is_set = 0;
+} else {
+    ceu_dbg_assert(_ceu_occ->id == CEU_INPUT__CODE_TERMINATED);
+    ]]..V(to)..[[.is_set = 1;
+    ]]..V(to)..[[.value=]]..V(fr)..[[->_ret;
+}
+]])
+        else
+        end
+    end,
+]=]
+
+    Set_Abs_Spawn = CONC_ALL,
+    Abs_Spawn = function (me)
+        local set = AST.par(me,'Set_Abs_Spawn')
         if set then
             local _, to = unpack(set)
             SET(me, to, '&'..CUR('__mem_'..me.n), true)
         end
 
         HALT(me, {
-            { ['evt.id']  = 'CEU_INPUT__CODE' },
+            { ['evt.id']  = 'CEU_INPUT__PROPAGATE_CODE' },
             { ['evt.mem'] = '(tceu_code_mem*) &'..CUR('__mem_'..me.n) },
             { lbl = me.lbl_out.id },
             lbl = me.lbl_out.id,
             exec = CODES.F.__abs(me, '(&'..CUR(' __mem_'..me.n)..'._mem)', 'NULL'),
         })
+
+-- o set=null deveria ser uma trilha criada pela atribuicao, nao necessariamente do spawn:
+-- var&? Ff f = spawn Ff();
+-- var&? Ff ff = &f;
 
         if set then
             local _, to = unpack(set)
@@ -501,8 +537,12 @@ CLEAR(me) -- TODO-NOW
         end
 
         LINE(me, [[
+return;
+#if 0
+ceu_dbg_assert(0);
 ceu_stack_clear(_ceu_stk, _ceu_mem,
                 ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
+#endif
 ]])
     end,
 
@@ -1070,6 +1110,7 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
 ]]..V(to)..' = '..V(fr)..[[;
 ]])
             else
+error'oi'
                 local trails = fr.info.dcl.blk.trails
                 if to.info.dcl.tag == 'Evt' then
                     LINE(me, [[
@@ -1085,6 +1126,7 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
             end
             if not AST.par(to.info.dcl, 'Code_Pars') then
                 if to.info.dcl.is_local_set_alias then
+error'oi'
                     local trails = to.info.dcl.trails
                     LINE(me, [[
 _ceu_mem->_trails[]]..trails[1]..[[].evt.id = CEU_INPUT__CLEAR;
@@ -1110,41 +1152,44 @@ _ceu_mem->_trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
     Set_Await_one = function (me)
         local fr, to = unpack(me)
         CONC_ALL(me)
-        if fr.tag == 'Await_Wclock' then
-            SET(me, to, 'CEU_APP.wclk_late', true)
-        else
-            assert(fr.tag == 'Abs_Await')
-            SET(me, to, CUR('__mem_'..fr.n)..'._ret', true)
-        end
+        assert(fr.tag == 'Await_Wclock')
+        SET(me, to, 'CEU_APP.wclk_late', true)
     end,
     Set_Await_many = function (me)
         local Await, List = unpack(me)
-        local id do
-            local ID_ext = AST.get(Await,'Await_Ext', 1,'ID_ext')
-            if ID_ext then
-                id = 'tceu_input_'..ID_ext.dcl.id
-            else
-                local Loc = AST.asr(Await,'Await_Int', 1,'Loc')
-                local sufix = TYPES.noc(TYPES.tostring(Loc.info.dcl[2]))
-                id = 'tceu_event_'..sufix
-            end
-        end
         CONC(me, Await)
 
-        local fr = AST.get(Await,'Await_Int', 1,'')
-        local abs = fr and TYPES.abs_dcl(fr.info.tp, 'Code')
+        local loc = AST.get(Await,'Await_Int',1,'Loc')
+        local abs = loc and TYPES.abs_dcl(loc.info.tp,'Code')
         if abs then
-            assert(#List == 1)
-            local to = unpack(List)
-            LINE(me, [[
-if (]]..V(fr)..[[ == NULL) {
-    ]]..V(to)..[[.is_set = 0;
-} else {
-    ]]..V(to)..[[.is_set = 1;
-    ]]..V(to)..[[.value=]]..V(fr)..[[->_ret;
-}
+            assert(not (loc.info.dcl.tag=='Var' and TYPES.is_nat(loc.info.tp)), 'bug found')
+            local code = TYPES.abs_dcl(loc.info.tp, 'Code')
+
+            local spawn = AST.get(me,2,'Par_Or', 1,'Stmts', 1,'Set_Abs_Spawn', 1,'Abs_Spawn')
+            if spawn then
+                -- x = await Ff();
+                --  to
+                -- _spw = spawn Ff();
+                -- x = await _spw;
+                SET(me, List[1], CUR('__mem_'..spawn.n)..'._ret', true)
+            else
+error'oi'
+                LINE(me, [[
+/* may fail if code is aborted, then make is_set=0 */
+ceu_dbg_assert(_ceu_occ->evt.id == CEU_INPUT__CODE_TERMINATED);
 ]])
+                SET(me, List[1], V(loc)..'->_ret', true)
+            end
         else
+            local id do
+                local ID_ext = AST.get(Await,'Await_Ext', 1,'ID_ext')
+                if ID_ext then
+                    id = 'tceu_input_'..ID_ext.dcl.id
+                else
+                    local sufix = TYPES.noc(TYPES.tostring(loc.info.dcl[2]))
+                    id = 'tceu_event_'..sufix
+                end
+            end
             for i, loc in ipairs(List) do
                 if loc.tag ~= 'ID_any' then
                     local ps = '(('..id..'*)(_ceu_occ->params))'
@@ -1395,13 +1440,12 @@ ceu_input_one(]]..V(ID_ext)..'.id, '..ps..[[);
         local Loc = unpack(me)
         local alias, tp = unpack(Loc.info.dcl)
         if alias == '&?' then
-            assert(not (Loc.info.dcl.tag=='Var' and TYPES.is_nat(tp)), 'bug found')
             LINE(me, [[
 if (]]..V(Loc)..[[ != NULL) {
 ]])
             HALT(me, {
-                { ['evt.id']  = 'CEU_INPUT__CODE' },
-                { ['evt.mem'] = V(Loc) },
+                { ['evt.id']  = 'CEU_INPUT__CODE_TERMINATED' },
+                { ['evt.mem'] = '(tceu_code_mem*)'..V(Loc) },
                 { lbl = me.lbl_out.id },
                 lbl = me.lbl_out.id,
             })
