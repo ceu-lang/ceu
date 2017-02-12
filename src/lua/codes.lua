@@ -493,6 +493,8 @@ CLEAR(me) -- TODO-NOW
 
     Set_Abs_Spawn = CONC_ALL,
     Abs_Spawn = function (me)
+        local _,_,pool = unpack(me)
+
         local set = AST.par(me,'Set_Abs_Spawn')
         if set then
             local _, to = unpack(set)
@@ -528,7 +530,7 @@ ceu_stack_clear(_ceu_stk, _ceu_mem,
 
 -- TODO: mover p/ Abs_Await
     Abs_Spawn_Pool = function (me)
-        local _, Abs_Cons, _, pool = unpack(me)
+        local _, Abs_Cons, pool = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
         local alias,_,_,dim = unpack(pool.info.dcl)
 

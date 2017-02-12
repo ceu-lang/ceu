@@ -46,6 +46,7 @@ var/nohold int x;
 dynamic var int x;
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -37928,7 +37929,6 @@ escape a;
     run = { ['~>2s']=20 },
 }
 
---]=====]
 Test { [[
 code/await Tx (var& int aaa)->void do
     await 1s;

@@ -561,23 +561,6 @@ error'TODO'
                             awt[3])))
                 return awt
             end
-
---[[
-        elseif set.tag == '_Set_Abs_Spawn' then
-            if set.__adjs_ok then
-            else
-                set.__adjs_ok = true
-
-                -- a = spawn Ff();
-                --  to
-                -- spawn Ff();
-                -- a = ?
-                local fr = unpack(set)
-                AST.set(set, 1, false)
-                AST.dump(node('Stmts', me.ln, fr, me))
-                return node('Stmts', me.ln, fr, me)
-            end
-]]
         end
 
         -----------------------------------------------------------------------
