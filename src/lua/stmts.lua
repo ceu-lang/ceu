@@ -274,7 +274,7 @@ error'oi'
         INFO.asr_tag(to, {'Var'}, 'invalid constructor')
 
         -- tp
-        local cons = AST.asr(me,'', 1,'Abs_Spawn', 2,'Abs_Cons')
+        local cons = AST.asr(me,'', 1,'', 2,'Abs_Cons')
         EXPS.check_tp(me, to.info.tp, cons.info.tp, 'invalid constructor')
     end,
 
