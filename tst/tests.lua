@@ -35291,9 +35291,19 @@ code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
 end
-pool[] Ff ffs;
-var&? Ff f = spawn Ff() in ffs;
+var&? Ff f = spawn Ff();
 escape (f? as int) + 1;
+]],
+    run = 1,
+}
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
+    var int v = 10;
+    x = &v;
+end
+pool[] Ff ffs;
+var&? Ff fff = spawn Ff() in ffs;
+escape (fff? as int) + 1;
 ]],
     run = 1,
 }

@@ -440,6 +440,9 @@ CLEAR(me) -- TODO-NOW
     };
     tceu_stk __ceu_stk = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
     ceu_bcast(&__ceu_occ, &__ceu_stk);
+    if (!__ceu_stk.is_alive) {
+        return;
+    }
 
     /* free */
     if (_ceu_mem->pak != NULL) {
@@ -534,7 +537,6 @@ ceu_stack_clear(_ceu_stk, _ceu_mem,
         local ID_abs, Abslist = unpack(Abs_Cons)
         local alias,_,_,dim = unpack(pool.info.dcl)
 
-        local code = CODES.F.__abs(me, '__ceu_new_mem', '(&'..V(pool)..')')
         LINE(me, [[
 {
     tceu_code_mem_dyn* __ceu_new;
@@ -565,13 +567,7 @@ ceu_stack_clear(_ceu_stk, _ceu_mem,
 ]])
         end
 
-        local set = AST.par(me,'Set_Abs_Spawn_Pool')
-        if set then
-            local _, to = unpack(set)
-            SET(me, to, '(__ceu_new != NULL)', true)
-        end
-
-        LINE(me, [[
+        local code = [[
     if (__ceu_new != NULL) {
         __ceu_new->state = CEU_CODE_MEM_DYN_STATE_NONE;
         __ceu_new->nxt = &]]..V(pool)..[[.first;
@@ -580,11 +576,37 @@ ceu_stack_clear(_ceu_stk, _ceu_mem,
         ]]..V(pool)..[[.first.prv = __ceu_new;
 
         tceu_code_mem* __ceu_new_mem = &__ceu_new->mem[0];
-        ]]..code..[[
+        ]]..CODES.F.__abs(me, '__ceu_new_mem', '(&'..V(pool)..')')..[[
         if (!_ceu_stk->is_alive) {
             return;
         }
     }
+]]
+
+        local set = AST.par(me,'Set_Abs_Spawn')
+        if set then
+            local _, to = unpack(set)
+            SET(me, to, '((tceu_code_mem_'..ID_abs.dcl.id_..'*)&__ceu_new->mem[0])', true)
+            LINE(me, [[
+    if (__ceu_new == NULL) {
+        return;                     /* never awakes */
+    } else {
+]])
+            HALT(me, {
+                { ['evt.id']  = 'CEU_INPUT__CODE_TERMINATED' },
+                { ['evt.mem'] = '(&__ceu_new->mem[0])' },
+                { lbl = me.lbl_out.id },
+                lbl = me.lbl_out.id,
+                exec = code,
+            })
+            SET(me, to, 'NULL', true)
+            LINE(me, [[
+    }
+]])
+        else
+            LINE(me, code)
+        end
+        LINE(me, [[
 }
 ]])
     end,

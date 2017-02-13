@@ -44,11 +44,13 @@ SPAWNS.G = {
 
     Set_Abs_Spawn__PRE = function (me)
         local spawn = AST.get(me,'', 1,'Abs_Spawn')
-        if (not spawn) or me.__spawns_ok then
+        if me.__spawns_ok then
             return
         else
             me.__spawns_ok = true
-            spawn.__spawns_ok = true
+            if spawn then
+                spawn.__spawns_ok = true
+            end
         end
         return SPAWNS.G._SPAWN(me.__par, me.__i, me)
     end,

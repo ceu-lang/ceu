@@ -73,6 +73,11 @@ error'await_alias'
     Abs_Spawn = function (me)
         me.lbl_out = new{'Await_Spawn__OUT'}
     end,
+    Abs_Spawn_Pool = function (me)
+        if AST.par(me, 'Set_Abs_Spawn') then
+            me.lbl_out = new{'Await_Spawn__OUT'}
+        end
+    end,
     Await_Wclock = function (me)
         me.lbl_out = new{'Await_Wclock__OUT'}
     end,
