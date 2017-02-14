@@ -155,6 +155,12 @@ error'oi'
     ['Exp_.'] = function (me)
         -- NO: x = &f!.*            // f may die (unless surrounded by "watching f")
         if AST.par(me,'Exp_1&') and me.info.dcl_obj.orig[1]=='&?' then
+            local to do
+                local set = AST.par(me, 'Set_Alias')
+                if set then
+                    _,to = unpack(set)
+                end
+            end
             local watch = AST.par(me, 'Watching')
             local ok = false
             while watch do
@@ -162,7 +168,7 @@ error'oi'
                                    or AST.get(watch,'', 1,'Par_Or', 1,'Block', 1,'Stmts', 1,'Set_Await_many',1,'Await_Int', 1,'')
                 if awt and awt.info.dcl==me.info.dcl_obj.orig then
                     -- watching.depth < to.dcl.blk.depth
-                    if AST.get(to.info.dcl.blk,6,'Code') then
+                    if to and AST.get(to.info.dcl.blk,6,'Code') then
                         -- ok: allow mid destination binding even outliving source
                         -- TODO: check it is not accessed outside the watching
                         ok = true

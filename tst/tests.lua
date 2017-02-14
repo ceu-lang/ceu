@@ -34865,8 +34865,8 @@ end
 escape 0;
 ]],
     --props_ = 'line 4 : invalid `await´ : unexpected enclosing `every´',
-    props_ = 'line 4 : invalid `spawn´ : unexpected enclosing `every´',
-    --run = { ['~>1s']=1 },
+    --props_ = 'line 4 : invalid `spawn´ : unexpected enclosing `every´',
+    run = { ['~>1s']=1 },
 }
 
 --<< CODE / ALIAS
