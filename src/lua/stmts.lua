@@ -141,7 +141,10 @@ STMTS.F = {
         ASR(ID_int.dcl[1], me, 'invalid binding : expected declaration with `&´')
 
         -- NO: f1 = &f              // f may die
-        ASR(not TYPES.abs_dcl(to.info.tp,'Code'), me, 'invalid binding : expected `spawn´')
+        if to.info.tag=='Var' and TYPES.abs_dcl(to.info.tp,'Code') then
+            local alias = unpack(to.info.dcl)
+            ASR(alias == '&?', me, 'invalid binding : expected `spawn´')
+        end
 
 -- TODO-remove
 --[[
@@ -487,10 +490,16 @@ error'oi'
     end,
 
     Loop_Pool = function (me)
-        local _,list,pool = unpack(me)
+        local _,i,pool = unpack(me)
 
         -- ctx
         INFO.asr_tag(pool, {'Pool'}, 'invalid `pool´ iterator')
+
+        -- tp
+        if i.tag ~= 'ID_any' then
+            ASR(TYPES.contains(i.info.tp, pool.info.tp), me,
+                'invalid control variable : types mismatch : "'..TYPES.tostring(i.info.tp)..'" <= "'..TYPES.tostring(pool.info.tp)..'"')
+        end
     end,
 
 -- CALL, EMIT

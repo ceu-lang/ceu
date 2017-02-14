@@ -614,14 +614,13 @@ ceu_stack_clear(_ceu_stk, _ceu_mem,
     --------------------------------------------------------------------------
 
     Loop_Pool = function (me)
-        local _,list,pool,body = unpack(me)
+        local _,i,pool,body = unpack(me)
         local Code = AST.asr(pool.info.dcl,'Pool', 2,'Type', 1,'ID_abs').dcl
 
         local cur = CUR('__cur_'..me.n)
         local dyn = CUR('__dyn_'..me.n)
 
-        if me.yields then
-            LINE(me, [[
+        LINE(me, [[
 _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__FINALIZE;
 _ceu_mem->_trails[]]..me.trails[1]..[[].evt.mem   = _ceu_mem;
 _ceu_mem->_trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_clr.id..[[;
@@ -640,19 +639,13 @@ if (0) {
         }
         return;
 }
-]])
-        end
-
-        LINE(me, [[
 {
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
     ]]..cur..[[ = ]]..V(pool)..[[.first.nxt;
     while (]]..cur..[[ != &]]..V(pool)..[[.first)
     {
 ]])
-
-        if me.yields then
-            LINE(me, [[
+        LINE(me, [[
         if (]]..cur..[[->state == CEU_CODE_MEM_DYN_STATE_NONE) {
             ]]..cur..[[->state = CEU_CODE_MEM_DYN_STATE_TRAVERSING;
             ]]..dyn..[[ = ]]..cur..[[;
@@ -663,33 +656,23 @@ if (0) {
             ]]..dyn..[[ = NULL;
         }
 ]])
-        end
-
-        if list then
-            CONC(me, list)
-error'oi'
-            local mids = AST.asr(Code,'Code', 4,'Block', 1,'Stmts', 2,'Code_Pars')
-            local ps = {}
-            for i, arg in ipairs(list) do
-                if arg.tag ~= 'ID_any' then
-                    local par = mids[i]
-                    ps[#ps+1] = '__ceu_ps._'..par.is_mid_idx..' = &'..V(arg,{is_bind=true})..';\n'
-                end
-            end
+        if i.tag ~= 'ID_any' then
+            local abs = TYPES.abs_dcl(i.info.tp,'Code')
+            SET(me, i, '((tceu_code_mem_'..abs.id_..'*)'..cur..'->mem)', true)
             LINE(me, [[
-        {
-            tceu_code_args_]]..Code.id_..[[ __ceu_ps = {};
-            ]]..table.concat(ps)..[[;
-            CEU_CODE_WATCH_]]..Code.id_..[[(]]..cur..[[->mem, &__ceu_ps);
+        _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].evt.id    = CEU_INPUT__CODE_TERMINATED;
+        _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].evt.mem   = ]]..cur..'->mem'..[[;
+        _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].lbl       = ]]..me.lbl_null.id..[[;
+        if (0) {
+            case ]]..me.lbl_null.id..[[:;
+                ]]..V(i)..[[ = NULL;
+                return;
         }
 ]])
         end
-
         CONC(me, body)
         CASE(me, me.lbl_cnt)
-
-        if me.yields then
-            LINE(me, [[
+        LINE(me, [[
         {
             tceu_code_mem_dyn* __ceu_nxt = ]]..cur..[[->nxt;
 
@@ -706,14 +689,6 @@ error'oi'
 
             ]]..cur..[[ = __ceu_nxt;
         }
-]])
-        else
-            LINE(me, [[
-            ]]..cur..[[ = ]]..cur..[[->nxt;
-]])
-        end
-
-        LINE(me, [[
     }
 }
 ]])

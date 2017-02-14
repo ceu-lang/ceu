@@ -39,7 +39,8 @@ error'await_alias'
 
     Loop_Pool = function (me)
         F.Loop(me)
-        me.lbl_clr = new{'Loop_Pool__CLR'}
+        me.lbl_clr  = new{'Loop_Pool__CLR'}
+        me.lbl_null = new{'Loop_Pool__NULL'}
     end,
     Loop = function (me)
         me.lbl_cnt = new{'Loop_Continue__CNT'}

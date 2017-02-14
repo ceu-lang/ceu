@@ -46,7 +46,6 @@ var/nohold int x;
 dynamic var int x;
 
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -38551,7 +38550,70 @@ escape ret;
     run = { ['~>1s']=6 },
 }
 
--->> CODE / AWAIT / EMIT-INTERNAL
+--<< CODE / AWAIT / EMIT-INTERNAL
+
+-->> CODE / AWAIT / ALIAS
+--]=====]
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
+                        // error
+    var int v = 10;
+    x = &v;
+end
+
+var&? Ff f1 = spawn Ff();
+var&? Ff f2 = &f1;
+escape (f2? as int) + 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
+    var int v = 10;
+    x = &v;
+end
+
+var&? Ff f1 = spawn Ff();
+var&? Ff f2 = &f1;
+escape (f2? as int) + 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
+    var int v = 10;
+    x = &v;
+    await FOREVER;
+end
+
+var&? Ff f1 = spawn Ff();
+var&? Ff f2 = &f1;
+escape (f2? as int) + 1 + f2!.x;
+]],
+    run = 12,
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
+    var int v = 10;
+    x = &v;
+    await 500ms;
+end
+
+var&? Ff f1 = spawn Ff();
+var&? Ff f2 = &f1;
+await 1s;
+escape (f2? as int) + 1 + f2!.x;
+]],
+    run = { ['~>1s']=12 },
+}
+
+do return end
+
+--<< CODE / AWAIT / ALIAS
 
 -->> CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
 
@@ -40405,7 +40467,7 @@ end
 escape 0;
 ]],
     wrn = true,
-    stmts = 'line 2 : invalid `await´ : unexpected recursive invocation',
+    stmts = 'line 2 : invalid `spawn´ : unexpected recursive invocation',
 }
 
 Test { [[
@@ -40501,6 +40563,18 @@ code/await Ff (void) -> int do
     escape (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
 end
 var int v = await Ff();
+escape v;
+]],
+    run = 10,
+}
+
+Test { [[
+native __ceu_mem, _tceu_code_mem_Ff;
+code/tight Ff (void) -> int do
+    var int yyy = 10;
+    escape (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
+end
+var int v = call Ff();
 escape v;
 ]],
     run = 10,
@@ -40676,7 +40750,23 @@ end
 
 escape n+1;
 ]],
-    stmts = 'line 7 : invalid `loop´ : expected 0 argument(s)',
+    parser = 'line 7 : after `loop´ : expected `do´ or internal identifier or `_´',
+}
+
+Test { [[
+code/await Ff (void) -> void do
+end
+
+pool[1] Ff fs;
+
+var&? Ff f;
+loop f in fs do
+end
+
+escape 1;
+]],
+    dcls = 'line 6 : variable "f" declared but not used',
+    --stmts = 'line 7 : invalid `loop´ : expected 0 argument(s)',
 }
 
 Test { [[
@@ -40688,13 +40778,14 @@ end
 
 pool[1] Ff fs;
 
-var int n = 0;
-loop (n) in fs do
+var& Ff n;
+loop n in fs do
 end
 
 escape n+1;
 ]],
-    stmts = 'line 10 : invalid binding : argument #1 : expected alias `&´ declaration',
+    dcls = 'line 9 : invalid declaration : unexpected context for `code´ "Ff"',
+    --stmts = 'line 10 : invalid binding : argument #1 : expected alias `&´ declaration',
 }
 
 Test { [[
@@ -40706,17 +40797,19 @@ end
 
 pool[1] Ff fs;
 
-var& int n;
-loop (n) in fs do
+var&? Ff n;
+loop n in fs do
 end
 
-escape n+1;
+escape n;
 ]],
-    props_ = 'line 13 : invalid access to internal identifier "n" : crossed `loop´ (/tmp/tmp.ceu:10)',
+    stmts = 'line 13 : invalid `escape´ : expected operator `!´',
+    --props_ = 'line 13 : invalid access to internal identifier "n" : crossed `loop´ (/tmp/tmp.ceu:10)',
     --props_ = 'line 13 : invalid access to internal identifier "n" : crossed yielding statement (/tmp/tmp.ceu:10)',
 }
 
 Test { [[
+code/await Gg (var int x) -> (var& int y) -> void do end
 code/await Ff (var int x) -> (var& int y) -> void do
     y = &x;
     if x == 1 then
@@ -40732,13 +40825,52 @@ loop i in [0 -> 8] do
 end
 
 var int ret = 0;
-var& bool n;
-loop (n) in fs do
+var&? Gg n;
+loop n in fs do
 end
 
+escape 0;
+]],
+    wrn = true,
+    --stmts = 'line 17 : invalid binding : argument #1 : types mismatch : "int" <= "bool"',
+    stmts = 'line 18 : invalid control variable : types mismatch : "Gg" <= "Ff"',
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+
+pool[5] Ff fs;
+spawn Ff() in fs;
+spawn Ff() in fs;
+
+var int ret = 0;
+loop _ in fs do
+    ret = ret + 1;
+end
 escape ret;
 ]],
-    stmts = 'line 17 : invalid binding : argument #1 : types mismatch : "int" <= "bool"',
+    run = 2,
+}
+
+Test { [[
+code/await Ff (void) -> void do
+    await FOREVER;
+end
+
+pool[5] Ff fs;
+spawn Ff() in fs;
+spawn Ff() in fs;
+
+var int ret = 0;
+var&? Ff fff;
+loop fff in fs do
+    ret = ret + 1;
+end
+escape ret;
+]],
+    run = 2,
 }
 
 Test { [[
@@ -40757,14 +40889,22 @@ loop i in [0 -> 8] do
 end
 
 var int ret = 0;
-var& int n;
-loop (n) in fs do
-    ret = ret + n;
+var&? Ff fff;
+loop fff in fs do
+    ret = ret + fff!.y;
 end
 
 escape ret;
 ]],
     run = 16,
+}
+
+Test { [[
+loop in gs do
+    ret = ret + 1;
+end
+]],
+    parser = 'line 1 : after `loop´ : expected `do´ or internal identifier or `_´',
 }
 
 Test { [[
@@ -40778,13 +40918,13 @@ spawn Gg() in gs;
 pool&[3] Gg gs_ = &gs;
 
 var int ret = 0;
-loop in gs_ do
+loop _ in gs_ do
     ret = ret + 1;
 end
 
 spawn Gg() in gs_;
 
-loop in gs do
+loop _ in gs do
     ret = ret + 1;
 end
 
@@ -40800,7 +40940,7 @@ code/await Gg (void) -> void do
 end
 
 code/await Ff (pool&[4] Gg gs, var& int ret) -> void do
-    loop in gs do
+    loop _ in gs do
         ret = ret + 1;
     end
     spawn Gg() in gs;
@@ -40812,19 +40952,19 @@ spawn Gg() in gs;
 pool&[3] Gg gs_ = &gs;
 
 var int ret = 0;
-loop in gs_ do
+loop _ in gs_ do
     ret = ret + 1;
 end
 
 spawn Gg() in gs_;
 
-loop in gs do
+loop _ in gs do
     ret = ret + 1;
 end
 
 await Ff(&gs_, &ret);
 
-loop in gs_ do
+loop _ in gs_ do
     ret = ret + 1;
 end
 
@@ -40866,15 +41006,16 @@ end
 pool[5] Ff fs;
 
 var& int nn;
-var& int n;
-loop (n) in fs do
-    nn = &n;
+var&? Ff fff;
+loop fff in fs do
+    nn = &fff!.y;
 end
 
 escape nn;
 ]],
+    inits = 'line 11 : invalid binding : crossing `loop´ (/tmp/tmp.ceu:10)',
     --inits = 'line 8 : uninitialized variable "nn" : reached `loop´',
-    props_ = 'line 14 : invalid access to internal identifier "nn" : crossed `loop´ (/tmp/tmp.ceu:10)',
+    --props_ = 'line 14 : invalid access to internal identifier "nn" : crossed `loop´ (/tmp/tmp.ceu:10)',
     --props_ = 'line 14 : invalid access to internal identifier "nn" : crossed yielding statement (/tmp/tmp.ceu:10)',
 }
 
@@ -40884,7 +41025,7 @@ end
 
 pool[] Ff ffs;
 
-loop in ffs do
+loop _ in ffs do
     continue;
 end
 
@@ -40902,8 +41043,8 @@ end
 
 pool[] Ff ffs;
 
-var& int x;
-loop (x) in ffs do
+var&? Ff fff;
+loop fff in ffs do
     await 1s;
 end
 
@@ -40964,13 +41105,34 @@ pool[] Ff ffs;
 spawn Ff() in ffs;
 
 var&? int x = do
-    var&? int x_;
-    loop (x_) in ffs do
-        escape &x_;
+    var&? Ff fff;
+    loop fff in ffs do
+        escape &fff!.x;
     end
 end;
 
 escape (x? as int) + 1;
+]],
+    dcls = 'line 10 : invalid declaration : option alias : expected native or `code/await´ type',
+}
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
+                        // error
+    var int v = 10;
+    x = &v;
+end
+
+pool[] Ff ffs;
+spawn Ff() in ffs;
+
+var&? Ff f1 = do
+    var&? Ff f2;
+    loop f2 in ffs do
+        escape &f2;
+    end
+end;
+
+escape (f1? as int) + 1;
 ]],
     stmts = 'line 12 : invalid binding : argument #1 : unmatching alias `&´ declaration',
 }
@@ -41218,7 +41380,7 @@ watching g do
     end
 end
 
-loop in ffs do
+loop _ in ffs do
     escape 99;  // yes
 end
 
@@ -41681,7 +41843,7 @@ code/await Tx (void)->void do await FOREVER; end;
 pool[10] Tx ts;
 spawn Tx() in ts;
 var int ret = 0;
-loop in ts do
+loop _ in ts do
     ret = ret + 1;
     spawn Tx() in ts;
 end
@@ -48943,7 +49105,7 @@ spawn Ff(1) in fs;
 spawn Ff(2) in fs;
 
 var int ret = 0;
-loop in fs do
+loop _ in fs do
     ret = ret + (call Get_X() in fs);
 end
 

@@ -469,7 +469,7 @@ if dcl.tag ~= 'Prim' then
                 if ok then
                     local blk1 = AST.par(dcl, 'Block')
                     local blk2 = AST.par(blk1,'Block') or blk1
-                    if toplevel then
+                    if toplevel or AST.get(me,8,'Code') then
                         --ok = true
                     elseif blk1.__par.tag == 'Code' then
                         --ok = true
@@ -672,9 +672,7 @@ end
     Loop_Pool__POS = 'Loop__POS',
     Loop_Pool = function (me)
         CUR().mem = CUR().mem..'tceu_code_mem_dyn* __cur_'..me.n..';\n'
-        if me.yields then
-            CUR().mem = CUR().mem..'tceu_code_mem_dyn* __dyn_'..me.n..';\n'
-        end
+        CUR().mem = CUR().mem..'tceu_code_mem_dyn* __dyn_'..me.n..';\n'
     end,
 
     ---------------------------------------------------------------------------

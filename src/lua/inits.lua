@@ -131,7 +131,7 @@ local function run_inits (par, i, Dcl, stop, dont_await)
         end
 
     -- ok: found assignment
-    elseif me.tag == 'Loop_Num' then
+    elseif me.tag=='Loop_Num' or me.tag=='Loop_Pool' then
         local _,i = unpack(me)
         if i.dcl == Dcl then
             return true, me

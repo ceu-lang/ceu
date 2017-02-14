@@ -397,8 +397,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                     (V'__ID_int'+V'ID_any') * OPT(K'in' * V'_Loop_Num_Range') *
                   V'__Do'
     , Loop_Pool = K'loop' * OPT('/'*V'__Exp') *
-                    OPT(PARENS(V'List_Var')) *
-                        K'in' * V'Loc' *
+                    (V'ID_int'+V'ID_any') * K'in' * V'Loc' *
                   V'__Do'
     , Loop      = K'loop' * OPT('/'*V'__Exp') *
                   V'__Do'
