@@ -495,9 +495,8 @@ error'oi'
 
     -- CODE / DATA
 
-    _Code_Pars_X = function (me)
-        me.tag = 'Code_Pars'
-        local Code = AST.asr(me,5,'Code')
+    Code_Pars_Stmts = function (me)
+        local Code = AST.par(me,'Code')
         local _,mods = unpack(Code)
 
         -- check types only
@@ -528,7 +527,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
         -- multi-methods: changes "me.id" on Code
         me.ids_dyn = ''
-        for i, dcl in ipairs(me) do
+        for i, dcl in ipairs(AST.par(me,'Block').dcls) do
             local _,_,_,dcl_mods = unpack(dcl)
             if dcl_mods and dcl_mods.dynamic then
                 ASR(mods.dynamic, me,
@@ -572,7 +571,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             return
         end
 
-        local proto_body = AST.asr(me,'', 4,'Block', 1,'Stmts')
+        local proto_body = AST.asr(me,'', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block',1,'Stmts')
         local orig = proto_body[2]
         AST.set(proto_body, 2, node('Stmts', me.ln))
         local new = AST.copy(me)
@@ -600,11 +599,11 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         end
 
         local blk = AST.par(me, 'Block')
+        local proto1 = AST.asr(body1,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 1,'Code_Pars_Stmts')
 
         if (not me.is_dyn_base) and mods1.dynamic and me.is_impl then
-error'oi'
-            local ins1 = AST.asr(body1,'Block', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
-            me.id = id..ins1.ids_dyn
+AST.dump(body1)
+            me.id = id..proto1.ids_dyn
             me.dyn_base = DCLS.asr(me,blk,id)
             me.dyn_base.dyn_last = me
         else
@@ -621,9 +620,7 @@ error'oi'
                 _n = '_'..((old and old.n) or me.n)
             end
             if me.dyn_base then
-error'oi'
-                local ins1 = AST.asr(body1,'Block', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
-                me.id_ = id.._n..ins1.ids_dyn
+                me.id_ = id.._n..proto1.ids_dyn
             else
                 me.id_ = id.._n
             end
@@ -638,7 +635,6 @@ error'oi'
             end
 
             -- compare ins
-            local proto1 = AST.asr(body1,'Block',1,'Stmts',2,'Do',3,'Block',1,'Stmts',1,'Code_Pars_Stmts')
             local proto2 = AST.asr(body2,'Block',1,'Stmts',2,'Do',3,'Block',1,'Stmts',1,'Code_Pars_Stmts')
             local ok = AST.is_equal(proto1, proto2)
 

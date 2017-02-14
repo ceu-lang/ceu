@@ -130,11 +130,12 @@ PROPS_.F = {
     --------------------------------------------------------------------------
 
     Code = function (me)
-        local _,mods,_,body = unpack(me)
-        if mods.dynamic and body then
-            local Code_Pars = AST.asr(body,'', 1,'Stmts', 1,'Code_Pars')
+        local _,mods1,_,body = unpack(me)
+        if mods1.dynamic and body then
+            local Code_Pars = AST.asr(body,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 1,'Code_Pars_Stmts', 1,'Stmts')
             for i, dcl in ipairs(Code_Pars) do
-                if dcl.mods.dynamic then
+                local _,_,_,mods2 = unpack(dcl)
+                if mods2.dynamic then
                     local _,Type,id = unpack(dcl)
                     local data = AST.get(Type,'',1,'ID_abs')
                     ASR(data and data.dcl.hier, me,

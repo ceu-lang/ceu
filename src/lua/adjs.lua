@@ -179,7 +179,7 @@ error'TODO: luacov never executes this?'
         local Y, mods, id, ins, mid, out, blk, eoc = unpack(me)
         me.tag = 'Code'
 
-        mid = mid or AST.node('Code_Pars_Stmts', me.ln)
+        mid = mid or node('Code_Pars_Stmts', me.ln)
 
         local Type = AST.get(out,'Code_Ret', 1,'Type')
         local is_void do

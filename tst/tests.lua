@@ -43,7 +43,7 @@ var int x2 = f;
 escape x1+x2;
 
 var/nohold int x;
-dynamic var int x;
+var/dynamic int x;
 
 do return end -- OK
 --]=====]
@@ -38697,7 +38697,7 @@ data Ui with
     var int x;
 end
 
-code/await/dynamic Ui_go (dynamic var& Ui ui) -> void do
+code/await/dynamic Ui_go (var&/dynamic Ui ui) -> void do
 end
 
 var Ui ui = val Ui(10);
@@ -38705,7 +38705,7 @@ await Ui_go(&ui);
 
 escape 1;
 ]],
-    stmts = 'line 9 : invalid `await´ : expected `/dynamic´ or `/static´ modifier',
+    stmts = 'line 9 : invalid `spawn´ : expected `/dynamic´ or `/static´ modifier',
     wrn = true,
     run = 1,
 }
@@ -38715,7 +38715,7 @@ data Ui with
     var int x;
 end
 
-code/await/dynamic Ui_go (dynamic var& Ui ui) -> void do
+code/await/dynamic Ui_go (var&/dynamic Ui ui) -> void do
 end
 
 var Ui ui = val Ui(10);
@@ -38756,7 +38756,7 @@ data Aa with
     var int a;
 end
 
-code/tight/dynamic Ff (dynamic var Aa&& a, var int xxx) -> int do
+code/tight/dynamic Ff (var/dynamic Aa&& a, var int xxx) -> int do
     escape a:a + xxx;
 end
 
@@ -38764,7 +38764,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/tight/dynamic Ff (dynamic var Aa.Bb&& b, var int yyy) -> int do
+code/tight/dynamic Ff (var/dynamic Aa.Bb&& b, var int yyy) -> int do
     escape b:b + yyy;
 end
 
@@ -38780,7 +38780,7 @@ data Aa with
     var int a;
 end
 
-code/tight/dynamic Ff (dynamic var Aa&& a, var int xxx) -> int do
+code/tight/dynamic Ff (var/dynamic Aa&& a, var int xxx) -> int do
     escape a:a + xxx;
 end
 
@@ -38788,7 +38788,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/tight/dynamic Ff (dynamic var Aa.Bb&& b, var int yyy) -> int do
+code/tight/dynamic Ff (var/dynamic Aa.Bb&& b, var int yyy) -> int do
     escape b:b + yyy;
 end
 
@@ -38805,7 +38805,7 @@ data Aa with
     var int a;
 end
 
-code/tight/dynamic Ff (var int xxx, dynamic var Aa&& a) -> int do
+code/tight/dynamic Ff (var int xxx, var/dynamic Aa&& a) -> int do
     escape a:a + xxx;
 end
 
@@ -38813,7 +38813,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/tight/dynamic Ff (var int yyy, dynamic var Aa.Bb&& b) -> int do
+code/tight/dynamic Ff (var int yyy, var/dynamic Aa.Bb&& b) -> int do
     escape b:b + yyy;
 end
 
@@ -38831,7 +38831,7 @@ data Aa with
     var int a;
 end
 
-code/tight/dynamic Ff (dynamic var& Aa a1, var int xxx, dynamic var& Aa a2) -> int do
+code/tight/dynamic Ff (var&/dynamic Aa a1, var int xxx, var&/dynamic Aa a2) -> int do
     escape a1.a + xxx + a2.a;
 end
 
@@ -38839,7 +38839,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/tight/dynamic Ff (dynamic var& Aa.Bb b1, var int yyy, dynamic var& Aa.Bb b2) -> int do
+code/tight/dynamic Ff (var&/dynamic Aa.Bb b1, var int yyy, var&/dynamic Aa.Bb b2) -> int do
     //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
     escape b1.b + yyy + b2.b;
 end
@@ -38857,7 +38857,7 @@ data Aa with
     var int a;
 end
 
-code/tight/dynamic Ff (dynamic var& Aa a, var int xxx) -> int do
+code/tight/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
     escape a.a + xxx;
 end
 
@@ -38865,7 +38865,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/tight/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) -> int do
+code/tight/dynamic Ff (var&/dynamic Aa.Bb b, var int yyy) -> int do
     escape b.b + (call/static Ff(&b as Aa,11)) + yyy;
 end
 
@@ -38882,7 +38882,7 @@ data Aa with
     var int a;
 end
 
-code/await/dynamic Ff (dynamic var& Aa a, var int xxx) -> int do
+code/await/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
     escape a.a + xxx;
 end
 
@@ -38899,7 +38899,7 @@ data Aa with
     var int a;
 end
 
-code/await/dynamic Ff (dynamic var& Aa a, var int xxx) -> int do
+code/await/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
     escape a.a + xxx;
 end
 
@@ -38907,7 +38907,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/await/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) -> int do
+code/await/dynamic Ff (var&/dynamic Aa.Bb b, var int yyy) -> int do
     //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
     escape b.b + yyy;
 end
@@ -38925,7 +38925,7 @@ data Aa with
     var int a;
 end
 
-code/await/dynamic Ff (dynamic var& Aa a, var int xxx) -> int do
+code/await/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
     escape a.a + xxx;
 end
 
@@ -38933,7 +38933,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/await/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) -> int do
+code/await/dynamic Ff (var&/dynamic Aa.Bb b, var int yyy) -> int do
     //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
     escape b.b + yyy;
 end
@@ -38971,7 +38971,7 @@ data Aa with
     var int a;
 end
 
-code/await/dynamic Ff (var& int ret, dynamic var& Aa a, var int xxx) -> void do
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa a, var int xxx) -> void do
     ret = ret + a.a + xxx;
 end
 
@@ -38979,7 +38979,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb b, var int yyy) -> void do
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa.Bb b, var int yyy) -> void do
     ret = ret + b.b + yyy;
 end
 
@@ -39002,7 +39002,7 @@ data Aa with
     var int a;
 end
 
-code/await/dynamic Ff (var& int ret, dynamic var& Aa a, var int xxx) -> void do
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa a, var int xxx) -> void do
     ret = ret + a.a + xxx;
 end
 
@@ -39010,7 +39010,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb b, var int yyy) -> void do
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa.Bb b, var int yyy) -> void do
     ret = ret + b.b + yyy;
 end
 
@@ -39033,7 +39033,7 @@ data Aa with
     var int a;
 end
 
-code/await/dynamic Ff (dynamic var& Aa a, var int xxx) -> int do
+code/await/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
     escape a.a + xxx;
 end
 
@@ -39041,7 +39041,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/await/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) -> int do
+code/await/dynamic Ff (var&/dynamic Aa.Bb b, var int yyy) -> int do
     //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
     escape b.b + yyy;
 end
@@ -39062,7 +39062,7 @@ data Aa with
     var int a;
 end
 
-code/await/dynamic Ff (dynamic var& Aa a1, var int xxx, dynamic var& Aa a2) -> int do
+code/await/dynamic Ff (var&/dynamic Aa a1, var int xxx, var&/dynamic Aa a2) -> int do
     escape a1.a + xxx + a2.a;
 end
 
@@ -39070,7 +39070,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/await/dynamic Ff (dynamic var& Aa.Bb b1, var int yyy, dynamic var& Aa.Bb b2) -> int do
+code/await/dynamic Ff (var&/dynamic Aa.Bb b1, var int yyy, var&/dynamic Aa.Bb b2) -> int do
     //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
     escape b1.b + yyy + b2.b;
 end
@@ -39091,7 +39091,7 @@ data Aa with
     var int a;
 end
 
-code/await/dynamic Ff (dynamic var& Aa a, dynamic var int xxx) -> int do
+code/await/dynamic Ff (var&/dynamic Aa a, var/dynamic int xxx) -> int do
     escape a.a + xxx;
 end
 
@@ -39099,7 +39099,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/await/dynamic Ff (dynamic var& Aa.Bb b, dynamic var int yyy) -> int do
+code/await/dynamic Ff (var&/dynamic Aa.Bb b, var/dynamic int yyy) -> int do
     var int v = await/static Ff(&b as Aa,11);
     escape b.b + v + yyy;
 end
@@ -39122,7 +39122,7 @@ data Aa with
     var int a;
 end
 
-code/await/dynamic Ff (dynamic var& Aa a, var int xxx) -> int do
+code/await/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
     escape a.a + xxx;
 end
 
@@ -39130,7 +39130,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/await/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) -> int do
+code/await/dynamic Ff (var&/dynamic Aa.Bb b, var int yyy) -> int do
     var int v = await/static Ff(&b as Aa,11);
     escape b.b + v + yyy;
 end
@@ -39150,10 +39150,10 @@ Test { [[
 data Aa;
 data Aa.Bb;
 
-code/tight/dynamic Ff (dynamic var& Aa v1, dynamic var& Aa v2) -> int do
+code/tight/dynamic Ff (var&/dynamic Aa v1, var&/dynamic Aa v2) -> int do
     escape 1;
 end
-code/tight/dynamic Ff (dynamic var& Aa.Bb v1, dynamic var& Aa.Bb v2) -> int do
+code/tight/dynamic Ff (var&/dynamic Aa.Bb v1, var&/dynamic Aa.Bb v2) -> int do
     escape 2;
 end
 
@@ -39172,16 +39172,16 @@ data Aa.Bb;
 data Aa.Bb.Xx;
 data Aa.Cc;
 
-code/tight/dynamic Ff (dynamic var& Aa v1, dynamic var& Aa v2, dynamic var& Aa v3) -> int do
+code/tight/dynamic Ff (var&/dynamic Aa v1, var&/dynamic Aa v2, var&/dynamic Aa v3) -> int do
     escape 1;
 end
-code/tight/dynamic Ff (dynamic var& Aa.Bb v1, dynamic var& Aa v2, dynamic var& Aa.Bb v3) -> int do
+code/tight/dynamic Ff (var&/dynamic Aa.Bb v1, var&/dynamic Aa v2, var&/dynamic Aa.Bb v3) -> int do
     escape 2;
 end
-code/tight/dynamic Ff (dynamic var& Aa.Bb v1, dynamic var& Aa.Bb v2, dynamic var& Aa.Bb v3) -> int do
+code/tight/dynamic Ff (var&/dynamic Aa.Bb v1, var&/dynamic Aa.Bb v2, var&/dynamic Aa.Bb v3) -> int do
     escape 4;
 end
-code/tight/dynamic Ff (dynamic var& Aa.Bb v1, dynamic var& Aa.Bb.Xx v2, dynamic var& Aa.Bb v3) -> int do
+code/tight/dynamic Ff (var&/dynamic Aa.Bb v1, var&/dynamic Aa.Bb.Xx v2, var&/dynamic Aa.Bb v3) -> int do
     escape 8;
 end
 
@@ -39216,11 +39216,11 @@ data Bb.Cc with
     var int y=20;
 end
 
-code/tight/dynamic Ff (dynamic var& Bb b) -> int do
+code/tight/dynamic Ff (var&/dynamic Bb b) -> int do
     escape b.x;
 end
 
-code/tight/dynamic Ff (dynamic var& Bb.Cc c) -> int do
+code/tight/dynamic Ff (var&/dynamic Bb.Cc c) -> int do
     escape c.x + c.y;
 end
 
@@ -39241,11 +39241,11 @@ data Bb.Cc with
     var int y=20;
 end
 
-code/tight/dynamic Ff (dynamic var Bb b) -> int do
+code/tight/dynamic Ff (var/dynamic Bb b) -> int do
     escape b.x;
 end
 
-code/tight/dynamic Ff (dynamic var Bb.Cc c) -> int do
+code/tight/dynamic Ff (var/dynamic Bb.Cc c) -> int do
     escape c.x + c.y;
 end
 
@@ -39278,10 +39278,10 @@ data Bb with
 end
 data Bb.Cc;
 
-code/tight/dynamic Ff (dynamic var& Bb b, dynamic var Aa a) -> void do
+code/tight/dynamic Ff (var&/dynamic Bb b, var/dynamic Aa a) -> void do
 end
 
-code/tight/dynamic Ff (dynamic var& Bb.Cc c, dynamic var Aa a) -> void do
+code/tight/dynamic Ff (var&/dynamic Bb.Cc c, var/dynamic Aa a) -> void do
 end
 
 escape 1;
@@ -39298,29 +39298,10 @@ data Bb with
 end
 data Bb.Cc;
 
-code/tight/dynamic Ff (dynamic var& Bb b, var Aa a) -> void do
+code/tight/dynamic Ff (var&/dynamic Bb b, var Aa a) -> void do
 end
 
-code/tight/dynamic Ff (dynamic var& Bb.Cc c, var Aa a) -> void do
-end
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Aa;
-data Bb with
-    var int x;
-end
-data Bb.Cc;
-
-code/tight/dynamic Ff (var Aa a, dynamic var& Bb b) -> void do
-end
-
-code/tight/dynamic Ff (var Aa a, dynamic var& Bb.Cc c) -> void do
+code/tight/dynamic Ff (var&/dynamic Bb.Cc c, var Aa a) -> void do
 end
 
 escape 1;
@@ -39336,12 +39317,10 @@ data Bb with
 end
 data Bb.Cc;
 
-code/tight/dynamic Ff (var& Aa a, dynamic var& Bb b,
-                       var Aa a2, dynamic var& Bb b2, var Aa a3) -> void do
+code/tight/dynamic Ff (var Aa a, var&/dynamic Bb b) -> void do
 end
 
-code/tight/dynamic Ff (var& Aa a, dynamic var& Bb.Cc c,
-                       var Aa a2, dynamic var& Bb.Cc c2, var Aa a3) -> void do
+code/tight/dynamic Ff (var Aa a, var&/dynamic Bb.Cc c) -> void do
 end
 
 escape 1;
@@ -39357,10 +39336,31 @@ data Bb with
 end
 data Bb.Cc;
 
-code/tight/dynamic Ff (dynamic var& Bb b,    var& Aa a) -> void do
+code/tight/dynamic Ff (var& Aa a, var&/dynamic Bb b,
+                       var Aa a2, var&/dynamic Bb b2, var Aa a3) -> void do
 end
 
-code/tight/dynamic Ff (dynamic var& Bb.Cc c, var& Aa a) -> void do
+code/tight/dynamic Ff (var& Aa a, var&/dynamic Bb.Cc c,
+                       var Aa a2, var&/dynamic Bb.Cc c2, var Aa a3) -> void do
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Aa;
+data Bb with
+    var int x;
+end
+data Bb.Cc;
+
+code/tight/dynamic Ff (var&/dynamic Bb b,    var& Aa a) -> void do
+end
+
+code/tight/dynamic Ff (var&/dynamic Bb.Cc c, var& Aa a) -> void do
 end
 
 escape 1;
@@ -39392,8 +39392,8 @@ Test { [[
 data Dd;
 data Dd.Ee;
 
-//code/tight/dynamic Play_New (dynamic var& Dd d) -> void;
-code/tight/dynamic Play_New (dynamic var& Dd d) -> void do
+//code/tight/dynamic Play_New (var&/dynamic Dd d) -> void;
+code/tight/dynamic Play_New (var&/dynamic Dd d) -> void do
 end
 
 var Dd d = _;
@@ -39410,10 +39410,10 @@ Test { [[
 data Dd;
 data Dd.Ee;
 
-code/tight/dynamic Play_New (dynamic var& Dd d) -> void;
-code/tight/dynamic Play_New (dynamic var& Dd d) -> void do
+code/tight/dynamic Play_New (var&/dynamic Dd d) -> void;
+code/tight/dynamic Play_New (var&/dynamic Dd d) -> void do
 end
-code/tight/dynamic Play_New (dynamic var& Dd d) -> void;
+code/tight/dynamic Play_New (var&/dynamic Dd d) -> void;
 
 var Dd d = _;
 
@@ -39430,7 +39430,7 @@ Test { [[
 data Aa;
 data Aa.Bb;
 
-code/await/dynamic Ff (var& int ret, dynamic var& Aa v1) -> void do
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa v1) -> void do
     ret = ret + 15;
 end
 
@@ -39450,7 +39450,7 @@ escape ret;
 Test { [[
 data Aa;
 data Aa.Bb;
-code/await/dynamic Ff (dynamic var& Aa v1) -> void;
+code/await/dynamic Ff (var&/dynamic Aa v1) -> void;
 var Aa a = val Aa();
 pool[10] Ff ffs;
 spawn/dynamic Ff(&a) in ffs;
@@ -39465,8 +39465,8 @@ Test { [[
 data Media;
 data Media.Text;
 do
-    code/tight/dynamic Play (dynamic var& Media m) -> void do end
-    code/tight/dynamic Play (dynamic var& Media.Text m) -> void do end
+    code/tight/dynamic Play (var&/dynamic Media m) -> void do end
+    code/tight/dynamic Play (var&/dynamic Media.Text m) -> void do end
 end
 escape 1;
 ]],
@@ -39477,8 +39477,8 @@ Test { [[
 data Media;
 data Media.Text;
 do/_
-    code/tight/dynamic Play (dynamic var& Media m) -> int do escape 1; end
-    code/tight/dynamic Play (dynamic var& Media.Text m) -> int do escape 2; end
+    code/tight/dynamic Play (var&/dynamic Media m) -> int do escape 1; end
+    code/tight/dynamic Play (var&/dynamic Media.Text m) -> int do escape 2; end
     var Media x = val Media.Text();
     escape call/dynamic Play(&x);
 end
@@ -39489,8 +39489,8 @@ end
 Test { [[
 data Media;
 data Media.Text;
-code/tight/dynamic Play (dynamic var& Media m) -> void do end
-code/tight/dynamic Play (dynamic var& Media.Text m) -> void do end
+code/tight/dynamic Play (var&/dynamic Media m) -> void do end
+code/tight/dynamic Play (var&/dynamic Media.Text m) -> void do end
 escape 1;
 ]],
     _opts = { ceu_features_lua='true' },
@@ -39501,10 +39501,10 @@ escape 1;
 Test { [[
 data Aa;
 data Aa.Bb;
-code/await/dynamic Ff (dynamic var& Aa v1) -> void;
+code/await/dynamic Ff (var&/dynamic Aa v1) -> void;
 var Aa a = val Aa();
 pool[10] Ff ffs;
-code/await/dynamic Ff (dynamic var& Aa v1) -> void do end;
+code/await/dynamic Ff (var&/dynamic Aa v1) -> void do end;
 spawn/dynamic Ff(&a) in ffs;
 escape 1;
 ]],
@@ -39518,20 +39518,20 @@ data Aa.Bb;
 data Aa.Bb.Xx;
 data Aa.Cc;
 
-code/await/dynamic Ff (var& int ret, dynamic var& Aa v1, dynamic var& Aa v2, dynamic var& Aa v3) -> void;
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa v1, var&/dynamic Aa v2, var&/dynamic Aa v3) -> void;
 
 pool[10] Ff ffs;
 
-code/await/dynamic Ff (var& int ret, dynamic var& Aa v1, dynamic var& Aa v2, dynamic var& Aa v3) -> void do
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa v1, var&/dynamic Aa v2, var&/dynamic Aa v3) -> void do
     ret = ret + 1;
 end
-code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa v2, dynamic var& Aa.Bb v3) -> void do
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa.Bb v1, var&/dynamic Aa v2, var&/dynamic Aa.Bb v3) -> void do
     ret = ret + 2;
 end
-code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa.Bb v2, dynamic var& Aa.Bb v3) -> void do
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa.Bb v1, var&/dynamic Aa.Bb v2, var&/dynamic Aa.Bb v3) -> void do
     ret = ret + 4;
 end
-code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa.Bb.Xx v2, dynamic var& Aa.Bb v3) -> void do
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa.Bb v1, var&/dynamic Aa.Bb.Xx v2, var&/dynamic Aa.Bb v3) -> void do
     ret = ret + 8;
 end
 
@@ -39565,7 +39565,7 @@ escape 1;
 
 Test { [[
 data Dd;
-code/tight/dynamic Ff (dynamic var& Dd d) -> void do
+code/tight/dynamic Ff (var&/dynamic Dd d) -> void do
 end
 code/tight Ff (var int x) -> void do
 end
@@ -39577,9 +39577,9 @@ escape 1;
 
 Test { [[
 data Dd;
-code/tight/dynamic Ff (dynamic var& Dd d) -> void do
+code/tight/dynamic Ff (var&/dynamic Dd d) -> void do
 end
-code/tight/dynamic Ff (dynamic var& Dd d) -> void do
+code/tight/dynamic Ff (var&/dynamic Dd d) -> void do
 end
 escape 1;
 ]],
@@ -39590,9 +39590,9 @@ escape 1;
 Test { [[
 data Dd;
 data Ee;
-code/tight/dynamic Ff (dynamic var& Dd d) -> void do
+code/tight/dynamic Ff (var&/dynamic Dd d) -> void do
 end
-code/tight/dynamic Ff (dynamic var& Ee d) -> void do
+code/tight/dynamic Ff (var&/dynamic Ee d) -> void do
 end
 escape 1;
 ]],
@@ -39603,11 +39603,11 @@ escape 1;
 Test { [[
 data Dd;
 data Dd.Ee;
-code/tight/dynamic Ff (dynamic var& Dd a, dynamic var& Dd b) -> void do
+code/tight/dynamic Ff (var&/dynamic Dd a, var&/dynamic Dd b) -> void do
 end
-code/tight/dynamic Ff (dynamic var& Dd a, dynamic var& Dd.Ee b) -> void do
+code/tight/dynamic Ff (var&/dynamic Dd a, var&/dynamic Dd.Ee b) -> void do
 end
-code/tight/dynamic Ff (dynamic var& Dd.Ee a, dynamic var& Dd b) -> void do
+code/tight/dynamic Ff (var&/dynamic Dd.Ee a, var&/dynamic Dd b) -> void do
 end
 escape 1;
 ]],
@@ -39618,9 +39618,9 @@ escape 1;
 Test { [[
 data Dd;
 data Dd.Ee;
-code/tight/dynamic Ff (dynamic var& Dd.Ee b) -> void do
+code/tight/dynamic Ff (var&/dynamic Dd.Ee b) -> void do
 end
-code/tight/dynamic Ff (dynamic var& Dd b) -> void do
+code/tight/dynamic Ff (var&/dynamic Dd b) -> void do
 end
 escape 1;
 ]],
@@ -39631,9 +39631,9 @@ escape 1;
 Test { [[
 data Dd;
 data Dd.Ee;
-code/tight/dynamic Ff (dynamic var& Dd a, dynamic var& Dd.Ee b) -> void do
+code/tight/dynamic Ff (var&/dynamic Dd a, var&/dynamic Dd.Ee b) -> void do
 end
-code/tight/dynamic Ff (dynamic var& Dd.Ee a, dynamic var& Dd b) -> void do
+code/tight/dynamic Ff (var&/dynamic Dd.Ee a, var&/dynamic Dd b) -> void do
 end
 escape 1;
 ]],
@@ -39656,8 +39656,8 @@ data Media as nothing;
 data Media.Audio;
 data Media.Video;
 
-code/await/dynamic Play (dynamic var& Media.Audio media) -> void do end
-code/await/dynamic Play (dynamic var& Media.Video media) -> void do end
+code/await/dynamic Play (var&/dynamic Media.Audio media) -> void do end
+code/await/dynamic Play (var&/dynamic Media.Video media) -> void do end
 
 var Media.Audio m = val Media.Audio();
 await/dynamic Play(&m);
@@ -39671,9 +39671,9 @@ data Media as nothing;
 data Media.Audio as 1;
 data Media.Video as 1;
 
-code/await/dynamic Play (dynamic var& Media media) -> void do end
-code/await/dynamic Play (dynamic var& Media.Audio media) -> void do end
-code/await/dynamic Play (dynamic var& Media.Video media) -> void do end
+code/await/dynamic Play (var&/dynamic Media media) -> void do end
+code/await/dynamic Play (var&/dynamic Media.Audio media) -> void do end
+code/await/dynamic Play (var&/dynamic Media.Video media) -> void do end
 
 var Media.Audio m = val Media.Audio();
 await/dynamic Play(&m);
@@ -39690,12 +39690,12 @@ do/_
    var int d;                                                                    
  end                                                                             
  code/tight/dynamic                                                              
- Ff (dynamic var& IData mydata) -> int                                        
+ Ff (var&/dynamic IData mydata) -> int                                        
  do                                                                              
    escape 1;
  end                                                                             
  code/tight/dynamic                                                              
- Ff (dynamic var& IData.Test1 mydata) -> int                                  
+ Ff (var&/dynamic IData.Test1 mydata) -> int                                  
  do                                                                              
    escape 2;
  end                                                                             
@@ -39719,19 +39719,19 @@ data IData;
  end                                                                             
                                                                                  
  code/tight/dynamic                                                              
- Test (dynamic var& IData mydata) -> int                                        
+ Test (var&/dynamic IData mydata) -> int                                        
  do                                                                              
    escape 1;
  end                                                                             
                                                                                  
  code/tight/dynamic                                                              
- Test (dynamic var& IData.Test1 mydata) -> int                                  
+ Test (var&/dynamic IData.Test1 mydata) -> int                                  
  do                                                                              
    escape 2;
  end                                                                             
                                                                                  
  code/tight/dynamic                                                              
- Test (dynamic var& IData.Test2 mydata) -> int                                  
+ Test (var&/dynamic IData.Test2 mydata) -> int                                  
  do                                                                              
    escape 3;
  end                                                                             
@@ -39754,9 +39754,9 @@ do/_
     data Media.Audio with 
         var int a = 1;
     end
-    code/tight/dynamic Play (dynamic var& Media media) -> int do
+    code/tight/dynamic Play (var&/dynamic Media media) -> int do
     end
-    code/tight/dynamic Play (dynamic var& Media.Audio media) -> int do
+    code/tight/dynamic Play (var&/dynamic Media.Audio media) -> int do
         escape media.a;
     end
     var Media.Audio audio = val Media.Audio(_);
@@ -39774,9 +39774,9 @@ do/_
     data Media.Audio with 
         var int a = 1;
     end
-    code/await/dynamic Play (dynamic var& Media media) -> int do
+    code/await/dynamic Play (var&/dynamic Media media) -> int do
     end
-    code/await/dynamic Play (dynamic var& Media.Audio media) -> int do
+    code/await/dynamic Play (var&/dynamic Media.Audio media) -> int do
         escape media.a;
     end
     var Media.Audio audio = val Media.Audio(_);
@@ -39802,15 +39802,15 @@ do/_
     end
 
 
-    code/await/dynamic Play (dynamic var& Media media) -> int do
+    code/await/dynamic Play (var&/dynamic Media media) -> int do
         _ceu_dbg_assert(0);               // never dispatched
     end
 
-    code/await/dynamic Play (dynamic var& Media.Audio media) -> int do
+    code/await/dynamic Play (var&/dynamic Media.Audio media) -> int do
         escape media.a;
     end
 
-    code/await/dynamic Play (dynamic var& Media.Video media) -> int do
+    code/await/dynamic Play (var&/dynamic Media.Video media) -> int do
         escape media.b;
     end
 
@@ -39838,15 +39838,15 @@ data Media.Video with
 end
 
 
-code/await/dynamic Play (dynamic var& Media media) -> int do
+code/await/dynamic Play (var&/dynamic Media media) -> int do
     _ceu_dbg_assert(0);               // never dispatched
 end
 
-code/await/dynamic Play (dynamic var& Media.Audio media) -> int do
+code/await/dynamic Play (var&/dynamic Media.Audio media) -> int do
     escape media.a;
 end
 
-code/await/dynamic Play (dynamic var& Media.Video media) -> int do
+code/await/dynamic Play (var&/dynamic Media.Video media) -> int do
     escape media.b;
 end
 
@@ -39872,15 +39872,15 @@ do/_
         var int v = 1;
     end
 
-    code/await/dynamic Play (dynamic var& Media media) -> void do
+    code/await/dynamic Play (var&/dynamic Media media) -> void do
         escape;             // never dispatched
     end
 
-    code/await/dynamic Play (dynamic var& Media.Audio media) -> void do
+    code/await/dynamic Play (var&/dynamic Media.Audio media) -> void do
         await 1s;                   // plays an audio
     end
 
-    code/await/dynamic Play (dynamic var& Media.Video media) -> void do
+    code/await/dynamic Play (var&/dynamic Media.Video media) -> void do
         await 2s;                  // plays a video
     end
     escape 1;
@@ -39896,11 +39896,11 @@ data IData;
 data IData.Test1 with                                                           
   var int d;                                                                    
 end                                                                             
-code/tight/dynamic Ff (dynamic var& IData mydata) -> int do
+code/tight/dynamic Ff (var&/dynamic IData mydata) -> int do
   escape 1;
 end                                                                             
-code/tight/dynamic Ff (dynamic var& IData.Test1 mydata) -> int;
-code/tight/dynamic Ff (dynamic var& IData.Test1 mydata) -> int do
+code/tight/dynamic Ff (var&/dynamic IData.Test1 mydata) -> int;
+code/tight/dynamic Ff (var&/dynamic IData.Test1 mydata) -> int do
   escape 2;
 end                                                                             
 var IData.Test1 t1 = val IData.Test1 (0);                                       
@@ -39917,12 +39917,12 @@ do/_
  data IData.Test1 with                                                           
    var int d;                                                                    
  end                                                                             
- code/tight/dynamic Ff (dynamic var& IData mydata) -> int do                                                                              
+ code/tight/dynamic Ff (var&/dynamic IData mydata) -> int do                                                                              
    escape 1;
  end                                                                             
- //code/tight/dynamic Ff (dynamic var& IData.Test1 mydata) -> int;
+ //code/tight/dynamic Ff (var&/dynamic IData.Test1 mydata) -> int;
  code/tight/dynamic                                                              
- Ff (dynamic var& IData.Test1 mydata) -> int                                  
+ Ff (var&/dynamic IData.Test1 mydata) -> int                                  
  do                                                                              
    escape 2;
  end                                                                             
@@ -39985,7 +39985,7 @@ escape (d is Dd.Ee) as int;
 
 Test { [[
 data Xx;
-code/await/dynamic Ff (dynamic var Xx x1) -> (var& Xx x2) -> void;
+code/await/dynamic Ff (var/dynamic Xx x1) -> (var& Xx x2) -> void;
 escape 1;
 ]],
     wrn = true,
@@ -40011,9 +40011,9 @@ data Xx;
 data Xx.Yy;
 data Dd;
 
-code/await/dynamic Ff (dynamic var Xx x) -> (var& Dd d) -> FOREVER;
+code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> FOREVER;
 
-code/await/dynamic Ff (dynamic var Xx x) -> (var& Dd d) -> FOREVER do
+code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> FOREVER do
     var Dd d_ = val Dd();
     d = &d_;
     await FOREVER;
@@ -40033,9 +40033,9 @@ data Xx;
 data Xx.Yy;
 data Dd;
 
-//code/await/dynamic Ff (dynamic var Xx x) -> (var& Dd d) -> FOREVER;
+//code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> FOREVER;
 
-code/await/dynamic Ff (dynamic var Xx x) -> (var& Dd d) -> FOREVER do
+code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> FOREVER do
     var Dd d_ = val Dd();
     d = &d_;
     await FOREVER;
@@ -40062,14 +40062,14 @@ end
 data Dd.Ee;
 
 native _ceu_dbg_assert;
-code/await/dynamic Ff (dynamic var Xx x) -> (var& Dd d) -> FOREVER do
+code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> FOREVER do
     var Dd d_ = val Dd(x);
     d = &d_;
     _ceu_dbg_assert(0);
     await FOREVER;
 end
 
-code/await/dynamic Ff (dynamic var Xx.Yy x) -> (var& Dd d) -> FOREVER do
+code/await/dynamic Ff (var/dynamic Xx.Yy x) -> (var& Dd d) -> FOREVER do
     var Dd d_ = val Dd.Ee(x);
     d = &d_;
     await FOREVER;
@@ -40095,14 +40095,14 @@ end
 data Dd.Ee;
 
 native _ceu_dbg_assert;
-code/await/dynamic Ff (dynamic var Xx x) -> (var& Dd d1) -> FOREVER do
+code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d1) -> FOREVER do
     var Dd d_ = val Dd(x);
     d1 = &d_;
     _ceu_dbg_assert(0);
     await FOREVER;
 end
 
-code/await/dynamic Ff (dynamic var Xx.Yy x) -> (var& Dd d2) -> FOREVER do
+code/await/dynamic Ff (var/dynamic Xx.Yy x) -> (var& Dd d2) -> FOREVER do
     var Dd d_ = val Dd.Ee(x);
     d2 = &d_;
     await FOREVER;
@@ -40128,7 +40128,7 @@ end
 data Dd.Ee;
 
 native _ceu_dbg_assert;
-code/await/dynamic Ff (dynamic var Xx x) -> (var& Dd d) -> FOREVER do
+code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> FOREVER do
     var Dd d_ = val Dd(x);
     d = &d_;
     _ceu_dbg_assert(0);
@@ -40162,14 +40162,14 @@ end
 data Dd.Ee;
 
 native _ceu_dbg_assert;
-code/await/dynamic Ff (dynamic var Xx x) -> (var& Dd d) -> FOREVER do
+code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> FOREVER do
     var Dd d_ = val Dd(x);
     d = &d_;
     _ceu_dbg_assert(0);
     await FOREVER;
 end
 
-code/await/dynamic Ff (dynamic var Xx.Yy x) -> (var& Dd d) -> FOREVER do
+code/await/dynamic Ff (var/dynamic Xx.Yy x) -> (var& Dd d) -> FOREVER do
     var Dd d_ = val Dd.Ee(x);
     d = &d_;
     await FOREVER;
@@ -40192,7 +40192,7 @@ end
 data Aa;
 data Aa.Bb;
 
-code/await/dynamic Ff (var& int ret, dynamic var& Aa v1) -> (var& Dd d) -> FOREVER do
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa v1) -> (var& Dd d) -> FOREVER do
     var Dd d_ = _;
     d = &d_;
     await FOREVER;
@@ -40225,7 +40225,7 @@ end
 data Aa;
 data Aa.Bb;
 
-code/await/dynamic Ff (var& int ret, dynamic var& Aa v1) -> (var& Dd d) -> void do
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa v1) -> (var& Dd d) -> void do
     var Dd d_ = _;
     d = &d_;
 end
@@ -40257,7 +40257,7 @@ end
 data Aa;
 data Aa.Bb;
 
-code/await/dynamic Ff (var& int ret, dynamic var& Aa v1) -> (var&? Dd d) -> FOREVER do
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa v1) -> (var&? Dd d) -> FOREVER do
     var Dd d_ = _;
     d = &d_;
     await FOREVER;
@@ -40292,7 +40292,7 @@ end
 data Aa;
 data Aa.Bb;
 
-code/await/dynamic Ff (var& int ret, dynamic var& Aa v1) -> (var&? Dd d, event&? void e) -> void do
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa v1) -> (var&? Dd d, event&? void e) -> void do
     var Dd d_ = _;
     d = &d_;
     event void e_;
@@ -40326,7 +40326,7 @@ escape ret+1;
 Test { [[
 data Xx;
 data Xx.Yy;
-code/await Gg (dynamic var Xx.Yy x) -> (void) -> FOREVER do
+code/await Gg (var/dynamic Xx.Yy x) -> (void) -> FOREVER do
     await FOREVER;
 end
 escape 1;
@@ -44620,15 +44620,15 @@ data Direction as 0;
 data Direction.Right as 10;
 data Direction.Left as 20;
 
-code/tight/dynamic Ff (dynamic var Direction dir) -> int do
+code/tight/dynamic Ff (var/dynamic Direction dir) -> int do
     escape 1;
 end
 
-code/tight/dynamic Ff (dynamic var Direction.Right dir) -> int do
+code/tight/dynamic Ff (var/dynamic Direction.Right dir) -> int do
     escape 10;
 end
 
-code/tight/dynamic Ff (dynamic var Direction.Left dir) -> int do
+code/tight/dynamic Ff (var/dynamic Direction.Left dir) -> int do
     escape 100;
 end
 
@@ -44659,15 +44659,15 @@ data Direction as nothing;
 data Direction.Right as 10;
 data Direction.Left as 20;
 
-code/tight/dynamic Ff (dynamic var Direction dir) -> int do
+code/tight/dynamic Ff (var/dynamic Direction dir) -> int do
     escape 1;
 end
 
-code/tight/dynamic Ff (dynamic var Direction.Right dir) -> int do
+code/tight/dynamic Ff (var/dynamic Direction.Right dir) -> int do
     escape 10;
 end
 
-code/tight/dynamic Ff (dynamic var Direction.Left dir) -> int do
+code/tight/dynamic Ff (var/dynamic Direction.Left dir) -> int do
     escape 100;
 end
 
