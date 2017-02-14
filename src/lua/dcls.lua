@@ -309,25 +309,20 @@ DCLS.F = {
                 'invalid declaration : variable cannot be of type `void´') 
         end
 
---[[
         local inits = DCLS.F.Var__POS__POS(me)
         if inits then
             return node('Stmts', me.ln, me, inits)
         end
-]]
     end,
 
 -------------------------------------------------------------------------------
 
---[[
     Var__POS__POS = function (me, t)
         local is_alias,Type,id = unpack(me)
 
         if ((not t) and AST.par(me,'Data')) or is_alias
             or AST.par(me,'Code_Ret')
-            --or AST.par(me,'_Code_Pars_X')
         then
-error'oi'
             return
         end
 
@@ -368,7 +363,7 @@ error'oi'
             end
 
             -- default vaules
-            local stmts = AST.asr(dcl,2,'Stmts')
+            local stmts = AST.asr(dcl,1,'Stmts')
             local set = AST.get(stmts,'', 2,'Set_Exp') or
                         AST.get(stmts,'', 2,'Set_Any') or
                         AST.get(stmts,'', 2,'Set_Abs_Val')
@@ -382,6 +377,7 @@ error'oi'
         end
 
         if AST.par(me,'_Code_Pars_X') and is_top then
+error'oi'
             local stmts = AST.get(AST.par(me,'Code'),'',
                                     4,'Block', 1,'Stmts', 2,'Block',
                                     1,'Stmts', 1,'Do', 3,'Block', 1,'Stmts')
@@ -398,7 +394,6 @@ error'oi'
             return t.stmts
         end
     end,
-]]
 
     Pool__PRE = 'Vec__PRE',
     Vec__PRE = function (me)

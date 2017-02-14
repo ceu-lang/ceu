@@ -46,6 +46,7 @@ var/nohold int x;
 dynamic var int x;
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -42041,7 +42042,6 @@ escape ret;
     exps = 'line 20 : invalid operand to `.´ : unexpected option alias',
 }
 
---]=====]
 Test { [[
 data Dd with
     var int v = 10;
@@ -42050,7 +42050,6 @@ end
 code/await Ff (void) -> (var& Dd d) -> FOREVER do
     var Dd d_ = val Dd(_);
     d = &d_;
-{printf("<<< %d\n", @(d_.v));}
     await FOREVER;
 end
 
@@ -42064,7 +42063,6 @@ watching 10s do
         var&? Ff f;
         loop f in fs do
             ret = ret + f!.d.v;
-{printf(">>> %d\n", @(f!.d.v));}
         end
     end
 end
@@ -42141,18 +42139,18 @@ end
 escape 10;
 ]],
     wrn = true,
-    stmts = 'line 2 : invalid `await´ : unexpected recursive invocation',
+    stmts = 'line 2 : invalid `spawn´ : unexpected recursive invocation',
 }
 
 Test { [[
-code/await Tx (void)->(event&? void e)->void do
+code/await Tx (void)->(event& void e)->void do
     event void e_;
     e = &e_;
 end
 
-event&? void e;
-spawn Tx() -> (&e);
-await e!;
+var&? Tx t =
+spawn Tx();
+await t!.e;
 escape 1;
 ]],
     wrn = true,
@@ -42160,16 +42158,16 @@ escape 1;
 }
 
 Test { [[
-code/await Tx (void)->(event&? void e)->void do
+code/await Tx (void)->(event& void e)->void do
     event void e_;
     e = &e_;
     await async do end;
     emit e_;
 end
 
-event&? void e;
-spawn Tx() -> (&e);
-await e!;
+var&? Tx t =
+spawn Tx();
+await t!.e;
 escape 1;
 ]],
     wrn = true,
@@ -42203,19 +42201,19 @@ escape 1;
 Test { [[
 input void A;
 
-code/await Tx (void)->(var&? int x)->void do
+code/await Tx (void)->(var& int x)->void do
     var int x_=_;
     x = &x_;
     await A;
 end
 
-var&? int x1;
-spawn Tx() -> (&x1);
-await x1;
+var&? Tx t1 =
+spawn Tx();
+await t1;
 
-var&? int x2;
-spawn Tx() -> (&x2);
-await x2;
+var&? Tx t2 =
+spawn Tx();
+await t2;
 
 escape 1;
 ]],
@@ -42224,18 +42222,40 @@ escape 1;
 }
 
 Test { [[
-code/await Tx (void)->(var&? int x)->void do
+code/await Tx (void)->(var& int x)->void do
     var int x_=_;
     x = &x_;
     await 1us;
 end
 
-var&? int x1;
-spawn Tx() -> (&x1);
+var&? Tx t1 =
+spawn Tx();
+await t1;
+
+var&? Tx t2 =
+spawn Tx();
+await t2;
+
+escape 1;
+]],
+    wrn = true,
+    run = { ['~>2us']=1 },
+}
+
+Test { [[
+code/await Tx (void)->(var& int x)->void do
+    var int x_=_;
+    x = &x_;
+    await 1us;
+end
+
+var&? Tx x1 =
+spawn Tx();
+spawn Tx();
 await x1;
 
-var&? int x2;
-spawn Tx() -> (&x2);
+var&? Tx x2 =
+spawn Tx();
 await x2;
 
 escape 1;
@@ -42245,25 +42265,54 @@ escape 1;
 }
 
 Test { [[
-code/await Tx (void)->(var&? int x)->void do
-    var int x_=_;
-    x = &x_;
-    await 1us;
+code/await Tx (void)->(var int e)->FOREVER do
+    e = 1;
+    await FOREVER;
 end
 
-var&? int x1;
-spawn Tx() -> (&x1);
-spawn Tx();
-await x1;
+var&? Tx t = spawn Tx();
 
-var&? int x2;
-spawn Tx() -> (&x2);
-await x2;
+var& int e = &t!.e;
 
-escape 1;
+escape 0;
 ]],
     wrn = true,
-    run = { ['~>2us']=1 },
+    scopes = 'line 8 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+}
+
+Test { [[
+code/await Tx (void)->(var int e)->FOREVER do
+    e = 1;
+    await FOREVER;
+end
+
+code/await Ux (var& int e) -> void do end
+
+var&? Tx t = spawn Tx();
+spawn Ux(&t!.e);
+
+escape 0;
+]],
+    wrn = true,
+    --run = 1,
+    scopes = 'line 9 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+}
+
+Test { [[
+code/await Tx (void)->(event void e)->FOREVER do
+    await FOREVER;
+end
+
+code/await Ux (event& void e) -> void do end
+
+var&? Tx t = spawn Tx();
+spawn Ux(&t!.e);
+
+escape 0;
+]],
+    wrn = true,
+    --run = 1,
+    scopes = 'line 8 : invalid binding : unexpected source with `&?´ : destination may outlive source',
 }
 
 -- group of tests fails w/o sudden death check while traversing children
@@ -42280,26 +42329,26 @@ code/await Tx (void)->(event& void e)->FOREVER do
     await FOREVER;
 end
 
-code/await Ux (event& void e, var bool only_await) -> void do
+code/await Ux (var&? Tx t, var bool only_await) -> void do
     par/or do
-        await e;
+        await t!.e;
         _V = _V + 1;
     with
         if only_await then
             await FOREVER;
         end
         await OS_START;
-        emit e;
+        emit t!.e;
     with
         await OS_START;
     end
 end
 
-event& void e;
-spawn Tx() -> (&e);
+var&? Tx t =
+spawn Tx();
 
-spawn Ux(&e, true);
-spawn Ux(&e, false);
+spawn Ux(&t, true);
+spawn Ux(&t, false);
 
 await OS_START;
 

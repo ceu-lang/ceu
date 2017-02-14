@@ -133,31 +133,6 @@ F = {
             end
         else
             local ok = is_call or check_blk(to.info.dcl.blk, (fr.info.dcl_obj or fr.info.dcl).blk)
-
-            -- NO: x = &f!.*            // f may die (unless surrounded by "watching f")
-            if fr.info.dcl_obj and fr.info.dcl_obj.orig[1]=='&?'then
-                local watch = AST.par(me, 'Watching')
-                local ok = false
-                while watch do
-                    local awt = watch and AST.get(watch,'', 1,'Par_Or', 1,'Block', 1,'Stmts', 1,'Await_Int', 1,'')
-                                       or AST.get(watch,'', 1,'Par_Or', 1,'Block', 1,'Stmts', 1,'Set_Await_many',1,'Await_Int', 1,'')
-                    if awt and awt.info.dcl==fr.info.dcl_obj.orig then
-                        -- watching.depth < to.dcl.blk.depth
-                        if AST.get(to.info.dcl.blk,6,'Code') then
-                            -- ok: allow mid destination binding even outliving source
-                            -- TODO: check it is not accessed outside the watching
-                            ok = true
-                        else
-                            ok = check_blk(to.info.dcl.blk, watch)
-                            ASR(ok, me, 'invalid binding : incompatible scopes')
-                        end
-                        break
-                    end
-                    watch = AST.par(watch, 'Watching')
-                end
-                ASR(ok, me, 'invalid binding : unexpected source with `&?´ : destination may outlive source')
-            end
-
             if not ok then
                 if to.info.dcl.is_mid_idx then
 -- TODO-remove
@@ -174,6 +149,32 @@ error'oi'
             end
             ok = ok or (to.info.dcl[1]=='&?')
             ASR(ok, me, 'invalid binding : incompatible scopes')
+        end
+    end,
+
+    ['Exp_.'] = function (me)
+        -- NO: x = &f!.*            // f may die (unless surrounded by "watching f")
+        if AST.par(me,'Exp_1&') and me.info.dcl_obj.orig[1]=='&?' then
+            local watch = AST.par(me, 'Watching')
+            local ok = false
+            while watch do
+                local awt = watch and AST.get(watch,'', 1,'Par_Or', 1,'Block', 1,'Stmts', 1,'Await_Int', 1,'')
+                                   or AST.get(watch,'', 1,'Par_Or', 1,'Block', 1,'Stmts', 1,'Set_Await_many',1,'Await_Int', 1,'')
+                if awt and awt.info.dcl==me.info.dcl_obj.orig then
+                    -- watching.depth < to.dcl.blk.depth
+                    if AST.get(to.info.dcl.blk,6,'Code') then
+                        -- ok: allow mid destination binding even outliving source
+                        -- TODO: check it is not accessed outside the watching
+                        ok = true
+                    else
+                        ok = check_blk(to.info.dcl.blk, watch)
+                        ASR(ok, me, 'invalid binding : incompatible scopes')
+                    end
+                    break
+                end
+                watch = AST.par(watch, 'Watching')
+            end
+            ASR(ok, me, 'invalid binding : unexpected source with `&?´ : destination may outlive source')
         end
     end,
 

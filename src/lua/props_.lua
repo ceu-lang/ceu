@@ -41,7 +41,9 @@ PROPS_.F = {
                     -- ok
                 else
                     local paror = AST.par(me,'Par_Or')
-                    ASR(paror and paror.__spawns,
+                    ASR(paror and paror.__spawns and AST.depth(paror)>AST.depth(par)
+                            or me.__spawns,
+                        me,
                         'invalid `'..AST.tag2id[me.tag]..
                         '´ : unexpected enclosing `'..AST.tag2id[par.tag]..'´')
                 end
