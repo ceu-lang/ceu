@@ -889,7 +889,13 @@ error'oi'
         elseif e.dcl and e.dcl.tag == 'Var' then
             local abs = AST.get(e.dcl,'Var', 2,'Type', 1,'ID_abs')
             if abs then
-                me.dcl = DCLS.asr(me, AST.asr(abs.dcl,'Data',3,'Block'), member, false, 'field')
+                local dcl = AST.get(abs.dcl,'Data',3,'Block')
+                if dcl then
+                    me.dcl = DCLS.asr(me, dcl, member, false, 'field')
+                else
+                    dcl = AST.asr(abs.dcl,'Code',4,'Block',1,'Stmts',2,'Do',3,'Block',1,'Stmts',2,'Block')
+                    me.dcl = DCLS.asr(me, dcl, member, false, 'parameter')
+                end
             else
                 AST.asr(e.dcl,'Var', 2,'Type', 1,'ID_nat')
             end

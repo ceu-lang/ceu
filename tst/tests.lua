@@ -36676,10 +36676,10 @@ end
 var&? Ff f = spawn Ff();
 var&? Ff f1 = &f;
 
-escape 0;
+escape 1;
 ]],
-    stmts = 'line 6 : invalid binding : expected `spawn´',
-    --run = false,
+    --stmts = 'line 6 : invalid binding : expected `spawn´',
+    run = 1,
     --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
     --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
     --scopes = 'line 8 : invalid binding : incompatible scopes',
@@ -37365,7 +37365,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    cc = '6:47: error: implicit declaration of function ‘g’',
+    cc = '6:43: error: implicit declaration of function ‘g’',
 }
 
 Test { [[
@@ -38553,7 +38553,6 @@ escape ret;
 --<< CODE / AWAIT / EMIT-INTERNAL
 
 -->> CODE / AWAIT / ALIAS
---]=====]
 
 Test { [[
 code/await Ff (void) -> (var& int x) -> void do
@@ -38606,12 +38605,25 @@ end
 var&? Ff f1 = spawn Ff();
 var&? Ff f2 = &f1;
 await 1s;
-escape (f2? as int) + 1 + f2!.x;
+escape (f2? as int) + 1;
 ]],
-    run = { ['~>1s']=12 },
+    run = { ['~>1s']=1 },
 }
 
-do return end
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
+    var int v = 10;
+    x = &v;
+    await 500ms;
+end
+
+var&? Ff f1 = spawn Ff();
+var&? Ff f2 = &f1;
+await 1s;
+escape f2!.x;
+]],
+    run = { ['~>1s']='10] runtime error: value is not set' },
+}
 
 --<< CODE / AWAIT / ALIAS
 
@@ -40662,12 +40674,13 @@ loop t in ts do
 end
 escape 1;
 ]],
-    parser = 'line 2 : after `in´ : expected `[´ or `]´',
+    dcls = 'line 2 : internal identifier "t" is not declared',
+    --parser = 'line 2 : after `in´ : expected `[´ or `]´',
 }
 
 Test { [[
 var int ts = _;
-loop in ts do
+loop _ in ts do
 end
 escape 1;
 ]],
@@ -40683,7 +40696,7 @@ end
 pool[5] Ff fs;
 
 var int n = 0;
-loop in fs do
+loop _ in fs do
     n = n + 1;
 end
 
@@ -40705,7 +40718,7 @@ loop i in [0 -> 10] do
 end
 
 var int n = 0;
-loop in fs do
+loop _ in fs do
     n = n + 1;
 end
 
@@ -40729,7 +40742,7 @@ loop i in [0 -> 8] do
 end
 
 var int n = 0;
-loop in fs do
+loop _ in fs do
     n = n + 1;
 end
 
@@ -40765,7 +40778,8 @@ end
 
 escape 1;
 ]],
-    dcls = 'line 6 : variable "f" declared but not used',
+    run = 1,
+    --dcls = 'line 6 : variable "f" declared but not used',
     --stmts = 'line 7 : invalid `loop´ : expected 0 argument(s)',
 }
 
@@ -41117,7 +41131,6 @@ escape (x? as int) + 1;
 }
 Test { [[
 code/await Ff (void) -> (var& int x) -> void do
-                        // error
     var int v = 10;
     x = &v;
 end
@@ -41134,10 +41147,12 @@ end;
 
 escape (f1? as int) + 1;
 ]],
-    stmts = 'line 12 : invalid binding : argument #1 : unmatching alias `&´ declaration',
+    run = 1,
+    --stmts = 'line 12 : invalid binding : argument #1 : unmatching alias `&´ declaration',
 }
+
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
 end
@@ -41145,57 +41160,37 @@ end
 pool[] Ff ffs;
 spawn Ff() in ffs;
 
-var&? int x = do
-    var& int x_;
-    loop (x_) in ffs do
-        escape &x_;
-    end
-end;
-
-escape (x? as int) + 1;
-]],
-    stmts = 'line 12 : invalid binding : unmatching alias `&´ declaration',
-}
-Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
-    var int v = 10;
-    x = &v;
-end
-
-pool[] Ff ffs;
-spawn Ff() in ffs;
-
-var&? int x;
-loop (x) in ffs do
+var&? Ff f;
+loop f in ffs do
     break;
 end
 
-escape (x? as int) + 1;
+escape (f? as int) + 1;
 ]],
     run = 1,
 }
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
+    await FOREVER;
 end
 
 pool[] Ff ffs;
 spawn Ff() in ffs;
 
-var&? int x = do
-    var&? int x_;
-    loop (x_) in ffs do
-        escape &x_;
-    end
-end;
+var&? Ff f;
+loop f in ffs do
+    break;
+end
 
-escape (x? as int) + 1;
+escape f!.x;
 ]],
-    run = 1,
+    run = 10,
 }
+
 Test { [[
-code/await Ff (void) -> (var&? int yyy) -> void do
+code/await Ff (void) -> (var& int yyy) -> void do
     var int v = 10;
     yyy = &v;
     await 1s;
@@ -41204,17 +41199,17 @@ end
 pool[] Ff ffs;
 spawn Ff() in ffs;
 
-    var&? int xxx;
-    loop (xxx) in ffs do
+    var&? Ff f;
+    loop f in ffs do
         break;
     end
 
-escape xxx!;
+escape f!.yyy;
 ]],
     run = 10,
 }
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
     await 1s;
@@ -41223,19 +41218,19 @@ end
 pool[] Ff ffs;
 spawn Ff() in ffs;
 
-var&? int xxx = do
-    var&? int x_;
-    loop (x_) in ffs do
-        escape &x_;
+var&? Ff f1 = do
+    var&? Ff f2;
+    loop f2 in ffs do
+        escape &f2;
     end
 end;
 
-escape xxx!;
+escape f1!.x;
 ]],
     run = 10,
 }
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
     await 1s;
@@ -41244,8 +41239,8 @@ end
 pool[] Ff ffs;
 spawn Ff() in ffs;
 
-var&? int x_;
-loop (x_) in ffs do
+var&? Ff x_;
+loop x_ in ffs do
     break;
 end
 
@@ -41255,7 +41250,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
     await 1s;
@@ -41264,11 +41259,11 @@ end
 pool[] Ff ffs;
 spawn Ff() in ffs;
 
-    var&? int x_;
-    loop (x_) in ffs do
+    var&? Ff x_;
+    loop x_ in ffs do
         break;
     end
-var int ret = x_!;
+var int ret = x_!.x;
 watching x_ do
     every 100ms do
         ret = ret + 1;
@@ -41281,7 +41276,7 @@ escape ret;
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
     await 1s;
@@ -41290,13 +41285,13 @@ end
 pool[] Ff ffs;
 spawn Ff() in ffs;
 
-var&? int x = do
-    var&? int x_;
-    loop (x_) in ffs do
+var&? Ff x = do
+    var&? Ff x_;
+    loop x_ in ffs do
         escape &x_;
     end
 end;
-var int ret = x!;
+var int ret = x!.x;
 watching x do
     every 100ms do
         ret = ret + 1;
@@ -41325,11 +41320,10 @@ pool[] Ff ffs;
 spawn Ff(&ret) in ffs;
 spawn Ff(&ret) in ffs;
 
-var& int x;
-event& void e;
-loop (x,e) in ffs do
-    x = ret;
-    emit e;
+var&? Ff x;
+loop x in ffs do
+    x!.x = ret;
+    emit x!.e;
 end
 
 escape ret;
@@ -41349,36 +41343,56 @@ end
 pool[] Ff ffs;
 spawn Ff() in ffs;
 
-var& int x;
-event& void e;
-loop (x,e) in ffs do
-    emit e;
+var&? Ff x;
+loop x in ffs do
+    emit x!.e;
 end
 
 escape 1;
 ]],
-    props_ = 'line 14 : invalid declaration : expected `&?´ modifier : yielding `loop´',
+    run = 1,
+    --props_ = 'line 14 : invalid declaration : expected `&?´ modifier : yielding `loop´',
+}
+
+Test { [[
+code/await Ff (void) -> (event void eee) -> void do
+    await eee;
+end
+
+pool[] Ff ffs;
+spawn Ff() in ffs;
+
+var&? Ff fff;
+loop fff in ffs do
+    emit fff!.eee; // kill iterator (why?)
+end
+
+loop _ in ffs do
+    escape 99;  // yes (no!)
+end
+
+escape 1;
+]],
+    run = 1,
+    --run = 99,
 }
 
 Test { [[
 input void A;
 
-code/await Ff (void) -> (event&? void eee) -> void do
+code/await Ff (void) -> (event& void eee) -> void do
     event void eee_;
     eee = &eee_;
     await eee_;
 end
 
-event void g;
 pool[] Ff ffs;
 spawn Ff() in ffs;
 
-watching g do
-    event&? void fff;
-    loop (fff) in ffs do
-        emit g; // kill iterator
+    var&? Ff fff;
+    loop fff in ffs do
+        emit fff!.eee; // kill iterator
     end
-end
 
 loop _ in ffs do
     escape 99;  // yes
@@ -41386,26 +41400,8 @@ end
 
 escape 1;
 ]],
-    run = { ['~>A']=99 },
-}
-
-Test { [[
-code/await Ff (void) -> (event&? void e) -> void do
-    event void e_;
-    e = &e_;
-    await e_;
-end
-
-pool[] Ff ffs;
-
-event&? void e;
-loop (e) in ffs do
-    emit e;     // no awake!
-end
-
-escape 0;
-]],
-    stmts = 'line 11 : invalid `emit´ : unexpected `event´ with `&?´ modifier',
+    --run = { ['~>A']=99 },
+    run = { ['~>A']=1 },
 }
 
 -- valgrind fails
@@ -41417,7 +41413,7 @@ native/pos do
     int V = 0;
 end
 
-code/await Ff (void) -> (event&? void e) -> void do
+code/await Ff (void) -> (event& void e) -> void do
     event void e_;
     e = &e_;
     await e_;
@@ -41430,16 +41426,16 @@ pool[] Ff ffs;
 spawn Ff() in ffs;
 
 watching g do
-    event&? void e;
-    loop (e) in ffs do
-        emit e!; // kill 1st, but don't delete
+    var&? Ff f;
+    loop f in ffs do
+        emit f!.e; // kill 1st, but don't delete
         emit g; // kill iterator
     end
 end
 
-event&? void e;
-loop (e) in ffs do
-    emit e!;     // no awake!
+var&? Ff f;
+loop f in ffs do
+    emit f!.e;     // no awake!
     escape 99;  // nooo
 end
 
@@ -41449,7 +41445,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x, event&? void e) -> void do
+code/await Ff (void) -> (var& int x, event& void e) -> void do
     var int v = 10;
     x = &v;
     event void e_;
@@ -41462,15 +41458,13 @@ spawn Ff() in ffs;
 spawn Ff() in ffs;
 
 var int ret = 0;
-var&? int x1;
-event&? void e1;
-loop (x1,e1) in ffs do
-    emit e1!;
-    var&? int x2;
-    event&? void e2;
-    loop (x2,e2) in ffs do
-        ret = ret + x2!;
-        emit e2!;
+var&? Ff f1;
+loop f1 in ffs do
+    emit f1!.e;
+    var&? Ff f2;
+    loop f2 in ffs do
+        ret = ret + f2!.x;
+        emit f2!.e;
     end
 end
 
@@ -41479,7 +41473,7 @@ escape ret;
     run = 10,
 }
 Test { [[
-code/await Ff (void) -> (var&? int x, event&? void e) -> void do
+code/await Ff (void) -> (var& int x, event& void e) -> void do
     var int v = 10;
     x = &v;
     event void e_;
@@ -41488,30 +41482,33 @@ code/await Ff (void) -> (var&? int x, event&? void e) -> void do
 end
 
 pool[2] Ff ffs;
-var bool b1 = spawn Ff() in ffs;
-var bool b2 = spawn Ff() in ffs;
+
+var&? Ff fa = spawn Ff() in ffs;
+var&? Ff fb = spawn Ff() in ffs;
+var bool b1 = fa?;
+var bool b2 = fb?;
 
 event void g;
 
 var int ret = 0;
 watching g do
-    var&? int x1;
-    event&? void e1;
-    loop (x1,e1) in ffs do
-        emit e1!;
-        var&? int x2;
-        event&? void e2;
-        loop (x2,e2) in ffs do
-            ret = ret + x2!;
-            emit e2!;
-            ret = ret + (x2? as int) + 1;
+    var&? Ff f1;
+    loop f1 in ffs do
+        emit f1!.e;
+        var&? Ff f2;
+        loop f2 in ffs do
+            ret = ret + f2!.x;
+            emit f2!.e;
+            ret = ret + (f2? as int) + 1;
             emit g;
         end
     end
 end
 
-var bool b3 = spawn Ff() in ffs;
-var bool b4 = spawn Ff() in ffs;
+var&? Ff fc = spawn Ff() in ffs;
+var&? Ff fd = spawn Ff() in ffs;
+var bool b3 = fc?;
+var bool b4 = fd?;
 
 escape ret + (b1 as int) + (b2 as int) + (b3 as int) + (b4 as int);
 ]],
@@ -41537,13 +41534,14 @@ escape 1;
 ]],
     --inits = 'line 1 : uninitialized event "e2" : reached `emit´ (/tmp/tmp.ceu:3)',
     --inits = 'line 1 : uninitialized event "e2" : reached yielding statement (/tmp/tmp.ceu:3)',
-    inits = 'line 1 : uninitialized event "e2" : reached read access (/tmp/tmp.ceu:3)',
+    --inits = 'line 1 : uninitialized event "e2" : reached read access (/tmp/tmp.ceu:3)',
+    parser = 'line 1 : after `&´ : expected `(´ or type',
 }
 
 Test { [[
 input void A;
 
-code/await Ff (void) -> (var&? int x, event&? void e) -> void do
+code/await Ff (void) -> (var& int x, event& void e) -> void do
     var int x_ = 0;
     x = &x_;
     event void e_;
@@ -41565,17 +41563,15 @@ spawn Ff() in ffs;
 
 await A;
 
-var&? int x1;
-event&? void e1;
-loop (x1,e1) in ffs do
-    var&? int x2;
-    event&? void e2;
-    loop (x2,e2) in ffs do
-        if e1? then
-            emit e1!;
+var&? Ff f1;
+loop f1 in ffs do
+    var&? Ff f2;
+    loop f2 in ffs do
+        if f1? then
+            emit f1!.e;
         end
-        if e2? then
-            emit e2!;
+        if f2? then
+            emit f2!.e;
         end
     end
 end
@@ -41586,7 +41582,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x, event&? int e) -> void do
+code/await Ff (void) -> (var& int x, event& int e) -> void do
     var int v = 10;
     x = &v;
 
@@ -41600,20 +41596,17 @@ end
 
 pool[] Ff ffs;
 
-var&?   int x;
-event&? int e;
-
-spawn Ff() -> (&x,&e) in ffs;
+var&? Ff f = spawn Ff() in ffs;
 
 var int ret = 0;
 
 par/and do
-    await e;
+    await f!.e;
 with
-    await x;
+    await f;
 with
-    emit e!(20);
-    ret = x!;
+    emit f!.e(20);
+    ret = f!.x;
 end
 
 escape ret;
@@ -41623,7 +41616,7 @@ escape ret;
 
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
     await async do end
@@ -41631,9 +41624,8 @@ end
 
 pool[] Ff ffs;
 
-var&? int x;
-spawn Ff() -> (&x) in ffs;
-escape x!;
+var&? Ff f = spawn Ff() in ffs;
+escape f!.x;
 ]],
     run = 10,
 }
@@ -41645,7 +41637,7 @@ native/pos do
     int V = 0;
 end
 
-code/await Bird (void) -> (event&? void e) -> FOREVER
+code/await Bird (void) -> (event& void e) -> FOREVER
 do
     event void e_;
     e = &e_;
@@ -41663,14 +41655,13 @@ spawn Bird() in birds;
 
 await async do end;
 
-event&? void e;
-loop (e) in birds do
+loop _ in birds do
 end
 
-event&? void e;
-loop (e) in birds do
+var&? Bird f;
+loop f in birds do
     _V = _V + 1;
-    emit e!;
+    emit f!.e;
 end
 
 escape _V;
@@ -41686,7 +41677,7 @@ native/pos do
     int V = 0;
 end
 
-code/await Bird (void) -> (event&? void e) -> void
+code/await Bird (void) -> (event& void e) -> void
 do
     event void e_;
     e = &e_;
@@ -41703,15 +41694,15 @@ spawn Bird() in birds;
 spawn Bird() in birds;
 spawn Bird() in birds_;
 
-event&? void e1;
+var&? Bird f1;
 var int i = 0;
-loop (e1) in birds do
-    event&? void e2;
+loop f1 in birds do
+    var&? Bird f2;
     var int j = 0;
-    loop (e2) in birds do
+    loop f2 in birds do
         if (i==1 and j==2) then
             _V = _V + 1;
-            emit e2!;
+            emit f2!.e;
         end
         j = j + 1;
     end
@@ -41749,21 +41740,21 @@ spawn Cloud() in clouds;
 code/await Collides (void) -> void do end
 
 code/await Collisions (void) -> void do
-    var& Ii cloud1;
-    loop (cloud1) in outer.clouds do
-        var& Ii cloud2;
-        loop (cloud2) in outer.clouds do
-            _V = _f(&&cloud1);
+    var&? Cloud cloud1;
+    loop cloud1 in outer.clouds do
+        var&? Cloud cloud2;
+        loop cloud2 in outer.clouds do
+            _V = _f(&&cloud1!.i);
             spawn Collides();
-            _ceu_dbg_assert(_V == &&cloud1);
+            _ceu_dbg_assert(_V == &&cloud1!.i);
         end
     end
 end
 await Collisions();
 escape 1;
 ]],
-    --run = 1,
-    props_ = 'line 29 : invalid `await´ : unexpected enclosing `loop´',
+    run = 1,
+    --props_ = 'line 29 : invalid `await´ : unexpected enclosing `loop´',
 }
 
 Test { [[
@@ -41795,23 +41786,13 @@ await FOREVER;
 --||| TODO: POOL ITERATORS
 
 Test { [[
-loop (Tx&&)t in ts do
-    ret = ret + t:v;
-end
-escape (ok1?) + ok2 + ret;
-]],
-    --parser = 'line 11 : after `loop´ : expected internal identifier or `do´',
-    parser = 'line 1 : after `(´ : expected internal identifier or `_´',
-    --fin = 'line 14 : pointer access across `await´',
-    --run = 1,
-}
-
-Test { [[
 code/await Tx (void) -> void do end
 var bool ok1 = spawn Tx();
-escape 0;
+escape 1;
 ]],
-    parser = 'line 2 : after `)´ : expected `->´ or `in´',
+    --run = 1,
+    --parser = 'line 2 : after `)´ : expected `->´ or `in´',
+    stmts = 'line 2 : invalid constructor : types mismatch : "bool" <= "Tx"',
 }
 Test { [[
 code/await Tx (void) -> void do end
@@ -41835,7 +41816,8 @@ pool[1] Tx ts;
 var int ok1 = spawn Tx() in ts;
 escape 0;
 ]],
-    stmts = 'line 3 : invalid constructor : expected `bool´ destination',
+    --stmts = 'line 3 : invalid constructor : expected `bool´ destination',
+    stmts = 'line 3 : invalid constructor : types mismatch : "int" <= "Tx"',
 }
 
 Test { [[
@@ -41878,9 +41860,9 @@ pool[] Tx ts;
 spawn Tx(10) in ts;
 spawn Tx(20);
 var int ret = 0;
-var& int v;
-loop (v) in ts do
-    ret = ret + v;
+var&? Tx v;
+loop v in ts do
+    ret = ret + v!.v2;
 end
 escape ret + _V;
 ]],
@@ -41902,9 +41884,9 @@ pool[] Tx ts;
 spawn Tx(10);
 spawn Tx(20) in ts;
 var int ret = 0;
-var& int v;
-loop (v) in ts do
-    ret = ret + v;
+var&? Tx v;
+loop v in ts do
+    ret = ret + v!.v2;
 end
 escape ret + _V;
 ]],
@@ -41963,9 +41945,9 @@ pool[] Tx ts;
 spawn Tx(10) in ts;
 spawn Tx(20) in ts;
 var int ret = 0;
-var& int v;
-loop (v) in ts do
-    ret = ret + v;
+var&? Tx v;
+loop v in ts do
+    ret = ret + v!.v2;
 end
 escape ret + _V;
 ]],
@@ -42000,29 +41982,29 @@ escape 1;
 -->> POOL/SPAWN/OPTION
 
 Test { [[
-code/await Tx (var int v1)->(var&? int v2)->void do
+code/await Tx (var int v1)->(var& int v2)->void do
     var int x = v1;
     v2 = &x;
 end
 
-var&? int v;
-spawn Tx(10) -> (&v);
-escape v!;
+var&? Tx v;
+v = spawn Tx(10);;
+escape v!.v2;
 ]],
     --asr = '7] runtime error: invalid tag',
     run = '8] runtime error: value is not set',
 }
 
 Test { [[
-code/await Tx (var int v1)->(var&? int v2)->void do
+code/await Tx (var int v1)->(var& int v2)->void do
     var int x = v1;
     v2 = &x;
 end
 
-var&? int v;
-spawn Tx(10) -> (&v);
+var&? Tx v;
+v = spawn Tx(10);
 await async do end
-escape v!;
+escape v!.v2;
 ]],
     --asr = '7] runtime error: invalid tag',
     run = '9] runtime error: value is not set',
@@ -42033,7 +42015,7 @@ data Dd with
     var int v = 10;
 end
 
-code/await Ff (void) -> (var&? Dd d) -> FOREVER do
+code/await Ff (void) -> (var& Dd d) -> FOREVER do
     var Dd d_ = val Dd(_);
     d = &d_;
     await FOREVER;
@@ -42046,9 +42028,9 @@ var int ret = 0;
 
 watching 10s do
     every 1s do
-        var&? Dd d;
-        loop (d) in fs do
-            ret = ret + d.v;
+        var&? Ff d;
+        loop d in fs do
+            ret = ret + d.d.v;
         end
     end
 end
@@ -42059,14 +42041,16 @@ escape ret;
     exps = 'line 20 : invalid operand to `.´ : unexpected option alias',
 }
 
+--]=====]
 Test { [[
 data Dd with
     var int v = 10;
 end
 
-code/await Ff (void) -> (var&? Dd d) -> FOREVER do
+code/await Ff (void) -> (var& Dd d) -> FOREVER do
     var Dd d_ = val Dd(_);
     d = &d_;
+{printf("<<< %d\n", @(d_.v));}
     await FOREVER;
 end
 
@@ -42077,9 +42061,10 @@ var int ret = 0;
 
 watching 10s do
     every 1s do
-        var&? Dd d;
-        loop (d) in fs do
-            ret = ret + d!.v;
+        var&? Ff f;
+        loop f in fs do
+            ret = ret + f!.d.v;
+{printf(">>> %d\n", @(f!.d.v));}
         end
     end
 end

@@ -37,6 +37,15 @@ error'await_alias'
         me.lbl = new{'Await_Alias'}
     end,
 
+    Set_Alias = function (me)
+        local _, to = unpack(me)
+        if to.info.tag=='Var' and TYPES.abs_dcl(to.info.tp,'Code') then
+            local alias = unpack(to.info.dcl)
+            assert(alias == '&?')
+            me.lbl = new{'Set_Alias__CLR'}
+        end
+    end,
+
     Loop_Pool = function (me)
         F.Loop(me)
         me.lbl_clr  = new{'Loop_Pool__CLR'}

@@ -41,17 +41,12 @@ PROPS_.F = {
                     -- ok
                 else
                     local paror = AST.par(me,'Par_Or')
-                    ASR(paror and paror.__props_ok or me.__props_ok, me,
+                    ASR(paror and paror.__spawns,
                         'invalid `'..AST.tag2id[me.tag]..
                         '´ : unexpected enclosing `'..AST.tag2id[par.tag]..'´')
                 end
             end
         end
-    end,
-
-    Await_Alias = function (me)
-error'await_alias'
-        AST.asr(AST.par(me,'Par_Or'),'').__props_ok = true
     end,
 
     --------------------------------------------------------------------------

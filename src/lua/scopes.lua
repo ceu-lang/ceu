@@ -172,15 +172,7 @@ error'oi'
                     end
                 end
             end
--- TODO-remove
---[[
-            if to.info.dcl[1] == '&?' then
-                ok = true
-                to.info.dcl.is_local_set_alias = true
-                fr.info.dcl.blk.needs_clear = true
-                assert(AST.par(to.info.dcl,'Code') == AST.par(fr.info.dcl,'Code'), 'not implemented')
-            end
-]]
+            ok = ok or (to.info.dcl[1]=='&?')
             ASR(ok, me, 'invalid binding : incompatible scopes')
         end
     end,

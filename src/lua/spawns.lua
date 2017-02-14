@@ -29,12 +29,15 @@ SPAWNS.G = {
             par_stmts[i] = nil
         end
 
-        return node('Par_Or', spawn.ln,
+        local ret =
+            node('Par_Or', spawn.ln,
                 node('Stmts', spawn.ln,
                     spawn,
                     node('Await_Forever', spawn.ln)),
                 node('Stmts', spawn.ln,
                     unpack(cnt_stmts)))
+        ret.__spawns = true
+        return ret
     end,
 
     _Spawn_Block__PRE = function (me)
@@ -70,26 +73,21 @@ SPAWNS.G = {
     end,
 
 -- TODO: var&? Ff f1 = &f2;
---[[
-    Var__PRE = function (me)
+    Set_Alias__PRE = function (me)
         if me.__spawns_ok then
             return
         else
             me.__spawns_ok = true
         end
 
-        local alias, tp, id = unpack(me)
-        if alias == '&?' and (tp[1].tag~='ID_nat' or tp[2]~=nil) then
-                             -- TODO: TYPES.is_nat
-            return SPAWNS.G._SPAWN(me.__par, me.__i,
-                    node('Stmts', me.ln,
-                        me,
-                        AST.node('Await_Int', me.ln,
-                            AST.node('ID_int', me.ln, id))))
-
+        local fr, to = unpack(me)
+        if to.info.tag=='Var' and TYPES.abs_dcl(to.info.tp,'Code') then
+            local alias = unpack(to.info.dcl)
+            if alias == '&?' then
+                return SPAWNS.G._SPAWN(me.__par, me.__i, me)
+            end
         end
     end,
-]]
 
     Pool__PRE = function (me)
         if me.__spawns_ok then

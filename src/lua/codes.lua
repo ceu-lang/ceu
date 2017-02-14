@@ -1088,6 +1088,14 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
                 LINE(me, [[
 ]]..V(to)..' = '..V(fr)..[[;
 ]])
+                HALT(me, {
+                    { ['evt.id']  = 'CEU_INPUT__CODE_TERMINATED' },
+                    { ['evt.mem'] = '(tceu_code_mem*)'..V(to) },
+                    { lbl = me.lbl.id },
+                    lbl = me.lbl.id,
+                })
+                SET(me, to, 'NULL', true)
+                HALT(me)
             else
 error'oi'
                 local trails = fr.info.dcl.blk.trails
@@ -1100,16 +1108,6 @@ error'oi'
                     LINE(me, [[
 ]]..V(to)..[[ = (tceu_opt_alias)
     { ]]..V(fr)..[[, {}, {_ceu_mem,]]..trails[1]..','..trails[2]..[[} };
-]])
-                end
-            end
-            if not AST.par(to.info.dcl, 'Code_Pars') then
-                if to.info.dcl.is_local_set_alias then
-error'oi'
-                    local trails = to.info.dcl.trails
-                    LINE(me, [[
-_ceu_mem->_trails[]]..trails[1]..[[].evt.id = CEU_INPUT__CLEAR;
-_ceu_mem->_trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
 ]])
                 end
             end

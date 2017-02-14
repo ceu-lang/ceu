@@ -78,7 +78,12 @@ local function run_inits (par, i, Dcl, stop, dont_await)
             end
         end
 
-    elseif AST.get(me,'Par_Or', 1,'Stmts', 1,'Finalize') then
+    elseif me.__spawns and (AST.get(me,'Par_Or', 1,'Stmts', 1,'Finalize')  or
+                            AST.get(me,'Par_Or', 1,'Stmts', 1,'Set_Alias') or
+                            AST.get(me,'Par_Or', 1,'Stmts', 1,'Set_Abs_Spawn'))
+    then
+        -- f = spawn Ff();
+        -- f1 = &f2
         local s1, s2 = unpack(me)
         local ok1,stmt1 = run_inits(s1, 1, Dcl, s1, dont_await)
         if ok1 then
@@ -86,19 +91,12 @@ local function run_inits (par, i, Dcl, stop, dont_await)
         end
         return run_inits(s2, 1, Dcl, stop, dont_await)
 
-    elseif AST.get(me,'Par_Or', 1,'Stmts', 1,'Abs_Spawn') or is_last_watching then
+    elseif (me.__spawns and AST.get(me,'Par_Or', 1,'Stmts', 1,'Abs_Spawn'))
+            or is_last_watching
+    then
         -- spawn Ff();
         -- do ... watching f do ... end end
         local s1, s2 = unpack(me)
-        return run_inits(s2, 1, Dcl, stop, dont_await)
-
-    elseif AST.get(me,'Par_Or', 1,'Stmts', 1,'Set_Abs_Spawn') then
-        -- f = spawn Ff();
-        local s1, s2 = unpack(me)
-        local ok1,stmt1 = run_inits(s1, 1, Dcl, s1, dont_await)
-        if ok1 then
-            return true, me
-        end
         return run_inits(s2, 1, Dcl, stop, dont_await)
 
     elseif me.tag=='If' or me.tag=='Par_Or' or me.tag=='Par_And' or me.tag=='Par' then
