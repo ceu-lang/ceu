@@ -34865,7 +34865,7 @@ end
 escape 0;
 ]],
     --props_ = 'line 4 : invalid `await´ : unexpected enclosing `every´',
-    --props_ = 'line 4 : invalid `spawn´ : unexpected enclosing `every´',
+    props_ = 'line 4 : invalid `spawn´ : unexpected enclosing `every´',
     run = { ['~>1s']=1 },
 }
 
@@ -41754,8 +41754,8 @@ end
 await Collisions();
 escape 1;
 ]],
-    run = 1,
-    --props_ = 'line 29 : invalid `await´ : unexpected enclosing `loop´',
+    --run = 1,
+    props_ = 'line 29 : invalid `spawn´ : unexpected enclosing `loop´',
 }
 
 Test { [[
@@ -44241,7 +44241,8 @@ end
 
 var Dd d = val Dd(10);
 
-var Dd? d1, d2;
+var Dd? d1;
+var Dd? d2;
 
 d2 = d;
 
@@ -44767,7 +44768,9 @@ escape 1;
 
 Test { [[
 data Vector3f with
-    var float x, y, z;
+    var float x;
+    var float y;
+    var float z;
 end
 
 class SurfaceBackground with
@@ -44818,13 +44821,14 @@ data Vx with
 end
 
 var& Vx v1 = val Vx(1);
-var& Vx v2, v3;
+var& Vx v2;
+var& Vx v3;
     v2 = val Vx(2);
     v3 = val Vx(3);
 escape v1.v+v2.v+v3.v;
 ]],
-    inits = 'line 5 : invalid binding : unexpected statement in the right side',
-    --inits = 'line 5 : invalid binding : expected operator `&´ in the right side',
+    --inits = 'line 5 : invalid binding : unexpected statement in the right side',
+    inits = 'line 5 : invalid binding : expected operator `&´ in the right side',
     --ref = 'line 5 : invalid attribution : missing alias operator `&´',
     --run = 6,
 }
@@ -44836,7 +44840,8 @@ end
 
 var Vx v1_ = val Vx(1);
 var& Vx v1 = &v1_;
-var& Vx v2, v3;
+var& Vx v2;
+var& Vx v3;
 do
     var Vx v2_ = val Vx(2);
     v2 = &v2_;
@@ -44847,7 +44852,7 @@ do
 end
 escape v1.v+v2.v+v3.v;
 ]],
-    scopes = 'line 10 : invalid binding : incompatible scopes',
+    scopes = 'line 11 : invalid binding : incompatible scopes',
     --inits = 'line 7 : uninitialized variable "v2" crossing compound statement (/tmp/tmp.ceu:8)',
     --ref = 'line 10 : attribution to reference with greater scope',
     --ref = 'line 10 : invalid attribution : variable "v2_" has narrower scope than its destination',
@@ -45069,7 +45074,7 @@ escape *dd.x;
 
 ]],
     --inits = 'line 8 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:7)',
-    inits = 'line 8 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:7)',
+    ptrs = 'line 8 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:7)',
     --run = { ['~>1s']=1 },
 }
 
@@ -45088,7 +45093,7 @@ escape *ee.dd.x;
 
 ]],
     --inits = 'line 11 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:10)',
-    inits = 'line 11 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:10)',
+    ptrs = 'line 11 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:10)',
     --run = { ['~>1s']=1 },
 }
 
@@ -45214,9 +45219,9 @@ code/await Points (void) -> (var& IPoints me) -> void do
     me = &me_;
 end
 
-var& IPoints points;
-watching Points() -> (&points) do
-    emit points.inc;
+var&? Points points = spawn Points();
+watching points do
+    emit points!.me.inc;
 end
 
 escape 1;
@@ -45724,8 +45729,8 @@ end
 var Dd ddd = _;
 escape ddd.x;
 ]],
-    inits = 'line 5 : uninitialized variable "ddd"',
-    --run = 10,
+    --inits = 'line 5 : uninitialized variable "ddd"',
+    run = 10,
 }
 
 Test { [[
@@ -45934,7 +45939,7 @@ Test { [[
 data Object with
   var int c = 101;
 end
-code/await Show(var Object obj) -> (var&? int ret) -> int do
+code/await Show(var Object obj) -> (var& int ret) -> int do
     var int a = obj.c;
     ret = &a;
     escape a;
@@ -45955,9 +45960,9 @@ code/await Show(var Object obj) -> (var& int ret) -> FOREVER do
     await FOREVER;
 end
 
-var& int r;
-spawn Show(Object(1)) -> (&r); // prints 0
-escape r;
+var&? Show s;
+s = spawn Show(Object(1)); // prints 0
+escape s!.ret;
 ]],
     run = 1,
 }
@@ -46006,37 +46011,38 @@ Test { [[
 data Object with
   var int ccc = 101;
 end
-code/await Show(var Object obj) -> (var&? int rrr) -> int do
+code/await Show(var Object obj) -> (var& int rrr) -> int do
     var int aaa = obj.ccc;
     rrr = &aaa;
     await 1s;
     escape 1;
 end
 
-var&? int r;
-spawn Show(Object(_)) -> (&r);
-var& int rr = &r!;                  // TODO: should not allow this
+var&? Show s =
+spawn Show(Object(_));
+var& int rr = &s!.rrr;                  // TODO: should not allow this
 await 2s;
 escape rr;
 ]],
+    scopes = 'line 13 : invalid binding : unexpected source with `&?´ : destination may outlive source',
     --wrn = true,
-    run = { ['~>2s']=101 },
+    --run = { ['~>2s']=101 },
 }
 
 Test { [[
 data Object with
   var int ccc = 101;
 end
-code/await Show(var Object obj) -> (var&? int rrr) -> int do
+code/await Show(var Object obj) -> (var& int rrr) -> int do
     var int aaa = obj.ccc;
     rrr = &aaa;
     await 1s;
     escape 1;
 end
 
-var&? int r;
-spawn Show(Object(_)) -> (&r);
-escape r!;
+var&? Show s =
+spawn Show(Object(_));
+escape s!.rrr;
 ]],
     --wrn = true,
     run = 101,
@@ -46051,9 +46057,9 @@ code/await Show(var Object obj) -> (var& int ret) -> FOREVER do
     await FOREVER;
 end
 
-var& int r;
-spawn Show(_) -> (&r); // prints 0
-escape r;
+var&? Show s =
+spawn Show(_); // prints 0
+escape s!.ret;
 ]],
     --wrn = true,
     run = 101,
@@ -46082,8 +46088,8 @@ end
 var Aa.Bb b = _;
 escape b.b;
 ]],
-    inits = 'line 7 : uninitialized variable "b"',
-    --run = 20,
+    --inits = 'line 7 : uninitialized variable "b"',
+    run = 20,
 }
 
 --<< DATA / DEFAULT / CONSTRUCTOR
@@ -46629,7 +46635,7 @@ end
 escape 1;
 ]],
     --inits = 'line 3 : invalid pointer access : crossed `async/thread´ (/tmp/tmp.ceu:3)',
-    inits = 'line 3 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:3)',
+    ptrs = 'line 3 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:3)',
     --fin = 'line 3 : unsafe access to pointer "p" across `async/thread´',
     _opts = { ceu_features_thread='true' },
 }
@@ -47772,7 +47778,7 @@ await 1s;
 
 escape ret;
 ]],
-    props_ = 'line 11 : invalid `await´ : unexpected enclosing `finalize´',
+    props_ = 'line 11 : invalid `spawn´ : unexpected enclosing `finalize´',
 }
 
 Test { [[
@@ -48268,7 +48274,7 @@ var int&& v = null;
     end
     await FOREVER;
 ]],
-    inits = 'line 22 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:21)',
+    ptrs = 'line 22 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:21)',
     --isr = 'line 4 : pointer access breaks the static check for `atomic´ sections',
     --run = 1,
     _opts = { ceu_features_isr='true' },
@@ -48285,7 +48291,7 @@ with
 end
 escape 1;
 ]],
-    inits = 'line 23 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:22)',
+    ptrs = 'line 23 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:22)',
     --inits = 'line 22 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:21)',
     --inits = 'line 23 : invalid pointer access : crossed `par/or´ (/tmp/tmp.ceu:22)',
     --isr = 'line 4 : pointer access breaks the static check for `atomic´ sections',
@@ -48797,8 +48803,8 @@ x = 1;
 escape x;
 ]],
     wrn = true,
-    --inits = 'line 1 : uninitialized variable "x" : reached `code´ (/tmp/tmp.ceu:2)',
-    inits = 'line 1 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "x" : reached end of `code´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:2)',
 }
 
 Test { [[

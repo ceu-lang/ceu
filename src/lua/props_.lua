@@ -36,14 +36,23 @@ PROPS_.F = {
                     elseif me.tag == 'Finalize' then
                         return -- ok (empty finalizer)
                     end
+                elseif par.tag == 'Loop_Pool' then
+                    if me.tag == 'Await_Forever' then
+                        local paror = AST.get(me,2,'Par_Or')
+                        if paror and paror.__spawns and
+                            AST.get(paror,'',1,'Stmts',1,'Set_Alias') and
+                            AST.get(paror,'',1,'Stmts',2,'')==me
+                        then
+                            return
+                        end
+                    elseif me.tag=='Par_Or' and me.__spawns then
+                            return
+                    end
                 end
                 if AST.get(par,'Finalize',3,'Par') == me then
                     -- ok
                 else
-                    local paror = AST.par(me,'Par_Or')
-                    ASR(paror and paror.__spawns and AST.depth(paror)>AST.depth(par)
-                            or me.__spawns,
-                        me,
+                    ASR(false, me,
                         'invalid `'..AST.tag2id[me.tag]..
                         '´ : unexpected enclosing `'..AST.tag2id[par.tag]..'´')
                 end
