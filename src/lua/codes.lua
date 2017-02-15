@@ -397,8 +397,6 @@ ceu_callback_assert_msg(0, "reached end of `code´");
 
         -- CODE/DELAYED
         if mods.await then
--- TODO-remove
-CLEAR(me) -- TODO-NOW
             LINE(me, [[
     tceu_evt_occ __ceu_occ = {
         { CEU_INPUT__CODE_TERMINATED, {_ceu_mem} },
