@@ -344,7 +344,6 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 -->>> OK
 
     , Y = C''     -- yielding point
-    , A = C''     -- yielding point
 
     , __seqs = KK';' * KK(';',true)^0     -- "true": ignore as "expected"
     , Nothing = K'nothing'
@@ -431,12 +430,12 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
 -- ASYNCHRONOUS
 
-    , Async        = K'await' * K'async' * (-P'/thread'-'/isr') * V'A' *
+    , Async        = K'await' * K'async' * (-P'/thread'-'/isr') * V'Y' *
                         OPT(PARENS(V'List_Var')) * V'__Do'
-    , Async_Thread = K'await' * K'async/thread' * V'A' *
+    , Async_Thread = K'await' * K'async/thread' * V'Y' *
                         OPT(PARENS(V'List_Var')) * V'__Do'
     , _Async_Isr   = K'spawn' * K'async/isr' * KK'[' * V'List_Exp' * KK']' *
-                        OPT(PARENS(V'List_Var')) * V'A' *
+                        OPT(PARENS(V'List_Var')) * V'Y' *
                      V'__Do'
     , Atomic  = K'atomic' * V'__Do'
 
@@ -459,8 +458,8 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                         OPT(V'Code_Pars_Stmts' * KK'->') *
                             V'Code_Ret'
 
-    , _Code_proto = V'A' * V'__code' * Cc(false)
-    , _Code_impl  = V'A' * V'__code' * V'__Do' * V'Y'
+    , _Code_proto = V'Y' * V'__code' * Cc(false)
+    , _Code_impl  = V'Y' * V'__code' * V'__Do' * V'Y'
 
     , _Spawn_Block = K'spawn' * OPT(PARENS(V'List_Var'+Cc(true))) * V'__Do'
 
@@ -553,13 +552,13 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     , Await_Until  = (V'Await_Ext' + V'Await_Int') * OPT(K'until'*V'__Exp')
 
-    , Await_Ext    = V'ID_ext'   * V'A' -I(V'_Abs_Await')            -- TODO: rem
-    , Await_Int    = V'Loc' * V'A' -I(V'Await_Wclock'+V'_Abs_Await') -- TODO: rem
-    , Await_Wclock = (V'WCLOCKK' + V'WCLOCKE') * V'A'
+    , Await_Ext    = V'ID_ext'   * V'Y' -I(V'_Abs_Await')            -- TODO: rem
+    , Await_Int    = V'Loc' * V'Y' -I(V'Await_Wclock'+V'_Abs_Await') -- TODO: rem
+    , Await_Wclock = (V'WCLOCKK' + V'WCLOCKE') * V'Y'
 
-    , Await_Forever = K'await' * K'FOREVER' * V'A'
-    , Await_Pause   = K'await' * K'pause'   * V'A'
-    , Await_Resume  = K'await' * K'resume'  * V'A'
+    , Await_Forever = K'await' * K'FOREVER' * V'Y'
+    , Await_Pause   = K'await' * K'pause'   * V'Y'
+    , Await_Resume  = K'await' * K'resume'  * V'Y'
 
     , _Emit_ps = OPT(V'__Exp' + PARENS(OPT(V'List_Exp')))
     , Emit_Wclock   = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
@@ -602,7 +601,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , _Abs_Call = K'call' * V'__abs_mods' * (V'Abs_Cons' -I(V'__id_data')) * OPT(KK'in' * V'Loc')
     , Abs_Val    = CK'val' * V'Abs_Cons'
     , Abs_New    = CK'new' * V'Abs_Cons'
-    , _Abs_Await = V'__Abs_Cons_Code' * V'A'
+    , _Abs_Await = V'__Abs_Cons_Code' * V'Y'
         -- TODO: "await Abs_Await" should not accept "-> (...)"
         --       but "watching Abs_Await" does
 

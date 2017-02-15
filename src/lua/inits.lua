@@ -42,7 +42,7 @@ local function run_inits (par, i, Dcl, stop, dont_await)
         end
     end
 
-    if dont_await and (me.tag=='A' or me.tag=='Y') then
+    if dont_await and me.tag=='Y' then
         err_inits(Dcl, me, 'yielding statement')
 
     elseif me.tag == 'Escape' then
