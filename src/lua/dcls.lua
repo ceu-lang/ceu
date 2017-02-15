@@ -839,7 +839,9 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         local blk do
             local obj = AST.get(me,2,'Abs_Call', 2,'Loc')
             if obj then
-                local Code = TYPES.abs_dcl(AST.asr(obj.dcl,'Var', 2,'Type'), 'Code')
+                local tp = AST.get(obj.dcl,'Var', 2,'Type')
+                ASR(tp, me, 'invalid `call´')
+                local Code = TYPES.abs_dcl(tp, 'Code')
                 blk = AST.asr(Code,'Code', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 2,'Block')
             else
                 blk = AST.par(me,'Block')

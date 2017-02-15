@@ -45,6 +45,30 @@ escape x1+x2;
 var/nohold int x;
 var/dynamic int x;
 
+-- TODO: warning shadow
+Test { [[
+var int x = do()
+    var bool x = false;
+    escape 10;
+end;
+escape x;
+]],
+    run = 10,
+}
+
+-- TODO: warning shadow
+Test { [[
+var int x = do()
+    code/await Ff (void) -> void do end
+    var&? Ff x;
+    escape 10;
+end;
+escape x;
+]],
+    wrn = true,
+    run = 10,
+}
+
 do return end -- OK
 --]=====]
 
@@ -32144,6 +32168,19 @@ escape a;
     run = { ['~>1s']=20 },
 }
 
+Test { [[
+native/nohold _S, _F, _f;
+code/await Surface_from_desc (var _S desc) -> FOREVER
+do
+    var&? _F f = &_f(desc) finalize (f) with end;
+    await FOREVER;
+end
+]],
+    wrn = true,
+    cc = '4:57: error: implicit declaration of function ‘f’',
+    --run = 1,
+}
+
 --<< OPTION / NATIVE / FINALIZE
 
 --<< OPTION / NATIVE
@@ -42315,6 +42352,21 @@ escape 0;
     scopes = 'line 8 : invalid binding : unexpected source with `&?´ : destination may outlive source',
 }
 
+Test { [[
+code/tight Ff (var& int x) -> int do
+    escape x + 1;
+end
+code/await Gg (void) -> (var int x) -> FOREVER do
+    x = 10;
+    await FOREVER;
+end
+var&? Gg g = spawn Gg();
+var int ret = call Ff(&g!.x);
+escape ret;
+]],
+    run = 11,
+}
+
 -- group of tests fails w/o sudden death check while traversing children
 Test { [[
 native _V;
@@ -49155,6 +49207,21 @@ escape ret;
 ]],
     wrn = true,     -- TODO
     run = 3,
+}
+
+Test { [[
+code/await Ff (void) -> void do
+    code/tight Gg (void) -> void do end
+end
+pool[] Ff fs;
+var&? Ff f;
+loop f in fs do
+    call Gg() in fs;
+end
+escape 1;
+]],
+    wrn = true,
+    dcls = 'line 7 : invalid `call´',
 }
 
 Test { [[

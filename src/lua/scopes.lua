@@ -125,7 +125,7 @@ F = {
             blk.needs_clear = true
 
             if fin.__fin_vars then
-                ASR(blk == fin.__fin_vars.blk, me,
+                ASR(check_blk(blk,fin.__fin_vars.blk), me,
                     'invalid `finalize´ : incompatible scopes')
                 fin.__fin_vars[#fin.__fin_vars+1] = assert(to.info.dcl)
             else
@@ -140,7 +140,11 @@ F = {
 
     ['Exp_.'] = function (me)
         -- NO: x = &f!.*            // f may die (unless surrounded by "watching f")
-        if AST.par(me,'Exp_1&') and me.info.dcl_obj.orig[1]=='&?' then
+        if AST.par(me,'Exp_1&') and me.info.dcl_obj and me.info.dcl_obj.orig and me.info.dcl_obj.orig[1]=='&?' then
+            if AST.par(me, 'Abs_Call') then
+                return      -- call Ff(&obj!.x)
+            end
+
             local to do
                 local set = AST.par(me, 'Set_Alias')
                 if set then
@@ -154,19 +158,22 @@ F = {
                                    or AST.get(watch,'', 1,'Par_Or', 1,'Block', 1,'Stmts', 1,'Set_Await_many',1,'Await_Int', 1,'')
                 if awt and awt.info.dcl==me.info.dcl_obj.orig then
                     -- watching.depth < to.dcl.blk.depth
-                    if to and AST.get(to.info.dcl.blk,6,'Code') then
-                        -- ok: allow mid destination binding even outliving source
-                        -- TODO: check it is not accessed outside the watching
-                        ok = true
-                    else
-                        ok = check_blk(to.info.dcl.blk, watch)
-                        ASR(ok, me, 'invalid binding : incompatible scopes')
+                    if to then
+                        if AST.get(to.info.dcl.blk,6,'Code') then
+                            -- ok: allow mid destination binding even outliving source
+                            -- TODO: check it is not accessed outside the watching
+                            ok = true
+                        else
+                            ok = check_blk(to.info.dcl.blk, watch)
+                            ASR(ok, me, 'invalid binding : incompatible scopes')
+                        end
+                        break
                     end
-                    break
                 end
                 watch = AST.par(watch, 'Watching')
             end
-            ASR(ok, me, 'invalid binding : unexpected source with `&?´ : destination may outlive source')
+            ASR(ok, me,
+                'invalid binding : unexpected source with `&?´ : destination may outlive source')
         end
     end,
 
