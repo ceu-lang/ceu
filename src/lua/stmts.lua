@@ -146,14 +146,6 @@ STMTS.F = {
             ASR(alias == '&?', me, 'invalid binding : expected `spawn´')
         end
 
--- TODO-remove
---[[
-        if to.__dcls_is_escape then
-error'oi'
-            ASR(to.info.dcl[1] == '&?', to, 'invalid binding : expected `&?´ modifier')
-        end
-]]
-
         -- tp
 
         EXPS.check_tp(me, to.info.tp, fr.info.tp, 'invalid binding', true)

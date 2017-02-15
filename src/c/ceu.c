@@ -126,12 +126,6 @@ typedef struct tceu_pool_pak {
     tceu_ntrl         up_trl;
 } tceu_pool_pak;
 
-typedef struct tceu_opt_alias {
-    void*          alias;
-    tceu_evt       evt;     /* TODO: alias points to copied evt (extra space) */
-    tceu_evt_range range;
-} tceu_opt_alias;
-
 static tceu_evt* CEU_OPTION_EVT (tceu_evt* alias, const char* file, int line) {
     ceu_callback_assert_msg_ex(alias != NULL, "value is not set", file, line);
     return alias;

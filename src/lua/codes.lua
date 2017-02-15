@@ -310,37 +310,6 @@ ceu_dbg_assert(]]..V(ID_int,ctx)..[[.pool.queue == NULL);
 }
 ]])
     end,
---[=[
-    Await_Alias = function (me)
-        local dcl = AST.ns[unpack(me)]
-        -- HACK_4
-        LINE(me, [[
-]]..V(dcl)..[[.alias = NULL;
-_ceu_mem->_trails[]]..me.trails[1]..[[].lbl = ]]..me.lbl.id..[[;
-/* do not enter from outside */
-if (0)
-{
-]])
-        CASE(me, me.lbl)
-        LINE(me, [[
-    ]]..V(dcl)..[[.alias = NULL;   /* set it to null when alias goes out of scope */
-    return;
-}
-]])
-    end,
-]=]
-
-    List_Var = function (me)
-        for _,ID_int in ipairs(me) do
-            if ID_int.tag~='ID_any' and ID_int.dcl[1]=='&?' then
-                -- HACK_4
-                LINE(me, [[
-_ceu_mem->_trails[]]..ID_int.dcl.trails[1]..[[].evt.id = CEU_INPUT__NONE;
-]]..V(ID_int.dcl)..[[.range.mem = (tceu_code_mem*) &_ceu_mem->_trails[]]..ID_int.dcl.trails[1]..[[];
-]])
-            end
-        end
-    end,
 
     ---------------------------------------------------------------------------
 
@@ -1084,33 +1053,18 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
 
         local alias, tp = unpack(to.info.dcl)
         if (alias == '&?') and (not (to.info.dcl.tag=='Var' and TYPES.is_nat(tp))) then
-            if fr.info.dcl[1] == '&?' then
-                LINE(me, [[
+            assert(fr.info.dcl[1] == '&?')
+            LINE(me, [[
 ]]..V(to)..' = '..V(fr)..[[;
 ]])
-                HALT(me, {
-                    { ['evt.id']  = 'CEU_INPUT__CODE_TERMINATED' },
-                    { ['evt.mem'] = '(tceu_code_mem*)'..V(to) },
-                    { lbl = me.lbl.id },
-                    lbl = me.lbl.id,
-                })
-                SET(me, to, 'NULL', true)
-                HALT(me)
-            else
-error'oi'
-                local trails = fr.info.dcl.blk.trails
-                if to.info.dcl.tag == 'Evt' then
-                    LINE(me, [[
-]]..V(to)..[[ = (tceu_opt_alias)
-    { &]]..V(to)..'.evt, '..V(fr)..[[, {_ceu_mem,]]..trails[1]..','..trails[2]..[[} };
-]])
-                else
-                    LINE(me, [[
-]]..V(to)..[[ = (tceu_opt_alias)
-    { ]]..V(fr)..[[, {}, {_ceu_mem,]]..trails[1]..','..trails[2]..[[} };
-]])
-                end
-            end
+            HALT(me, {
+                { ['evt.id']  = 'CEU_INPUT__CODE_TERMINATED' },
+                { ['evt.mem'] = '(tceu_code_mem*)'..V(to) },
+                { lbl = me.lbl.id },
+                lbl = me.lbl.id,
+            })
+            SET(me, to, 'NULL', true)
+            HALT(me)
         else
             -- var Ee.Xx ex = ...;
             -- var& Ee = &ex;

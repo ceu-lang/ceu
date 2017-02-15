@@ -132,22 +132,8 @@ F = {
                 fin.__fin_vars = { blk=blk, assert(to.info.dcl) }
             end
         else
-            local ok = is_call or check_blk(to.info.dcl.blk, (fr.info.dcl_obj or fr.info.dcl).blk)
-            if not ok then
-                if to.info.dcl.is_mid_idx then
--- TODO-remove
-error'oi'
-                    local watch = AST.par(me, 'Watching')
-                    if watch then
-                        --  code/await Ff (void) => (Dcl) => void do
-                        --      watching Gg(1) => (y1) do
-                        --          var int v = ...
-                        --          Dcl = &v;   // OK
-                        ok = (fr.info.dcl.blk == AST.asr(watch,'',1,'Par_Or',2,'Block'))
-                    end
-                end
-            end
-            ok = ok or (to.info.dcl[1]=='&?')
+            local ok = is_call or (to.info.dcl[1]=='&?') or
+                       check_blk(to.info.dcl.blk, (fr.info.dcl_obj or fr.info.dcl).blk)
             ASR(ok, me, 'invalid binding : incompatible scopes')
         end
     end,

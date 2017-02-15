@@ -32,10 +32,6 @@ F = {
     Finalize_Case = function (me)
         me.lbl_in = new{'Finalize_Case__IN'}
     end,
-    Await_Alias = function (me)
-error'await_alias'
-        me.lbl = new{'Await_Alias'}
-    end,
 
     Set_Alias = function (me)
         local _, to = unpack(me)

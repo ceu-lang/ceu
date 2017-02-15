@@ -107,75 +107,6 @@ typedef struct tceu_code_mem_]]..me.id_..[[ {
             return
         end
 
---[=[
-        -- args
-        me.mems.args = 'typedef struct tceu_code_args_'..me.id_..' {\n'
-
-        for i,dcl in ipairs(body.dcls) do
-            local alias,Type,id2,dim = unpack(dcl)
-            if id2 ~= '_ret' then
-                id2 = '_'..i
-            end
-
-            local ptr = '' do
-                if alias then
-                    if (dcl.tag ~= 'Evt') and alias=='&' then
-                        ptr = ptr..'*'
-                    end
-                    if dcl.is_mid_idx then
-                        ptr = ptr..'*'  -- extra indirection for mid's
-                    end
-                end
-            end
-
-            -- &?
-            if (alias == '&?') and (not (dcl.tag=='Var' and TYPES.is_nat(Type))) then
-                    me.mems.args = me.mems.args..[[
-tceu_opt_alias]]..ptr..' '..id2..[[;
-]]
-
-            -- VAR
-            elseif dcl.tag == 'Var' then
-                if dcl.id~='_ret' or mods.tight then
-                    me.mems.args = me.mems.args..[[
-]]..TYPES.toc(Type)..ptr..' '..id2..[[;
-]]
-                end
-
-            -- EVT
-            elseif dcl.tag == 'Evt' then
-                assert(alias)
--- TODO: per Code evts
-                me.mems.args = me.mems.args .. [[
-tceu_evt]]..ptr..' '..id2..[[;
-]]
-
-            -- VEC
-            elseif dcl.tag == 'Vec' then
-                assert(alias)
-                if TYPES.is_nat(TYPES.get(Type,1)) then
-                    me.mems.args = me.mems.args .. [[
-]]..TYPES.toc(Type)..' ('..ptr..id2..')['..V(dim)..[[];
-]]
-                else
-                    me.mems.args = me.mems.args .. [[
-tceu_vector]]..ptr..' '..id2..[[;
-]]
-                end
-
-            -- POOL
-            elseif dcl.tag == 'Pool' then
-                assert(alias)
-                me.mems.args = me.mems.args .. [[
-tceu_pool_pak]]..ptr..' '..id2..[[;
-]]
-
-            else
-                error'bug found'
-            end
-        end
-]=]
-
         local multis = {}
         if mods.dynamic then
             local Code_Pars = AST.asr(body,'', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 1,'Code_Pars_Stmts')
@@ -236,57 +167,6 @@ usize params = multis_params
 
         --me.mems.args = me.mems.args..'} tceu_code_args_'..me.id_..';\n'
 
-        -- CEU_CODE_WATCH_xxx
---[=[
-        local mid = AST.asr(body,'', 1,'Stmts', 2,'Code_Pars')
-        if #mid>0 and mods.await then
-            me.mems.wrapper = me.mems.wrapper .. [[
-static void CEU_CODE_WATCH_]]..me.id_..[[ (tceu_code_mem* _ceu_mem,
-                                           tceu_code_args_]]..me.id_..[[* args)
-{
-]]
-            if mods.dynamic then
-                me.mems.wrapper = me.mems.wrapper .. multis.params
-            else
-                me.mems.wrapper = me.mems.wrapper .. [[
-usize params = offsetof(tceu_code_mem_]]..me.id_..[[,_params);
-]]
-            end
-            local params = AST.asr(body,'', 1,'Stmts', 1,'Code_Pars')
-            for i, var in ipairs(mid) do
-                local idx = #params + i
-                local alias = unpack(var)
-                local v = [[
-    *((typeof(args->_]]..idx..[[))(((byte*)_ceu_mem) + params +
-                                (offsetof(tceu_code_mem_]]..me.id_..','..var.id_..[[) -
-                                 offsetof(tceu_code_mem_]]..me.id_..[[,_params))))
-]]
-                if alias == '&' then
-                    me.mems.wrapper = me.mems.wrapper .. [[
-    if (args->_]]..idx..[[ != NULL) {
-        *(args->_]]..idx..[[) = ]]..v..[[;
-    }
-]]
-                else
-                    assert(alias == '&?')
-                    me.mems.wrapper = me.mems.wrapper .. [[
-    if (args->_]]..idx..[[ != NULL) {
-        tceu_trl* trl = (tceu_trl*) args->_]]..idx..[[->range.mem;
-        *(args->_]]..idx..[[) = ]]..v..[[;
-
-        /* HACK_4 */
-        trl->evt.id    = CEU_INPUT__CLEAR;
-        trl->clr_range = args->_]]..idx..[[->range;
-    }
-]]
-                end
-            end
-            me.mems.wrapper = me.mems.wrapper .. [[
-}
-]]
-        end
-]=]
-
         -- CEU_CODE_xxx
 
         local Type = AST.get(body,'Block', 1,'Stmts', 1,'Code_Ret', 1,'', 2,'Type')
@@ -344,15 +224,6 @@ static void CEU_CODE_]]..me.id_..[[ (tceu_stk* stk, tceu_ntrl trlK,
         return; /* skips WATCH below */
     }
 ]]
---[=[
-error'oi'
-            if #mid>0 and mods.await then
-            --if me.mems.watch ~= '' then
-                me.mems.wrapper = me.mems.wrapper .. [[
-    CEU_CODE_WATCH_]]..me.id_..[[(mem, &ps);
-]]
-            end
-]=]
             me.mems.wrapper = me.mems.wrapper .. [[
 }
 ]]
@@ -489,18 +360,8 @@ if dcl.tag ~= 'Prim' then
                 end
             end
 
-            -- &?
-            if false then
---[[
-            if (alias == '&?') and (not (dcl.tag=='Var' and TYPES.is_nat(Type))) then
-                mem[#mem+1] = 'tceu_opt_alias '..dcl.id_..';\n'
-                if dcl.tag == 'Evt' then
-                    MEMS.evts[#MEMS.evts+1] = dcl
-                end
-]]
-
             -- VAR
-            elseif dcl.tag == 'Var' then
+            if dcl.tag == 'Var' then
                 --if dcl.id == '_ret' then
                     --dcl.id_ = dcl.id
                 --else
