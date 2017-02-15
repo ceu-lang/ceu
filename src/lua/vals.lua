@@ -103,19 +103,14 @@ F = {
     end,
 
     Abs_Call = function (me)
-        local _, pool, Abs_Cons = unpack(me)
+        local _, obj, Abs_Cons = unpack(me)
         local ID_abs, _ = unpack(Abs_Cons)
         local _,mods,_,Code_Pars = unpack(ID_abs.dcl)
         assert(mods.tight)
 
         local mem do
-            if pool then
-                for loop in AST.iter'Loop_Pool' do
-                    local _,_,pool2 = unpack(loop)
-                    if AST.is_equal(pool,pool2) then
-                        mem = CUR('__cur_'..loop.n..'->mem')
-                    end
-                end
+            if obj then
+                mem = '((tceu_code_mem*)'..V(obj)..')'
             else
                 mem = '_ceu_mem'
             end

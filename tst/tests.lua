@@ -49145,8 +49145,10 @@ spawn Ff(1) in fs;
 spawn Ff(2) in fs;
 
 var int ret = 0;
-loop _ in fs do
-    ret = ret + (call Get_X() in fs);
+
+var&? Ff f;
+loop f in fs do
+    ret = ret + (call Get_X() in f);
 end
 
 escape ret;

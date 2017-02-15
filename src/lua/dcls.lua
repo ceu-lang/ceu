@@ -602,7 +602,6 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         local proto1 = AST.asr(body1,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 1,'Code_Pars_Stmts')
 
         if (not me.is_dyn_base) and mods1.dynamic and me.is_impl then
-AST.dump(body1)
             me.id = id..proto1.ids_dyn
             me.dyn_base = DCLS.asr(me,blk,id)
             me.dyn_base.dyn_last = me
@@ -838,10 +837,10 @@ AST.dump(body1)
     ID_abs = function (me)
         local id = unpack(me)
         local blk do
-            local pool = AST.get(me,2,'Abs_Call', 2,'Loc')
-            if pool then
-                local Code = AST.asr(pool.dcl,'Pool', 2,'Type', 1,'ID_abs').dcl
-                blk = AST.asr(Code,'Code', 4,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 1,'Do', 3,'Block')
+            local obj = AST.get(me,2,'Abs_Call', 2,'Loc')
+            if obj then
+                local Code = TYPES.abs_dcl(AST.asr(obj.dcl,'Var', 2,'Type'), 'Code')
+                blk = AST.asr(Code,'Code', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 2,'Block')
             else
                 blk = AST.par(me,'Block')
             end
