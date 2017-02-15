@@ -31370,6 +31370,19 @@ escape 1;
     scopes = 'line 7 : invalid `finalize´ : incompatible scopes',
 }
 Test { [[
+native/nohold _S, _F, _f;
+code/await Surface_from_desc (var _S desc) -> FOREVER
+do
+    var&? _F f = &_f(desc) finalize (f) with end;
+    await FOREVER;
+end
+]],
+    wrn = true,
+    cc = '4:57: error: implicit declaration of function ‘f’',
+    --run = 1,
+}
+
+Test { [[
 native _f;
 var int x = 0;
 do
@@ -32166,19 +32179,6 @@ end
 escape a;
 ]],
     run = { ['~>1s']=20 },
-}
-
-Test { [[
-native/nohold _S, _F, _f;
-code/await Surface_from_desc (var _S desc) -> FOREVER
-do
-    var&? _F f = &_f(desc) finalize (f) with end;
-    await FOREVER;
-end
-]],
-    wrn = true,
-    cc = '4:57: error: implicit declaration of function ‘f’',
-    --run = 1,
 }
 
 --<< OPTION / NATIVE / FINALIZE
@@ -41102,7 +41102,8 @@ end
 
 escape 1;
 ]],
-    props_ = 'line 11 : invalid `await´ : unexpected enclosing `loop´',
+    --props_ = 'line 11 : invalid `await´ : unexpected enclosing `loop´',
+    run = {['~>1s']=1},
 }
 
 Test { [[
@@ -41791,8 +41792,8 @@ end
 await Collisions();
 escape 1;
 ]],
-    --run = 1,
-    props_ = 'line 29 : invalid `spawn´ : unexpected enclosing `loop´',
+    run = 1,
+    --props_ = 'line 29 : invalid `spawn´ : unexpected enclosing `loop´',
 }
 
 Test { [[
@@ -41820,6 +41821,90 @@ await FOREVER;
     run = { ['~>A;~>B'] = '6] runtime error: bug found' },
 }
 
+Test { [[
+code/await Gg (void) -> FOREVER do
+end
+
+pool[] Gg gs;
+var&? Gg g;
+loop g in gs do
+    await 1s;
+end
+escape 1;
+]],
+    wrn = true,
+    run = {['~>1s']=1},
+}
+
+Test { [[
+code/await Gg (var& int x) -> FOREVER do
+    await FOREVER;
+end
+pool[] Gg gs;
+do
+    var int x = 10;
+    spawn Gg(&x) in gs;
+end
+escape 1;
+]],
+    wrn = true,
+    scopes = 'line 7 : invalid binding : incompatible scopes',
+}
+Test { [[
+code/await Gg (var& int x) -> FOREVER do
+    await FOREVER;
+end
+do
+    pool[] Gg gs;
+    var int x = 10;
+    spawn Gg(&x) in gs;
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+code/await Ff (void) -> (var int x) -> FOREVER do
+    x = 10;
+    await FOREVER;
+end
+
+code/await Gg (var&? Ff f, var& int x) -> FOREVER do
+    await FOREVER;
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    pool[] Gg gs;
+    spawn Gg(&f, &f!.x) in gs;
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+code/await Ff (void) -> (var int x) -> FOREVER do
+    x = 10;
+    await FOREVER;
+end
+
+code/await Gg (var&? Ff f, var& int x) -> FOREVER do
+    await FOREVER;
+end
+
+pool[] Gg gs;
+var&? Ff f = spawn Ff();
+watching f do
+    spawn Gg(&f, &f!.x) in gs;
+end
+
+escape 1;
+]],
+    wrn = true,
+    scopes = 'line 13 : invalid binding : incompatible scopes',
+}
 --<< POOL / LOOP
 --||| TODO: POOL ITERATORS
 
@@ -42333,6 +42418,26 @@ escape 0;
     wrn = true,
     --run = 1,
     scopes = 'line 9 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+}
+
+Test { [[
+code/await Tx (void)->(var int e)->FOREVER do
+    e = 1;
+    await FOREVER;
+end
+
+code/await Ux (var& int e) -> void do end
+
+var&? Tx t = spawn Tx();
+watching t do
+    spawn Ux(&t!.e);
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+    --scopes = 'line 9 : invalid binding : unexpected source with `&?´ : destination may outlive source',
 }
 
 Test { [[

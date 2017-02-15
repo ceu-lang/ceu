@@ -418,6 +418,7 @@ error'TODO: remove below'
                         tag = Dcl.tag,
                         tp  = Dcl[2],
                         dcl = Dcl,
+                        blk = e.info.dcl.blk,
                         dcl_obj = e.info.dcl,
                     }
                 else

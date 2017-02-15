@@ -20,7 +20,7 @@ local function check_blk (to_blk, fr_blk)
             ) then
         return 'maybe'
     else
-        assert(AST.is_par(to_blk,fr_blk), 'bug found')
+        --assert(AST.is_par(to_blk,fr_blk), 'bug found')
         return false
     end
 end
@@ -125,7 +125,8 @@ F = {
             blk.needs_clear = true
 
             if fin.__fin_vars then
-                ASR(check_blk(blk,fin.__fin_vars.blk), me,
+                --ASR(check_blk(blk,fin.__fin_vars.blk), me,
+                ASR(blk == fin.__fin_vars.blk, me,
                     'invalid `finalize´ : incompatible scopes')
                 fin.__fin_vars[#fin.__fin_vars+1] = assert(to.info.dcl)
             else
@@ -138,27 +139,47 @@ F = {
         end
     end,
 
+    Abs_Spawn_Pool = function (me)
+        local _, Abs_Cons, pool = unpack(me)
+        local ps = AST.asr(Abs_Cons,'Abs_Cons', 2,'Abslist')
+        for _, p in ipairs(ps) do
+            if p.info.dcl then
+                if p.info.tag == 'Alias' then
+                    ASR(check_blk(pool.info.dcl.blk, p.info.blk or p.info.dcl.blk), me,
+                        'invalid binding : incompatible scopes')
+                end
+            end
+        end
+    end,
+
     ['Exp_.'] = function (me)
         -- NO: x = &f!.*            // f may die (unless surrounded by "watching f")
+        -- NO:
         if AST.par(me,'Exp_1&') and me.info.dcl_obj and me.info.dcl_obj.orig and me.info.dcl_obj.orig[1]=='&?' then
             if AST.par(me, 'Abs_Call') then
                 return      -- call Ff(&obj!.x)
             end
 
             local to do
-                local set = AST.par(me, 'Set_Alias')
+                local set   = AST.par(me, 'Set_Alias')
+                local spawn = AST.par(me, 'Abs_Spawn_Pool')
                 if set then
                     _,to = unpack(set)
+                elseif spawn then
+                    to = AST.asr(spawn,'', 3,'Loc')
+                else
+                    --return
                 end
             end
+
             local watch = AST.par(me, 'Watching')
             local ok = false
             while watch do
                 local awt = watch and AST.get(watch,'', 1,'Par_Or', 1,'Block', 1,'Stmts', 1,'Await_Int', 1,'')
                                    or AST.get(watch,'', 1,'Par_Or', 1,'Block', 1,'Stmts', 1,'Set_Await_many',1,'Await_Int', 1,'')
                 if awt and awt.info.dcl==me.info.dcl_obj.orig then
-                    -- watching.depth < to.dcl.blk.depth
                     if to then
+                        -- watching.depth < to.dcl.blk.depth
                         if AST.get(to.info.dcl.blk,6,'Code') then
                             -- ok: allow mid destination binding even outliving source
                             -- TODO: check it is not accessed outside the watching
@@ -167,8 +188,14 @@ F = {
                             ok = check_blk(to.info.dcl.blk, watch)
                             ASR(ok, me, 'invalid binding : incompatible scopes')
                         end
-                        break
+                    else
+                        -- var&? Tx t = spawn Tx();
+                        -- watching t do
+                        --    spawn Ux(&t!.e);
+                        -- end
+                        ok = true   -- Ux is scoped inside watching
                     end
+                    break
                 end
                 watch = AST.par(watch, 'Watching')
             end
