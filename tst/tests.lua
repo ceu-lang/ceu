@@ -85,49 +85,6 @@ end
     run = 1,
 }
 
--- TODO: escape set_alias
-Test { [[
-code/await Ff (void) -> void do end
-pool[] Ff fs;
-var&? Ff ff = do
-    every 1s do
-        var&? Ff f;
-        loop f in fs do
-            escape &f;
-        end
-    end
-end;
-]],
-    run = 1,
-}
-
--- XXXX
-Test { [[
-code/await Ff (void) -> (var& int x) -> void do
-    var int v = 10;
-    x = &v;
-    await 1ms;
-end
-
-pool[] Ff ffs;
-spawn Ff() in ffs;
-
-var&? Ff f1 = do
-    var&? Ff f2;
-    loop f2 in ffs do
-        escape &f2;
-    end
-end;
-
-var int ret = (f1? as int);
-await 1s;
-escape ret + (f1? as int);
-]],
-    run = { ['~>1s']=1 },
-    --stmts = 'line 12 : invalid binding : argument #1 : unmatching alias `&´ declaration',
-}
-
-
 do return end -- OK
 --]=====]
 
@@ -39518,7 +39475,6 @@ escape (x? as int) + 1;
 ]],
     dcls = 'line 10 : invalid declaration : option alias : expected native or `code/await´ type',
 }
--- XXXX
 Test { [[
 code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
@@ -39539,6 +39495,73 @@ escape (f1? as int) + 1;
 ]],
     run = 1,
     --stmts = 'line 12 : invalid binding : argument #1 : unmatching alias `&´ declaration',
+}
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
+    var int v = 10;
+    x = &v;
+    await 1ms;
+end
+
+pool[] Ff ffs;
+spawn Ff() in ffs;
+
+var&? Ff f1 = do
+    var&? Ff f2;
+    loop f2 in ffs do
+        escape &f2;
+    end
+end;
+
+var int ret = (f1? as int);
+await 1s;
+escape ret + (f1? as int);
+]],
+    run = { ['~>1s']=1 },
+    --stmts = 'line 12 : invalid binding : argument #1 : unmatching alias `&´ declaration',
+}
+
+Test { [[
+code/await Ff (void) -> void do end
+pool[] Ff fs;
+var&? Ff ff = do
+    every 1s do
+        var&? Ff f;
+        loop f in fs do
+            escape &f;
+        end
+    end
+end;
+escape 1;
+]],
+    run = false,
+}
+
+Test { [[
+code/await Ff (var int x) -> (var int y) -> FOREVER do
+    y = x;
+    await FOREVER;
+end
+
+pool[] Ff fs;
+spawn Ff(10) in fs;
+spawn Ff(20) in fs;
+spawn Ff(30) in fs;
+
+var&? Ff ff = do
+    every 1s do
+        var&? Ff f;
+        loop f in fs do
+            if f!.y == 20 then
+                escape &f;
+            end
+        end
+    end
+end;
+
+escape ff!.y;
+]],
+    run = {['~>1s']=20},
 }
 
 Test { [[

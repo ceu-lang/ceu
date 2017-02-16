@@ -293,6 +293,7 @@ end
     if not check(T,'inits')  then return end
     if not check(T,'ptrs')   then return end
     if not check(T,'scopes') then return end
+--AST.dump(AST.root)
     if not check(T,'props_') then return end
     if not check(T,'trails') then return end
 
@@ -302,7 +303,6 @@ end
     dofile(DIR..'vals.lua')
     dofile(DIR..'multis.lua')
     if not check(T,'mems')   then return end
---AST.dump(AST.root)
     if not check(T,'codes')  then return end
 
 if T.ana or T.tmp or T.props or T.mode then return end

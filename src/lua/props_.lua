@@ -11,7 +11,7 @@ local sync = {
 
 local NO = {
     {Every     = sync},
-    {Loop_Pool = sync},
+    --{Loop_Pool = sync},
     {Async     = sync},
     {Finalize  = sync},
     {Code      = sync},   -- only code/tight
@@ -22,40 +22,36 @@ PROPS_.F = {
         for _,T in ipairs(NO) do
             local k,t = next(T)
             local par = AST.par(me,k)
+
             if par and t[me.tag] then
                 local sub = par
                 if par.tag == 'Every' then
                     local Await = unpack(AST.asr(par,'', 1,'Loop', 2,'Block', 1,'Stmts'))
                     if AST.is_par(Await,me) then
-                        return -- ok
+                        return -- ok: await for the every itself
+                    end
+
+                    local paror = AST.get(me,2,'Par_Or')
+                    local var = AST.get(me,'Par_Or', 1,'Stmts', 1,'Var')
+                    if me.tag=='Await_Forever' and paror and paror.__spawns then
+                        return -- ok: var&? inside every
+                    elseif me.__spawns and var and var[1]=='&?' then
+                        return -- ok: var&? inside every
                     end
                 elseif par.tag == 'Code' then
                     local _, mods = unpack(par)
                     if mods.await then
-                        return -- ok
+                        return -- ok: code/await
                     elseif me.tag == 'Finalize' then
-                        return -- ok (empty finalizer)
+                        return -- ok (this an empty finalizer for sure)
                     end
-                elseif par.tag == 'Loop_Pool' then
-                    if me.tag == 'Await_Forever' then
-                        local paror = AST.get(me,2,'Par_Or')
-                        if paror and paror.__spawns and
-                            AST.get(paror,'',1,'Stmts',1,'Set_Alias') and
-                            AST.get(paror,'',1,'Stmts',2,'')==me
-                        then
-                            return
-                        end
-                    elseif me.tag=='Par_Or' and me.__spawns then
-                            return
-                    end
+                elseif par.tag=='Finalize' and AST.get(par,'Finalize',3,'Par')==me then
+                    return -- ok: finalize par fin/pse/res
                 end
-                if AST.get(par,'Finalize',3,'Par') == me then
-                    -- ok
-                else
-                    ASR(false, me,
-                        'invalid `'..AST.tag2id[me.tag]..
-                        '´ : unexpected enclosing `'..AST.tag2id[par.tag]..'´')
-                end
+
+                ASR(false, me,
+                    'invalid `'..AST.tag2id[me.tag]..
+                    '´ : unexpected enclosing `'..AST.tag2id[par.tag]..'´')
             end
         end
     end,
