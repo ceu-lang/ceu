@@ -175,9 +175,9 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
 
                 if mods and mods.dynamic and var_tp[1].dcl.hier then
                     if val.tag == 'Exp_as' then
-                        ps[#ps+1] = '._data_'..i..' = CEU_DATA_'..val.info.tp[1].dcl.id
+                        ps[#ps+1] = { '_data_'..i, 'CEU_DATA_'..val.info.tp[1].dcl.id }
                     else
-                        ps[#ps+1] = '._data_'..i..' = '..V(val,ctx)..op..'_enum'
+                        ps[#ps+1] = { '_data_'..i, V(val,ctx)..op..'_enum' }
                     end
                 end
             end
@@ -188,9 +188,9 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
                (not (val.info and TYPES.check(val.info.tp,'?')))
             then
                 if val.tag == 'ID_any' then
-                    ps[#ps+1] = '.'..var.id_..' = { .is_set=0 }'
+                    ps[#ps+1] = { var.id_, '{ .is_set=0 }' }
                 else
-                    ps[#ps+1] = '.'..var.id_..' = { .is_set=1, .value='..V(val)..'}'
+                    ps[#ps+1] = { var.id_, '{ .is_set=1, .value='..V(val)..'}' }
                 end
             else
                 local to_val = ctx.to_val
@@ -206,7 +206,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
                             --  event ...;
                             --  vector[] _int x;
                         else
-                            ps[#ps+1] = '.'..var.id_..' = '..to_val..'.'..var.id_
+                            ps[#ps+1] = { var.id_, to_val..'.'..var.id_ }
                         end
                     end
                 else
@@ -253,14 +253,38 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
                         end
                     end
 
-                    ps[#ps+1] = '.'..var.id..' = '..val_val
+                    ps[#ps+1] = { var.id, val_val }
                                     -- proto has no var.id_
                 end
             end
         end
 
-        return '(struct '..id_struct..')'..
-                    '{\n'..table.concat(ps,',\n')..'\n}'
+        local ps1='' do
+            for i, t in ipairs(ps) do
+                local to, fr = unpack(t)
+                ps1 = ps1..'.'..to..' = '..fr
+                if i < #t then
+                    ps1 = ps1..','
+                end
+            end
+        end
+        local ps2='' do
+            for _, t in ipairs(ps) do
+                local to, fr = unpack(t)
+                ps2 = ps2..'__ceu_'..me.n..'.'..to..' = '..fr..';'
+            end
+        end
+
+        return [[
+
+#if defined(__GNUC__) && defined(__cplusplus)
+({]]..id_struct..' __ceu_'..me.n..';'..ps2..'; __ceu_'..me.n..[[;})
+
+#else
+(struct ]]..id_struct..') { '..ps1..[[ }
+
+#endif
+]]
     end,
 
     List_Exp = function (me)
