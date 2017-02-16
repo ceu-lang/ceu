@@ -79,7 +79,7 @@ local function run_inits (par, i, Dcl, stop, dont_await)
         end
 
     elseif me.__spawns and (AST.get(me,'Par_Or', 1,'Stmts', 1,'Finalize')  or
-                            AST.get(me,'Par_Or', 1,'Stmts', 1,'Set_Alias') or
+                            AST.get(me,'Par_Or', 1,'Stmts', 1,'Var') or
                             AST.get(me,'Par_Or', 1,'Stmts', 1,'Set_Abs_Spawn'))
     then
         -- f = spawn Ff();

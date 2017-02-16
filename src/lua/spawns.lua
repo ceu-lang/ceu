@@ -46,19 +46,17 @@ SPAWNS.G = {
     end,
 
     Set_Abs_Spawn__PRE = function (me)
-        local spawn = AST.get(me,'', 1,'Abs_Spawn')
         if me.__spawns_ok then
             return
         else
             me.__spawns_ok = true
-            if spawn then
-                spawn.__spawns_ok = true
-            end
         end
-        return SPAWNS.G._SPAWN(me.__par, me.__i, me)
+        if AST.get(me,'', 1,'Abs_Spawn') then
+            return SPAWNS.G._SPAWN(me.__par, me.__i, me)
+        end
     end,
     Abs_Spawn__PRE = function (me)
-        if me.__spawns_ok then
+        if me.__spawns_ok or AST.get(me,1,'Set_Abs_Spawn') then
             return
         else
             me.__spawns_ok = true
@@ -73,19 +71,14 @@ SPAWNS.G = {
     end,
 
 -- TODO: var&? Ff f1 = &f2;
-    Set_Alias__PRE = function (me)
+    Var__PRE = function (me)
         if me.__spawns_ok then
             return
         else
             me.__spawns_ok = true
         end
-
-        local fr, to = unpack(me)
-        if to.info.tag=='Var' and TYPES.abs_dcl(to.info.tp,'Code') then
-            local alias = unpack(to.info.dcl)
-            if alias == '&?' then
-                return SPAWNS.G._SPAWN(me.__par, me.__i, me)
-            end
+        if me.__dcls_code_alias then
+            return SPAWNS.G._SPAWN(me.__par, me.__i, me)
         end
     end,
 

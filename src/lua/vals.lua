@@ -146,7 +146,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
 
         if ID_abs.dcl.tag == 'Data' then
             if ID_abs.dcl.hier then
-                ps[1] = '._enum = CEU_DATA_'..ID_abs.dcl.id_
+                ps[1] = { '_enum', 'CEU_DATA_'..ID_abs.dcl.id_ }
             end
         end
 
@@ -263,7 +263,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
             for i, t in ipairs(ps) do
                 local to, fr = unpack(t)
                 ps1 = ps1..'.'..to..' = '..fr
-                if i < #t then
+                if i < #ps then
                     ps1 = ps1..','
                 end
             end

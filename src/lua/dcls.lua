@@ -281,6 +281,7 @@ DCLS.F = {
         if alias == '&?' then
             local ID = unpack(Type)
             if ID.tag=='ID_abs' and ID.dcl.tag=='Code' and ID.dcl[2].await then
+                me.__dcls_code_alias = true
                 -- ok
             elseif TYPES.is_nat(Type) then
                 -- ok

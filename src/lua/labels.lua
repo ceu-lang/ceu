@@ -33,12 +33,9 @@ F = {
         me.lbl_in = new{'Finalize_Case__IN'}
     end,
 
-    Set_Alias = function (me)
-        local _, to = unpack(me)
-        if to.info.tag=='Var' and TYPES.abs_dcl(to.info.tp,'Code') then
-            local alias = unpack(to.info.dcl)
-            assert(alias == '&?')
-            me.lbl = new{'Set_Alias__CLR'}
+    Var = function (me)
+        if me.__dcls_code_alias then
+            me.lbl = new{'Alias__CLR'}
         end
     end,
 
@@ -78,11 +75,6 @@ F = {
 
     Abs_Spawn = function (me)
         me.lbl_out = new{'Await_Spawn__OUT'}
-    end,
-    Abs_Spawn_Pool = function (me)
-        if AST.par(me, 'Set_Abs_Spawn') then
-            me.lbl_out = new{'Await_Spawn__OUT'}
-        end
     end,
     Await_Wclock = function (me)
         me.lbl_out = new{'Await_Wclock__OUT'}

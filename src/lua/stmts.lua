@@ -388,11 +388,14 @@ STMTS.F = {
         me.tp = ret and AST.copy(ret)
 
         local watch = AST.par(me, 'Watching')
-        local me1 = AST.get(watch,'', 1,'Par_Or', 1,'Block', 1,'Stmts',
-                                      2,'Par_Or', 1,'Stmts', 1,'Set_Abs_Spawn',
-                                      1,'Abs_Spawn')
-        if me1 == me then
-            ASR(ret, watch, 'invalid `watching´ : `code´ executes forever')
+        if watch then
+            local me1 = AST.get(watch,'', 1,'Par_Or', 1,'Block', 1,'Stmts',
+                                          1,'Par_Or', 2,'Stmts', 1,'Par_Or',
+                                          1,'Stmts',  1,'Set_Abs_Spawn',
+                                          1,'Abs_Spawn')
+            if me1 == me then
+                ASR(ret, watch, 'invalid `watching´ : `code´ executes forever')
+            end
         end
      end,
 

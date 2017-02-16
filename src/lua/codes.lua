@@ -239,6 +239,20 @@ if (]]..V(c)..[[) {
 ]]..V(me, {base=base})..[[.is_set = 0;
 ]])
         end
+
+        if me.__dcls_code_alias then
+            HALT(me, {
+                { ['evt.id']  = 'CEU_INPUT__CODE_TERMINATED' },
+                { ['evt.mem'] = 'NULL' },   -- will be set on Set_Alias/Spawn
+                { lbl = me.lbl.id },
+                lbl = me.lbl.id,
+                exec = code,
+            })
+            LINE(me, [[
+]]..V(me)..[[ = NULL;
+]])
+            HALT(me)
+        end
     end,
 
     Vec_Init = function (me)
@@ -468,7 +482,10 @@ ceu_callback_assert_msg(0, "reached end of `code´");
         local set = AST.par(me,'Set_Abs_Spawn')
         if set then
             local _, to = unpack(set)
-            SET(me, to, '&'..CUR('__mem_'..me.n), true)
+            LINE(me, [[
+]]..V(to)..' = &'..CUR('__mem_'..me.n)..[[;
+_ceu_mem->_trails[]]..(to.dcl.trails[1])..[[].evt.mem =  &]]..CUR('__mem_'..me.n)..[[;
+]])
         end
 
         HALT(me, {
@@ -478,24 +495,6 @@ ceu_callback_assert_msg(0, "reached end of `code´");
             lbl = me.lbl_out.id,
             exec = CODES.F.__abs(me, '(&'..CUR(' __mem_'..me.n)..'._mem)', 'NULL'),
         })
-
--- o set=null deveria ser uma trilha criada pela atribuicao, nao necessariamente do spawn:
--- var&? Ff f = spawn Ff();
--- var&? Ff ff = &f;
-
-        if set then
-            local _, to = unpack(set)
-            SET(me, to, 'NULL', true)
-        end
-
-        LINE(me, [[
-return;
-#if 0
-ceu_dbg_assert(0);
-ceu_stack_clear(_ceu_stk, _ceu_mem,
-                ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
-#endif
-]])
     end,
 
 -- TODO: mover p/ Abs_Await
@@ -534,7 +533,20 @@ ceu_stack_clear(_ceu_stk, _ceu_mem,
 ]])
         end
 
-        local code = [[
+        local set = AST.par(me,'Set_Abs_Spawn')
+        if set then
+            local _, to = unpack(set)
+            LINE(me, [[
+    if (__ceu_new != NULL) {
+]])
+            LINE(me, [[
+        ]]..V(to)..' = ((tceu_code_mem_'..ID_abs.dcl.id_..[[*)&__ceu_new->mem[0]);
+        _ceu_mem->_trails[]]..(to.dcl.trails[1])..[[].evt.mem = &__ceu_new->mem[0];
+    }
+]])
+        end
+
+        LINE(me, [[
     if (__ceu_new != NULL) {
         __ceu_new->state = CEU_CODE_MEM_DYN_STATE_NONE;
         __ceu_new->nxt = &]]..V(pool)..[[.first;
@@ -548,32 +560,6 @@ ceu_stack_clear(_ceu_stk, _ceu_mem,
             return;
         }
     }
-]]
-
-        local set = AST.par(me,'Set_Abs_Spawn')
-        if set then
-            local _, to = unpack(set)
-            SET(me, to, '((tceu_code_mem_'..ID_abs.dcl.id_..'*)&__ceu_new->mem[0])', true)
-            LINE(me, [[
-    if (__ceu_new == NULL) {
-        return;                     /* never awakes */
-    } else {
-]])
-            HALT(me, {
-                { ['evt.id']  = 'CEU_INPUT__CODE_TERMINATED' },
-                { ['evt.mem'] = '(&__ceu_new->mem[0])' },
-                { lbl = me.lbl_out.id },
-                lbl = me.lbl_out.id,
-                exec = code,
-            })
-            SET(me, to, 'NULL', true)
-            LINE(me, [[
-    }
-]])
-        else
-            LINE(me, code)
-        end
-        LINE(me, [[
 }
 ]])
     end,
@@ -1049,20 +1035,11 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
     Set_Alias = function (me)
         local fr, to = unpack(me)
 
-        local alias, tp = unpack(to.info.dcl)
-        if (alias == '&?') and (not (to.info.dcl.tag=='Var' and TYPES.is_nat(tp))) then
-            assert(fr.info.dcl[1] == '&?')
+        if to.info.dcl.__dcls_code_alias then
             LINE(me, [[
 ]]..V(to)..' = '..V(fr)..[[;
+_ceu_mem->_trails[]]..(to.dcl.trails[1])..[[].evt.mem = ]]..V(fr)..[[;
 ]])
-            HALT(me, {
-                { ['evt.id']  = 'CEU_INPUT__CODE_TERMINATED' },
-                { ['evt.mem'] = '(tceu_code_mem*)'..V(to) },
-                { lbl = me.lbl.id },
-                lbl = me.lbl.id,
-            })
-            SET(me, to, 'NULL', true)
-            HALT(me)
         else
             -- var Ee.Xx ex = ...;
             -- var& Ee = &ex;
