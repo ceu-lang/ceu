@@ -401,6 +401,7 @@ if (0)
 ]=]
 
         CONC(me, body)
+        CLEAR(me)           -- TODO: only stack_clear?
 
         local Type = AST.get(body,'Block', 1,'Stmts', 1,'Code_Ret', 1,'', 2,'Type')
         if not Type then
