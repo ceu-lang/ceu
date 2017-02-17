@@ -143,7 +143,7 @@ F = {
         local _, Abs_Cons, pool = unpack(me)
         local ps = AST.asr(Abs_Cons,'Abs_Cons', 2,'Abslist')
         for _, p in ipairs(ps) do
-            if p.info.dcl then
+            if p.info and p.info.dcl then
                 if p.info.tag == 'Alias' then
                     ASR(check_blk(pool.info.dcl.blk, p.info.blk or p.info.dcl.blk), me,
                         'invalid binding : incompatible scopes')

@@ -464,9 +464,11 @@ static void ceu_bcast (tceu_evt_occ* occ, tceu_stk* stk)
     tceu_trl* trl;
     tceu_evt_range range = occ->range;
 
-    ceu_callback_assert_msg(((tceu_nseq)(CEU_APP.seq+1)) != CEU_APP.seq_base,
-                            "too many internal reactions");
-    CEU_APP.seq++;
+    if (occ->evt.id > CEU_INPUT__SEQ) {
+        ceu_callback_assert_msg(((tceu_nseq)(CEU_APP.seq+1)) != CEU_APP.seq_base,
+                                "too many internal reactions");
+        CEU_APP.seq++;
+    }
 
     tceu_stk _stk = { 1, stk, range }; /* maybe nested bcast aborts it */
 
