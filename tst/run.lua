@@ -10,6 +10,7 @@ TESTS = {
         count  = 0,
         trails = 0,
         bytes  = 0,
+        bcasts = 0,
         visits = 0,
     }
 }
@@ -346,9 +347,15 @@ if T.ana or T.tmp or T.props or T.mode then return end
     if type(T.run) == 'number' then
         assert(ret == T.run%256, '>>> ERROR : run : expected '..T.run..' : got '..ret)
 
-        local n = string.match(out, '_ceu_tests_trails_visited_ = (%d+)\n')
-        TESTS.stats.visits = TESTS.stats.visits + tonumber(n)
-        assert(out == '_ceu_tests_trails_visited_ = '..n..'\n', 'code with output')
+        local n1 = string.match(out, '_ceu_tests_bcasts_ = (%d+)\n')
+        TESTS.stats.bcasts = TESTS.stats.bcasts + tonumber(n1)
+
+        local n2 = string.match(out, '_ceu_tests_trails_visited_ = (%d+)\n')
+        TESTS.stats.visits = TESTS.stats.visits + tonumber(n2)
+
+        assert(out == '_ceu_tests_bcasts_ = '..n1..'\n'..
+                      '_ceu_tests_trails_visited_ = '..n2..'\n',
+            'code with output')
     else
         assert(type(T.run) == 'string', 'missing run value')
         assert(string.find(out, T.run, nil, true), '>>> ERROR : run : expected "'..T.run..'" : got "'..out..'"')
@@ -580,6 +587,7 @@ stats = {
     count  = ]]..TESTS.stats.count  ..[[,
     trails = ]]..TESTS.stats.trails ..[[,
     bytes  = ]]..TESTS.stats.bytes  ..[[,
+    bcasts = ]]..TESTS.stats.bcasts ..[[,
     visits = ]]..TESTS.stats.visits ..[[,
 }
 ]])
@@ -669,6 +677,44 @@ stats = {
     visits = 2505081,
 }
 (./run.lua: 647.16s 38344k)
+
+stats = {
+    count  = 3093,
+    trails = 5648,
+    bytes  = 49990960,
+    visits = 5207437,
+}
+(./run.lua: 760.84s 40444k)
+
+stats = {
+    count  = 3093,
+    trails = 5648,
+    bytes  = 49990960,
+    visits = 4152987,
+             5006862,
+             4564906,
+}
+(./run.lua: 711.48s 40732k)
+
+stats = {
+    count  = 3093,
+    trails = 5648,
+    bytes  = 49392944,
+    visits = 5075900,
+}
+
+(./run.lua: 747.26s 42228k)
+
+stats = {
+    count  = 3093,
+    trails = 5648,
+    bytes  = 49392944,
+    visits = 5211691,
+}
+
+(./run.lua: 755.32s 40812k)
+
+
 
 -------------------------------------------------------------------------------
 

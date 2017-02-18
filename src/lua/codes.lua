@@ -51,10 +51,8 @@ local function CLEAR (me)
                     ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
     tceu_evt_range __ceu_range = { _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[ };
 
-    tceu_evt_occ __ceu_occ = { {CEU_INPUT__CLEAR,{NULL}}, (tceu_nseq)(CEU_APP.seq+1), &__ceu_range,
-                               {(tceu_code_mem*)&CEU_APP.root,
-                                0, (tceu_ntrl)(CEU_APP.root._mem.trails_n-1)}
-                             };
+    tceu_evt_occ __ceu_occ = { {CEU_INPUT__CLEAR,{NULL}}, (tceu_nseq)(CEU_APP.seq+1),
+                               NULL, __ceu_range };
     tceu_stk __ceu_stk = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
     ceu_bcast(&__ceu_occ, &__ceu_stk);
     if (!__ceu_stk.is_alive) {
@@ -716,10 +714,9 @@ goto ]]..me.outer.lbl_out.id..[[;
 ]])
         else
             LINE(me, [[
-ceu_lbl(NULL, _ceu_stk,
-        _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
+return ceu_lbl(NULL, _ceu_stk,
+               _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
 ]])
-            HALT(me)
         end
     end,
 
@@ -869,10 +866,9 @@ goto ]]..me.outer.lbl_out.id..[[;
 ]])
         else
             LINE(me, [[
-ceu_lbl(NULL, _ceu_stk,
-        _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
+return ceu_lbl(NULL, _ceu_stk,
+               _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
 ]])
-            HALT(me)
         end
     end,
     Continue = function (me)
@@ -882,10 +878,9 @@ goto ]]..me.outer.lbl_out.id..[[;
 ]])
         else
             LINE(me, [[
-ceu_lbl(NULL, _ceu_stk,
-        _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_cnt.id..[[);
+return ceu_lbl(NULL, _ceu_stk,
+               _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_cnt.id..[[);
 ]])
-            HALT(me)
         end
     end,
 
@@ -930,12 +925,11 @@ ceu_lbl(NULL, _ceu_stk,
             else
                 -- no need to abort since there's a "return" below
                 LINE(me, [[
-ceu_lbl(_ceu_occ, _ceu_stk,
-        _ceu_mem, ]]..sub.trails[1]..','..me.lbls_in[i].id..[[);
+return ceu_lbl(_ceu_occ, _ceu_stk,
+              _ceu_mem, ]]..sub.trails[1]..','..me.lbls_in[i].id..[[);
 ]])
             end
         end
-        HALT(me)
 
         -- code for each branch
         for i, sub in ipairs(me) do
@@ -952,10 +946,9 @@ ceu_lbl(_ceu_occ, _ceu_stk,
 ]])
                 end
                 LINE(me, [[
-ceu_lbl(_ceu_occ, _ceu_stk,
-        _ceu_mem, ]]..me.trails[1]..','..me.lbl_out.id..[[);
+return ceu_lbl(_ceu_occ, _ceu_stk,
+               _ceu_mem, ]]..me.trails[1]..','..me.lbl_out.id..[[);
 ]])
-                HALT(me)
             end
         end
 

@@ -85,6 +85,138 @@ end
     run = 1,
 }
 
+Test { [[
+code/await Light (pool&[] Light    lights,
+                  var     int?     direction,
+                  var     int?     magnitude,
+                  var     bool?    is_fork,
+                 ) -> void
+do
+end
+
+pool[] Light lights;
+
+spawn Light(&lights,_,_,_) in lights;
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+--do return end
+
+
+-- TODO-TCO (see cc.lua:TODO-TCO)
+Test { [[
+var int i;
+loop i in [0->10000[ do      // 6000 already fails
+    par/or do with end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+var usize i;
+loop i in [0->10000[ do      // 5000 already fails
+    spawn Ff();
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var usize i;
+loop i in [0->10000[ do
+    do
+        par do
+            escape;
+        with
+        end
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var usize i;
+loop i in [0->100000[ do
+    do
+        par do
+            escape;
+        with
+        end
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int i;
+loop i in [0->100000[ do
+    par/or do with end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+var usize i;
+loop i in [0->100000[ do
+    spawn Ff();
+end
+escape 1;
+]],
+    run = 1,
+}
+do return end
+
+
+Test { [[
+var int ret = 1;
+var u8 i;
+loop i in [0->0[ do
+    ret = ret + 1;
+end
+escape ret;
+]],
+    run = 1,
+}
+Test { [[
+var int ret = 1;
+var u8 i;
+loop i in ]0<-0] do
+    ret = ret + 1;
+end
+escape ret;
+]],
+    run = 1,
+}
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+var usize i;
+loop i in [0->0[ do
+    spawn Ff();
+end
+escape 1;
+]],
+    run = 1,
+}
 do return end -- OK
 --]=====]
 
@@ -1822,7 +1954,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    run = '18] runtime error: too many internal reactions',
+    run = '19] runtime error: too many internal reactions',
 }
 
     -- WALL-CLOCK TIME / WCLOCK
@@ -21023,6 +21155,36 @@ escape ret;
 }
 
 Test { [[
+native/pre do
+    int V = 0;
+end
+par/or do
+    do finalize with
+        {V++;}
+    end
+with
+end
+
+par/and do
+    do finalize with
+        {V++;}
+    end
+with
+    do finalize with
+        {V++;}
+    end
+    await 1s;
+with
+    await 500ms;
+    escape {V};
+end
+
+escape 1;
+]],
+    run = {['~>1s']=2},
+}
+
+Test { [[
 input void OS_START;
 await OS_START;
 watching 1s do
@@ -38222,6 +38384,18 @@ escape a;
 }
 
 Test { [[
+code/await Tx (void)->void do
+    await async do end
+end
+pool[] Tx ts;
+spawn Tx() in ts;
+await async do end
+escape 5;
+]],
+    run = { ['~>1s']=5 },
+}
+
+Test { [[
 code/await Tx (var& int aaa)->void do
     await 1s;
     aaa = 5;
@@ -43146,34 +43320,6 @@ escape (call Ff(x1));
 }
 
 Test { [[
-//data Direction as nothing;
-data Direction as 0;
-data Direction.Right as 10;
-data Direction.Left as 20;
-
-code/tight/dynamic Ff (var/dynamic Direction dir) -> int do
-    escape 1;
-end
-
-code/tight/dynamic Ff (var/dynamic Direction.Right dir) -> int do
-    escape 10;
-end
-
-code/tight/dynamic Ff (var/dynamic Direction.Left dir) -> int do
-    escape 100;
-end
-
-var Direction.Right x1 = val Direction.Right();
-var Direction y1 = val Direction.Left();
-var Direction y2 = val Direction();
-
-escape (call/dynamic Ff(x1)) + (call/dynamic Ff(y1)) + (call/dynamic Ff(y2));
-]],
-    wrn = true,
-    run = 111,
-}
-
-Test { [[
 data Direction as nothing;
 data Direction.Right as 10;
 data Direction.Left as 20;
@@ -47765,6 +47911,7 @@ escape 1;
 
 --<<< CEU_FEATURES_*
 
+do return end
 -->> CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
 
 Test { [[
@@ -49498,6 +49645,34 @@ escape (call/dynamic Ff(x1)) + (call/dynamic Ff(y1)) + (call/dynamic Ff(y2));
 ]],
     wrn = true,
     stmts = 'line 20 : invalid constructor : cannot instantiate `data´ "Direction"',
+}
+
+Test { [[
+//data Direction as nothing;
+data Direction as 0;
+data Direction.Right as 10;
+data Direction.Left as 20;
+
+code/tight/dynamic Ff (var/dynamic Direction dir) -> int do
+    escape 1;
+end
+
+code/tight/dynamic Ff (var/dynamic Direction.Right dir) -> int do
+    escape 10;
+end
+
+code/tight/dynamic Ff (var/dynamic Direction.Left dir) -> int do
+    escape 100;
+end
+
+var Direction.Right x1 = val Direction.Right();
+var Direction y1 = val Direction.Left();
+var Direction y2 = val Direction();
+
+escape (call/dynamic Ff(x1)) + (call/dynamic Ff(y1)) + (call/dynamic Ff(y2));
+]],
+    wrn = true,
+    run = 111,
 }
 
 --<< CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC

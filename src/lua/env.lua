@@ -102,6 +102,7 @@ end
 
 if TESTS then
     c = c .. [[
+u32 _ceu_tests_bcasts_ = 0;
 u32 _ceu_tests_trails_visited_ = 0;
 ]]
 end

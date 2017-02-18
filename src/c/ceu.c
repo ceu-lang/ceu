@@ -492,6 +492,10 @@ xxx += 4;
         trlF = tmp;
     }
 
+#ifdef CEU_TESTS
+    _ceu_tests_bcasts_++;
+#endif
+
     for (trlK=trl0, trl=&range.mem->_trails[trlK]; ;)
     {
 #ifdef CEU_TESTS
@@ -593,50 +597,13 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
         /* normal trails: check if awakes */
 
         if (occ->evt.id == CEU_INPUT__CLEAR) {
-            tceu_evt_range* clr_range = (tceu_evt_range*) occ->params;
-
-            int matches_clear_vs_trail = (clr_range->mem  == range.mem  &&
-                                          clr_range->trl0 <= trlK       &&
-                                          clr_range->trlF >= trlK)
-                                            || ceu_mem_is_child(range.mem,
-                                                    clr_range->mem,
-                                                    clr_range->trl0,
-                                                    clr_range->trlF);
-
-            /* clearing this trail? */
-            if (matches_clear_vs_trail) {
-                tceu_nevt trl_evt_id = trl->evt.id;
-                trl->evt.id = CEU_INPUT__NONE;
-                if (trl_evt_id == CEU_INPUT__FINALIZE) {
-                    /* FINALIZE awakes now on "mark" */
-                    ceu_lbl(occ, &_stk, range.mem, trlK, trl->lbl);
-                }
-
-            /* clear matches CLEAR? */
-            } else if (trl->evt.id == CEU_INPUT__CLEAR) {
-                int matches_clear_vs_clear =
-                        (clr_range->mem  == trl->clr_range.mem  &&
-                         clr_range->trl0 <= trl->clr_range.trl0 &&
-                         clr_range->trlF >= trl->clr_range.trlF);
-                if (matches_clear_vs_clear) {
-ceu_dbg_assert(0);
-                    goto _CEU_AWAKE_YES_;
-                }
-
-            /* clear matches CODE? */
-            } else if (trl->evt.id==CEU_INPUT__CODE_TERMINATED ||
-                       trl->evt.id==CEU_INPUT__PROPAGATE_CODE)
-            {
-                if (ceu_mem_is_child((tceu_code_mem*)trl->evt.mem,
-                                     clr_range->mem,
-                                     clr_range->trl0, clr_range->trlF) == 2)
-                {
-                    goto _CEU_AWAKE_YES_;
-                }
+            tceu_nevt trl_evt_id = trl->evt.id;
+            trl->evt.id = CEU_INPUT__NONE;
+            if (trl_evt_id == CEU_INPUT__FINALIZE) {
+                /* FINALIZE awakes now on "mark" */
+                ceu_lbl(occ, &_stk, range.mem, trlK, trl->lbl);
             }
-        }
-
-        if (occ->evt.id==CEU_INPUT__CODE_TERMINATED &&
+        } else if (occ->evt.id==CEU_INPUT__CODE_TERMINATED &&
             (trl->evt.id==CEU_INPUT__CODE_TERMINATED || trl->evt.id==CEU_INPUT__PROPAGATE_CODE))
         {
             if (trl->evt.mem == occ->evt.mem) {
@@ -816,6 +783,7 @@ CEU_API int ceu_loop (void)
     ceu_stop();
 
 #ifdef CEU_TESTS
+    printf("_ceu_tests_bcasts_ = %d\n", _ceu_tests_bcasts_);
     printf("_ceu_tests_trails_visited_ = %d\n", _ceu_tests_trails_visited_);
 #endif
 
