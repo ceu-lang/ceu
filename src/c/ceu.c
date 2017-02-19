@@ -1,3 +1,5 @@
+#define CEU_FEATURES_LONGJMP
+
 === FEATURES ===        /* CEU_FEATURES */
 
 #include <stddef.h>     /* offsetof */
@@ -5,6 +7,10 @@
 #include <string.h>     /* memset, strlen */
 #ifdef CEU_TESTS
 #include <stdio.h>
+#endif
+
+#ifdef CEU_FEATURES_LONGJMP
+#include <setjmp.h>
 #endif
 
 #ifdef CEU_FEATURES_LUA
@@ -241,10 +247,24 @@ enum {
     === LABELS ===
 };
 
+typedef struct tceu_stk {
+    u8               is_alive : 1;
+    struct tceu_stk* down;
+    tceu_evt_range   range;
+} tceu_stk;
+
 typedef struct tceu_app {
     bool end_ok;
     int  end_val;
 
+    /* LONGJMP */
+#ifdef CEU_FEATURES_LONGJMP
+    bool      jmp_pending;
+    jmp_buf   jmp_buf;
+    tceu_stk* jmp_stk;
+#endif
+
+    /* SEQ */
     tceu_nseq seq;
     tceu_nseq seq_base;
 
@@ -267,13 +287,38 @@ typedef struct tceu_app {
 
 static tceu_app CEU_APP;
 
-/*****************************************************************************/
+#ifdef CEU_FEATURES_LONGJMP
+#define CEU_LONGJMP_SET(me)                     \
+    if (!me->is_alive) {                        \
+        ceu_dbg_assert(!CEU_APP.jmp_pending);   \
+        CEU_APP.jmp_pending = 1;                \
+        if (!setjmp(CEU_APP.jmp_buf)) {         \
+printf("set\n"); \
+            return;                             \
+        } else {                                \
+            _ceu_stk = CEU_APP.jmp_stk;         \
+printf("cnt\n"); \
+            /* continue from here */            \
+        }                                       \
+    }
 
-typedef struct tceu_stk {
-    u8               is_alive : 1;
-    struct tceu_stk* down;
-    tceu_evt_range   range;
-} tceu_stk;
+#define CEU_LONGJMP_JMP(me, sub)                \
+    if (!me->is_alive) {                        \
+        ceu_dbg_assert(CEU_APP.jmp_pending);    \
+        if (!sub->is_alive) {                   \
+            return;                             \
+        } else {                                \
+printf("jmp\n"); \
+            CEU_APP.jmp_pending = 0;            \
+            CEU_APP.jmp_stk = sub;              \
+            longjmp(CEU_APP.jmp_buf,1);         \
+        }                                       \
+    } else {                                    \
+        return;                                 \
+    }
+#endif
+
+/*****************************************************************************/
 
 static tceu_code_mem* ceu_outer (tceu_code_mem* mem, u8 n) {
     for (; mem->depth!=n; mem=mem->up_mem);
@@ -531,6 +576,7 @@ fprintf(stderr, "??? trlK=%d, evt=%d, seq=%d\n", trlK, trl->evt.id, trl->seq);
                     occ->range = _range;
                     ceu_bcast(occ, &_stk);
                     if (!_stk.is_alive) {
+ceu_dbg_assert(0);
                         goto _CEU_BREAK_;
                     }
                 }
@@ -549,6 +595,7 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                     occ->range = _range;
                     ceu_bcast(occ, &_stk);
                     if (!_stk.is_alive) {
+ceu_dbg_assert(0);
                         goto _CEU_BREAK_;
                     }
                     cur = nxt;
@@ -579,6 +626,7 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                             ceu_bcast(&occ2, &_stk);
                         }
                         if (!_stk.is_alive) {
+ceu_dbg_assert(0);
                             goto _CEU_BREAK_;
                         }
                     }
@@ -641,6 +689,7 @@ fprintf(stderr, "+++ %d\n", trl->lbl);
         trl->evt.id = CEU_INPUT__NONE;
         ceu_lbl(occ, &_stk, range.mem, trlK, trl->lbl);
         if (!_stk.is_alive) {
+ceu_dbg_assert(0);
 #ifdef _CEU_DEBUG
 fprintf(stderr, "break\n");
 #endif
@@ -724,6 +773,10 @@ CEU_API void ceu_start (void) {
     ceu_callback_void_void(CEU_CALLBACK_START);
 
     CEU_APP.end_ok   = 0;
+
+#ifdef CEU_FEATURES_LONGJMP
+    CEU_APP.jmp_pending = 0;
+#endif
 
     CEU_APP.seq      = 0;
     CEU_APP.seq_base = 0;

@@ -107,6 +107,17 @@ escape 1;
 
 
 -- TODO-TCO (see cc.lua:TODO-TCO)
+--]=====]
+Test { [[
+par/or do
+with
+end
+escape 1;
+]],
+    run = 1,
+}
+do return end
+
 Test { [[
 var int i;
 loop i in [0->10000[ do      // 6000 already fails
@@ -218,7 +229,6 @@ escape 1;
     run = 1,
 }
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -35623,6 +35633,19 @@ escape 1;
 }
 
 Test { [[
+code/await Ff (void) -> int do
+    await 1s;
+    escape 1;
+end
+
+pool[] Ff fs;
+var&? Ff f = spawn Ff() in fs;
+var int? ret = await f;
+escape ret!;
+]],
+    run = { ['~>1s']=1 },
+}
+Test { [[
 code/await Ff (void) -> (var& int x) -> FOREVER do
     var int v = 10;
     x = &v;
@@ -35660,6 +35683,24 @@ escape x!.x + 1;
     run = 11,
 }
 
+Test { [[
+code/await Ff (void) -> void do
+    await 1s;
+end
+
+do
+    pool[] Ff fs;
+    var&? Ff f = spawn Ff() in fs;
+    par/or do
+        await f;
+    with
+        await FOREVER;
+    end
+end
+escape 1;
+]],
+    run = { ['~>1s']=1 },
+}
 Test { [[
 code/await Ff (void) -> (var& int x) -> void do
                         // err
