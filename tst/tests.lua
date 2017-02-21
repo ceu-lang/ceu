@@ -141,8 +141,502 @@ escape 1;
     run = 1,
 }
 
-do return end -- OK
 --]=====]
+
+-->> KILL
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+var&? Ff f = spawn Ff();
+par/and do
+    await f;
+with
+    kill f;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+class Tx with
+    var int a=0;
+do
+    this.a = 1;
+end
+var Tx a;
+var int ret = 0;
+par/and do
+    await a;
+    ret = ret + 1;
+with
+    kill a;
+with
+    await a;
+    ret = ret * 2;
+end
+escape ret;
+]],
+    _ana = { acc=3 },
+    run = 2,
+}
+
+Test { [[
+class Tx with
+    var int a=0;
+do
+    this.a = 1;
+end
+var Tx a;
+var int ret = 0;
+par/and do
+    watching a do
+        await FOREVER;
+    end
+    ret = 10;
+with
+    kill a;
+end
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+class Tx with
+    var int a=0;
+do
+    this.a = 1;
+    await FOREVER;
+end
+var Tx a;
+var int rrr = 0;
+par/and do
+    var int v = await a;
+    rrr = rrr + v;
+with
+    kill a => 10;
+with
+    var int v = await a;
+    rrr = rrr + v;
+end
+escape rrr;
+]],
+    _ana = { acc=true },
+    run = 20,
+}
+
+Test { [[
+class Tx with
+    var int a=0;
+do
+    this.a = 1;
+    await FOREVER;
+end
+var Tx a;
+var int ret = 10;
+par/and do
+    var int v =
+    watching a do
+        await FOREVER;
+    end;
+    ret = v;
+with
+    kill a => 1;
+end
+escape ret;
+]],
+    run = 1,
+}
+
+Test { [[
+native/pos do
+    int V = 0;
+end
+class Tx with
+do
+    do finalize with
+        _V = 10;
+    end
+    await FOREVER;
+end
+var Tx&&? t = spawn Tx;
+kill *t!;
+escape _V;
+]],
+    run = 10,
+}
+
+Test { [[
+native/pos do
+    int V = 0;
+end
+class Tx with
+do
+    do finalize with
+        _V = 10;
+    end
+    await FOREVER;
+end
+var Tx t;
+kill t;
+escape _V;
+]],
+    run = 10,
+}
+
+Test { [[
+native/pos do
+    int V = 0;
+end
+class Tx with
+do
+    do finalize with
+        _V = 10;
+    end
+    await FOREVER;
+end
+var Tx t;
+par/and do
+    kill t;
+with
+    await t;
+    _V = _V * 2;
+end
+escape _V;
+]],
+    run = 20,
+}
+
+Test { [[
+class Tx with
+    var int v = 10;
+do
+    await FOREVER;
+end
+
+var Tx&&? t = spawn Tx;
+do finalize with
+    kill *t!;
+end
+
+escape 10;
+]],
+    props = 'line 9 : not permitted inside `finalize´',
+}
+
+Test { [[
+class Tx with
+    var int v = 10;
+do
+    await FOREVER;
+end
+
+input void OS_START;
+event Tx&& e;
+
+var int ret = 1;
+
+par/and do
+    await OS_START;
+    var Tx&&? t = spawn Tx;
+    ret = ret * 2;
+    watching *t! do
+        emit e(t!);
+        ret = ret + t!:v;
+        await *t!;
+        ret = -1;
+    end
+    ret = ret * 2;
+with
+    var Tx&& t1 = await e;
+    ret = ret + t1:v;
+    kill *t1;
+    ret = ret + 1;
+end
+
+escape ret;
+]],
+    tmp = 'line 8 : invalid event type',
+    --env = 'line 17 : wrong argument : cannot pass pointers',
+    --run = 25,
+}
+
+Test { [[
+class Tx with
+do
+    await FOREVER;
+end
+var int ret = 0;
+loop i do
+    var Tx t1;
+    par/or do
+        await t1;
+    with
+        kill t1;
+        await FOREVER;
+    end
+
+    var Tx&&? t = spawn Tx;
+    par/or do
+        await *t!;
+    with
+        kill *t!;
+        await FOREVER;
+    end
+    if i == 10 then
+        break;
+    else
+        ret = ret + 1;
+    end
+end
+escape ret;
+]],
+    wrn = true,
+    loop = true,
+    --tight = 'line 6 : tight loop',
+    run = 10,
+}
+
+Test { [[
+class Tx with
+do
+end
+var int ret = 0;
+loop i do
+    var Tx t1;
+    par/or do
+        await t1;
+    with
+        kill t1;
+        await FOREVER;
+    end
+
+    var Tx&&? t = spawn Tx;
+    par/or do
+        if t? then
+            await *t!;
+        end
+    with
+        kill *t!;
+        await FOREVER;
+    end
+    if i == 10 then
+        break;
+    else
+        ret = ret + 1;
+    end
+end
+escape ret;
+]],
+    wrn = true,
+    loop = true,
+    --tight = 'line 6 : tight loop',
+    run = 10,
+}
+
+Test { [[
+class Tx with
+do
+    await FOREVER;
+end
+
+pool[] Tx ts;
+
+loop t1 in ts do
+    loop t2 in ts do
+        kill *t1;
+        kill *t2;
+    end
+end
+
+escape 1;
+]],
+    fin = 'line 10 : unsafe access to pointer "t1" across `loop´ (/tmp/tmp.ceu : 9)',
+    --fin = 'line 11 : unsafe access to pointer "t2" across `kill´',
+}
+
+Test { [[
+class Tx with
+do
+    await FOREVER;
+end
+
+pool[] Tx ts;
+
+loop t1 in ts do
+    loop t2 in ts do
+        watching *t2 do
+            kill *t1;
+            kill *t2;
+        end
+    end
+end
+
+escape 1;
+]],
+    fin = ' line 11 : unsafe access to pointer "t1" across `loop´ (/tmp/tmp.ceu : 9)',
+}
+
+Test { [[
+class Tx with
+do
+    await FOREVER;
+end
+
+pool[] Tx ts;
+
+loop t1 in ts do
+    watching *t1 do
+        loop t2 in ts do
+            watching *t2 do
+                kill *t1;
+                kill *t2;
+            end
+        end
+    end
+end
+
+escape 1;
+]],
+    props = 'line 8 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
+    --run = 1,
+}
+
+Test { [[
+input void OS_START;
+event void a;
+class Tx with do
+    await FOREVER;
+end
+do
+    var Tx t;
+    par/or do
+        await t;
+native _assert;
+        _assert(0);
+    with
+        await OS_START;
+    end
+    kill t;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+
+class Tx with
+do
+    await FOREVER;
+end
+
+var Tx t;
+par/or do
+    await t;
+with
+    kill t;
+native _assert;
+    _assert(0);
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class Tx with
+    event void e;
+do
+    await e;
+end
+
+pool[] Tx ts;
+
+var int ret = 1;
+
+spawn Tx in ts;
+spawn Tx in ts;
+async do end;
+
+loop t1 in ts do
+    loop t2 in ts do
+        ret = ret + 1;
+        kill *t2;
+    end
+end
+
+escape ret;
+]],
+    props = 'line 15 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
+    --run = 3,
+}
+Test { [[
+class Tx with
+    event void e;
+do
+    await e;
+end
+
+pool[] Tx ts;
+
+var int ret = 1;
+
+spawn Tx in ts;
+spawn Tx in ts;
+async do end;
+
+loop t1 in ts do
+    watching *t1 do
+        loop t2 in ts do
+            watching *t2 do
+                ret = ret + 1;
+                kill *t1;
+            end
+        end
+    end
+end
+
+escape ret;
+]],
+    props = 'line 15 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
+    --run = 3,
+}
+
+-- BUG: loop between declaration and watching
+Test { [[
+class Tx with
+    event void e;
+do
+    await FOREVER;
+end
+
+pool[] Tx ts;
+
+var Tx*? t = spawn Tx in ts;
+
+loop do
+    watching *t! do
+        kill *t!;
+    end
+    await 1s;
+    if false then
+        break;
+    end
+end
+
+escape 1;
+]],
+    run = { ['~>1s']=10 },
+}
+
+--<< KILL
+do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -44710,6 +45204,46 @@ escape b.b;
 ]],
     --inits = 'line 7 : uninitialized variable "b"',
     run = 20,
+}
+
+Test { [[
+data Dd with
+    var int x = 111;
+end
+code/await Ff (var Dd d) -> int do
+    escape d.x;
+end
+var int ret = await Ff(_);
+escape ret;
+]],
+    run = 111,
+}
+
+Test { [[
+data Dd with
+    var int x = 111;
+end
+code/tight Ff (var Dd d) -> int do
+    escape d.x;
+end
+var int ret = call Ff(_);
+escape ret;
+]],
+    run = 111,
+}
+
+Test { [[
+data Dd with
+    var int x = 111;
+end
+code/await Ff (void) -> (var Dd d) -> FOREVER do
+    d = val Dd(_);
+    await FOREVER;
+end
+var&? Ff f = spawn Ff();
+escape f!.d.x;
+]],
+    run = 111,
 }
 
 --<< DATA / DEFAULT / CONSTRUCTOR

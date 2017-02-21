@@ -3,7 +3,7 @@
 TESTS = {
     --cmd = true,
     --luacov = 'lua5.3 -lluacov'
-    valgrind = true,
+    --valgrind = true,
 --REENTRANT = true
 --COMPLETE = true
     stats = {
@@ -711,8 +711,16 @@ stats = {
     bytes  = 49392944,
     visits = 5211691,
 }
-
 (./run.lua: 755.32s 40812k)
+
+stats = {
+    count  = 3106,
+    trails = 5684,
+    bytes  = 53819176,
+    bcasts = 862322,
+    visits = 2161183,
+}
+(./run.lua: 648.72s 42460k)
 
 
 
