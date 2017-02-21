@@ -377,23 +377,7 @@ DCLS.F = {
 
         end
 
-        if AST.par(me,'_Code_Pars_X') and is_top then
-error'oi'
-            local stmts = AST.get(AST.par(me,'Code'),'',
-                                    4,'Block', 1,'Stmts', 2,'Block',
-                                    1,'Stmts', 1,'Do', 3,'Block', 1,'Stmts')
-            if stmts then
-                AST.asr(stmts,'', 1,'Code_Args')
-                AST.insert(stmts, 1, t.stmts)
-            else
-                if #t.stmts > 0 then
-                   -- code/dynamic / prototype
-                    error'not implemented'
-                end
-            end
-        else
-            return t.stmts
-        end
+        return t.stmts
     end,
 
     Pool__PRE = 'Vec__PRE',

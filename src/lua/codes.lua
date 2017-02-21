@@ -323,6 +323,17 @@ ceu_dbg_assert(]]..V(ID_int,ctx)..[[.pool.queue == NULL);
 
     ---------------------------------------------------------------------------
 
+    Code_Pars_Stmts = function (me)
+        if AST.get(me,6,'Code', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block',
+                                1,'Stmts', 1,'Code_Pars_Stmts') == me
+        then
+            -- input args
+        else
+            -- output args
+            CONC_ALL(me)
+        end
+    end,
+
     Code = function (me)
         local _,mods,_,body = unpack(me)
         if not me.is_impl then return end
