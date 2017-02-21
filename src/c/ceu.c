@@ -459,7 +459,7 @@ int ceu_lua_atpanic (lua_State* lua) {
 
 /*****************************************************************************/
 
-static void ceu_bcast (tceu_evt_occ* occ, tceu_stk* stk);
+static void ceu_bcast (tceu_evt_occ* occ, tceu_stk* stk, bool is_prim);
 static void ceu_lbl (tceu_evt_occ* _ceu_occ, tceu_stk* _ceu_stk,
                      tceu_code_mem* _ceu_mem, tceu_ntrl _ceu_trlK, tceu_nlbl _ceu_lbl);
 
@@ -543,13 +543,13 @@ _CEU_LBL_:
 static int xxx = 0;
 #endif
 
-static void ceu_bcast (tceu_evt_occ* occ, tceu_stk* stk)
+static void ceu_bcast (tceu_evt_occ* occ, tceu_stk* stk, bool is_prim)
 {
     tceu_ntrl trlK;
     tceu_trl* trl;
     tceu_evt_range range = occ->range;
 
-    if (stk->is_base && occ->evt.id>CEU_INPUT__SEQ) {
+    if (is_prim && occ->evt.id>CEU_INPUT__SEQ) {
         ceu_callback_assert_msg(((tceu_nseq)(CEU_APP.seq+1)) != CEU_APP.seq_base,
                                 "too many internal reactions");
         CEU_APP.seq++;
@@ -614,7 +614,7 @@ fprintf(stderr, "??? trlK=%d, evt=%d, seq=%d\n", trlK, trl->evt.id, trl->seq);
                         (tceu_ntrl)(((tceu_code_mem*)trl->evt.mem)->trails_n-1)
                     };
                     occ->range = _range;
-                    ceu_bcast(occ, &_stk);
+                    ceu_bcast(occ, &_stk, 0);
 #ifdef CEU_FEATURES_LONGJMP
                     CEU_LONGJMP_JMP_((&_stk));
 #else
@@ -637,7 +637,7 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                     tceu_evt_range _range = { &cur->mem[0],
                                               0, (tceu_ntrl)((&cur->mem[0])->trails_n-1) };
                     occ->range = _range;
-                    ceu_bcast(occ, &_stk);
+                    ceu_bcast(occ, &_stk, 0);
 #ifdef CEU_FEATURES_LONGJMP
                     CEU_LONGJMP_JMP_((&_stk));
 #else
@@ -665,13 +665,13 @@ ceu_dbg_assert(0);
                                                   {range.mem,
                                                    (tceu_ntrl)(trlK+1), (tceu_ntrl)(trlK+trl->pse_skip)}
                                                 };
-                            ceu_bcast(&occ2, &_stk);
+                            ceu_bcast(&occ2, &_stk, 0);
                         } else {
                             tceu_evt_occ occ2 = { {CEU_INPUT__RESUME,{NULL}}, CEU_APP.seq, occ->params,
                                                   {range.mem,
                                                    (tceu_ntrl)(trlK+1), (tceu_ntrl)(trlK+trl->pse_skip)}
                                                 };
-                            ceu_bcast(&occ2, &_stk);
+                            ceu_bcast(&occ2, &_stk, 0);
                         }
                         ceu_dbg_assert(_stk.is_alive);
                     }
@@ -793,7 +793,7 @@ void ceu_input_one (tceu_nevt evt_id, void* evt_params, tceu_stk* stk)
                          {(tceu_code_mem*)&CEU_APP.root,
                           0, (tceu_ntrl)(CEU_APP.root._mem.trails_n-1)}
                        };
-    ceu_bcast(&occ, &_stk);
+    ceu_bcast(&occ, &_stk, 1);
 }
 #endif
 
@@ -804,7 +804,7 @@ void ceu_input_one (tceu_nevt evt_id, void* evt_params, tceu_stk* stk)
                          {(tceu_code_mem*)&CEU_APP.root,
                           0, (tceu_ntrl)(CEU_APP.root._mem.trails_n-1)}
                        };
-    ceu_bcast(&occ, &_stk);
+    ceu_bcast(&occ, &_stk, 1);
 }
 
 CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params)
