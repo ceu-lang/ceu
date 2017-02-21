@@ -50,9 +50,8 @@ local function CLEAR (me)
     ceu_stack_clear(_ceu_stk, _ceu_mem,
                     ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
 #ifdef CEU_FEATURES_LONGJMP
-    CEU_LONGJMP_SET(_ceu_stk)
+    CEU_LONGJMP_SET(_ceu_stk,]]..me.lbl_clr.id..[[)
 #endif
-
     tceu_evt_range __ceu_range = { _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[ };
     tceu_evt_occ __ceu_occ = { {CEU_INPUT__CLEAR,{NULL}}, (tceu_nseq)(CEU_APP.seq+1),
                                NULL, __ceu_range };
@@ -398,7 +397,9 @@ if (0)
 ]=]
 
         CONC(me, body)
-        CLEAR(me)           -- TODO: only stack_clear?
+        if mods.await then
+            CLEAR(me)           -- TODO: only stack_clear?
+        end
 
         local Type = AST.get(body,'Block', 1,'Stmts', 1,'Code_Ret', 1,'', 2,'Type')
         if not Type then
@@ -417,12 +418,16 @@ ceu_callback_assert_msg(0, "reached end of `code´");
         { (tceu_code_mem*)&CEU_APP.root, 0,
           (tceu_ntrl)(CEU_APP.root._mem.trails_n-1) }
     };
-    tceu_stk __ceu_stk = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
+    tceu_stk __ceu_stk = { 1, 0, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
     ceu_bcast(&__ceu_occ, &__ceu_stk);
+#ifdef CEU_FEATURES_LONGJMP
+    CEU_LONGJMP_JMP((&__ceu_stk));
+#else
     if (!__ceu_stk.is_alive) {
 ceu_dbg_assert(0);
         return;
     }
+#endif
 
 /* TODO: if return value can be stored with "ceu_bcast", we can "free" first
          and remove this extra stack level */
@@ -467,12 +472,16 @@ ceu_dbg_assert(0);
 ]]
         end
         ret = ret .. [[
-    tceu_stk __ceu_stk  = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
+    tceu_stk __ceu_stk  = { 1, 0, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
     CEU_CODE_]]..ID_abs.dcl.id_..[[(&__ceu_stk, 0, (tceu_code_mem*)]]..mem..[[);
+#ifdef CEU_FEATURES_LONGJMP
+    CEU_LONGJMP_JMP((&__ceu_stk));
+#else
     if (!__ceu_stk.is_alive) {
 ceu_dbg_assert(0);
         return;
     }
+#endif
 }
 ]]
         return ret
@@ -559,10 +568,6 @@ _ceu_mem->_trails[]]..(to.dcl.trails[1])..[[].evt.mem =  &]]..CUR('__mem_'..me.n
 
         tceu_code_mem* __ceu_new_mem = &__ceu_new->mem[0];
         ]]..CODES.F.__abs(me, '__ceu_new_mem', '(&'..V(pool)..')')..[[
-        if (!_ceu_stk->is_alive) {
-ceu_dbg_assert(0);
-            return;
-        }
     }
 }
 ]])
@@ -580,13 +585,13 @@ ceu_dbg_assert(0);
         LINE(me, [[
 _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__FINALIZE;
 _ceu_mem->_trails[]]..me.trails[1]..[[].evt.mem   = _ceu_mem;
-_ceu_mem->_trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_clr.id..[[;
+_ceu_mem->_trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_fin.id..[[;
 _ceu_mem->_trails[]]..me.trails[1]..[[].clr_range =
     (tceu_evt_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[1]..[[ };
 
 ]]..dyn..[[ = NULL;
 if (0) {
-    case ]]..me.lbl_clr.id..[[:
+    case ]]..me.lbl_fin.id..[[:
         if (]]..dyn..[[ != NULL) {
             if (]]..dyn..[[->state==CEU_CODE_MEM_DYN_STATE_DELETE) {
                 ceu_code_mem_dyn_free(&]]..V(pool)..[[.pool, ]]..dyn..[[);
@@ -719,7 +724,7 @@ goto ]]..me.outer.lbl_out.id..[[;
 ]])
         else
             LINE(me, [[
-return ceu_lbl(NULL, _ceu_stk,
+RETURN_CEU_LBL(NULL, _ceu_stk,
                _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
 ]])
         end
@@ -871,7 +876,7 @@ goto ]]..me.outer.lbl_out.id..[[;
 ]])
         else
             LINE(me, [[
-return ceu_lbl(NULL, _ceu_stk,
+RETURN_CEU_LBL(NULL, _ceu_stk,
                _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
 ]])
         end
@@ -883,7 +888,7 @@ goto ]]..me.outer.lbl_out.id..[[;
 ]])
         else
             LINE(me, [[
-return ceu_lbl(NULL, _ceu_stk,
+RETURN_CEU_LBL(NULL, _ceu_stk,
                _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_cnt.id..[[);
 ]])
         end
@@ -919,13 +924,14 @@ return ceu_lbl(NULL, _ceu_stk,
                 local abt = me[i+1].trails[1]
                 LINE(me, [[
 {
-    tceu_stk __ceu_stk = { 1, _ceu_stk, {_ceu_mem,]]..abt..','..abt..[[} };
+    tceu_stk __ceu_stk = { 1, 0, _ceu_stk, {_ceu_mem,]]..abt..','..abt..[[} };
     ceu_lbl(_ceu_occ, &__ceu_stk,
             _ceu_mem, ]]..sub.trails[1]..[[, ]]..me.lbls_in[i].id..[[);
 #ifdef CEU_FEATURES_LONGJMP
-    CEU_LONGJMP_JMP((&__ceu_stk),_ceu_stk);
+    CEU_LONGJMP_JMP((&__ceu_stk));
 #else
     if (!__ceu_stk.is_alive) {
+ceu_dbg_assert(0);
         return;
     }
 #endif
@@ -934,7 +940,7 @@ return ceu_lbl(NULL, _ceu_stk,
             else
                 -- no need to abort since there's a "return" below
                 LINE(me, [[
-return ceu_lbl(_ceu_occ, _ceu_stk,
+RETURN_CEU_LBL(_ceu_occ, _ceu_stk,
               _ceu_mem, ]]..sub.trails[1]..','..me.lbls_in[i].id..[[);
 ]])
             end
@@ -955,7 +961,7 @@ return ceu_lbl(_ceu_occ, _ceu_stk,
 ]])
                 end
                 LINE(me, [[
-return ceu_lbl(_ceu_occ, _ceu_stk,
+RETURN_CEU_LBL(_ceu_occ, _ceu_stk,
                _ceu_mem, ]]..me.trails[1]..','..me.lbl_out.id..[[);
 ]])
             end
@@ -1324,7 +1330,18 @@ ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
 _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__ASYNC;
 _ceu_mem->_trails[]]..me.trails[1]..[[].seq    = (tceu_nseq)(CEU_APP.seq+1);
 _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
-ceu_input_one(]]..V(ID_ext)..'.id, '..ps..[[);
+{
+    tceu_stk __ceu_stk = { 1, 0, _ceu_stk, {_ceu_mem,]]..me.trails[1]..','..me.trails[1]..[[} };
+    ceu_input_one(]]..V(ID_ext)..'.id, '..ps..[[, &__ceu_stk);
+#ifdef CEU_FEATURES_LONGJMP
+    CEU_LONGJMP_JMP((&__ceu_stk));
+#else
+    if (!_ceu_stk->is_alive) {
+ceu_dbg_assert(0);
+        return;
+    }
+#endif
+}
 ]])
             else
                 local isr = assert(AST.par(me,'Async_Isr'))
@@ -1395,12 +1412,16 @@ if (]]..V(Loc)..[[ != NULL) {
                                {(tceu_code_mem*)&CEU_APP.root,
                                 0, (tceu_ntrl)(CEU_APP.root._mem.trails_n-1)}
                              };
-    tceu_stk __ceu_stk  = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
+    tceu_stk __ceu_stk  = { 1, 0, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
     ceu_bcast(&__ceu_occ, &__ceu_stk);
-    if (!__ceu_stk.is_alive) {
+#ifdef CEU_FEATURES_LONGJMP
+    CEU_LONGJMP_JMP((&__ceu_stk));
+#else
+    if (!_ceu_stk->is_alive) {
 ceu_dbg_assert(0);
         return;
     }
+#endif
 }
 ]])
     end,
@@ -1443,11 +1464,16 @@ ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
 {
     s32 __ceu_dt = ]]..V(e)..[[;
     do {
-        ceu_input_one(CEU_INPUT__WCLOCK, &__ceu_dt);
+        tceu_stk __ceu_stk = { 1, 0, _ceu_stk, {_ceu_mem,]]..me.trails[1]..','..me.trails[1]..[[} };
+        ceu_input_one(CEU_INPUT__WCLOCK, &__ceu_dt, _ceu_stk);
+#ifdef CEU_FEATURES_LONGJMP
+        CEU_LONGJMP_JMP((&__ceu_stk));
+#else
         if (!_ceu_stk->is_alive) {
 ceu_dbg_assert(0);
             return;
         }
+#endif
         __ceu_dt = 0;
     } while (CEU_APP.wclk_min_set <= 0);
 }

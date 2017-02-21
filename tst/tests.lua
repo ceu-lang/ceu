@@ -106,95 +106,7 @@ escape 1;
 --do return end
 
 
--- TODO-TCO (see cc.lua:TODO-TCO)
---]=====]
-Test { [[
-par/or do
-with
-end
-escape 1;
-]],
-    run = 1,
-}
 do return end
-
-Test { [[
-var int i;
-loop i in [0->10000[ do      // 6000 already fails
-    par/or do with end
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-code/await Ff (void) -> FOREVER do
-    await FOREVER;
-end
-var usize i;
-loop i in [0->10000[ do      // 5000 already fails
-    spawn Ff();
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-var usize i;
-loop i in [0->10000[ do
-    do
-        par do
-            escape;
-        with
-        end
-    end
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-var usize i;
-loop i in [0->100000[ do
-    do
-        par do
-            escape;
-        with
-        end
-    end
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-var int i;
-loop i in [0->100000[ do
-    par/or do with end
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-code/await Ff (void) -> FOREVER do
-    await FOREVER;
-end
-var usize i;
-loop i in [0->100000[ do
-    spawn Ff();
-end
-escape 1;
-]],
-    run = 1,
-}
-do return end
-
 
 Test { [[
 var int ret = 1;
@@ -228,7 +140,9 @@ escape 1;
 ]],
     run = 1,
 }
+
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -35702,6 +35616,22 @@ escape 1;
     run = { ['~>1s']=1 },
 }
 Test { [[
+code/await Ff (event& void e) -> void do
+    emit e;
+end
+event void e;
+par/or do
+    await e;
+with
+    pool[] Ff fs;
+    spawn Ff(&e) in fs;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
 code/await Ff (void) -> (var& int x) -> void do
                         // err
     var int v = 10;
@@ -47895,6 +47825,95 @@ escape 1;
 }
 
 --<<< OUTER
+
+-->>> TCO
+
+Test { [[
+par/or do
+with
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int i;
+loop i in [0->10000[ do      // 6000 already fails
+    par/or do with end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+var usize i;
+loop i in [0->10000[ do      // 5000 already fails
+    spawn Ff();
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var usize i;
+loop i in [0->10000[ do
+    do
+        par do
+            escape;
+        with
+        end
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var usize i;
+loop i in [0->100000[ do
+    do
+        par do
+            escape;
+        with
+        end
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int i;
+loop i in [0->100000[ do
+    par/or do with end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+var usize i;
+loop i in [0->100000[ do
+    spawn Ff();
+end
+escape 1;
+]],
+    run = 1,
+}
+
+--<<< TCO
 
 -->>> CEU_FEATURES_*
 
