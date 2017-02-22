@@ -430,6 +430,22 @@ STMTS.F = {
         end
     end,
 
+    Kill = function (me)
+        local loc, e = unpack(me)
+        local alias = unpack(loc.info.dcl)
+
+        -- ctx
+        INFO.asr_tag(loc, {'Var'}, 'invalid `kill´')
+
+        -- tp
+        local abs = TYPES.abs_dcl(loc.info.tp, 'Code')
+        ASR(abs, me, 'invalid `kill´ : expected `code/await´ abstraction')
+        assert(alias == '&?')
+        local tp = AST.get(abs,'Code', 4,'Block', 1,'Stmts',
+                                       1,'Code_Ret', 1,'', 2,'Type')
+        -- TODO: check e vs tp
+    end,
+
 -- STATEMENTS
 
     Await_Until = function (me)

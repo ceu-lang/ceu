@@ -141,9 +141,23 @@ escape 1;
     run = 1,
 }
 
---]=====]
-
 -->> KILL
+
+Test { [[
+event int a;
+kill a;
+escape 1;
+]],
+    stmts = 'line 2 : invalid `kill´ : unexpected context for event "a"',
+}
+
+Test { [[
+var int a = 0;
+kill a;
+escape 1;
+]],
+    stmts = 'line 2 : invalid `kill´ : expected `code/await´ abstraction',
+}
 
 Test { [[
 code/await Ff (void) -> FOREVER do
@@ -161,12 +175,50 @@ escape 1;
     run = 1,
 }
 Test { [[
-class Tx with
-    var int a=0;
-do
-    this.a = 1;
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
 end
-var Tx a;
+var&? Ff f = spawn Ff();
+par/or do
+    await f;
+with
+    kill f;
+    {ceu_dbg_assert(0);}
+end
+
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+event void e;
+watching e do
+    pool[] Ff fs;
+    var&? Ff f = spawn Ff() in fs;
+    par/or do
+        await f;
+        emit e;
+    with
+        kill f;
+        {ceu_dbg_assert(0);}
+    end
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Tx (void) -> (var int a) -> FOREVER do
+do
+    a = 1;
+    await FOREVER;
+end
+var&? Tx a = spawn Tx();
 var int ret = 0;
 par/and do
     await a;
@@ -184,12 +236,13 @@ escape ret;
 }
 
 Test { [[
-class Tx with
-    var int a=0;
+code/await Tx (void) -> (var int a) -> FOREVER do
 do
-    this.a = 1;
+    a = 1;
+    await FOREVER;
 end
-var Tx a;
+var&? Tx a = spawn Tx();
+
 var int ret = 0;
 par/and do
     watching a do
@@ -637,6 +690,7 @@ escape 1;
 
 --<< KILL
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -48302,13 +48356,68 @@ var int ret = 0;
 
 var&? Ff f;
 loop f in fs do
-    ret = ret + (call Get_X() in f);
+    ret = ret + (call f!.Get_X());
 end
 
 escape ret;
 ]],
     wrn = true,     -- TODO
     run = 3,
+}
+
+Test { [[
+code/await Ff (var int x) -> FOREVER do
+    code/await Get_X (void) -> int do
+        escape outer.x;
+    end
+    await FOREVER;
+end
+
+pool[] Ff fs;
+spawn Ff(1) in fs;
+spawn Ff(2) in fs;
+
+var int ret = 0;
+
+var&? Ff f;
+loop f in fs do
+    var int v = await Get_X() in f;
+    ret = ret + v;
+end
+
+escape ret;
+]],
+    wrn = true,     -- TODO
+    run = 3,
+}
+
+Test { [[
+data Dd with
+    var int x = 10;
+    code/tight Get_X (void) -> int do
+        escape outer.x;
+    end
+end
+
+var Dd d = _;
+escape call d.Get_X();
+]],
+    run = 10,
+}
+
+Test { [[
+data Dd with
+    var int x = 10;
+    code/await Get_X (void) -> int do
+        escape outer.x;
+    end
+end
+
+var Dd d = val Dd(20);
+var int x = await d.Get_X();
+escape x;
+]],
+    run = 10,
 }
 
 Test { [[
