@@ -48385,12 +48385,13 @@ var int ret = 0;
 
 var&? Ff f;
 loop f in fs do
-    var int v = await Get_X() in f;
+    var int v = await f!.Get_X();
     ret = ret + v;
 end
 
 escape ret;
 ]],
+    todo = 'dot for spawn/await',
     wrn = true,     -- TODO
     run = 3,
 }
@@ -48406,6 +48407,7 @@ end
 var Dd d = _;
 escape call d.Get_X();
 ]],
+    todo = 'dot for data',
     run = 10,
 }
 
@@ -48421,6 +48423,7 @@ var Dd d = val Dd(20);
 var int x = await d.Get_X();
 escape x;
 ]],
+    todo = 'dot for spawn/await',
     run = 10,
 }
 
@@ -48431,12 +48434,13 @@ end
 pool[] Ff fs;
 var&? Ff f;
 loop f in fs do
-    call Gg() in fs;
+    call f!.Gg();
 end
 escape 1;
 ]],
     wrn = true,
-    dcls = 'line 7 : invalid `call´',
+    --dcls = 'line 7 : invalid `call´',
+    run = 1,
 }
 
 Test { [[

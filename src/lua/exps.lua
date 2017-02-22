@@ -187,8 +187,7 @@ EXPS.F = {
     end,
 
     Abs_Cons = function (me)
-        local obj, ID_abs, Abslist = unpack(me)
-assert(not obj, 'not implemented')
+        local _, ID_abs, Abslist = unpack(me)
 
         local err_str
         if ID_abs.dcl.tag == 'Data' then

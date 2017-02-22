@@ -738,6 +738,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
     Abs_Cons = function (me)
         local obj, code, Abslist = unpack(me)
+
         if code.dcl.tag ~= 'Code' then
             EXPS.F.Abs_Cons(me)
             return
@@ -847,9 +848,8 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         local blk do
             local obj = AST.get(me,1,'Abs_Cons', 1,'Loc')
             if obj then
-                local tp = AST.get(obj.dcl,'Var', 2,'Type')
-                ASR(tp, me, 'invalid `call´')
-                local Code = TYPES.abs_dcl(tp, 'Code')
+                assert(obj.info.tp)
+                local Code = TYPES.abs_dcl(obj.info.tp, 'Code')
                 blk = AST.asr(Code,'Code', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 2,'Block')
             else
                 blk = AST.par(me,'Block')
