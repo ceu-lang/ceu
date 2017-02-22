@@ -284,6 +284,7 @@ end
 --AST.dump(AST.root)
     if not check(T,'adjs')   then return end
     dofile(DIR..'types.lua')
+    dofile(DIR..'exps.lua')
     if not check(T,'dcls')   then return end
 --do return end
     --if not check(T,'exps')   then return end

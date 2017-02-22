@@ -966,7 +966,6 @@ DCLS.F = {
     end,
 }
 
-dofile '../src/lua/exps.lua'
 for k,v in pairs(EXPS.F) do
     if DCLS.F[k] then
         --DBG('>>>', k)

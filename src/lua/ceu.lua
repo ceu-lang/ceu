@@ -13,8 +13,8 @@ if CEU.opts.ceu then
     DBG,ASR = DBG2,ASR2
     dofile 'adjs.lua'
     dofile 'types.lua'
-    dofile 'dcls.lua'
     dofile 'exps.lua'
+    dofile 'dcls.lua'
     dofile 'consts.lua'
     dofile 'fins.lua'
     dofile 'spawns.lua'
