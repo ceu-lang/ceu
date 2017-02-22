@@ -728,19 +728,29 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
     end,
 
     ---------------------------------------------------------------------------
+    -- HACK_02: very ugly
+    ---------------------------------------------------------------------------
 
     --  call Ff(Dd(...));
     -- to
     --  var Dd x = Dd(...);
     --  call FF(x);
 
-    Abs_Cons__POS = function (me)
+    Abs_Cons = function (me)
         local obj, code, Abslist = unpack(me)
-assert(not obj, 'not implemented')
         if code.dcl.tag ~= 'Code' then
+            EXPS.F.Abs_Cons(me)
             return
         end
 
+        if me.__dcls_ok then
+            EXPS.F.Abs_Cons(me)
+            return
+        else
+            me.__dcls_ok = true
+        end
+
+        local is_pending = false
         for i, v in ipairs(Abslist) do
             local id = '_'..code.n..'_'..v.n..'_abs'
             local xxx, yyy
@@ -780,9 +790,15 @@ assert(not obj, 'not implemented')
                 local t = stmts.__dcls_cons or {}
                 stmts.__dcls_cons = t
                 t[#t+1] = { j, set, get }
+                t.conss = t.conss or {}
+                t.conss[#t.conss+1] = me
+                is_pending = true
 
                 AST.set(Abslist,i,get)
             end
+        end
+        if not is_pending then
+            EXPS.F.Abs_Cons(me)
         end
     end,
 
@@ -797,6 +813,11 @@ assert(not obj, 'not implemented')
 
                 get[DCLS.F] = nil
                 AST.visit_fs(get)
+            end
+
+            for _, cons in ipairs(t.conss) do
+                cons[DCLS.F] = nil
+                AST.visit_fs(cons)
             end
         end
     end,
@@ -813,6 +834,7 @@ assert(not obj, 'not implemented')
     ID_nat = function (me)
         local id = unpack(me)
         me.dcl = DCLS.asr(me, AST.par(me,'Block'), id, true, 'native identifier')
+        EXPS.F.ID_nat(me)
     end,
 
     ID_ext = function (me)
@@ -823,8 +845,7 @@ assert(not obj, 'not implemented')
     ID_abs = function (me)
         local id = unpack(me)
         local blk do
-            local obj = AST.get(me,2,'Abs_Call', 2,'Loc')
-assert(not obj, 'not implemented')
+            local obj = AST.get(me,1,'Abs_Cons', 1,'Loc')
             if obj then
                 local tp = AST.get(obj.dcl,'Var', 2,'Type')
                 ASR(tp, me, 'invalid `call´')
@@ -851,11 +872,13 @@ assert(not obj, 'not implemented')
             end
         end
         me.dcl = DCLS.asr(me, blk, id, can_cross, 'internal identifier')
+        EXPS.F.ID_int(me)
     end,
 
     Loc = function (me)
         local e = unpack(me)
         me.dcl = e.dcl
+        EXPS.F.Loc(me)
     end,
 
     ['Exp_.'] = function (me)
@@ -879,6 +902,7 @@ assert(not obj, 'not implemented')
                 AST.asr(e.dcl,'Var', 2,'Type', 1,'ID_nat')
             end
         end
+        EXPS.F['Exp_.'](me)
     end,
 
     ---------------------------------------------------------------------------
@@ -958,5 +982,14 @@ assert(not obj, 'not implemented')
         end
     end,
 }
+
+dofile '../src/lua/exps.lua'
+for k,v in pairs(EXPS.F) do
+    if DCLS.F[k] then
+        --DBG('>>>', k)
+    else
+        DCLS.F[k] = v
+    end
+end
 
 AST.visit(DCLS.F)

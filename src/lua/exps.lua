@@ -67,7 +67,7 @@ function EXPS.check_dim (to, fr)
     end
 end
 
-F = {
+EXPS.F = {
     Loc = function (me)
         local e = unpack(me)
         me.info = e.info
@@ -250,7 +250,7 @@ assert(not obj, 'not implemented')
             elseif val.tag == 'Vec_Cons' then
 assert(ID_abs.dcl.tag == 'Data', 'TODO')
 error'TODO: remove below'
-                F.__set_vec(val, var)
+                EXPS.F.__set_vec(val, var)
 
             else
                 -- ctx
@@ -389,7 +389,7 @@ error'TODO: remove below'
         end
 
         if e.tag == 'Outer' then
-            F.ID_int(me)
+            EXPS.F.ID_int(me)
             me.info.id = 'outer.'..member
         else
             ASR(TYPES.ID_plain(e.info.tp), me,
@@ -771,4 +771,4 @@ DBG'TODO: type annotation'
     end,
 }
 
-AST.visit(F)
+--AST.visit(F)

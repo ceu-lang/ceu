@@ -774,12 +774,12 @@ Test { [[escape (((1)));]], run=1 }
 Test { [[
 escape 1 + null;
 ]],
-    exps = 'line 1 : invalid operand to `+´ : expected numeric type',
+    dcls = 'line 1 : invalid operand to `+´ : expected numeric type',
 }
 Test { [[
 escape 1 or false;
 ]],
-    exps = 'line 1 : invalid operand to `or´ : expected boolean type',
+    dcls = 'line 1 : invalid operand to `or´ : expected boolean type',
 }
 
 Test { [[escape (1 >= 0) as int;]], run=1 }
@@ -794,7 +794,7 @@ Test { [[escape 1 as int;]],
 Test { [[escape 1==2;]], stmts='line 1 : invalid `escape´ : types mismatch : "int" <= "bool"', }
 Test { [[escape (1!=2) as int;]], run=1 }
 Test { [[escape 0  or  10;]],
-    exps = 'line 1 : invalid operand to `or´ : expected boolean type',
+    dcls = 'line 1 : invalid operand to `or´ : expected boolean type',
 }
 Test { [[escape (0 as bool)  or  (10 as bool) as int;]],
     parser = 'line 1 : after `)´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or binary operator or `;´',
@@ -805,7 +805,7 @@ Test { [[escape ((0 as bool)  or  (10 as bool)) as int;]],
 }
 Test { [[escape ((0 as bool) and (10 as bool)) as int;]], run=0 }
 Test { [[escape (10==true) as int;]],
-    exps = 'line 1 : invalid operands to `==´ : incompatible types : "int" vs "bool"',
+    dcls = 'line 1 : invalid operands to `==´ : incompatible types : "int" vs "bool"',
 }
 Test { [[escape (10!=0) as int;]], run=1 }
 Test { [[escape (true and true) as int;]], run=1 }
@@ -831,7 +831,7 @@ Test { [[var int sizeof;]],
 Test { [[escape sizeof(int);]], stmts='line 1 : invalid `escape´ : types mismatch : "int" <= "usize"' }
 Test { [[escape sizeof(int) as int;]], run=4 }
 Test { [[escape 1<2>3;]],
-    exps = 'line 1 : invalid operand to `>´ : expected numeric type',
+    dcls = 'line 1 : invalid operand to `>´ : expected numeric type',
 }
 Test { [[escape (((1<2) as int)<3) as int;]], run=1 }
 
@@ -917,26 +917,26 @@ Test { [[
 var uint x = 1.5;
 escape x + 0.5;
 ]],
-    exps = 'line 2 : invalid operands to `+´ : incompatible numeric types : "uint" vs "float"',
+    dcls = 'line 2 : invalid operands to `+´ : incompatible numeric types : "uint" vs "float"',
 }
 
 Test { [[
 escape *1;
 ]],
     --parser = 'line 1 : after `*´ : expected location',
-    --exps = 'line 1 : invalid operand to `*´ : expected location',
-    exps = 'line 1 : invalid operand to `*´ : expected pointer type',
-    --exps = 'line 1 : invalid operand to `*´ : unexpected context for value "1"',
+    --dcls = 'line 1 : invalid operand to `*´ : expected location',
+    dcls = 'line 1 : invalid operand to `*´ : expected pointer type',
+    --dcls = 'line 1 : invalid operand to `*´ : unexpected context for value "1"',
 }
 
 Test { [[
 escape &&1;
 ]],
     --parser = 'line 1 : after `&&´ : expected location',
-    --exps = 'line 1 : invalid operand to `&&´ : unexpected context for value "1"',
-    exps = 'line 1 : expected native type',
-    --exps = 'line 1 : invalid operand to `&&´ : expected location',
-    --exps = 'line 1 : invalid expression : operand to `&&´ must be a name',
+    --dcls = 'line 1 : invalid operand to `&&´ : unexpected context for value "1"',
+    dcls = 'line 1 : expected native type',
+    --dcls = 'line 1 : invalid operand to `&&´ : expected location',
+    --dcls = 'line 1 : invalid expression : operand to `&&´ must be a name',
 }
 
 Test { [[
@@ -952,8 +952,8 @@ var int x = 1;
 escape *&&x;
 ]],
     --parser = 'line 2 : after `*´ : expected location',
-    --exps = 'line 2 : invalid operand to `*´ : expected location',
-    --exps = 'line 2 : invalid operand to `*´ : unexpected context for value "x"',
+    --dcls = 'line 2 : invalid operand to `*´ : expected location',
+    --dcls = 'line 2 : invalid operand to `*´ : unexpected context for value "x"',
     run = 1,
 }
 
@@ -962,15 +962,15 @@ var int x = 1;
 escape *&&*&&x;
 ]],
     --parser = 'line 2 : after `*´ : expected location',
-    --exps = 'line 2 : invalid operand to `*´ : expected location',
-    exps = 'line 2 : expected native type',
+    --dcls = 'line 2 : invalid operand to `*´ : expected location',
+    dcls = 'line 2 : expected native type',
     --run = 1,
 }
 
 Test { [[
 escape not 1;
 ]],
-    exps = 'line 1 : invalid operand to `not´ : expected boolean type',
+    dcls = 'line 1 : invalid operand to `not´ : expected boolean type',
 }
 Test { [[
 escape (not false) as int;
@@ -1174,7 +1174,7 @@ Test { [[
 escape (1+1).v;
 ]],
     --parser = 'line 1 : after `)´ : expected `(´ or `is´ or `as´ or binary operator or `;´',
-    exps = 'line 1 : invalid operand to `.´ : expected native or data type',
+    dcls = 'line 1 : invalid operand to `.´ : expected native or data type',
 }
 
 Test { [[
@@ -2443,14 +2443,16 @@ Test { [[await -1ms; escape 0;]],
     --ast = "line 1 : after `await´ : expected event",
     --parser = 'line 1 : after `1´ : expected `;´',
     --parser = 'line 1 : after `1´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `until´ or `;´',
-    parser = 'line 1 : after `await´ : expected `async´ or `async/thread´ or number or `(´ or abstraction identifier or external identifier or location or `{´ or `pause´ or `resume´ or `FOREVER´',
+    --parser = 'line 1 : after `await´ : expected `async´ or `async/thread´ or number or `(´ or abstraction identifier or external identifier or location or `{´ or `pause´ or `resume´ or `FOREVER´',
+    parser = 'line 1 : after `await´ : expected `async´ or `async/thread´ or number or `(´ or location or `{´ or abstraction identifier or external identifier or `pause´ or `resume´ or `FOREVER´',
 }
 
 Test { [[await 1; escape 0;]],
     parser = 'line 1 : after `1´ : expected `h´ or `min´ or `s´ or `ms´ or `us´',
 }
 Test { [[await -1; escape 0;]],
-    parser = 'line 1 : after `await´ : expected `async´ or `async/thread´ or number or `(´ or abstraction identifier or external identifier or location or `{´ or `pause´ or `resume´ or `FOREVER´',
+    --parser = 'line 1 : after `await´ : expected `async´ or `async/thread´ or number or `(´ or abstraction identifier or external identifier or location or `{´ or `pause´ or `resume´ or `FOREVER´',
+    parser = 'line 1 : after `await´ : expected `async´ or `async/thread´ or number or `(´ or location or `{´ or abstraction identifier or external identifier or `pause´ or `resume´ or `FOREVER´',
     --env = 'line 1 : event "?" is not declared',
 }
 
@@ -6994,37 +6996,37 @@ Test { [[
 event void e;
 escape 0  or  e;
 ]],
-    exps = 'line 2 : invalid operand to `or´ : unexpected context for event "e"',
+    dcls = 'line 2 : invalid operand to `or´ : unexpected context for event "e"',
 }
 Test { [[
 event void e;
 escape sizeof(e);
 ]],
-    exps = 'line 2 : invalid operand to `sizeof´ : unexpected context for event "e"',
+    dcls = 'line 2 : invalid operand to `sizeof´ : unexpected context for event "e"',
 }
 Test { [[
 event void e;
 escape not e;
 ]],
-    exps = 'line 2 : invalid operand to `not´ : unexpected context for event "e"',
+    dcls = 'line 2 : invalid operand to `not´ : unexpected context for event "e"',
 }
 Test { [[
 event int e;
 escape e?;
 ]],
-    exps = 'line 2 : invalid operand to `?´ : unexpected context for event "e"',
+    dcls = 'line 2 : invalid operand to `?´ : unexpected context for event "e"',
 }
 Test { [[
 event int e;
 escape e|e;
 ]],
-    exps = 'line 2 : invalid operand to `|´ : unexpected context for event "e"',
+    dcls = 'line 2 : invalid operand to `|´ : unexpected context for event "e"',
 }
 Test { [[
 event void e;
 escape -e;
 ]],
-    exps = 'line 2 : invalid operand to `-´ : unexpected context for event "e"',
+    dcls = 'line 2 : invalid operand to `-´ : unexpected context for event "e"',
 }
 
 Test { [[
@@ -19226,7 +19228,7 @@ end
 var& int v = &_V;
 escape v;
 ]],
-    exps = 'line 5 : invalid operand to `&´ : expected native call',
+    dcls = 'line 5 : invalid operand to `&´ : expected native call',
     --stmts = 'line 5 : invalid binding : unexpected native identifier',
     --gcc = 'error: assignment makes pointer from integer without a cast',
     --run = 10;
@@ -19238,8 +19240,8 @@ var&? _int v1 = &_f() finalize (v1) with end;
 var&? _int v2 = &{f()};
 escape v1! + v2!;
 ]],
-    exps = 'line 3 : invalid operand to `&´ : expected native call',
-    --exps = 'line 3 : invalid operand to `&´ : unexpected context for native "_{}"',
+    dcls = 'line 3 : invalid operand to `&´ : expected native call',
+    --dcls = 'line 3 : invalid operand to `&´ : unexpected context for native "_{}"',
     --stmts = 'line 3 : invalid binding : unexpected native identifier',
 }
 
@@ -19294,8 +19296,8 @@ var& int v;
 v = &_V;
 escape v;
 ]],
-    exps = 'line 6 : invalid operand to `&´ : expected native call',
-    --exps = 'line 6 : invalid operand to `&´ : unexpected context for native "_V"',
+    dcls = 'line 6 : invalid operand to `&´ : expected native call',
+    --dcls = 'line 6 : invalid operand to `&´ : unexpected context for native "_V"',
     --stmts = 'line 6 : invalid binding : unexpected native identifier',
     --gcc = 'error: assignment makes pointer from integer without a cast',
     --env = 'line 5 : invalid attribution (int& vs _&&)',
@@ -19348,8 +19350,8 @@ var& int v;
 v = &_V;
 escape v;
 ]],
-    exps = 'line 6 : invalid operand to `&´ : expected native call',
-    --exps = 'line 6 : invalid operand to `&´ : unexpected context for native "_V"',
+    dcls = 'line 6 : invalid operand to `&´ : expected native call',
+    --dcls = 'line 6 : invalid operand to `&´ : unexpected context for native "_V"',
     --stmts = 'line 6 : invalid binding : unexpected native identifier',
     --gcc = 'error: assignment makes pointer from integer without a cast',
     --run = 10;
@@ -19379,7 +19381,7 @@ var& int v;
 v = &&vv;
 escape *v;
 ]],
-    exps = 'line 4 : invalid operand to `*´ : expected pointer type',
+    dcls = 'line 4 : invalid operand to `*´ : expected pointer type',
     --env = 'line 6 : types mismatch (`int&´ <= `int&&´)'
 }
 Test { [[
@@ -19463,8 +19465,8 @@ end
 v = 1;
 escape _V1+_V2;
 ]],
-    exps = 'line 8 : invalid operand to `&´ : expected native call',
-    --exps = 'line 8 : invalid operand to `&´ : unexpected context for native "_V1"',
+    dcls = 'line 8 : invalid operand to `&´ : expected native call',
+    --dcls = 'line 8 : invalid operand to `&´ : unexpected context for native "_V1"',
     --stmts = 'line 8 : invalid binding : unexpected native identifier',
     --gcc = 'error: assignment makes pointer from integer without a cast',
     --run = 6,
@@ -20013,7 +20015,7 @@ do v(&&a);
 finalize with nothing; end;
 escape(a);
 ]],
-    --exps = 'line 12 : invalid call : unexpected context for variable "v"',
+    --dcls = 'line 12 : invalid call : unexpected context for variable "v"',
     --env = 'line 8 : native variable/function "_f" is not declared',
     --fin = 'line 8 : attribution to pointer with greater scope',
     --inits = 'line 12 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:10)',
@@ -20041,7 +20043,7 @@ var int a=0;
 do v(&&a); finalize with nothing; end;
 escape(a);
 ]],
-    --exps = 'line 12 : invalid call : unexpected context for variable "v"',
+    --dcls = 'line 12 : invalid call : unexpected context for variable "v"',
     --env = 'line 8 : native variable/function "_f" is not declared',
     --fin = 'line 8 : attribution to pointer with greater scope',
     --inits = 'line 12 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:10)',
@@ -20122,7 +20124,7 @@ var int a=0;
 do v(&&a); finalize (a) with nothing; end;
 escape(a);
 ]],
-    --exps = 'line 11 : invalid call : unexpected context for variable "v"',
+    --dcls = 'line 11 : invalid call : unexpected context for variable "v"',
     --env = 'line 8 : native variable/function "_f" is not declared',
     run = 10,
 }
@@ -22068,7 +22070,7 @@ end
 escape v;
 ]],
     --parser = 'line 5 : after `(´ : expected location',
-    --exps = 'line 5 : invalid operand to `*´ : expected location',
+    --dcls = 'line 5 : invalid operand to `*´ : expected location',
     run = 1,
 }
 
@@ -23510,7 +23512,7 @@ await async (pi) do
 end;
 escape i;
 ]],
-    exps = 'line 7 : invalid operand to `not´ : expected boolean type',
+    dcls = 'line 7 : invalid operand to `not´ : expected boolean type',
     wrn = true,
 }
 
@@ -24989,35 +24991,35 @@ input (int tilex, int tiley, bool vertical, int lock, int door, usize&& position
 
 -- int_int
 Test { [[var int&&p; escape p/10;]],
-    exps = 'line 1 : invalid operand to `/´ : expected numeric type'
+    dcls = 'line 1 : invalid operand to `/´ : expected numeric type'
 }
 Test { [[var int&&p; escape p|10;]],
-    exps = 'line 1 : invalid operand to `|´ : expected integer type',
+    dcls = 'line 1 : invalid operand to `|´ : expected integer type',
 }
 Test { [[var int&&p; escape p>>10;]],
-    exps = 'line 1 : invalid operand to `>>´ : expected integer type',
+    dcls = 'line 1 : invalid operand to `>>´ : expected integer type',
 }
 Test { [[var int&&p; escape p^10;]],
-    exps = 'line 1 : invalid operand to `^´ : expected numeric type',
+    dcls = 'line 1 : invalid operand to `^´ : expected numeric type',
 }
 Test { [[var int&&p; escape ~p;]],
-    exps = 'line 1 : invalid operand to `~´ : expected integer type',
+    dcls = 'line 1 : invalid operand to `~´ : expected integer type',
 }
 
 -- same
 Test { [[var int&&p; var int a; escape p==a;]],
-    exps = 'line 1 : invalid operands to `==´ : incompatible types : "int&&" vs "int"',
+    dcls = 'line 1 : invalid operands to `==´ : incompatible types : "int&&" vs "int"',
 }
 Test { [[var int&&p; var int a; escape p!=a;]],
-    exps = 'line 1 : invalid operands to `!=´ : incompatible types : "int&&" vs "int"',
+    dcls = 'line 1 : invalid operands to `!=´ : incompatible types : "int&&" vs "int"',
 }
 Test { [[var int&&p; var int a; escape p>a;]],
-    exps = 'line 1 : invalid operand to `>´ : expected numeric type',
+    dcls = 'line 1 : invalid operand to `>´ : expected numeric type',
 }
 
 -- any
 Test { [[var int&&p=null; escape p or 10;]],
-    exps = 'line 1 : invalid operand to `or´ : expected boolean type',
+    dcls = 'line 1 : invalid operand to `or´ : expected boolean type',
 }
 Test { [[var int&&p=null; escape (p!=null or true) as int;]], run=1 }
 Test { [[var int&&p=null; escape (p!=null and false) as int;]],  run=0 }
@@ -25025,24 +25027,24 @@ Test { [[var int&&p=null; escape( not (p!=null)) as int;]], run=1 }
 
 -- arith
 Test { [[var int&&p; escape p+p;]],
-    exps = 'line 1 : invalid operand to `+´ : expected numeric type',
+    dcls = 'line 1 : invalid operand to `+´ : expected numeric type',
 }--TODO: "+"'}
 Test { [[var int&&p; escape p+10;]],
-    exps = 'line 1 : invalid operand to `+´ : expected numeric type',
+    dcls = 'line 1 : invalid operand to `+´ : expected numeric type',
 }
 Test { [[var int&&p; escape p+10 and 0;]],
-    exps = 'line 1 : invalid operand to `+´ : expected numeric type',
+    dcls = 'line 1 : invalid operand to `+´ : expected numeric type',
 }
 
 -- ptr
 Test { [[var int a; escape *a;]],
-    exps = 'line 1 : invalid operand to `*´ : expected pointer type',
+    dcls = 'line 1 : invalid operand to `*´ : expected pointer type',
 }
 Test { [[var int a; var int&&pa; (pa+10)=&&a; escape a;]],
     parser = 'line 1 : after `)´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `;´',
     --parser = 'line 1 : after `)´ : expected `(´',
     --parser = 'line 1 : after `pa´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `)´ or `,´',
-    --exps = 'line 1 : invalid operand to `+´ : expected numeric type',
+    --dcls = 'line 1 : invalid operand to `+´ : expected numeric type',
 }
 Test { [[var int a; var int&&pa; a=1; pa=&&a; *pa=3; escape a;]], run=3 }
 
@@ -25561,7 +25563,7 @@ Test { [[vector[2] int v; escape v;]],
 Test { [[native _u8; vector[2] _u8 v=_; escape (&&v==&&v) as int;]],
     wrn = true,
     run = 1,
-    --exps = 'line 1 : invalid operand to `&&´ : unexpected context for vector "v"',
+    --dcls = 'line 1 : invalid operand to `&&´ : unexpected context for vector "v"',
     --env = 'line 1 : types mismatch (`int´ <= `_u8[]&&´)',
     --env = 'invalid operand to unary "&&"',
 }
@@ -25740,7 +25742,7 @@ Test { [[vector[1] int v; escape v;]],
     --env='cannot index a non array'
 }
 Test { [[native _int; vector[2] _int v; escape v[v];]],
-    exps = 'line 1 : invalid index : unexpected context for vector "v"',
+    dcls = 'line 1 : invalid index : unexpected context for vector "v"',
     --env='invalid array index'
 }
 
@@ -25748,8 +25750,8 @@ Test { [[
 vector[2] int v ;
 escape v == &&v[0] ;
 ]],
-    exps = 'line 2 : invalid operand to `==´ : unexpected context for vector "v"',
-    --exps = 'line 2 : invalid expression : operand to `&&´ must be a name',
+    dcls = 'line 2 : invalid operand to `==´ : unexpected context for vector "v"',
+    --dcls = 'line 2 : invalid expression : operand to `&&´ must be a name',
     --env = 'line 2 : invalid operands to binary "=="',
     --run = 1,
 }
@@ -25758,8 +25760,8 @@ native _int;
 vector[2] _int v ;
 escape v == &&v[0] ;
 ]],
-    exps = 'line 3 : invalid operand to `==´ : unexpected context for vector "v"',
-    --exps = 'line 3 : invalid operand to `==´ : expected the same type',
+    dcls = 'line 3 : invalid operand to `==´ : unexpected context for vector "v"',
+    --dcls = 'line 3 : invalid operand to `==´ : expected the same type',
     --env = 'line 2 : invalid operands to binary "=="',
     --run = 1,
 }
@@ -26066,8 +26068,8 @@ finalize with
 end
 escape p! ==null;
 ]],
-    exps = 'line 2 : invalid operand to `&´ : expected native call',
-    --exps = 'line 6 : invalid operands to `==´ : incompatible types : "void" vs "null&&"',
+    dcls = 'line 2 : invalid operand to `&´ : expected native call',
+    --dcls = 'line 6 : invalid operands to `==´ : incompatible types : "void" vs "null&&"',
     --env = 'line 7 : invalid operands to binary "=="',
     --run = 1,
 }
@@ -29259,14 +29261,14 @@ Test { [[
 var u8 v;
 escape ($$v) as int;
 ]],
-    exps = 'line 2 : invalid operand to `$$´ : unexpected context for variable "v"',
+    dcls = 'line 2 : invalid operand to `$$´ : unexpected context for variable "v"',
     --env = 'line 2 : invalid operand to unary "$$" : vector expected',
 }
 Test { [[
 var u8 v;
 escape ($v) as int;
 ]],
-    exps = 'line 2 : invalid operand to `$´ : unexpected context for variable "v"',
+    dcls = 'line 2 : invalid operand to `$´ : unexpected context for variable "v"',
 }
 
 Test { [[
@@ -29380,7 +29382,7 @@ Test { [[
 vector[10] u8 vec = [1,2,3];
 escape $$vec + $vec + vec[0] + vec[1] + vec[2];
 ]],
-    exps = 'line 2 : invalid operands to `+´ : incompatible numeric types : "usize" vs "u8"',
+    dcls = 'line 2 : invalid operands to `+´ : incompatible numeric types : "usize" vs "u8"',
 }
 Test { [[
 vector[10] u8 vec = [1,2,3];
@@ -29593,10 +29595,10 @@ Test { [[
 vector[2] int v ;
 escape v == &&v[0] ;
 ]],
-    --exps = 'line 2 : invalid operand to `==´ : expected the same type',
+    --dcls = 'line 2 : invalid operand to `==´ : expected the same type',
     --env = 'line 2 : invalid operand to unary "&&" : vector elements are not addressable',
-    --exps = 'line 2 : invalid expression : operand to `&&´ must be a name',
-    exps = 'line 2 : invalid operand to `==´ : unexpected context for vector "v"',
+    --dcls = 'line 2 : invalid expression : operand to `&&´ must be a name',
+    dcls = 'line 2 : invalid operand to `==´ : unexpected context for vector "v"',
 }
 
 Test { [[
@@ -29854,7 +29856,7 @@ escape (str[4]=={'i'}) as int;
 
 Test { [[vector[2] u8 v; escape (&&v==&&v) as int;]],
     run = 1,
-    --exps = 'line 1 : invalid operand to `&&´ : unexpected context for vector "v"',
+    --dcls = 'line 1 : invalid operand to `&&´ : unexpected context for vector "v"',
     --env = 'line 1 : types mismatch (`int´ <= `u8[]&&´)',
     --env = 'invalid operand to unary "&&"',
 }
@@ -29969,32 +29971,32 @@ Test { [[
 vector[] int v;
 escape v > 0;
 ]],
-    exps = 'line 2 : invalid operand to `>´ : unexpected context for vector "v"',
+    dcls = 'line 2 : invalid operand to `>´ : unexpected context for vector "v"',
 }
 Test { [[
 vector[] int v;
 escape v?;
 ]],
-    exps = 'line 2 : invalid operand to `?´ : unexpected context for vector "v"',
+    dcls = 'line 2 : invalid operand to `?´ : unexpected context for vector "v"',
 }
 Test { [[
 vector[] int v;
 escape v!;
 ]],
-    exps = 'line 2 : invalid operand to `!´ : unexpected context for vector "v"',
+    dcls = 'line 2 : invalid operand to `!´ : unexpected context for vector "v"',
 }
 Test { [[
 vector[] int v;
 escape ~v;
 ]],
-    exps = 'line 2 : invalid operand to `~´ : unexpected context for vector "v"',
+    dcls = 'line 2 : invalid operand to `~´ : unexpected context for vector "v"',
 }
 
 Test { [[
 vector[] int v;
 v[true] = 1;
 ]],
-    exps = 'line 2 : invalid index : expected integer type',
+    dcls = 'line 2 : invalid index : expected integer type',
 }
 
 Test { [[
@@ -30070,7 +30072,7 @@ _enqueue(&&buf);
 escape 1;
 ]],
     run = 1,
-    --exps = 'line 3 : invalid operand to `&&´ : unexpected context for vector "buf"',
+    --dcls = 'line 3 : invalid operand to `&&´ : unexpected context for vector "buf"',
     --fin = 'line 2 : call requires `finalize´',
 }
 
@@ -30211,7 +30213,7 @@ vector[] byte v = [].."abc";
 native _char;
 escape _strlen(v as _char&&);
 ]],
-    exps = 'line 4 : invalid operand to `as´ : unexpected context for vector "v"',
+    dcls = 'line 4 : invalid operand to `as´ : unexpected context for vector "v"',
     --env = 'line 2 : types mismatch (`byte[]´ <= `_char&&´)',
     --run = 3,
 }
@@ -30486,8 +30488,8 @@ if false then
 end
 escape v2[0][0];
 ]],
-    exps = 'line 5 : invalid vector : unexpected context for variable "v2"',
-    --exps = 'line 5 : invalid vector : expected location',
+    dcls = 'line 5 : invalid vector : unexpected context for variable "v2"',
+    --dcls = 'line 5 : invalid vector : expected location',
 }
 
 Test { [[
@@ -31002,14 +31004,14 @@ escape v;
 ]],
     wrn = true,
     --env = 'line 4 : invalid operands to binary "+"',
-    exps = 'line 4 : invalid operand to `+´ : expected numeric type',
+    dcls = 'line 4 : invalid operand to `+´ : expected numeric type',
 }
 
 Test { [[
 var int v = 10;
 escape v!;
 ]],
-    exps = 'line 2 : invalid operand to `!´ : expected option type',
+    dcls = 'line 2 : invalid operand to `!´ : expected option type',
 }
 
 Test { [[
@@ -31140,14 +31142,14 @@ Test { [[
 var int? i;
 escape i as int;
 ]],
-    exps = 'line 2 : invalid operand to `as´ : unexpected option type',
+    dcls = 'line 2 : invalid operand to `as´ : unexpected option type',
 }
 Test { [[
 var int? i;
 escape i is int;
 ]],
-    --exps = 'line 2 : invalid operand to `is´ : unexpected option type',
-    exps = 'line 2 : invalid operand to `is´ : expected plain `data´ type : got "int?"',
+    --dcls = 'line 2 : invalid operand to `is´ : unexpected option type',
+    dcls = 'line 2 : invalid operand to `is´ : expected plain `data´ type : got "int?"',
 }
 Test { [[
 var int? i = 10;
@@ -31166,13 +31168,13 @@ Test { [[
 escape 1?;
 ]],
     --parser = 'ERR : /tmp/tmp.ceu : line 1 : after `1´ : expected `is´ or `as´ or binary operator or `;´',
-    exps = 'line 1 : invalid operand to `?´ : unexpected context for value "1"',
+    dcls = 'line 1 : invalid operand to `?´ : unexpected context for value "1"',
 }
 Test { [[
 var int i;
 escape i?;
 ]],
-    exps = 'line 2 : invalid operand to `?´ : expected option type',
+    dcls = 'line 2 : invalid operand to `?´ : expected option type',
 }
 Test { [[
 var int? i = 1;
@@ -31547,8 +31549,8 @@ var SDL_Color clr = val SDL_Color(10);
 var SDL_Color? bg_clr = clr;
 escape bg_clr.v;
 ]],
-    exps = 'line 6 : invalid operand to `.´ : expected plain type : got "SDL_Color?"',
-    --exps = 'line 6 : invalid member access : "bg_clr" must be of plain type',
+    dcls = 'line 6 : invalid operand to `.´ : expected plain type : got "SDL_Color?"',
+    --dcls = 'line 6 : invalid member access : "bg_clr" must be of plain type',
     --env = 'line 6 : invalid `.´ operation : cannot be an option type',
 }
 
@@ -32069,7 +32071,7 @@ end
 
 escape 1;
 ]],
-    exps = 'line 16 : invalid operand to `&&´ : unexpected option type',
+    dcls = 'line 16 : invalid operand to `&&´ : unexpected option type',
 }
 
 Test { [[
@@ -32303,7 +32305,7 @@ end
 escape &ptr! == &ptr!;  // ptr.SOME fails
 ]],
     dcls = 'line 8 : invalid declaration : option alias : expected native or `code/await´ type',
-    --exps = 'line 14 : invalid expression : unexpected context for operation `&´',
+    --dcls = 'line 14 : invalid expression : unexpected context for operation `&´',
     --env = 'line 14 : invalid use of operator "&" : not a binding assignment',
 }
 
@@ -32447,7 +32449,7 @@ var& int tex2 = tex1;
 
 escape &tex2==&_V;
 ]],
-    exps = 'line 17 : invalid expression : unexpected context for operation `&´',
+    dcls = 'line 17 : invalid expression : unexpected context for operation `&´',
     --env = 'line 15 : types mismatch (`int&´ <= `int&?´)',
     --run = 1,
 }
@@ -32471,7 +32473,7 @@ var& int tex2 = tex1;
 
 escape &tex2==&_V;
 ]],
-    exps = 'line 17 : invalid expression : unexpected context for operation `&´',
+    dcls = 'line 17 : invalid expression : unexpected context for operation `&´',
     --env = 'line 15 : types mismatch (`int&´ <= `int&?´)',
     --asr = true,
 }
@@ -33365,7 +33367,7 @@ code/tight Fx (var int v)->int do
 end
 escape call Fx();
 ]],
-    exps = 'line 4 : invalid call : expected 1 argument(s)',
+    dcls = 'line 4 : invalid call : expected 1 argument(s)',
 }
 
 Test { [[
@@ -33375,7 +33377,7 @@ end
 var int&& ptr;
 escape call Fx(ptr);
 ]],
-    exps= 'line 5 : invalid call : argument #1 : types mismatch : "int" <= "int&&"',
+    dcls = 'line 5 : invalid call : argument #1 : types mismatch : "int" <= "int&&"',
 }
 
 Test { [[
@@ -33740,8 +33742,8 @@ var u8 v = 0;
 call Set(_);
 escape v as int;
 ]],
-    exps = 'line 5 : invalid call : invalid binding : argument #1 : expected location',
-    --exps = 'line 5 : invalid constructor : argument #1 : unexpected `_´',
+    dcls = 'line 5 : invalid call : invalid binding : argument #1 : expected location',
+    --dcls = 'line 5 : invalid constructor : argument #1 : unexpected `_´',
 }
 
 Test { [[
@@ -33752,7 +33754,7 @@ var int v = 0;
 call Ff(v);
 escape v;
 ]],
-    exps = 'line 5 : invalid call : invalid binding : argument #1 : unexpected context for variable "v"',
+    dcls = 'line 5 : invalid call : invalid binding : argument #1 : unexpected context for variable "v"',
 }
 
 Test { [[
@@ -34010,7 +34012,7 @@ end
 var s8 i = 0;
 escape call Fx(i);
 ]],
-    exps = 'line 5 : invalid call : argument #1 : types mismatch : "u8" <= "s8"',
+    dcls = 'line 5 : invalid call : argument #1 : types mismatch : "u8" <= "s8"',
 }
 
 Test { [[
@@ -34046,7 +34048,7 @@ end
 escape call Ff(&1);
 ]],
     run = 1,
-    exps = 'line 4 : invalid binding : unexpected context for value "1"',
+    dcls = 'line 4 : invalid binding : unexpected context for value "1"',
     --todo = 'support aliases to constants',
 }
 
@@ -34335,7 +34337,7 @@ end
 
 escape call Fx(&&str);
 ]],
-    exps = 'line 7 : invalid call : invalid binding : argument #1 : unexpected context for value "str"',
+    dcls = 'line 7 : invalid call : invalid binding : argument #1 : unexpected context for value "str"',
 }
 Test { [[
 vector[1] byte str = [0,1,2];
@@ -34346,7 +34348,7 @@ end
 
 escape call Fx(&str);
 ]],
-    exps = 'line 7 : invalid call : invalid binding : argument #1 : dimension mismatch',
+    dcls = 'line 7 : invalid call : invalid binding : argument #1 : dimension mismatch',
 }
 Test { [[
 var  byte v1 = 0;
@@ -34375,7 +34377,7 @@ end
 
 escape call Fx(&str);
 ]],
-    exps = 'line 7 : invalid call : argument #1 : types mismatch : "int" <= "byte"',
+    dcls = 'line 7 : invalid call : argument #1 : types mismatch : "int" <= "byte"',
     --run = 1,
 }
 Test { [[
@@ -34402,7 +34404,7 @@ escape call Fx(str);
 ]],
     wrn = true,
     --ref = 'line 7 : invalid attribution : missing alias operator `&´',
-    exps = 'line 7 : invalid call : invalid binding : argument #1 : unexpected context for vector "str"',
+    dcls = 'line 7 : invalid call : invalid binding : argument #1 : unexpected context for vector "str"',
 }
 Test { [[
 vector[] byte str = [0,1,2];
@@ -34454,7 +34456,7 @@ vector[10] u8 buffer;
 call FillBuffer(&buffer);
 escape buffer[0] as int;
 ]],
-    exps = 'line 5 : invalid call : invalid binding : argument #1 : dimension mismatch',
+    dcls = 'line 5 : invalid call : invalid binding : argument #1 : dimension mismatch',
     --tmp = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
 }
 
@@ -34617,7 +34619,7 @@ end
 vector[] byte str = [].."Ola Mundo!";
 escape call Strlen((&&str[0]) as _char&&);
 ]],
-    exps = 'line 3 : invalid vector : unexpected context for variable "str"',
+    dcls = 'line 3 : invalid vector : unexpected context for variable "str"',
     --run = 10,
 }
 
@@ -34888,7 +34890,7 @@ code/await Tx (void)->void do end
 call Tx();
 escape 1;
 ]],
-    exps = 'line 2 : invalid call : expected `code/tight´ : got `code/await´ (/tmp/tmp.ceu:2)',
+    dcls = 'line 2 : invalid call : expected `code/tight´ : got `code/await´ (/tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -35512,7 +35514,7 @@ spawn Ff(&x);
 
 escape 0;
 ]],
-    exps = 'line 6 : invalid binding : types mismatch : "Var" <= "Vec"',
+    dcls = 'line 6 : invalid binding : types mismatch : "Var" <= "Vec"',
 }
 
 Test { [[
@@ -35524,7 +35526,7 @@ var int a = &off;
 call Ff(&off);
 escape 0;
 ]],
-    exps = 'line 6 : invalid binding : argument #1 : expected declaration with `&´',
+    dcls = 'line 6 : invalid binding : argument #1 : expected declaration with `&´',
     wrn = true,
 }
 
@@ -36636,7 +36638,7 @@ var int x = await Fx();
 escape x;
 ]],
     run = 10,
-    --exps = 'line 17 : invalid access to output variable "vv"',
+    --dcls = 'line 17 : invalid access to output variable "vv"',
 }
 
 Test { [[
@@ -38147,7 +38149,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    --exps = 'line 4 : invalid access to output variable "e"',
+    --dcls = 'line 4 : invalid access to output variable "e"',
     run = 1,
 }
 
@@ -40628,7 +40630,7 @@ if e2? then
 end
 escape 1;
 ]],
-    exps = 'line 2 : invalid operand to `?´ : unexpected context for event "e2"',
+    dcls = 'line 2 : invalid operand to `?´ : unexpected context for event "e2"',
 }
 
 Test { [[
@@ -41228,7 +41230,7 @@ end
 escape ret;
 ]],
     wrn = true,
-    exps = 'line 20 : invalid operand to `.´ : unexpected option alias',
+    dcls = 'line 20 : invalid operand to `.´ : unexpected option alias',
 }
 
 Test { [[
@@ -42766,7 +42768,7 @@ escape 1;
 ]],
     wrn = true,
     --env = 'line 7 : union data constructor requires a tag',
-    exps = 'line 7 : invalid constructor : expected 0 argument(s)',
+    dcls = 'line 7 : invalid constructor : expected 0 argument(s)',
 }
 
 Test { [[
@@ -42821,7 +42823,7 @@ var int x = 0;
 var Ee ex = val Ee(&x);
 escape 1;
 ]],
-    exps = 'line 8 : invalid constructor : argument #1 : types mismatch : "Dx" <= "int"',
+    dcls = 'line 8 : invalid constructor : argument #1 : types mismatch : "Dx" <= "int"',
 }
 
 Test { [[
@@ -42850,8 +42852,8 @@ end
 var Ee ex = val Ee(_);
 escape 1;
 ]],
-    exps = 'line 7 : invalid constructor : invalid binding : argument #1 : expected location',
-    --exps = 'line 7 : invalid constructor : argument #1 : unexpected `_´',
+    dcls = 'line 7 : invalid constructor : invalid binding : argument #1 : expected location',
+    --dcls = 'line 7 : invalid constructor : argument #1 : unexpected `_´',
 }
 
 Test { [[
@@ -42896,8 +42898,8 @@ end
 var Dx d = val Dx(10);
 escape (d as Ex).x;
 ]],
-    exps = 'line 8 : invalid operand to `as´ : unmatching `data´ abstractions',
-    --exps = 'line 8 : invalid operand to `as´ : unexpected plain `data´ : got "Dx"',
+    dcls = 'line 8 : invalid operand to `as´ : unmatching `data´ abstractions',
+    --dcls = 'line 8 : invalid operand to `as´ : unexpected plain `data´ : got "Dx"',
 }
 
 Test { [[
@@ -43154,7 +43156,7 @@ var& Ee e = &ex;
 escape (e as Xx):x;
 ]],
     wrn = true,
-    exps = 'line 7 : invalid operand to `as´ : unmatching `data´ abstractions',
+    dcls = 'line 7 : invalid operand to `as´ : unmatching `data´ abstractions',
 }
 
 Test { [[
@@ -43167,7 +43169,7 @@ var& Ee e = &ex;
 escape (e is Xx) as int;
 ]],
     wrn = true,
-    exps = 'line 7 : invalid operand to `is´ : expected `data´ type in some hierarchy : got "Ee"',
+    dcls = 'line 7 : invalid operand to `is´ : expected `data´ type in some hierarchy : got "Ee"',
 }
 
 Test { [[
@@ -43175,14 +43177,14 @@ data Aa;
 var Aa a = _;
 escape a as int;
 ]],
-    exps = 'line 3 : invalid operand to `as´ : expected `data´ type in a hierarchy : got "Aa"',
+    dcls = 'line 3 : invalid operand to `as´ : expected `data´ type in a hierarchy : got "Aa"',
 }
 
 Test { [[
 data Aa;
 escape (1 as Aa) as int;
 ]],
-    exps = 'line 2 : invalid operand to `as´ : expected `data´ type in a hierarchy : got "Aa"',
+    dcls = 'line 2 : invalid operand to `as´ : expected `data´ type in a hierarchy : got "Aa"',
 }
 
 Test { [[
@@ -43220,7 +43222,7 @@ var Ee.Xx ex = val Ee.Xx();
 escape ((ex is Ee) as int) + 1;
 ]],
     wrn = true,
-    exps = 'line 4 : invalid operand to `is´ : unmatching `data´ abstractions',
+    dcls = 'line 4 : invalid operand to `is´ : unmatching `data´ abstractions',
 }
 Test { [[
 data Ee;
@@ -43237,7 +43239,7 @@ var Ee ex = val Ee();
 escape ((ex is Ee) as int) + 1;
 ]],
     wrn = true,
-    exps = 'line 3 : invalid operand to `is´ : expected `data´ type in some hierarchy : got "Ee"',
+    dcls = 'line 3 : invalid operand to `is´ : expected `data´ type in some hierarchy : got "Ee"',
 }
 Test { [[
 data Ee;
@@ -43249,7 +43251,7 @@ var Ee&& e = &&ex;
 escape (e is Ee.Xx&&) as int;
 ]],
     wrn = true,
-    exps = 'line 7 : invalid operand to `is´ : expected plain `data´ type : got "Ee&&"',
+    dcls = 'line 7 : invalid operand to `is´ : expected plain `data´ type : got "Ee&&"',
 }
 
 Test { [[
@@ -43262,7 +43264,7 @@ var Ee&& e = &&ex;
 escape (e as Xx&&):x;
 ]],
     wrn = true,
-    exps = 'line 7 : invalid operand to `as´ : unmatching `data´ abstractions',
+    dcls = 'line 7 : invalid operand to `as´ : unmatching `data´ abstractions',
 }
 
 Test { [[
@@ -43369,7 +43371,7 @@ var& Data dd = &d;
 
 escape (dd is Data) as int;
 ]],
-    exps = 'line 8 : invalid operand to `is´ : expected `data´ type in some hierarchy : got "Data"',
+    dcls = 'line 8 : invalid operand to `is´ : expected `data´ type in some hierarchy : got "Data"',
 }
 
 Test { [[
@@ -43382,7 +43384,7 @@ var Aa a = val Aa(10);
 escape a.a + a.b;
 ]],
     dcls = 'line 7 : field "b" is not declared',
-    --exps = 'line 7 : invalid member access : "a" has no member "b" : `data´ "Aa" (/tmp/tmp.ceu:1)',
+    --dcls = 'line 7 : invalid member access : "a" has no member "b" : `data´ "Aa" (/tmp/tmp.ceu:1)',
 }
 
 Test { [[
@@ -43415,7 +43417,7 @@ var Aa.Bb b = val Aa.Bb(10,20);
 escape a.a + b.a + b.b + b.c;
 ]],
     dcls = 'line 11 : field "c" is not declared',
-    exps = 'line 11 : invalid member access : "b" has no member "c" : `data´ "Aa.Bb" (/tmp/tmp.ceu:4)',
+    --dcls = 'line 11 : invalid member access : "b" has no member "c" : `data´ "Aa.Bb" (/tmp/tmp.ceu:4)',
 }
 
 Test { [[
@@ -43611,7 +43613,7 @@ var& Xx x  = &x_;
 escape (x as Yy) as int;
 ]],
     wrn = true,
-    exps = 'line 5 : invalid operand to `as´ : unmatching `data´ abstractions',
+    dcls = 'line 5 : invalid operand to `as´ : unmatching `data´ abstractions',
 }
 
 Test { [[
@@ -43621,7 +43623,7 @@ var& Xx xxx  = &x_;
 escape xxx as int;
 ]],
     wrn = true,
-    exps = 'line 4 : invalid operand to `as´ : expected `data´ type in a hierarchy : got "Xx"',
+    dcls = 'line 4 : invalid operand to `as´ : expected `data´ type in a hierarchy : got "Xx"',
 }
 
 Test { [[
@@ -44038,7 +44040,7 @@ var Test t = val Test();
 escape t.v[0];
 ]],
     --env = 'line 4 : arity mismatch',
-    exps = 'line 5 : invalid constructor : expected 1 argument(s)',
+    dcls = 'line 5 : invalid constructor : expected 1 argument(s)',
 }
 
 Test { [[
@@ -44770,21 +44772,21 @@ data Ts;
 pool[] Ts ts;
 escape ts + 1;
 ]],
-    exps = 'line 3 : invalid operand to `+´ : unexpected context for pool "ts"',
+    dcls = 'line 3 : invalid operand to `+´ : unexpected context for pool "ts"',
 }
 Test { [[
 data Dd;
 pool[] Dd dds;
 escape dds?;
 ]],
-    exps = 'line 3 : invalid operand to `?´ : unexpected context for pool "dds"',
+    dcls = 'line 3 : invalid operand to `?´ : unexpected context for pool "dds"',
 }
 Test { [[
 data Dd;
 pool[] Dd dds;
 escape dds!;
 ]],
-    exps = 'line 3 : invalid operand to `!´ : unexpected context for pool "dds"',
+    dcls = 'line 3 : invalid operand to `!´ : unexpected context for pool "dds"',
 }
 
 Test { [[
@@ -47687,7 +47689,7 @@ end
 escape 1;
 ]],
     run = 1,
-    --exps = 'line 4 : invalid operand to `&&´ : unexpected context for vector "v"',
+    --dcls = 'line 4 : invalid operand to `&&´ : unexpected context for vector "v"',
     --env = 'line 4 : types mismatch (`int&&´ <= `int[]&&´)',
     --env = 'line 4 : invalid operand to unary "&&"',
     _opts = { ceu_features_isr='true' },
@@ -48723,7 +48725,7 @@ end
 
 escape call/dynamic Ff();
 ]],
-    exps = 'line 4 : invalid call : unexpected `/dynamic´ modifier',
+    dcls = 'line 4 : invalid call : unexpected `/dynamic´ modifier',
 }
 
 Test { [[
@@ -48762,7 +48764,7 @@ var Aa.Bb b = val Aa.Bb(2,3);
 
 escape (call Ff(&&b,22)) + (call Ff(&&a,33));
 ]],
-    exps = 'line 20 : invalid call : expected `/dynamic´ or `/static´ modifier',
+    dcls = 'line 20 : invalid call : expected `/dynamic´ or `/static´ modifier',
 }
 Test { [[
 data Aa with
@@ -49242,7 +49244,7 @@ var int v2 = call/dynamic Ff(Bb(_));
 var int v1 = call/dynamic Ff(Bb.Cc(_,_));
 escape v1 + v2;
 ]],
-    exps = 'line 17 : invalid call argument #1 : `data´ copy : unmatching fields',
+    dcls = 'line 17 : invalid call argument #1 : `data´ copy : unmatching fields',
 }
 Test { [[
 data Aa;
