@@ -306,12 +306,14 @@ STMTS.F = {
         end
 
         -- tp
-        if fr.tag == 'Await_Int' then
-            ASR(fr.tp, me,
+        local fr_tp = fr.tp
+        if fr.tag == 'If' then
+            fr_tp = AST.get(fr,'', 2,'Await_Int').tp
+            ASR(fr_tp, me,
                 'invalid assignment : `code´ executes forever')
         end
 
-        EXPS.check_tp(me, to.tp, fr.tp, 'invalid assignment')
+        EXPS.check_tp(me, to.tp, fr_tp, 'invalid assignment')
 
         if me.__adjs_is_watching then
             for _, e in ipairs(to) do
@@ -405,20 +407,16 @@ STMTS.F = {
 
         -- ctx
         INFO.asr_tag(e, {'Var','Evt','Pool'}, 'invalid `await´')
-        if e.info.tag == 'Var' then
-            ASR(e.info.dcl[1] == '&?', me,
-                'invalid `await´ : expected `var´ with `&?´ modifier')
-        end
 
         -- tp
-        local abs = TYPES.abs_dcl(e.info.tp, 'Code')
-        if abs then
-            assert(alias == '&?')
+        if e.info.tag == 'Var' then
+            local abs = TYPES.abs_dcl(e.info.tp, 'Code')
+            ASR(abs, me, 'invalid `await´ : expected `code/await´ abstraction')
+            ASR(alias=='&', me, 'invalid `await´ : unexpected option alias')
             local tp = AST.get(abs,'Code', 4,'Block', 1,'Stmts',
                                            1,'Code_Ret', 1,'', 2,'Type')
             if tp then
-                local ID = AST.get(me,'', 1,'Loc', 1,'ID_int')
-                if string.sub(ID[1],1,5) ~= '_spw_' then
+                if string.sub(e.info.dcl.id,1,5) ~= '_spw_' then
                     tp = TYPES.push(tp, '?')
                 end
                 me.tp = AST.node('Typelist', me.ln, AST.copy(tp))
@@ -432,7 +430,7 @@ STMTS.F = {
 
     Kill = function (me)
         local loc, e = unpack(me)
-        local alias = unpack(loc.info.dcl)
+        local alias, _ = unpack(e.info.dcl)
 
         -- ctx
         INFO.asr_tag(loc, {'Var'}, 'invalid `kill´')
@@ -440,7 +438,7 @@ STMTS.F = {
         -- tp
         local abs = TYPES.abs_dcl(loc.info.tp, 'Code')
         ASR(abs, me, 'invalid `kill´ : expected `code/await´ abstraction')
-        assert(alias == '&?')
+        ASR(alias=='&', me, 'invalid `await´ : unexpected alias')
         local tp = AST.get(abs,'Code', 4,'Block', 1,'Stmts',
                                        1,'Code_Ret', 1,'', 2,'Type')
         -- TODO: check e vs tp

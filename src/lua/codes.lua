@@ -1148,7 +1148,8 @@ _ceu_mem->_trails[]]..(to.dcl.trails[1])..[[].evt.mem = ]]..V(fr)..[[;
         local Await, List = unpack(me)
         CONC(me, Await)
 
-        local loc = AST.get(Await,'Await_Int',1,'Loc')
+        local loc = AST.get(Await,'If', 2,'Await_Int', 1,'Exp_!', 2,'Loc')
+                        or AST.get(Await,'Await_Int', 1,'Loc')
         local abs = loc and TYPES.abs_dcl(loc.info.tp,'Code')
         if abs then
             assert(not (loc.info.dcl.tag=='Var' and TYPES.is_nat(loc.info.tp)), 'bug found')
@@ -1443,19 +1444,13 @@ ceu_dbg_assert(0);
     Await_Int = function (me)
         local Loc = unpack(me)
         local alias, tp = unpack(Loc.info.dcl)
-        if alias == '&?' then
-            LINE(me, [[
-if (]]..V(Loc)..[[ != NULL) {
-]])
+        if Loc.info.tag == 'Var' then
             HALT(me, {
                 { ['evt.id']  = 'CEU_INPUT__CODE_TERMINATED' },
-                { ['evt.mem'] = '(tceu_code_mem*)'..V(Loc) },
+                { ['evt.mem'] = '(tceu_code_mem*)&'..V(Loc) },
                 { lbl = me.lbl_out.id },
                 lbl = me.lbl_out.id,
             })
-            LINE(me, [[
-}
-]])
         else
             HALT(me, {
                 { evt = V(Loc) },
