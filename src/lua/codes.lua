@@ -323,9 +323,9 @@ ceu_dbg_assert(]]..V(ID_int,ctx)..[[.pool.queue == NULL);
 
     ---------------------------------------------------------------------------
 
-    Code_Pars_Stmts = function (me)
+    Code_Pars = function (me)
         if AST.get(me,6,'Code', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block',
-                                1,'Stmts', 1,'Code_Pars_Stmts') == me
+                                1,'Stmts', 1,'Code_Pars') == me
         then
             -- input args
         else

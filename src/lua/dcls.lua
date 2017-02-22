@@ -480,7 +480,7 @@ DCLS.F = {
 
     -- CODE / DATA
 
-    Code_Pars_Stmts = function (me)
+    Code_Pars = function (me)
         local Code = AST.par(me,'Code')
         local _,mods = unpack(Code)
 
@@ -492,23 +492,6 @@ DCLS.F = {
             end
             DCLS.F.Typelist(tps)
         end
-
-        -- check if all mid's are "&" aliases
---[[
-        if AST.asr(me,1,'Stmts')[2] == me then
-            for i, dcl in ipairs(me) do
-                local is_alias, Type = unpack(dcl)
-                ASR(is_alias, dcl,
-                    'invalid `code´ declaration : `watching´ parameter #'..i..' : expected `&´')
-assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
-            end
-        end
-
-        local stmts = AST.asr(me,1,'Stmts')
-        if stmts[2] == me then
-            return  -- initialization list
-        end
-]]
 
         -- multi-methods: changes "me.id" on Code
         me.ids_dyn = ''
@@ -584,7 +567,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         end
 
         local blk = AST.par(me, 'Block')
-        local proto1 = AST.asr(body1,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 1,'Code_Pars_Stmts')
+        local proto1 = AST.asr(body1,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 1,'Code_Pars')
 
         if (not me.is_dyn_base) and mods1.dynamic and me.is_impl then
             me.id = id..proto1.ids_dyn
@@ -619,7 +602,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             end
 
             -- compare ins
-            local proto2 = AST.asr(body2,'Block',1,'Stmts',2,'Do',3,'Block',1,'Stmts',1,'Code_Pars_Stmts')
+            local proto2 = AST.asr(body2,'Block',1,'Stmts',2,'Do',3,'Block',1,'Stmts',1,'Code_Pars')
             local ok = AST.is_equal(proto1, proto2)
 
             -- compare mods

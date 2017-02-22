@@ -109,7 +109,7 @@ typedef struct tceu_code_mem_]]..me.id_..[[ {
 
         local multis = {}
         if mods.dynamic then
-            local Code_Pars = AST.asr(body,'', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 1,'Code_Pars_Stmts')
+            local Code_Pars = AST.asr(body,'', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 1,'Code_Pars')
             for i, dcl in ipairs(AST.par(Code_Pars,'Block').dcls) do
                 local _,_,_,dcl_mods = unpack(dcl)
                 if dcl_mods.dynamic then
