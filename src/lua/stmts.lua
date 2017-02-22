@@ -158,8 +158,8 @@ STMTS.F = {
                 ASR(TYPES.is_nat(to.info.tp), me,
                     'invalid binding : expected `native´ type')
             else
-                local ID_abs = AST.asr(fr,'', 2,'Abs_Call', 3,'Abs_Cons',
-                                              1,'ID_abs')
+                local ID_abs = AST.asr(fr,'', 2,'Abs_Call', 2,'Abs_Cons',
+                                              2,'ID_abs')
                 local tp = AST.asr(ID_abs.dcl,'Code', 4,'Block', 1,'Stmts',
                                                       1,'Code_Ret', 1,'', 2,'Type')
                 EXPS.check_tp(me, to.info.tp, tp, 'invalid binding', true)
@@ -226,7 +226,7 @@ STMTS.F = {
     Set_Abs_Val = function (me)
         local fr, to = unpack(me)
         local Abs_Cons = AST.asr(fr,'Abs_Val', 2,'Abs_Cons')
-        local ID_abs = unpack(Abs_Cons)
+        local _,ID_abs = unpack(Abs_Cons)
 
         -- ctx
         INFO.asr_tag(to, {'Var'}, 'invalid constructor')
@@ -363,7 +363,7 @@ STMTS.F = {
 
     Abs_Spawn = function (me)
         local mods_call,Abs_Cons = unpack(me)
-        local ID_abs = AST.asr(Abs_Cons,'Abs_Cons', 1,'ID_abs')
+        local ID_abs = AST.asr(Abs_Cons,'Abs_Cons', 2,'ID_abs')
         me.__code = AST.asr(ID_abs.dcl,'Code')
 
         local _,mods_dcl = unpack(me.__code)

@@ -555,7 +555,7 @@ error'TODO: luacov never executes this?'
                 node('Var', me.ln,
                     '&?',
                     node('Type', me.ln,
-                        AST.copy(AST.asr(abs,'Abs_Cons',1,'ID_abs'))),
+                        AST.copy(AST.asr(abs,'Abs_Cons',2,'ID_abs'))),
                     '_spw_'..me.n),
                 node('_Set', me.ln,
                     node('Loc', me.ln,
@@ -621,7 +621,7 @@ error'TODO: luacov never executes this?'
             local new = AST.par(me, 'Abs_Cons')
 
             while new do
-                assert(AST.asr(new,'', 2,'Abslist', old.__i,'') == old)
+                assert(AST.asr(new,'', 3,'Abslist', old.__i,'') == old)
                 table.insert(T, 1, old.__i)
                 old = new
                 new = AST.par(new, 'Abs_Cons')
@@ -654,13 +654,6 @@ error'TODO: luacov never executes this?'
             me.__adjs_sets = nil
             return ret
         end
-    end,
-
-    _Abs_Call__PRE = function (me)
-        me.tag = 'Abs_Call'
-        local _, abs, pool = unpack(me)
-        AST.set(me, 2, pool)
-        AST.set(me, 3, abs)
     end,
 
 -------------------------------------------------------------------------------

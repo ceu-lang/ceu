@@ -136,8 +136,8 @@ G = {
     end,
 
     Abs_Call = function (me)
-        local mods_call, _, Abs_Cons = unpack(me)
-        local Code = AST.asr(Abs_Cons,'', 1,'ID_abs').dcl
+        local mods_call, Abs_Cons = unpack(me)
+        local Code = AST.asr(Abs_Cons,'Abs_Cons', 2,'ID_abs').dcl
         local _,mods_dcl = unpack(Code)
 
         -- calling known Code

@@ -467,7 +467,8 @@ ceu_dbg_assert(0);
 
     __abs = function (me, mem, pak)
         local _, Abs_Cons = unpack(me)
-        local ID_abs, Abslist = unpack(Abs_Cons)
+        local obj, ID_abs, Abslist = unpack(Abs_Cons)
+assert(not obj, 'not implemented')
 
         local ret = [[
 {
@@ -523,7 +524,8 @@ _ceu_mem->_trails[]]..(to.dcl.trails[1])..[[].evt.mem =  &]]..CUR('__mem_'..me.n
 -- TODO: mover p/ Abs_Await
     Abs_Spawn_Pool = function (me)
         local _, Abs_Cons, pool = unpack(me)
-        local ID_abs, Abslist = unpack(Abs_Cons)
+        local obj, ID_abs, Abslist = unpack(Abs_Cons)
+assert(not obj, 'not implemented')
         local alias,_,_,dim = unpack(pool.info.dcl)
 
         LINE(me, [[

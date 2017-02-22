@@ -156,7 +156,7 @@ F = {
     end,
 
     Abs_Call = function (me)
-        local ID_abs = AST.asr(me,'', 3,'Abs_Cons', 1,'ID_abs')
+        local ID_abs = AST.asr(me,'', 2,'Abs_Cons', 2,'ID_abs')
         local _,mods_dcl  = unpack(ID_abs.dcl)
         local mods_call = unpack(me)
 
@@ -187,7 +187,8 @@ F = {
     end,
 
     Abs_Cons = function (me)
-        local ID_abs, Abslist = unpack(me)
+        local obj, ID_abs, Abslist = unpack(me)
+assert(not obj, 'not implemented')
 
         local err_str
         if ID_abs.dcl.tag == 'Data' then

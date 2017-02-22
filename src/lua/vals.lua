@@ -103,12 +103,13 @@ F = {
     end,
 
     Abs_Call = function (me)
-        local _, obj, Abs_Cons = unpack(me)
-        local ID_abs, _ = unpack(Abs_Cons)
+        local _, Abs_Cons = unpack(me)
+        local _, ID_abs, _ = unpack(Abs_Cons)
         local _,mods,_,Code_Pars = unpack(ID_abs.dcl)
         assert(mods.tight)
 
         local mem do
+assert(not obj, 'not implemented')
             if obj then
                 mem = '((tceu_code_mem*)'..V(obj)..')'
             else
@@ -129,7 +130,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
     end,
 
     Abs_Cons = function (me, ctx)
-        local ID_abs, Abslist = unpack(me)
+        local _, ID_abs, Abslist = unpack(me)
 
         local id_struct do
             if ID_abs.dcl.tag == 'Data' then

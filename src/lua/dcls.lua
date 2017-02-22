@@ -735,7 +735,8 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
     --  call FF(x);
 
     Abs_Cons__POS = function (me)
-        local code, Abslist = unpack(me)
+        local obj, code, Abslist = unpack(me)
+assert(not obj, 'not implemented')
         if code.dcl.tag ~= 'Code' then
             return
         end
@@ -744,7 +745,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             local id = '_'..code.n..'_'..v.n..'_abs'
             local xxx, yyy
 
-            local data = AST.get(v,'Abs_Cons', 1,'ID_abs')
+            local data = AST.get(v,'Abs_Cons', 2,'ID_abs')
             if data and data.dcl.tag == 'Data' then
                 xxx = data
                 yyy = node('Set_Abs_Val', v.ln,
@@ -823,6 +824,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         local id = unpack(me)
         local blk do
             local obj = AST.get(me,2,'Abs_Call', 2,'Loc')
+assert(not obj, 'not implemented')
             if obj then
                 local tp = AST.get(obj.dcl,'Var', 2,'Type')
                 ASR(tp, me, 'invalid `call´')

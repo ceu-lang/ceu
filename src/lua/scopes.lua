@@ -141,7 +141,7 @@ F = {
 
     Abs_Spawn_Pool = function (me)
         local _, Abs_Cons, pool = unpack(me)
-        local ps = AST.asr(Abs_Cons,'Abs_Cons', 2,'Abslist')
+        local ps = AST.asr(Abs_Cons,'Abs_Cons', 3,'Abslist')
         for _, p in ipairs(ps) do
             if p.info and p.info.dcl then
                 if p.info.tag == 'Alias' then

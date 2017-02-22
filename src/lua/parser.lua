@@ -407,7 +407,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     , _Lock = K'lock' * V'Loc' * V'__Do'
 
-    , Stmt_Call = V'_Abs_Call' + V'__Nat_Call'
+    , Stmt_Call = V'Abs_Call' + V'__Nat_Call'
 
     , __fin_stmt  = V'___fin_stmt' * V'__seqs'
     , ___fin_stmt = V'Nothing'
@@ -423,7 +423,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     , _Var_set_fin = K'var' * KK'&?' * V'Type' * V'__ID_int'
                    * (KK'='-'==') * KK'&'
-                    * (V'__Nat_Call' + V'_Abs_Call')
+                    * (V'__Nat_Call' + V'Abs_Call')
                      * V'__finalize'
 
     , Pause_If = K'pause/if' * (V'Loc'+V'ID_ext') * V'__Do'
@@ -598,7 +598,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , __abs_mods = Ct ( (Cg(K'/dynamic'*Cc'dynamic','dynamic') +
                          Cg(K'/static' *Cc'static', 'static'))^-1 *
                          Cg(K'/recursive'*Cc'recursive','recursive')^-1 )
-    , _Abs_Call = K'call' * V'__abs_mods' * (V'Abs_Cons' -I(V'__id_data')) * OPT(KK'in' * V'Loc')
+    , Abs_Call   = K'call' * V'__abs_mods' * (V'Abs_Cons' -I(V'__id_data'))
     , Abs_Val    = CK'val' * V'Abs_Cons'
     , Abs_New    = CK'new' * V'Abs_Cons'
     , _Abs_Await = V'__Abs_Cons_Code' * V'Y'
@@ -609,7 +609,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , Abs_Spawn_Pool = K'spawn' * V'__Abs_Cons_Code' * KK'in' * V'Loc'
 
     , __Abs_Cons_Code = V'__abs_mods' * (V'Abs_Cons' -I(V'__id_data'))
-    , Abs_Cons   = V'ID_abs' * PARENS(OPT(V'Abslist'))
+    , Abs_Cons   = OPT(V'Loc'*KK'.') * V'ID_abs' * PARENS(OPT(V'Abslist'))
     , Abslist    = LIST(V'__abs_item')^-1
     , __abs_item = (V'Abs_Cons' + V'Vec_Cons' + V'__Exp' + V'ID_any')
 
@@ -766,7 +766,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                         (Cc'call') * PARENS(OPT(V'List_Exp'))
                       )
                     )^0
-    , __13   = V'_Abs_Call'
+    , __13   = V'Abs_Call'
              + V'ID_int'  + V'ID_nat'
              + V'Outer'
              + V'_Nat_Exp'

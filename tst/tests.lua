@@ -41305,7 +41305,8 @@ escape 10;
 Test { [[
 spawn i;
 ]],
-    parser = 'line 1 : after `spawn´ : expected `(´ or `do´ or `async/isr´ or abstraction identifier',
+    --parser = 'line 1 : after `spawn´ : expected `(´ or `do´ or `async/isr´ or abstraction identifier',
+    parser = 'line 1 : after `i´ : expected `[´ or `:´ or `.´ or `!´ or `as´',
 }
 
 Test { [[
@@ -42714,7 +42715,8 @@ var int x = 0;
 var Ee e = val x;
 escape 1;
 ]],
-    parser = 'line 3 : after `val´ : expected abstraction identifier',
+    --parser = 'line 3 : after `val´ : expected abstraction identifier',
+    parser = 'line 3 : after `x´ : expected `[´ or `:´ or `.´ or `!´ or `as´',
 }
 
 Test { [[
