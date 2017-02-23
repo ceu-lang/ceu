@@ -281,7 +281,6 @@ end
     if not check(T,'parser') then return end
     --dofile 'ast.lua'
     if not check(T,'ast')    then return end
---AST.dump(AST.root)
     if not check(T,'adjs')   then return end
     dofile(DIR..'types.lua')
     dofile(DIR..'exps.lua')
@@ -306,6 +305,7 @@ end
     dofile(DIR..'multis.lua')
     if not check(T,'mems')   then return end
     if not check(T,'codes')  then return end
+--AST.dump(AST.root)
 
 if T.ana or T.tmp or T.props or T.mode then return end
 

@@ -689,6 +689,86 @@ escape 1;
 }
 
 --<< KILL
+
+Test { [[
+native/pre do
+    int V = 0;
+end
+
+code/await Gg (void) -> FOREVER do
+    every 100ms do
+        {V++;}
+    end
+end
+
+code/await Ff (void) -> (pool[1] Gg gs) -> FOREVER do
+    //pool[1] Gg gs_;
+    //spawn Gg() in gs_;
+    spawn Gg() in gs;
+    await FOREVER;
+end
+
+spawn Ff();
+await 1s;
+escape {V};
+]],
+    wrn = true,
+    run = {['~>1s']=10},
+}
+Test { [[
+native/pre do
+    int V = 0;
+end
+
+code/await Gg (void) -> FOREVER do
+    every 100ms do
+        {V++;}
+    end
+end
+
+code/await Ff (void) -> (pool[1] Gg gs1, pool[1] Gg gs2) -> FOREVER do
+    //pool[1] Gg gs_;
+    //spawn Gg() in gs_;
+    spawn Gg() in gs1;
+    spawn Gg() in gs2;
+    await FOREVER;
+end
+
+spawn Ff();
+await 1s;
+escape {V};
+]],
+    wrn = true,
+    run = {['~>1s']=20},
+}
+--do return end
+
+Test { [[
+native/pre do
+    int V = 0;
+end
+
+code/await Gg (void) -> FOREVER do
+    every 100ms do
+        {V++;}
+    end
+end
+
+code/await Ff (void) -> (pool[1] Gg gs) -> FOREVER do
+    var&? Gg g1 = spawn Gg() in gs;
+    kill g1;
+    var&? Gg g2 = spawn Gg() in gs;
+    await FOREVER;
+end
+
+spawn Ff();
+await 1s;
+escape {V};
+]],
+    wrn = true,
+    run = {['~>1s']=10},
+}
+
 do return end -- OK
 --]=====]
 
@@ -35563,9 +35643,9 @@ escape 0;
 -->> CODE / OPTION
 
 Test { [[
-code/tight Fx (var int? x) -> int do
-    if x? then
-        escape x! + 1;
+code/tight Fx (var int? xxx) -> int do
+    if xxx? then
+        escape xxx! + 1;
     else
         escape 1;
     end
@@ -35591,6 +35671,27 @@ var int v2 = await Fx(_);
 escape v1+v2;
 ]],
     run = 12,
+}
+
+Test { [[
+data Dd with
+    var int x = 10;
+end
+code/tight Ff (var Dd d) -> int do
+    escape d.x;
+end
+escape call Ff(_);
+]],
+    run = 10,
+}
+
+Test { [[
+code/tight Ff (var int? x) -> int do
+    escape (x? as int) + 1;
+end
+escape call Ff(_);
+]],
+    run = 10,
 }
 
 --<< CODE / OPTION
@@ -44933,6 +45034,26 @@ escape d.e1.e + d.e2.e + d.e3.e;
 ]],
     --wrn = true,
     run = 120,
+}
+
+Test { [[
+data Obj with
+    var int x = 0;
+end
+
+var int ret = 0;
+
+code/await DoObj(var Obj o) -> FOREVER
+do
+    outer.ret = outer.ret + o.x;
+    await FOREVER;
+end
+
+spawn DoObj(Obj(1));
+
+escape ret;
+]],
+    run = 1,
 }
 
 Test { [[

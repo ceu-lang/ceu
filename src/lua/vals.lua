@@ -105,7 +105,7 @@ F = {
     Abs_Call = function (me)
         local _, Abs_Cons = unpack(me)
         local obj, ID_abs, _ = unpack(Abs_Cons)
-        local _,mods,_,Code_Pars = unpack(ID_abs.dcl)
+        local _,mods = unpack(ID_abs.dcl)
         assert(mods.tight)
 
         local mem do

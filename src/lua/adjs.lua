@@ -174,12 +174,16 @@ error'TODO: luacov never executes this?'
                         unpack(me, 3))))
     end,
 
+    _Code_Pars__POS = function (me)
+        me.tag = 'Stmts'
+    end,
+
     _Code_impl__PRE = '_Code_proto__PRE',
     _Code_proto__PRE = function (me)
         local Y, mods, id, ins, mid, out, blk, eoc = unpack(me)
         me.tag = 'Code'
 
-        mid = mid or node('Code_Pars', me.ln)
+        mid = mid or node('_Code_Pars', me.ln)
 
         local Type = AST.get(out,'Code_Ret', 1,'Type')
         local is_void do
@@ -228,6 +232,16 @@ error'TODO: luacov never executes this?'
                                 set_or_do)),
                         eoc)
         ret.is_impl = (blk ~= false)
+
+        AST.par(ins,'Block').__adjs_1 = true
+        AST.par(mid,'Block').__adjs_2 = true
+        if blk then
+            blk.__adjs_3 = true
+        end
+        ret.__adjs_1 = AST.par(ins,'Block')
+        ret.__adjs_2 = AST.par(mid,'Block')
+        ret.__adjs_3 = blk
+
         return ret
     end,
 

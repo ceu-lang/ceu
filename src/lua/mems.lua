@@ -109,6 +109,7 @@ typedef struct tceu_code_mem_]]..me.id_..[[ {
 
         local multis = {}
         if mods.dynamic then
+error'oi'
             local Code_Pars = AST.asr(body,'', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 1,'Code_Pars')
             for i, dcl in ipairs(AST.par(Code_Pars,'Block').dcls) do
                 local _,_,_,dcl_mods = unpack(dcl)
@@ -323,8 +324,7 @@ static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
         local mem = {}
 
         local toplevel = ( AST.get(me,1,'Data') or
-                           code and AST.depth(me)<=AST.depth(AST.asr(code,'',4,'Block',1,'Stmts',2,'Do',3,'Block',1,'Stmts',2,'Block')) )
-                                    -- block of pars/mids
+                           code and AST.depth(me)<=AST.depth(code.__adjs_2) )
 
         for _, dcl in ipairs(me.dcls) do
 if dcl.tag ~= 'Prim' then

@@ -323,17 +323,6 @@ ceu_dbg_assert(]]..V(ID_int,ctx)..[[.pool.queue == NULL);
 
     ---------------------------------------------------------------------------
 
-    Code_Pars = function (me)
-        if AST.get(me,6,'Code', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block',
-                                1,'Stmts', 1,'Code_Pars') == me
-        then
-            -- input args
-        else
-            -- output args
-            CONC_ALL(me)
-        end
-    end,
-
     Code = function (me)
         local _,mods,_,body = unpack(me)
         if not me.is_impl then return end
@@ -359,53 +348,6 @@ if (0)
 ]])
             end
         end
-
-        -- copy args
---[=[
-        do
-            local args_id        = me.id_
-            local args_Code_Pars = AST.asr(body,'', 1,'Stmts', 1,'Block', 1,'Code_Pars')
-            if me.dyn_base then
-                args_id = me.dyn_base.id_
-                args_Code_Pars = AST.asr(me.dyn_base,'Code', 4,'Block', 1,'Stmts', 1,'Block', 1,'Code_Pars')
-            end
-
-            for i,dcl in ipairs(body.dcls) do
-                if dcl.is_param then
-                    local _,Type1,_ = unpack(dcl)
-
---[[
-                    local cast = ''
-                    if me.dyn_base then
-                        local is_alias2,Type2,_ = unpack(args_Code_Pars[i])
-                        if not AST.is_equal(Type1,Type2) then
-                            cast = '('..TYPES.toc(Type1)..(is_alias2 and '*' or '')..')'
-                        end
-                    end
-]]
-                    local is_alias2,Type2,_ = unpack(args_Code_Pars[i])
-                    local tpc
-                    if dcl.tag == 'Vec' then
-                        tpc = 'tceu_vector*'
-                    elseif dcl.tag == 'Evt' then
-                        tpc = 'tceu_evt'
-                    elseif dcl.tag == 'Pool' then
-                        tpc = 'tceu_pool_pak*'
-                    else
-                        tpc = TYPES.toc(Type1)..'*'
-                    end
-                    local cast = '*('..tpc..(is_alias2 and '*' or '')..')'
-
--- TODO: unify-01
-                    LINE(me, [[
-]]..V(dcl,{is_bind=true})..[[ =
-    /*]]..cast..[[((tceu_code_args_]]..args_id..[[*)_ceu_occ)->_]]..i..[[;*/
-    ]]..cast..[[(&((tceu_code_args_]]..args_id..[[*)_ceu_occ)->_]]..i..[[);
-]])
-                end
-            end
-        end
-]=]
 
         CONC(me, body)
         if mods.await then

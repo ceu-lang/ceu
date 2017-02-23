@@ -455,7 +455,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                              Cg(K'/recursive'*Cc'recursive','recursive')^-1 ) *
                 (V'__ID_abs'-V'__id_data') *
                     V'Code_Pars' * KK'->' *
-                        OPT(V'Code_Pars' * KK'->') *
+                        OPT(V'_Code_Pars' * KK'->') *
                             V'Code_Ret'
 
     , _Code_proto = V'Y' * V'__code' * Cc(false)
@@ -484,6 +484,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     -- TYPEPARS
 
     , Code_Pars = #KK'(' * (PARENS(P'void') + PARENS(LIST(V'__Dcls')))
+    , _Code_Pars = #KK'(' * (PARENS(P'void') + PARENS(LIST(V'__Dcls')))
     , Code_Ret = (V'Type' + CK'FOREVER')
 
 -- DATA

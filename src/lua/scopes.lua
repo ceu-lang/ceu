@@ -5,9 +5,9 @@ local function check_blk (to_blk, fr_blk)
 
     -- changes fr_blk from body->mid
     local ok = false
-    if fr_blk == AST.get(Code,'', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 2,'Block') then
+    if Code and fr_blk==Code.__adjs_3 then
         ok = true
-        fr_blk = AST.asr(Code,'', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block')
+        fr_blk = Code.__adjs_2
     end
 
     if AST.depth(to_blk) >= AST.depth(fr_blk) then
