@@ -111,7 +111,7 @@ error'TODO: luacov never executes this?'
     end,
     _Dopre__POS = function (me)
         AST.set(Pre_Stmts, #Pre_Stmts+1, AST.asr(me,'', 1,'Block', 1,'Stmts'))
-        return AST.node('Nothing', me.ln)
+        return node('Nothing', me.ln)
     end,
 
     _Do__PRE = function (me)
@@ -633,9 +633,9 @@ error'TODO: luacov never executes this?'
             local base = AST.asr(Set,'', 2,'Loc', 1,'')
             local ret = AST.copy(base)
             for _, idx in ipairs(T) do
-                ret = AST.node('Exp_.', me.ln, '.', ret, idx)
+                ret = node('Exp_.', me.ln, '.', ret, idx)
             end
-            exp = AST.node('Loc', me.ln, ret)
+            exp = node('Loc', me.ln, ret)
         end
 --<< TODO: join
 

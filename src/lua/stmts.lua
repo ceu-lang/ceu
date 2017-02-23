@@ -411,8 +411,9 @@ STMTS.F = {
         end
 
         -- tp
-        local abs = TYPES.abs_dcl(e.info.tp, 'Code')
-        if abs then
+        if e.info.tag == 'Var' then
+            local abs = TYPES.abs_dcl(e.info.tp, 'Code')
+            ASR(abs, me, 'invalid `await´ : expected `code/await´ abstraction')
             assert(alias == '&?')
             local tp = AST.get(abs,'Code', 4,'Block', 1,'Stmts',
                                            1,'Code_Ret', 1,'', 2,'Type')

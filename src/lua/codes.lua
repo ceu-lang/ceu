@@ -1443,7 +1443,8 @@ ceu_dbg_assert(0);
     Await_Int = function (me)
         local Loc = unpack(me)
         local alias, tp = unpack(Loc.info.dcl)
-        if alias == '&?' then
+        if Loc.info.tag == 'Var' then
+            assert(alias == '&?')
             LINE(me, [[
 if (]]..V(Loc)..[[ != NULL) {
 ]])
