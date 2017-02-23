@@ -213,8 +213,23 @@ escape 1;
 }
 
 Test { [[
+code/await Tx (void) -> FOREVER do
+    await FOREVER;
+end
+var&? Tx aaa = spawn Tx();
+par/and do
+    kill aaa;
+with
+    await aaa;
+end
+escape 1;
+]],
+    _ana = { acc=3 },
+    run = 1,
+}
+
+Test { [[
 code/await Tx (void) -> (var int a) -> FOREVER do
-do
     a = 1;
     await FOREVER;
 end
@@ -237,7 +252,6 @@ escape ret;
 
 Test { [[
 code/await Tx (void) -> (var int a) -> FOREVER do
-do
     a = 1;
     await FOREVER;
 end
@@ -688,7 +702,34 @@ escape 1;
     run = { ['~>1s']=10 },
 }
 
+Test { [[
+native/pre do
+    int V = 0;
+end
+
+code/await Gg (void) -> FOREVER do
+    every 100ms do
+        {V++;}
+    end
+end
+
+code/await Ff (void) -> (pool[1] Gg gs) -> FOREVER do
+    var&? Gg g1 = spawn Gg() in gs;
+    kill g1;
+    var&? Gg g2 = spawn Gg() in gs;
+    await FOREVER;
+end
+
+spawn Ff();
+await 1s;
+escape {V};
+]],
+    wrn = true,
+    run = {['~>1s']=10},
+}
+
 --<< KILL
+do return end
 
 Test { [[
 native/pre do
@@ -742,32 +783,6 @@ escape {V};
     run = {['~>1s']=20},
 }
 --do return end
-
-Test { [[
-native/pre do
-    int V = 0;
-end
-
-code/await Gg (void) -> FOREVER do
-    every 100ms do
-        {V++;}
-    end
-end
-
-code/await Ff (void) -> (pool[1] Gg gs) -> FOREVER do
-    var&? Gg g1 = spawn Gg() in gs;
-    kill g1;
-    var&? Gg g2 = spawn Gg() in gs;
-    await FOREVER;
-end
-
-spawn Ff();
-await 1s;
-escape {V};
-]],
-    wrn = true,
-    run = {['~>1s']=10},
-}
 
 do return end -- OK
 --]=====]
@@ -35691,7 +35706,7 @@ code/tight Ff (var int? x) -> int do
 end
 escape call Ff(_);
 ]],
-    run = 10,
+    run = 1,
 }
 
 --<< CODE / OPTION

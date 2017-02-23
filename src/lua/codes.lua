@@ -537,11 +537,11 @@ assert(not obj, 'not implemented')
 {
     tceu_code_mem* __ceu_mem = (tceu_code_mem*) ]]..V(loc)..[[;
 
-    tceu_stk __ceu_stk1 = { 1, 0, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
+    tceu_stk __ceu_stk1 = { 1, 0, _ceu_stk, {_ceu_mem,]]..me.trails[1]..','..me.trails[2]..[[} };
 
     /* clear code blocks */
     {
-        tceu_evt_range __ceu_range = { _ceu_mem, ]]..abs.trails[1]..', '..abs.trails[2]..[[ };
+        tceu_evt_range __ceu_range = { __ceu_mem, ]]..abs.trails[1]..', '..abs.trails[2]..[[ };
         tceu_evt_occ __ceu_occ = { {CEU_INPUT__CLEAR,{NULL}}, (tceu_nseq)(CEU_APP.seq+1),
                                    NULL, __ceu_range };
         ceu_bcast(&__ceu_occ, _ceu_stk, 1);
