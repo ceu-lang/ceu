@@ -372,7 +372,12 @@ if dcl.tag ~= 'Prim' then
                 --else
                     local alias, tp = unpack(dcl)
                     if alias then
-                        mem[#mem+1] = TYPES.toc(tp)..'* '..dcl.id_..';\n'
+                        if TYPES.abs_dcl(tp,'Code') then
+                            -- because of recursive definitions
+                            mem[#mem+1] = 'struct '..TYPES.toc(tp)..'* '..dcl.id_..';\n'
+                        else
+                            mem[#mem+1] = TYPES.toc(tp)..'* '..dcl.id_..';\n'
+                        end
                     else
                         mem[#mem+1] = TYPES.toc(tp)..'  '..dcl.id_..';\n'
                     end

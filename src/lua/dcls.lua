@@ -94,13 +94,13 @@ function DCLS.asr (me, blk_or_data, id, can_cross, err)
                 '`data´ "'..data.id..
                 '" ('..data.ln[1]..':'..  data.ln[2]..')')
         else
-            local par = AST.par(me,'Code')
-            if par and par[3]==id then
-                return par
-            else
-                ASR(false, me,
-                    err..' "'..id..'" is not declared')
+            -- recursive use
+            for par in AST.iter'Code' do
+                if par and par[3]==id then
+                    return par
+                end
             end
+            ASR(false, me, err..' "'..id..'" is not declared')
         end
     end
 end

@@ -784,8 +784,54 @@ escape {V};
 }
 --do return end
 
-do return end -- OK
 --]=====]
+
+Test { [[
+code/await Ff (pool&[] Ff fs) -> (var int y) -> int do
+    y = 10;
+    await async do end
+
+    var&? Ff f;
+    loop f in fs do
+        escape f!.y;
+    end
+
+    escape 0;
+end
+
+pool[] Ff fs;
+var&? Ff f;
+f = spawn Ff(&fs) in fs;
+var int? y = await f;
+escape y!;
+]],
+    run = 10,
+}
+
+Test { [[
+code/await Ff (pool&[] Ff fs) -> (var int y) -> int do
+    y = 10;
+    code/await Gg (void) -> int do
+        var&? Ff f;
+        loop f in outer.fs do
+            escape f!.y;
+        end
+        escape 0;
+    end
+    var int x = await Gg();
+    await async do end;
+    escape x;
+end
+
+pool[] Ff fs;
+spawn Ff(&fs) in fs;
+var int x = await Ff(&fs);
+escape x;
+]],
+    run = 10,
+}
+
+--do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested
