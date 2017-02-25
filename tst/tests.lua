@@ -37803,7 +37803,7 @@ watching f do
     escape x;
 end
 ]],
-    scopes = 'line 13 : invalid binding : incompatible scopes',
+    scopes = 'line 22 : invalid binding : incompatible scopes',
 }
 
 Test { [[
@@ -38040,10 +38040,11 @@ code/await Ff (void) -> (var& int x) -> void do
     end
 end
 
-escape 0;
+escape 1;
 ]],
     wrn = true,
-    scopes = 'line 13 : invalid binding : incompatible scopes',
+    --scopes = 'line 13 : invalid binding : incompatible scopes',
+    run = 1,
 }
 
 Test { [[
