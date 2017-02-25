@@ -3,6 +3,13 @@ local function check_blk (to_blk, fr_blk)
     local Code = AST.par(fr_blk,'Code')
     local Stmts = Code and AST.get(Code,'',4,'Block',1,'Stmts',4,'Block',1,'Stmts')
 
+    -- changes nested watchings to pars
+    local watch = AST.par(fr_blk, 'Watching')
+    while watch do
+        fr_blk = AST.par(watch, 'Block')
+        watch = AST.par(watch, 'Watching')
+    end
+
     -- changes fr_blk from body->mid
     local ok = false
     if Code and fr_blk==Code.__adjs_3 then
@@ -180,7 +187,7 @@ F = {
                 if awt and awt.info.dcl==me.info.dcl_obj.orig then
                     if to then
                         -- watching.depth < to.dcl.blk.depth
-                        if AST.get(to.info.dcl.blk,6,'Code') then
+                        if to.info.dcl.blk.__adjs_2 then
                             -- ok: allow mid destination binding even outliving source
                             -- TODO: check it is not accessed outside the watching
                             ok = true

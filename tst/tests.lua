@@ -38487,6 +38487,61 @@ escape ret!;
 }
 
 Test { [[
+code/await Hh (void) -> (var int x) -> FOREVER do
+    x = 10;
+    await FOREVER;
+end
+
+code/await Gg (void) -> FOREVER do
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var&? Gg g = spawn Gg();
+    watching g do
+        var&? Hh h = spawn Hh();
+        watching h do
+            x = &h!.x;
+            await FOREVER;
+        end
+        await 1s;
+    end
+end
+
+escape 1;
+]],
+    inits = 'line 10 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:14)',
+    wrn = true,
+}
+
+Test { [[
+code/await Hh (void) -> (var int x) -> FOREVER do
+    x = 10;
+    await FOREVER;
+end
+
+code/await Gg (void) -> FOREVER do
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var&? Gg g = spawn Gg();
+    watching g do
+        var&? Hh h = spawn Hh();
+        watching h do
+            x = &h!.x;
+            await FOREVER;
+        end
+    end
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
 code/await Ff (var int v) -> (var& int x) -> void do
     x = &v;
     await FOREVER;
