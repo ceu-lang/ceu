@@ -784,9 +784,8 @@ escape {V};
 }
 --do return end
 
+do return end -- OK
 --]=====]
-
---do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -34204,6 +34203,17 @@ call/recursive Fa();
 escape 1;
 ]],
     wrn = true,
+    run = 1,
+}
+
+Test { [[
+code/tight Ff (void) -> int;
+var int ret = call Ff();
+code/tight Ff (void) -> int do
+    escape 1;
+end
+escape ret;
+]],
     run = 1,
 }
 

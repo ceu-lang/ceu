@@ -140,8 +140,10 @@ G = {
         local Code = AST.asr(Abs_Cons,'Abs_Cons', 2,'ID_abs').dcl
         local _,mods_dcl = unpack(Code)
 
-        -- calling known Code
-        if impls[Code] then
+        local Par = AST.par(me,'Code')
+
+        -- calling known Code (or not calling from a tight)
+        if impls[Code] or (not (Par and Par[2].tight)) then
             if mods_call.recursive then
                 ASR(mods_dcl.recursive, me,
                     'invalid `call´ : unexpected `/recursive´')
@@ -162,7 +164,6 @@ G = {
         end
 
         -- calling from Par code with '/recursive'
-        local Par = AST.par(me,'Code')
         if Par and mods_call.recursive then
             -- Par must be '/recursive'
             local _,mods_dcl = unpack(Par)
