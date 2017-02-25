@@ -786,51 +786,6 @@ escape {V};
 
 --]=====]
 
-Test { [[
-code/await Ff (pool&[] Ff fs) -> (var int y) -> int do
-    y = 10;
-    await async do end
-
-    var&? Ff f;
-    loop f in fs do
-        escape f!.y;
-    end
-
-    escape 0;
-end
-
-pool[] Ff fs;
-var&? Ff f;
-f = spawn Ff(&fs) in fs;
-var int? y = await f;
-escape y!;
-]],
-    run = 10,
-}
-
-Test { [[
-code/await Ff (pool&[] Ff fs) -> (var int y) -> int do
-    y = 10;
-    code/await Gg (void) -> int do
-        var&? Ff f;
-        loop f in outer.fs do
-            escape f!.y;
-        end
-        escape 0;
-    end
-    var int x = await Gg();
-    await async do end;
-    escape x;
-end
-
-pool[] Ff fs;
-spawn Ff(&fs) in fs;
-var int x = await Ff(&fs);
-escape x;
-]],
-    run = 10,
-}
-
 --do return end -- OK
 
 ----------------------------------------------------------------------------
@@ -1276,6 +1231,17 @@ escape _f(_V);
     cc = '2:27: error: ‘V’ undeclared (first use in this function)',
 }
 
+Test { [[
+var int x = 0;
+code/tight Ff (void) -> int do
+    outer.x = outer.x() - 1;
+    escape x;
+end
+escape call Ff();
+]],
+    --run = 1,
+    dcls = 'line 3 : invalid call : expected native type',
+}
 --<<< NATIVE
 
 Test { [[var int a;]],
@@ -39736,6 +39702,51 @@ code/await Tx (var& Tx txs) -> void;
 escape 0;
 ]],
     dcls = 'line 1 : invalid declaration : unexpected context for `code´ "Tx"',
+}
+
+Test { [[
+code/await Ff (pool&[] Ff fs) -> (var int y) -> int do
+    y = 10;
+    await async do end
+
+    var&? Ff f;
+    loop f in fs do
+        escape f!.y;
+    end
+
+    escape 0;
+end
+
+pool[] Ff fs;
+var&? Ff f;
+f = spawn Ff(&fs) in fs;
+var int? y = await f;
+escape y!;
+]],
+    run = 10,
+}
+
+Test { [[
+code/await Ff (pool&[] Ff fs) -> (var int y) -> int do
+    y = 10;
+    code/await Gg (void) -> int do
+        var&? Ff f;
+        loop f in outer.fs do
+            escape f!.y;
+        end
+        escape 0;
+    end
+    var int x = await Gg();
+    await async do end;
+    escape x;
+end
+
+pool[] Ff fs;
+spawn Ff(&fs) in fs;
+var int x = await Ff(&fs);
+escape x;
+]],
+    run = 10,
 }
 
 --<< CODE / AWAIT / RECURSIVE

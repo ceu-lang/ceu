@@ -148,7 +148,7 @@ EXPS.F = {
         INFO.asr_tag(e, {'Nat','Var'}, 'invalid call')
 
         -- tp
-        ASR(TYPES.is_nat(e.info.tp),
+        ASR(TYPES.is_nat(e.info.tp), me,
             'invalid call : expected native type')
 
         -- info
