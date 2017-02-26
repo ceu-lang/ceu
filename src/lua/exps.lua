@@ -157,7 +157,7 @@ EXPS.F = {
 
     Abs_Call = function (me)
         local ID_abs = AST.asr(me,'', 2,'Abs_Cons', 2,'ID_abs')
-        local _,mods_dcl  = unpack(ID_abs.dcl)
+        local mods_dcl  = unpack(ID_abs.dcl)
         local mods_call = unpack(me)
 
         if mods_dcl.dynamic then
@@ -180,7 +180,7 @@ EXPS.F = {
 
         -- info
         me.info = INFO.new(me, 'Val', nil,
-                    AST.copy(AST.asr(ID_abs.dcl,'Code', 4,'Block', 1,'Stmts',
+                    AST.copy(AST.asr(ID_abs.dcl,'Code', 3,'Block', 1,'Stmts',
                                                         1,'Code_Ret',
                                                                     -- TODO: HACK_5
                                                         1,'', 2,'Type')))
@@ -194,7 +194,7 @@ EXPS.F = {
             me.vars = AST.asr(ID_abs.dcl,'Data', 3,'Block').dcls
             err_str = 'invalid constructor'
         else
-            me.vars = AST.asr(ID_abs.dcl,'Code', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block').dcls
+            me.vars = AST.asr(ID_abs.dcl,'Code').__adjs_1.dcls
             err_str = 'invalid call'
         end
         ASR(#me.vars == #Abslist, me, err_str..' : expected '..#me.vars..' argument(s)')
@@ -410,7 +410,7 @@ error'TODO: remove below'
                     else
                         local code = AST.asr(ID_abs.dcl,'Code')
                         Dcl = DCLS.asr(me,
-                                       AST.asr(code,'',4,'Block',1,'Stmts',2,'Do', 3,'Block',1,'Stmts',2,'Block'),
+                                       AST.asr(code,'',3,'Block',1,'Stmts',2,'Do', 3,'Block',1,'Stmts',2,'Block'),
                                        member,false,e.info.id)
                     end
                     me.info = {

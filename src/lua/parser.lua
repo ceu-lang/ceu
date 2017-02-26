@@ -458,8 +458,8 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                         OPT(V'_Code_Pars' * KK'->') *
                             V'Code_Ret'
 
-    , _Code_proto = V'Y' * V'__code' * Cc(false)
-    , _Code_impl  = V'Y' * V'__code' * V'__Do' * V'Y'
+    , _Code_proto = V'__code' * Cc(false)
+    , _Code_impl  = V'__code' * V'__Do' * V'Y'
 
     , _Spawn_Block = K'spawn' * OPT(PARENS(V'List_Var'+Cc(true))) * V'__Do'
 

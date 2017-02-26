@@ -129,7 +129,7 @@ G = {
         if not me.is_impl then
             return
         end
-        local _,_,id = unpack(me)
+        local _,id = unpack(me)
         local blk = AST.par(me, 'Block')
         local old = DCLS.get(blk, id)
         impls[old] = true
@@ -138,12 +138,12 @@ G = {
     Abs_Call = function (me)
         local mods_call, Abs_Cons = unpack(me)
         local Code = AST.asr(Abs_Cons,'Abs_Cons', 2,'ID_abs').dcl
-        local _,mods_dcl = unpack(Code)
+        local mods_dcl = unpack(Code)
 
         local Par = AST.par(me,'Code')
 
         -- calling known Code (or not calling from a tight)
-        if impls[Code] or (not (Par and Par[2].tight)) then
+        if impls[Code] or (not (Par and Par[1].tight)) then
             if mods_call.recursive then
                 ASR(mods_dcl.recursive, me,
                     'invalid `call´ : unexpected `/recursive´')
@@ -166,7 +166,7 @@ G = {
         -- calling from Par code with '/recursive'
         if Par and mods_call.recursive then
             -- Par must be '/recursive'
-            local _,mods_dcl = unpack(Par)
+            local mods_dcl = unpack(Par)
             ASR(mods_dcl.recursive, Par,
                 'invalid `code´ declaration : expected `/recursive´ : nested `call/recursive´ ('..me.ln[1]..':'..me.ln[2]..')')
         end

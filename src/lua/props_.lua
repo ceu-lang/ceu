@@ -39,7 +39,7 @@ PROPS_.F = {
                         return -- ok: var&? inside every
                     end
                 elseif par.tag == 'Code' then
-                    local _, mods = unpack(par)
+                    local mods = unpack(par)
                     if mods.await then
                         return -- ok: code/await
                     elseif me.tag == 'Finalize' then
@@ -126,7 +126,7 @@ PROPS_.F = {
     --------------------------------------------------------------------------
 
     Code = function (me)
-        local _,mods1,_,body = unpack(me)
+        local mods1,_,body = unpack(me)
         if mods1.dynamic and body then
 error'oi'
             local Code_Pars = AST.asr(body,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 1,'Code_Pars', 1,'Stmts')

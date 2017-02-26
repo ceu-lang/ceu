@@ -96,7 +96,7 @@ function DCLS.asr (me, blk_or_data, id, can_cross, err)
         else
             -- recursive use
             for par in AST.iter'Code' do
-                if par and par[3]==id then
+                if par and par[2]==id then
                     return par
                 end
             end
@@ -268,7 +268,7 @@ DCLS.F = {
             end
             ASR(ok, tp,
                 'invalid declaration : unexpected context for `'..AST.tag2id[ID.dcl.tag]..'´ "'..
-                    (ID.dcl.id or ID.dcl[3])..'"')
+                    (ID.dcl.id or ID.dcl[2])..'"')
         end
     end,
 
@@ -280,7 +280,7 @@ DCLS.F = {
 
         if alias == '&?' then
             local ID = unpack(Type)
-            if ID.tag=='ID_abs' and ID.dcl.tag=='Code' and ID.dcl[2].await then
+            if ID.tag=='ID_abs' and ID.dcl.tag=='Code' and ID.dcl[1].await then
                 me.__dcls_code_alias = true
                 -- ok
             elseif TYPES.is_nat(Type) then
@@ -407,7 +407,7 @@ DCLS.F = {
         DCLS.F.__no_abs(Type, 'Code', 'tight')
 
         local code = AST.par(me, 'Code')
-        if code and code[2].tight and (not is_alias) then
+        if code and code[1].tight and (not is_alias) then
             ASR(false, me,
                 'invalid declaration : vector inside `code/tight´')
         end
@@ -482,7 +482,7 @@ DCLS.F = {
 
     Code_Pars = function (me)
         local Code = AST.par(me,'Code')
-        local _,mods = unpack(Code)
+        local mods = unpack(Code)
 
         -- check types only
         do
@@ -554,7 +554,7 @@ DCLS.F = {
     end,
 
     Code = function (me)
-        local _,mods1,id,body1 = unpack(me)
+        local mods1,id,body1 = unpack(me)
 
         --ASR(not AST.par(me,'Code'), me,
             --'invalid `code´ declaration : nesting is not allowed')
@@ -594,7 +594,7 @@ DCLS.F = {
         end
 
         if old then
-            local _,mods2,_,body2 = unpack(old)
+            local mods2,_,body2 = unpack(old)
             if me.is_impl then
                 ASR(not (old.is_impl or old.__impl), me,
                     'invalid `code´ declaration : body for "'..id..'" already exists')
@@ -747,7 +747,7 @@ DCLS.F = {
                         node('Loc', v.ln,
                             node('ID_int', v.ln, id)))
             elseif v.tag == 'ID_any' then
-                local vars = AST.asr(code.dcl,'Code', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block').dcls
+                local vars = AST.asr(code.dcl,'Code', 3,'Block', 1,'Stmts', 2,'Do', 3,'Block').dcls
                 local _,tp = unpack(vars[i])
                 if TYPES.abs_dcl(tp,'Data') then
                     xxx = tp[1]
@@ -833,7 +833,7 @@ DCLS.F = {
             if obj then
                 assert(obj.info.tp)
                 local Code = TYPES.abs_dcl(obj.info.tp, 'Code')
-                blk = AST.asr(Code,'Code', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 2,'Block')
+                blk = AST.asr(Code,'Code', 3,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 2,'Block')
             else
                 blk = AST.par(me,'Block')
             end
@@ -878,7 +878,7 @@ DCLS.F = {
                 if dcl then
                     me.dcl = DCLS.asr(me, dcl, member, false, 'field')
                 else
-                    dcl = AST.asr(abs.dcl,'Code',4,'Block',1,'Stmts',2,'Do',3,'Block',1,'Stmts',2,'Block')
+                    dcl = AST.asr(abs.dcl,'Code',3,'Block',1,'Stmts',2,'Do',3,'Block',1,'Stmts',2,'Block')
                     me.dcl = DCLS.asr(me, dcl, member, false, 'parameter')
                 end
             else

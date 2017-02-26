@@ -324,7 +324,7 @@ ceu_dbg_assert(]]..V(ID_int,ctx)..[[.pool.queue == NULL);
     ---------------------------------------------------------------------------
 
     Code = function (me)
-        local _,mods,_,body = unpack(me)
+        local mods,_,body = unpack(me)
         if not me.is_impl then return end
         if me.is_dyn_base then return end
 

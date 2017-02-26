@@ -160,7 +160,7 @@ STMTS.F = {
             else
                 local ID_abs = AST.asr(fr,'', 2,'Abs_Call', 2,'Abs_Cons',
                                               2,'ID_abs')
-                local tp = AST.asr(ID_abs.dcl,'Code', 4,'Block', 1,'Stmts',
+                local tp = AST.asr(ID_abs.dcl,'Code', 3,'Block', 1,'Stmts',
                                                       1,'Code_Ret', 1,'', 2,'Type')
                 EXPS.check_tp(me, to.info.tp, tp, 'invalid binding', true)
             end
@@ -366,7 +366,7 @@ STMTS.F = {
         local ID_abs = AST.asr(Abs_Cons,'Abs_Cons', 2,'ID_abs')
         me.__code = AST.asr(ID_abs.dcl,'Code')
 
-        local _,mods_dcl = unpack(me.__code)
+        local mods_dcl = unpack(me.__code)
         ASR(mods_dcl.await, me,
             'invalid `'..AST.tag2id[me.tag]..'´ : expected `code/await´ declaration '..
                 '('..me.__code.ln[1]..':'..me.__code.ln[2]..')')
@@ -383,7 +383,7 @@ STMTS.F = {
         ASR(AST.par(me,'Code') ~= me.__code, me,
             'invalid `'..AST.tag2id[me.tag]..'´ : unexpected recursive invocation')
 
-        local ret = AST.get(me.__code,'', 4,'Block', 1,'Stmts',
+        local ret = AST.get(me.__code,'', 3,'Block', 1,'Stmts',
                                           1,'Code_Ret', 1,'', 2,'Type')
         me.tp = ret and AST.copy(ret)
 
@@ -415,7 +415,7 @@ STMTS.F = {
             local abs = TYPES.abs_dcl(e.info.tp, 'Code')
             ASR(abs, me, 'invalid `await´ : expected `code/await´ abstraction')
             assert(alias == '&?')
-            local tp = AST.get(abs,'Code', 4,'Block', 1,'Stmts',
+            local tp = AST.get(abs,'Code', 3,'Block', 1,'Stmts',
                                            1,'Code_Ret', 1,'', 2,'Type')
             if tp then
                 local ID = AST.get(me,'', 1,'Loc', 1,'ID_int')

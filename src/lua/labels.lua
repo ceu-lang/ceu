@@ -61,7 +61,7 @@ F = {
     Loop_Num = 'Loop',
 
     Code = function (me)
-        local _,mods = unpack(me)
+        local mods = unpack(me)
         me.lbl_in = new{'Code_'..me.id_, true}
         if mods.await then
             me.lbl_clr = new{'Code__CLR'}

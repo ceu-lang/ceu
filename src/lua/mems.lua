@@ -97,7 +97,7 @@ typedef struct tceu_code_mem_]]..me.id_..[[ {
     end,
 
     Code = function (me)
-        local _, mods, _, body = unpack(me)
+        local mods, _, body = unpack(me)
 
         me.mems.wrapper = ''
 
