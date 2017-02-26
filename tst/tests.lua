@@ -36061,6 +36061,32 @@ escape f!.x;
 }
 
 Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+
+pool[] Ff fs;
+spawn Ff() in fs;
+
+var int ret = 0;
+var int i;
+loop i in [0->1] do
+    var&? Ff f1 = do
+        var&? Ff f2;
+        loop f2 in fs do
+            if i == 0 then
+                escape &f2;
+            end
+        end
+    end;
+    ret = ret + 1 + (f1? as int);
+end
+
+escape ret;
+]],
+    run = 3,
+}
+Test { [[
 code/await Ff (void) -> void do
 end
 pool[] Ff ffs;
@@ -45198,6 +45224,19 @@ escape (call Ff ());
 ]],
     --wrn = true,
     run = 3,
+}
+
+Test { [[
+data Dd with
+    var int x = 10;
+end
+vector[] Dd ds = [];
+var Dd d2 = val Dd(_);
+var Dd d1 = val Dd(1);
+ds = ds .. [d2,d1];
+escape ds[0].x + ds[1].x;
+]],
+    run = 11,
 }
 
 --<< DATA / VECTOR

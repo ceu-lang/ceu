@@ -229,14 +229,17 @@ if (]]..V(c)..[[) {
     end,
 
     Var = function (me, base)
-        local is_alias, tp = unpack(me)
-        if TYPES.check(tp,'?') and (not is_alias) then
+        local alias, tp = unpack(me)
+        if TYPES.check(tp,'?') and (not alias) then
             LINE(me, [[
 ]]..V(me, {base=base})..[[.is_set = 0;
 ]])
         end
 
         if me.__dcls_code_alias then
+            LINE(me, [[
+]]..V(me)..[[ = NULL;
+]])
             HALT(me, {
                 { ['evt.id']  = 'CEU_INPUT__CODE_TERMINATED' },
                 { ['evt.mem'] = 'NULL' },   -- will be set on Set_Alias/Spawn
