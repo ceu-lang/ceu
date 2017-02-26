@@ -48395,8 +48395,9 @@ x = 1;
 escape x;
 ]],
     wrn = true,
-    inits = 'line 1 : uninitialized variable "x" : reached end of `code´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "x" : reached end of `code´ (/tmp/tmp.ceu:2)',
     --inits = 'line 1 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:2)',
+    run = 1,
 }
 
 Test { [[
