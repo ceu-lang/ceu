@@ -34,8 +34,18 @@ local function run_inits (par, i, Dcl, stop, dont_await)
                     if do_int and do_int[1]=='_ret' and x.__i==3 then
                         break   -- ok, last in ROOT
                     end
-                    is_last_watching = false
-                    break
+
+                    -- check if all statements after myself are code dcls
+                    for i=x.__i+1, #x.__par do
+                        if x.__par[i].tag ~= 'Code' then
+                            is_last_watching = false        -- no: error
+                            break
+                        end
+                    end
+
+                    if not is_last_watching then
+                        break
+                    end
                 end
                 x = x.__par
             end
@@ -44,6 +54,10 @@ local function run_inits (par, i, Dcl, stop, dont_await)
 
     if dont_await and me.tag=='Y' then
         err_inits(Dcl, me, 'yielding statement')
+
+    elseif me.tag == 'Code' then
+        -- skip nested code
+        return run_inits(par, i+1, Dcl, stop, dont_await)
 
     elseif me.tag == 'Escape' then
         local blk = AST.asr(me.outer,'',3,'Block')
@@ -222,7 +236,7 @@ F = {
                 local ok,stmt,endof = run_inits(me, #me+1, me, AST.par(me,'Code'), dont_await)
                 if ok and ok~=true then
                     if (ok=='Code' or ok=='Escape') and me.__dcls_unused
-                        and (not (code and code[2].await and AST.get(me.blk,6,'Code')))
+                        and (not (code and code[2].await and me.blk.__adjs_2))
                     then
                         -- ok, warning generated (unless in init list)
                     else

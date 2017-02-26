@@ -731,58 +731,45 @@ escape {V};
 --<< KILL
 do return end
 
+-- TODO: bug #89
 Test { [[
-native/pre do
-    int V = 0;
-end
+code/await Ff (void) -> (var& int x) -> FOREVER do
+    code/tight Gg (void) -> void;
+    call Gg();
 
-code/await Gg (void) -> FOREVER do
-    every 100ms do
-        {V++;}
+    var int y = 10;
+    x = &y;
+
+    code/tight Gg (void) -> void do
+        outer.x = 10;
     end
-end
 
-code/await Ff (void) -> (pool[1] Gg gs) -> FOREVER do
-    //pool[1] Gg gs_;
-    //spawn Gg() in gs_;
-    spawn Gg() in gs;
     await FOREVER;
 end
-
 spawn Ff();
-await 1s;
-escape {V};
+escape 1;
 ]],
-    wrn = true,
-    run = {['~>1s']=10},
+    run = 1,
 }
+
+-- TODO: bug #89
 Test { [[
-native/pre do
-    int V = 0;
-end
-
-code/await Gg (void) -> FOREVER do
-    every 100ms do
-        {V++;}
+code/await Ff (void) -> (var& int x) -> FOREVER do
+    code/tight Gg (void) -> void do
+        outer.x = 10;
     end
-end
+    call Gg();
 
-code/await Ff (void) -> (pool[1] Gg gs1, pool[1] Gg gs2) -> FOREVER do
-    //pool[1] Gg gs_;
-    //spawn Gg() in gs_;
-    spawn Gg() in gs1;
-    spawn Gg() in gs2;
+    var int y = 10;
+    x = &y;
     await FOREVER;
 end
-
 spawn Ff();
-await 1s;
-escape {V};
+escape 1;
 ]],
-    wrn = true,
-    run = {['~>1s']=20},
+    --inits = 'line 1 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:3)',
+    run = 1,
 }
---do return end
 
 do return end -- OK
 --]=====]
@@ -38705,6 +38692,50 @@ escape ret;
     inits = 'line 8 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:12)',
 }
 
+Test { [[
+code/await Ff (void) -> (var& int x) -> FOREVER do
+    code/await Gg (void) -> (var& int x) -> FOREVER do
+        var int y = 10;
+        x = &y;
+        await FOREVER;
+    end
+    var&? Gg g = spawn Gg();
+    watching g do
+        x = &g!.x;
+        await FOREVER;
+    end
+    code/tight Hh (void) -> void do end
+    code/tight Ii (void) -> void do end
+end
+spawn Ff();
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+code/await Ff (void) -> (var& int x) -> FOREVER do
+    code/await Gg (void) -> (var& int x) -> FOREVER do
+        var int y = 10;
+        x = &y;
+        await FOREVER;
+    end
+    var&? Gg g = spawn Gg();
+    watching g do
+        x = &g!.x;
+        await FOREVER;
+    end
+    code/tight Hh (void) -> void do end
+    nothing;
+    code/tight Ii (void) -> void do end
+end
+spawn Ff();
+escape 1;
+]],
+    inits = 'line 1 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:8)',
+    wrn = true,
+}
+
 --<< CODE / WATCHING / SCOPES
 
 --<< CODE / AWAIT / WATCHING
@@ -41410,6 +41441,57 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+native/pre do
+    int V = 0;
+end
+
+code/await Gg (void) -> FOREVER do
+    every 100ms do
+        {V++;}
+    end
+end
+
+code/await Ff (void) -> (pool[1] Gg gs) -> FOREVER do
+    pool[1] Gg gs_;
+    spawn Gg() in gs_;
+    spawn Gg() in gs;
+    await FOREVER;
+end
+
+spawn Ff();
+await 1s;
+escape {V};
+]],
+    wrn = true,
+    run = {['~>1s']=20},
+}
+Test { [[
+native/pre do
+    int V = 0;
+end
+
+code/await Gg (void) -> FOREVER do
+    every 100ms do
+        {V++;}
+    end
+end
+
+code/await Ff (void) -> (pool[1] Gg gs1, pool[1] Gg gs2) -> FOREVER do
+    pool[1] Gg gs_;
+    spawn Gg() in gs_;
+    spawn Gg() in gs1;
+    spawn Gg() in gs2;
+    await FOREVER;
+end
+
+spawn Ff();
+await 1s;
+escape {V};
+]],
+    wrn = true,
+    run = {['~>1s']=30},
+}
 -->> POOL/SPAWN/OPTION
 
 Test { [[
