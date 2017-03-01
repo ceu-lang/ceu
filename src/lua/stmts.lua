@@ -120,14 +120,6 @@ STMTS.F = {
         end
     end,
 
-    Set_Nil__PRE = function (me)
-        local _, to = unpack(me)
-        local alias = unpack(to.info.dcl)
-        if alias then
-            me.tag = 'Set_Alias'
-        end
-    end,
-
     Set_Nil = function (me)
         local _, to = unpack(me)
         INFO.asr_tag(to, {'Var'}, 'invalid assignment')

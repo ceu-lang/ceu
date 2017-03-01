@@ -885,6 +885,14 @@ DCLS.F = {
         EXPS.F['Exp_.'](me)
     end,
 
+    Set_Nil = function (me)
+        local _, to = unpack(me)
+        local alias = unpack(to.info.dcl)
+        if alias then
+            me.tag = 'Set_Alias'
+        end
+    end,
+
     ---------------------------------------------------------------------------
 
     Loop_Num = function (me)
