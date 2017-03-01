@@ -1228,6 +1228,12 @@ escape call Ff();
     --run = 1,
     dcls = 'line 3 : invalid call : expected native type',
 }
+
+Test { [[
+escape 1 + ({1.1 == 1} as int);
+]],
+    run = 1,
+}
 --<<< NATIVE
 
 Test { [[var int a;]],

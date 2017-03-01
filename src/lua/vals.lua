@@ -539,7 +539,7 @@ ceu_data_as(CEU_DATA_SUPERS_]]..base.id_..[[,
 ]]
             else
                 ret = [[
-((]]..TYPES.toc(Type)..')'..V(e)..[[)
+((]]..TYPES.toc(Type)..')('..V(e)..[[))
 ]]
             end
         end
