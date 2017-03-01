@@ -33037,6 +33037,33 @@ escape a;
 
 -- TODO: SKIP-01
 
+-->> OPTION / NIL
+
+Test { [[
+var int x = 10;
+x = nil;
+escape 1;
+]],
+    stmts = 'line 2 : invalid assignment : expected option destination',
+}
+
+Test { [[
+vector[] int x;
+x = nil;
+escape 1;
+]],
+    stmts = 'line 2 : invalid assignment : unexpected context for vector "x"',
+}
+
+Test { [[
+var int? x = 10;
+x = nil;
+escape (x? as int) + 1;
+]],
+    run = 1,
+}
+
+--<< OPTION / NIL
 --<<< OPTION TYPES
 
 -->>> WATCHING

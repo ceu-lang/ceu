@@ -636,7 +636,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
         + V'_Set_Abs_New'
         + V'_Set_Abs_Spawn'
         + V'_Set_Any'
-        + V'_Set_Alias'
+        + V'_Set_Nil'
         + V'_Set_Exp'
 
     , __sets_many = V'_Set_Emit_Ext_req' + V'_Set_Await_many' + V'_Set_Watching'
@@ -664,7 +664,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , _Set_Abs_Spawn     = #K'spawn'         * (V'Abs_Spawn' + V'Abs_Spawn_Pool')
 
     , _Set_Any           = #K'_'             * V'ID_any'
-    , _Set_Alias         =                     V'NIL'
+    , _Set_Nil           =                     V'NIL'
     , _Set_Exp           =                     V'__Exp'
 
     , __extcode_pre = (K'call/recursive'+K'call') * V'ID_ext'
