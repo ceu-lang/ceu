@@ -122,6 +122,12 @@ STMTS.F = {
 
     Set_Alias = function (me)
         local fr, to = unpack(me)
+        local alias = unpack(to.info.dcl)
+
+        if fr.tag == 'NIL' then
+            ASR(alias == '&?', me, 'invalid binding : expected option alias')
+            return
+        end
 
         -- ctx
         INFO.asr_tag(to, {'Var','Vec','Pool','Evt'}, 'invalid binding')
@@ -142,7 +148,6 @@ STMTS.F = {
 
         -- NO: f1 = &f              // f may die
         if to.info.tag=='Var' and TYPES.abs_dcl(to.info.tp,'Code') then
-            local alias = unpack(to.info.dcl)
             ASR(alias == '&?', me, 'invalid binding : expected `spawn´')
         end
 

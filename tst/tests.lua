@@ -19186,8 +19186,9 @@ b = &a;
 a = 2;
 escape b;
 ]],
-    inits = 'line 3 : invalid binding : variable "b" is already bound',-- (/tmp/tmp.ceu:2)',
+    --inits = 'line 3 : invalid binding : variable "b" is already bound',-- (/tmp/tmp.ceu:2)',
     --ref = 'line 3 : invalid attribution : variable "b" is already bound',
+    run = 2,
 }
 Test { [[
 var int a = 1;
@@ -19212,8 +19213,9 @@ else
 end
 escape b;
 ]],
-    inits = 'line 5 : invalid binding : variable "b" is already bound',-- (/tmp/tmp.ceu:4,/tmp/tmp.ceu:7)',
+    --inits = 'line 5 : invalid binding : variable "b" is already bound',-- (/tmp/tmp.ceu:4,/tmp/tmp.ceu:7)',
     --ref = 'line 3 : invalid attribution : variable "b" is already bound',
+    run = 1,
 }
 Test { [[
 var int a = 1;
@@ -19227,8 +19229,9 @@ end
 escape b;
 ]],
     -- TODO: /tmp/tmp.ceu:6
-    inits = 'line 7 : invalid binding : variable "b" is already bound',-- (/tmp/tmp.ceu:4,/tmp/tmp.ceu:6)',
+    --inits = 'line 7 : invalid binding : variable "b" is already bound',-- (/tmp/tmp.ceu:4,/tmp/tmp.ceu:6)',
     --ref = 'line 3 : invalid attribution : variable "b" is already bound',
+    run = 1,
 }
 Test { [[
 var int a = 1;
@@ -19241,8 +19244,9 @@ end
 b = &a;
 escape b;
 ]],
-    inits = 'line 8 : invalid binding : variable "b" is already bound',-- (/tmp/tmp.ceu:4,/tmp/tmp.ceu:6)',
+    --inits = 'line 8 : invalid binding : variable "b" is already bound',-- (/tmp/tmp.ceu:4,/tmp/tmp.ceu:6)',
     --ref = 'line 3 : invalid attribution : variable "b" is already bound',
+    run = 1,
 }
 Test { [[
 var int a = 1;
@@ -20606,7 +20610,8 @@ event& void b = &a;
 b = &b;
 escape 1;
 ]],
-    inits = 'line 3 : invalid binding : event "b" is already bound',-- (/tmp/tmp.ceu:2)',
+    --inits = 'line 3 : invalid binding : event "b" is already bound',-- (/tmp/tmp.ceu:2)',
+    run = 1,
     --run = { ['~>1s'] = 1 },
 }
 
@@ -20810,8 +20815,8 @@ var int x=0;
 var&? int xxx = &x;
 escape 2;
 ]],
-    dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
-    --run = 1,
+    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
+    run = 2,
 }
 
 Test { [[
@@ -20821,7 +20826,8 @@ var&? int xxx = do
 end;
 escape (xxx? as int) + 1;
 ]],
-    dcls = 'line 1 : invalid declaration : option alias : expected native or `code/await´ type',
+    scopes = 'line 3 : invalid binding : incompatible scopes',
+    --dcls = 'line 1 : invalid declaration : option alias : expected native or `code/await´ type',
     --run = 1,
 }
 
@@ -20874,6 +20880,101 @@ escape await Ff(&Dd(1));
     --todo = 'support aliases to data',
     --run = 1,
 }
+
+-->> ALIAS / OPTION / NIL
+
+Test { [[
+var int x = 10;
+var int y = 20;
+var& int v = &x;
+loop do
+    v = &y;
+    break;
+end
+escape v;
+]],
+    run = 20,
+}
+
+Test { [[
+var int x = 10;
+var int y = 20;
+var& int v = &x;
+loop do
+    v = &y;
+    break;
+end
+escape v;
+]],
+    run = 20,
+}
+
+Test { [[
+var int x = 10;
+var int y = 20;
+var& int v;
+loop do
+    v = &y;
+    break;
+end
+escape v;
+]],
+    inits = 'line 5 : invalid binding : crossing `loop´ (/tmp/tmp.ceu:4)',
+}
+
+Test { [[
+code/await Ff (void) -> void do end
+var&? Ff v;
+escape (v? as int) + 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var&? int v;
+escape (v? as int) + 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int x = 10;
+var&? int v = &x;
+escape (v? as int) + 1;
+]],
+    run = 2,
+}
+
+Test { [[
+var int x = 10;
+var int y = 20;
+var&? int v;
+loop do
+    v = &y;
+    break;
+end
+escape v!;
+]],
+    run = 20,
+}
+
+Test { [[
+var& int v = nil;
+escape 0;
+]],
+    stmts = 'line 1 : invalid binding : expected option alias',
+}
+
+Test { [[
+var int x = 10;
+var&? int v = &x;
+v = nil;
+escape (v? as int) + 1;
+]],
+    run = 1,
+}
+
+--<< ALIAS / OPTION / NIL
 
 --<<< ALIASES / REFERENCES / REFS / &
 
@@ -31041,9 +31142,10 @@ var int? v1 = 0;
 var int? v2 = 1;
 var& int? i = &v1;
 i = &v2;
-escape v1!;
+escape i!;
 ]],
-    inits = 'line 4 : invalid binding : variable "i" is already bound',-- (/tmp/tmp.ceu:3)',
+    run = 1,
+    --inits = 'line 4 : invalid binding : variable "i" is already bound',-- (/tmp/tmp.ceu:3)',
     --ref = 'line 4 : invalid attribution : variable "i" is already bound',
     --ref = 'line 4 : invalid attribution : l-value already bounded',
 }
@@ -31114,7 +31216,8 @@ i = &v;
 i = &v;
 escape i!;
 ]],
-    inits = 'line 4 : invalid binding : variable "i" is already bound',-- (/tmp/tmp.ceu:3)',
+    run = 10;
+    --inits = 'line 4 : invalid binding : variable "i" is already bound',-- (/tmp/tmp.ceu:3)',
     --ref = 'line 4 : invalid attribution : variable "i" is already bound',
 }
 
@@ -31555,8 +31658,8 @@ finalize(v1) with
     nothing;
 end
 ]],
-    dcls = 'line 1 : invalid declaration : option alias : expected native or `code/await´ type',
-    --stmts = 'line 4 : invalid binding : expected `native´ type',
+    --dcls = 'line 1 : invalid declaration : option alias : expected native or `code/await´ type',
+    stmts = 'line 4 : invalid binding : expected `native´ type',
     --cc = 'error: implicit declaration of function ‘fff’',
     --stmts = 'line 4 : invalid binding : types mismatch : "int?" <= "_"',
 }
@@ -32395,9 +32498,11 @@ finalize (ptr) with
     nothing;
 end
 
-escape &ptr! == &ptr!;  // ptr.SOME fails
+escape &&ptr! == &&ptr!;  // ptr.SOME fails
 ]],
-    dcls = 'line 8 : invalid declaration : option alias : expected native or `code/await´ type',
+    --run = 1,
+    stmts = 'line 9 : invalid binding : expected `native´ type',
+    --dcls = 'line 8 : invalid declaration : option alias : expected native or `code/await´ type',
     --dcls = 'line 14 : invalid expression : unexpected context for operation `&´',
     --env = 'line 14 : invalid use of operator "&" : not a binding assignment',
 }
@@ -34762,8 +34867,8 @@ await Rect();
 
 escape 0;
 ]],
-    dcls = 'line 4 : invalid declaration : option alias : expected native or `code/await´ type',
-    --stmts = 'line 4 : invalid `await´ : expected `code/await´ declaration (/tmp/tmp.ceu:1)',
+    --dcls = 'line 4 : invalid declaration : option alias : expected native or `code/await´ type',
+    stmts = 'line 4 : invalid `spawn´ : expected `code/await´ declaration (/tmp/tmp.ceu:1)',
 }
 
 -->> CODE / ALIAS / FINALIZE
@@ -35597,7 +35702,8 @@ call Ff(&x);
 
 escape 0;
 ]],
-    inits = 'line 3 : invalid binding : variable "x" is already bound',
+    --inits = 'line 3 : invalid binding : variable "x" is already bound',
+    inits = 'line 6 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:7)',
 }
 
 Test { [[
@@ -35813,7 +35919,8 @@ end
 ret = ret + (ppp? as int);
 escape ret;
 ]],
-    dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
+    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
+    scopes = 'line 5 : invalid binding : incompatible scopes',
     --run = 10,
 }
 
@@ -35828,8 +35935,8 @@ end
 ret = ret + (p? as int);
 escape ret;
 ]],
-    dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
-    --dcls = 'line 2 : invalid declaration : option type : not implemented',
+    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
+    dcls = 'line 2 : invalid declaration : option type : not implemented',
     --stmts = 'line 5 : invalid binding : types mismatch : "int?" <= "int"',
 }
 
@@ -35844,8 +35951,8 @@ end
 ret = ret + (p? as int);
 escape ret;
 ]],
-    dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
-    --dcls = 'line 2 : invalid declaration : option type : not implemented',
+    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
+    dcls = 'line 2 : invalid declaration : option type : not implemented',
     --run = 10,
 }
 
@@ -35861,8 +35968,8 @@ end
 ret = ret + (p? as int);
 escape ret;
 ]],
-    dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
-    --dcls = 'line 2 : invalid declaration : option type : not implemented',
+    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
+    dcls = 'line 2 : invalid declaration : option type : not implemented',
     --run = 'err acc to p!!',
 }
 
@@ -35879,7 +35986,8 @@ end
 ret = ret + (p? as int);
 escape ret;
 ]],
-    dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
+    stmts = 'line 8 : invalid `await´ : expected `code/await´ abstraction',
+    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
     --inits = 'line 2 : uninitialized variable "p" : reached `par/or´ (/tmp/tmp.ceu:3)',
     --inits = 'line 2 : uninitialized variable "p" : reached yielding statement (/tmp/tmp.ceu:3)',
 }
@@ -35993,8 +36101,8 @@ var int x = f!.x;
 
 escape x;
 ]],
-    dcls = 'line 5 : invalid declaration : option alias : expected native or `code/await´ type',
-    --stmts = 'line 5 : invalid constructor : types mismatch : "bool" <= "Ff"',
+    --dcls = 'line 5 : invalid declaration : option alias : expected native or `code/await´ type',
+    stmts = 'line 5 : invalid constructor : types mismatch : "bool" <= "Ff"',
 }
 
 Test { [[
@@ -37914,9 +38022,10 @@ end
 var&? Gg g;
 g = spawn Gg();
 g = spawn Gg();
-escape 0;
+escape 1;
 ]],
-    inits = 'line 7 : invalid binding : variable "g" is already bound',
+    --inits = 'line 7 : invalid binding : variable "g" is already bound',
+    run = 1,
 }
 
 Test { [[
@@ -40464,7 +40573,31 @@ end;
 
 escape (x? as int) + 1;
 ]],
-    dcls = 'line 10 : invalid declaration : option alias : expected native or `code/await´ type',
+    --dcls = 'line 10 : invalid declaration : option alias : expected native or `code/await´ type',
+    stmts = 'line 13 : invalid binding : unmatching alias `&´ declaration',
+}
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
+                        // error
+    var int v = 10;
+    x = &v;
+end
+
+pool[] Ff ffs;
+spawn Ff() in ffs;
+
+var& int x = do
+    var&? Ff fff;
+    loop fff in ffs do
+        escape &fff!.x;
+    end
+end;
+
+escape 1;
+]],
+    --dcls = 'line 10 : invalid declaration : option alias : expected native or `code/await´ type',
+    --stmts = 'line 13 : invalid binding : unmatching alias `&´ declaration',
+    scopes = 'line 13 : invalid binding : unexpected source with `&?´ : destination may outlive source',
 }
 Test { [[
 code/await Ff (void) -> (var& int x) -> void do

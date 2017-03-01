@@ -57,6 +57,10 @@ F = {
 
 -- PRIMITIVES
 
+    NIL = function (me)
+        return 'NULL'
+    end,
+
     NULL = function (me)
         return 'NULL'
     end,

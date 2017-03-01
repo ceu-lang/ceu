@@ -116,6 +116,10 @@ F = {
     Set_Alias = function (me)
         local fr, to = unpack(me)
 
+        if fr.tag == 'NIL' then
+            return
+        end
+
         local _, call = unpack(fr)
         if (call.tag=='Exp_call' or call.tag=='Abs_Call') then
             ASR(to.info.dcl[1] == '&?', me,
@@ -140,9 +144,9 @@ F = {
                 fin.__fin_vars = { blk=blk, assert(to.info.dcl) }
             end
         else
-            local ok = is_call or (to.info.dcl[1]=='&?') or
-                       check_blk(to.info.dcl.blk, (fr.info.dcl_obj or fr.info.dcl).blk)
-            ASR(ok, me, 'invalid binding : incompatible scopes')
+            ASR(is_call or to.info.dcl.__dcls_code_alias or
+                check_blk(to.info.dcl.blk, (fr.info.dcl_obj or fr.info.dcl).blk),
+                me, 'invalid binding : incompatible scopes')
         end
     end,
 

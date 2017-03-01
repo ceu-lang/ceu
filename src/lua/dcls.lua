@@ -285,9 +285,6 @@ DCLS.F = {
                 -- ok
             elseif TYPES.is_nat(Type) then
                 -- ok
-            else
-                ASR(false, me,
-                    'invalid declaration : option alias : expected native or `code/await´ type')
             end
 
             me.is_read_only = true

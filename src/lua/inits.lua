@@ -151,7 +151,7 @@ local function run_inits (par, i, Dcl, stop, dont_await)
 
     -- ok: found assignment
     elseif string.sub(me.tag,1,4)=='Set_' then
-        local is_alias = unpack(Dcl)
+        local alias = unpack(Dcl)
 
         local fr, to = unpack(me)
         if me.tag == 'Set_Exp' then
@@ -171,7 +171,7 @@ local function run_inits (par, i, Dcl, stop, dont_await)
                     -- ID = ...;
                     local ID_int = AST.asr(sub,'Loc', 1,'ID_int')
                     if ID_int.dcl == Dcl then
-                        if is_alias then
+                        if alias == '&' then
                             local loop = AST.par(me, DCLS.F.__loop)
                             if loop then
                                 ASR(AST.depth(loop) < AST.depth(Dcl), me,
@@ -180,7 +180,7 @@ local function run_inits (par, i, Dcl, stop, dont_await)
                             ASR(me.tag=='Set_Alias' or me.tag=='Set_Abs_Spawn', me,
                                 'invalid binding : expected operator `&´ in the right side')
                         else
-                            assert(me.tag ~= 'Set_Alias')
+                            --assert(me.tag ~= 'Set_Alias')
                         end
 
                         me.is_init = true
@@ -214,19 +214,20 @@ F = {
     Vec  = 'Var',
     Evt  = 'Var',
     Var  = function (me)
-        local is_alias,tp = unpack(me)
+        local alias,tp = unpack(me)
         local code = AST.par(me, 'Code')
 
         -- RUN_INITS
         if me.is_implicit                   or      -- compiler defined
            AST.get(me.blk,4,'Code')         or      -- "code" parameter
            AST.par(me,'Data')               or      -- "data" member
-           TYPES.check(tp,'?') and (not is_alias)   -- optional initialization
+           alias == '&?'                    or      -- option alias
+           TYPES.check(tp,'?') and (not alias)      -- optional initialization
         then
             -- ok: don't need initialization
         else
             if me.tag=='Var' or     -- all vars must be inited
-               is_alias      or     -- all aliases must be bound
+               alias == '&'  or     -- all aliases must be bound
                tp.tag=='Type' and TYPES.is_nat(tp) and assert(me.tag=='Vec')
             then
                 -- var x = ...
@@ -247,6 +248,7 @@ F = {
         end
     end,
 
+--[[
     Set_Abs_Spawn = 'Set_Alias',
     Set_Alias = function (me)
         local _,to = unpack(me)
@@ -259,6 +261,7 @@ F = {
             AST.tag2id[to.info.dcl.tag]..
             ' "'..to.info.dcl.id..'" is already bound')
     end,
+]]
 
     ID_int = function (me)
         local is_alias = unpack(me.dcl)

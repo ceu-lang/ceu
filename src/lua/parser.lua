@@ -84,7 +84,7 @@ local T = {
     },
 
     {
-        '`do´ or `await´ or `%[´ or location or `{´ or `%(´ or `not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `&&´ or `&´ or `call´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `emit´ or `call/recursive´ or `val´ or `new´ or `spawn´ or `_´ or `request´ or `watching´',
+        '`do´ or `await´ or `%[´ or location or `{´ or `%(´ or `not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `&&´ or `&´ or `call´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `emit´ or `call/recursive´ or `val´ or `new´ or `spawn´ or `_´ or `nil´ or `request´ or `watching´',
         'expression'
     },
     {
@@ -286,6 +286,7 @@ KEYS = P
 'output' +
 'outer' +
 'or' +
+'nil' +
 'null' +
 'nothing' +
 'not' +
@@ -635,6 +636,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
         + V'_Set_Abs_New'
         + V'_Set_Abs_Spawn'
         + V'_Set_Any'
+        + V'_Set_Alias'
         + V'_Set_Exp'
 
     , __sets_many = V'_Set_Emit_Ext_req' + V'_Set_Await_many' + V'_Set_Watching'
@@ -662,6 +664,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , _Set_Abs_Spawn     = #K'spawn'         * (V'Abs_Spawn' + V'Abs_Spawn_Pool')
 
     , _Set_Any           = #K'_'             * V'ID_any'
+    , _Set_Alias         =                     V'NIL'
     , _Set_Exp           =                     V'__Exp'
 
     , __extcode_pre = (K'call/recursive'+K'call') * V'ID_ext'
@@ -786,6 +789,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
              + K'true'  / function() return 1 end
     , STRING = CKK( CKK'"' * (P(1)-'"'-'\n')^0 * K'"', 'string literal' )
     , NULL   = CK'null'     -- TODO: the idea is to get rid of this
+    , NIL    = CK'nil'
 
     , Outer   = K'outer'
 
