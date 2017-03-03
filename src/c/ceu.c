@@ -371,6 +371,22 @@ void ceu_code_mem_dyn_remove (tceu_pool* pool, tceu_code_mem_dyn* cur) {
     }
 }
 
+void ceu_code_mem_dyn_gc (tceu_pak* pak) {
+    if (pak->n_traversing == 0) {
+        /* TODO-OPT: one element killing another is unlikely:
+                     set bit in pool when this happens and only
+                     traverses in this case */
+        tceu_code_mem_dyn* cur = pak->first.nxt;
+        while (cur != &pak->first) {
+            tceu_code_mem_dyn* nxt = cur->nxt;
+            if (!cur->is_alive) {
+                ceu_code_mem_dyn_free(&pak->pool, cur);
+            }
+            cur = nxt;
+        }
+    }
+}
+
 /*****************************************************************************/
 
 #ifdef CEU_FEATURES_LUA
@@ -526,7 +542,6 @@ printf(">>> BCAST[%p]:\n", trl->pool_first);
 printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
 #endif
                 while (cur != &trl->evt.pak->first) {
-                    tceu_code_mem_dyn* nxt = cur->nxt;
                     if (cur->is_alive) {
                         tceu_evt_range _range = { &cur->mem[0],
                                                   0, (tceu_ntrl)((&cur->mem[0])->trails_n-1) };
@@ -536,22 +551,10 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                             goto _CEU_BREAK_;
                         }
                     }
-                    cur = nxt;
+                    cur = cur->nxt;
                 }
                 trl->evt.pak->n_traversing--;
-                if (trl->evt.pak->n_traversing == 0) {
-                    /* TODO-OPT: one element killing another is unlikely:
-                                 set bit in pool when this happens and only
-                                 traverses in this case */
-                    tceu_code_mem_dyn* cur = trl->evt.pak->first.nxt;
-                    while (cur != &trl->evt.pak->first) {
-                        tceu_code_mem_dyn* nxt = cur->nxt;
-                        if (!cur->is_alive) {
-                            ceu_code_mem_dyn_free(&trl->evt.pak->pool, cur);
-                        }
-                        cur = nxt;
-                    }
-                }
+                ceu_code_mem_dyn_gc(trl->evt.pak);
                 break;
             }
 

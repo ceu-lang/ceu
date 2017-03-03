@@ -29,9 +29,7 @@ TRAILS.F = {
 
     Loop_Pool = function (me)
         local _, _, _, body = unpack(me)
-        if me.yields then
-            me.trails_n = body.trails_n + 1
-        end
+        me.trails_n = body.trails_n + 1
     end,
 
     Pause_If = function (me)
@@ -86,9 +84,7 @@ end
     Loop_Pool__PRE = function (me)
         local _, _, _, body = unpack(me)
         body.trails = { unpack(me.trails) }
-        if me.yields then
-            body.trails[1] = body.trails[1] + 1
-        end
+        body.trails[1] = body.trails[1] + 1
     end,
 
     Pause_If__PRE = function (me)
