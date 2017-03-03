@@ -287,11 +287,11 @@ ceu_vector_setmax(&]]..V(ID_int,ctx)..[[, 0, 0);
 {
     /* first.nxt = first.prv = &first; */
     tceu_code_mem_dyn* __ceu_dyn = &]]..V(ID_int)..[[.first;
-    ]]..V(ID_int)..[[.first = (tceu_code_mem_dyn) { __ceu_dyn, __ceu_dyn,
-                                                CEU_CODE_MEM_DYN_STATE_NONE, {} };
+    ]]..V(ID_int)..[[.first = (tceu_code_mem_dyn) { __ceu_dyn, __ceu_dyn, 1, {} };
 };
 ]]..V(ID_int)..[[.up_mem = _ceu_mem;
 ]]..V(ID_int)..[[.up_trl = ]]..ID_int.dcl.trails[1]..[[;
+]]..V(ID_int)..[[.n_traversing = 0;
 ]])
         if dim == '[]' then
             LINE(me, [[
@@ -305,8 +305,8 @@ ceu_pool_init(&]]..V(ID_int)..'.pool, '..V(dim)..[[,
 ]])
         end
         LINE(me, [[
-_ceu_mem->_trails[]]..ID_int.dcl.trails[1]..[[].evt.id         = CEU_INPUT__PROPAGATE_POOL;
-_ceu_mem->_trails[]]..ID_int.dcl.trails[1]..[[].evt.pool_first = &]]..V(ID_int)..[[.first;
+_ceu_mem->_trails[]]..ID_int.dcl.trails[1]..[[].evt.id  = CEU_INPUT__PROPAGATE_POOL;
+_ceu_mem->_trails[]]..ID_int.dcl.trails[1]..[[].evt.pak = &]]..V(ID_int)..[[;
 ]])
     end,
     Pool_Finalize = function (me)
@@ -392,13 +392,7 @@ ceu_dbg_assert(0);
     if (_ceu_mem->pak != NULL) {
         tceu_code_mem_dyn* __ceu_dyn =
             (tceu_code_mem_dyn*)(((byte*)(_ceu_mem)) - sizeof(tceu_code_mem_dyn));
-
-        ceu_dbg_assert(__ceu_dyn->state != CEU_CODE_MEM_DYN_STATE_DELETE);
-        if (__ceu_dyn->state == CEU_CODE_MEM_DYN_STATE_TRAVERSING) {
-           __ceu_dyn->state = CEU_CODE_MEM_DYN_STATE_DELETE;
-        } else {
-            ceu_code_mem_dyn_free(&_ceu_mem->pak->pool, __ceu_dyn);
-        }
+        ceu_code_mem_dyn_remove(&_ceu_mem->pak->pool, __ceu_dyn);
     }
 ]])
         end
@@ -518,7 +512,7 @@ assert(not obj, 'not implemented')
 
         LINE(me, [[
     if (__ceu_new != NULL) {
-        __ceu_new->state = CEU_CODE_MEM_DYN_STATE_NONE;
+        __ceu_new->is_alive = 1;
         __ceu_new->nxt = &]]..V(pool)..[[.first;
         ]]..V(pool)..[[.first.prv->nxt = __ceu_new;
         __ceu_new->prv = ]]..V(pool)..[[.first.prv;
@@ -568,13 +562,7 @@ assert(not obj, 'not implemented')
             if (__ceu_mem->pak != NULL) {
                 tceu_code_mem_dyn* __ceu_dyn =
                     (tceu_code_mem_dyn*)(((byte*)(__ceu_mem)) - sizeof(tceu_code_mem_dyn));
-
-                ceu_dbg_assert(__ceu_dyn->state != CEU_CODE_MEM_DYN_STATE_DELETE);
-                if (__ceu_dyn->state == CEU_CODE_MEM_DYN_STATE_TRAVERSING) {
-                   __ceu_dyn->state = CEU_CODE_MEM_DYN_STATE_DELETE;
-                } else {
-                    ceu_code_mem_dyn_free(&__ceu_mem->pak->pool, __ceu_dyn);
-                }
+                ceu_code_mem_dyn_remove(&__ceu_mem->pak->pool, __ceu_dyn);
             }
         }
 
@@ -599,25 +587,20 @@ ceu_dbg_assert(0);
         local Code = AST.asr(pool.info.dcl,'Pool', 2,'Type', 1,'ID_abs').dcl
 
         local cur = CUR('__cur_'..me.n)
-        local dyn = CUR('__dyn_'..me.n)
 
         LINE(me, [[
+ceu_dbg_assert(]]..V(pool)..[[.n_traversing < 255);
+]]..V(pool)..[[.n_traversing++;
 _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__FINALIZE;
 _ceu_mem->_trails[]]..me.trails[1]..[[].evt.mem   = _ceu_mem;
 _ceu_mem->_trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_fin.id..[[;
 _ceu_mem->_trails[]]..me.trails[1]..[[].clr_range =
     (tceu_evt_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[1]..[[ };
 
-]]..dyn..[[ = NULL;
 if (0) {
     case ]]..me.lbl_fin.id..[[:
-        if (]]..dyn..[[ != NULL) {
-            if (]]..dyn..[[->state==CEU_CODE_MEM_DYN_STATE_DELETE) {
-                ceu_code_mem_dyn_free(&]]..V(pool)..[[.pool, ]]..dyn..[[);
-            } else {
-               ]]..dyn..[[->state = CEU_CODE_MEM_DYN_STATE_NONE;
-            }
-        }
+        ]]..V(pool)..[[.n_traversing--;
+        ceu_code_mem_dyn_gc(&]]..V(pool)..[[);
         return;
 }
 {
@@ -625,55 +608,33 @@ if (0) {
     ]]..cur..[[ = ]]..V(pool)..[[.first.nxt;
     while (]]..cur..[[ != &]]..V(pool)..[[.first)
     {
-]])
-        LINE(me, [[
-        if (]]..cur..[[->state == CEU_CODE_MEM_DYN_STATE_NONE) {
-            ]]..cur..[[->state = CEU_CODE_MEM_DYN_STATE_TRAVERSING;
-            ]]..dyn..[[ = ]]..cur..[[;
-        } else if (]]..cur..[[->state == CEU_CODE_MEM_DYN_STATE_DELETE) {
-            ]]..cur..[[ = ]]..cur..[[->nxt;
-            continue;
-        } else {
-            ]]..dyn..[[ = NULL;
-        }
+        if (]]..cur..[[->is_alive)
+        {
 ]])
         if i.tag ~= 'ID_any' then
             local abs = TYPES.abs_dcl(i.info.tp,'Code')
             SET(me, i, '((tceu_code_mem_'..abs.id_..'*)'..cur..'->mem)', true)
             LINE(me, [[
-        _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].evt.id    = CEU_INPUT__CODE_TERMINATED;
-        _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].evt.mem   = ]]..cur..'->mem'..[[;
-        _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].lbl       = ]]..me.lbl_null.id..[[;
-        if (0) {
-            case ]]..me.lbl_null.id..[[:;
-                ]]..V(i)..[[ = NULL;
-                return;
-        }
+            _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].evt.id    = CEU_INPUT__CODE_TERMINATED;
+            _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].evt.mem   = ]]..cur..'->mem'..[[;
+            _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].lbl       = ]]..me.lbl_null.id..[[;
+            if (0) {
+                case ]]..me.lbl_null.id..[[:;
+                    ]]..V(i)..[[ = NULL;
+                    return;
+            }
 ]])
         end
         CONC(me, body)
         CASE(me, me.lbl_cnt)
         LINE(me, [[
-        {
-            tceu_code_mem_dyn* __ceu_nxt = ]]..cur..[[->nxt;
-
-            ceu_dbg_assert(]]..cur..[[->state != CEU_CODE_MEM_DYN_STATE_NONE);
-            if (]]..dyn..[[ != NULL) {
-                ceu_dbg_assert(]]..cur..[[ == ]]..dyn..[[);
-                if (]]..cur..[[->state==CEU_CODE_MEM_DYN_STATE_DELETE) {
-                    ceu_code_mem_dyn_free(&]]..V(pool)..[[.pool, ]]..cur..[[);
-                } else {
-                   ]]..cur..[[->state = CEU_CODE_MEM_DYN_STATE_NONE;
-                }
-                ]]..dyn..[[ = NULL;
-            }
-
-            ]]..cur..[[ = __ceu_nxt;
         }
+        ]]..cur..[[ = ]]..cur..[[->nxt;
     }
 }
 ]])
         CASE(me, me.lbl_out)
+        CLEAR(me)
     end,
 
     ---------------------------------------------------------------------------

@@ -543,7 +543,6 @@ end
     Loop_Pool__POS = 'Loop__POS',
     Loop_Pool = function (me)
         CUR().mem = CUR().mem..'tceu_code_mem_dyn* __cur_'..me.n..';\n'
-        CUR().mem = CUR().mem..'tceu_code_mem_dyn* __dyn_'..me.n..';\n'
     end,
 
     ---------------------------------------------------------------------------
