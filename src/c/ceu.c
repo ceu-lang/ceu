@@ -46,14 +46,14 @@ void ceu_input_one (tceu_nevt evt_id, void* evt_params);
 
 struct tceu_stk;
 struct tceu_code_mem;
-struct tceu_code_mem_dyn;
+struct tceu_pool_pak;
 struct tceu_evt_occ;
 
 typedef struct tceu_evt {
     tceu_nevt id;
     union {
-        void* mem;                              /* CEU_INPUT__CODE, CEU_EVENT__MIN */
-        struct tceu_code_mem_dyn* pool_first;   /* CEU_INPUT__CODE_POOL */
+        void* mem;                   /* CEU_INPUT__CODE, CEU_EVENT__MIN */
+        struct tceu_pool_pak* pak;   /* CEU_INPUT__CODE_POOL */
     };
 } tceu_evt;
 
@@ -93,7 +93,6 @@ typedef struct tceu_trl {
     };
 } tceu_trl;
 
-struct tceu_pool_pak;
 typedef struct tceu_code_mem {
     struct tceu_pool_pak* pak;
     struct tceu_code_mem* up_mem;
@@ -105,16 +104,10 @@ typedef struct tceu_code_mem {
     tceu_trl   _trails[0];
 } tceu_code_mem;
 
-typedef enum tceu_code_mem_dyn_state {
-    CEU_CODE_MEM_DYN_STATE_NONE,
-    CEU_CODE_MEM_DYN_STATE_TRAVERSING,
-    CEU_CODE_MEM_DYN_STATE_DELETE,
-} tceu_code_mem_dyn_state;
-
 typedef struct tceu_code_mem_dyn {
     struct tceu_code_mem_dyn* prv;
     struct tceu_code_mem_dyn* nxt;
-    u8 state;
+    u8 is_alive: 1;
     tceu_code_mem mem[0];   /* actual tceu_code_mem is in sequence */
 } tceu_code_mem_dyn;
 
@@ -123,6 +116,7 @@ typedef struct tceu_pool_pak {
     tceu_code_mem_dyn first;
     tceu_code_mem*    up_mem;
     tceu_ntrl         up_trl;
+    u8                n_traversing;
 } tceu_pool_pak;
 
 typedef struct tceu_opt_alias {
@@ -369,6 +363,14 @@ void ceu_code_mem_dyn_free (tceu_pool* pool, tceu_code_mem_dyn* cur) {
     }
 }
 
+void ceu_code_mem_dyn_remove (tceu_pool* pool, tceu_code_mem_dyn* cur) {
+    cur->is_alive = 0;
+
+    if (cur->mem[0].pak->n_traversing == 0) {
+        ceu_code_mem_dyn_free(pool, cur);
+    }
+}
+
 /*****************************************************************************/
 
 #ifdef CEU_FEATURES_LUA
@@ -516,21 +518,38 @@ fprintf(stderr, "??? trlK=%d, evt=%d, seq=%d\n", trlK, trl->evt.id, trl->seq);
                 break;
             }
             case CEU_INPUT__CODE_POOL: {
-                tceu_code_mem_dyn* cur = trl->evt.pool_first->nxt;
+                trl->evt.pak->n_traversing++;
+                tceu_code_mem_dyn* cur = trl->evt.pak->first.nxt;
 #if 0
 printf(">>> BCAST[%p]:\n", trl->pool_first);
 printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
 #endif
-                while (cur != trl->evt.pool_first) {
+                while (cur != &trl->evt.pak->first) {
                     tceu_code_mem_dyn* nxt = cur->nxt;
-                    tceu_evt_range _range = { &cur->mem[0],
-                                              0, (tceu_ntrl)((&cur->mem[0])->trails_n-1) };
-                    occ->range = _range;
-                    ceu_bcast(occ, &_stk);
-                    if (!_stk.is_alive) {
-                        goto _CEU_BREAK_;
+                    if (cur->is_alive) {
+                        tceu_evt_range _range = { &cur->mem[0],
+                                                  0, (tceu_ntrl)((&cur->mem[0])->trails_n-1) };
+                        occ->range = _range;
+                        ceu_bcast(occ, &_stk);
+                        if (!_stk.is_alive) {
+                            goto _CEU_BREAK_;
+                        }
                     }
                     cur = nxt;
+                }
+                trl->evt.pak->n_traversing++;
+                if (trl->evt.pak->n_traversing == 0) {
+                    /* TODO-OPT: one element killing another is unlikely:
+                                 set bit in pool when this happens and only
+                                 traverses in this case */
+                    tceu_code_mem_dyn* cur = trl->evt.pak->first.nxt;
+                    while (cur != &trl->evt.pak->first) {
+                        tceu_code_mem_dyn* nxt = cur->nxt;
+                        if (!cur->is_alive) {
+                            ceu_code_mem_dyn_free(&trl->evt.pak->pool, cur);
+                        }
+                        cur = nxt;
+                    }
                 }
                 break;
             }

@@ -8,6 +8,7 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+--[=====[
 Test { [[
 var int x = 1;
 escape *(&&x);
@@ -37,9 +38,31 @@ escape rr;
     run = { ['~>2s']=101 },
 }
 
---[=====[
-do return end -- OK
 --]=====]
+Test { [[
+code/await Ff (event& int e, var int i) -> void do
+    par/or do
+        var int ii = await e until i==ii;
+    with
+        await async do end
+        emit e(2);
+        await FOREVER;
+    end
+end
+
+pool[] Ff fs;
+event int e;
+spawn Ff(&e, 1) in fs;
+spawn Ff(&e, 2) in fs;
+await async do end
+await async do end
+escape 1;
+]],
+    run = 1,
+}
+
+
+do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested
