@@ -518,6 +518,7 @@ fprintf(stderr, "??? trlK=%d, evt=%d, seq=%d\n", trlK, trl->evt.id, trl->seq);
                 break;
             }
             case CEU_INPUT__CODE_POOL: {
+                ceu_dbg_assert(trl->evt.pak->n_traversing < 255);
                 trl->evt.pak->n_traversing++;
                 tceu_code_mem_dyn* cur = trl->evt.pak->first.nxt;
 #if 0
@@ -537,7 +538,7 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                     }
                     cur = nxt;
                 }
-                trl->evt.pak->n_traversing++;
+                trl->evt.pak->n_traversing--;
                 if (trl->evt.pak->n_traversing == 0) {
                     /* TODO-OPT: one element killing another is unlikely:
                                  set bit in pool when this happens and only

@@ -278,6 +278,7 @@ ceu_vector_setmax(&]]..V(ID_int,ctx)..[[, 0, 0);
 };
 ]]..V(ID_int)..[[.up_mem = _ceu_mem;
 ]]..V(ID_int)..[[.up_trl = ]]..ID_int.dcl.trails[1]..[[;
+]]..V(ID_int)..[[.n_traversing = 0;
 ]])
         if dim == '[]' then
             LINE(me, [[
