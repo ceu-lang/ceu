@@ -657,6 +657,8 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                         tceu_evt_range _range = { &cur->mem[0],
                                                   0, (tceu_ntrl)((&cur->mem[0])->trails_n-1) };
                         occ->range = _range;
+                        tceu_stk _stk = { 1, 0, stk,
+                                          {cur->mem[0].up_mem,cur->mem[0].up_trl,cur->mem[0].up_trl} };
                         ceu_bcast(occ, &_stk, 0);
 #ifdef CEU_FEATURES_LONGJMP
                         CEU_LONGJMP_JMP_((&_stk));

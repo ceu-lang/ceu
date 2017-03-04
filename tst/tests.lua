@@ -181,9 +181,9 @@ escape 1;
     run = 1,
 }
 
+--]=====]
 -->> KILL
 
---]=====]
 Test { [[
 event int a;
 kill a;
@@ -39646,6 +39646,71 @@ watching e do
     _ceu_dbg_assert(0);
 end
 
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (var int i) -> void do
+    await async do end
+    if i == 1 then
+        await async do end
+    end
+end
+pool[] Ff fs;
+spawn Ff(0) in fs;
+spawn Ff(1) in fs;
+await async do end;
+await async do end;
+await async do end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+event void e;
+code/await Ff (void) -> void do
+    await async do end
+    emit outer.e;
+end
+par/or do
+    await FOREVER;
+with
+    watching e do
+        pool[] Ff fs;
+        spawn Ff() in fs;
+        spawn Ff() in fs;
+        await FOREVER;
+    end
+    await async do end;
+end
+await async do end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+event void e;
+code/await Gg (event& void e) -> void do
+    await async do end
+    emit e;
+end
+code/await Ff (void) -> void do
+    event void ee;
+    spawn Gg(&ee);
+    await ee;
+    emit outer.e;
+end
+do
+    pool[] Ff fs;
+    spawn Ff() in fs;
+    spawn Ff() in fs;
+    await e;
+end
+await async do end;
 escape 1;
 ]],
     run = 1,
