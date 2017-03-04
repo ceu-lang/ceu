@@ -110,6 +110,10 @@ local function run_inits (par, i, Dcl, stop, dont_await)
     then
         -- spawn Ff();
         -- do ... watching f do ... end end
+        if not is_last_watching then
+            local spw = AST.asr(me,'Par_Or', 1,'Stmts', 1,'Abs_Spawn')
+            run_inits(spw, 1, Dcl, spw, dont_await)
+        end
         local s1, s2 = unpack(me)
         return run_inits(s2, 1, Dcl, stop, dont_await)
 

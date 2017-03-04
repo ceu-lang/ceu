@@ -43872,6 +43872,26 @@ escape 1;
 Test { [[
 code/await Tx (var& float v) -> void do
 end
+
+data Dx with
+    var float v;
+end
+
+var Dx d;
+spawn Tx(&d.v);
+d = val Dx(1);
+
+escape 1;
+]],
+    wrn = true,
+    --ref = 'line 11 : uninitialized variable "d" crossing compound statement (/tmp/tmp.ceu:12)',
+    --tmp = 'line 13 : invalid access to uninitialized variable "d" (declared at /tmp/tmp.ceu:11)',
+    inits = 'line 8 : uninitialized variable "d" : reached read access (/tmp/tmp.ceu:9)',
+}
+
+Test { [[
+code/await Tx (var& float v) -> void do
+end
 var float v;
 spawn Tx(&v);
 v = 1;
@@ -43880,7 +43900,7 @@ escape 1;
     wrn = true,
     --ref = 'line 11 : uninitialized variable "d" crossing compound statement (/tmp/tmp.ceu:12)',
     --tmp = 'line 13 : invalid access to uninitialized variable "d" (declared at /tmp/tmp.ceu:11)',
-    --inits = 'line 8 : uninitialized variable "d" : reached read access (/tmp/tmp.ceu:9)',
+    inits = 'line 3 : uninitialized variable "v" : reached read access (/tmp/tmp.ceu:4)',
 }
 
 Test { [[
