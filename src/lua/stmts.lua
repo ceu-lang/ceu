@@ -454,8 +454,9 @@ STMTS.F = {
         local abs = TYPES.abs_dcl(loc.info.tp, 'Code')
         ASR(abs, me, 'invalid `kill´ : expected `code/await´ abstraction')
         assert(alias == '&?')
-        local tp = AST.get(abs,'Code', 4,'Block', 1,'Stmts',
+        local tp = AST.get(abs,'Code', 3,'Block', 1,'Stmts',
                                        1,'Code_Ret', 1,'', 2,'Type')
+        ASR(tp, me, 'invalid kill : `code/await´ executes forever')
         -- TODO: check e vs tp
     end,
 

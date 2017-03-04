@@ -46950,8 +46950,8 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) -> FOREVER do
-    await FOREVER;
+code/await Ff (void) -> void do
+    await 1s;
 end
 var&? Ff f = spawn Ff();
 par/and do
@@ -46969,6 +46969,21 @@ code/await Ff (void) -> FOREVER do
     await FOREVER;
 end
 var&? Ff f = spawn Ff();
+par/and do
+    await f;
+with
+    kill f;
+end
+
+escape 1;
+]],
+    stmts = 'line 8 : invalid kill : `code/await´ executes forever',
+}
+Test { [[
+code/await Ff (void) -> void do
+    await 1s;
+end
+var&? Ff f = spawn Ff();
 par/or do
     await f;
 with
@@ -46981,8 +46996,8 @@ escape 1;
     run = 1,
 }
 Test { [[
-code/await Ff (void) -> FOREVER do
-    await FOREVER;
+code/await Ff (void) -> void do
+    await 1s;
 end
 event void e;
 watching e do
@@ -47003,8 +47018,8 @@ escape 1;
 }
 
 Test { [[
-code/await Tx (void) -> FOREVER do
-    await FOREVER;
+code/await Tx (void) -> void do
+    await 1s;
 end
 var&? Tx aaa = spawn Tx();
 par/and do
@@ -47019,9 +47034,9 @@ escape 1;
 }
 
 Test { [[
-code/await Tx (void) -> (var int a) -> FOREVER do
+code/await Tx (void) -> (var int a) -> void do
     a = 1;
-    await FOREVER;
+    await 1s;
 end
 var&? Tx a = spawn Tx();
 var int ret = 0;
@@ -47041,9 +47056,9 @@ escape ret;
 }
 
 Test { [[
-code/await Tx (void) -> (var int a) -> FOREVER do
+code/await Tx (void) -> (var int a) -> void do
     a = 1;
-    await FOREVER;
+    await 1s;
 end
 var&? Tx a = spawn Tx();
 
@@ -47066,7 +47081,7 @@ native/pre do
     int V = 0;
 end
 
-code/await Gg (void) -> FOREVER do
+code/await Gg (void) -> void do
     every 100ms do
         {V++;}
     end
