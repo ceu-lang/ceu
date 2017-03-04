@@ -181,597 +181,8 @@ escape 1;
     run = 1,
 }
 
+do return end -- OK
 --]=====]
--->> KILL
-
-Test { [[
-event int a;
-kill a;
-escape 1;
-]],
-    stmts = 'line 2 : invalid `kill´ : unexpected context for event "a"',
-}
-
-Test { [[
-var int a = 0;
-kill a;
-escape 1;
-]],
-    stmts = 'line 2 : invalid `kill´ : expected `code/await´ abstraction',
-}
-
-Test { [[
-code/await Ff (void) -> FOREVER do
-    await FOREVER;
-end
-var&? Ff f = spawn Ff();
-par/and do
-    await f;
-with
-    kill f;
-end
-
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-code/await Ff (void) -> FOREVER do
-    await FOREVER;
-end
-var&? Ff f = spawn Ff();
-par/or do
-    await f;
-with
-    kill f;
-    {ceu_dbg_assert(0);}
-end
-
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-code/await Ff (void) -> FOREVER do
-    await FOREVER;
-end
-event void e;
-watching e do
-    pool[] Ff fs;
-    var&? Ff f = spawn Ff() in fs;
-    par/or do
-        await f;
-        emit e;
-    with
-        kill f;
-        {ceu_dbg_assert(0);}
-    end
-end
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-code/await Tx (void) -> FOREVER do
-    await FOREVER;
-end
-var&? Tx aaa = spawn Tx();
-par/and do
-    kill aaa;
-with
-    await aaa;
-end
-escape 1;
-]],
-    _ana = { acc=3 },
-    run = 1,
-}
-
-Test { [[
-code/await Tx (void) -> (var int a) -> FOREVER do
-    a = 1;
-    await FOREVER;
-end
-var&? Tx a = spawn Tx();
-var int ret = 0;
-par/and do
-    await a;
-    ret = ret + 1;
-with
-    kill a;
-with
-    await a;
-    ret = ret * 2;
-end
-escape ret;
-]],
-    _ana = { acc=3 },
-    run = 2,
-}
-
-Test { [[
-code/await Tx (void) -> (var int a) -> FOREVER do
-    a = 1;
-    await FOREVER;
-end
-var&? Tx a = spawn Tx();
-
-var int ret = 0;
-par/and do
-    watching a do
-        await FOREVER;
-    end
-    ret = 10;
-with
-    kill a;
-end
-escape ret;
-]],
-    run = 10,
-}
-
-Test { [[
-class Tx with
-    var int a=0;
-do
-    this.a = 1;
-    await FOREVER;
-end
-var Tx a;
-var int rrr = 0;
-par/and do
-    var int v = await a;
-    rrr = rrr + v;
-with
-    kill a => 10;
-with
-    var int v = await a;
-    rrr = rrr + v;
-end
-escape rrr;
-]],
-    _ana = { acc=true },
-    run = 20,
-}
-
-Test { [[
-class Tx with
-    var int a=0;
-do
-    this.a = 1;
-    await FOREVER;
-end
-var Tx a;
-var int ret = 10;
-par/and do
-    var int v =
-    watching a do
-        await FOREVER;
-    end;
-    ret = v;
-with
-    kill a => 1;
-end
-escape ret;
-]],
-    run = 1,
-}
-
-Test { [[
-native/pos do
-    int V = 0;
-end
-class Tx with
-do
-    do finalize with
-        _V = 10;
-    end
-    await FOREVER;
-end
-var Tx&&? t = spawn Tx;
-kill *t!;
-escape _V;
-]],
-    run = 10,
-}
-
-Test { [[
-native/pos do
-    int V = 0;
-end
-class Tx with
-do
-    do finalize with
-        _V = 10;
-    end
-    await FOREVER;
-end
-var Tx t;
-kill t;
-escape _V;
-]],
-    run = 10,
-}
-
-Test { [[
-native/pos do
-    int V = 0;
-end
-class Tx with
-do
-    do finalize with
-        _V = 10;
-    end
-    await FOREVER;
-end
-var Tx t;
-par/and do
-    kill t;
-with
-    await t;
-    _V = _V * 2;
-end
-escape _V;
-]],
-    run = 20,
-}
-
-Test { [[
-class Tx with
-    var int v = 10;
-do
-    await FOREVER;
-end
-
-var Tx&&? t = spawn Tx;
-do finalize with
-    kill *t!;
-end
-
-escape 10;
-]],
-    props = 'line 9 : not permitted inside `finalize´',
-}
-
-Test { [[
-class Tx with
-    var int v = 10;
-do
-    await FOREVER;
-end
-
-input void OS_START;
-event Tx&& e;
-
-var int ret = 1;
-
-par/and do
-    await OS_START;
-    var Tx&&? t = spawn Tx;
-    ret = ret * 2;
-    watching *t! do
-        emit e(t!);
-        ret = ret + t!:v;
-        await *t!;
-        ret = -1;
-    end
-    ret = ret * 2;
-with
-    var Tx&& t1 = await e;
-    ret = ret + t1:v;
-    kill *t1;
-    ret = ret + 1;
-end
-
-escape ret;
-]],
-    tmp = 'line 8 : invalid event type',
-    --env = 'line 17 : wrong argument : cannot pass pointers',
-    --run = 25,
-}
-
-Test { [[
-class Tx with
-do
-    await FOREVER;
-end
-var int ret = 0;
-loop i do
-    var Tx t1;
-    par/or do
-        await t1;
-    with
-        kill t1;
-        await FOREVER;
-    end
-
-    var Tx&&? t = spawn Tx;
-    par/or do
-        await *t!;
-    with
-        kill *t!;
-        await FOREVER;
-    end
-    if i == 10 then
-        break;
-    else
-        ret = ret + 1;
-    end
-end
-escape ret;
-]],
-    wrn = true,
-    loop = true,
-    --tight = 'line 6 : tight loop',
-    run = 10,
-}
-
-Test { [[
-class Tx with
-do
-end
-var int ret = 0;
-loop i do
-    var Tx t1;
-    par/or do
-        await t1;
-    with
-        kill t1;
-        await FOREVER;
-    end
-
-    var Tx&&? t = spawn Tx;
-    par/or do
-        if t? then
-            await *t!;
-        end
-    with
-        kill *t!;
-        await FOREVER;
-    end
-    if i == 10 then
-        break;
-    else
-        ret = ret + 1;
-    end
-end
-escape ret;
-]],
-    wrn = true,
-    loop = true,
-    --tight = 'line 6 : tight loop',
-    run = 10,
-}
-
-Test { [[
-class Tx with
-do
-    await FOREVER;
-end
-
-pool[] Tx ts;
-
-loop t1 in ts do
-    loop t2 in ts do
-        kill *t1;
-        kill *t2;
-    end
-end
-
-escape 1;
-]],
-    fin = 'line 10 : unsafe access to pointer "t1" across `loop´ (/tmp/tmp.ceu : 9)',
-    --fin = 'line 11 : unsafe access to pointer "t2" across `kill´',
-}
-
-Test { [[
-class Tx with
-do
-    await FOREVER;
-end
-
-pool[] Tx ts;
-
-loop t1 in ts do
-    loop t2 in ts do
-        watching *t2 do
-            kill *t1;
-            kill *t2;
-        end
-    end
-end
-
-escape 1;
-]],
-    fin = ' line 11 : unsafe access to pointer "t1" across `loop´ (/tmp/tmp.ceu : 9)',
-}
-
-Test { [[
-class Tx with
-do
-    await FOREVER;
-end
-
-pool[] Tx ts;
-
-loop t1 in ts do
-    watching *t1 do
-        loop t2 in ts do
-            watching *t2 do
-                kill *t1;
-                kill *t2;
-            end
-        end
-    end
-end
-
-escape 1;
-]],
-    props = 'line 8 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
-    --run = 1,
-}
-
-Test { [[
-input void OS_START;
-event void a;
-class Tx with do
-    await FOREVER;
-end
-do
-    var Tx t;
-    par/or do
-        await t;
-native _assert;
-        _assert(0);
-    with
-        await OS_START;
-    end
-    kill t;
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-
-class Tx with
-do
-    await FOREVER;
-end
-
-var Tx t;
-par/or do
-    await t;
-with
-    kill t;
-native _assert;
-    _assert(0);
-end
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class Tx with
-    event void e;
-do
-    await e;
-end
-
-pool[] Tx ts;
-
-var int ret = 1;
-
-spawn Tx in ts;
-spawn Tx in ts;
-async do end;
-
-loop t1 in ts do
-    loop t2 in ts do
-        ret = ret + 1;
-        kill *t2;
-    end
-end
-
-escape ret;
-]],
-    props = 'line 15 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
-    --run = 3,
-}
-Test { [[
-class Tx with
-    event void e;
-do
-    await e;
-end
-
-pool[] Tx ts;
-
-var int ret = 1;
-
-spawn Tx in ts;
-spawn Tx in ts;
-async do end;
-
-loop t1 in ts do
-    watching *t1 do
-        loop t2 in ts do
-            watching *t2 do
-                ret = ret + 1;
-                kill *t1;
-            end
-        end
-    end
-end
-
-escape ret;
-]],
-    props = 'line 15 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
-    --run = 3,
-}
-
--- BUG: loop between declaration and watching
-Test { [[
-class Tx with
-    event void e;
-do
-    await FOREVER;
-end
-
-pool[] Tx ts;
-
-var Tx*? t = spawn Tx in ts;
-
-loop do
-    watching *t! do
-        kill *t!;
-    end
-    await 1s;
-    if false then
-        break;
-    end
-end
-
-escape 1;
-]],
-    run = { ['~>1s']=10 },
-}
-
-Test { [[
-native/pre do
-    int V = 0;
-end
-
-code/await Gg (void) -> FOREVER do
-    every 100ms do
-        {V++;}
-    end
-end
-
-code/await Ff (void) -> (pool[1] Gg gs) -> FOREVER do
-    var&? Gg g1 = spawn Gg() in gs;
-    kill g1;
-    var&? Gg g2 = spawn Gg() in gs;
-    await FOREVER;
-end
-
-spawn Ff();
-await 1s;
-escape {V};
-]],
-    wrn = true,
-    run = {['~>1s']=10},
-}
-
---<< KILL
-
---do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -31739,6 +31150,7 @@ interface UI with
 end
 escape 1;
 ]],
+    parser = 'line 4 : after `interface´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `?´ or `(´ or `is´ or binary operator or `;´',
     run = 1,
 }
 
@@ -33886,15 +33298,15 @@ end
 }
 
 Test { [[
-class Tx with
+code/await Tx (void) -> int
 do
     code/tight Fx (var int a)->int;
-    code/tight Fx (var int x)->int do
-        escape x;
+    code/tight Fx (var int a)->int do
+        escape a;
     end
     escape call Fx(10);
 end
-var int x = do Tx;
+var int x = await Tx();
 escape x;
 ]],
     run = {['~>1s']=10},
@@ -33999,64 +33411,6 @@ else
 end
 ]],
     run = 2,
-}
-
-Test { [[
-class Tx with
-    var int v = 10;
-do
-end
-
-var Tx t;
-
-code/tight Fx (void)->Tx&& do
-    escape &&t;
-end
-
-var Tx&& p = call Fx();
-
-escape p:v;
-]],
-    run = 10,
-}
-Test { [[
-class Tx with
-    var int v = 10;
-do
-end
-
-var Tx t;
-
-code/tight Fx (void)->Tx&& do
-    var Tx&& p = &&t;
-    escape p;
-end
-
-var Tx&& p = call Fx();
-
-escape p:v;
-]],
-    run = 10,
-}
-Test { [[
-class Tx with
-    var int v = 10;
-do
-end
-
-var Tx t;
-
-code/tight Fx (void)->Tx&& do
-    var Tx&& p = &&t;
-    escape p;
-end
-
-var Tx&& p = call Fx();
-await 1s;
-
-escape p:v;
-]],
-    fin = 'line 16 : unsafe access to pointer "p" across `await´ (/tmp/tmp.ceu : 14)',
 }
 
 Test { [[
@@ -43012,15 +42366,16 @@ Test { [[
 data Tx with
     var int x;
 end
-interface Tx with
+code/await Tx (void) -> void do
 end
 escape 1;
 ]],
     wrn = true,
-    tmp = 'line 4 : top-level identifier "Tx" already taken',
+    --tmp = 'line 4 : top-level identifier "Tx" already taken',
+    dcls = 'line 4 : invalid `code´ declaration',
 }
 Test { [[
-interface Tx with
+code/await Tx (void) -> void do
 end
 data Tx with
     var int x;
@@ -43043,26 +42398,28 @@ escape 1;
     --dcls = 'line 4 : identifier "Tx" is already declared (/tmp/tmp.ceu : line 1)',
 }
 Test { [[
-class Tx with
+code/await Tx (void) -> void
 do
 end
-interface Tx with
+code/tight Tx (void) -> void
+do
 end
 escape 1;
 ]],
-    tmp = 'top-level identifier "Tx" already taken',
+    --tmp = 'top-level identifier "Tx" already taken',
+    dcls = 'line 4 : invalid `code´ declaration : body for "Tx" already exists',
 }
 
 Test { [[
 data Dx with
     var int x;
 end
-class C with
-    var Dx d = val Dx(200);
-do
+code/await Cc (void) -> (var Dx d) -> FOREVER do
+    d = val Dx(200);
+    await FOREVER;
 end
-var C c;
-escape c.d.x;
+var&? Cc c = spawn Cc();
+escape c!.d.x;
 ]],
     run = 200,
 }
@@ -43916,24 +43273,47 @@ data Leaf.Tween with
     var& Ball ball;
 end
 
-class LeafHandler with
-    var& Leaf leaf;
-do
-    var& Ball ball = &(leaf as Tween).ball;
+code/tight LeafHandler (var& Leaf leaf) -> int do
+    var& Ball ball = &(leaf as Leaf.Tween).ball;
     escape ball.x;
 end
 
 var Ball ball = val Ball(10);
-var Leaf leaf = val Tween(&ball);
+var Leaf.Tween leaf = val Leaf.Tween(&ball);
 
-var int x = do LeafHandler with
-                this.leaf = &leaf;
-            end;
+var int x = call LeafHandler(&leaf);
 
 escape x;
 ]],
     wrn = true,
     run = 10,
+}
+
+Test { [[
+data Ball with
+    var int x;
+end
+
+data Leaf;
+data Leaf.Nothing;
+data Leaf.Tween with
+    var& Ball ball;
+end
+
+code/tight LeafHandler (var& Leaf leaf) -> int do
+    var& Ball ball = &(leaf as Leaf.Tween).ball;
+    escape ball.x;
+end
+
+var Ball ball = val Ball(10);
+var Leaf.Nothing leaf = val Leaf.Nothing();
+
+var int x = call LeafHandler(&leaf);
+
+escape x;
+]],
+    wrn = true,
+    run = '12] runtime error: invalid cast `as´',
 }
 
 Test { [[
@@ -44459,21 +43839,18 @@ Test { [[
 data Dx with
     var int x;
 end
-class C with
-    var Dx d = val Dx(200);
-do
+code/await Cc (void) -> (var Dx d) -> FOREVER do
+    d = val Dx(200);
+    await FOREVER;
 end
-var C c;
-escape c.d.x;
+var&? Cc c = spawn Cc();
+escape c!.d.x;
 ]],
     run = 200,
 }
 
 Test { [[
-class Tx with
-    var& float v;
-do
-    await FOREVER;
+code/await Tx (var& float v) -> void do
 end
 
 data Dx with
@@ -44481,59 +43858,29 @@ data Dx with
 end
 
 var Dx d;
-var Tx t with
-    this.v = &d.v;   // 13
-end;
+await Tx(&d.v);
 d = val Dx(1);
 
-escape t.v;
+escape 1;
 ]],
+    wrn = true,
     --ref = 'line 11 : uninitialized variable "d" crossing compound statement (/tmp/tmp.ceu:12)',
-    tmp = 'line 13 : invalid access to uninitialized variable "d" (declared at /tmp/tmp.ceu:11)',
+    --tmp = 'line 13 : invalid access to uninitialized variable "d" (declared at /tmp/tmp.ceu:11)',
+    inits = 'line 8 : uninitialized variable "d" : reached read access (/tmp/tmp.ceu:9)',
 }
 
 Test { [[
-class Tx with
-    var& float v;
-do
-    await FOREVER;
+code/await Tx (var& float v) -> void do
 end
-
-data Dx with
-    var float v;
-end
-
-var Dx d;
-var Tx _ with
-    this.v = &d.v;   // 13
-end;
-
+var float v;
+spawn Tx(&v);
+v = 1;
 escape 1;
 ]],
+    wrn = true,
     --ref = 'line 11 : uninitialized variable "d" crossing compound statement (/tmp/tmp.ceu:12)',
-    tmp = 'line 13 : invalid access to uninitialized variable "d" (declared at /tmp/tmp.ceu:11)',
-}
-
-Test { [[
-class Tx with
-    var& float v;
-do
-    await FOREVER;
-end
-
-data Dx with
-    var float v;
-end
-
-var Tx _ with
-    var Dx d = val Dx(1);
-    this.v = &d.v;
-end;
-
-escape 1;
-]],
-    --ref = 'line 13 : attribution to reference with greater scope',
-    tmp = 'line 13 : invalid attribution : variable "d" has narrower scope than its destination',
+    --tmp = 'line 13 : invalid access to uninitialized variable "d" (declared at /tmp/tmp.ceu:11)',
+    --inits = 'line 8 : uninitialized variable "d" : reached read access (/tmp/tmp.ceu:9)',
 }
 
 Test { [[
@@ -44543,15 +43890,16 @@ data Vector3f with
     var float z;
 end
 
-class SurfaceBackground with
-    var& _WorldObjs__SurfaceBackground me;
-do
-    code/tight Set_pos (var _Vector3f&& p)->void do
-        this.me.p = Vector3f(p:x, p:y, p:z);
+native _t,_u;
+var& _t me;
+    code/tight Set_pos (var _u&& p)->void do
+        outer.me.p = val Vector3f(p:x, p:y, p:z);
     end
-end
+escape 1;
 ]],
-    adt = 'line 9 : invalid attribution : destination is not a "data" type',
+    wrn = true,
+    --adt = 'line 9 : invalid attribution : destination is not a "data" type',
+    stmts = 'line 10 : invalid constructor : types mismatch : "_t" <= "Vector3f"',
 }
 
 Test { [[
@@ -47562,6 +46910,164 @@ escape v;
     run = 4,
     _opts = { ceu_features_thread='true' },
 }
+
+-->> KILL
+
+Test { [[
+event int a;
+kill a;
+escape 1;
+]],
+    stmts = 'line 2 : invalid `kill´ : unexpected context for event "a"',
+}
+
+Test { [[
+var int a = 0;
+kill a;
+escape 1;
+]],
+    stmts = 'line 2 : invalid `kill´ : expected `code/await´ abstraction',
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+var&? Ff f = spawn Ff();
+par/and do
+    await f;
+with
+    kill f;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+var&? Ff f = spawn Ff();
+par/or do
+    await f;
+with
+    kill f;
+    {ceu_dbg_assert(0);}
+end
+
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+event void e;
+watching e do
+    pool[] Ff fs;
+    var&? Ff f = spawn Ff() in fs;
+    par/or do
+        await f;
+        emit e;
+    with
+        kill f;
+        {ceu_dbg_assert(0);}
+    end
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Tx (void) -> FOREVER do
+    await FOREVER;
+end
+var&? Tx aaa = spawn Tx();
+par/and do
+    kill aaa;
+with
+    await aaa;
+end
+escape 1;
+]],
+    _ana = { acc=3 },
+    run = 1,
+}
+
+Test { [[
+code/await Tx (void) -> (var int a) -> FOREVER do
+    a = 1;
+    await FOREVER;
+end
+var&? Tx a = spawn Tx();
+var int ret = 0;
+par/and do
+    await a;
+    ret = ret + 1;
+with
+    kill a;
+with
+    await a;
+    ret = ret * 2;
+end
+escape ret;
+]],
+    _ana = { acc=3 },
+    run = 2,
+}
+
+Test { [[
+code/await Tx (void) -> (var int a) -> FOREVER do
+    a = 1;
+    await FOREVER;
+end
+var&? Tx a = spawn Tx();
+
+var int ret = 0;
+par/and do
+    watching a do
+        await FOREVER;
+    end
+    ret = 10;
+with
+    kill a;
+end
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+native/pre do
+    int V = 0;
+end
+
+code/await Gg (void) -> FOREVER do
+    every 100ms do
+        {V++;}
+    end
+end
+
+code/await Ff (void) -> (pool[1] Gg gs) -> FOREVER do
+    var&? Gg g1 = spawn Gg() in gs;
+    kill g1;
+    var&? Gg g2 = spawn Gg() in gs;
+    await FOREVER;
+end
+
+spawn Ff();
+await 1s;
+escape {V};
+]],
+    wrn = true,
+    run = {['~>1s']=10},
+}
+
+--<< KILL
 
 -->> CODE / FINALIZE / EMIT / SPAWN / THREADS
 

@@ -591,6 +591,7 @@ DCLS.F = {
         end
 
         if old then
+            ASR(old.tag == 'Code', me, 'invalid `code´ declaration')
             local mods2,_,body2 = unpack(old)
             if me.is_impl then
                 ASR(not (old.is_impl or old.__impl), me,
