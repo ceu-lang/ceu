@@ -1056,6 +1056,17 @@ _ceu_mem->_trails[]]..(to.dcl.trails[1])..[[].evt.mem = ]]..V(fr)..[[;
             LINE(me, [[
 ]]..V(to, {is_bind=true})..' = '..cast..V(fr)..[[;
 ]])
+
+            if fr.tag == 'Exp_1&' then
+                local _, call = unpack(fr)
+                if (call.tag=='Exp_call' or call.tag=='Abs_Call') then
+                    if to.info.dcl[1] == '&' then
+                        LINE(me, [[
+ceu_callback_assert_msg(]]..V(to,{is_bind=true})..[[!=NULL, "call failed");
+]])
+                    end
+                end
+            end
         end
     end,
 

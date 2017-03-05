@@ -19911,6 +19911,58 @@ escape _V;
     run = 14,
 }
 
+Test { [[
+native _V, _void, _alloc, _hold;
+native/nohold _dealloc, _unhold;
+native/pre do
+    int V = 2;
+    void* alloc () {
+        V++;
+        return &V;
+    }
+    void dealloc (void* x) {
+        V*=2;
+    }
+    void hold (void* x) {
+        V*=2;
+    }
+    void unhold (void* x) {
+        V++;
+    }
+end
+
+do
+    var& _void tcp = &_alloc()
+            finalize (tcp) with
+                _dealloc(&&tcp);
+            end;
+    do
+        _hold(&&tcp);
+    finalize (tcp) with
+        _unhold(&&tcp);
+    end
+end
+
+escape _V;
+]],
+    run = 14,
+}
+Test { [[
+native _void, _alloc;
+native/pre do
+    void* alloc () {
+        return NULL;
+    }
+end
+
+var& _void tcp = &_alloc()
+        finalize (tcp) with
+        end;
+escape 0;
+]],
+    run = '8] runtime error: call failed',
+}
+
 --<<< FINALLY / FINALIZE
 
 Test { [[
@@ -30883,7 +30935,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    scopes = 'line 6 : invalid binding : expected option alias `&?´ as destination : got "_SDL_Texture"',
+    cc = '1: error: unknown type name ‘SDL_Texture’',
+    --scopes = 'line 6 : invalid binding : expected option alias `&?´ as destination : got "_SDL_Texture"',
 }
 
 Test { [[
@@ -32164,7 +32217,8 @@ var& _SDL_Window win =
     &_SDL_CreateWindow("UI - Texture", 500, 1300, 800, 480, _SDL_WINDOW_SHOWN);
 escape 0;
 ]],
-    scopes = 'line 5 : invalid binding : expected option alias `&?´ as destination : got "_SDL_Window"',
+    scopes = 'line 5 : invalid binding : expected `finalize´',
+    --scopes = 'line 5 : invalid binding : expected option alias `&?´ as destination : got "_SDL_Window"',
     --fin = 'line 6 : must assign to a option reference (declared with `&?´)',
 }
 Test { [[
@@ -32178,7 +32232,8 @@ var& _SDL_Window win =
         end
 escape 0;
 ]],
-    parser = 'line 5 : after `)´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `..´ or `;´',
+    cc = '1: error: unknown type name ‘SDL_Window’',
+    --parser = 'line 5 : after `)´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `..´ or `;´',
     --scopes = 'line 4 : invalid binding : expected option alias `&?´ as destination : got "_SDL_Window"',
     --fin = 'line 6 : must assign to a option reference (declared with `&?´)',
 }

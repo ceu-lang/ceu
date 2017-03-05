@@ -770,11 +770,11 @@ error'TODO: luacov never executes this?'
 -------------------------------------------------------------------------------
 
     _Var_set_fin__PRE = function (me)
-        local Type, __ID_int = unpack(me)
+        local alias, Type, __ID_int = unpack(me)
         me.tag = '_Var_set_fin_X'
         return node('Stmts', me.ln,
                 node('Var', me.ln,
-                    '&?',
+                    alias,
                     Type,
                     __ID_int),
                 me)

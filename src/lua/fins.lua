@@ -62,7 +62,7 @@ F = {
     Pool_Init__PRE = 'Vec_Init__PRE',
 
     _Var_set_fin_X__PRE = function (me)
-        local Type, __ID_int, Exp_call = unpack(me)
+        local alias, Type, __ID_int, Exp_call = unpack(me)
 
         --  var & Type __ID_int = & Exp_call finalize with ... end
         -->>>
@@ -79,7 +79,7 @@ F = {
                         Exp_call),
                     node('Loc', Type.ln,
                         node('ID_int', Type.ln, __ID_int))),
-                unpack(me,4))
+                unpack(me,5))
     end,
 
     _Async_Isr__PRE = function (me)

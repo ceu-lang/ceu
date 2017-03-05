@@ -122,7 +122,7 @@ F = {
 
         local _, call = unpack(fr)
         if (call.tag=='Exp_call' or call.tag=='Abs_Call') then
-            ASR(to.info.dcl[1] == '&?', me,
+            ASR(to.info.dcl[1], me,
                 'invalid binding : expected option alias `&?´ as destination : got "'
                 ..TYPES.tostring(to.info.tp)..'"')
 

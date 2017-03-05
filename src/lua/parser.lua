@@ -422,7 +422,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                     K'end'
     , _Finalize = K'do' * OPT(V'__fin_stmt') * V'__finalize'
 
-    , _Var_set_fin = K'var' * KK'&?' * V'Type' * V'__ID_int'
+    , _Var_set_fin = K'var' * V'__ALS' * V'Type' * V'__ID_int'
                    * (KK'='-'==') * KK'&'
                     * (V'__Nat_Call' + V'Abs_Call')
                      * V'__finalize'
