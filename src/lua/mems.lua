@@ -316,13 +316,9 @@ static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
     ---------------------------------------------------------------------------
 
     Block__PRE = function (me)
-        local code = AST.par(me, 'Code')
-        if code and (not code.is_impl) then
-            return
-        end
-
         local mem = {}
 
+        local code = AST.par(me, 'Code')
         local toplevel = ( AST.get(me,1,'Data') or
                            code and AST.depth(me)<=AST.depth(code.__adjs_2) )
 
