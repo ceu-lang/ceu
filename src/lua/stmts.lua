@@ -155,7 +155,7 @@ STMTS.F = {
 
         -- NO: f1 = &f              // f may die
         if to.info.tag=='Var' and TYPES.abs_dcl(to.info.tp,'Code') then
-            ASR(alias == '&?', me, 'invalid binding : expected `spawn´')
+            --ASR(alias == '&?', me, 'invalid binding : expected `spawn´')
         end
 
         -- tp
@@ -453,7 +453,7 @@ STMTS.F = {
         -- tp
         local abs = TYPES.abs_dcl(loc.info.tp, 'Code')
         ASR(abs, me, 'invalid `kill´ : expected `code/await´ abstraction')
-        assert(alias == '&?')
+        ASR(alias=='&?', me, 'invalid `kill´ : expected `&?´ alias')
         local tp = AST.get(abs,'Code', 3,'Block', 1,'Stmts',
                                        1,'Code_Ret', 1,'', 2,'Type')
         --ASR(tp, me, 'invalid kill : `code/await´ executes forever')

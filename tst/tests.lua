@@ -35156,7 +35156,7 @@ escape 0;
 
 --<< CODE / ALIAS
 
--->> CODE / OPTION
+-->> CODE / AWAIT / OPTION
 
 Test { [[
 code/tight Fx (var int? xxx) -> int do
@@ -35210,7 +35210,70 @@ escape call Ff(_);
     run = 1,
 }
 
---<< CODE / OPTION
+Test { [[
+code/await Ff (void) -> void do
+end
+var& Ff f = spawn Ff();
+escape 0;
+]],
+    dcls = 'line 3 : invalid declaration : `code/await´ must execute forever',
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+var& Ff f = spawn Ff();
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> void do
+end
+var&? Ff f1 = spawn Ff();
+var& Ff f2 = &f1!;
+escape 0;
+]],
+    dcls = 'line 4 : invalid declaration : `code/await´ must execute forever',
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+var&? Ff f1 = spawn Ff();
+var& Ff f2 = &f1!;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+pool[1] Ff fs;
+var& Ff f1 = spawn Ff() in fs;
+var& Ff f2 = spawn Ff() in fs;
+escape 1;
+]],
+    run = '6] runtime error: out of memory',
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+var& Ff f = spawn Ff();
+kill f;
+escape 0;
+]],
+    stmts = 'line 5 : invalid `kill´ : expected `&?´ alias',
+}
+
+--<< CODE / AWAIT / OPTION
 
 -->> CODE / AWAIT / FOREVER
 
@@ -39405,7 +39468,23 @@ Test { [[
 code/await Tx (var& Tx txs) -> void;
 escape 0;
 ]],
-    dcls = 'line 1 : invalid declaration : unexpected context for `code´ "Tx"',
+    dcls = 'line 1 : invalid declaration : `code/await´ must execute forever',
+}
+
+Test { [[
+code/await Tx (var&? Tx txs) -> FOREVER;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+code/await Tx (var& Tx txs) -> FOREVER;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
 }
 
 Test { [[
@@ -39715,7 +39794,28 @@ end
 
 escape n+1;
 ]],
-    dcls = 'line 9 : invalid declaration : unexpected context for `code´ "Ff"',
+    dcls = 'line 9 : invalid declaration : `code/await´ must execute forever',
+    --dcls = 'line 9 : invalid declaration : unexpected context for `code´ "Ff"',
+    --stmts = 'line 10 : invalid binding : argument #1 : expected alias `&´ declaration',
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> FOREVER do
+    var int xx = 10;
+    x = &xx;
+    await FOREVER;
+end
+
+pool[1] Ff fs;
+
+var& Ff n;
+loop n in fs do
+end
+
+escape 1;
+]],
+    run = 1,
+    --dcls = 'line 9 : invalid declaration : unexpected context for `code´ "Ff"',
     --stmts = 'line 10 : invalid binding : argument #1 : expected alias `&´ declaration',
 }
 

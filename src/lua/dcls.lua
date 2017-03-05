@@ -278,18 +278,22 @@ DCLS.F = {
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
 
-        if alias == '&?' then
+        if alias then
             local ID = unpack(Type)
             if ID.tag=='ID_abs' and ID.dcl.tag=='Code' and ID.dcl[1].await then
+                if alias == '&' then
+                    local tp = AST.get(ID.dcl,'Code', 3,'Block', 1,'Stmts',
+                                                      1,'Code_Ret', 1,'', 2,'Type')
+                    ASR(not tp, me, 'invalid declaration : `code/await´ must execute forever')
+                end
                 me.__dcls_code_alias = true
                 -- ok
-            elseif TYPES.is_nat(Type) then
-                -- ok
             end
-
-            me.is_read_only = true
-            ASR(not TYPES.check(Type,'?'), me,
-                'invalid declaration : option type : not implemented')
+            if alias == '&?' then
+                me.is_read_only = true
+                ASR(not TYPES.check(Type,'?'), me,
+                    'invalid declaration : option type : not implemented')
+            end
         else
             DCLS.F.__no_abs(Type, 'Code')
         end

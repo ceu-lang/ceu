@@ -83,9 +83,9 @@ case ]]..T.lbl..[[:;
     end
 end
 
-function SET (me, to, fr, fr_ok, fr_ctx)
+function SET (me, to, fr, fr_ok, fr_ctx, to_ctx)
     local fr_val = fr
-    local to_val = V(to)
+    local to_val = V(to,to_ctx)
 
     if not fr_ok then
         -- var Ee.Xx ex = ...;
@@ -238,7 +238,7 @@ if (]]..V(c)..[[) {
 
         if me.__dcls_code_alias then
             LINE(me, [[
-]]..V(me)..[[ = NULL;
+]]..V(me,{is_bind=true})..[[ = NULL;
 ]])
             HALT(me, {
                 { ['evt.id']  = 'CEU_INPUT__CODE_TERMINATED' },
@@ -248,7 +248,7 @@ if (]]..V(c)..[[) {
                 exec = code,
             })
             LINE(me, [[
-]]..V(me)..[[ = NULL;
+]]..V(me,{is_bind=true})..[[ = NULL;
 ]])
             HALT(me)
         end
@@ -446,7 +446,7 @@ ceu_dbg_assert(0);
         if set then
             local _, to = unpack(set)
             LINE(me, [[
-]]..V(to)..' = &'..CUR('__mem_'..me.n)..[[;
+]]..V(to,{is_bind=true})..' = &'..CUR('__mem_'..me.n)..[[;
 _ceu_mem->_trails[]]..(to.dcl.trails[1])..[[].evt.mem =  &]]..CUR('__mem_'..me.n)..[[;
 ]])
         end
@@ -498,13 +498,13 @@ assert(not obj, 'not implemented')
         end
 
         local set = AST.par(me,'Set_Abs_Spawn')
+        local to = set and set[2]
         if set then
-            local _, to = unpack(set)
             LINE(me, [[
     if (__ceu_new != NULL) {
 ]])
             LINE(me, [[
-        ]]..V(to)..' = ((tceu_code_mem_'..ID_abs.dcl.id_..[[*)&__ceu_new->mem[0]);
+        ]]..V(to,{is_bind=true})..' = ((tceu_code_mem_'..ID_abs.dcl.id_..[[*)&__ceu_new->mem[0]);
         _ceu_mem->_trails[]]..(to.dcl.trails[1])..[[].evt.mem = &__ceu_new->mem[0];
     }
 ]])
@@ -520,6 +520,14 @@ assert(not obj, 'not implemented')
 
         tceu_code_mem* __ceu_new_mem = &__ceu_new->mem[0];
         ]]..CODES.F.__abs(me, '__ceu_new_mem', '(&'..V(pool)..')')..[[
+    } else {
+]])
+        if set and to.dcl[1]=='&' then
+            LINE(me, [[
+        ceu_callback_assert_msg(0, "out of memory");
+]])
+        end
+        LINE(me, [[
     }
 }
 ]])
@@ -613,14 +621,14 @@ if (0) {
 ]])
         if i.tag ~= 'ID_any' then
             local abs = TYPES.abs_dcl(i.info.tp,'Code')
-            SET(me, i, '((tceu_code_mem_'..abs.id_..'*)'..cur..'->mem)', true)
+            SET(me, i, '((tceu_code_mem_'..abs.id_..'*)'..cur..'->mem)', true, nil, {is_bind=true})
             LINE(me, [[
             _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].evt.id    = CEU_INPUT__CODE_TERMINATED;
             _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].evt.mem   = ]]..cur..'->mem'..[[;
             _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].lbl       = ]]..me.lbl_null.id..[[;
             if (0) {
                 case ]]..me.lbl_null.id..[[:;
-                    ]]..V(i)..[[ = NULL;
+                    ]]..V(i,{is_bind=true})..[[ = NULL;
                     return;
             }
 ]])
@@ -1033,7 +1041,7 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
 
         if to.info.dcl.__dcls_code_alias then
             LINE(me, [[
-]]..V(to)..' = '..V(fr)..[[;
+]]..V(to,{is_bind=true})..' = '..V(fr)..[[;
 _ceu_mem->_trails[]]..(to.dcl.trails[1])..[[].evt.mem = ]]..V(fr)..[[;
 ]])
         else
