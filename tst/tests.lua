@@ -181,86 +181,6 @@ escape 1;
     run = 1,
 }
 
-Test { [[
-data Dd with
-    var int x;
-    var&? Dd d;
-end
-var Dd d = val Dd(10,_);
-escape d.x;
-]],
-    run = 10,
-}
-
-Test { [[
-data Dd with
-    var int x;
-    var&? Dd d;
-end
-var Dd d1 = val Dd(10,_);
-var Dd d2 = val Dd(20,&d1);
-escape d2.x + d2.d!.x;
-]],
-    run = 30,
-}
-
-Test { [[
-data Dd with
-    var int x = 1;
-    var&? Dd d;
-end
-code/tight/recursive Dd_D(var& Dd d, var& Dd ret) -> void do
-    if d.d? then
-        call/recursive Dd_D(&d.d!, &ret);
-    end
-    ret.x = ret.x + d.x;
-end
-var Dd d1 = val Dd(10,_);
-var Dd d2 = val Dd(20,&d1);
-var Dd d = _;
-call/recursive Dd_D(&d2,&d);
-escape d.x;
-]],
-    run = 31,
-}
-
-Test { [[
-data Dd with
-    var int x = 1;
-    var&? Dd d;
-end
-code/tight/recursive Dd_D_(var& Dd d, var& Dd ret) -> void do
-    if d.d? then
-        call/recursive Dd_D_(&d.d!, &ret);
-    end
-    ret.x = ret.x + d.x;
-end
-code/tight/recursive Dd_D(var& Dd d, var& Dd ret) -> void do
-    ret = val Dd(0,_);
-    call/recursive Dd_D_(&d, &ret);
-end
-var Dd d1 = val Dd(10,_);
-var Dd d2 = val Dd(20,&d1);
-var Dd d = _;
-call/recursive Dd_D(&d2,&d);
-escape d.x;
-]],
-    run = 30,
-}
-
-Test { [[
-code/tight/recursive Gg (void) -> void do
-    call/recursive Gg();
-end
-code/await Ff (void) -> void do
-    call/recursive Gg();
-end
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
 do return end -- OK
 --]=====]
 
@@ -34092,6 +34012,19 @@ escape (call/recursive Fat(10) == 3628800) as int;
     run = 1,
 }
 
+Test { [[
+code/tight/recursive Gg (void) -> void do
+    call/recursive Gg();
+end
+code/await Ff (void) -> void do
+    call/recursive Gg();
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
 --<<< RECURSIVE
 
 -->> VECTOR / CODE
@@ -45835,6 +45768,77 @@ escape call Ff();
 }
 
 --<< CODE / RETURN / DATA
+
+-->> DATA / RECURSIVE / OPTION ALIAS
+
+Test { [[
+data Dd with
+    var int x;
+    var&? Dd d;
+end
+var Dd d = val Dd(10,_);
+escape d.x;
+]],
+    run = 10,
+}
+
+Test { [[
+data Dd with
+    var int x;
+    var&? Dd d;
+end
+var Dd d1 = val Dd(10,_);
+var Dd d2 = val Dd(20,&d1);
+escape d2.x + d2.d!.x;
+]],
+    run = 30,
+}
+
+Test { [[
+data Dd with
+    var int x = 1;
+    var&? Dd d;
+end
+code/tight/recursive Dd_D(var& Dd d, var& Dd ret) -> void do
+    if d.d? then
+        call/recursive Dd_D(&d.d!, &ret);
+    end
+    ret.x = ret.x + d.x;
+end
+var Dd d1 = val Dd(10,_);
+var Dd d2 = val Dd(20,&d1);
+var Dd d = _;
+call/recursive Dd_D(&d2,&d);
+escape d.x;
+]],
+    run = 31,
+}
+
+Test { [[
+data Dd with
+    var int x = 1;
+    var&? Dd d;
+end
+code/tight/recursive Dd_D_(var& Dd d, var& Dd ret) -> void do
+    if d.d? then
+        call/recursive Dd_D_(&d.d!, &ret);
+    end
+    ret.x = ret.x + d.x;
+end
+code/tight/recursive Dd_D(var& Dd d, var& Dd ret) -> void do
+    ret = val Dd(0,_);
+    call/recursive Dd_D_(&d, &ret);
+end
+var Dd d1 = val Dd(10,_);
+var Dd d2 = val Dd(20,&d1);
+var Dd d = _;
+call/recursive Dd_D(&d2,&d);
+escape d.x;
+]],
+    run = 30,
+}
+
+--<< DATA / RECURSIVE / OPTION ALIAS
 
 --<<< DATA
 

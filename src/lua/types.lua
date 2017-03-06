@@ -218,9 +218,11 @@ function TYPES.ID_plain (tp)
 end
 
 function TYPES.abs_dcl (tp,kind)
-    assert(kind, 'bug found')
+    --assert(kind, 'bug found')
     local ID = TYPES.ID_plain(tp)
-    return ID and ID.dcl and ID.dcl.tag==kind and ID.dcl
+    return ID and ID.dcl and
+            ((kind==nil and ID.dcl.tag=='Code' or ID.dcl.tag=='Data') or ID.dcl.tag==kind) and
+                ID.dcl
 end
 
 do

@@ -282,7 +282,7 @@ assert(me.hier)
             local cc = TYPES.toc(tp)
             local c = TYPES.toc(TYPES.pop(tp,'?'))
             if alias == '&?' then
-                if TYPES.abs_dcl(tp,'Code') then
+                if TYPES.abs_dcl(tp) then
                     MEMS.datas.mems = MEMS.datas.mems..[[
 struct ]]..cc..[[;
 static struct ]]..cc..'* CEU_OPTION_'..cc..[[ (struct ]]..cc..[[* alias, char* file, int line) {
@@ -368,7 +368,7 @@ if dcl.tag ~= 'Prim' then
                 --else
                     local alias, tp = unpack(dcl)
                     if alias then
-                        if TYPES.abs_dcl(tp,'Code') then
+                        if TYPES.abs_dcl(tp) then
                             -- because of recursive definitions
                             mem[#mem+1] = 'struct '..TYPES.toc(tp)..'* '..dcl.id_..';\n'
                         else
