@@ -35,7 +35,7 @@ PROPS_.F = {
                     local var = AST.get(me,'Par_Or', 1,'Stmts', 1,'Var')
                     if me.tag=='Await_Forever' and paror and paror.__spawns then
                         return -- ok: var&? inside every
-                    elseif me.__spawns and var and var[1]=='&?' then
+                    elseif me.__spawns and var and var[1] then
                         return -- ok: var&? inside every
                     end
                 elseif par.tag == 'Code' then

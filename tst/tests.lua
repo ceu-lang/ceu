@@ -181,6 +181,86 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+data Dd with
+    var int x;
+    var&? Dd d;
+end
+var Dd d = val Dd(10,_);
+escape d.x;
+]],
+    run = 10,
+}
+
+Test { [[
+data Dd with
+    var int x;
+    var&? Dd d;
+end
+var Dd d1 = val Dd(10,_);
+var Dd d2 = val Dd(20,&d1);
+escape d2.x + d2.d!.x;
+]],
+    run = 30,
+}
+
+Test { [[
+data Dd with
+    var int x = 1;
+    var&? Dd d;
+end
+code/tight/recursive Dd_D(var& Dd d, var& Dd ret) -> void do
+    if d.d? then
+        call/recursive Dd_D(&d.d!, &ret);
+    end
+    ret.x = ret.x + d.x;
+end
+var Dd d1 = val Dd(10,_);
+var Dd d2 = val Dd(20,&d1);
+var Dd d = _;
+call/recursive Dd_D(&d2,&d);
+escape d.x;
+]],
+    run = 31,
+}
+
+Test { [[
+data Dd with
+    var int x = 1;
+    var&? Dd d;
+end
+code/tight/recursive Dd_D_(var& Dd d, var& Dd ret) -> void do
+    if d.d? then
+        call/recursive Dd_D_(&d.d!, &ret);
+    end
+    ret.x = ret.x + d.x;
+end
+code/tight/recursive Dd_D(var& Dd d, var& Dd ret) -> void do
+    ret = val Dd(0,_);
+    call/recursive Dd_D_(&d, &ret);
+end
+var Dd d1 = val Dd(10,_);
+var Dd d2 = val Dd(20,&d1);
+var Dd d = _;
+call/recursive Dd_D(&d2,&d);
+escape d.x;
+]],
+    run = 30,
+}
+
+Test { [[
+code/tight/recursive Gg (void) -> void do
+    call/recursive Gg();
+end
+code/await Ff (void) -> void do
+    call/recursive Gg();
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
 do return end -- OK
 --]=====]
 
@@ -20444,6 +20524,81 @@ escape (v? as int) + 1;
 
 --<< ALIAS / OPTION / NIL
 
+-->> OPTION / ALIAS / ID_any
+
+Test { [[
+code/tight Ff (var&? int i) -> int do
+    if i? then
+        escape i!;
+    else
+        escape 99;
+    end
+end
+var int x = 1;
+escape call Ff(_) + call Ff(&x);
+]],
+    wrn = true,
+    run = 100,
+}
+
+Test { [[
+code/tight Gg (var&? int i) -> int do
+    if i? then
+        escape i!;
+    else
+        escape 99;
+    end
+end
+code/tight Ff (var&? int i) -> int do
+    escape call Gg(&i);
+end
+var int x = 1;
+escape call Ff(_) + call Ff(&x);
+]],
+    wrn = true,
+    run = 100,
+}
+
+Test { [[
+code/await Ff (var&? int i) -> int do
+    if i? then
+        escape i!;
+    else
+        escape 99;
+    end
+end
+var int x = 1;
+var int v1 = await Ff(_);
+var int v2 = await Ff(&x);
+escape v1 + v2;
+]],
+    wrn = true,
+    run = 100,
+}
+
+Test { [[
+code/await Gg (var&? int i) -> int do
+    if i? then
+        escape i!;
+    else
+        escape 99;
+    end
+end
+code/await Ff (var&? int i) -> int do
+    var int ret = await Gg(&i);
+    escape ret;
+end
+var int x = 1;
+var int v1 = await Ff(_);
+var int v2 = await Ff(&x);
+escape v1 + v2;
+]],
+    wrn = true,
+    run = 100,
+}
+
+--<< OPTION / ALIAS / ID_any
+
 --<<< ALIASES / REFERENCES / REFS / &
 
 Test { [[
@@ -35328,6 +35483,20 @@ escape 0;
     stmts = 'line 5 : invalid `kill´ : expected `&?´ alias',
 }
 
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+pool[] Ff fs;
+every 1s do
+    var& Ff f;
+    loop f in fs do
+    end
+end
+escape 0;
+]],
+    run = false,
+}
 --<< CODE / AWAIT / OPTION
 
 -->> CODE / AWAIT / FOREVER

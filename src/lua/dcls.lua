@@ -750,13 +750,15 @@ DCLS.F = {
                             node('ID_int', v.ln, id)))
             elseif v.tag == 'ID_any' then
                 local vars = AST.asr(code.dcl,'Code', 3,'Block', 1,'Stmts', 2,'Do', 3,'Block').dcls
-                local _,tp = unpack(vars[i])
-                if TYPES.abs_dcl(tp,'Data') then
-                    xxx = tp[1]
-                    yyy = node('Set_Any', v.ln,
-                            v,
-                            node('Loc', v.ln,
-                                node('ID_int', v.ln, id)))
+                local is_alias,tp = unpack(vars[i])
+                if not is_alias then
+                    if TYPES.abs_dcl(tp,'Data') then
+                        xxx = tp[1]
+                        yyy = node('Set_Any', v.ln,
+                                v,
+                                node('Loc', v.ln,
+                                    node('ID_int', v.ln, id)))
+                    end
                 end
             end
 

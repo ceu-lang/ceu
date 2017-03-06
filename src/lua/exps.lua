@@ -173,7 +173,7 @@ EXPS.F = {
         ASR(ID_abs.dcl.tag=='Code', me,
                 'invalid call : '..
                 'unexpected context for '..AST.tag2id[ID_abs.dcl.tag]
-                                         ..' "'..ID_abs.dcl.id..'"')
+                                         ..' "'..(ID_abs.dcl.id or '')..'"')
         ASR(mods_dcl.tight, me,
                 'invalid call : '..
                 'expected `code/tight´ : got `code/await´ ('..ID_abs.dcl.ln[1]..':'..ID_abs.ln[2]..')')
@@ -213,7 +213,7 @@ EXPS.F = {
             local var = me.vars[i]
             local val = Abslist[i]
 
-            local var_is_alias, var_tp, var_id, var_dim = unpack(var)
+            local var_alias, var_tp, var_id, var_dim = unpack(var)
 
             if mods and mods.dynamic and var_tp[1].dcl.hier and (not is_dyn) then
                 if var_tp.tag=='Type' and var_tp[1].tag == 'ID_abs' then
@@ -228,9 +228,11 @@ EXPS.F = {
                 end
             end
 
-            if var_is_alias then
-                INFO.asr_tag(val, {'Alias'},
-                    err_str..' : invalid binding : argument #'..i)
+            if var_alias then
+                if not (var_alias=='&?' and val.tag=='ID_any') then
+                    INFO.asr_tag(val, {'Alias'},
+                        err_str..' : invalid binding : argument #'..i)
+                end
 
                 -- dim
                 if var.tag=='Vec' or var[1]=='vector' then
@@ -259,10 +261,10 @@ error'TODO: remove below'
                 end
 
                 -- tp
-                if var_is_alias then
+                if var_alias then
                     EXPS.check_tag(me, var.tag, val.info.dcl.tag, 'invalid binding')
                 end
-                EXPS.check_tp(me, var_tp, val.info.tp, err_str..' : argument #'..i,var_is_alias)
+                EXPS.check_tp(me, var_tp, val.info.tp, err_str..' : argument #'..i,var_alias)
 
                 -- abs vs abs
                 local to_abs = TYPES.abs_dcl(var_tp, 'Data')
