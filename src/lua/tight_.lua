@@ -167,7 +167,7 @@ G = {
         if Par and mods_call.recursive then
             -- Par must be '/recursive'
             local mods_dcl = unpack(Par)
-            ASR(mods_dcl.recursive, Par,
+            ASR(mods_dcl.await or mods_dcl.recursive, Par,
                 'invalid `code´ declaration : expected `/recursive´ : nested `call/recursive´ ('..me.ln[1]..':'..me.ln[2]..')')
         end
     end,
