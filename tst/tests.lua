@@ -39937,6 +39937,15 @@ escape 1;
 }
 
 Test { [[
+code/await Ff (void) -> void do
+end
+spawn Ff(_);
+escape 0;
+]],
+    dcls = 'line 3 : invalid call : expected 0 argument(s)',
+}
+
+Test { [[
 code/await Ff (void) -> (var& int x) -> void do
     var int xx = 10;
     x = &xx;
