@@ -20464,6 +20464,21 @@ var int x = 1;
 escape call Ff(_) + call Ff(&x);
 ]],
     wrn = true,
+    dcls = 'line 9 : invalid call : invalid binding : argument #1 : expected location',
+}
+
+Test { [[
+code/tight Ff (var&? int i) -> int do
+    if i? then
+        escape i!;
+    else
+        escape 99;
+    end
+end
+var int x = 1;
+escape call Ff(nil) + call Ff(&x);
+]],
+    wrn = true,
     run = 100,
 }
 
@@ -20479,7 +20494,7 @@ code/tight Ff (var&? int i) -> int do
     escape call Gg(&i);
 end
 var int x = 1;
-escape call Ff(_) + call Ff(&x);
+escape call Ff(nil) + call Ff(&x);
 ]],
     wrn = true,
     run = 100,
@@ -20494,7 +20509,7 @@ code/await Ff (var&? int i) -> int do
     end
 end
 var int x = 1;
-var int v1 = await Ff(_);
+var int v1 = await Ff(nil);
 var int v2 = await Ff(&x);
 escape v1 + v2;
 ]],
@@ -45826,6 +45841,17 @@ end
 var Dd d = val Dd(10,_);
 escape d.x;
 ]],
+    dcls = 'line 5 : invalid constructor : invalid binding : argument #2 : expected location',
+}
+
+Test { [[
+data Dd with
+    var int x;
+    var&? Dd d;
+end
+var Dd d = val Dd(10,nil);
+escape d.x;
+]],
     run = 10,
 }
 
@@ -45834,7 +45860,7 @@ data Dd with
     var int x;
     var&? Dd d;
 end
-var Dd d1 = val Dd(10,_);
+var Dd d1 = val Dd(10,nil);
 var Dd d2 = val Dd(20,&d1);
 escape d2.x + d2.d!.x;
 ]],
@@ -45852,7 +45878,7 @@ code/tight/recursive Dd_D(var& Dd d, var& Dd ret) -> void do
     end
     ret.x = ret.x + d.x;
 end
-var Dd d1 = val Dd(10,_);
+var Dd d1 = val Dd(10,nil);
 var Dd d2 = val Dd(20,&d1);
 var Dd d = _;
 call/recursive Dd_D(&d2,&d);
@@ -45873,10 +45899,10 @@ code/tight/recursive Dd_D_(var& Dd d, var& Dd ret) -> void do
     ret.x = ret.x + d.x;
 end
 code/tight/recursive Dd_D(var& Dd d, var& Dd ret) -> void do
-    ret = val Dd(0,_);
+    ret = val Dd(0,nil);
     call/recursive Dd_D_(&d, &ret);
 end
-var Dd d1 = val Dd(10,_);
+var Dd d1 = val Dd(10,nil);
 var Dd d2 = val Dd(20,&d1);
 var Dd d = _;
 call/recursive Dd_D(&d2,&d);
