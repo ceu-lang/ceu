@@ -11,7 +11,7 @@ endif
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 syn match	Macro	"\<_\w*\>"
-syn keyword	cConstant   null true false _
+syn keyword	cConstant   null true false _ nil
 syn keyword	cOperator   not or and sizeof
 syn keyword cType       bool byte
 syn keyword cType       f32 f64 float

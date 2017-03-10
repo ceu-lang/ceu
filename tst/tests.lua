@@ -494,6 +494,12 @@ escape (1<<1) + (8>>2);
     run = 4,
 }
 
+Test { [[
+var int x = 0;
+escape x.x;
+]],
+    dcls = 'line 2 : invalid member access',
+}
 --<<< EXPS / EXPRESSIONS
 
 -->>> NATIVE
@@ -20497,6 +20503,38 @@ escape v1 + v2;
 }
 
 Test { [[
+code/await Ff (var& int i) -> int do
+    escape 1;
+end
+var int v1 = await Ff(nil);
+escape v1;
+]],
+    wrn = true,
+    dcls = 'line 4 : invalid call : invalid binding : argument #1 : expected location',
+}
+
+Test { [[
+code/await Gg (var&? int i) -> int do
+    if i? then
+        escape i!;
+    else
+        escape 99;
+    end
+end
+code/await Ff (var&? int i) -> int do
+    var int ret = await Gg(&i);
+    escape ret;
+end
+var int x = 1;
+var int v1 = await Ff(nil);
+var int v2 = await Ff(&x);
+escape v1 + v2;
+]],
+    --wrn = true,
+    run = 100,
+}
+
+Test { [[
 code/await Gg (var&? int i) -> int do
     if i? then
         escape i!;
@@ -20514,7 +20552,7 @@ var int v2 = await Ff(&x);
 escape v1 + v2;
 ]],
     wrn = true,
-    run = 100,
+    dcls = 'line 13 : invalid call : invalid binding : argument #1 : expected location',
 }
 
 --<< OPTION / ALIAS / ID_any

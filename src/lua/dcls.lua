@@ -888,7 +888,8 @@ DCLS.F = {
                     me.dcl = DCLS.asr(me, dcl, member, false, 'parameter')
                 end
             else
-                AST.asr(e.dcl,'Var', 2,'Type', 1,'ID_nat')
+                ASR(AST.get(e.dcl,'Var', 2,'Type', 1,'ID_nat'), me,
+                    'invalid member access')
             end
         end
         EXPS.F['Exp_.'](me)
