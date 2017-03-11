@@ -49050,6 +49050,29 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+code/await Ff (void) -> int do
+    event void ok_escape;
+
+    code/await Gg (void) -> FOREVER do
+        emit outer.ok_escape;
+        await FOREVER;
+    end
+
+    par do
+        await ok_escape;
+        escape 1;
+    with
+        spawn Gg();
+        escape 99;
+    end
+end
+var int ret = await Ff();
+escape ret;
+]],
+    run = 1,
+}
+
 --<<< OUTER
 
 -->>> TCO

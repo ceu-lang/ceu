@@ -368,7 +368,15 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
 
         if me.info.dcl.tag=='Evt' and (not is_alias) then
             if e.tag == 'Outer' then
-                return '((tceu_evt){ '..me.info.dcl.id_..', {&CEU_APP.root} })'
+                local outer = e.__dcls_outer
+                local mem do
+                    if outer and assert(outer.depth) then
+                        mem = 'ceu_outer(_ceu_mem, '..(outer.depth or 0)..')'
+                    else
+                        mem = '&CEU_APP.root'
+                    end
+                end
+                return '((tceu_evt){ '..me.info.dcl.id_..', {'..mem..'} })'
             else
                 return '((tceu_evt){ '..me.info.dcl.id_..', {&'..V(e)..'} })'
             end
