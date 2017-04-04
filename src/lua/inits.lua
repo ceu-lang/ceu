@@ -132,12 +132,10 @@ local function run_inits (par, i, Dcl, stop, dont_await)
         local ok2,stmt2 = run_inits(s2, 1, Dcl, s2, dont_await)
 
         if ok1 or ok2 then
-            if ok1 and ok2 then
-                if ok1=='Escape' or ok2=='Escape' then
-                    return me.tag, (ok1=='Escape' and stmt1 or stmt2)
-                else
-                    return true, me
-                end
+            if (ok1=='Escape' or ok2=='Escape') and Dcl.blk.__adjs_2 then
+                return me.tag, (ok1=='Escape' and stmt1 or stmt2)
+            elseif ok1 and ok2 then
+                return true, me
             else
                 -- don't allow only one because of alias binding (2x)
                 err_inits(Dcl, me, 'end of `'..AST.tag2id[me.tag]..'´')
@@ -244,6 +242,8 @@ F = {
                         and (not (code and code[2].await and me.blk.__adjs_2))
                     then
                         -- ok, warning generated (unless in init list)
+                    --elseif ok=='Escape' and me.blk.__adjs_2 then
+                    elseif me.blk.__adjs_2 then
                     else
                         err_inits(me, stmt, nil, endof) --, 'end of '..AST.tag2id[me.tag])
                     end

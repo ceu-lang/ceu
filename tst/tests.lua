@@ -181,6 +181,15 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+every 1s do
+    vector[] byte xxx = [];
+end
+escape 0;
+]],
+    run = false,
+}
+
 do return end -- OK
 --]=====]
 
@@ -1546,8 +1555,9 @@ else
 end;
 ]],
     --inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:2)',
-    inits = 'line 1 : uninitialized variable "a" : reached `escape´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 1 : uninitialized variable "a" : reached `escape´ (/tmp/tmp.ceu:3)',
     --ref = 'line 5 : invalid extra access to variable "a" inside the initializing `if-then-else´ (/tmp/tmp.ceu:2)',
+    run = 3,
 }
 Test { [[
 var int a;
@@ -1558,8 +1568,9 @@ else
 end;
 ]],
     --inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:2)',
-    inits = 'line 1 : uninitialized variable "a" : reached `escape´ (/tmp/tmp.ceu:5)',
+    --inits = 'line 1 : uninitialized variable "a" : reached `escape´ (/tmp/tmp.ceu:5)',
     --ref = 'line 5 : invalid extra access to variable "a" inside the initializing `if-then-else´ (/tmp/tmp.ceu:2)',
+    run = 1,
 }
 Test { [[
 var int a=1;
@@ -35665,8 +35676,22 @@ end
 escape 1;
 ]],
     wrn = true,
-    inits = 'line 1 : uninitialized variable "v" : reached end of `if´ (/tmp/tmp.ceu:3)',
-    --run = 1,
+    --inits = 'line 1 : uninitialized variable "v" : reached end of `if´ (/tmp/tmp.ceu:3)',
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> (var& int v) -> int do
+    if true then
+        escape 10;
+    end
+    var int x = 100;
+    v = &x;
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
 }
 
 Test { [[
@@ -35692,8 +35717,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    --run = 1,
-    inits = 'line 1 : uninitialized variable "v" : reached end of `if´ (/tmp/tmp.ceu:3)',
+    run = 1,
+    --inits = 'line 1 : uninitialized variable "v" : reached end of `if´ (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -35706,7 +35731,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    inits = 'line 1 : uninitialized variable "v" : reached `escape´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 1 : uninitialized variable "v" : reached `escape´ (/tmp/tmp.ceu:3)',
+    run = 1,
 }
 
 Test { [[
