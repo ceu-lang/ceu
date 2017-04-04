@@ -181,15 +181,6 @@ escape 1;
     run = 1,
 }
 
-Test { [[
-every 1s do
-    vector[] byte xxx = [];
-end
-escape 0;
-]],
-    run = false,
-}
-
 do return end -- OK
 --]=====]
 
@@ -29601,6 +29592,15 @@ escape ret;
 ]],
     wrn = true,
     run = 3,
+}
+
+Test { [[
+every 1s do
+    vector[] byte xxx = [];
+end
+escape 0;
+]],
+    run = false,
 }
 
 -->> VECTOR / _CHAR*

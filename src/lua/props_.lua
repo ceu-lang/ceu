@@ -37,6 +37,17 @@ PROPS_.F = {
                         return -- ok: var&? inside every
                     elseif me.__spawns and var and var[1] then
                         return -- ok: var&? inside every
+
+                    elseif me.tag=='Finalize' or me.tag=='Par_Or' then
+                        if me.tag == 'Finalize' then
+                            if AST.get(me,3,'Stmts', 1,'Vec') then
+                                return -- ok: vector[] inside every
+                            end
+                        else
+                            if AST.get(me,1,'Stmts', 1,'Vec') then
+                                return -- ok: vector[] inside every
+                            end
+                        end
                     end
                 elseif par.tag == 'Code' then
                     local mods = unpack(par)
