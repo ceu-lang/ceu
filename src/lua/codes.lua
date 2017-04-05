@@ -855,6 +855,10 @@ while (1) {
 }
 ]])
         CASE(me, me.lbl_out)
+
+        if me.has_break and me.trails_n>1 then
+            CLEAR(me)
+        end
     end,
 
     Break = function (me)

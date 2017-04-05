@@ -181,8 +181,27 @@ escape 1;
     run = 1,
 }
 
-do return end -- OK
+ssize <- usize
+
 --]=====]
+
+Test { [[
+var int ret = 0;
+var int i;
+loop i do
+    ret = 1;
+    do finalize with
+        ret = ret * 2;
+    end
+    break;
+end
+ret = ret + 1;
+escape ret;
+]],
+    run = 3,
+}
+
+do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -37114,6 +37133,21 @@ Test { [[
 var int ret = 0;
 var int x;
 watching 1s do
+    await 2s;
+    x = 10;
+end
+ret = x;
+escape ret;
+]],
+    inits = 'line 2 : uninitialized variable "x" : reached end of `par/or´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:3)',
+    --run = { ['~>2s']=10 },
+}
+
+Test { [[
+var int ret = 0;
+var int x;
+watching 1s do
     x = 10;
 end
 ret = x;
@@ -38508,19 +38542,64 @@ escape ret!;
 }
 
 Test { [[
+code/await Gg (void) -> (var& int x) -> void do
+    do finalize with
+        nothing;
+    end
+    var int y=1;
+    x = &y;
+end
+escape 10;
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+end
+code/await Gg (var& Ff f) -> (var& int x) -> void do
+    var& Ff g = &f;
+    var int y=1;
+    x = &y;
+end
+escape 10;
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+code/await Ff (void) -> void do
+end
+code/await Gg (void) -> (var& int x) -> void do
+    pool[] Ff fs;
+    var int y=1;
+    x = &y;
+end
+escape 10;
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
 code/await Ff (void) -> (var& int x) -> int
 do
     var int xx = 10;
     x = &xx;
+    await async do end;
     escape 10;
 end
 
 code/await Gg (void) -> (var& int x) -> int
 do
-    var&? Ff f = spawn Ff();
+    pool[] Ff fs;
+    var&? Ff f = spawn Ff() in fs;
     var int? ret =
         watching f do
             x = &f!.x;
+            await FOREVER;
         end;
     escape ret!;
 end
@@ -38529,8 +38608,36 @@ var int ret = await Gg();
 
 escape ret;
 ]],
-    --run = 10,
-    inits = 'line 8 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:12)',
+    run = 10,
+    --inits = 'line 8 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:12)',
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> int
+do
+    var int xx = 10;
+    x = &xx;
+    await async do end;
+    escape 10;
+end
+
+code/await Gg (void) -> (var& int x) -> int
+do
+    pool[] Ff fs;
+    var&? Ff f = spawn Ff() in fs;
+    var int? ret =
+        watching f do
+            x = &f!.x;
+            await FOREVER;
+        end;
+    escape x;                   // error: deallocated
+end
+
+var int ret = await Gg();
+
+escape ret;
+]],
+    run = 10,
 }
 
 Test { [[
