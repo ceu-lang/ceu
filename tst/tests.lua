@@ -253,8 +253,76 @@ escape ret;
     run = 3,
 }
 
---do return end -- OK
 --]=====]
+Test { [=[
+event void a;
+var int ret = 0;
+
+spawn do
+    await async do end;
+    emit a;
+    ret = 10;
+    emit a;
+    ret = 20;
+end
+
+do
+    await a;
+end
+par/or do
+    await FOREVER;
+with
+    await a;
+end
+
+escape ret;
+]=],
+    wrn = true,
+    run = 20;
+}
+
+Test { [=[
+native/pre do
+    int V = 0;
+end
+
+code/await UV_FS_Write2 (void) -> void do
+    {printf(">>> %p\n", _ceu_mem);}
+    await 1s;
+    {V++;}
+end
+
+do
+    await UV_FS_Write2();
+end
+par/or do
+    await FOREVER;
+with
+    await UV_FS_Write2();
+end
+
+escape {V};
+]=],
+    wrn = true,
+    run = {['~>2s']=2},
+}
+
+Test { [[
+    do/_
+        var int flags = _O_CREAT|_O_WRONLY|_O_TRUNC;
+        var _mode_t mode = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
+        var&? UV_FS_Open f = spawn UV_FS_Open(&&path[0], flags, mode);
+        await f!.file.ok;
+        if f!.file.fd < 0 then
+            escape f!.file.fd;
+        end
+    end
+]],
+    todo = 'on error, await never awakes // 1. force watching // 2. raise exception',
+    run = 1,
+}
+
+do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested
