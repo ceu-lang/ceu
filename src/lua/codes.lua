@@ -1807,7 +1807,7 @@ _CEU_LUA_ERR_]]..me.n..[[:;
         for _, p in ipairs(me.params) do
             local tp = p.info.tp
             ASR(not TYPES.is_nat(tp), me, 'unknown type')
-            if p.info.dcl and p.info.dcl.tag=='Vec' then
+            if p.info.tag=='Vec' and p.info.dcl and p.info.dcl.tag=='Vec' then
                 if TYPES.check(tp,'byte') then
                     LINE(me, [[
     lua_pushlstring(]]..LUA(me)..[[,(char*)]]..V(p)..[[.buf,]]..V(p)..[[.len);
