@@ -183,7 +183,59 @@ escape 1;
 
 ssize <- usize
 
---]=====]
+do return end
+
+Test { [[
+code/await Ff (vector&[] byte buf) -> FOREVER do
+    code/tight Reset (void) -> void do
+        $outer.buf = 0;
+    end
+    call Reset();
+    await FOREVER;
+end
+vector[] byte buf = [1,2,3];
+var&? Ff f = spawn Ff(&buf);
+call f.Reset();
+escape ($buf as int) + 1;
+]],
+    run = 1,
+}
+do return end
+
+Test { [=[
+code/await Ff (void) -> int do
+    [[ G = 111 ]];
+    await async/thread do end;
+    var int ret = [[G]];
+    escape ret;
+end
+var int ret = 0;
+par/and do
+    lua[] do
+        var int v = await Ff();
+        ret = ret + v;
+    end
+with
+    lua[] do
+        var int v = await Ff();
+        ret = ret + v;
+    end
+end
+escape ret;
+]=],
+    _opts = { ceu_features_lua='true' , ceu_features_thread='true' },
+    run = 222,
+}
+do return end
+
+Test { [=[
+vector[] byte xxx = [1];
+var int ret = [[ @xxx[0] ]];
+escape ret;
+]=],
+    _opts = { ceu_features_lua='true' },
+    run = 1,
+}
 
 Test { [[
 var int ret = 0;
@@ -201,7 +253,8 @@ escape ret;
     run = 3,
 }
 
-do return end -- OK
+--do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -2892,6 +2945,38 @@ var int a = do/a end;
     run = '1] runtime error: reached end of `do´',
 }
 
+Test { [[
+var int err = 99;
+err = do ()
+    var int err = 10;
+    escape 1;
+end;
+escape err;
+]],
+    run = 1,
+}
+Test { [[
+var int err = 99;
+err = do ()
+    var int err = 10;
+    if true then
+        escape 1;
+    end
+end;
+escape err;
+]],
+    run = 1,
+}
+
+Test { [[
+var int err = 99;
+err = do ()
+    do/_ escape 1; end
+end;
+escape err;
+]],
+    run = 1,
+}
 --<<< DO/_, SETBLOCK, ESCAPE
 
 -->>> SPAWN / BLOCK

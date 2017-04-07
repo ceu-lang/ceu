@@ -856,7 +856,8 @@ DCLS.F = {
             -- var int a = do var int a; ... escape ...; end;
             local set = AST.par(me,'Set_Exp')
             if set and set.__dcls_is_escape and AST.is_par(set[2],me) then
-                blk = AST.par(blk, 'Block')
+                -- __dcls_is_escape holds the enclosing "do" node
+                blk = AST.par(set.__dcls_is_escape, 'Block')
                 can_cross = true
             end
         end
@@ -962,7 +963,7 @@ DCLS.F = {
             esc.outer = do_
             local _,outer,_,to = unpack(do_)
             local set = AST.get(me.__par,'Set_Exp') or AST.asr(me.__par,'Set_Alias')
-            set.__dcls_is_escape = true
+            set.__dcls_is_escape = do_
             local fr = unpack(set)
             if to and type(to)~='boolean' then
                 ASR(type(fr)~='boolean', me,
