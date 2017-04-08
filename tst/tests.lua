@@ -253,7 +253,6 @@ escape ret;
     run = 3,
 }
 
---]=====]
 Test { [=[
 event void a;
 var int ret = 0;
@@ -281,32 +280,6 @@ escape ret;
     run = 20;
 }
 
-Test { [=[
-native/pre do
-    int V = 0;
-end
-
-code/await UV_FS_Write2 (void) -> void do
-    {printf(">>> %p\n", _ceu_mem);}
-    await 1s;
-    {V++;}
-end
-
-do
-    await UV_FS_Write2();
-end
-par/or do
-    await FOREVER;
-with
-    await UV_FS_Write2();
-end
-
-escape {V};
-]=],
-    wrn = true,
-    run = {['~>2s']=2},
-}
-
 Test { [[
     do/_
         var int flags = _O_CREAT|_O_WRONLY|_O_TRUNC;
@@ -323,6 +296,7 @@ Test { [[
 }
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -37292,7 +37266,8 @@ end
 ret = x;
 escape ret;
 ]],
-    inits = 'line 2 : uninitialized variable "x" : reached end of `par/or´ (/tmp/tmp.ceu:3)',
+    inits = 'line 2 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:7)',
+    --inits = 'line 2 : uninitialized variable "x" : reached end of `par/or´ (/tmp/tmp.ceu:3)',
     --inits = 'line 2 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:3)',
     --run = { ['~>2s']=10 },
 }
@@ -37306,7 +37281,8 @@ end
 ret = x;
 escape ret;
 ]],
-    inits = 'line 2 : uninitialized variable "x" : reached end of `par/or´ (/tmp/tmp.ceu:3)',
+    inits = 'line 2 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:6)',
+    --inits = 'line 2 : uninitialized variable "x" : reached end of `par/or´ (/tmp/tmp.ceu:3)',
     --inits = 'line 2 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:3)',
     --run = 10,
 }
@@ -37370,7 +37346,8 @@ watching f do
 end
 escape x;
 ]],
-    inits = 'line 4 : uninitialized variable "x" : reached end of `par/or´ (/tmp/tmp.ceu:6)',
+    inits = 'line 4 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:10)',
+    --inits = 'line 4 : uninitialized variable "x" : reached end of `par/or´ (/tmp/tmp.ceu:6)',
     --run = 1,
 }
 
@@ -37455,11 +37432,12 @@ end
 
 escape 0;
 ]],
+    inits = 'line 7 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:13)',
+    --inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:9)',
     --stmts = 'line 9 : invalid binding : unexpected source with `&?´',
     --run = false,
     --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
     --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
-    inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:9)',
     --scopes = 'line 8 : invalid binding : incompatible scopes',
 }
 
@@ -38435,9 +38413,10 @@ var int? ret =
 
 escape ret!;
 ]],
-    --run = 110,
+    scopes = 'line 12 : invalid binding : incompatible scopes',
     --inits = 'line 8 : uninitialized event "e" : reached end of `par/or´ (/tmp/tmp.ceu:11)',
-    inits = 'line 8 : uninitialized event "e" : reached end of `par/or´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : uninitialized event "e" : reached end of `par/or´ (/tmp/tmp.ceu:11)',
+    --run = 110,
 }
 
 Test { [[
@@ -38638,7 +38617,8 @@ end
 
 escape nn;
 ]],
-    inits = 'line 9 : uninitialized variable "nn" : reached end of `par/or´ (/tmp/tmp.ceu:11)',
+    inits = 'line 9 : uninitialized variable "nn" : reached read access (/tmp/tmp.ceu:15)',
+    --inits = 'line 9 : uninitialized variable "nn" : reached end of `par/or´ (/tmp/tmp.ceu:11)',
     --scopes = 'line 12 : invalid binding : incompatible scopes',
     --run = 10,
     --inits = 'line 9 : uninitialized variable "nn" : reached end of `par/or´ (/tmp/tmp.ceu:11)',
@@ -38790,7 +38770,8 @@ var int ret = await Gg();
 
 escape ret;
 ]],
-    run = 10,
+    inits = 'line 9 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:18)',
+    --run = 10,
 }
 
 Test { [[

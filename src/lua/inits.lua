@@ -35,11 +35,15 @@ local function run_inits (par, i, Dcl, stop, dont_await)
                         break   -- ok, last in ROOT
                     end
 
+-- HACK_04: check escape/set_exp (will fix with exceptions)
                     -- check if all statements after myself are code dcls or escape
                     for i=x.__i+1, #x.__par do
                         if x.__par[i].tag~='Code' and x.__par[i].tag~='Escape' and x.__par[i].tag~='Set_Exp' then
                             is_last_watching = false        -- no: error
                             break
+                        elseif x.__par[i].tag ~= 'Code' then
+-- HACK_04
+                            run_inits(x.__par[i], 1, Dcl, x.__par[i])
                         end
                     end
 
