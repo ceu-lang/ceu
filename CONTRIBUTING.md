@@ -29,3 +29,4 @@
     - Then, implement the [7GUIs](https://github.com/eugenkiss/7guis/wiki)
       programming usability benchmark
 - [Handmade Hero](https://handmadehero.org/) in Céu-SDL
+- Integrating with [LWAN](https://lwan.ws/)

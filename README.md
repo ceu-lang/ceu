@@ -17,6 +17,12 @@ Join our chat:
 
 https://gitter.im/fsantanna/ceu
 
+<!--
+# WHY CÉU
+
+`TODO`
+-->
+
 # INSTALLATION
 
 ## Install required software:
@@ -32,6 +38,7 @@ $ sudo apt-get install git lua5.3 lua-lpeg liblua5.3-0
 ```
 $ git clone https://github.com/fsantanna/ceu
 $ cd ceu/
+$ git checkout v0.20
 ```
 
 ## Install Céu:
