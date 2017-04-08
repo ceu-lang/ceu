@@ -45,7 +45,7 @@ escape x1+x2;
 var/nohold int x;
 var/dynamic int x;
 
--- TODO: warning shadow
+-- BUG #96
 Test { [[
 var int x = do()
     var bool x = false;
@@ -56,7 +56,7 @@ escape x;
     run = 10,
 }
 
--- TODO: warning shadow
+-- BUG #96
 Test { [[
 var int x = do()
     code/await Ff (void) -> void do end
@@ -69,7 +69,7 @@ escape x;
     run = 10,
 }
 
--- TODO: tight loop
+-- BUG #97: tight loop
 Test { [[
 event void a;
 loop do
@@ -85,29 +85,7 @@ end
     run = 1,
 }
 
-Test { [[
-code/await Light (pool&[] Light    lights,
-                  var     int?     direction,
-                  var     int?     magnitude,
-                  var     bool?    is_fork,
-                 ) -> void
-do
-end
-
-pool[] Light lights;
-
-spawn Light(&lights,_,_,_) in lights;
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
---do return end
-
-
-do return end
-
+-- BUG #98
 Test { [[
 var int ret = 1;
 var u8 i;
@@ -118,6 +96,7 @@ escape ret;
 ]],
     run = 1,
 }
+-- BUG #98
 Test { [[
 var int ret = 1;
 var u8 i;
@@ -128,6 +107,7 @@ escape ret;
 ]],
     run = 1,
 }
+-- BUG #98
 Test { [[
 code/await Ff (void) -> FOREVER do
     await FOREVER;
@@ -141,7 +121,7 @@ escape 1;
     run = 1,
 }
 
--- TODO: bug #89
+-- BUG #89
 Test { [[
 code/await Ff (void) -> (var& int x) -> FOREVER do
     code/tight Gg (void) -> void;
@@ -162,7 +142,7 @@ escape 1;
     run = 1,
 }
 
--- TODO: bug #89
+-- BUG #89
 Test { [[
 code/await Ff (void) -> (var& int x) -> FOREVER do
     code/tight Gg (void) -> void do
@@ -180,8 +160,6 @@ escape 1;
     --inits = 'line 1 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:3)',
     run = 1,
 }
-
-ssize <- usize
 
 do return end
 
@@ -517,6 +495,29 @@ var ssize n = 10;
     end
 ]],
     run = 10,
+}
+
+Test { [[
+var usize u = 10;
+var ssize s = u;
+escape s as int;
+]],
+    run = 10,
+}
+
+Test { [[
+var ssize s = sizeof(u32);
+escape s as int;
+]],
+    run = 4,
+}
+
+Test { [[
+var ssize s = 10;
+var usize u = s;
+escape u as int;
+]],
+    stmts = 'line 2 : invalid assignment : types mismatch : "usize" <= "ssize"',
 }
 
 Test { [[
@@ -41709,6 +41710,26 @@ escape {V};
     wrn = true,
     run = {['~>1s']=30},
 }
+
+Test { [[
+code/await Light (pool&[] Light    lights,
+                  var     int?     direction,
+                  var     int?     magnitude,
+                  var     bool?    is_fork,
+                 ) -> void
+do
+end
+
+pool[] Light lights;
+
+spawn Light(&lights,_,_,_) in lights;
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
 -->> POOL/SPAWN/OPTION
 
 Test { [[
