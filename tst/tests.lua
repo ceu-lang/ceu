@@ -161,25 +161,6 @@ escape 1;
     run = 1,
 }
 
-do return end
-
-Test { [[
-code/await Ff (vector&[] byte buf) -> FOREVER do
-    code/tight Reset (void) -> void do
-        $outer.buf = 0;
-    end
-    call Reset();
-    await FOREVER;
-end
-vector[] byte buf = [1,2,3];
-var&? Ff f = spawn Ff(&buf);
-call f.Reset();
-escape ($buf as int) + 1;
-]],
-    run = 1,
-}
-do return end
-
 Test { [=[
 code/await Ff (void) -> int do
     [[ G = 111 ]];
@@ -49304,6 +49285,33 @@ escape 1;
     wrn = true,
     --dcls = 'line 7 : invalid `call´',
     run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> (var int x) -> FOREVER do
+    x = 10;
+    await FOREVER;
+end
+var&? Ff f = spawn Ff();
+escape f.x;
+]],
+    dcls = 'line 6 : invalid operand to `.´ : unexpected option alias',
+}
+
+Test { [[
+code/await Ff (vector&[] byte buf) -> FOREVER do
+    code/tight Reset (void) -> void do
+        $outer.buf = 0;
+    end
+    call Reset();
+    await FOREVER;
+end
+vector[] byte buf = [1,2,3];
+var&? Ff f = spawn Ff(&buf);
+call f.Reset();
+escape ($buf as int) + 1;
+]],
+    dcls = 'line 10 : invalid operand to `.´ : unexpected option alias',
 }
 
 Test { [[

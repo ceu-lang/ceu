@@ -187,7 +187,15 @@ EXPS.F = {
     end,
 
     Abs_Cons = function (me)
-        local _, ID_abs, Abslist = unpack(me)
+        local Loc, ID_abs, Abslist = unpack(me)
+
+        if Loc then
+            -- var&? Ff f; f.Call(); // vs f!.Call()
+            assert(Loc.info.dcl)
+            local alias = unpack(Loc.info.dcl)
+            ASR(alias~='&?', me,
+                'invalid operand to `.´ : unexpected option alias')
+        end
 
         local err_str
         if ID_abs.dcl.tag == 'Data' then
