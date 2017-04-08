@@ -1,5 +1,5 @@
 LUA_EXE = ...
-CEU_VER = '0.20'
+CEU_VER = '0.30-alpha'
 CEU_GIT = ''
     do
         local f = assert(io.popen('git rev-parse HEAD'))
@@ -40,14 +40,14 @@ subst 'parser.lua'
 subst 'ast.lua'
 subst 'adjs.lua'
 subst 'types.lua'
-subst 'dcls.lua'
-subst 'locs.lua'
 subst 'exps.lua'
+subst 'dcls.lua'
 subst 'consts.lua'
 subst 'fins.lua'
 subst 'spawns.lua'
 subst 'stmts.lua'
 subst 'inits.lua'
+subst 'ptrs.lua'
 subst 'scopes.lua'
 subst 'tight_.lua'
 subst 'props_.lua'

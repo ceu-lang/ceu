@@ -9,7 +9,6 @@ F = {
     ['1__PRE'] = function (me)
         local stmts, eof = unpack(me)
         AST.asr(stmts, 'Stmts')
-        AST.set(stmts, #stmts+1, eof)
 
         --  Stmts
         --      to
@@ -47,7 +46,7 @@ F = {
                             '_ceu_callback_assert_msg'))
         nats[3].is_predefined = true
 
-        local ret = node('_Vars', me.ln,
+        local ret = node('Var', me.ln,
                         false,
                         node('Type', me.ln,
                             node('ID_prim', me.ln, 'int')),
@@ -59,15 +58,16 @@ F = {
                         false,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
-                                node('_Vars_set', me.ln,
+                                node('_Var_set', me.ln,
                                     false,
+                                    {},
                                     node('Type', me.ln,
                                         node('ID_prim', me.ln, 'bool')),
                                     'is_locked',
                                     {node('_Set_Exp',me.ln,
                                         node('BOOL',me.ln,'0'))}
                                     ),
-                                node('_Evts_set', me.ln,
+                                node('_Evt_set', me.ln,
                                     false,
                                     node('Type', me.ln,
                                         node('ID_prim', me.ln, 'void')),
@@ -99,8 +99,9 @@ F = {
                                 node('ID_int', me.ln, '_ret')),
                             node('_Set_Do', me.ln,
                                 node('Do', me.ln,
-                                    true,
-                                    node('Block', me.ln, lua)))))))
+                                    true, false,
+                                    node('Block', me.ln, lua)))),
+                        eof)))
         return AST.root
     end,
     _Stmts__PRE = function (me)
@@ -110,7 +111,30 @@ error'TODO: luacov never executes this?'
     end,
     _Dopre__POS = function (me)
         AST.set(Pre_Stmts, #Pre_Stmts+1, AST.asr(me,'', 1,'Block', 1,'Stmts'))
-        return AST.node('Nothing', me.ln)
+        return node('Nothing', me.ln)
+    end,
+
+    _Do__PRE = function (me)
+        local _,vars = unpack(me)
+        if vars == true then
+            AST.set(me, 2,
+                node('Var_List', me.ln))
+        end
+        me.tag = 'Do'
+    end,
+
+    _Spawn_Block__PRE = function (me)
+        local vars, blk = unpack(me)
+        if not AST.get(vars,'Block') then
+            if vars then
+                return node('_Spawn_Block', me.ln,
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('_Do', me.ln, true, vars, blk))))
+            else
+                AST.remove(me,1)
+            end
+        end
     end,
 
 -------------------------------------------------------------------------------
@@ -150,63 +174,26 @@ error'TODO: luacov never executes this?'
                         unpack(me, 3))))
     end,
 
-    _Ext_Req_proto__PRE  = '_Code_proto__PRE',
-    _Ext_Code_proto__PRE = '_Code_proto__PRE',
-    _Code_proto__PRE = function (me)
-        local tag = string.match(me.tag,'(.*)_proto')
-        return node(tag, me.ln, unpack(me))
+    _Code_Pars__POS = function (me)
+        me.tag = 'Stmts'
     end,
 
-    _Ext_Req_impl__PRE  = '_Code_impl__PRE',
-    _Ext_Code_impl__PRE = '_Code_impl__PRE',
-    _Code_impl__PRE = function (me)
-        local _,_,_,_,_,out,blk = unpack(me)
+    _Code_impl__PRE = '_Code_proto__PRE',
+    _Code_proto__PRE = function (me)
+        local mods, id, ins, mid, out, blk, eoc = unpack(me)
+        me.tag = 'Code'
 
-        local stmts_old = AST.asr(blk,'Block', 1,'Stmts')
-        local stmts_new = node('Stmts', me.ln)
-        AST.set(blk, 1, stmts_new)
+        mid = mid or node('_Code_Pars', me.ln)
 
         local Type = AST.get(out,'Code_Ret', 1,'Type')
-        if Type then
-            -- enclose "blk" with "_ret = do ... end"
-
-            local ID_prim,mod = unpack(Type)
-            local is_void = (ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod))
-            local do_ = node('Do', me.ln,
-                            true,
-                            node('Block', me.ln,
-                                stmts_old))
-            if is_void then
-                AST.set(stmts_new, 1, do_)
-            else
-                AST.set(stmts_new, 1,
-                        node('_Set', me.ln,
-                            node('Loc', me.ln,
-                                node('ID_int', me.ln, '_ret')),
-                            node('_Set_Do', me.ln,
-                                do_)))
+        local is_void do
+            if Type then
+                local ID_prim,mod = unpack(Type)
+                is_void = (ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod))
             end
-        else
-            -- ok
-            AST.set(stmts_new, 1,
-                        node('Do', me.ln,
-                            node('ID_any', me.ln),
-                            node('Block', me.ln,
-                                stmts_old)))
         end
 
-        local tag = string.match(me.tag,'(.*)_impl')
-        return node(tag, me.ln, unpack(me))
-    end,
-
-    _Code__PRE = function (me)
-        local Y, mods, id, ins, mid, out, blk, eoc = unpack(me)
-        mid = mid or AST.node('_Code_Pars', me.ln)
-
-        local Type = AST.get(out,'Code_Ret', 1,'Type')
         if Type then
-            local ID_prim,mod = unpack(Type)
-            local is_void = (ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod))
             if is_void then
                 out = node('Var_', me.ln, false, AST.copy(Type), '_ret')
                     -- TODO: HACK_5 (Var_)
@@ -218,74 +205,44 @@ error'TODO: luacov never executes this?'
             out = node('Nothing', me.ln)
         end
 
-        local ret = node('Code', me.ln, Y, mods, id,
-                        node('Block', me.ln,
-                            node('Stmts', me.ln,
+        local set_or_do = node('Do', me.ln,
+                            (Type and true) or node('ID_any', me.ln),
+                            false,
+                            node('Block', me.ln,
                                 node('Stmts', me.ln,
                                     ins,
-                                    mid,
-                                    node('Code_Ret', me.ln, out)),
-                                (blk or node('Stmts',me.ln)))),
+                                    node('Block', me.ln,
+                                        node('Stmts', me.ln,
+                                            mid,
+                                            (blk or node('Stmts',me.ln)))))))
+
+        if Type and (not is_void) then
+            set_or_do = node('_Set', me.ln,
+                            node('Loc', me.ln,
+                                node('ID_int', me.ln, '_ret')),
+                            node('_Set_Do', me.ln,
+                                set_or_do))
+        end
+
+        local ret = node('Code', me.ln, mods, id,
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('Code_Ret', me.ln,
+                                    out),
+                                set_or_do)),
                         eoc)
         ret.is_impl = (blk ~= false)
-        return ret
-    end,
 
-    _Code_Pars_Init__PRE = function (me)
-        me.tag = '_Code_Pars'
-        return F._Code_Pars__PRE(me)
-    end,
-    _Code_Pars__PRE = function (me)
-        me.tag = '_Code_Pars_X'
-        local Code = AST.par(me,'Code')
-
-        local params, mids = unpack(AST.asr(me,1,'Stmts'))
-
-        local is_param = (params == me)
-        local is_mid   = (mids == me)
-
-        for i, v in ipairs(me) do
-            if v == 'void' then
-error'TODO'
-            else
-                assert(AST.get(v,'_Code_Pars_Item') or AST.get(v,'_Code_Pars_Init_Item'))
-                local mods,pre,is_alias = unpack(v)
-                local _,dim,hold,tp,id
-                local dcl
-                if pre == 'var' then
-                    _,_,_,hold,tp,id = unpack(v)
-                    id = id or '_anon_'..i
-                    AST.set(me, i, node('Var', me.ln, is_alias, AST.copy(tp), id))
-                elseif pre == 'vector' then
-                    _,_,_,dim,tp,id = unpack(v)
-                    id = id or '_anon_'..i
-                    AST.set(me, i,
-                            node('Vec', me.ln, is_alias, AST.copy(tp), id, AST.copy(dim)))
-                elseif pre == 'pool' then
-                    _,_,_,dim,tp,id = unpack(v)
-                    id = id or '_anon_'..i
-                    AST.set(me, i,
-                            node('Pool', me.ln, is_alias, AST.copy(tp), id, AST.copy(dim)))
-                elseif pre == 'event' then
-                    _,_,_,_,tp,id = unpack(v)
-                    id = id or '_anon_'..i
-                    if tp.tag == 'Type' then
-                        tp = node('_Typelist', me.ln, tp)
-                        AST.set(v, 4, tp)
-                    end
-                    AST.set(me, i, node('Evt', me.ln, is_alias, AST.copy(tp), id))
-                else
-                    error'TODO'
-                end
-                me[i].is_param   = is_param
-                me[i].is_mid_idx = is_mid and ((params and #params or 0) + i)
-                me[i].mods       = mods
-                if Code.is_impl then
-                    ASR(id ~= '_anon_'..i, me,
-                        'invalid declaration : parameter #'..i..' : expected identifier')
-                end
-            end
+        AST.par(ins,'Block').__adjs_1 = true
+        AST.par(mid,'Block').__adjs_2 = true
+        if blk then
+            blk.__adjs_3 = true
         end
+        ret.__adjs_1 = AST.par(ins,'Block')
+        ret.__adjs_2 = AST.par(mid,'Block')
+        ret.__adjs_3 = blk
+
+        return ret
     end,
 
 -------------------------------------------------------------------------------
@@ -299,7 +256,7 @@ error'TODO'
         local max_chk = node('Nothing', me.ln)
         if max then
             max_chk = node('Stmt_Call', me.ln,
-                        node('Nat_Call', me.ln,
+                        node('Exp_call', me.ln,
                             'call',
                             node('Loc', me.ln,
                                 node('ID_nat', me.ln,
@@ -380,7 +337,7 @@ error'TODO'
         if AST.is_node(i) then
             AST.asr(i, 'ID_any')
             i = '__i_'..me.n    -- invent an ID not referenceable
-            i_dcl = node('_Vars', me.ln,
+            i_dcl = node('Var', me.ln,
                         false,
                         node('Type', me.ln,
                             node('ID_prim', me.ln, 'int')),
@@ -436,6 +393,7 @@ error'TODO'
         local exp = unpack(exp)
         return node('Do', me.ln,
                 node('ID_any', me.ln),
+                false,
                 node('Block', me.ln,
                     node('Stmts', me.ln,
                         node('Loop', me.ln,
@@ -498,20 +456,20 @@ error'TODO'
     _Set__PRE = function (me)
         local to,set = unpack(me)
 
-        --  _Set
-        --      to
-        --      _Set_Watching
-        --          _Watching
-        --              Await_*
-        --              Block
-        -->>>
-        --  _Watching
-        --      _Set
-        --          to
-        --          _Set_Await_many
-        --              Await_*
-        --      Block
         if set.tag == '_Set_Watching' then
+            --  _Set
+            --      to
+            --      _Set_Watching
+            --          _Watching
+            --              Await_*
+            --              Block
+            -->>>
+            --  _Watching
+            --      _Set
+            --          to
+            --          _Set_Await_many
+            --              Await_*
+            --      Block
             local watching = AST.asr(unpack(set),'_Watching')
             local awt = unpack(watching)
             local tag do
@@ -534,6 +492,33 @@ error'TODO'
                 AST.set(set, 1, awt)
                 return unt
             end
+
+            -- x = await Ff(...)
+            --  to
+            -- x = (var&? Ff f; f=spawn Ff(...); await f;)
+            --  to
+            -- var&? Ff f; f=spawn Ff(...); x=await f;
+            if AST.get(set,'', 1,'Stmts', 3,'Await_Int') then
+                local stmts = unpack(set)
+                local dcl, spw, awt = unpack(set)
+                AST.set(stmt, 3,
+                    node('_Set', me.ln,
+                        to,
+                        awt))
+                return stmts
+            end
+
+        elseif set.tag == '_Set_Await_one' then
+            local awt = unpack(set)
+            if awt.tag == '_Abs_Await' then
+                awt = F._Abs_Await__PRE(awt)
+                AST.set(awt, 3,
+                    node('_Set', me.ln,
+                        to,
+                        node('_Set_Await_many', me.ln,
+                            awt[3])))
+                return awt
+            end
         end
 
         -----------------------------------------------------------------------
@@ -549,7 +534,7 @@ error'TODO'
             --      _Set_*
             --          fr
             -->>>
-            --  _Set_*
+            --  Set_*
             --      fr
             --      to
 
@@ -564,6 +549,39 @@ error'TODO'
 
             return set
         end
+    end,
+
+    Set_Await_many__PRE = function (me)
+        local _,var,_ = unpack(me)
+        if var.tag == 'Loc' then
+            AST.set(me, 2, node('List_Loc', var.ln, var))
+        end
+    end,
+
+    _Abs_Await__PRE = function (me)
+        -- await Ff(...)
+        --  to
+        -- var&? Ff f;
+        -- f = spawn Ff(...)
+        -- await f;
+        local _,abs = unpack(me)
+        return node('Stmts', me.ln,
+                node('Var', me.ln,
+                    '&?',
+                    node('Type', me.ln,
+                        AST.copy(AST.asr(abs,'Abs_Cons',2,'ID_abs'))),
+                    '_spw_'..me.n),
+                node('_Set', me.ln,
+                    node('Loc', me.ln,
+                        node('ID_int', me.ln,
+                            '_spw_'..me.n)),
+                    node('_Set_Abs_Spawn', me.ln,
+                        node('Abs_Spawn', me.ln,
+                            unpack(me)))),
+                node('Await_Int', me.ln,
+                    node('Loc', me.ln,
+                        node('ID_int', me.ln,
+                            '_spw_'..me.n))))
     end,
 
     _Escape__PRE = function (me)
@@ -601,9 +619,6 @@ error'TODO'
                             watch)),
                     block))
     end,
-    _List_Var_Ref = function (me)
-        me.tag = 'List_Var'
-    end,
 
 -------------------------------------------------------------------------------
 
@@ -620,7 +635,7 @@ error'TODO'
             local new = AST.par(me, 'Abs_Cons')
 
             while new do
-                assert(AST.asr(new,'', 2,'Abslist', old.__i,'') == old)
+                assert(AST.asr(new,'', 3,'Abslist', old.__i,'') == old)
                 table.insert(T, 1, old.__i)
                 old = new
                 new = AST.par(new, 'Abs_Cons')
@@ -632,9 +647,9 @@ error'TODO'
             local base = AST.asr(Set,'', 2,'Loc', 1,'')
             local ret = AST.copy(base)
             for _, idx in ipairs(T) do
-                ret = AST.node('Exp_.', me.ln, '.', ret, idx)
+                ret = node('Exp_.', me.ln, '.', ret, idx)
             end
-            exp = AST.node('Loc', me.ln, ret)
+            exp = node('Loc', me.ln, ret)
         end
 --<< TODO: join
 
@@ -698,117 +713,68 @@ error'TODO'
 
 -------------------------------------------------------------------------------
 
+    __dcl_set__PRE = function (me)
+        local is_alias, mods, dim, tp, id, set
+        local tag = string.sub(me.tag,2,-5)
+        if tag=='Var' or tag=='Pool' or tag=='Vec' then
+            is_alias, dim_or_mods, tp, id, set = unpack(me)
+            AST.set(me, 2, tp)
+            AST.set(me, 3, id)
+            AST.set(me, 4, dim_or_mods)
+            AST.set(me, 5, nil)
+        else
+            is_alias, tp, id, set = unpack(me)
+            AST.set(me, 4, nil)
+        end
+
+        if set then
+            set = node('_Set', me.ln,
+                    node('Loc', me.ln,
+                        node('ID_int', me.ln, id)),
+                    unpack(set))
+        end
+
+        me.tag = tag
+        return node('Stmts', me.ln, me, set or nil)
+    end,
+
+    _Var_set__PRE = '__dcl_set__PRE',
+    _Vec_set__PRE = '__dcl_set__PRE',
+    _Pool_set__PRE = '__dcl_set__PRE',
+    _Evt_set__PRE = function (me)
+        local _,tp = unpack(me)
+        if tp.tag == 'Type' then
+            AST.set(me, 2, node('_Typelist',me.ln,tp))
+        end
+        return F.__dcl_set__PRE(me)
+    end,
+
     -- single declaration with multiple ids
     --      -> multiple declarations with single ids
+    _Nats__PRE = function (me)
+        local mod = unpack(me)
+        local ids = { unpack(me, 2) }
 
-    __dcls__PRE = function (me)
-        local alias, dim, tp
-        local tag = string.sub(me.tag,2,-2)
-        local idx do
-            if tag=='Pool' or tag=='Vec' then
-                idx = 3
-                alias, dim, tp = unpack(me)
-            else
-                idx = 2
-                alias, tp = unpack(me)
-            end
-        end
-
-        local ids = { unpack(me, idx+1) }
         local ret = node('Stmts', me.ln)
         for i,id in ipairs(ids) do
-            if tag=='Pool' or tag=='Vec' then
-                AST.set(ret, #ret+1,
-                        node(tag, me.ln, alias, AST.copy(tp), id, AST.copy(dim)))
-            else
-                AST.set(ret, #ret+1,
-                        node(tag, me.ln, alias, AST.copy(tp), id))
-            end
+            AST.set(ret, #ret+1,
+                node('Nat', me.ln, mod,
+                    node('Type', me.ln,
+                        node('ID_prim', me.ln, '_')),
+                    id))
         end
 
         return ret
-    end,
-
-    _Vars__PRE = '__dcls__PRE',
-    _Vecs__PRE = '__dcls__PRE',
-    _Pools__PRE = '__dcls__PRE',
-    _Evts__PRE = function (me)
-        local _,tp = unpack(me)
-        if tp.tag == 'Type' then
-            AST.set(me, 2, node('_Typelist', me.ln, tp))
-        end
-        return F.__dcls__PRE(me)
-    end,
-    _Exts__PRE = function (me)
-        local _,tp = unpack(me)
-        if tp.tag == 'Type' then
-            AST.set(me, 2, node('_Typelist', me.ln, tp))
-        end
-        return F.__dcls__PRE(me)
-    end,
-    _Nats__PRE = function (me)
-        AST.insert(me, 2,
-            node('Type', me.ln,
-                node('ID_prim', me.ln, '_')))
-        return F.__dcls__PRE(me)
-    end,
-
-    __dcls_set__PRE = function (me, tag, idx)
-        local is_alias, dim, tp, id
-        local tag = string.sub(me.tag,2,-6)
-        local idx do
-            if tag=='Pool' or tag=='Vec' then
-                idx = 3
-                is_alias, dim, tp, id = unpack(me)
-            else
-                idx = 2
-                is_alias, tp, id = unpack(me)
-            end
-        end
-
-        local ret = node('Stmts', me.ln)
-        local sets = { unpack(me, idx+1) }
-        for i=1, #sets, 2 do
-            local id, set = unpack(sets,i)
-
-            if tag=='Pool' or tag=='Vec' then
-                AST.set(ret, #ret+1,
-                        node('_'..tag..'s', me.ln, is_alias, AST.copy(dim), AST.copy(tp), id))
-            else
-                AST.set(ret, #ret+1,
-                        node('_'..tag..'s', me.ln, is_alias, AST.copy(tp), id))
-            end
-
-            if set then
-                local _,v = unpack(set)
-                local to = node('Loc', me.ln,
-                            node('ID_int', me.ln, id))
-                AST.set(ret, #ret+1,
-                        node('_Set', me.ln, to, unpack(set)))
-            end
-        end
-        return ret
-    end,
-
-    _Vars_set__PRE = '__dcls_set__PRE',
-    _Vecs_set__PRE = '__dcls_set__PRE',
-    _Pools_set__PRE = '__dcls_set__PRE',
-    _Evts_set__PRE = function (me)
-        local _,tp = unpack(me)
-        if tp.tag == 'Type' then
-            tp = node('_Typelist', me.ln, tp)
-        end
-        return F.__dcls_set__PRE(me)
     end,
 
 -------------------------------------------------------------------------------
 
     _Var_set_fin__PRE = function (me)
-        local Type, __ID_int = unpack(me)
+        local alias, Type, __ID_int = unpack(me)
         me.tag = '_Var_set_fin_X'
         return node('Stmts', me.ln,
                 node('Var', me.ln,
-                    '&?',
+                    alias,
                     Type,
                     __ID_int),
                 me)
@@ -838,7 +804,7 @@ error'TODO'
         end
         return ret
     end,
-    Nat_Call__PRE = function (me)
+    Exp_call = function (me)
         local _,_, ps = unpack(me)
         if ps and ps.tag == 'List_Exp' then
             -- ok
@@ -848,13 +814,6 @@ error'TODO'
                 AST.set(me[3], 1, ps)
 error'TODO: luacov never executes this?'
             end
-        end
-    end,
-
-    Set_Await_many__PRE = function (me)
-        local _,var,_ = unpack(me)
-        if var.tag == 'Loc' then
-            AST.set(me, 2, node('List_Loc', var.ln, var))
         end
     end,
 
@@ -872,7 +831,8 @@ error'TODO: luacov never executes this?'
 -------------------------------------------------------------------------------
 
     _Nat_Exp__PRE = function (me)
-        return node('ID_nat', me.ln, '_{}', unpack(me))
+        me.tag = 'ID_nat'
+        AST.insert(me, 1, '_{}')
     end,
 
     ['Exp_:__PRE'] = function (me)

@@ -2,7 +2,7 @@ PROPS_ = {}
 
 local sync = {
     Await_Forever=true, Await_Ext=true, Await_Int=true, Await_Wclock=true,
-    Abs_Spawn=true, Abs_Await=true,
+    Abs_Spawn=true,
     Emit_Int=true,
     Every=true, Finalize=true, Pause_If=true,
     Par=true, Par_And=true, Par_Or=true, Watching=true,
@@ -11,7 +11,7 @@ local sync = {
 
 local NO = {
     {Every     = sync},
-    {Loop_Pool = sync},
+    --{Loop_Pool = sync},
     {Async     = sync},
     {Finalize  = sync},
     {Code      = sync},   -- only code/tight
@@ -22,35 +22,49 @@ PROPS_.F = {
         for _,T in ipairs(NO) do
             local k,t = next(T)
             local par = AST.par(me,k)
+
             if par and t[me.tag] then
                 local sub = par
                 if par.tag == 'Every' then
                     local Await = unpack(AST.asr(par,'', 1,'Loop', 2,'Block', 1,'Stmts'))
                     if AST.is_par(Await,me) then
-                        return -- ok
+                        return -- ok: await for the every itself
+                    end
+
+                    local paror = AST.get(me,2,'Par_Or')
+                    local var = AST.get(me,'Par_Or', 1,'Stmts', 1,'Var')
+                    if me.tag=='Await_Forever' and paror and paror.__spawns then
+                        return -- ok: var&? inside every
+                    elseif me.__spawns and var and var[1] then
+                        return -- ok: var&? inside every
+
+                    elseif me.tag=='Finalize' or me.tag=='Par_Or' then
+                        if me.tag == 'Finalize' then
+                            if AST.get(me,3,'Stmts', 1,'Vec') then
+                                return -- ok: vector[] inside every
+                            end
+                        else
+                            if AST.get(me,1,'Stmts', 1,'Vec') then
+                                return -- ok: vector[] inside every
+                            end
+                        end
                     end
                 elseif par.tag == 'Code' then
-                    local _, mods = unpack(par)
+                    local mods = unpack(par)
                     if mods.await then
-                        return -- ok
+                        return -- ok: code/await
                     elseif me.tag == 'Finalize' then
-                        return -- ok (empty finalizer)
+                        return -- ok (this an empty finalizer for sure)
                     end
+                elseif par.tag=='Finalize' and AST.get(par,'Finalize',3,'Par')==me then
+                    return -- ok: finalize par fin/pse/res
                 end
-                if AST.get(par,'Finalize',3,'Par') == me then
-                    -- ok
-                else
-                    local paror = AST.par(me,'Par_Or')
-                    ASR(paror and paror.__props_ok or me.__props_ok, me,
-                        'invalid `'..AST.tag2id[me.tag]..
-                        '´ : unexpected enclosing `'..AST.tag2id[par.tag]..'´')
-                end
+
+                ASR(false, me,
+                    'invalid `'..AST.tag2id[me.tag]..
+                    '´ : unexpected enclosing `'..AST.tag2id[par.tag]..'´')
             end
         end
-    end,
-
-    Await_Alias = function (me)
-        AST.asr(AST.par(me,'Par_Or'),'').__props_ok = true
     end,
 
     --------------------------------------------------------------------------
@@ -119,24 +133,17 @@ PROPS_.F = {
             to.info.dcl.__no_access = watch -- no access outside watch
         end
     end,
-    ID_int = function (me)
-        local no = me.dcl[1]~='&?' and me.dcl.__no_access
-        if no then
-            ASR(AST.is_par(no, me), me,
-                'invalid access to internal identifier "'..me.dcl.id..'"'..
-                ' : crossed `'..AST.tag2id[no.tag]..'´'..
-                ' ('..no.ln[1]..':'..no.ln[2]..')')
-        end
-    end,
 
     --------------------------------------------------------------------------
 
     Code = function (me)
-        local _,mods,_,body = unpack(me)
-        if mods.dynamic and body then
-            local Code_Pars = AST.asr(body,'', 1,'Stmts', 1,'Code_Pars')
+        local mods1,_,body = unpack(me)
+        if mods1.dynamic and body then
+error'oi'
+            local Code_Pars = AST.asr(body,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 1,'Code_Pars', 1,'Stmts')
             for i, dcl in ipairs(Code_Pars) do
-                if dcl.mods.dynamic then
+                local _,_,_,mods2 = unpack(dcl)
+                if mods2.dynamic then
                     local _,Type,id = unpack(dcl)
                     local data = AST.get(Type,'',1,'ID_abs')
                     ASR(data and data.dcl.hier, me,
@@ -161,36 +168,6 @@ PROPS_.F = {
             ASR(me.hier, me, 'invalid `as´ declaration : expected `data´ hierarchy')
             if num ~= 'nothing' then
                 PROPS_.F.__check(DCLS.base(me))
-            end
-        end
-    end,
-
-    --------------------------------------------------------------------------
-
-    Abs_Spawn_Pool   = '_in_loop_pool',
-    Emit_Evt         = '_in_loop_pool',
-    _in_loop_pool = function (me)
-        for n in AST.iter() do
-            if n.tag == 'Loop_Pool' then
-                n.yields = true
-            end
-        end
-    end,
-
-    Loop_Pool = function (me)
-        local _,list,pool = unpack(me)
-        local Code = AST.asr(pool.info.dcl,'Pool', 2,'Type', 1,'ID_abs').dcl
-        local ret = AST.get(Code,'Code', 4,'Block', 1,'Stmts',
-                                         3,'Code_Ret', 1,'', 2,'Type')
-        me.yields = me.yields and ret
-            -- if "=>FOREVER" counts as not yielding
-
-        if list and me.yields then
-            for _,ID in ipairs(list) do
-                if ID.tag ~= 'ID_any' then
-                    ASR(ID.dcl[1] == '&?', me,
-                        'invalid declaration : expected `&?´ modifier : yielding `loop´')
-                end
             end
         end
     end,

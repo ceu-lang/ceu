@@ -3,9 +3,11 @@
 
 native/const
     _stderr,
+    _stdout,
 ;
 
 native/plain
+    _byte,
     _sockaddr,
     _sockaddr_in,
     _sockaddr_storage,
@@ -20,7 +22,9 @@ native/pure
 ;
 
 native/nohold
+    _ceu_vector_buf_set,
     _ceu_vector_setlen,
+    _fflush,
     _fprintf,
     _free,
     _memcpy,
@@ -35,7 +39,9 @@ native
     _assert,
     _ceu_dbg_assert,
     _cos,
+    _htonl,
     _malloc,
+    _ntohl,
     _ntohs,
     _pow,
     _rand,

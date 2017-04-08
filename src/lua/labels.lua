@@ -24,23 +24,34 @@ F = {
         me.lbl_in = new{'ROOT', true}
     end,
 
+    Block = function (me)
+        me.lbl_clr = new{'Block__CLR'}
+    end,
+
     Do = function (me)
         local _,_,set = unpack(me)
         me.lbl_out = new{'Do__OUT'}
+        me.lbl_clr = new{'Do__CLR'}
     end,
 
     Finalize_Case = function (me)
         me.lbl_in = new{'Finalize_Case__IN'}
     end,
-    Await_Alias = function (me)
-        me.lbl = new{'Await_Alias'}
+
+    Var = function (me)
+        if me.__dcls_code_alias then
+            me.lbl = new{'Alias__CLR'}
+        end
     end,
 
     Loop_Pool = function (me)
         F.Loop(me)
-        me.lbl_clr = new{'Loop_Pool__CLR'}
+        me.lbl_clr  = new{'Loop_Pool__CLR'}
+        me.lbl_fin  = new{'Loop_Pool__FIN'}
+        me.lbl_null = new{'Loop_Pool__NULL'}
     end,
     Loop = function (me)
+        me.lbl_clr = new{'Loop__CLR'}
         me.lbl_cnt = new{'Loop_Continue__CNT'}
         me.lbl_out = new{'Loop_Break__OUT'}
         if AST.par(me,'Async') then
@@ -50,7 +61,11 @@ F = {
     Loop_Num = 'Loop',
 
     Code = function (me)
+        local mods = unpack(me)
         me.lbl_in = new{'Code_'..me.id_, true}
+        if mods.await then
+            me.lbl_clr = new{'Code__CLR'}
+        end
     end,
 
     ---------------------------------------------------------------------------
@@ -65,12 +80,15 @@ F = {
         if me.tag ~= 'Par' then
             me.lbl_out = new{me.tag..'__OUT'}
         end
+        if me.tag == 'Par_Or' then
+            me.lbl_clr = new{me.tag..'__CLR'}
+        end
     end,
 
     ---------------------------------------------------------------------------
 
-    Abs_Await = function (me)
-        me.lbl_out = new{'Await_Abs__OUT'}
+    Abs_Spawn = function (me)
+        me.lbl_out = new{'Await_Spawn__OUT'}
     end,
     Await_Wclock = function (me)
         me.lbl_out = new{'Await_Wclock__OUT'}

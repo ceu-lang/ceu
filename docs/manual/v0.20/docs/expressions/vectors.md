@@ -25,6 +25,17 @@ Vec_Max ::= `$$´ Loc
 
 `TODO: max`
 
+The vector length can also be assigned:
+
+```ceu
+vector[] int vec = [ 1, 2, 3 ];
+$vec = 1;
+```
+
+The new length must be smaller or equal to the current length, otherwise the
+assignment raises a runtime error.
+The space for [dynamic vectors](../statements/#dimension) shrinks automatically.
+
 ### Constructor
 
 Vector constructors are only valid in [assignments](../statements/#assignments):

@@ -101,30 +101,48 @@ STMTS.F = {
         ASR(not TYPES.is_nat(TYPES.get(to.info.tp,1)), me,
             'invalid constructor : expected internal type : got "'..TYPES.tostring(to.info.tp)..'"')
 
-        for i, e in ipairs(fr) do
-            if e.tag == 'Loc' then
-                -- OK: v1 = v1 ..
-                -- NO: v1 = v2 ..
-                -- NO: v1 = .. v1
-                if i == 1 then
-                    ASR(AST.is_equal(to,e), me,
-                            'invalid constructor : item #'..i..' : '..
-                            'expected destination as source')
-                else
-                    ASR(not AST.is_equal(to,e), me,
-                            'invalid constructor : item #'..i..' : '..
-                            'unexpected destination as source')
-                end
-            end
+        -- OK: v1 = v1 ..
+        -- NO: v1 = v2 ..
+        -- NO: v1 = .. v1
+
+        local loc = AST.get(fr,'',1,'Loc')
+        if loc then
+            ASR(AST.is_equal(to,loc), me,
+                'invalid constructor : item #1 : '..
+                'expected destination as source')
         end
+
+        for i=2, #fr do
+            local e = fr[i]
+            ASR(not AST.is_equal(AST.asr(to,'Loc',1,''),e), me,
+                'invalid constructor : item #'..i..' : '..
+                'unexpected destination as source')
+        end
+    end,
+
+    Set_Nil = function (me)
+        local _, to = unpack(me)
+        INFO.asr_tag(to, {'Var'}, 'invalid assignment')
+        ASR(TYPES.check(to.info.tp,'?'), me,
+            'invalid assignment : expected option destination')
     end,
 
     Set_Alias = function (me)
         local fr, to = unpack(me)
+        local alias = unpack(to.info.dcl)
+
+        if fr.tag == 'NIL' then
+            ASR(alias == '&?', me, 'invalid binding : expected option alias')
+            return
+        end
 
         -- ctx
         INFO.asr_tag(to, {'Var','Vec','Pool','Evt'}, 'invalid binding')
         INFO.asr_tag(fr, {'Alias'}, 'invalid binding')
+
+        if fr[2].info.tag == 'Val' then
+            ASR(fr[2].tag == 'Abs_Call', me, 'invalid binding : expected native type')
+        end
 
         -- NO: var int x = &...
         -- NO: d.x = &...
@@ -135,8 +153,9 @@ STMTS.F = {
         ASR(ID_int, me, 'invalid binding : unexpected context for operator `'..op..'´')
         ASR(ID_int.dcl[1], me, 'invalid binding : expected declaration with `&´')
 
-        if to.__dcls_is_escape then
-            ASR(to.info.dcl[1] == '&?', to, 'invalid binding : expected `&?´ modifier')
+        -- NO: f1 = &f              // f may die
+        if to.info.tag=='Var' and TYPES.abs_dcl(to.info.tp,'Code') then
+            --ASR(alias == '&?', me, 'invalid binding : expected `spawn´')
         end
 
         -- tp
@@ -144,16 +163,17 @@ STMTS.F = {
         EXPS.check_tp(me, to.info.tp, fr.info.tp, 'invalid binding', true)
 
         local is_call = false
-        if fr[2].tag=='Nat_Call' or fr[2].tag=='Abs_Call' then
+        if fr[2].tag=='Exp_call' or fr[2].tag=='Abs_Call' then
             is_call = true
-            if fr[2].tag == 'Nat_Call' then
+            if fr[2].tag == 'Exp_call' then
                 assert(fr.info.dcl and fr.info.dcl.tag=='Nat')
                 ASR(TYPES.is_nat(to.info.tp), me,
                     'invalid binding : expected `native´ type')
             else
                 local ID_abs = AST.asr(fr,'', 2,'Abs_Call', 2,'Abs_Cons',
-                                              1,'ID_abs')
-                local tp = AST.asr(ID_abs.dcl,'Code', 4,'Block', 1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
+                                              2,'ID_abs')
+                local tp = AST.asr(ID_abs.dcl,'Code', 3,'Block', 1,'Stmts',
+                                                      1,'Code_Ret', 1,'', 2,'Type')
                 EXPS.check_tp(me, to.info.tp, tp, 'invalid binding', true)
             end
         else
@@ -218,7 +238,7 @@ STMTS.F = {
     Set_Abs_Val = function (me)
         local fr, to = unpack(me)
         local Abs_Cons = AST.asr(fr,'Abs_Val', 2,'Abs_Cons')
-        local ID_abs = unpack(Abs_Cons)
+        local _,ID_abs = unpack(Abs_Cons)
 
         -- ctx
         INFO.asr_tag(to, {'Var'}, 'invalid constructor')
@@ -254,15 +274,15 @@ STMTS.F = {
         -- ctx
         INFO.asr_tag(to, {'Var','Pool'}, 'invalid constructor')
     end,
-    Set_Abs_Spawn_Pool = function (me)
+    Set_Abs_Spawn = function (me)
         local _, to = unpack(me)
 
         -- ctx
         INFO.asr_tag(to, {'Var'}, 'invalid constructor')
 
         -- tp
-        ASR(TYPES.check(to.info.tp,'bool'), me,
-            'invalid constructor : expected `bool´ destination')
+        local cons = AST.asr(me,'', 1,'', 2,'Abs_Cons')
+        EXPS.check_tp(me, to.info.tp, cons.info.tp, 'invalid constructor')
     end,
 
 -- EMIT
@@ -276,12 +296,7 @@ STMTS.F = {
 
     Set_Await_one = function (me)
         local fr, to = unpack(me)
-        assert(fr.tag=='Await_Wclock' or fr.tag=='Abs_Await' or fr.tag=='Await_Int')
-
-        if fr.tag == 'Abs_Await' then
-            ASR(fr.tp, me,
-                'invalid assignment : `code´ executes forever')
-        end
+        assert(fr.tag=='Await_Wclock' or fr.tag=='Abs_Spawn' or fr.tag=='Await_Int')
 
         EXPS.check_tp(me, to.info.tp, fr.tp or fr.info.tp, 'invalid assignment')
 
@@ -303,6 +318,11 @@ STMTS.F = {
         end
 
         -- tp
+        if fr.tag == 'Await_Int' then
+            ASR(fr.tp, me,
+                'invalid assignment : `code´ executes forever')
+        end
+
         EXPS.check_tp(me, to.tp, fr.tp, 'invalid assignment')
 
         if me.__adjs_is_watching then
@@ -353,38 +373,12 @@ STMTS.F = {
         me.tp = TYPES.new(me, 'int')
     end,
 
-    __check_watching_list = function (me, pars, list, must_be_opt)
-        local tag = (me.tag=='Abs_Await' and 'Watching') or me.tag
-        ASR(pars and #pars==#list, me,
-            'invalid `'..AST.tag2id[tag]..'´ : expected '..#pars..' argument(s)')
-        for i, par in ipairs(pars) do
-            local par_alias,par_tp = unpack(par)
-            assert(par_alias)
-            local arg = list[i]
-            if arg.tag ~= 'ID_any' then
-                local arg_alias,arg_tp = unpack(arg.dcl)
-                local err = 'invalid binding : argument #'..i
-                ASR(arg_alias, me,
-                    err..' : expected alias `&´ declaration')
-                ASR(arg_alias == par_alias, me,
-                    err..' : unmatching alias `&´ declaration')
-                EXPS.check_tag(me, par.tag, arg.info.dcl.tag, err)
-                EXPS.check_tp(me, par_tp, arg_tp, err)
-
-                if must_be_opt then
-                    ASR(arg_alias=='&?', me,
-                        err..' : terminating `code´ : expected alias `&?´ declaration')
-                end
-            end
-        end
-    end,
-
-    Abs_Spawn_Pool = function (me)
-        local mods_call,Abs_Cons,list = unpack(me)
-        local ID_abs = AST.asr(Abs_Cons,'Abs_Cons', 1,'ID_abs')
+    Abs_Spawn = function (me)
+        local mods_call,Abs_Cons = unpack(me)
+        local ID_abs = AST.asr(Abs_Cons,'Abs_Cons', 2,'ID_abs')
         me.__code = AST.asr(ID_abs.dcl,'Code')
 
-        local _,mods_dcl = unpack(me.__code)
+        local mods_dcl = unpack(me.__code)
         ASR(mods_dcl.await, me,
             'invalid `'..AST.tag2id[me.tag]..'´ : expected `code/await´ declaration '..
                 '('..me.__code.ln[1]..':'..me.__code.ln[2]..')')
@@ -398,30 +392,22 @@ STMTS.F = {
                 'invalid `'..AST.tag2id[me.tag]..'´ : unexpected `/'..mod..'´ modifier')
         end
 
-        if list then
-            local must_be_opt = (me.tag~='Abs_Await' or me.__adjs_is_spawn) and
-                                 AST.get(me.__code,'', 4,'Block',
-                                                       1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
-
-            local pars = AST.asr(me.__code,'', 4,'Block', 1,'Stmts', 2,'Code_Pars')
-            STMTS.F.__check_watching_list(me, pars, list, must_be_opt)
-        end
-    end,
-
-    Abs_Await = function (me)
-        STMTS.F.Abs_Spawn_Pool(me)
-
         ASR(AST.par(me,'Code') ~= me.__code, me,
             'invalid `'..AST.tag2id[me.tag]..'´ : unexpected recursive invocation')
 
-        local ret = AST.get(me.__code,'', 4,'Block',
-                                          1,'Stmts', 3,'Code_Ret', 1,'', 2,'Type')
+        local ret = AST.get(me.__code,'', 3,'Block', 1,'Stmts',
+                                          1,'Code_Ret', 1,'', 2,'Type')
         me.tp = ret and AST.copy(ret)
 
         local watch = AST.par(me, 'Watching')
-        local me1 = AST.get(watch,'', 1,'Par_Or', 1,'Block', 1,'Stmts', 1,'Abs_Await')
-        if me1 == me then
-            ASR(ret, watch, 'invalid `watching´ : `code´ executes forever')
+        if watch then
+            local me1 = AST.get(watch,'', 1,'Par_Or', 1,'Block', 1,'Stmts',
+                                          1,'Par_Or', 2,'Stmts', 1,'Par_Or',
+                                          1,'Stmts',  1,'Set_Abs_Spawn',
+                                          1,'Abs_Spawn')
+            if me1 == me then
+                ASR(ret, watch, 'invalid `watching´ : `code´ executes forever')
+            end
         end
      end,
 
@@ -437,11 +423,41 @@ STMTS.F = {
         end
 
         -- tp
-        if alias == '&?' then
-            me.tp = TYPES.new(e, 'void')
+        if e.info.tag == 'Var' then
+            local abs = TYPES.abs_dcl(e.info.tp, 'Code')
+            ASR(abs, me, 'invalid `await´ : expected `code/await´ abstraction')
+            assert(alias == '&?')
+            local tp = AST.get(abs,'Code', 3,'Block', 1,'Stmts',
+                                           1,'Code_Ret', 1,'', 2,'Type')
+            if tp then
+                local ID = AST.get(me,'', 1,'Loc', 1,'ID_int')
+                if string.sub(ID[1],1,5) ~= '_spw_' then
+                    tp = TYPES.push(tp, '?')
+                end
+                me.tp = AST.node('Typelist', me.ln, AST.copy(tp))
+            else
+                -- will fail in Set_Await_many
+            end
         else
             me.tp = e.info.tp
         end
+    end,
+
+    Kill = function (me)
+        local loc, e = unpack(me)
+        local alias = unpack(loc.info.dcl)
+
+        -- ctx
+        INFO.asr_tag(loc, {'Var'}, 'invalid `kill´')
+
+        -- tp
+        local abs = TYPES.abs_dcl(loc.info.tp, 'Code')
+        ASR(abs, me, 'invalid `kill´ : expected `code/await´ abstraction')
+        ASR(alias=='&?', me, 'invalid `kill´ : expected `&?´ alias')
+        local tp = AST.get(abs,'Code', 3,'Block', 1,'Stmts',
+                                       1,'Code_Ret', 1,'', 2,'Type')
+        --ASR(tp, me, 'invalid kill : `code/await´ executes forever')
+        -- TODO: check e vs tp
     end,
 
 -- STATEMENTS
@@ -470,7 +486,7 @@ STMTS.F = {
     end,
 
     Do = function (me)
-        local _,_,e = unpack(me)
+        local _,_,_,e = unpack(me)
         if e then
             INFO.asr_tag(e, {'Nat','Var'}, 'invalid assignment')
         end
@@ -499,15 +515,15 @@ STMTS.F = {
     end,
 
     Loop_Pool = function (me)
-        local _,list,pool = unpack(me)
+        local _,i,pool = unpack(me)
 
         -- ctx
         INFO.asr_tag(pool, {'Pool'}, 'invalid `pool´ iterator')
 
-        if list then
-            local Code = AST.asr(pool.info.tp[1].dcl, 'Code')
-            local pars = AST.asr(Code,'', 4,'Block', 1,'Stmts', 2,'Code_Pars')
-            STMTS.F.__check_watching_list(me, pars, list)
+        -- tp
+        if i.tag ~= 'ID_any' then
+            ASR(TYPES.contains(i.info.tp, pool.info.tp), me,
+                'invalid control variable : types mismatch : "'..TYPES.tostring(i.info.tp)..'" <= "'..TYPES.tostring(pool.info.tp)..'"')
         end
     end,
 
@@ -563,7 +579,11 @@ STMTS.F = {
         EXPS.check_tp(me, Typelist, ps.tp, 'invalid call')
     end,
 
-    Nat_Call = function (me)
+    Stmt_Call = function (me)
+        local f = unpack(me)
+        ASR(f.tag=='Exp_call' or f.tag=='Abs_Call', me, 'invalid call')
+    end,
+    Exp_call = function (me)
         local _, e, ps = unpack(me)
 
         -- tp

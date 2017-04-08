@@ -10,6 +10,7 @@ TESTS = {
         count  = 0,
         trails = 0,
         bytes  = 0,
+        bcasts = 0,
         visits = 0,
     }
 }
@@ -134,7 +135,7 @@ end
         assert(ok==false, 'no error found')
         assert(string.find(msg, T[mod], nil, true), tostring(msg))
     else
-        assert(ok==true, msg)
+        assert(ok==true, '['..mod..'] '..(msg or ''))
         return true
     end
 end
@@ -282,16 +283,17 @@ end
     if not check(T,'ast')    then return end
     if not check(T,'adjs')   then return end
     dofile(DIR..'types.lua')
+    dofile(DIR..'exps.lua')
     if not check(T,'dcls')   then return end
-    if not check(T,'locs')   then return end
-    if not check(T,'exps')   then return end
 --do return end
+    --if not check(T,'exps')   then return end
     if not check(T,'consts') then return end
     if not check(T,'fins')   then return end
     if not check(T,'spawns') then return end
     if not check(T,'stmts')  then return end
     if not check(T,'tight_') then return end
     if not check(T,'inits')  then return end
+    if not check(T,'ptrs')   then return end
     if not check(T,'scopes') then return end
     if not check(T,'props_') then return end
     if not check(T,'trails') then return end
@@ -346,9 +348,15 @@ if T.ana or T.tmp or T.props or T.mode then return end
     if type(T.run) == 'number' then
         assert(ret == T.run%256, '>>> ERROR : run : expected '..T.run..' : got '..ret)
 
-        local n = string.match(out, '_ceu_tests_trails_visited_ = (%d+)\n')
-        TESTS.stats.visits = TESTS.stats.visits + tonumber(n)
-        assert(out == '_ceu_tests_trails_visited_ = '..n..'\n', 'code with output')
+        local n1 = string.match(out, '_ceu_tests_bcasts_ = (%d+)\n')
+        TESTS.stats.bcasts = TESTS.stats.bcasts + tonumber(n1)
+
+        local n2 = string.match(out, '_ceu_tests_trails_visited_ = (%d+)\n')
+        TESTS.stats.visits = TESTS.stats.visits + tonumber(n2)
+
+        assert(out == '_ceu_tests_bcasts_ = '..n1..'\n'..
+                      '_ceu_tests_trails_visited_ = '..n2..'\n',
+            'code with output')
     else
         assert(type(T.run) == 'string', 'missing run value')
         assert(string.find(out, T.run, nil, true), '>>> ERROR : run : expected "'..T.run..'" : got "'..out..'"')
@@ -580,6 +588,7 @@ stats = {
     count  = ]]..TESTS.stats.count  ..[[,
     trails = ]]..TESTS.stats.trails ..[[,
     bytes  = ]]..TESTS.stats.bytes  ..[[,
+    bcasts = ]]..TESTS.stats.bcasts ..[[,
     visits = ]]..TESTS.stats.visits ..[[,
 }
 ]])
@@ -669,6 +678,52 @@ stats = {
     visits = 2505081,
 }
 (./run.lua: 647.16s 38344k)
+
+stats = {
+    count  = 3093,
+    trails = 5648,
+    bytes  = 49990960,
+    visits = 5207437,
+}
+(./run.lua: 760.84s 40444k)
+
+stats = {
+    count  = 3093,
+    trails = 5648,
+    bytes  = 49990960,
+    visits = 4152987,
+             5006862,
+             4564906,
+}
+(./run.lua: 711.48s 40732k)
+
+stats = {
+    count  = 3093,
+    trails = 5648,
+    bytes  = 49392944,
+    visits = 5075900,
+}
+
+(./run.lua: 747.26s 42228k)
+
+stats = {
+    count  = 3093,
+    trails = 5648,
+    bytes  = 49392944,
+    visits = 5211691,
+}
+(./run.lua: 755.32s 40812k)
+
+stats = {
+    count  = 3106,
+    trails = 5684,
+    bytes  = 53819176,
+    bcasts = 862322,
+    visits = 2161183,
+}
+(./run.lua: 648.72s 42460k)
+
+
 
 -------------------------------------------------------------------------------
 

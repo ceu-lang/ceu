@@ -229,7 +229,7 @@ The current length of a vector is dynamic and can be accessed through the
 Céu generates an <a href="#TODO">error</a> for out-of-bounds vector accesses.</p>
 <p>Example:</p>
 <pre><code class="ceu">vector[9] byte buf = [1,2,3];   // write access
-buf[$buf+1] = 4;                // write access
+buf = buf .. [4];               // write access
 escape buf[1];                  // read access (yields 2)
 </code></pre>
 

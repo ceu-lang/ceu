@@ -25,7 +25,7 @@ end
 local function types_id (tp)
     local ID = unpack(tp)
     if ID.dcl and (ID.dcl.tag=='Code' or ID.dcl.tag=='Data') then
-        return ID.dcl.id_
+        return ID.dcl.id_ or 'TODO'
     else
         local id = unpack(ID)
         return id
@@ -218,9 +218,11 @@ function TYPES.ID_plain (tp)
 end
 
 function TYPES.abs_dcl (tp,kind)
-    assert(kind, 'bug found')
+    --assert(kind, 'bug found')
     local ID = TYPES.ID_plain(tp)
-    return ID and ID.dcl and ID.dcl.tag==kind and ID.dcl
+    return ID and ID.dcl and
+            ((kind==nil and ID.dcl.tag=='Code' or ID.dcl.tag=='Data') or ID.dcl.tag==kind) and
+                ID.dcl
 end
 
 do

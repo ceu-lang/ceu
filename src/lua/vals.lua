@@ -10,11 +10,16 @@ function CUR (field, ctx)
     local Code = AST.iter'Code'()
     local Isr  = AST.iter'Async_Isr'()
     local data do
-        if ctx.is_outer then
+        if ctx.outer then
             if Isr and Code then
                 data = '(*((tceu_code_mem_'..Code.id_..'*)_ceu_mem))'
             else
-                data = 'CEU_APP.root'
+                if ctx.outer.depth then
+                    local mem = 'ceu_outer(_ceu_mem, '..(ctx.outer.depth or 0)..')'
+                    data = '(*(tceu_code_mem_'..ctx.outer.id_..'*)('..mem..'))'
+                else
+                    data = 'CEU_APP.root'
+                end
             end
         elseif Isr then
             data = '_ceu_loc'
@@ -51,6 +56,10 @@ F = {
     end,
 
 -- PRIMITIVES
+
+    NIL = function (me)
+        return 'NULL'
+    end,
 
     NULL = function (me)
         return 'NULL'
@@ -92,37 +101,45 @@ F = {
 
 -- CALL
 
-    Nat_Call = function (me)
+    Exp_call = function (me)
         local _, e, ps = unpack(me)
         return V(e)..'('..table.concat(V(ps),',')..')'
     end,
 
     Abs_Call = function (me)
         local _, Abs_Cons = unpack(me)
-        local ID_abs, _ = unpack(Abs_Cons)
-        local _,mods,_,Code_Pars = unpack(ID_abs.dcl)
+        local obj, ID_abs, _ = unpack(Abs_Cons)
+        local mods = unpack(ID_abs.dcl)
         assert(mods.tight)
+
+        local mem do
+            if obj then
+                mem = '((tceu_code_mem*)&'..V(obj)..')'
+            else
+                mem = '_ceu_mem'
+            end
+        end
+        assert(mem)
+
         if CEU.opts.ceu_features_lua then
             return [[
-CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
-                             ]]..V(Abs_Cons)..[[, ]]..LUA(me)..[[)
+CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..','..LUA(me)..[[)
 ]]
         else
             return [[
-CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
-                             ]]..V(Abs_Cons)..[[)
+CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
 ]]
         end
     end,
 
     Abs_Cons = function (me, ctx)
-        local ID_abs, Abslist = unpack(me)
+        local obj, ID_abs, Abslist = unpack(me)
 
         local id_struct do
             if ID_abs.dcl.tag == 'Data' then
                 id_struct = 'tceu_data_'..ID_abs.dcl.id_
             else
-                id_struct = 'tceu_code_args_'..ID_abs.dcl.id_
+                id_struct = 'tceu_code_mem_'..ID_abs.dcl.id_
             end
             if ctx.to_tp then
                 id_struct = ctx.to_tp
@@ -133,21 +150,18 @@ CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
 
         if ID_abs.dcl.tag == 'Data' then
             if ID_abs.dcl.hier then
-                ps[1] = '._enum = CEU_DATA_'..ID_abs.dcl.id_
+                ps[1] = { '_enum', 'CEU_DATA_'..ID_abs.dcl.id_ }
             end
         end
 
-        local mods = (ID_abs.dcl.tag=='Code' and ID_abs.dcl[2])
+        local mods = (ID_abs.dcl.tag=='Code' and ID_abs.dcl[1])
 
         assert(#me.vars == #Abslist)
         for i=1, #me.vars do
             local var = me.vars[i]
             local val = Abslist[i]
 
-            local var_is_alias, var_tp, var_id, var_dim = unpack(var)
-            if ID_abs.dcl.tag == 'Code' then
-                var_id = '_'..i
-            end
+            local var_is_alias, var_tp = unpack(var)
 
             -- var Ee.Xx ex = ...;
             -- code Ff (var& Ee e)
@@ -165,9 +179,9 @@ CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
 
                 if mods and mods.dynamic and var_tp[1].dcl.hier then
                     if val.tag == 'Exp_as' then
-                        ps[#ps+1] = '._data_'..i..' = CEU_DATA_'..val.info.tp[1].dcl.id
+                        ps[#ps+1] = { '_data_'..i, 'CEU_DATA_'..val.info.tp[1].dcl.id }
                     else
-                        ps[#ps+1] = '._data_'..i..' = '..V(val,ctx)..op..'_enum'
+                        ps[#ps+1] = { '_data_'..i, V(val,ctx)..op..'_enum' }
                     end
                 end
             end
@@ -178,9 +192,9 @@ CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
                (not (val.info and TYPES.check(val.info.tp,'?')))
             then
                 if val.tag == 'ID_any' then
-                    ps[#ps+1] = '.'..var_id..' = { .is_set=0 }'
+                    ps[#ps+1] = { var.id_, '{ .is_set=0 }' }
                 else
-                    ps[#ps+1] = '.'..var_id..' = { .is_set=1, .value='..V(val)..'}'
+                    ps[#ps+1] = { var.id_, '{ .is_set=1, .value='..V(val)..'}' }
                 end
             else
                 local to_val = ctx.to_val
@@ -196,7 +210,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
                             --  event ...;
                             --  vector[] _int x;
                         else
-                            ps[#ps+1] = '.'..var_id..' = '..to_val..'.'..var_id
+                            ps[#ps+1] = { var.id_, to_val..'.'..var.id_ }
                         end
                     end
                 else
@@ -206,7 +220,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
                         --ctx.to_tp  = TYPES.toc(var_tp)
                         ctx.to_tp  = TYPES.toc(val.info.tp)
                         if to_val then  -- only set for Set_Abs_Val ("data")
-                            ctx.to_val = '('..to_val..'.'..var_id..')'
+                            ctx.to_val = '('..to_val..'.'..var.id_..')'
                         end
                     end
 
@@ -243,24 +257,38 @@ CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
                         end
                     end
 
-                    ps[#ps+1] = '.'..var_id..' = '..val_val
+                    ps[#ps+1] = { var.id, val_val }
+                                    -- proto has no var.id_
                 end
             end
         end
 
-        if ctx.mid then
-            for i, var in ipairs(ctx.mid) do
-                -- extra indirection for mid's
-                if var.tag == 'ID_any' then
-                    ps[#ps+1] = '._'..(i+#me.vars)..' = NULL'
-                else
-                    ps[#ps+1] = '._'..(i+#me.vars)..' = &'..V(var,{is_bind=true})
+        local ps1='' do
+            for i, t in ipairs(ps) do
+                local to, fr = unpack(t)
+                ps1 = ps1..'.'..to..' = '..fr
+                if i < #ps then
+                    ps1 = ps1..','
                 end
             end
         end
+        local ps2='' do
+            for _, t in ipairs(ps) do
+                local to, fr = unpack(t)
+                ps2 = ps2..'__ceu_'..me.n..'.'..to..' = '..fr..';'
+            end
+        end
 
-        return '(struct '..id_struct..')'..
-                    '{\n'..table.concat(ps,',\n')..'\n}'
+        return [[
+
+#if defined(__GNUC__) && defined(__cplusplus)
+({]]..id_struct..' __ceu_'..me.n..';'..ps2..'; __ceu_'..me.n..[[;})
+
+#else
+(struct ]]..id_struct..') { '..ps1..[[ }
+
+#endif
+]]
     end,
 
     List_Exp = function (me)
@@ -340,20 +368,25 @@ CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
 
         if me.info.dcl.tag=='Evt' and (not is_alias) then
             if e.tag == 'Outer' then
-                return '((tceu_evt){ '..me.info.dcl.id_..', {&CEU_APP.root} })'
+                local outer = e.__dcls_outer
+                local mem do
+                    if outer and assert(outer.depth) then
+                        mem = 'ceu_outer(_ceu_mem, '..(outer.depth or 0)..')'
+                    else
+                        mem = '&CEU_APP.root'
+                    end
+                end
+                return '((tceu_evt){ '..me.info.dcl.id_..', {'..mem..'} })'
             else
                 return '((tceu_evt){ '..me.info.dcl.id_..', {&'..V(e)..'} })'
             end
         elseif e.tag == 'Outer' then
-            return F.ID_int(me,{is_outer=true})
+            return F.ID_int(me,{outer=e.__dcls_outer or AST.root})
         else
             local ptr = ''
-            if not TYPES.is_nat(e.info.tp) then
-                if is_alias and me.info.dcl.tag~='Evt' then
-                    ptr = '*'
-                end
+            if is_alias=='&' and (not ctx.is_bind) and (me.info.dcl.tag~='Evt') then
+                ptr = '*'
             end
-
             local suf = (ctx and ctx.id_suf) or ''
             return '('..ptr..'('..V(e)..'.'..member..suf..'))'
         end
@@ -366,7 +399,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
         local dcl = e.info.dcl
         if dcl and dcl.tag == 'Evt' then
             return V(e)
-        elseif e.tag=='Nat_Call' or e.tag=='Abs_Call' then
+        elseif e.tag=='Exp_call' or e.tag=='Abs_Call' then
             -- x = &_f();
             return V(e)
         elseif dcl[1] == '&?' then
@@ -382,7 +415,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
         local _,arr,idx = unpack(me)
         if TYPES.is_nat(TYPES.get(arr.info.tp,1)) then
             return '('..V(arr)..'['..V(idx)..'])'
-        elseif AST.get(me,2,'Exp_&&',2,'Loc',1,'')==me then
+        elseif AST.get(me,1,'Exp_&&',2,'')==me then
             return [[
 (*(]]..TYPES.toc(me.info.tp)..[[*) ceu_vector_buf_get(&]]..V(arr)..','..V(idx)..[[))
 ]]
@@ -399,11 +432,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
         local _, e = unpack(me)
         local alias, tp = unpack(e.info.dcl)
         if alias == '&?' then
-            if e.info.dcl.tag=='Var' and TYPES.is_nat(tp) then
-                return '('..V(e)..' != NULL)'
-            else
-                return '('..V(e)..'.alias != NULL)'
-            end
+            return '('..V(e)..' != NULL)'
         else
             return '('..V(e)..'.is_set)'
         end
@@ -414,11 +443,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..[[(_ceu_stk, _ceu_trlK,
         local alias, tp = unpack(e.info.dcl)
         if alias == '&?' then
             if e.info.dcl.tag == 'Var' then
-                if TYPES.is_nat(tp) then
-                    return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e,{is_bind=true})..', __FILE__, __LINE__))'
-                else
-                    return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e)..'.alias, __FILE__, __LINE__))'
-                end
+                return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e)..', __FILE__, __LINE__))'
             elseif e.info.dcl.tag == 'Evt' then
                 return '(*CEU_OPTION_EVT('..V(e)..'.alias, __FILE__, __LINE__))'
             else
@@ -522,7 +547,7 @@ ceu_data_as(CEU_DATA_SUPERS_]]..base.id_..[[,
 ]]
             else
                 ret = [[
-((]]..TYPES.toc(Type)..')'..V(e)..[[)
+((]]..TYPES.toc(Type)..')('..V(e)..[[))
 ]]
             end
         end

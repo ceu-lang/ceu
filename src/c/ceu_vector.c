@@ -12,7 +12,12 @@ typedef struct {
 
 #define ceu_vector_buf_len(vec)           ((vec)->len * (vec)->unit)
 #define ceu_vector_buf_get(vec,idx)       (&(vec)->buf[(idx)*(vec)->unit])
-#define ceu_vector_buf_set(vec,idx,buf,n) memcpy(ceu_vector_buf_get((vec),(idx)),(buf),(n))
+#define ceu_vector_buf_set(vec,idx,buf,n) {                             \
+    ceu_callback_assert_msg_ex(((vec)->len*(vec)->unit) >= ((idx)+(n)), \
+                               "ccess out of bounds",                   \
+                               __FILE__, __LINE__);                     \
+    memcpy(ceu_vector_buf_get((vec),(idx)),(buf),(n));                  \
+}
 
 #define ceu_vector_setlen(a,b,c) ceu_vector_setlen_ex(a,b,c,__FILE__,__LINE__)
 #define ceu_vector_geti(a,b)     ceu_vector_geti_ex(a,b,__FILE__,__LINE__)

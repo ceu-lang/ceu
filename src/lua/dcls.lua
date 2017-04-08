@@ -6,17 +6,18 @@ local function iter_boundary (cur, id, can_cross)
     return function ()
         while cur do
             local c = cur
+            local do_ = AST.get(c, 'Do')
             cur = cur.__par
             if c.tag == 'Block' then
                 return c
             elseif can_cross then
                 -- continue
-            elseif string.match(c.tag, '^.?Async') then
+            elseif string.match(c.tag,'^.?Async') or (do_ and do_[2]) then
                 -- see if varlist matches id to can_cross the boundary
                 -- async (a,b,c) do ... end
                 local can_cross2 = false
 
-                if string.sub(id,1,1) == string.upper(string.sub(id,1,1))
+                if string.match(c.tag,'^.?Async') and string.sub(id,1,1)==string.upper(string.sub(id,1,1))
                     and string.sub(id,1,1) ~= '_'
                 then
                     ASR(false, cur, 'abstraction inside `async´ : not implemented') -- TODO: ID_abs is ok
@@ -44,16 +45,36 @@ local function iter_boundary (cur, id, can_cross)
     end
 end
 
-function DCLS.get (blk, id, can_cross)
+local __do = function (me)
+    return me.tag=='Do' and me[2]~=false
+end
+
+function DCLS.outer (me)
+    local async = AST.par(me,'_Async_Isr') or AST.par(me,'Async_Isr')
+    local do_   = AST.iter(__do)()
+    local code  = AST.par(me,'Code')
+    ASR(async or do_ or code, me, 'invalid `outer´')
+
+    local ret = async
+    if do_ and ((not ret) or AST.depth(do_)>AST.depth(ret)) then
+        ret = do_
+    end
+    if code and ((not ret) or AST.depth(code)>AST.depth(ret)) then
+        ret = code
+    end
+    return ret
+end
+
+function DCLS.get (blk, id, can_cross, dont_use)
     AST.asr(blk, 'Block')
     for blk in iter_boundary(blk,id,can_cross) do
         local dcl = blk.dcls[id]
         if dcl then
             local no = AST.iter'Vec_Init'() or AST.iter'Pool_Init'()
-            if not no then
+            if (not no) and (not dont_use) then
                 dcl.is_used = true
             end
-            return dcl
+            return dcl, AST.par(blk,'Code')
         end
     end
     return nil
@@ -62,9 +83,9 @@ end
 function DCLS.asr (me, blk_or_data, id, can_cross, err)
     local data = AST.get(blk_or_data, 'Data')
     local blk = (data and AST.asr(data,'',3,'Block')) or blk_or_data
-    local ret = DCLS.get(blk, id, can_cross)
+    local ret,n = DCLS.get(blk, id, can_cross)
     if ret then
-        return ret
+        return ret,n
     else
         if data then
             ASR(false, me, 
@@ -73,13 +94,13 @@ function DCLS.asr (me, blk_or_data, id, can_cross, err)
                 '`data´ "'..data.id..
                 '" ('..data.ln[1]..':'..  data.ln[2]..')')
         else
-            local par = AST.par(me,'Code')
-            if par and par[3]==id then
-                return par
-            else
-                ASR(false, me,
-                    err..' "'..id..'" is not declared')
+            -- recursive use
+            for par in AST.iter'Code' do
+                if par and par[2]==id then
+                    return par
+                end
             end
+            ASR(false, me, err..' "'..id..'" is not declared')
         end
     end
 end
@@ -94,7 +115,7 @@ assert(can_cross==nil)
 
     local id = (opts and opts.id) or me.id
 
-    local old = DCLS.get(blk, id, can_cross)
+    local old = DCLS.get(blk, id, can_cross, true)
     local implicit = (me.is_implicit and 'implicit ') or ''
     if old and (not old.is_predefined) then
         local F do
@@ -207,8 +228,11 @@ DCLS.F = {
                 elseif dcl.tag=='Code' and CEU.opts.ceu_err_unused_code then
                     f = ASR_WRN_PASS(CEU.opts.ceu_err_unused_code)
                 end
-                f(dcl.is_used or dcl.is_predefined, dcl,
-                  AST.tag2id[dcl.tag]..' "'..dcl.id..'" declared but not used')
+                if not (dcl.is_used or dcl.is_predefined) then
+                    dcl.__dcls_unused = true
+                    f(false, dcl,
+                      AST.tag2id[dcl.tag]..' "'..dcl.id..'" declared but not used')
+                end
             end
         end
     end,
@@ -220,12 +244,31 @@ DCLS.F = {
 
     -- LOC
 
-    __no_abs = function (tp, no_what)
+    __no_abs = function (tp, class, mod)
         local ID = unpack(tp)
         if ID.tag == 'ID_abs' then
-            ASR(no_what and ID.dcl.tag~=no_what, tp,
+            local ok do
+                if class then
+                    if ID.dcl.tag==class then
+                        if mod then
+                            if ID.dcl[2][mod] then
+                                ok = false
+                            else
+                                ok = true
+                            end
+                        else
+                            ok = false
+                        end
+                    else
+                        ok = true
+                    end
+                else
+                    ok = false
+                end
+            end
+            ASR(ok, tp,
                 'invalid declaration : unexpected context for `'..AST.tag2id[ID.dcl.tag]..'´ "'..
-                    (ID.dcl.id or ID.dcl[3])..'"')
+                    (ID.dcl.id or ID.dcl[2])..'"')
         end
     end,
 
@@ -234,12 +277,25 @@ DCLS.F = {
 
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
-        DCLS.F.__no_abs(Type, 'Code')
 
-        if alias == '&?' then
-            me.is_read_only = true
-            ASR(not TYPES.check(Type,'?'), me,
-                'invalid declaration : option type : not implemented')
+        if alias then
+            local ID = unpack(Type)
+            if ID.tag=='ID_abs' and ID.dcl.tag=='Code' and ID.dcl[1].await then
+                if alias == '&' then
+                    local tp = AST.get(ID.dcl,'Code', 3,'Block', 1,'Stmts',
+                                                      1,'Code_Ret', 1,'', 2,'Type')
+                    ASR(not tp, me, 'invalid declaration : `code/await´ must execute forever')
+                end
+                me.__dcls_code_alias = true
+                -- ok
+            end
+            if alias == '&?' then
+                me.is_read_only = true
+                ASR(not TYPES.check(Type,'?'), me,
+                    'invalid declaration : option type : not implemented')
+            end
+        else
+            DCLS.F.__no_abs(Type, 'Code')
         end
 
         if alias then
@@ -268,7 +324,6 @@ DCLS.F = {
 
         if ((not t) and AST.par(me,'Data')) or is_alias
             or AST.par(me,'Code_Ret')
-            or AST.par(me,'_Code_Pars_X')
         then
             return
         end
@@ -310,7 +365,7 @@ DCLS.F = {
             end
 
             -- default vaules
-            local stmts = AST.asr(dcl,2,'Stmts')
+            local stmts = AST.asr(dcl,1,'Stmts')
             local set = AST.get(stmts,'', 2,'Set_Exp') or
                         AST.get(stmts,'', 2,'Set_Any') or
                         AST.get(stmts,'', 2,'Set_Abs_Val')
@@ -323,22 +378,7 @@ DCLS.F = {
 
         end
 
-        if AST.par(me,'_Code_Pars_X') and is_top then
-            local stmts = AST.get(AST.par(me,'Code'),'',
-                                    4,'Block', 1,'Stmts', 2,'Block',
-                                    1,'Stmts', 1,'Do', 2,'Block', 1,'Stmts')
-            if stmts then
-                AST.asr(stmts,'', 1,'Code_Args')
-                AST.insert(stmts, 1, t.stmts)
-            else
-                if #t.stmts > 0 then
-                   -- code/dynamic / prototype
-                    error'not implemented'
-                end
-            end
-        else
-            return t.stmts
-        end
+        return t.stmts
     end,
 
     Pool__PRE = 'Vec__PRE',
@@ -365,7 +405,13 @@ DCLS.F = {
         local is_alias,Type,id,dim = unpack(me)
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
-        DCLS.F.__no_abs(Type, 'Code')
+        DCLS.F.__no_abs(Type, 'Code', 'tight')
+
+        local code = AST.par(me, 'Code')
+        if code and code[1].tight and (not is_alias) then
+            ASR(false, me,
+                'invalid declaration : vector inside `code/tight´')
+        end
 
         -- vector[] void vec;
         local ID_prim,mod = unpack(Type)
@@ -435,10 +481,9 @@ DCLS.F = {
 
     -- CODE / DATA
 
-    _Code_Pars_X = function (me)
-        me.tag = 'Code_Pars'
-        local Code = AST.asr(me,4,'Code')
-        local _,mods = unpack(Code)
+    Code_Pars = function (me)
+        local Code = AST.par(me,'Code')
+        local mods = unpack(Code)
 
         -- check types only
         do
@@ -449,27 +494,11 @@ DCLS.F = {
             DCLS.F.Typelist(tps)
         end
 
-        -- check if all mid's are "&" aliases
---[[
-        if AST.asr(me,1,'Stmts')[2] == me then
-            for i, dcl in ipairs(me) do
-                local is_alias, Type = unpack(dcl)
-                ASR(is_alias, dcl,
-                    'invalid `code´ declaration : `watching´ parameter #'..i..' : expected `&´')
-assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
-            end
-        end
-]]
-
-        local stmts = AST.asr(me,1,'Stmts')
-        if stmts[2] == me then
-            return  -- initialization list
-        end
-
         -- multi-methods: changes "me.id" on Code
         me.ids_dyn = ''
-        for i, dcl in ipairs(me) do
-            if dcl.mods.dynamic then
+        for i, dcl in ipairs(AST.par(me,'Block').dcls) do
+            local _,_,_,dcl_mods = unpack(dcl)
+            if dcl_mods and dcl_mods.dynamic then
                 ASR(mods.dynamic, me,
                     'invalid `dynamic´ modifier : expected enclosing `code/dynamic´')
                 local is_alias,Type = unpack(dcl)
@@ -511,7 +540,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             return
         end
 
-        local proto_body = AST.asr(me,'', 4,'Block', 1,'Stmts')
+        local proto_body = AST.asr(me,'', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block',1,'Stmts')
         local orig = proto_body[2]
         AST.set(proto_body, 2, node('Stmts', me.ln))
         local new = AST.copy(me)
@@ -525,23 +554,24 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         return s
     end,
 
-    __proto_ignore = function (n1, n2)
-        return (type(n1)=='string' and string.sub(n1,1,6)=='_anon_')
-            or (type(n2)=='string' and string.sub(n2,1,6)=='_anon_')
-            --or (AST.get(n1,'Block') and n2==nil)
-    end,
-
     Code = function (me)
-        local _,mods1,id,body1 = unpack(me)
+        local mods1,id,body1 = unpack(me)
 
-        ASR(not AST.par(me,'Code'), me,
-            'invalid `code´ declaration : nesting is not allowed')
+        --ASR(not AST.par(me,'Code'), me,
+            --'invalid `code´ declaration : nesting is not allowed')
+
+        me.depth = 0
+        local par = AST.par(me, 'Code')
+        while par do
+            par = AST.par(par, 'Code')
+            me.depth = me.depth + 1
+        end
 
         local blk = AST.par(me, 'Block')
+        local proto1 = AST.asr(body1,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 1,'Code_Pars')
 
         if (not me.is_dyn_base) and mods1.dynamic and me.is_impl then
-            local ins1 = AST.asr(body1,'Block', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
-            me.id = id..ins1.ids_dyn
+            me.id = id..proto1.ids_dyn
             me.dyn_base = DCLS.asr(me,blk,id)
             me.dyn_base.dyn_last = me
         else
@@ -558,15 +588,15 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
                 _n = '_'..((old and old.n) or me.n)
             end
             if me.dyn_base then
-                local ins1 = AST.asr(body1,'Block', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
-                me.id_ = id.._n..ins1.ids_dyn
+                me.id_ = id.._n..proto1.ids_dyn
             else
                 me.id_ = id.._n
             end
         end
 
         if old then
-            local _,mods2,_,body2 = unpack(old)
+            ASR(old.tag == 'Code', me, 'invalid `code´ declaration')
+            local mods2,_,body2 = unpack(old)
             if me.is_impl then
                 ASR(not (old.is_impl or old.__impl), me,
                     'invalid `code´ declaration : body for "'..id..'" already exists')
@@ -574,9 +604,8 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             end
 
             -- compare ins
-            local proto1 = AST.asr(body1,'Block',1,'Stmts',1,'Stmts')
-            local proto2 = AST.asr(body2,'Block',1,'Stmts',1,'Stmts')
-            local ok = AST.is_equal(proto1, proto2, DCLS.F.__proto_ignore)
+            local proto2 = AST.asr(body2,'Block',1,'Stmts',2,'Do',3,'Block',1,'Stmts',1,'Code_Pars')
+            local ok = AST.is_equal(proto1, proto2)
 
             -- compare mods
             do
@@ -684,23 +713,35 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
     end,
 
     ---------------------------------------------------------------------------
+    -- HACK_02: very ugly
+    ---------------------------------------------------------------------------
 
     --  call Ff(Dd(...));
     -- to
     --  var Dd x = Dd(...);
     --  call FF(x);
 
-    Abs_Cons__POS = function (me)
-        local code, Abslist = unpack(me)
+    Abs_Cons = function (me)
+        local obj, code, Abslist = unpack(me)
+
         if code.dcl.tag ~= 'Code' then
+            EXPS.F.Abs_Cons(me)
             return
         end
 
+        if me.__dcls_ok then
+            EXPS.F.Abs_Cons(me)
+            return
+        else
+            me.__dcls_ok = true
+        end
+
+        local is_pending = false
         for i, v in ipairs(Abslist) do
             local id = '_'..code.n..'_'..v.n..'_abs'
             local xxx, yyy
 
-            local data = AST.get(v,'Abs_Cons', 1,'ID_abs')
+            local data = AST.get(v,'Abs_Cons', 2,'ID_abs')
             if data and data.dcl.tag == 'Data' then
                 xxx = data
                 yyy = node('Set_Abs_Val', v.ln,
@@ -708,14 +749,18 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
                         node('Loc', v.ln,
                             node('ID_int', v.ln, id)))
             elseif v.tag == 'ID_any' then
-                local vars = AST.asr(code.dcl,'Code', 4,'Block', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
-                local _,tp = unpack(vars[i])
-                if TYPES.abs_dcl(tp,'Data') then
-                    xxx = tp[1]
-                    yyy = node('Set_Any', v.ln,
-                            v,
-                            node('Loc', v.ln,
-                                node('ID_int', v.ln, id)))
+                local vars = AST.asr(code.dcl,'Code', 3,'Block', 1,'Stmts', 2,'Do', 3,'Block').dcls
+                if vars[i] then
+                    local is_alias,tp = unpack(vars[i])
+                    if not is_alias then
+                        if TYPES.abs_dcl(tp,'Data') then
+                            xxx = tp[1]
+                            yyy = node('Set_Any', v.ln,
+                                    v,
+                                    node('Loc', v.ln,
+                                        node('ID_int', v.ln, id)))
+                        end
+                    end
                 end
             end
 
@@ -735,9 +780,15 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
                 local t = stmts.__dcls_cons or {}
                 stmts.__dcls_cons = t
                 t[#t+1] = { j, set, get }
+                t.conss = t.conss or {}
+                t.conss[#t.conss+1] = me
+                is_pending = true
 
                 AST.set(Abslist,i,get)
             end
+        end
+        if not is_pending then
+            EXPS.F.Abs_Cons(me)
         end
     end,
 
@@ -752,6 +803,11 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
                 get[DCLS.F] = nil
                 AST.visit_fs(get)
+            end
+
+            for _, cons in ipairs(t.conss) do
+                cons[DCLS.F] = nil
+                AST.visit_fs(cons)
             end
         end
     end,
@@ -768,6 +824,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
     ID_nat = function (me)
         local id = unpack(me)
         me.dcl = DCLS.asr(me, AST.par(me,'Block'), id, true, 'native identifier')
+        EXPS.F.ID_nat(me)
     end,
 
     ID_ext = function (me)
@@ -777,36 +834,73 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
     ID_abs = function (me)
         local id = unpack(me)
-
-        -- search outside current "code/data"
-        local code_or_data = AST.par(me,'Code') or AST.par(me,'Data')
-        local blk = (code_or_data and AST.par(code_or_data,'Block'))
-                        or AST.par(me,'Block')
-
-        me.dcl = DCLS.asr(me, blk, id, false, 'abstraction')
+        local blk do
+            local obj = AST.get(me,1,'Abs_Cons', 1,'Loc')
+            if obj then
+                assert(obj.info.tp)
+                local Code = TYPES.abs_dcl(obj.info.tp, 'Code')
+                blk = AST.asr(Code,'Code', 3,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 2,'Block')
+            else
+                blk = AST.par(me,'Block')
+            end
+        end
+        me.dcl = DCLS.asr(me, blk, id, true, 'abstraction')
     end,
 
     ID_int = function (me)
         local id = unpack(me)
         local blk = AST.par(me,'Block')
+        local can_cross = false
         do
             -- escape should refer to the parent "a"
             -- var int a = do var int a; ... escape ...; end;
             local set = AST.par(me,'Set_Exp')
             if set and set.__dcls_is_escape and AST.is_par(set[2],me) then
-                blk = AST.par(blk, 'Block')
+                -- __dcls_is_escape holds the enclosing "do" node
+                blk = AST.par(set.__dcls_is_escape, 'Block')
+                can_cross = true
             end
         end
-        me.dcl = DCLS.asr(me, blk, id, false, 'internal identifier')
+        me.dcl = DCLS.asr(me, blk, id, can_cross, 'internal identifier')
+        EXPS.F.ID_int(me)
+    end,
+
+    Loc = function (me)
+        local e = unpack(me)
+        me.dcl = e.dcl
+        EXPS.F.Loc(me)
     end,
 
     ['Exp_.'] = function (me)
         local _, e, member = unpack(me)
         if e.tag == 'Outer' then
-            local out = AST.par(me,'_Async_Isr') or ASR(AST.par(me,'Code'), me,
-                            'invalid `outer´ : expected enclosing `code´ declaration')
-            me.dcl = DCLS.asr(me, AST.par(out,'Block'),
-                              member, false, 'internal identifier')
+            local code
+            local out = DCLS.outer(me)
+            me.dcl,code = DCLS.asr(me, AST.par(out,'Block'), member, true, 'internal identifier')
+            e.__dcls_outer = code  -- how many "code" crosses?
+        elseif e.dcl and e.dcl.tag == 'Var' then
+            local abs = AST.get(e.dcl,'Var', 2,'Type', 1,'ID_abs')
+            if abs then
+                local dcl = AST.get(abs.dcl,'Data',3,'Block')
+                if dcl then
+                    me.dcl = DCLS.asr(me, dcl, member, false, 'field')
+                else
+                    dcl = AST.asr(abs.dcl,'Code',3,'Block',1,'Stmts',2,'Do',3,'Block',1,'Stmts',2,'Block')
+                    me.dcl = DCLS.asr(me, dcl, member, false, 'parameter')
+                end
+            else
+                ASR(AST.get(e.dcl,'Var', 2,'Type', 1,'ID_nat'), me,
+                    'invalid member access')
+            end
+        end
+        EXPS.F['Exp_.'](me)
+    end,
+
+    Set_Nil = function (me)
+        local _, to = unpack(me)
+        local alias = unpack(to.info.dcl)
+        if alias then
+            me.tag = 'Set_Alias'
         end
     end,
 
@@ -867,9 +961,9 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             end
             ASR(do_, esc, 'invalid `escape´ : no matching enclosing `do´')
             esc.outer = do_
-            local _,_,to = unpack(do_)
+            local _,outer,_,to = unpack(do_)
             local set = AST.get(me.__par,'Set_Exp') or AST.asr(me.__par,'Set_Alias')
-            set.__dcls_is_escape = true
+            set.__dcls_is_escape = do_
             local fr = unpack(set)
             if to and type(to)~='boolean' then
                 ASR(type(fr)~='boolean', me,
@@ -887,5 +981,13 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         end
     end,
 }
+
+for k,v in pairs(EXPS.F) do
+    if DCLS.F[k] then
+        --DBG('>>>', k)
+    else
+        DCLS.F[k] = v
+    end
+end
 
 AST.visit(DCLS.F)

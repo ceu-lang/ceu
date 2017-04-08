@@ -8,36 +8,293 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
-Test { [[
-var int x = 1;
-escape *(&&x);
-]],
-    parser = 'line 2 : after `(´ : expected location',
-}
-
--- XXX-01
-Test { [[
-data Object with
-  var int ccc = 101;
-end
-code/await Show(var Object obj) -> (var&? int rrr) -> int do
-    var int aaa = obj.ccc;
-    rrr = &aaa;
-    await 1s;
-    escape 1;
-end
-
-var&? int r;
-spawn Show(Object(_)) -> (&r);
-var& int rr = &r!;                  // TODO: should not allow this
-await 2s;
-escape rr;
-]],
-    --wrn = true,
-    run = { ['~>2s']=101 },
-}
-
 --[=====[
+--
+    vector[] byte right1 = [] .. "pingus/player"
+                           .. (call Pingu_Get_Owner_Str(&pingu) as _char&&) // requires as _char&&
+                           .. "/walker/right";
+
+--
+            if (call Get_Velocity().y > 5.0) then
+
+--
+    var IPingu pingu = val IPingu(rect_, _, _);
+    pingu.direction = do
+        if direction_? then
+            escape direction_!;
+        else
+            escape {LEFT};
+        end
+    end;
+
+pause Ff;
+resume Ff;
+
+code/await Ff (var int x) -> int
+with
+do
+    await 1s;
+    escape x+10;
+end
+
+var&? Ff f = spawn Ff();
+var int x1 = f!.x;
+var int x2 = f;
+escape x1+x2;
+
+var/nohold int x;
+var/dynamic int x;
+
+-- TODO: warning shadow
+Test { [[
+var int x = do()
+    var bool x = false;
+    escape 10;
+end;
+escape x;
+]],
+    run = 10,
+}
+
+-- TODO: warning shadow
+Test { [[
+var int x = do()
+    code/await Ff (void) -> void do end
+    var&? Ff x;
+    escape 10;
+end;
+escape x;
+]],
+    wrn = true,
+    run = 10,
+}
+
+-- TODO: tight loop
+Test { [[
+event void a;
+loop do
+    par/and do
+        every a do
+            break;
+        end
+    with
+        emit a;
+    end
+end
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Light (pool&[] Light    lights,
+                  var     int?     direction,
+                  var     int?     magnitude,
+                  var     bool?    is_fork,
+                 ) -> void
+do
+end
+
+pool[] Light lights;
+
+spawn Light(&lights,_,_,_) in lights;
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+--do return end
+
+
+do return end
+
+Test { [[
+var int ret = 1;
+var u8 i;
+loop i in [0->0[ do
+    ret = ret + 1;
+end
+escape ret;
+]],
+    run = 1,
+}
+Test { [[
+var int ret = 1;
+var u8 i;
+loop i in ]0<-0] do
+    ret = ret + 1;
+end
+escape ret;
+]],
+    run = 1,
+}
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+var usize i;
+loop i in [0->0[ do
+    spawn Ff();
+end
+escape 1;
+]],
+    run = 1,
+}
+
+-- TODO: bug #89
+Test { [[
+code/await Ff (void) -> (var& int x) -> FOREVER do
+    code/tight Gg (void) -> void;
+    call Gg();
+
+    var int y = 10;
+    x = &y;
+
+    code/tight Gg (void) -> void do
+        outer.x = 10;
+    end
+
+    await FOREVER;
+end
+spawn Ff();
+escape 1;
+]],
+    run = 1,
+}
+
+-- TODO: bug #89
+Test { [[
+code/await Ff (void) -> (var& int x) -> FOREVER do
+    code/tight Gg (void) -> void do
+        outer.x = 10;
+    end
+    call Gg();
+
+    var int y = 10;
+    x = &y;
+    await FOREVER;
+end
+spawn Ff();
+escape 1;
+]],
+    --inits = 'line 1 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:3)',
+    run = 1,
+}
+
+ssize <- usize
+
+do return end
+
+Test { [[
+code/await Ff (vector&[] byte buf) -> FOREVER do
+    code/tight Reset (void) -> void do
+        $outer.buf = 0;
+    end
+    call Reset();
+    await FOREVER;
+end
+vector[] byte buf = [1,2,3];
+var&? Ff f = spawn Ff(&buf);
+call f.Reset();
+escape ($buf as int) + 1;
+]],
+    run = 1,
+}
+do return end
+
+Test { [=[
+code/await Ff (void) -> int do
+    [[ G = 111 ]];
+    await async/thread do end;
+    var int ret = [[G]];
+    escape ret;
+end
+var int ret = 0;
+par/and do
+    lua[] do
+        var int v = await Ff();
+        ret = ret + v;
+    end
+with
+    lua[] do
+        var int v = await Ff();
+        ret = ret + v;
+    end
+end
+escape ret;
+]=],
+    _opts = { ceu_features_lua='true' , ceu_features_thread='true' },
+    run = 222,
+}
+do return end
+
+Test { [=[
+vector[] byte xxx = [1];
+var int ret = [[ @xxx[0] ]];
+escape ret;
+]=],
+    _opts = { ceu_features_lua='true' },
+    run = 1,
+}
+
+Test { [[
+var int ret = 0;
+var int i;
+loop i do
+    ret = 1;
+    do finalize with
+        ret = ret * 2;
+    end
+    break;
+end
+ret = ret + 1;
+escape ret;
+]],
+    run = 3,
+}
+
+Test { [=[
+event void a;
+var int ret = 0;
+
+spawn do
+    await async do end;
+    emit a;
+    ret = 10;
+    emit a;
+    ret = 20;
+end
+
+do
+    await a;
+end
+par/or do
+    await FOREVER;
+with
+    await a;
+end
+
+escape ret;
+]=],
+    wrn = true,
+    run = 20;
+}
+
+Test { [[
+    do/_
+        var int flags = _O_CREAT|_O_WRONLY|_O_TRUNC;
+        var _mode_t mode = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
+        var&? UV_FS_Open f = spawn UV_FS_Open(&&path[0], flags, mode);
+        await f!.file.ok;
+        if f!.file.fd < 0 then
+            escape f!.file.fd;
+        end
+    end
+]],
+    todo = 'on error, await never awakes // 1. force watching // 2. raise exception',
+    run = 1,
+}
+
 do return end -- OK
 --]=====]
 
@@ -123,12 +380,12 @@ Test { [[escape (((1)));]], run=1 }
 Test { [[
 escape 1 + null;
 ]],
-    exps = 'line 1 : invalid operand to `+´ : expected numeric type',
+    dcls = 'line 1 : invalid operand to `+´ : expected numeric type',
 }
 Test { [[
 escape 1 or false;
 ]],
-    exps = 'line 1 : invalid operand to `or´ : expected boolean type',
+    dcls = 'line 1 : invalid operand to `or´ : expected boolean type',
 }
 
 Test { [[escape (1 >= 0) as int;]], run=1 }
@@ -143,10 +400,10 @@ Test { [[escape 1 as int;]],
 Test { [[escape 1==2;]], stmts='line 1 : invalid `escape´ : types mismatch : "int" <= "bool"', }
 Test { [[escape (1!=2) as int;]], run=1 }
 Test { [[escape 0  or  10;]],
-    exps = 'line 1 : invalid operand to `or´ : expected boolean type',
+    dcls = 'line 1 : invalid operand to `or´ : expected boolean type',
 }
 Test { [[escape (0 as bool)  or  (10 as bool) as int;]],
-    parser = 'line 1 : after `)´ : expected `(´ or binary operator or `;´',
+    parser = 'line 1 : after `)´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or binary operator or `;´',
     --run = 1,
 }
 Test { [[escape ((0 as bool)  or  (10 as bool)) as int;]],
@@ -154,7 +411,7 @@ Test { [[escape ((0 as bool)  or  (10 as bool)) as int;]],
 }
 Test { [[escape ((0 as bool) and (10 as bool)) as int;]], run=0 }
 Test { [[escape (10==true) as int;]],
-    exps = 'line 1 : invalid operands to `==´ : incompatible types : "int" vs "bool"',
+    dcls = 'line 1 : invalid operands to `==´ : incompatible types : "int" vs "bool"',
 }
 Test { [[escape (10!=0) as int;]], run=1 }
 Test { [[escape (true and true) as int;]], run=1 }
@@ -166,12 +423,13 @@ Test { [[escape ((1<=2) as int) + ((1<2) as int) + 2/1 - 2%3;]], run=2 }
 Test { [[nt a;]],
     --parser = "line 1 : after `nt´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´",
     --parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
-    parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `(´',
+    parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `?´ or `(´ or `is´ or binary operator or `;´',
 }
 Test { [[nt sizeof;]],
     --parser = "line 1 : after `nt´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´",
+    parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `?´ or `(´ or `is´ or binary operator or `;´',
     --parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
-    parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `(´',
+    --parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `(´',
 }
 Test { [[var int sizeof;]],
     parser = "line 1 : after `int´ : expected type modifier or internal identifier",
@@ -179,7 +437,7 @@ Test { [[var int sizeof;]],
 Test { [[escape sizeof(int);]], stmts='line 1 : invalid `escape´ : types mismatch : "int" <= "usize"' }
 Test { [[escape sizeof(int) as int;]], run=4 }
 Test { [[escape 1<2>3;]],
-    exps = 'line 1 : invalid operand to `>´ : expected numeric type',
+    dcls = 'line 1 : invalid operand to `>´ : expected numeric type',
 }
 Test { [[escape (((1<2) as int)<3) as int;]], run=1 }
 
@@ -265,30 +523,33 @@ Test { [[
 var uint x = 1.5;
 escape x + 0.5;
 ]],
-    exps = 'line 2 : invalid operands to `+´ : incompatible numeric types : "uint" vs "float"',
+    dcls = 'line 2 : invalid operands to `+´ : incompatible numeric types : "uint" vs "float"',
 }
 
 Test { [[
 escape *1;
 ]],
-    parser = 'line 1 : after `*´ : expected location',
-    --exps = 'line 1 : invalid operand to `*´ : expected location',
-    --exps = 'line 1 : invalid operand to `*´ : expected pointer type',
+    --parser = 'line 1 : after `*´ : expected location',
+    --dcls = 'line 1 : invalid operand to `*´ : expected location',
+    dcls = 'line 1 : invalid operand to `*´ : expected pointer type',
+    --dcls = 'line 1 : invalid operand to `*´ : unexpected context for value "1"',
 }
 
 Test { [[
 escape &&1;
 ]],
-    parser = 'line 1 : after `&&´ : expected location',
-    --exps = 'line 1 : invalid operand to `&&´ : expected location',
-    --exps = 'line 1 : invalid expression : operand to `&&´ must be a name',
+    --parser = 'line 1 : after `&&´ : expected location',
+    --dcls = 'line 1 : invalid operand to `&&´ : unexpected context for value "1"',
+    dcls = 'line 1 : expected native type',
+    --dcls = 'line 1 : invalid operand to `&&´ : expected location',
+    --dcls = 'line 1 : invalid expression : operand to `&&´ must be a name',
 }
 
 Test { [[
 var int x = 1;
-escape &&x == &&x as int;
+escape &&x == &&x as int ();
 ]],
-    parser = 'line 2 : after `x´ : expected `[´ or `:´ or `.´ or `!´ or binary operator or `;´',
+    parser = 'line 2 : after `x´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or binary operator or `;´',
     --run = 1,
 }
 
@@ -296,24 +557,26 @@ Test { [[
 var int x = 1;
 escape *&&x;
 ]],
-    parser = 'line 2 : after `*´ : expected location',
-    --exps = 'line 2 : invalid operand to `*´ : expected location',
-    --run = 1,
+    --parser = 'line 2 : after `*´ : expected location',
+    --dcls = 'line 2 : invalid operand to `*´ : expected location',
+    --dcls = 'line 2 : invalid operand to `*´ : unexpected context for value "x"',
+    run = 1,
 }
 
 Test { [[
 var int x = 1;
 escape *&&*&&x;
 ]],
-    parser = 'line 2 : after `*´ : expected location',
-    --exps = 'line 2 : invalid operand to `*´ : expected location',
+    --parser = 'line 2 : after `*´ : expected location',
+    --dcls = 'line 2 : invalid operand to `*´ : expected location',
+    dcls = 'line 2 : expected native type',
     --run = 1,
 }
 
 Test { [[
 escape not 1;
 ]],
-    exps = 'line 1 : invalid operand to `not´ : expected boolean type',
+    dcls = 'line 1 : invalid operand to `not´ : expected boolean type',
 }
 Test { [[
 escape (not false) as int;
@@ -345,6 +608,12 @@ escape (1<<1) + (8>>2);
     run = 4,
 }
 
+Test { [[
+var int x = 0;
+escape x.x;
+]],
+    dcls = 'line 2 : invalid member access',
+}
 --<<< EXPS / EXPRESSIONS
 
 -->>> NATIVE
@@ -468,16 +737,33 @@ end
 escape _get_A_id();
 ]],
     wrn = true,
-    run = 12,
+    run = 13,
 }
 
 Test { [[
 native _V, _f;
 escape _f(_V);
 ]],
-    cc = '2:41: error: ‘V’ undeclared (first use in this function)',
+    cc = '2:27: error: ‘V’ undeclared (first use in this function)',
 }
 
+Test { [[
+var int x = 0;
+code/tight Ff (void) -> int do
+    outer.x = outer.x() - 1;
+    escape x;
+end
+escape call Ff();
+]],
+    --run = 1,
+    dcls = 'line 3 : invalid call : expected native type',
+}
+
+Test { [[
+escape 1 + ({1.1 == 1} as int);
+]],
+    run = 1,
+}
 --<<< NATIVE
 
 Test { [[var int a;]],
@@ -486,8 +772,9 @@ Test { [[var int a;]],
 
 Test { [[var int a;]],
     wrn = true,
-    inits = 'uninitialized variable "a" : reached yielding statement (/tmp/tmp.ceu:1)',
+    --inits = 'uninitialized variable "a" : reached yielding statement (/tmp/tmp.ceu:1)',
     --inits = 'uninitialized variable "a" : reached `end of file´ (/tmp/tmp.ceu:1)',
+    run = false,
 }
 
 Test { [[var int a=0;]],
@@ -515,8 +802,8 @@ escape (_x);
 Test { [[
 escape (1+1).v;
 ]],
-    parser = 'line 1 : after `)´ : expected `(´ or `is´ or `as´ or binary operator or `;´',
-    --env = 'line 1 : not a struct',
+    --parser = 'line 1 : after `)´ : expected `(´ or `is´ or `as´ or binary operator or `;´',
+    dcls = 'line 1 : invalid operand to `.´ : expected native or data type',
 }
 
 Test { [[
@@ -524,6 +811,7 @@ var int a, b;
 a=0; b=0;
 escape 10;
 ]],
+    parser = 'line 1 : after `a´ : expected `=´ or `;´',
     run = 10,
 }
 
@@ -564,14 +852,14 @@ Test { [[do var int a=1; end var int a=0; escape a;]],
     tmp = 'error: variable ‘__ceu_a_1’ set but not used',
     --run = 0,
 }
-Test { [[var int a=1,a=0; escape a;]],
+Test { [[var int a=1; var int a=0; escape a;]],
     wrn = true,
     --dcls = 'line 1 : internal identifier "a" is already declared at line 1',
     run = 0,
 }
 Test { [[var int a; a = b = 1]],
     --parser = "line 1 : after `b´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `;´",
-    parser = 'line 1 : after `b´ : expected `[´ or `:´ or `.´ or `!´ or `(´ or `?´ or `is´ or `as´ or binary operator or `..´ or `;´',
+    parser = 'line 1 : after `b´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `..´ or `?´ or `(´ or `is´ or binary operator or `;´',
 }
 Test { [[var int a = b; escape 0;]],
     dcls = 'internal identifier "b" is not declared',
@@ -624,7 +912,7 @@ Test { [[
 native do
 end
 ]],
-    parser = 'line 1 : after `native´ : expected `/´ or native identifier or `/pre´ or `/pos´',
+    parser = 'line 1 : after `native´ : expected `/pre´ or `/pos´ or `/´ or native identifier',
 }
 
 Test { [[
@@ -656,17 +944,17 @@ Test { [[
 inputintMY_EVT;
 ifv==0thenbreak;end
 ]],
-    parser = 'line 1 : after `inputintMY_EVT´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `(´',
+    --parser = 'line 1 : after `inputintMY_EVT´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `(´',
     --parser = 'line 2 : after `ifv´ : `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
-    --parser = 'line 2 : after `==´ : expected expression',
+    parser = 'line 2 : after `==´ : expected expression',
     --parser = 'line 2 : after `0´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´',
 }
 Test { [[
 inputintMY_EVT;
 escape 1;
 ]],
-    parser = 'line 1 : after `inputintMY_EVT´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `(´',
-    --dcls = 'line 1 : internal identifier "inputintMY_EVT" is not declared',
+    --parser = 'line 1 : after `inputintMY_EVT´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `(´',
+    dcls = 'line 1 : internal identifier "inputintMY_EVT" is not declared',
 }
 
 Test { [[
@@ -682,8 +970,8 @@ Test { [[
 native_printf();
 loopdo await250ms;_printf("Hello World!\n");end
 ]],
-    parser = 'line 2 : after `loopdo´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `(´',
-    --parser = 'line 2 : after `loopdo´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´ or `?´ or `is´ or binary operator or `;´',
+    --parser = 'line 2 : after `loopdo´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `(´',
+    parser = 'line 2 : after `loopdo´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `?´ or `(´ or `is´ or binary operator or `;´',
     --parser = 'line 2 : after `loopdo´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´',
 }
 
@@ -691,6 +979,12 @@ loopdo await250ms;_printf("Hello World!\n");end
 
 Test { [[
 input void A, A;
+]],
+    parser = 'line 1 : after `A´ : expected `;´',
+    --dcls = 'line 1 : declaration of "A" hides previous declaration (/tmp/tmp.ceu : line 1)',
+}
+Test { [[
+input void A; input void A;
 ]],
     dcls = 'line 1 : declaration of "A" hides previous declaration (/tmp/tmp.ceu : line 1)',
 }
@@ -706,7 +1000,7 @@ var bool a? = 1;
 a? = 2;
 escape a?;
 ]],
-    parser = 'line 2 : after `a´ : expected `=´ or `,´ or `;´',
+    parser = 'line 2 : after `a´ : expected `=´ or `;´',
     --run = 2,
 }
 
@@ -1007,7 +1301,7 @@ escape a as int;
 Test { [[
 escape a && b;
 ]],
-    parser = 'line 1 : after `a´ : expected `[´ or `:´ or `.´ or `!´ or `(´ or `?´ or `is´ or `as´ or binary operator or `;´',
+    parser = 'line 1 : after `a´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `;´',
 }
 
 Test { [[
@@ -1018,7 +1312,7 @@ native _ISPOINTER, _MINDIST, _TILESHIFT;
                                 escape 0;
 end
 ]],
-    parser = 'line 3 : after `)´ : expected `is´ or `as´ or binary operator or `)´',
+    parser = 'line 3 : after `)´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `)´',
     --dcls = 'line 3 : internal identifier "check" is not declared',
 }
 
@@ -1365,9 +1659,23 @@ else
     a=1;a=2; escape 3;
 end;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:2)',
     --inits = 'line 1 : uninitialized variable "a" : reached `escape´ (/tmp/tmp.ceu:3)',
     --ref = 'line 5 : invalid extra access to variable "a" inside the initializing `if-then-else´ (/tmp/tmp.ceu:2)',
+    run = 3,
+}
+Test { [[
+var int a;
+if false then
+    a=1;a=2; escape 3;
+else
+    escape 1;
+end;
+]],
+    --inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "a" : reached `escape´ (/tmp/tmp.ceu:5)',
+    --ref = 'line 5 : invalid extra access to variable "a" inside the initializing `if-then-else´ (/tmp/tmp.ceu:2)',
+    run = 1,
 }
 Test { [[
 var int a=1;
@@ -1408,7 +1716,9 @@ end
 x = 10;
 escape x;
 ]],
-    run = 10,
+    --run = 10,
+    --inits = 'line 1 : uninitialized variable "x" : reached `escape´ (/tmp/tmp.ceu:3)',
+    inits = 'line 1 : uninitialized variable "x" : reached end of `if´ (/tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -1422,17 +1732,18 @@ x = 10;
 escape x;
 ]],
     inits = 'line 1 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:5)',
+    --inits = 'line 1 : uninitialized variable "x" : reached `escape´ (/tmp/tmp.ceu:3)',
 }
 
     -- EVENTS
 
 Test { [[input int A=1;
 ]],
-    parser="line 1 : after `A´ : expected `,´ or `;´"
+    parser="line 1 : after `A´ : expected `;´"
 }
 
 Test { [[input int A=1;]],
-    parser="line 1 : after `A´ : expected `,´ or `;´"
+    parser="line 1 : after `A´ : expected `;´"
 }
 
 Test { [[
@@ -1464,14 +1775,14 @@ Test { [[input  int A;]],
         isForever = true,
     },
 }
-Test { [[input int A,A; escape 0;]],
+Test { [[input int A; input int A; escape 0;]],
     dcls = 'line 1 : declaration of "A" hides previous declaration (/tmp/tmp.ceu : line 1)',
     --dcls = 'line 1 : identifier "A" is already declared (/tmp/tmp.ceu : line 1)',
     --dcls = 'external "A" is already declared',
     run = 0,
 }
 Test { [[
-input int A,B,Z;
+input int A; input int B; input int Z;
 ]],
     wrn = true,
     run = false,
@@ -1648,8 +1959,8 @@ with
 end
 escape ret;
 ]],
-    --inits = 'line 2 : uninitialized variable "ret" : reached `par/or´ (/tmp/tmp.ceu:3)',
-    inits = 'line 2 : uninitialized variable "ret" : reached yielding statement (/tmp/tmp.ceu:3)',
+    inits = 'line 2 : uninitialized variable "ret" : reached end of `par/or´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "ret" : reached yielding statement (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -1746,7 +2057,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    run = '18] runtime error: too many internal reactions',
+    run = '19] runtime error: too many internal reactions',
 }
 
     -- WALL-CLOCK TIME / WCLOCK
@@ -1763,14 +2074,16 @@ Test { [[await -1ms; escape 0;]],
     --ast = "line 1 : after `await´ : expected event",
     --parser = 'line 1 : after `1´ : expected `;´',
     --parser = 'line 1 : after `1´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `until´ or `;´',
-    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or location or `{´ or `pause´ or `resume´ or `async´ or `async/thread´ or `FOREVER´',
+    --parser = 'line 1 : after `await´ : expected `async´ or `async/thread´ or number or `(´ or abstraction identifier or external identifier or location or `{´ or `pause´ or `resume´ or `FOREVER´',
+    parser = 'line 1 : after `await´ : expected `async´ or `async/thread´ or number or `(´ or location or `{´ or abstraction identifier or external identifier or `pause´ or `resume´ or `FOREVER´',
 }
 
 Test { [[await 1; escape 0;]],
     parser = 'line 1 : after `1´ : expected `h´ or `min´ or `s´ or `ms´ or `us´',
 }
 Test { [[await -1; escape 0;]],
-    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or location or `{´ or `pause´ or `resume´ or `async´ or `async/thread´ or `FOREVER´',
+    --parser = 'line 1 : after `await´ : expected `async´ or `async/thread´ or number or `(´ or abstraction identifier or external identifier or location or `{´ or `pause´ or `resume´ or `FOREVER´',
+    parser = 'line 1 : after `await´ : expected `async´ or `async/thread´ or number or `(´ or location or `{´ or abstraction identifier or external identifier or `pause´ or `resume´ or `FOREVER´',
     --env = 'line 1 : event "?" is not declared',
 }
 
@@ -1882,7 +2195,8 @@ end;
 escape a + 1;
 ]],
     --inits = 'line 1 : uninitialized variable "a" : reached `async´ (/tmp/tmp.ceu:2)',
-    inits = 'line 1 : uninitialized variable "a" : reached yielding statement (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "a" : reached yielding statement (/tmp/tmp.ceu:2)',
+    run = 2,
 }
 
 Test { [[
@@ -1934,7 +2248,7 @@ escape v;
     run = { ['10~>A']=10 },
 }
 Test { [[
-input int A,B;
+input int A; input int B;
 await A;
 var int v = await B;
 escape v;
@@ -2036,7 +2350,39 @@ with
 end
 escape ret;
 ]],
-    inits = 'line 1 : uninitialized variable "ret" : reached yielding statement (/tmp/tmp.ceu:2)',
+    run = 1,
+    --inits = 'line 1 : uninitialized variable "ret" : reached yielding statement (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "ret" : reached `par/or´ (/tmp/tmp.ceu:2)',
+    --ref = 'line 1 : uninitialized variable "ret" crossing compound statement (/tmp/tmp.ceu:2)',
+}
+
+Test { [[
+var int ret;
+par do
+    ret = 1;
+    escape ret;
+with
+    ret = 2;
+    escape ret;
+end
+]],
+    run = 1,
+    --inits = 'line 1 : uninitialized variable "ret" : reached yielding statement (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "ret" : reached `par/or´ (/tmp/tmp.ceu:2)',
+    --ref = 'line 1 : uninitialized variable "ret" crossing compound statement (/tmp/tmp.ceu:2)',
+}
+
+Test { [[
+var int ret;
+par/and do
+    ret = 1;
+with
+    ret = 2;
+end
+escape ret;
+]],
+    run = 2,
+    --inits = 'line 1 : uninitialized variable "ret" : reached yielding statement (/tmp/tmp.ceu:2)',
     --inits = 'line 1 : uninitialized variable "ret" : reached `par/or´ (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "ret" crossing compound statement (/tmp/tmp.ceu:2)',
 }
@@ -2233,7 +2579,7 @@ end
 
 Test { [[
     input void A;
-    var int v1=4,v2=4;
+    var int v1=4; var int v2=4;
     par/or do
         await A;
         v1 = 1;
@@ -2250,7 +2596,7 @@ Test { [[
 
 Test { [[
 par do
-    var int v1=4,v2=4;
+    var int v1=4; var int v2=4;
     par/or do
         await 10ms;
         v1 = 1;
@@ -2288,7 +2634,7 @@ escape v;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int ret;
 if true then
     ret = await A;
@@ -2641,6 +2987,38 @@ var int a = do/a end;
     run = '1] runtime error: reached end of `do´',
 }
 
+Test { [[
+var int err = 99;
+err = do ()
+    var int err = 10;
+    escape 1;
+end;
+escape err;
+]],
+    run = 1,
+}
+Test { [[
+var int err = 99;
+err = do ()
+    var int err = 10;
+    if true then
+        escape 1;
+    end
+end;
+escape err;
+]],
+    run = 1,
+}
+
+Test { [[
+var int err = 99;
+err = do ()
+    do/_ escape 1; end
+end;
+escape err;
+]],
+    run = 1,
+}
 --<<< DO/_, SETBLOCK, ESCAPE
 
 -->>> SPAWN / BLOCK
@@ -2687,8 +3065,136 @@ escape _CEU_APP.root.__mem.trails_n;
 }
 --<<< SPAWN / BLOCK
 
+-->> DO / VISIBLE
+
 Test { [[
-input void A,B;
+var int a = 0;
+do ()
+    a = 1;
+end
+escape a;
+]],
+    dcls = 'line 3 : internal identifier "a" is not declared',
+}
+
+Test { [[
+var int a = 0;
+do (a)
+    a = 1;
+end
+escape a;
+]],
+    run = 1
+}
+
+Test { [[
+var int a = 0;
+do
+    a = 1;
+end
+escape a;
+]],
+    run = 1
+}
+
+Test { [[
+var int a = 0;
+do ()
+    outer.a = 1;
+end
+escape a;
+]],
+    run = 1,
+}
+
+Test { [[
+do/_
+    var int a = 0;
+    do ()
+        outer.a = 1;
+    end
+    escape a;
+end
+]],
+    run = 1,
+}
+
+Test { [[
+do/_
+    var int a = 0;
+    var int b = 1;
+    spawn (b) do
+        every 1s do
+            outer.a = outer.a + b;
+        end
+    end
+    await 10s;
+    escape a;
+end
+]],
+    run = { ['~>10s']=10 },
+}
+
+Test { [[
+var bool x = do ()
+    escape true;
+end;
+escape x as int;
+]],
+    run = 1,
+}
+
+Test { [[
+var bool x = do ()
+    par do
+        escape true;
+    with
+    end
+end;
+escape x as int;
+]],
+    run = 1,
+}
+
+Test { [[
+native/pre do
+    typedef struct t {
+        int x;
+    } t;
+    t x;
+end
+native _x;
+_x.x = do ()
+    par do
+        escape 1;
+    with
+    end
+end;
+escape _x.x;
+]],
+    run = 1,
+}
+
+Test { [[
+data Dd with
+    var int x = 10;
+end
+var Dd x = _;
+x.x = do ()
+    par do
+        escape 1;
+    with
+    end
+end;
+escape x.x;
+]],
+    run = 1,
+}
+
+--<< DO / VISIBLE
+
+Test { [[
+input void A; input void B;
 par/or do
     await A;
     await FOREVER;
@@ -2779,7 +3285,7 @@ end;
 }
 
 Test { [[
-input void A,B;
+input void A; input void B;
 par do
     await A;
     await FOREVER;
@@ -2793,7 +3299,7 @@ end;
 
 -- testa ParOr que da clean em ParOr que ja terminou
 Test { [[
-input int A,B,C;
+input int A; input int B; input int C;
 par/or do
     await A;
 with
@@ -2816,7 +3322,7 @@ escape a;
 }
 
 Test { [[
-input int A,B,C;
+input int A; input int B; input int C;
 par/or do
     await A;
 with
@@ -2831,13 +3337,13 @@ with
 end;
 escape a;
 ]],
-    --inits = 'line 8 : uninitialized variable "a" : reached `par/or´ (/tmp/tmp.ceu:9)',
-    inits = 'line 8 : uninitialized variable "a" : reached yielding statement (/tmp/tmp.ceu:9)',
+    inits = 'line 8 : uninitialized variable "a" : reached end of `par/or´ (/tmp/tmp.ceu:9)',
+    --inits = 'line 8 : uninitialized variable "a" : reached yielding statement (/tmp/tmp.ceu:9)',
     --ref = 'line 8 : uninitialized variable "a" crossing compound statement (/tmp/tmp.ceu:9)',
 }
 
 Test { [[
-input int A,B,C;
+input int A; input int B; input int C;
 var int a=0;
 par/or do
     par/or do
@@ -2881,17 +3387,29 @@ escape _V;
     stmts = 'line 5 : invalid assignment : read-only variable "_V"',
 }
 Test { [[
+var int b = b;
+escape 0;
+]],
+    inits = 'line 1 : uninitialized variable "b" : reached read access (/tmp/tmp.ceu:1)',
+    --run = 1,
+}
+Test { [[
+var int a = do escape a; end;
+escape 0;
+]],
+    inits = 'line 1 : invalid access to variable "a" : assignment in enclosing `do` (/tmp/tmp.ceu:1)',
+    --run = 1,
+}
+Test { [[
 native _V;
 native/pos do
     int V = 0;
 end
-_V = do
-    escape _V+1;
-end;
+    _V = do escape _V+1; end;
 escape _V;
 ]],
-    inits = 'line 6 : invalid access to native "_V" : assignment in enclosing `do` (/tmp/tmp.ceu:5)',
-    --run = 1,
+    --inits = 'line 6 : invalid access to native "_V" : assignment in enclosing `do` (/tmp/tmp.ceu:5)',
+    run = 1,
 }
 Test { [[
 native _V;
@@ -2985,6 +3503,36 @@ escape v;
 }
 
 Test { [[
+native/plain _char_const_ptr;
+native/pre do
+    typedef char* char_const_ptr;
+end
+var _char_const_ptr file = "xxx";
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native/plain _u8;
+var _u8&& cbuffer = {1}.get_data();
+]],
+    scopes = 'line 2 : invalid assignment : expected binding for "_{}"',
+}
+
+Test { [[
+native/plain _xxx;
+native/pre do
+    typedef int xxx;
+    ##define f(x) x
+end
+var _xxx x = {f}(1);
+escape x;
+]],
+    run = 1,
+}
+
+Test { [[
 var int a =
     do/_
         escape a;
@@ -3057,7 +3605,7 @@ escape a;
 }
 
 Test { [[
-input int A,B,C;
+input int A; input int B; input int C;
 var int a = do/_
         par/or do
             par do
@@ -3088,7 +3636,7 @@ escape a;
 }
 
 Test { [[
-input int A,B,C;
+input int A; input int B; input int C;
 var int a = do/_
         par/or do
             par do
@@ -3123,7 +3671,7 @@ escape a;
 }
 
 Test { [[
-input int A,B,C;
+input int A; input int B; input int C;
 var int a = do/_
         par/or do
             par do
@@ -3159,7 +3707,7 @@ escape a;
 
 -- testa ParOr que da clean em await vivo
 Test { [[
-input int A,B,C;
+input int A; input int B; input int C;
 par/and do
     par/or do
         await A;
@@ -3181,7 +3729,8 @@ await A;
 b = 1;
 escape b;
 ]],
-    inits = 'line 2 : uninitialized variable "b"',
+    --inits = 'line 2 : uninitialized variable "b"',
+    run = { ['1~>A']=1 },
 }
 
 Test { [[
@@ -3202,8 +3751,9 @@ await A;
 b = 1;
 escape b;
 ]],
-    inits = 'line 2 : uninitialized variable "b" : reached yielding statement (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "b" : reached yielding statement (/tmp/tmp.ceu:3)',
     --inits = 'line 2 : uninitialized variable "b" : reached `await´ (/tmp/tmp.ceu:3)',
+    run = { ['1~>A']=1 },
 }
 
 Test { [[
@@ -3211,7 +3761,7 @@ input int A;
 var int b;
 if true then
     await A;
-    b = 1;
+    b = 10;
 else
     if true then
         await A;
@@ -3224,7 +3774,8 @@ end;
 escape b;
 ]],
     --inits = 'line 2 : uninitialized variable "b" : reached `await´ (/tmp/tmp.ceu:4)',
-    inits = 'line 2 : uninitialized variable "b" : reached yielding statement (/tmp/tmp.ceu:4)',
+    --inits = 'line 2 : uninitialized variable "b" : reached yielding statement (/tmp/tmp.ceu:4)',
+    run = { ['1~>A']=10 },
 }
 
 Test { [[
@@ -3669,7 +4220,7 @@ escape 1;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 loop do
     par do
         await A;
@@ -3705,7 +4256,7 @@ escape 1;   // unreachs
 }
 
 Test { [[
-input void A,B;
+input void A; input void B;
 loop do
     par do
         await A;
@@ -4150,6 +4701,16 @@ escape 1;
     stmts = 'line 1 : invalid control variable : types mismatch : "int" <= "float"',
 }
 
+Test { [[
+var int i;
+loop i in [10 -> {100}[ do
+    escape i;
+end
+escape 0;
+]],
+    run = 10,
+}
+
 -- LOOP / BOUNDED
 
 Test { [[
@@ -4496,7 +5057,7 @@ end
 }
 Test { [[
 input void X;
-var int x,y;
+var int x; var int y;
 every (x,y) in X do
     x = 1;
 end
@@ -4505,7 +5066,7 @@ end
 }
 Test { [[
 input int X;
-var int x,y;
+var int x; var int y;
 every (x,y) in X do
     x = 1;
 end
@@ -4685,7 +5246,7 @@ end
 Test { [[
 input (int,int) A;
 par do
-    var int a, b;
+    var int a; var int  b;
     (a,b) = await A;
     if (a as bool) and (b as bool) then end
 with
@@ -4703,7 +5264,7 @@ end
 Test { [[
 input (int,int) A;
 par do
-    var int a, b;
+    var int a; var int  b;
     (a,b) = await A;
     if (a as bool) and (b as bool) then end
 with
@@ -4727,7 +5288,7 @@ Test { [[
 input (int,int) A;
 par do
     loop do
-        var int a, b;
+        var int a; var int  b;
         (a,b) = await A;
         escape a+b;
     end
@@ -4744,7 +5305,7 @@ Test { [[
 input (int,int) A;
 par do
     loop do
-        var int a, b;
+        var int a; var int  b;
         (a,b) = await A;
         escape a+b;
     end
@@ -4762,7 +5323,7 @@ end
 Test { [[
 input (int,int) A;
 par do
-    var int a, b;
+    var int a; var int  b;
     every (a,b) in A do
         escape a+b;
     end
@@ -4809,7 +5370,7 @@ escape a;
 }
 Test { [[
 input int A;
-var int a,b;
+var int a; var int b;
 (a,b) = await A;
 ]],
     stmts = 'line 3 : invalid assignment : types mismatch',
@@ -4818,7 +5379,7 @@ var int a,b;
 Test { [[
 input (int,int) B;
 input int A;
-var int a,b;
+var int a; var int b;
 (a,b) = await A;
 await B;
 ]],
@@ -4828,7 +5389,7 @@ await B;
 Test { [[
 input (int,int) A;
 par do
-    var int a,b;
+    var int a; var int b;
     every (a,b) in A do
         escape a+b;
     end
@@ -4846,7 +5407,7 @@ Test { [[
 input (int,int) A;
 par do
     loop do
-        var int a,b;
+        var int a; var int b;
         (a,b) = await A;
         escape a+b;
     end
@@ -4862,7 +5423,7 @@ end
 Test { [[
 input (int,int) A;
 par do
-    var int a, b;
+    var int a; var int  b;
     loop do
         (a,b) = await A;
         escape a+b;
@@ -4882,7 +5443,7 @@ Test { [[
 input (int,int) A;
 par do
     loop do
-        var int a, b;
+        var int a; var int  b;
         (a,b) = await A;
         escape a+b;
     end
@@ -4907,7 +5468,7 @@ escape 0;
 }
 
 Test { [[
-input void A,C;
+input void A; input void C;
 var int ret = 0;
 par/or do
     every A do
@@ -5456,7 +6017,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-input int C, A;
+input int C; input int  A;
 loop do
     var int v = await C;
     if v!=0 then
@@ -5814,7 +6375,7 @@ escape sum;
     run = 4,
 }
 Test { [[
-input void A, B;
+input void A; input void  B;
 var int sum = 0;
 var int i;
 loop i in [0 -> 10[ do
@@ -5841,7 +6402,7 @@ escape v;
 --<<< LOOP
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int ret=0;
 par/and do
     ret = await A;
@@ -5854,7 +6415,7 @@ escape ret;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int ret=0;
 par/and do
     ret = await A;
@@ -5871,7 +6432,7 @@ escape ret;
 }
 
 Test { [[
-input int A,B,Z,X,C;
+input int A; input int B; input int Z; input int X; input int C;
 var int ret=0;
 par/or do
     par/and do
@@ -5897,7 +6458,7 @@ escape ret;
 }
 
 Test { [[
-input int A,B,Z,X,C;
+input int A; input int B; input int Z; input int X; input int C;
 var int ret=0;
 par/or do
     par/and do
@@ -6000,8 +6561,8 @@ escape a + b;
 
 -- A changes twice, but first value must be used
 Test { [[
-input int A,C;
-var int a=0,f=0;
+input int A; input int C;
+var int a=0; var int f=0;
 par/and do
     a = await A;
 with
@@ -6013,8 +6574,8 @@ escape a+f;
 }
 
 Test { [[
-input int A,C;
-var int a=0,f=0;
+input int A; input int C;
+var int a=0; var int f=0;
 par/or do
     par do
         a = await A;
@@ -6041,7 +6602,7 @@ escape 0;
 
 Test { [[
 input (int,int) B;
-var int x1=0, x2=0;
+var int x1=0; var int  x2=0;
 par/and do
     (_,_) = await B;
     (x1,_) = await B;
@@ -6098,37 +6659,37 @@ Test { [[
 event void e;
 escape 0  or  e;
 ]],
-    exps = 'line 2 : invalid operand to `or´ : unexpected context for event "e"',
+    dcls = 'line 2 : invalid operand to `or´ : unexpected context for event "e"',
 }
 Test { [[
 event void e;
 escape sizeof(e);
 ]],
-    exps = 'line 2 : invalid operand to `sizeof´ : unexpected context for event "e"',
+    dcls = 'line 2 : invalid operand to `sizeof´ : unexpected context for event "e"',
 }
 Test { [[
 event void e;
 escape not e;
 ]],
-    exps = 'line 2 : invalid operand to `not´ : unexpected context for event "e"',
+    dcls = 'line 2 : invalid operand to `not´ : unexpected context for event "e"',
 }
 Test { [[
 event int e;
 escape e?;
 ]],
-    exps = 'line 2 : invalid operand to `?´ : unexpected context for event "e"',
+    dcls = 'line 2 : invalid operand to `?´ : unexpected context for event "e"',
 }
 Test { [[
 event int e;
 escape e|e;
 ]],
-    exps = 'line 2 : invalid operand to `|´ : unexpected context for event "e"',
+    dcls = 'line 2 : invalid operand to `|´ : unexpected context for event "e"',
 }
 Test { [[
 event void e;
 escape -e;
 ]],
-    exps = 'line 2 : invalid operand to `-´ : unexpected context for event "e"',
+    dcls = 'line 2 : invalid operand to `-´ : unexpected context for event "e"',
 }
 
 Test { [[
@@ -6137,7 +6698,8 @@ event void a;
 var _abc b;
 ]],
     wrn = true,
-    inits = 'line 3 : uninitialized variable "b"',
+    --inits = 'line 3 : uninitialized variable "b"',
+    cc = false,
 }
 
 Test { [[
@@ -6278,7 +6840,7 @@ escape ret;
 
 -- requires trl->stk for CEU_INPUT__STK
 Test { [[
-event void a, b;
+event void a; event void  b;
 par do
     await a;
     emit b;
@@ -6308,7 +6870,7 @@ escape 1;
 
 Test { [[
 input void OS_START;
-input void A, B;
+input void A; input void  B;
 input void ANY;
 var int ret = 0;
 await OS_START;
@@ -6384,7 +6946,7 @@ escape ret;
 Test { [[
 input void OS_START;
 var int ret=0;
-event void a,b;
+event void a; event void b;
 par/and do
     await OS_START;
     emit a;
@@ -6400,7 +6962,7 @@ escape 1;
 Test { [[
 input void OS_START;
 var int ret=0;
-event void a,b;
+event void a; event void b;
 par/and do
     await OS_START;
     emit a;
@@ -6425,7 +6987,7 @@ escape ret;
 Test { [[
 input void OS_START;
 var int ret=0;
-event void a,b;
+event void a; event void b;
 par/and do
     await OS_START;
     emit a;         // 6
@@ -6459,7 +7021,7 @@ escape ret;
 Test { [[
 input void OS_START;
 var int ret=0;
-event void a,b,c,d;
+event void a; event void b; event void c; event void d;
 par/and do
     await OS_START;
     emit a;
@@ -6768,7 +7330,7 @@ par do
         emit e(3,4);
     end
 with
-    var int a,b;
+    var int a; var int b;
     (a,b) = await e;
     escape a+b;
 end
@@ -6780,7 +7342,7 @@ end
 -- different semantics w/ longjmp
 Test { [[
 input void OS_START;
-event void e,f;
+event void e; event void f;
 par do
     par/or do
         await OS_START;
@@ -7101,7 +7663,7 @@ end
 
 Test { [[
 input void OS_START;
-event void a,b;
+event void a; event void b;
 par do
     await OS_START;
     emit a;
@@ -7216,7 +7778,7 @@ escape 10;
 
 Test { [[
 input void A;
-event void a, b, c, d;
+event void a; event void  b; event void  c; event void  d;
 native _assert;
 var int v=0;
 par do
@@ -7240,7 +7802,7 @@ end
 
 Test { [[
 input void A;
-event void a, b, c, d;
+event void a; event void  b; event void  c; event void  d;
 native _assert;
 var int v=0;
 par do
@@ -7327,7 +7889,7 @@ escape 0;
 
 Test { [[
 input void A;
-event void a,b;
+event void a; event void b;
 par/and do
     await a;
 with
@@ -7361,7 +7923,7 @@ escape a;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int a = do/_ par do
         await A;
         if true then
@@ -7502,8 +8064,8 @@ escape v;
 }
 
 Test { [[
-input int A,B;
-var int a,v=0;
+input int A; input int B;
+var int a; var int v=0;
 a = do/_ par do
     if true then
         v = await A;    // 5
@@ -7528,8 +8090,8 @@ escape a;
 }
 
 Test { [[
-input int A,B;
-var int a,v=0;
+input int A; input int B;
+var int a; var int v=0;
 a = do/_ par do
     if true then
         v = await A;
@@ -7557,7 +8119,7 @@ escape a;
 
 Test { [[
 input void OS_START;
-event void c,d;
+event void c; event void d;
 par do
     await OS_START;
     emit c;
@@ -7581,7 +8143,7 @@ native/pos do
     ##include <assert.h>
 end
 input void OS_START;
-event void a, b, c, d;
+event void a; event void  b; event void  c; event void  d;
 native _assert;
 var int v=0;
 par do
@@ -7703,8 +8265,8 @@ end;
 }
 
 Test { [[
-event void a, b;
-input void OS_START,A;
+event void a; event void  b;
+input void OS_START; input void A;
 var int ret = 0 ;
 
 par/or do
@@ -7752,7 +8314,7 @@ end
 
 -- TODO: STACK
 Test { [[
-event void a, b;
+event void a; event void  b;
 input void OS_START;
 var int ret = 0 ;
 
@@ -7812,7 +8374,7 @@ end
 
 Test { [[
 input void OS_START;
-event int x, y;
+event int x; event int  y;
 var int ret = 0;
 par do
     par/and do
@@ -7843,7 +8405,7 @@ end
 
 Test { [[
 input void OS_START;
-event void a, b;
+event void a; event void  b;
 par do
     par do
         await a;    // 5
@@ -7934,7 +8496,7 @@ escape ret;
 
 Test { [[
 input int A;
-var int a=0, b=0;
+var int a=0; var int  b=0;
 par/and do
     a = await A;
     a = a + 1;
@@ -7948,8 +8510,8 @@ escape a + b;
 }
 
 Test { [[
-input int A,B;
-var int a=0,b=0,c=0,d=0;
+input int A; input int B;
+var int a=0; var int b=0; var int c=0; var int d=0;
 par/or do
     par/and do          // 4
         a = await A;
@@ -7977,8 +8539,8 @@ escape a + b + c + d;
 }
 
 Test { [[
-input int A,B;
-var int a=0,b=0,ret=0;
+input int A; input int B;
+var int a=0; var int b=0; var int ret=0;
 par/and do
     await A;
     a = 1+2+3+4;
@@ -7993,8 +8555,8 @@ escape ret;
 }
 
 Test { [[
-input int A,B;
-var int a=0,b=0;
+input int A; input int B;
+var int a=0; var int b=0;
 par/or do
     if true then
         a = await A;
@@ -8076,7 +8638,7 @@ end;
 }
 
 Test { [[
-input int A,B,Z;
+input int A; input int B; input int Z;
 par do
     var int v = await A;
     escape v;
@@ -8110,7 +8672,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-input int A,B;
+input int A; input int B;
 par do
     await A;
     var int v = await A;
@@ -8128,7 +8690,7 @@ end;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 await A;
 par do
     var int v = await A;
@@ -8144,7 +8706,7 @@ end;
     },
 }
 Test { [[
-input int A,B,Z;
+input int A; input int B; input int Z;
 par do
     await A;
     var int v = await B;
@@ -8161,7 +8723,7 @@ end;
     },
 }
 Test { [[
-input int A,B,Z;
+input int A; input int B; input int Z;
 await A;
 par do
     var int v = await B;
@@ -8230,7 +8792,7 @@ escape a;
     }
 }
 Test { [[
-var int a=0,b=0;
+var int a=0; var int b=0;
 par/or do
     await 10us;
     await 10us;
@@ -8250,7 +8812,7 @@ escape a + b;
     },
 }
 Test { [[
-var int a=0,b=0;
+var int a=0; var int b=0;
 par/or do
     await (10)us;
     await (10)us;
@@ -8270,7 +8832,7 @@ escape a + b;
     }
 }
 Test { [[
-var int a=0,b=0;
+var int a=0; var int b=0;
 par/or do
     await (10)us;
     await (10)us;
@@ -8290,7 +8852,7 @@ escape a + b;
     }
 }
 Test { [[
-var int a=0,b=0;
+var int a=0; var int b=0;
 par/or do
     await 10us;
     await 10us;
@@ -8310,7 +8872,7 @@ escape a + b;
     }
 }
 Test { [[
-var int a=100,b=100;
+var int a=100; var int b=100;
 par/or do
     a = await 10us;
 with
@@ -8329,7 +8891,7 @@ escape a + b;
     }
 }
 Test { [[
-var int a=0,b=0;
+var int a=0; var int b=0;
 par do
     a = await 10ms;
     escape a;
@@ -8345,7 +8907,7 @@ end;
     },
 }
 Test { [[
-var int a=0,b=0;
+var int a=0; var int b=0;
 par/or do
     a = await 10ms;
 with
@@ -8363,7 +8925,7 @@ escape a+b;
     }
 }
 Test { [[
-var int a=0,b=0;
+var int a=0; var int b=0;
 par/or do
     a = await 10ms;
 with
@@ -8381,7 +8943,7 @@ escape a+b;
     }
 }
 Test { [[
-var int a=0,b=0;
+var int a=0; var int b=0;
 par do
     a = await 10us;
     escape a;
@@ -8398,7 +8960,7 @@ end;
     },
 }
 Test { [[
-var int a=0,b=0;
+var int a=0; var int b=0;
 par do
     a = await 10us;
     escape a;
@@ -8417,7 +8979,7 @@ end;
 
 Test { [[
 input void A;
-var int v1=0, v2=0;
+var int v1=0; var int  v2=0;
 par/or do
     await 1s;           // 4
     v1 = v1 + 1;
@@ -8441,7 +9003,7 @@ escape v1 + v2;
 
 Test { [[
 input void A;
-var int v1=0, v2=0, v3=0;
+var int v1=0; var int  v2=0; var int  v3=0;
 par/or do
     await 1s;           // 4
     v1 = v1 + 1;
@@ -8576,7 +9138,7 @@ escape 1;
     run = false,
 }
 Test { [[
-input void A,B;
+input void A; input void B;
 var int a=0;
 loop do
     par/or do
@@ -8844,7 +9406,7 @@ end;
     },
 }
 Test { [[
-var int a=0,b=0;
+var int a=0; var int b=0;
 par/or do
     a = await 10ms;
     escape a;
@@ -8860,7 +9422,7 @@ end;
     },
 }
 Test { [[
-var int a=0,b=0;
+var int a=0; var int b=0;
 par do
     a = await 10ms;
     escape a;
@@ -8879,7 +9441,7 @@ end;
     }
 }
 Test { [[
-var int a=0,b=0;
+var int a=0; var int b=0;
 par/and do
     a = await 10us;
 with
@@ -8893,7 +9455,7 @@ escape a+b;
     }
 }
 Test { [[
-var int a=0,b=0,c=0;
+var int a=0; var int b=0; var int c=0;
 par do
     a = await 10us;
     escape a;
@@ -8912,7 +9474,7 @@ end;
     },
 }
 Test { [[
-var int a=0,b=0,c=0;
+var int a=0; var int b=0; var int c=0;
 par/or do
     a = await 10us;
 with
@@ -8931,7 +9493,7 @@ escape a+b+c;
     }
 }
 Test { [[
-var int a=0,b=0,c=0;
+var int a=0; var int b=0; var int c=0;
 par/and do
     a = await 10ms;
 with
@@ -8947,7 +9509,7 @@ escape a+b+c;
     }
 }
 Test { [[
-var int a=0,b=0,c=0;
+var int a=0; var int b=0; var int c=0;
 par do
     a = await 10us;
     escape a;
@@ -8966,7 +9528,7 @@ end;
     },
 }
 Test { [[
-var int a=0,b=0;
+var int a=0; var int b=0;
 par do
     a = await 10min;
     escape a;
@@ -9051,7 +9613,7 @@ escape a;
     },
 }
 Test { [[
-var int v1=0,v2=0;
+var int v1=0; var int v2=0;
 par do
     v1 = await 5min;
     escape v1;
@@ -9172,7 +9734,7 @@ end;
 Test { [[
 input void C;
 do/_
-    var int a=0, b=0, c=0;
+    var int a=0; var int  b=0; var int  c=0;
     par do
         loop do
             await 10ms;
@@ -9204,7 +9766,7 @@ end;
 Test { [[
 input void C;
 do/_
-    var int a=0, b=0, c=0;
+    var int a=0; var int  b=0; var int  c=0;
     par do
         loop do
             await 10ms;
@@ -9240,7 +9802,7 @@ end;
     -- TIME LATE
 
 Test { [[
-var int a, b;
+var int a; var int  b;
 (a,b) = await 1s;
 escape 1;
 ]],
@@ -9347,7 +9909,7 @@ escape a;
 
 -- 1st to test timer clean
 Test { [[
-input int A, C;
+input int A; input int  C;
 var int a=0;
 par/or do
     a = await 10min;
@@ -9496,7 +10058,7 @@ escape 10;
 
 Test { [[
 input int A;
-event int b, c;
+event int b; event int  c;
 par do
     await A;
     emit b(1);
@@ -9521,7 +10083,7 @@ end;
 
 Test { [[
 input int A;
-event int b, c;
+event int b; event int  c;
 par do
     await A;
     emit b(1);
@@ -9660,7 +10222,7 @@ escape 0;
 }
 
 Test { [[
-var int v1=2,v2=3;
+var int v1=2; var int v2=3;
 par/or do
 with
 end
@@ -9669,7 +10231,7 @@ escape v1+v2;
     run = 5,
 }
 Test { [[
-var int v1,v2;
+var int v1; var int v2;
 par/or do
 with
 end
@@ -9677,7 +10239,8 @@ v1=2;
 v2=3;
 escape v1+v2;
 ]],
-    inits = 'line 1 : uninitialized variable "v1" : reached yielding statement (/tmp/tmp.ceu:2)',
+    run = 5,
+    --inits = 'line 1 : uninitialized variable "v1" : reached yielding statement (/tmp/tmp.ceu:2)',
     --inits = 'line 1 : uninitialized variable "v1" : reached `par/or´ (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "v1" crossing compound statement (/tmp/tmp.ceu:2)',
 }
@@ -9685,7 +10248,7 @@ Test { [[
 par/or do
 with
 end
-var int v1,v2;
+var int v1; var int v2;
 v1=2;
 v2=3;
 escape v1+v2;
@@ -9693,7 +10256,7 @@ escape v1+v2;
     run = 5,
 }
 Test { [[
-var int v1=0,v2=0;
+var int v1=0; var int v2=0;
 do
     par/or do
     with
@@ -9707,7 +10270,7 @@ escape v1+v2;
 }
 
 Test { [[
-var int v1=0,v2=0;
+var int v1=0; var int v2=0;
 par/and do
     v1 = 3;
 with
@@ -9720,7 +10283,7 @@ escape v1+v2;
 
 Test { [[
 event int a;
-var int v1=0,v2=0;
+var int v1=0; var int v2=0;
 par/or do
     emit a(2);
     v1 = 3;
@@ -9740,7 +10303,7 @@ escape v1+v2;
 
 Test { [[
 event int a;
-var int v1=0,v2=0,v3=0;
+var int v1=0; var int v2=0; var int v3=0;
 par/or do
     emit a(2);
     v1 = 2;
@@ -9763,7 +10326,7 @@ escape v1+v2+v3;
 
 Test { [[
 event int a;
-var int v1=0,v2=0,v3=0;
+var int v1=0; var int v2=0; var int v3=0;
 par/or do
     emit a(2);
     v1 = 2;
@@ -10014,7 +10577,7 @@ end;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 
 loop do
     par/or do
@@ -10064,7 +10627,7 @@ escape a;
 }
 
 Test { [[
-input void A,B;
+input void A; input void B;
 var int a = 5;
 par/or do
     par/or do
@@ -10087,7 +10650,7 @@ escape a;
 }
 
 Test { [[
-input void A,B;
+input void A; input void B;
 var int a = 5;
 par/or do
     par/and do
@@ -10110,7 +10673,7 @@ escape a;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int a = 0;
 par/or do
     par/or do
@@ -10135,7 +10698,7 @@ escape a;
 }
 
 Test { [[
-input int A, Z;
+input int A; input int  Z;
 var int v=0;
 loop do
     par/or do
@@ -10153,7 +10716,7 @@ escape v;
     }
 }
 Test { [[
-input int A,B,Z;
+input int A; input int B; input int Z;
 var int v=0;
 loop do
     par/or do
@@ -10172,7 +10735,7 @@ escape v;
     }
 }
 Test { [[
-input int A,B,Z;
+input int A; input int B; input int Z;
 var int v=0;
 loop do
     par/or do
@@ -10191,7 +10754,7 @@ escape v;
     }
 }
 Test { [[
-input int A,B;
+input int A; input int B;
 var int v=0;
 loop do
     par do
@@ -10213,7 +10776,7 @@ escape v;
     }
 }
 Test { [[
-input int A,B;
+input int A; input int B;
 var int v=0;
 loop do
     par/or do
@@ -10236,7 +10799,7 @@ escape v;
     }
 }
 Test { [[
-input int A, B;
+input int A; input int  B;
 var int v=0;
 loop do
     par/or do
@@ -10295,7 +10858,7 @@ escape a;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 par/and do
     await A;
 with
@@ -10343,7 +10906,7 @@ escape 1;
 
 Test { [[
 input void OS_START;
-event int b,c;
+event int b; event int c;
 var int cc = 1;
 par/and do
     await OS_START;
@@ -10576,7 +11139,7 @@ end;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int ret=0;
 par/or do
     await A;
@@ -10602,7 +11165,7 @@ escape ret;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int ret=0;
 par/or do
     await B;
@@ -10652,7 +11215,7 @@ escape dt;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int dt=0;
 par/or do
     await A;
@@ -10675,7 +11238,7 @@ escape dt;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int dt=0;
 par/or do
     await A;
@@ -10698,7 +11261,7 @@ escape dt;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int dt=0;
 var int ret = 10;
 par/or do
@@ -10724,7 +11287,7 @@ escape ret;
 }
 
 Test { [[
-input int A, B;
+input int A; input int  B;
 var int dt=0;
 var int ret = 10;
 par/or do
@@ -10788,7 +11351,7 @@ escape dt;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int ret=0;
 par/or do
     await A;
@@ -10814,7 +11377,7 @@ escape ret;
 }
 
 Test { [[
-event int a, b;
+event int a; event int  b;
 var int x=0;
 par/or do
     await a;                // 4
@@ -10842,7 +11405,7 @@ escape x;
 }
 
 Test { [[
-event int a, b;
+event int a; event int  b;
 var int x=0;
 var int bb=0;
 par/or do
@@ -10871,7 +11434,7 @@ escape x;
 }
 
 Test { [[
-event int a, b;
+event int a; event int  b;
 var int x=0;
 par/or do
     await a;
@@ -10898,7 +11461,7 @@ escape x;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 par do
     par/or do
         await A;
@@ -10919,7 +11482,7 @@ end;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 par do
     par/and do
         await A;
@@ -10940,7 +11503,7 @@ end;
 }
 
 Test { [[
-input int A,B, Z;
+input int A; input int B; input int  Z;
 par do
     loop do
         par/or do
@@ -10968,7 +11531,7 @@ end;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int a = 0;
 par/or do
     par/or do
@@ -10996,7 +11559,7 @@ escape a;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int a = 0;
 par/or do
     await A;
@@ -11018,7 +11581,7 @@ escape a;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int a = 0;
 par/or do
     par/and do
@@ -11047,7 +11610,7 @@ escape a;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int a = 0;
 par/or do
     par/or do
@@ -11076,7 +11639,7 @@ escape a;
     }
 }
 Test { [[
-input int A,B;
+input int A; input int B;
 var int a=0;
 par/or do
     par/and do
@@ -11146,7 +11709,7 @@ end;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int v=0;
 par do
     loop do
@@ -11170,7 +11733,7 @@ end;
 }
 -- bom exemplo de explosao de estados!!!
 Test { [[
-input int A,B;
+input int A; input int B;
 var int v=0;
 par do
     loop do
@@ -11197,7 +11760,7 @@ end;
 
 -- EX.04: join
 Test { [[
-input int A,B;
+input int A; input int B;
 var int a=0;
 par/and do
     par/or do
@@ -11868,8 +12431,8 @@ end;
 
 Test { [[
 input int A;
-event int a, i, j;
-var int dd=0, ee=0;
+event int a; event int  i; event int  j;
+var int dd=0; var int  ee=0;
 par/and do
     await A;
     emit a(1);
@@ -11910,7 +12473,7 @@ end;
 
 Test { [[
 event int a;
-var int v=0,aa=1;
+var int v=0; var int aa=1;
 loop do
     par do
         v = aa;
@@ -11929,7 +12492,7 @@ end;
 Test { [[
 input int A;
 event int b;
-var int a=1,v=0;
+var int a=1; var int v=0;
 par do
     loop do
         v = a;
@@ -11947,7 +12510,7 @@ end;
     },
 }
 Test { [[
-input int A,B;
+input int A; input int B;
 event int a;
 par do
     par do
@@ -12034,7 +12597,7 @@ escape i;
 }
 Test { [[
 input void OS_START;
-event int b,c;
+event int b; event int c;
 var int cc=0;
 par/or do
     await OS_START;
@@ -12095,7 +12658,7 @@ escape 0;   // TODO
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int ret = do/_ loop do
         await A;
         par/or do
@@ -12114,7 +12677,7 @@ escape ret;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int ret = loop do
         await A;
         par/or do
@@ -12180,7 +12743,7 @@ escape aa-1;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int a = 0;
 par do
     await B;
@@ -12201,7 +12764,7 @@ end;
 
 
 Test { [[
-input int A,B;
+input int A; input int B;
 loop do
     par/or do
         await A;
@@ -12221,7 +12784,7 @@ escape 1;
     -- UNREACH
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int ret = 0;
 par/or do await A; with await B; end;
 par/or do
@@ -12238,7 +12801,7 @@ escape ret;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int ret=0;
 par/or do
     par/or do
@@ -12276,7 +12839,7 @@ escape ret;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int v=0;
 par/or do
     v = await A;
@@ -12297,7 +12860,7 @@ escape v;
 }
 
 Test { [[
-input int A,B,Z;
+input int A; input int B; input int Z;
 var int ret=0;
 par/or do
     par/or do
@@ -12323,7 +12886,7 @@ escape ret;
 }
 
 Test { [[
-input int A,B,Z;
+input int A; input int B; input int Z;
 var int v=0;
 par/or do
     par/and do
@@ -12348,7 +12911,7 @@ escape v;
 }
 
 Test { [[
-input int A,B,Z;
+input int A; input int B; input int Z;
 var int v=0;
 par/or do
     par/and do
@@ -12379,7 +12942,7 @@ escape v;
 }
 
 Test { [[
-input int A,B,Z;
+input int A; input int B; input int Z;
 var int v=0;
 par/or do
     par/and do
@@ -12411,7 +12974,7 @@ escape v;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int v=0;
 par/or do
     if true then
@@ -12438,7 +13001,7 @@ escape v;
     },
 }
 Test { [[
-input int A,B;
+input int A; input int B;
 var int v=0;
 par/or do
     if true then
@@ -12465,7 +13028,7 @@ escape v;
     },
 }
 Test { [[
-input int A,B,Z;
+input int A; input int B; input int Z;
 var int v=0;
 par/or do
     await A;
@@ -12485,7 +13048,7 @@ escape v;
     },
 }
 Test { [[
-input int A,B,Z;
+input int A; input int B; input int Z;
 var int v=0;
 par/or do
     if true then
@@ -12514,7 +13077,7 @@ escape v;
     },
 }
 Test { [[
-input int A,B;
+input int A; input int B;
 par do
     loop do
         await A;
@@ -12535,7 +13098,7 @@ end;
     },
 }
 Test { [[
-input int A,B;
+input int A; input int B;
 var int v=0;
 loop do
     par/or do
@@ -12552,7 +13115,7 @@ escape v;
     },
 }
 Test { [[
-input int A,B,Z;
+input int A; input int B; input int Z;
 var int a = 0;
 par do
     loop do
@@ -12576,7 +13139,7 @@ end;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 if 11!=0 then
     var int v = await A;
     escape v;
@@ -12592,7 +13155,7 @@ end;
     },
 }
 Test { [[
-input int A,B;
+input int A; input int B;
 loop do
     await A;
 end;
@@ -12636,7 +13199,7 @@ end;
     },
 }
 Test { [[
-input int A,B;
+input int A; input int B;
 par do
     loop do
         await A;
@@ -12654,7 +13217,7 @@ end;
     },
 }
 Test { [[
-input int A,B,Z;
+input int A; input int B; input int Z;
 var int v=0;
 loop do
     v = await A;
@@ -12675,7 +13238,7 @@ escape v;
 }
 
 Test { [[
-input int A,B,Z,X,E,EE,GG,H,I,J,K,L;
+input int A; input int B; input int Z; input int X; input int E; input int EE; input int GG; input int H; input int I; input int J; input int K; input int L;
 var int v=0;
 par/or do
     await A;
@@ -12745,7 +13308,7 @@ end;
     },
 }
 Test { [[
-input int B,Z;
+input int B; input int Z;
 event int a;
 var int aa=0;
 par do
@@ -12890,7 +13453,7 @@ escape aa;
     --todo = 'nd excpt',
 }
 Test { [[
-input int B,Z;
+input int B; input int Z;
 event int a;
 var int aa=5;
 par/or do
@@ -12989,7 +13552,7 @@ end
     run = 1,
 }
 Test { [[
-input int B,Z;
+input int B; input int Z;
 event int a;
 var int aa=0;
 par do
@@ -13016,7 +13579,7 @@ end;
     },
 }
 Test { [[
-input int B,Z;
+input int B; input int Z;
 event int aa;
 var int a=0;
 par do
@@ -13270,7 +13833,8 @@ with
     escape a;
 end;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached yielding statement (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached read access (/tmp/tmp.ceu:3)',
+    --inits = 'line 1 : uninitialized variable "a" : reached yielding statement (/tmp/tmp.ceu:2)',
     --inits = 'line 1 : uninitialized variable "a" : reached `par´ (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "a" crossing compound statement (/tmp/tmp.ceu:2)',
 }
@@ -13390,8 +13954,8 @@ escape 1;
     run = 1,
 }
 Test { [[
-event int a,b;
-var int aa=2,bb=2;
+event int a; event int b;
+var int aa=2; var int bb=2;
 par/or do
     emit a(1);
     aa = 2;
@@ -13408,7 +13972,7 @@ escape aa+bb;
     run = 4,
 }
 Test { [[
-var int a=0, b=0;
+var int a=0; var int  b=0;
 par/or do
     a=2;
 with
@@ -13659,7 +14223,7 @@ end;
     },
 }
 Test { [[
-input int A, B;
+input int A; input int  B;
 var int a=0;
 par/or do
     var int v = await A;
@@ -13686,7 +14250,7 @@ escape a;
     },
 }
 Test { [[
-input int A, B;
+input int A; input int  B;
 var int a=0;
 par/or do
     await A;
@@ -13706,7 +14270,7 @@ escape a;
     },
 }
 Test { [[
-input int A, B;
+input int A; input int  B;
 var int a=0;
 par/or do
     await A;
@@ -13727,7 +14291,7 @@ escape a;
 }
 
 Test { [[
-input int A, B, Z;
+input int A; input int  B; input int  Z;
 var int v=0;
 par/or do
     v = await A;
@@ -13783,8 +14347,8 @@ escape v;
     }
 }
 Test { [[
-var int a=0, b=0, c=0, d=0;
-event int aa, bb, cc, dd;
+var int a=0; var int  b=0; var int  c=0; var int  d=0;
+event int aa; event int  bb; event int  cc; event int  dd;
 par/or do
     par/and do
         await aa;
@@ -13819,8 +14383,8 @@ escape a+b+c+d;
     run = 5,
 }
 Test { [[
-event int a, b, c;
-var int aa=0, bb=0, cc=0;
+event int a; event int  b; event int  c;
+var int aa=0; var int  bb=0; var int  cc=0;
 par/or do
     par/or do
         await a;
@@ -13853,7 +14417,7 @@ escape aa+bb+cc;
     run = 10,
 }
 Test { [[
-event int a, b, c;
+event int a; event int  b; event int  c;
 par/or do
     par do
         await a;
@@ -13954,7 +14518,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-input int A, B;
+input int A; input int  B;
 var int v=0;
 loop do
     par/or do
@@ -14106,7 +14670,7 @@ escape v;
     }
 }
 Test { [[
-var int v1=0, v2=0;
+var int v1=0; var int  v2=0;
 loop do
     par do
         v1 = 1;
@@ -14163,7 +14727,7 @@ end;
 
 Test { [[
 input int A;
-var int v1=0,v2=0;
+var int v1=0; var int v2=0;
 loop do
     par do
         v1 = await A;
@@ -14187,7 +14751,7 @@ escape v1 + v2;
 
 Test { [[
 input int A;
-var int v1=0, v2=0;
+var int v1=0; var int  v2=0;
 loop do
     par/or do
         await A;
@@ -14209,7 +14773,7 @@ escape 0;
 
 Test { [[
 input int A;
-var int v1=0, v2=0, v3=0;
+var int v1=0; var int  v2=0; var int  v3=0;
 loop do
     par/or do
         v1 = await A;
@@ -14234,7 +14798,7 @@ escape v1+v2+v3;
 
 -- TODO: parei com abrt aqui!!!
 Test { [[
-var int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0;
+var int v1=0; var int v2=0; var int v3=0; var int v4=0; var int v5=0; var int v6=0;
 loop do
     par/or do
         v1 = 1;
@@ -14266,7 +14830,7 @@ escape v1+v2+v3+v4+v5+v6;
 }
 
 Test { [[
-var int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0;
+var int v1=0; var int v2=0; var int v3=0; var int v4=0; var int v5=0; var int v6=0;
 loop do
     par/or do
         v1 = 1;
@@ -14297,7 +14861,7 @@ escape v1+v2+v3+v4+v5+v6;
 
 Test { [[
 input void A;
-var int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0;
+var int v1=0; var int v2=0; var int v3=0; var int v4=0; var int v5=0; var int v6=0;
 loop do
     par/or do
         await A;
@@ -14333,7 +14897,7 @@ escape v1+v2+v3+v4+v5+v6;
 
 Test { [[
 input int A;
-var int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0;
+var int v1=0; var int v2=0; var int v3=0; var int v4=0; var int v5=0; var int v6=0;
 loop do
     par/or do
         await A;    // 5
@@ -14366,7 +14930,7 @@ escape v1+v2+v3+v4+v5+v6;
 }
 
 Test { [[
-var int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0;
+var int v1=0; var int v2=0; var int v3=0; var int v4=0; var int v5=0; var int v6=0;
 loop do
     par do
         escape 1;           // acc 1
@@ -14397,7 +14961,7 @@ escape v1+v2+v3+v4+v5+v6;   // TODO: unreach
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int v=0;
 loop do
     await A;
@@ -14417,7 +14981,7 @@ escape v;
 }
 
 Test { [[
-input int A,B,Z,X;
+input int A; input int B; input int Z; input int X;
 var int a = 0;
 a = do/_ par do
     par/and do
@@ -14441,7 +15005,7 @@ escape a;
 }
 
 Test { [[
-input int A,B,Z,X;
+input int A; input int B; input int Z; input int X;
 var int a = 0;
 a = do par do
     par/and do
@@ -14464,7 +15028,7 @@ escape a;
 }
 
 Test { [[
-input int A,B,Z,X;
+input int A; input int B; input int Z; input int X;
 var int a = 0;
 a = do par do
     par/and do
@@ -14490,7 +15054,7 @@ escape a;
 }
 
 Test { [[
-input int A,B,Z,X;
+input int A; input int B; input int Z; input int X;
 var int a = 0;
 a = do par do
     par do
@@ -14513,7 +15077,7 @@ escape a;
 }
 
 Test { [[
-input int A,B,Z,X;
+input int A; input int B; input int Z; input int X;
 var int a = 0;
 a = do par do
     par do
@@ -14872,7 +15436,7 @@ escape a;
 }
 
 Test { [[
-var int a=0, b=0, c=0, d=0, e=0, f=0;
+var int a=0; var int  b=0; var int  c=0; var int  d=0; var int  e=0; var int  f=0;
 par/and do
     a = 1;
 with
@@ -14961,7 +15525,7 @@ end;
 }
 
 Test { [[
-input int A,B;
+input int A; input int B;
 var int v=0;
 par/or do
     loop do
@@ -14989,7 +15553,7 @@ escape v;
 -- Testa prio em DFA.lua
 Test { [[
 input int A;
-var int b=0,c=0,d=0;
+var int b=0; var int c=0; var int d=0;
 par/or do
     par/and do
         loop do
@@ -15021,7 +15585,7 @@ escape b+c+d;
 
 Test { [[
 input int A;
-var int b=0,c=0,d=0;
+var int b=0; var int c=0; var int d=0;
 par/or do
     par/and do
         loop do
@@ -15051,7 +15615,7 @@ escape b+c+d;
 }
 
 Test { [[
-input int A,Z,X;
+input int A; input int Z; input int X;
 var int b=0;
 par/or do
     b = 0;
@@ -15079,7 +15643,7 @@ end;
 }
 
 Test { [[
-input void A,Z;
+input void A; input void Z;
 var int ret = 0;
 par/or do
     loop do
@@ -15101,7 +15665,7 @@ escape ret;
 }
 Test { [[
 input int A;
-input void X,Z;
+input void X; input void Z;
 var int b=0;
 par/or do
     b = 0;
@@ -15159,7 +15723,7 @@ escape c;
 
     -- FRP
 Test { [[
-event int a,b;
+event int a; event int b;
 par/or do
     emit a(2);
 with
@@ -15277,7 +15841,7 @@ end;
 }
 
 Test { [[
-event int a,b;
+event int a; event int b;
     loop do
         par/or do
             await a;
@@ -15290,7 +15854,7 @@ escape 0;
     tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
 }
 Test { [[
-event int a,b;
+event int a; event int b;
     loop do
         par/and do
             await a;
@@ -15305,7 +15869,7 @@ escape 0;
 
 Test { [[
 input int A;
-event int a,b;
+event int a; event int b;
 var int v=0;
 par/or do
     v = await A;
@@ -15336,8 +15900,8 @@ escape v;
 }
 
 Test { [[
-input int X, E;
-event int a, b;
+input int X; input int  E;
+event int a; event int  b;
 var int c=0;
 par/or do
     await X;
@@ -15351,7 +15915,7 @@ par/or do
 with
     c = 0;
     loop do
-        var int aa=0,bb=0;
+        var int aa=0; var int bb=0;
         par/or do
             aa=await a;
         with
@@ -15377,8 +15941,8 @@ end;
 }
 
 Test { [[
-input int X, E;
-event int a, b;
+input int X; input int  E;
+event int a; event int  b;
 var int c=0;
 par/or do
     await X;
@@ -15392,7 +15956,7 @@ par/or do
 with
     c = 0;
     loop do
-        var int aa=0,bb=0;
+        var int aa=0; var int bb=0;
         par/or do
             aa=await a;
         with
@@ -15427,8 +15991,9 @@ with
 end;
 escape v;
 ]],
+    run = 2.
     --inits = 'line 1 : uninitialized variable "v" : reached `par/and´ (/tmp/tmp.ceu:2)',
-    inits = 'line 1 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:2)'
 }
 
@@ -15440,7 +16005,8 @@ with
 end;
 escape v;
 ]],
-    inits = 'line 1 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "v" : reached end of `par/and´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:2)',
     --inits = 'line 1 : uninitialized variable "v" : reached `par/and´ (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:2)',
 }
@@ -15458,8 +16024,9 @@ end
 escape a;
 ]],
     wrn = true,
+    inits = 'line 1 : uninitialized variable "a" : reached read access (/tmp/tmp.ceu:10)',
     --inits = 'line 1 : uninitialized variable "a" : reached `break´ (/tmp/tmp.ceu:6)',
-    inits = 'line 1 : uninitialized variable "a" : reached yielding statement (/tmp/tmp.ceu:6)',
+    --inits = 'line 1 : uninitialized variable "a" : reached yielding statement (/tmp/tmp.ceu:6)',
     --inits = 'line 1 : uninitialized variable "a" : reached `loop´ (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "a" crossing compound statement (/tmp/tmp.ceu:2)',
 }
@@ -15472,14 +16039,14 @@ with
 end;
 escape v;
 ]],
-    inits = 'line 1 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:2)',
-    --inits = 'line 1 : uninitialized variable "v" : reached `par/or´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "v" : reached end of `par/or´ (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 
 Test { [[
-input int A,B;
-event int a,b;
+input int A; input int B;
+event int a; event int b;
 var int v;
 par/or do
     par/and do
@@ -15499,14 +16066,15 @@ with
 end;
 ]],
     wrn = true,
-    inits = 'line 3 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:4)',
+    inits = 'line 3 : uninitialized variable "v" : reached read access (/tmp/tmp.ceu:12)',
+    --inits = 'line 3 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:4)',
     --inits = 'line 3 : uninitialized variable "v" : reached `par/or´ (/tmp/tmp.ceu:4)',
     --ref = 'line 3 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:4)',
 }
 
 Test { [[
-input int A,B;
-event int a,b;
+input int A; input int B;
+event int a; event int b;
 var int v=0;
 par/or do
     par/and do
@@ -15537,8 +16105,8 @@ end;
 }
 
 Test { [[
-input int A,B;
-event int a,b;
+input int A; input int B;
+event int a; event int b;
 var int v=0;
 par/or do
     par/and do
@@ -15571,8 +16139,8 @@ end;
 }
 
 Test { [[
-input int A, B;
-event int a,b;
+input int A; input int  B;
+event int a; event int b;
 var int v=0;
 par/or do
     par/and do
@@ -15605,7 +16173,7 @@ end;
 
 -- EX.08: join pode tirar o A da espera
 Test { [[
-input int A, B;
+input int A; input int  B;
 var int a=0;
 par/and do
     loop do
@@ -15646,8 +16214,8 @@ end;
 }
 
 Test { [[
-input int A, X, E;
-event int a, b, c;
+input int A; input int  X; input int  E;
+event int a; event int  b; event int  c;
 var int cc=0;                   // 0: cc=0
 par/or do
     loop do
@@ -15664,7 +16232,7 @@ with
 with
     cc = 0;
     loop do
-        var int aa=0,bb=0;
+        var int aa=0; var int bb=0;
         par/or do
             aa = await a;
         with
@@ -15690,8 +16258,8 @@ end;
 
     -- Exemplo apresentacao RSSF
 Test { [[
-input int A, Z;
-event int b, d, e;
+input int A; input int  Z;
+event int b; event int  d; event int  e;
 par/and do
     loop do
         await A;
@@ -15717,7 +16285,7 @@ end;
 
     -- SLIDESHOW
 Test { [[
-input int A,Z,X;
+input int A; input int Z; input int X;
 var int i=0;
 par/or do
     await A;
@@ -15766,7 +16334,7 @@ end;
 }
 
 Test { [[
-input int A, B, Z, X;
+input int A; input int  B; input int  Z; input int  X;
 var int v=0;
 par/and do
     par/and do
@@ -15871,7 +16439,7 @@ end;
 -- EX.03: trig/await + await
 Test { [[
 input int A;
-event int a, b;
+event int a; event int  b;
 par/and do
     await A;
     par/or do
@@ -15908,7 +16476,7 @@ escape 0;
 -- EX.03: trig/await + await
 Test { [[
 input int A;
-event int a,b;
+event int a; event int b;
 par/and do
     await A;
     par/or do
@@ -16007,7 +16575,7 @@ escape aa;
 }
 
 Test { [[
-input int A, B;
+input int A; input int  B;
 var int v=0;
 par/and do
     par/or do
@@ -16055,7 +16623,7 @@ escape 0;
 }
 Test { [[
 input void OS_START;
-input int A,B;
+input int A; input int B;
 event int a;
 par/and do
     par/or do
@@ -16083,7 +16651,7 @@ escape 10;
 }
 
 Test { [[
-input int A, B, Z;
+input int A; input int  B; input int  Z;
 event int a;
 var int aa=0;
 par/and do
@@ -16111,7 +16679,7 @@ escape aa;
 }
 
 Test { [[
-input int A, B, Z;
+input int A; input int  B; input int  Z;
 event int a;
 var int aa=0;
 par/and do
@@ -16140,7 +16708,7 @@ escape aa;
 
 Test { [[
 input void A;
-event int a,b;
+event int a; event int b;
 par/and do
     await A;
     emit a(1);
@@ -16162,7 +16730,7 @@ escape 0;
 }
 
 Test { [[
-input int A, B, Z, X, E;
+input int A; input int  B; input int  Z; input int  X; input int  E;
 var int d=0;
 par/or do
     await A;
@@ -16241,9 +16809,9 @@ escape 1;
 ]]
 
 Test { [[
-input void OS_START, A;
+input void OS_START; input void  A;
 var int v = 0;
-event void a,b;
+event void a; event void b;
 par/or do
     loop do
         par/or do
@@ -16274,7 +16842,7 @@ end;
 Test { [[
 input void OS_START;
 var int v = 0;
-event int a, b;
+event int a; event int  b;
 par/or do
     loop do
         var int aa = await a;
@@ -16295,8 +16863,8 @@ end;
 }
 
 Test { [[
-input void OS_START, Z;
-event void a, b;
+input void OS_START; input void  Z;
+event void a; event void  b;
 par/or do
     loop do
         par/or do
@@ -16321,7 +16889,7 @@ escape 1;
 
 Test { [[
 input void OS_START;
-event int a, b;
+event int a; event int  b;
 par/or do
     loop do
         par/or do
@@ -16343,10 +16911,10 @@ escape 10;
 }
 
 Test { [[
-input void OS_START,A;
+input void OS_START; input void A;
 var int v = 0;
 var int x = 0;
-event int a, b;
+event int a; event int  b;
 par/or do
     loop do
         par/or do
@@ -16395,8 +16963,8 @@ escape 0;
 }
 
 Test { [[
-input int A,B,Z;
-var int v1=0,v2=0;
+input int A; input int B; input int Z;
+var int v1=0; var int v2=0;
 par do
     loop do
         par/or do
@@ -16491,8 +17059,8 @@ escape ret + v;
 }
 
 Test { [[
-input int A,B,Z;
-var int v1=0,v2=0;
+input int A; input int B; input int Z;
+var int v1=0; var int v2=0;
 par do
     loop do
         par/or do
@@ -16522,8 +17090,8 @@ end;
 }
 
 Test { [[
-input int A,B,Z;
-var int v1=0,v2=0;
+input int A; input int B; input int Z;
+var int v1=0; var int v2=0;
 par do
     loop do
         par/or do
@@ -16551,7 +17119,7 @@ end;
 }
 
 Test { [[
-input void A,Z;
+input void A; input void Z;
 var int v=0;
 par do
     loop do
@@ -16654,8 +17222,8 @@ end;
 }
 
 Test { [[
-input void A, B;
-var int aa=0, bb=0;
+input void A; input void  B;
+var int aa=0; var int  bb=0;
 par/and do
     await A;
     var int a = 1;
@@ -16672,8 +17240,8 @@ escape aa+bb;
 
 Test { [[
 input int Z;
-event int draw, occurring, sleeping;
-var int x=0, vis=0;
+event int draw; event int  occurring; event int  sleeping;
+var int x=0; var int  vis=0;
 par do
     await Z;
     escape vis;
@@ -16727,8 +17295,8 @@ end;
 
 Test { [[
 input int Z;
-event int draw, occurring, sleeping;
-var int x=0, vis=0;
+event int draw; event int  occurring; event int  sleeping;
+var int x=0; var int  vis=0;
 par do
     await Z;
     escape vis;
@@ -16783,7 +17351,7 @@ end;
 
 Test { [[
 input void OS_START;
-event int a, b;
+event int a; event int  b;
 var int v=0;
 par/or do
     every a do
@@ -16888,7 +17456,7 @@ escape ret;
 Test { [[
 input void OS_START;
 event int a;
-var int v1=0, v2=0;
+var int v1=0; var int  v2=0;
 par/and do
     par/or do
         await OS_START;
@@ -16937,7 +17505,7 @@ escape aa;
 }
 
 Test { [[
-input void OS_START,A;
+input void OS_START; input void A;
 event int a;
 var int aa=0;
 par/or do
@@ -16966,8 +17534,8 @@ escape aa;
 }
 
 Test { [[
-input void OS_START, A;
-event int a, b;
+input void OS_START; input void  A;
+event int a; event int  b;
 var int bb=0;
 par/or do
     var int x;
@@ -17024,7 +17592,7 @@ escape aa;
 
 Test { [[
 input void OS_START;
-event int a,b;
+event int a; event int b;
 var int aa=0;
 par/or do
     await OS_START;
@@ -17046,7 +17614,7 @@ escape aa;
 }
 
 Test { [[
-input int A, Z;
+input int A; input int  Z;
 event int c;
 var int cc = 0;
 par do
@@ -17070,7 +17638,7 @@ end;
 
 Test { [[
 input void OS_START;
-input int A, Z;
+input int A; input int  Z;
 event int c;
 var int cc = 0;
 par do
@@ -17107,7 +17675,7 @@ par do
         await 10s;
     end;
 with
-    var int v1=0,v2=0;
+    var int v1=0; var int v2=0;
     par/and do
         v1 = await a;
     with
@@ -17126,16 +17694,17 @@ end;
 
 Test { [[
 event int a;
-    var int v1,v2;
+    var int v1; var int v2;
     v1 = await a;
     v2 = await a;
 ]],
-    inits = 'line 2 : uninitialized variable "v2" : reached yielding statement (/tmp/tmp.ceu:3)',
+    run = false,
+    --inits = 'line 2 : uninitialized variable "v2" : reached yielding statement (/tmp/tmp.ceu:3)',
     --inits = 'line 2 : uninitialized variable "v2" : reached `await´ (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
-input void OS_START, A;
+input void OS_START; input void  A;
 event int a;
 par do
     loop do
@@ -17146,7 +17715,7 @@ par do
         await 10s;
     end;
 with
-    var int v1=_,v2=_;
+    var int v1=_; var int v2=_;
     v1 = await a;
     v2 = await a;
     escape v1 + v2;
@@ -17181,7 +17750,7 @@ escape a;
 }
 
 Test { [[
-event int b, c;
+event int b; event int  c;
 var int a=0;
 par/or do
     var int cc;
@@ -17209,9 +17778,9 @@ escape a;
 }
 
 Test { [[
-input int A, Z;
+input int A; input int  Z;
 var int i = 0;
-event int a, b;
+event int a; event int  b;
 par do
     par do
         loop do
@@ -17331,7 +17900,7 @@ end;
 
 Test { [[
 input void OS_START;
-event int a, b, c;
+event int a; event int  b; event int  c;
 var int x = 0;
 var int y = 0;
 par/or do
@@ -17475,7 +18044,7 @@ end;
 
 Test { [[
 input void OS_START;
-event int a, b;
+event int a; event int  b;
 var int aa=0;
 par/or do
     every a do
@@ -17543,7 +18112,7 @@ end
     },
 }
 Test { [[
-input void OS_START, A;
+input void OS_START; input void  A;
 event int a;
 var int x = 0;
 par do
@@ -17562,7 +18131,7 @@ end
     run = {['~>A']=2,},
 }
 Test { [[
-input void OS_START, A;
+input void OS_START; input void  A;
 event int a;
 var int x = 0;
 par do
@@ -17664,7 +18233,7 @@ escape x;
 }
 
 Test { [[
-event int a, x, y, vis;
+event int a; event int  x; event int  y; event int  vis;
 par/or do
     par/and do
         emit x(1);
@@ -17700,7 +18269,7 @@ end;
 -- TODO: STACK
 Test { [[
 input void OS_START;
-event void x, y;
+event void x; event void  y;
 var int ret = 0;
 par/or do
     par/and do
@@ -17739,7 +18308,7 @@ escape ret;
 
 Test { [[
 input void OS_START;
-event int a, x, y;
+event int a; event int  x; event int  y;
 var int ret = 0;
 par do
     par/and do
@@ -17778,7 +18347,7 @@ end;
 }
 
 Test { [[
-event int a, x, y, vis;
+event int a; event int  x; event int  y; event int  vis;
 par/or do
     par/and do
         emit x(1);
@@ -17814,8 +18383,8 @@ end;
 Test { [[
 input void OS_START;
 input int Z;
-event int x, w, y, z, a, vis;
-var int xx=0, ww=0, yy=0, zz=0, aa=0, vvis=0;
+event int x; event int  w; event int  y; event int  z; event int  a; event int  vis;
+var int xx=0; var int  ww=0; var int  yy=0; var int  zz=0; var int  aa=0; var int  vvis=0;
 par do
     loop do
         par/or do
@@ -17899,7 +18468,7 @@ end;
 }
 
 Test { [[
-input void A, B;
+input void A; input void  B;
 do/_
     var int a = 1;
     var int tot = 0;
@@ -17932,7 +18501,7 @@ end;
 }
 
 Test { [[
-input void A, B;
+input void A; input void  B;
 do/_
     var int a = 0;
     par/or do
@@ -17950,7 +18519,7 @@ end;
 }
 
 Test { [[
-input void A, B;
+input void A; input void  B;
 var int a=0;
 par/or do
     await A;
@@ -17987,7 +18556,7 @@ escape 0;
 }
 
 Test { [[
-input void A, B;
+input void A; input void  B;
 var int i=0;
 do
     par/or do
@@ -18014,7 +18583,7 @@ Test { [[
 event a;
 escape 0;
 ]],
-    parser = 'line 1 : after `event´ : expected type',
+    parser = 'line 1 : after `event´ : expected `&´ or `(´ or type',
 }
 
 Test { [[
@@ -18052,7 +18621,7 @@ escape a;
 
 Test { [[
 var int ret = 0;
-event void a,b;
+event void a; event void b;
 par/or do
     ret = ret + 1;
 with
@@ -18187,8 +18756,9 @@ b = &a;
 a = 2;
 escape b;
 ]],
-    inits = 'line 3 : invalid binding : variable "b" is already bound (/tmp/tmp.ceu:2)',
+    --inits = 'line 3 : invalid binding : variable "b" is already bound',-- (/tmp/tmp.ceu:2)',
     --ref = 'line 3 : invalid attribution : variable "b" is already bound',
+    run = 2,
 }
 Test { [[
 var int a = 1;
@@ -18213,8 +18783,9 @@ else
 end
 escape b;
 ]],
-    inits = 'line 5 : invalid binding : variable "b" is already bound (/tmp/tmp.ceu:4,/tmp/tmp.ceu:7)',
+    --inits = 'line 5 : invalid binding : variable "b" is already bound',-- (/tmp/tmp.ceu:4,/tmp/tmp.ceu:7)',
     --ref = 'line 3 : invalid attribution : variable "b" is already bound',
+    run = 1,
 }
 Test { [[
 var int a = 1;
@@ -18228,8 +18799,9 @@ end
 escape b;
 ]],
     -- TODO: /tmp/tmp.ceu:6
-    inits = 'line 7 : invalid binding : variable "b" is already bound (/tmp/tmp.ceu:4,/tmp/tmp.ceu:6)',
+    --inits = 'line 7 : invalid binding : variable "b" is already bound',-- (/tmp/tmp.ceu:4,/tmp/tmp.ceu:6)',
     --ref = 'line 3 : invalid attribution : variable "b" is already bound',
+    run = 1,
 }
 Test { [[
 var int a = 1;
@@ -18242,8 +18814,9 @@ end
 b = &a;
 escape b;
 ]],
-    inits = 'line 8 : invalid binding : variable "b" is already bound (/tmp/tmp.ceu:4,/tmp/tmp.ceu:6)',
+    --inits = 'line 8 : invalid binding : variable "b" is already bound',-- (/tmp/tmp.ceu:4,/tmp/tmp.ceu:6)',
     --ref = 'line 3 : invalid attribution : variable "b" is already bound',
+    run = 1,
 }
 Test { [[
 var int a = 1;
@@ -18322,9 +18895,30 @@ end
 var& int v = &_V;
 escape v;
 ]],
-    stmts = 'line 5 : invalid binding : unexpected native identifier',
+    dcls = 'line 5 : invalid operand to `&´ : expected native call',
+    --stmts = 'line 5 : invalid binding : unexpected native identifier',
     --gcc = 'error: assignment makes pointer from integer without a cast',
     --run = 10;
+}
+
+Test { [[
+native _f, _int;
+var&? _int v1 = &_f() finalize (v1) with end;
+var&? _int v2 = &{f()};
+escape v1! + v2!;
+]],
+    dcls = 'line 3 : invalid operand to `&´ : expected native call',
+    --dcls = 'line 3 : invalid operand to `&´ : unexpected context for native "_{}"',
+    --stmts = 'line 3 : invalid binding : unexpected native identifier',
+}
+
+Test { [[
+native _f, _int;
+var&? _int v1 = &_f() finalize (v1) with end;
+var&? _int v2 = &{f()} finalize (v2) with end;
+escape v1! + v2!;
+]],
+    fins = 'line 3 : invalid operand to `&´ : expected native call',
 }
 
 Test { [[
@@ -18369,7 +18963,9 @@ var& int v;
 v = &_V;
 escape v;
 ]],
-    stmts = 'line 6 : invalid binding : unexpected native identifier',
+    dcls = 'line 6 : invalid operand to `&´ : expected native call',
+    --dcls = 'line 6 : invalid operand to `&´ : unexpected context for native "_V"',
+    --stmts = 'line 6 : invalid binding : unexpected native identifier',
     --gcc = 'error: assignment makes pointer from integer without a cast',
     --env = 'line 5 : invalid attribution (int& vs _&&)',
     --run = 10;
@@ -18421,7 +19017,9 @@ var& int v;
 v = &_V;
 escape v;
 ]],
-    stmts = 'line 6 : invalid binding : unexpected native identifier',
+    dcls = 'line 6 : invalid operand to `&´ : expected native call',
+    --dcls = 'line 6 : invalid operand to `&´ : unexpected context for native "_V"',
+    --stmts = 'line 6 : invalid binding : unexpected native identifier',
     --gcc = 'error: assignment makes pointer from integer without a cast',
     --run = 10;
 }
@@ -18450,7 +19048,7 @@ var& int v;
 v = &&vv;
 escape *v;
 ]],
-    locs = 'line 4 : invalid operand to `*´ : expected pointer type',
+    dcls = 'line 4 : invalid operand to `*´ : expected pointer type',
     --env = 'line 6 : types mismatch (`int&´ <= `int&&´)'
 }
 Test { [[
@@ -18472,7 +19070,7 @@ escape v;
 }
 
 Test { [[
-var int a=1, b=2;
+var int a=1; var int  b=2;
 var& int v;
 if true then
 else
@@ -18486,7 +19084,7 @@ escape a + b + v;
     --ref = 'line 5 : missing initialization for variable "v" in the other branch of the `if-then-else´ (/tmp/tmp.ceu:3)',
 }
 Test { [[
-var int a=1, b=2;
+var int a=1; var int  b=2;
 var& int v;
 if true then
     v = &a;
@@ -18499,7 +19097,7 @@ escape a + b + v;
     --ref = 'line 4 : missing initialization for variable "v" in the other branch of the `if-then-else´ (/tmp/tmp.ceu:3)',
 }
 Test { [[
-var int a=1, b=2;
+var int a=1; var int  b=2;
 var& int v;
 if true then
     v = &a;
@@ -18534,13 +19132,15 @@ end
 v = 1;
 escape _V1+_V2;
 ]],
-    stmts = 'line 8 : invalid binding : unexpected native identifier',
+    dcls = 'line 8 : invalid operand to `&´ : expected native call',
+    --dcls = 'line 8 : invalid operand to `&´ : unexpected context for native "_V1"',
+    --stmts = 'line 8 : invalid binding : unexpected native identifier',
     --gcc = 'error: assignment makes pointer from integer without a cast',
     --run = 6,
 }
 
 Test { [[
-var int a=1, b=2, c=3;
+var int a=1; var int  b=2; var int  c=3;
 var& int x;
 if false then
     x = &a;
@@ -18556,7 +19156,7 @@ escape a + b + x + c;
 }
 
 Test { [[
-var int a=1, b=2, c=3;
+var int a=1; var int  b=2; var int  c=3;
 var& int v;
 if true then
     v = &a;
@@ -18579,7 +19179,7 @@ escape a + b + x + v;
 }
 
 Test { [[
-var int a=1, b=2, c=3;
+var int a=1; var int  b=2; var int  c=3;
 var& int v;
 if true then
     v = &a;
@@ -18629,8 +19229,9 @@ escape v;
     wrn = true,
     --ref = 'reference declaration and first binding cannot be separated by loops',
     --ref = 'line 2 : uninitialized variable "i" crossing compound statement (/tmp/tmp.ceu:3)',
-    inits = 'line 2 : uninitialized variable "i" : reached yielding statement (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "i" : reached yielding statement (/tmp/tmp.ceu:3)',
     --inits = 'line 2 : uninitialized variable "i" : reached `loop´ (/tmp/tmp.ceu:3)',
+    inits = 'line 4 : invalid binding : crossing `loop´ (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -18856,7 +19457,7 @@ var int&& ptr = &&v;
 await 1s;
 escape *ptr;
 ]],
-    inits = 'line 4 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:3)',
+    ptrs = 'line 4 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:3)',
     --inits = 'line 4 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
     --fin = 'line 4 : unsafe access to pointer "ptr" across `await´',
 }
@@ -18869,7 +19470,7 @@ await 1s;
 var int&& c = a;
 escape 1;
 ]],
-    inits = 'line 5 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:4)',
+    ptrs = 'line 5 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:4)',
     --fin = 'line 5 : unsafe access to pointer "a" across `await´',
 }
 
@@ -18881,7 +19482,7 @@ await 1s;
 var int&& c = a;
 escape 1;
 ]],
-    inits = 'line 5 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:4)',
+    ptrs = 'line 5 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:4)',
     --fin = 'line 5 : unsafe access to pointer "a" across `await´',
 }
 
@@ -19081,11 +19682,11 @@ do v(&&a);
 finalize with nothing; end;
 escape(a);
 ]],
-    --exps = 'line 12 : invalid call : unexpected context for variable "v"',
+    --dcls = 'line 12 : invalid call : unexpected context for variable "v"',
     --env = 'line 8 : native variable/function "_f" is not declared',
     --fin = 'line 8 : attribution to pointer with greater scope',
     --inits = 'line 12 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:10)',
-    inits = 'line 12 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:10)',
+    ptrs = 'line 12 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:10)',
     --run = { ['~>1s']=10 },
 }
 
@@ -19109,11 +19710,11 @@ var int a=0;
 do v(&&a); finalize with nothing; end;
 escape(a);
 ]],
-    --exps = 'line 12 : invalid call : unexpected context for variable "v"',
+    --dcls = 'line 12 : invalid call : unexpected context for variable "v"',
     --env = 'line 8 : native variable/function "_f" is not declared',
     --fin = 'line 8 : attribution to pointer with greater scope',
     --inits = 'line 12 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:10)',
-    inits = 'line 12 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:10)',
+    ptrs = 'line 12 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:10)',
 }
 Test { [[
 native _f;
@@ -19190,7 +19791,7 @@ var int a=0;
 do v(&&a); finalize (a) with nothing; end;
 escape(a);
 ]],
-    --exps = 'line 11 : invalid call : unexpected context for variable "v"',
+    --dcls = 'line 11 : invalid call : unexpected context for variable "v"',
     --env = 'line 8 : native variable/function "_f" is not declared',
     run = 10,
 }
@@ -19277,7 +19878,7 @@ escape 10;
     --loop = true,
     --fin = 'line 5 : invalid pointer "ptr"',
     --inits = 'line 6 : invalid pointer access : crossed `loop´ (/tmp/tmp.ceu:3)',
-    inits = 'line 6 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:4)',
+    ptrs = 'line 6 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:4)',
 }
 
 Test { [[
@@ -19464,6 +20065,58 @@ escape _V;
     run = 14,
 }
 
+Test { [[
+native _V, _void, _alloc, _hold;
+native/nohold _dealloc, _unhold;
+native/pre do
+    int V = 2;
+    void* alloc () {
+        V++;
+        return &V;
+    }
+    void dealloc (void* x) {
+        V*=2;
+    }
+    void hold (void* x) {
+        V*=2;
+    }
+    void unhold (void* x) {
+        V++;
+    }
+end
+
+do
+    var& _void tcp = &_alloc()
+            finalize (tcp) with
+                _dealloc(&&tcp);
+            end;
+    do
+        _hold(&&tcp);
+    finalize (tcp) with
+        _unhold(&&tcp);
+    end
+end
+
+escape _V;
+]],
+    run = 14,
+}
+Test { [[
+native _void, _alloc;
+native/pre do
+    void* alloc () {
+        return NULL;
+    }
+end
+
+var& _void tcp = &_alloc()
+        finalize (tcp) with
+        end;
+escape 0;
+]],
+    run = '8] runtime error: call failed',
+}
+
 --<<< FINALLY / FINALIZE
 
 Test { [[
@@ -19478,7 +20131,7 @@ native/pos do
 end
 var int v = 10;
 var _t t;
-escape *(t.ptr);
+escape (t.ptr);
 ]],
     inits = 'line 11 : uninitialized variable "t" : reached read access (/tmp/tmp.ceu:12)',
     --ref = 'line 12 : invalid access to uninitialized variable "t" (declared at /tmp/tmp.ceu:11)',
@@ -19524,7 +20177,7 @@ end
 var int v = 10;
 var _t t;
 t.ptr = &_f(&&v);
-escape *(t.ptr);
+escape (t.ptr);
 ]],
     stmts = 'line 13 : invalid binding : unexpected context for operator `.´',
     --stmts = 'line 13 : invalid binding : expected declaration with `&´',
@@ -19546,7 +20199,7 @@ end
 var int v = 10;
 var& _t t;
 t.ptr = &_f(&&v);
-escape *(t.ptr);
+escape (t.ptr);
 ]],
     stmts = 'line 13 : invalid binding : unexpected context for operator `.´',
     --stmts = 'line 13 : invalid binding : expected declaration with `&´',
@@ -19579,7 +20232,8 @@ event& void b = &a;
 b = &b;
 escape 1;
 ]],
-    inits = 'line 3 : invalid binding : event "b" is already bound (/tmp/tmp.ceu:2)',
+    --inits = 'line 3 : invalid binding : event "b" is already bound',-- (/tmp/tmp.ceu:2)',
+    run = 1,
     --run = { ['~>1s'] = 1 },
 }
 
@@ -19700,7 +20354,8 @@ var int v = 10;
 var& void p = &v;
 escape *((&&p) as int&&);
 ]],
-    parser = 'line 3 : after `(´ : expected location',
+    --parser = 'line 3 : after `(´ : expected location',
+    run = 10,
 }
 Test { [[
 var int v = 10;
@@ -19773,7 +20428,17 @@ var& int x = do
 end;
 escape x;
 ]],
-    stmts = 'line 1 : invalid binding : expected `&?´ modifier',
+    --stmts = 'line 1 : invalid binding : expected `&?´ modifier',
+    scopes = 'line 3 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+var int x=0;
+var&? int xxx = &x;
+escape 2;
+]],
+    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
+    run = 2,
 }
 
 Test { [[
@@ -19783,7 +20448,9 @@ var&? int xxx = do
 end;
 escape (xxx? as int) + 1;
 ]],
-    run = 1,
+    scopes = 'line 3 : invalid binding : incompatible scopes',
+    --dcls = 'line 1 : invalid declaration : option alias : expected native or `code/await´ type',
+    --run = 1,
 }
 
 Test { [[
@@ -19795,6 +20462,263 @@ escape (x? as int) + 1;
 }
 
 --<< ALIAS / ESCAPE / DO
+
+-- TODO: support aliases to constants
+
+Test { [[
+data Dd with
+    var int x = 10;
+end
+code/tight Ff (void) -> Dd do
+    var Dd d = _;
+    escape d;
+end
+escape call Ff().x;
+]],
+    run = 10,
+    todo = 'support indexing calls',
+}
+
+Test { [[
+var& int x = &1;
+escape x;
+]],
+    --stmts = 'line 1 : invalid binding : unexpected context for value "1"',
+    stmts = 'line 1 : invalid binding : expected native type',
+    --run = 1,
+    --todo = 'support aliases to constants',
+}
+
+Test { [[
+data Dd with
+    var int x;
+end
+code/await Ff (var& Dd x) -> int do
+    escape x.x + 1;
+end
+escape await Ff(&Dd(1));
+]],
+    parser = 'line 7 : after `escape´ : expected expression or `;´',
+    --todo = 'support aliases to data',
+    --run = 1,
+}
+
+-->> ALIAS / OPTION / NIL
+
+Test { [[
+var int x = 10;
+var int y = 20;
+var& int v = &x;
+loop do
+    v = &y;
+    break;
+end
+escape v;
+]],
+    run = 20,
+}
+
+Test { [[
+var int x = 10;
+var int y = 20;
+var& int v = &x;
+loop do
+    v = &y;
+    break;
+end
+escape v;
+]],
+    run = 20,
+}
+
+Test { [[
+var int x = 10;
+var int y = 20;
+var& int v;
+loop do
+    v = &y;
+    break;
+end
+escape v;
+]],
+    inits = 'line 5 : invalid binding : crossing `loop´ (/tmp/tmp.ceu:4)',
+}
+
+Test { [[
+code/await Ff (void) -> void do end
+var&? Ff v;
+escape (v? as int) + 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var&? int v;
+escape (v? as int) + 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int x = 10;
+var&? int v = &x;
+escape (v? as int) + 1;
+]],
+    run = 2,
+}
+
+Test { [[
+var int x = 10;
+var int y = 20;
+var&? int v;
+loop do
+    v = &y;
+    break;
+end
+escape v!;
+]],
+    run = 20,
+}
+
+Test { [[
+var& int v = nil;
+escape 0;
+]],
+    stmts = 'line 1 : invalid binding : expected option alias',
+}
+
+Test { [[
+var int x = 10;
+var&? int v = &x;
+v = nil;
+escape (v? as int) + 1;
+]],
+    run = 1,
+}
+
+--<< ALIAS / OPTION / NIL
+
+-->> OPTION / ALIAS / ID_any
+
+Test { [[
+code/tight Ff (var&? int i) -> int do
+    if i? then
+        escape i!;
+    else
+        escape 99;
+    end
+end
+var int x = 1;
+escape call Ff(_) + call Ff(&x);
+]],
+    wrn = true,
+    dcls = 'line 9 : invalid call : invalid binding : argument #1 : expected location',
+}
+
+Test { [[
+code/tight Ff (var&? int i) -> int do
+    if i? then
+        escape i!;
+    else
+        escape 99;
+    end
+end
+var int x = 1;
+escape call Ff(nil) + call Ff(&x);
+]],
+    wrn = true,
+    run = 100,
+}
+
+Test { [[
+code/tight Gg (var&? int i) -> int do
+    if i? then
+        escape i!;
+    else
+        escape 99;
+    end
+end
+code/tight Ff (var&? int i) -> int do
+    escape call Gg(&i);
+end
+var int x = 1;
+escape call Ff(nil) + call Ff(&x);
+]],
+    wrn = true,
+    run = 100,
+}
+
+Test { [[
+code/await Ff (var&? int i) -> int do
+    if i? then
+        escape i!;
+    else
+        escape 99;
+    end
+end
+var int x = 1;
+var int v1 = await Ff(nil);
+var int v2 = await Ff(&x);
+escape v1 + v2;
+]],
+    wrn = true,
+    run = 100,
+}
+
+Test { [[
+code/await Ff (var& int i) -> int do
+    escape 1;
+end
+var int v1 = await Ff(nil);
+escape v1;
+]],
+    wrn = true,
+    dcls = 'line 4 : invalid call : invalid binding : argument #1 : expected location',
+}
+
+Test { [[
+code/await Gg (var&? int i) -> int do
+    if i? then
+        escape i!;
+    else
+        escape 99;
+    end
+end
+code/await Ff (var&? int i) -> int do
+    var int ret = await Gg(&i);
+    escape ret;
+end
+var int x = 1;
+var int v1 = await Ff(nil);
+var int v2 = await Ff(&x);
+escape v1 + v2;
+]],
+    --wrn = true,
+    run = 100,
+}
+
+Test { [[
+code/await Gg (var&? int i) -> int do
+    if i? then
+        escape i!;
+    else
+        escape 99;
+    end
+end
+code/await Ff (var&? int i) -> int do
+    var int ret = await Gg(&i);
+    escape ret;
+end
+var int x = 1;
+var int v1 = await Ff(_);
+var int v2 = await Ff(&x);
+escape v1 + v2;
+]],
+    wrn = true,
+    dcls = 'line 13 : invalid call : invalid binding : argument #1 : expected location',
+}
+
+--<< OPTION / ALIAS / ID_any
 
 --<<< ALIASES / REFERENCES / REFS / &
 
@@ -20369,7 +21293,7 @@ escape ret;
 }
 
 Test { [[
-input void A, B;
+input void A; input void  B;
 var int ret = 1;
 par/or do
     do
@@ -20395,7 +21319,7 @@ escape ret;
 }
 
 Test { [[
-input void A, B;
+input void A; input void  B;
 var int ret = 1;
 par/or do
     do
@@ -20425,7 +21349,7 @@ escape ret;
 }
 
 Test { [[
-input void A, B, Z;
+input void A; input void  B; input void  Z;
 var int ret = 1;
 par/or do
     do
@@ -20459,7 +21383,7 @@ escape ret;
 }
 
 Test { [[
-input void A, B;
+input void A; input void  B;
 event void a;
 var int ret = 1;
 par/or do
@@ -20490,7 +21414,7 @@ escape ret;
 }
 
 Test { [[
-input void A, B;
+input void A; input void  B;
 event void a;
 var int ret = 1;
 par/or do
@@ -20526,7 +21450,7 @@ escape ret;
 }
 
 Test { [[
-input void A, B;
+input void A; input void  B;
 event void a;
 var int ret = 1;
 par/or do
@@ -20617,7 +21541,7 @@ escape ret;
 }
 
 Test { [[
-input void A, B;
+input void A; input void  B;
 var int ret = 1;
 par/or do
     do
@@ -20640,6 +21564,36 @@ end
 escape ret;
 ]],
     run = { ['~>B']=17, ['~>A']=605 },
+}
+
+Test { [[
+native/pre do
+    int V = 0;
+end
+par/or do
+    do finalize with
+        {V++;}
+    end
+with
+end
+
+par/and do
+    do finalize with
+        {V++;}
+    end
+with
+    do finalize with
+        {V++;}
+    end
+    await 1s;
+with
+    await 500ms;
+    escape {V};
+end
+
+escape 1;
+]],
+    run = {['~>1s']=2},
 }
 
 Test { [[
@@ -20674,7 +21628,7 @@ escape 1;
 }
 
 Test { [[
-input void A,B;
+input void A; input void B;
 var int ret = 0;
 loop do
     do
@@ -20916,7 +21870,7 @@ escape ret;
 }
 
 Test { [[
-input void A, B;
+input void A; input void  B;
 event void e;
 var int v = 1;
 par/or do
@@ -21053,9 +22007,9 @@ with
 end
 escape v;
 ]],
-    parser = 'line 5 : after `(´ : expected location',
-    --exps = 'line 5 : invalid operand to `*´ : expected location',
-    --run = 1,
+    --parser = 'line 5 : after `(´ : expected location',
+    --dcls = 'line 5 : invalid operand to `*´ : expected location',
+    run = 1,
 }
 
 Test { [[
@@ -21119,7 +22073,7 @@ await E;
 escape *v;
 ]],
     --inits = 'line 4 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
-    inits = 'line 4 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:3)',
+    ptrs = 'line 4 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:3)',
     --fin = 'line 4 : unsafe access to pointer "v" across `await´',
     --fin = 'line 3 : cannot `await´ again on this block',
     --run = 0,
@@ -21171,7 +22125,7 @@ escape 1;
     --fin = 'line 8 : pointer access across `await´',
     --fin = 'line 6 : attribution to pointer with greater scope',
     --inits = 'line 6 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:5)',
-    inits = 'line 6 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:5)',
+    ptrs = 'line 6 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:5)',
     --scopes = 'line 6 : invalid pointer assignment : expected `finalize´',
 }
 
@@ -21206,7 +22160,7 @@ end
 escape 1;
 ]],
     --inits = 'line 9 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:6)',
-    inits = 'line 9 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:6)',
+    ptrs = 'line 9 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:6)',
     --fin = 'line 6 : call requires `finalize´',
 }
 
@@ -21232,7 +22186,7 @@ end
 escape 0;
 ]],
     --inits = 'line 4 : invalid pointer access : crossed `par/or´ (/tmp/tmp.ceu:2)',
-    inits = 'line 4 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:2)',
+    ptrs = 'line 4 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:2)',
     --fin = 'line 8 : pointer access across `await´',
     --fin = 'line 6 : invalid block for pointer across `await´',
     --fin = 'line 6 : cannot `await´ again on this block',
@@ -21427,7 +22381,7 @@ end
 escape ret + *p;
 ]],
     --inits = 'line 8 : invalid pointer access : crossed `par/and´ (/tmp/tmp.ceu:6)',
-    inits = 'line 8 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:6)',
+    ptrs = 'line 8 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:6)',
     --adj = 'line 7 : invalid `finalize´',
     --fin = 'line 8 : attribution does not require `finalize´',
     --fin = 'line 8 : invalid block for awoken pointer "p"',
@@ -21440,7 +22394,7 @@ await async do end
 escape *p;
 ]],
     --inits = 'line 3 : invalid pointer access : crossed `async´ (/tmp/tmp.ceu:2)',
-    inits = 'line 3 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:2)',
+    ptrs = 'line 3 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:2)',
 }
 Test { [[
 var int ret = 0;
@@ -21455,7 +22409,7 @@ end
 escape ret + *p;
 ]],
     --inits = 'line 6 : invalid pointer access : crossed `par/and´ (/tmp/tmp.ceu:5)',
-    inits = 'line 6 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:5)',
+    ptrs = 'line 6 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:5)',
     --env = 'line 11 : wrong argument : cannot pass pointers',
     --fin = 'line 16 : unsafe access to pointer "p" across `async´ (/tmp/tmp.ceu : 11)',
     --fin = 'line 14 : unsafe access to pointer "p" across `par/and´',
@@ -21887,7 +22841,7 @@ escape a;
 }
 
 Test { [[
-var int a,b;
+var int a; var int b;
 await async (b) do
     a = 1;
 end;
@@ -22496,7 +23450,7 @@ await async (pi) do
 end;
 escape i;
 ]],
-    exps = 'line 7 : invalid operand to `not´ : expected boolean type',
+    dcls = 'line 7 : invalid operand to `not´ : expected boolean type',
     wrn = true,
 }
 
@@ -22611,7 +23565,7 @@ end;
 }
 
 Test { [[
-input int A, B;
+input int A; input int  B;
 var int a = 0;
 par/or do
     await async do
@@ -22718,7 +23672,7 @@ every qu_ in GO do
 end
 ]],
     --inits = 'line 7 : invalid pointer access : crossed `async´ (/tmp/tmp.ceu:7)',
-    inits = 'line 7 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:7)',
+    ptrs = 'line 7 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:7)',
     --fin = 'line 5 : unsafe access to pointer "qu" across `async´',
     --_ana = { isForever=true },
     --run = 1,
@@ -22975,7 +23929,8 @@ v.a = 1;
 v.b = 2;
 escape v.a + v.b;
 ]],
-    inits = 'line 8 : uninitialized variable "v"',
+    run = 3,
+    --inits = 'line 8 : uninitialized variable "v"',
 }
 Test { [[
 native/pre do
@@ -23044,7 +23999,7 @@ end
 native/plain _t;
 output _t&& A;
 output int B;
-var int a, b;
+var int a; var int  b;
 
 var _t v = { (struct t){1,-1} };
 a = emit A(&&v);
@@ -23084,7 +24039,7 @@ end
 native/plain _t;
 output _t A;
 output int B;
-var int a, b;
+var int a; var int  b;
 
 var _t v = { (struct t){1,-1} };
 a = emit A(v);
@@ -23149,7 +24104,7 @@ Test { [[
 native/pos do
     #define ceu_out_emit(a,b,c,d)  __ceu_nothing(d)
 end
-output void A, B;
+output void A; output void B;
 par/or do
     emit A;
 with
@@ -23169,7 +24124,7 @@ native/pos do
     #define ceu_out_emit(a,b,c,d)  __ceu_nothing(d)
 end
 deterministic A with B;
-output void A, B;
+output void A; output void B;
 par/or do
     emit A;
 with
@@ -23184,7 +24139,7 @@ Test { [[
 native/pos do
     #define ceu_out_emit(a,b,c,d)  __ceu_nothing(d)
 end
-output void A, B;
+output void A; output void B;
 deterministic A with B;
 par/or do
     emit A;
@@ -23219,7 +24174,7 @@ native/pos do
 end
 
 output (int&&,  int&&) RADIO_SEND;
-var int a=1,b=1;
+var int a=1; var int b=1;
 emit RADIO_SEND(&&a,&&b);
 
 escape a + b;
@@ -23247,7 +24202,7 @@ native/pos do
 end
 
 output (int&&,  int&&) RADIO_SEND;
-var int a=1,b=1;
+var int a=1; var int b=1;
 emit RADIO_SEND(&&a,&&b);
 
 escape a + b;
@@ -23277,7 +24232,7 @@ end
 
 Test { [[
 native _Fx;
-output int Z,W;
+output int Z; output int W;
 native/pos do
     void Z() {};
 end
@@ -23300,7 +24255,7 @@ end
 Test { [[
 native _Fx;
 deterministic _Fx with Z,W;
-output int Z,W;
+output int Z; output int W;
 native/pos do
     void Z() {};
 end
@@ -23370,7 +24325,7 @@ end
 Test { [[
 native _Fx;
 deterministic Z with W;
-output void Z,W;
+output void Z; output voidW;
 par do
     emit Z;
 with
@@ -23398,6 +24353,17 @@ Test { [[
 output/input/tight Z  (var int)->int;
 escape call Z(1);
 ]],
+    parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
+    --parser = 'line 2 : after `call´ : expected location',
+    --parser = 'line 2 : after `call´ : expected expression',
+    --parser = 'line 2 : after `Z´ : expected `;´',
+    --parser = 'line 2 : after `Z´ : expected `(´',
+}
+
+Test { [[
+output/input/tight Z  (var int a)->int;
+escape call Z(1);
+]],
     parser = 'line 2 : after `call´ : expected location',
     --parser = 'line 2 : after `call´ : expected expression',
     --parser = 'line 2 : after `Z´ : expected `;´',
@@ -23405,7 +24371,7 @@ escape call Z(1);
 }
 
 Test { [[
-output/input/tight Z  (var int)->int;
+output/input/tight Z  (var int a)->int;
 call Z(1);
 escape 1;
 ]],
@@ -23413,7 +24379,7 @@ escape 1;
 }
 
 Test { [[
-output/input/tight Z  (var int)->int;
+output/input/tight Z  (var int a)->int;
 emit Z(1);
 escape 1;
 ]],
@@ -23428,7 +24394,7 @@ native/pos do
         escape v+1;
     }
 end
-output/input/tight Z  (var int)->int;
+output/input/tight Z  (var int a)->int;
 call Z(1);
 escape 1;
 ]],
@@ -23443,7 +24409,7 @@ native/pos do
         escape *v+1;
     }
 end
-output/input/tight Z  (var int)->int;
+output/input/tight Z  (var int a)->int;
 call Z(1);
 escape 1;
 ]],
@@ -23457,7 +24423,7 @@ native/pos do
         escape *v+1;
     }
 end
-output/input/tight Z  (var int)->int;
+output/input/tight Z  (var int a)->int;
 var int ret = call Z(1);
 escape ret;
 ]],
@@ -23471,7 +24437,7 @@ native/pos do
         escape v+1;
     }
 end
-output/input/tight Z  (var int)->int;
+output/input/tight Z  (var int a)->int;
 var int ret = call Z(1,2);
 escape ret;
 ]],
@@ -23539,7 +24505,7 @@ native/pos do
         escape p->_1 + p->_2;
     }
 end
-output/input/tight Z  (var int, var int)->int;
+output/input/tight Z  (var int a, var int b)->int;
 var int ret = call Z(1,2);
 escape ret;
 ]],
@@ -23559,7 +24525,7 @@ native/pos do
         escape (evt == CEU_OUTPUT_Z) + *p;
     }
 end
-output/input/tight Z  (var int)->int;
+output/input/tight Z  (var int b)->int;
 var int ret = (call Z(2));
 escape ret;
 ]],
@@ -23638,7 +24604,7 @@ native/pos do
         return (evt == CEU_OUTPUT_Z) + *p;
     }
 end
-output/input/tight Z  (var int)->int;
+output/input/tight Z  (var int b)->int;
 par/and do
     call Z(1);
 with
@@ -23963,35 +24929,35 @@ input (int tilex, int tiley, bool vertical, int lock, int door, usize&& position
 
 -- int_int
 Test { [[var int&&p; escape p/10;]],
-    exps = 'line 1 : invalid operand to `/´ : expected numeric type'
+    dcls = 'line 1 : invalid operand to `/´ : expected numeric type'
 }
 Test { [[var int&&p; escape p|10;]],
-    exps = 'line 1 : invalid operand to `|´ : expected integer type',
+    dcls = 'line 1 : invalid operand to `|´ : expected integer type',
 }
 Test { [[var int&&p; escape p>>10;]],
-    exps = 'line 1 : invalid operand to `>>´ : expected integer type',
+    dcls = 'line 1 : invalid operand to `>>´ : expected integer type',
 }
 Test { [[var int&&p; escape p^10;]],
-    exps = 'line 1 : invalid operand to `^´ : expected numeric type',
+    dcls = 'line 1 : invalid operand to `^´ : expected numeric type',
 }
 Test { [[var int&&p; escape ~p;]],
-    exps = 'line 1 : invalid operand to `~´ : expected integer type',
+    dcls = 'line 1 : invalid operand to `~´ : expected integer type',
 }
 
 -- same
 Test { [[var int&&p; var int a; escape p==a;]],
-    exps = 'line 1 : invalid operands to `==´ : incompatible types : "int&&" vs "int"',
+    dcls = 'line 1 : invalid operands to `==´ : incompatible types : "int&&" vs "int"',
 }
 Test { [[var int&&p; var int a; escape p!=a;]],
-    exps = 'line 1 : invalid operands to `!=´ : incompatible types : "int&&" vs "int"',
+    dcls = 'line 1 : invalid operands to `!=´ : incompatible types : "int&&" vs "int"',
 }
 Test { [[var int&&p; var int a; escape p>a;]],
-    exps = 'line 1 : invalid operand to `>´ : expected numeric type',
+    dcls = 'line 1 : invalid operand to `>´ : expected numeric type',
 }
 
 -- any
 Test { [[var int&&p=null; escape p or 10;]],
-    exps = 'line 1 : invalid operand to `or´ : expected boolean type',
+    dcls = 'line 1 : invalid operand to `or´ : expected boolean type',
 }
 Test { [[var int&&p=null; escape (p!=null or true) as int;]], run=1 }
 Test { [[var int&&p=null; escape (p!=null and false) as int;]],  run=0 }
@@ -23999,23 +24965,24 @@ Test { [[var int&&p=null; escape( not (p!=null)) as int;]], run=1 }
 
 -- arith
 Test { [[var int&&p; escape p+p;]],
-    exps = 'line 1 : invalid operand to `+´ : expected numeric type',
+    dcls = 'line 1 : invalid operand to `+´ : expected numeric type',
 }--TODO: "+"'}
 Test { [[var int&&p; escape p+10;]],
-    exps = 'line 1 : invalid operand to `+´ : expected numeric type',
+    dcls = 'line 1 : invalid operand to `+´ : expected numeric type',
 }
 Test { [[var int&&p; escape p+10 and 0;]],
-    exps = 'line 1 : invalid operand to `+´ : expected numeric type',
+    dcls = 'line 1 : invalid operand to `+´ : expected numeric type',
 }
 
 -- ptr
 Test { [[var int a; escape *a;]],
-    locs = 'line 1 : invalid operand to `*´ : expected pointer type',
+    dcls = 'line 1 : invalid operand to `*´ : expected pointer type',
 }
 Test { [[var int a; var int&&pa; (pa+10)=&&a; escape a;]],
-    parser = 'line 1 : after `)´ : expected `(´',
+    parser = 'line 1 : after `)´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `;´',
+    --parser = 'line 1 : after `)´ : expected `(´',
     --parser = 'line 1 : after `pa´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `)´ or `,´',
-    --exps = 'line 1 : invalid operand to `+´ : expected numeric type',
+    --dcls = 'line 1 : invalid operand to `+´ : expected numeric type',
 }
 Test { [[var int a; var int&&pa; a=1; pa=&&a; *pa=3; escape a;]], run=3 }
 
@@ -24032,7 +24999,8 @@ native _V;
 *(0x100 as u32&&) = _V;
 escape 1;
 ]],
-    parser = 'line 2 : after `(´ : expected location',
+    parser = 'line 2 : after `)´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `;´',
+    --parser = 'line 2 : after `(´ : expected location',
     --gcc = 'error: ‘V’ undeclared (first use in this function)',
 }
 
@@ -24088,7 +25056,7 @@ a = null;
 escape 1;
 ]],
     --inits = 'line 7 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:4)',
-    inits = 'line 7 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:4)',
+    ptrs = 'line 7 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:4)',
 }
 
 Test { [[
@@ -24328,7 +25296,7 @@ native/pos do
         *v = 1;
     }
 end
-var int a=1, b=1;
+var int a=1; var int  b=1;
 par/and do
     _f(&&b);
 with
@@ -24349,7 +25317,7 @@ native/pos do
         *v = 1;
     }
 end
-var int a=1, b=1;
+var int a=1; var int  b=1;
 par/and do
     a = 1;              // 10
 with
@@ -24375,7 +25343,7 @@ native/pos do
         *v = 1;
     }
 end
-var int a=1, b=0;
+var int a=1; var int  b=0;
 par/or do
     a = 1;
 with
@@ -24402,7 +25370,7 @@ native/pos do
         *v = 1;
     }
 end
-var int a=1, b=1;
+var int a=1; var int  b=1;
 var int&& pb = &&b;
 par/and do
     a = 1;
@@ -24429,7 +25397,7 @@ native/pos do
         *v = 1;
     }
 end
-var int a=1, b=1;
+var int a=1; var int  b=1;
 var int&& pb = &&b;
 par/or do
     a = 1;
@@ -24533,7 +25501,7 @@ Test { [[vector[2] int v; escape v;]],
 Test { [[native _u8; vector[2] _u8 v=_; escape (&&v==&&v) as int;]],
     wrn = true,
     run = 1,
-    --exps = 'line 1 : invalid operand to `&&´ : unexpected context for vector "v"',
+    --dcls = 'line 1 : invalid operand to `&&´ : unexpected context for vector "v"',
     --env = 'line 1 : types mismatch (`int´ <= `_u8[]&&´)',
     --env = 'invalid operand to unary "&&"',
 }
@@ -24712,7 +25680,7 @@ Test { [[vector[1] int v; escape v;]],
     --env='cannot index a non array'
 }
 Test { [[native _int; vector[2] _int v; escape v[v];]],
-    exps = 'line 1 : invalid index : unexpected context for vector "v"',
+    dcls = 'line 1 : invalid index : unexpected context for vector "v"',
     --env='invalid array index'
 }
 
@@ -24720,8 +25688,8 @@ Test { [[
 vector[2] int v ;
 escape v == &&v[0] ;
 ]],
-    exps = 'line 2 : invalid operand to `==´ : unexpected context for vector "v"',
-    --exps = 'line 2 : invalid expression : operand to `&&´ must be a name',
+    dcls = 'line 2 : invalid operand to `==´ : unexpected context for vector "v"',
+    --dcls = 'line 2 : invalid expression : operand to `&&´ must be a name',
     --env = 'line 2 : invalid operands to binary "=="',
     --run = 1,
 }
@@ -24730,8 +25698,8 @@ native _int;
 vector[2] _int v ;
 escape v == &&v[0] ;
 ]],
-    exps = 'line 3 : invalid operand to `==´ : unexpected context for vector "v"',
-    --exps = 'line 3 : invalid operand to `==´ : expected the same type',
+    dcls = 'line 3 : invalid operand to `==´ : unexpected context for vector "v"',
+    --dcls = 'line 3 : invalid operand to `==´ : expected the same type',
     --env = 'line 2 : invalid operands to binary "=="',
     --run = 1,
 }
@@ -24964,6 +25932,14 @@ escape *p;
     run = 10,
 }
 
+Test { [[
+var int x = 1;
+escape *(&&x);
+]],
+    run = 1,
+    --parser = 'line 2 : after `(´ : expected location',
+}
+
 --<<< NATIVE/POINTERS/VECTORS
 
     -- NATIVE C FUNCS BLOCK RAW
@@ -24978,7 +25954,7 @@ escape c;
 
 Test { [[
 native/plain _int;
-var _int a=1, b=1;
+var _int a=1; var int  b=1;
 a = b;
 await 1s;
 escape (a==b) as int;
@@ -24987,7 +25963,7 @@ escape (a==b) as int;
 }
 
 Test { [[
-var int a=1, b=1;
+var int a=1; var int  b=1;
 a = b;
 await 1s;
 escape (a==b) as int;
@@ -25030,7 +26006,8 @@ finalize with
 end
 escape p! ==null;
 ]],
-    exps = 'line 6 : invalid operands to `==´ : incompatible types : "void" vs "null&&"',
+    dcls = 'line 2 : invalid operand to `&´ : expected native call',
+    --dcls = 'line 6 : invalid operands to `==´ : incompatible types : "void" vs "null&&"',
     --env = 'line 7 : invalid operands to binary "=="',
     --run = 1,
 }
@@ -25050,7 +26027,8 @@ escape 1;
 Test { [[
 _f()
 ]],
-    parser = 'line 1 : after `)´ : expected `;´',
+    parser = 'line 1 : after `)´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `;´',
+    --parser = 'line 1 : after `)´ : expected `;´',
     --parser = 'line 1 : after `)´ : expected `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´',
 }
 
@@ -25399,7 +26377,7 @@ escape (_V==null) as int;
 
 Test { [[
 do/_
-    var int&& p=_, p1=_;
+    var int&& p=_; var int&& p1=_;
     input int&& E;
     p = await E;
     p1 = p;
@@ -25410,7 +26388,7 @@ end
     wrn = true,
     --run = 1,
     --inits = 'line 5 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:4)',
-    inits = 'line 5 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:4)',
+    ptrs = 'line 5 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:4)',
     --fin = 'line 7 : unsafe access to pointer "p1" across `await´',
 }
 
@@ -25450,7 +26428,7 @@ end
 escape ret;
 ]],
     --inits = 'line 10 : invalid pointer access : crossed `emit´ (/tmp/tmp.ceu:9)',
-    inits = 'line 10 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:9)',
+    ptrs = 'line 10 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:9)',
     --fin = 'line 10 : unsafe access to pointer "x" across `emit´',
 }
 
@@ -26271,6 +27249,12 @@ end
     -- RAW
 
 Test { [[
+{fff}(1,2);
+]],
+    parser = 'line 1 : after `1´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `)´',
+}
+
+Test { [[
 native/pos do
     int V = 0;
     int fff (int a, int b) {
@@ -26278,7 +27262,7 @@ native/pos do
         return V;
     }
 end
-{fff}(1,2);
+call {fff}(1,2);
 var int i = {fff}(3,4);
 escape i;
 ]],
@@ -26829,7 +27813,7 @@ escape (ptr == null) as int;
 ]],
     wrn = true,
     --inits = 'line 4 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
-    inits = 'line 4 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:3)',
+    ptrs = 'line 4 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:3)',
     --fin = 'line 4 : unsafe access to pointer "i" across `await´ (/tmp/tmp.ceu : 3)',
 }
 Test { [[
@@ -26842,7 +27826,7 @@ escape 1;
 ]],
     wrn = true,
     --inits = 'line 5 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
-    inits = 'line 5 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:3)',
+    ptrs = 'line 5 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:3)',
     --fin = 'line 4 : unsafe access to pointer "i" across `await´ (/tmp/tmp.ceu : 3)',
 }
 Test { [[
@@ -27051,7 +28035,8 @@ Test { [[
 escape 1;
 ]],
     opts_pre = true,
-    parser = 'line 3 : after `(´ : expected location',
+    --parser = 'line 3 : after `(´ : expected location',
+    parser = 'line 3 : after `)´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `;´',
 }
 
 Test { [[
@@ -27183,7 +28168,7 @@ Test { [[
 input int KEY;
 if true then escape 50; end
 par do
-    var int pct=0, dt=0, step=0, ship=0, points=0;
+    var int pct=0; var int  dt=0; var int  step=0; var int  ship=0; var int  points=0;
     var int win = 0;
     loop do
         if win!=0 then
@@ -27348,9 +28333,36 @@ escape 1;
     tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
 }
 
+Test { [[
+loop do
+    var int name = do
+        await 1s;
+        escape 1;
+    end;
+    if name == 1 then
+        break;
+    end
+end
+escape 1;
+]],
+    run = { ['~>1s']=1 },
+}
+Test { [[
+loop do
+    var int name = do
+        escape 1;
+    end;
+    if name == 1 then
+        break;
+    end
+end
+escape 1;
+]],
+    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+}
 -- INFINITE LOOP/EXECUTION
 Test { [[
-event void e, f;
+event void e; event void  f;
 watching 1s do
     par do
         loop do
@@ -27384,7 +28396,7 @@ escape 1;
 }
 
 Test { [[
-event void e, f;
+event void e; event void  f;
 watching 1s do
     par do
         loop do
@@ -27418,7 +28430,7 @@ escape 1;
 }
 
 Test { [[
-event void e, f;
+event void e; event void  f;
 watching 1s do
     par do
         loop do
@@ -27452,7 +28464,7 @@ escape 1;
 }
 
 Test { [[
-event void e, k1, k2;
+event void e; event void  k1; event void  k2;
 watching 1s do
     par do
         loop do
@@ -27486,7 +28498,7 @@ escape 1;
     run = {['~>1s']=1},
 }
 Test { [[
-event void e, f;
+event void e; event void  f;
 watching 1s do
     par do
         loop do
@@ -27520,7 +28532,7 @@ escape 1;
 }
 
 Test { [[
-event void e, f;
+event void e; event void  f;
 par do
     loop do
         par/or do
@@ -27551,7 +28563,7 @@ end
 }
 
 Test { [[
-event void e, f;
+event void e; event void  f;
 par do
     loop do
         await e;        // 17
@@ -27582,7 +28594,7 @@ end
 }
 
 Test { [[
-event void e, k1, k2;
+event void e; event void  k1; event void  k2;
 par do
     loop do
         await e;
@@ -27741,7 +28753,7 @@ escape 0;
 }
 
 Test { [[
-input int A, B;
+input int A; input int  B;
 event bool a;
 par/or do
     loop do
@@ -27759,7 +28771,7 @@ end
 }
 
 Test { [[
-input int A, B;
+input int A; input int  B;
 event bool a;
 par/or do
     loop do
@@ -27813,7 +28825,7 @@ end
 
 -- TODO: nesting with same event
 Test { [[
-input int A,B;
+input int A; input int B;
 event bool a;
 var int ret = 0;
 par/or do
@@ -27856,8 +28868,8 @@ escape ret;
 }
 
 Test { [[
-input int A, B, Z;
-event bool a, b;
+input int A; input int  B; input int  Z;
+event bool a; event bool b;
 var int ret = 0;
 par/or do
     loop do
@@ -27967,7 +28979,7 @@ escape ret;
 }
 
 Test { [[
-input int  A,B,C;
+input int  A; input int B; input int C;
 event bool a;
 var int ret = 50;
 par/or do
@@ -28187,14 +29199,14 @@ Test { [[
 var u8 v;
 escape ($$v) as int;
 ]],
-    exps = 'line 2 : invalid operand to `$$´ : unexpected context for variable "v"',
+    dcls = 'line 2 : invalid operand to `$$´ : unexpected context for variable "v"',
     --env = 'line 2 : invalid operand to unary "$$" : vector expected',
 }
 Test { [[
 var u8 v;
 escape ($v) as int;
 ]],
-    locs = 'line 2 : invalid operand to `$´ : unexpected context for variable "v"',
+    dcls = 'line 2 : invalid operand to `$´ : unexpected context for variable "v"',
 }
 
 Test { [[
@@ -28243,7 +29255,8 @@ Test { [[
 vector[10] u8 vec = (1,2,3);
 escape 1;
 ]],
-    parser = 'line 1 : after `1´ : expected `is´ or `as´ or binary operator',
+    --parser = 'line 1 : after `1´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `is´ or `as´ or binary operator',
+    parser = 'line 1 : after `1´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `)´ or `..´',
 }
 Test { [[
 vector[10] u8 vec = (1);
@@ -28307,7 +29320,7 @@ Test { [[
 vector[10] u8 vec = [1,2,3];
 escape $$vec + $vec + vec[0] + vec[1] + vec[2];
 ]],
-    exps = 'line 2 : invalid operands to `+´ : incompatible numeric types : "usize" vs "u8"',
+    dcls = 'line 2 : invalid operands to `+´ : incompatible numeric types : "usize" vs "u8"',
 }
 Test { [[
 vector[10] u8 vec = [1,2,3];
@@ -28371,7 +29384,8 @@ vector[10] u8 vec = [1,2,3];
 $$vec = 0;
 escape vec[0] as int;
 ]],
-    parser = 'line 1 : after `;´ : expected statement',
+    parser = 'line 2 : after `vec´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `;´',
+    --parser = 'line 1 : after `;´ : expected statement',
     --env = 'line 2 : invalid attribution',
 }
 Test { [[
@@ -28394,7 +29408,7 @@ Test { [[
 vector[] byte bs;
 native/nohold _ceu_vector_setlen;
 _ceu_vector_setlen(&&bs,1,0);
-escape 1 + ($bs as int);
+escape 1 + (($bs) as int);
 ]],
     run = '3] runtime error: access out of bounds',
 }
@@ -28404,7 +29418,7 @@ native/nohold _ceu_vector_setlen;
 vector[] byte bs;
 _ceu_vector_setlen(&&bs, 1, 1);
 _ceu_vector_setlen(&&bs, 1, 0);
-escape 1 + ($bs as int);
+escape 1 + (($bs) as int);
 ]],
     run = 2,
 }
@@ -28437,7 +29451,7 @@ escape v2[0] + v2[1] + v2[2];
 }
 
 Test { [[
-vector[] byte v1, v2, v3;
+vector[] byte v1; vector[] byte v2; vector[] byte v3;
 v1 = v2;
 v1 = v2..v3;
 escape $v1+1;
@@ -28519,10 +29533,10 @@ Test { [[
 vector[2] int v ;
 escape v == &&v[0] ;
 ]],
-    --exps = 'line 2 : invalid operand to `==´ : expected the same type',
+    --dcls = 'line 2 : invalid operand to `==´ : expected the same type',
     --env = 'line 2 : invalid operand to unary "&&" : vector elements are not addressable',
-    --exps = 'line 2 : invalid expression : operand to `&&´ must be a name',
-    exps = 'line 2 : invalid operand to `==´ : unexpected context for vector "v"',
+    --dcls = 'line 2 : invalid expression : operand to `&&´ must be a name',
+    dcls = 'line 2 : invalid operand to `==´ : unexpected context for vector "v"',
 }
 
 Test { [[
@@ -28609,14 +29623,16 @@ Test { [[
 escape 1..2;
 ]],
     --parser = 'line 1 : after `..´ : invalid constructor syntax',
-    parser = 'line 1 : after `1´ : expected `is´ or `as´ or binary operator or `;´',
+    --parser = 'line 1 : after `1´ : expected `[´ or `:´ or `!´ or `?´ or `is´ or `as´ or binary operator or `;´',
+    parser = 'line 1 : after `1´ : expected `[´ or `:´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `;´',
 }
 Test { [[
 escape 1 .. 2;
 ]],
     --parser = 'line 1 : after `..´ : invalid constructor syntax',
     --parser = 'line 1 : after `1´ : expected `;´',
-    parser = 'line 1 : after `1´ : expected `is´ or `as´ or binary operator or `;´',
+    --parser = 'line 1 : after `1´ : expected `[´ or `:´ or `!´ or `?´ or `is´ or `as´ or binary operator or `;´',
+    parser = 'line 1 : after `1´ : expected `[´ or `:´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `;´',
 }
 Test { [[
 vector[] int x = [1]..2;
@@ -28724,6 +29740,15 @@ escape ret;
     run = 3,
 }
 
+Test { [[
+every 1s do
+    vector[] byte xxx = [];
+end
+escape 0;
+]],
+    run = false,
+}
+
 -->> VECTOR / _CHAR*
 
 Test { [[
@@ -28778,7 +29803,7 @@ escape (str[4]=={'i'}) as int;
 
 Test { [[vector[2] u8 v; escape (&&v==&&v) as int;]],
     run = 1,
-    --exps = 'line 1 : invalid operand to `&&´ : unexpected context for vector "v"',
+    --dcls = 'line 1 : invalid operand to `&&´ : unexpected context for vector "v"',
     --env = 'line 1 : types mismatch (`int´ <= `u8[]&&´)',
     --env = 'invalid operand to unary "&&"',
 }
@@ -28893,32 +29918,32 @@ Test { [[
 vector[] int v;
 escape v > 0;
 ]],
-    exps = 'line 2 : invalid operand to `>´ : unexpected context for vector "v"',
+    dcls = 'line 2 : invalid operand to `>´ : unexpected context for vector "v"',
 }
 Test { [[
 vector[] int v;
 escape v?;
 ]],
-    exps = 'line 2 : invalid operand to `?´ : unexpected context for vector "v"',
+    dcls = 'line 2 : invalid operand to `?´ : unexpected context for vector "v"',
 }
 Test { [[
 vector[] int v;
 escape v!;
 ]],
-    locs = 'line 2 : invalid operand to `!´ : unexpected context for vector "v"',
+    dcls = 'line 2 : invalid operand to `!´ : unexpected context for vector "v"',
 }
 Test { [[
 vector[] int v;
 escape ~v;
 ]],
-    exps = 'line 2 : invalid operand to `~´ : unexpected context for vector "v"',
+    dcls = 'line 2 : invalid operand to `~´ : unexpected context for vector "v"',
 }
 
 Test { [[
 vector[] int v;
 v[true] = 1;
 ]],
-    exps = 'line 2 : invalid index : expected integer type',
+    dcls = 'line 2 : invalid index : expected integer type',
 }
 
 Test { [[
@@ -28994,7 +30019,7 @@ _enqueue(&&buf);
 escape 1;
 ]],
     run = 1,
-    --exps = 'line 3 : invalid operand to `&&´ : unexpected context for vector "buf"',
+    --dcls = 'line 3 : invalid operand to `&&´ : unexpected context for vector "buf"',
     --fin = 'line 2 : call requires `finalize´',
 }
 
@@ -29125,7 +30150,7 @@ _f(v..[1]);
 escape 1;
 ]],
     --parser = 'line 2 : after `..´ : invalid constructor syntax',
-    parser = 'line 2 : after `v´ : expected `[´ or `:´ or `!´ or `(´ or `?´ or `is´ or `as´ or binary operator or `,´ or `)´',
+    parser = 'line 2 : after `v´ : expected `[´ or `:´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `,´ or `)´',
     --run = 1,
 }
 
@@ -29135,7 +30160,7 @@ vector[] byte v = [].."abc";
 native _char;
 escape _strlen(v as _char&&);
 ]],
-    exps = 'line 4 : invalid operand to `as´ : unexpected context for vector "v"',
+    dcls = 'line 4 : invalid operand to `as´ : unexpected context for vector "v"',
     --env = 'line 2 : types mismatch (`byte[]´ <= `_char&&´)',
     --run = 3,
 }
@@ -29388,7 +30413,7 @@ escape 0;
 }
 Test { [[
 vector[2] int v;
-var int i=0,j=0;
+var int i=0; var int j=0;
 par/or do
     v[j] = 1;
 with
@@ -29410,8 +30435,8 @@ if false then
 end
 escape v2[0][0];
 ]],
-    locs = 'line 5 : invalid vector : unexpected context for variable "v2"',
-    --exps = 'line 5 : invalid vector : expected location',
+    dcls = 'line 5 : invalid vector : unexpected context for variable "v2"',
+    --dcls = 'line 5 : invalid vector : expected location',
 }
 
 Test { [[
@@ -29744,7 +30769,8 @@ end
 vector&[_N] _u8 xxxx = _;
 escape 1;
 ]],
-    inits = 'line 6 : invalid binding : unexpected statement in the right side',
+    inits = 'line 6 : invalid binding : expected operator `&´ in the right side',
+    --inits = 'line 6 : invalid binding : unexpected statement in the right side',
     --gcc = '6:26: error: variably modified ‘xxxx’ at file scope',
 }
 
@@ -29759,7 +30785,7 @@ escape 0;
 --<< VECTOR / ALIAS
 
 Test { [[
-var int x=1, y=2, z=3;
+var int x=1; var int  y=2; var int  z=3;
 vector[10] int&& v = [ &&x, &&y, &&z ];
 escape *v[0] + *v[1] + *v[2];
 ]],
@@ -29869,9 +30895,10 @@ var int? v1 = 0;
 var int? v2 = 1;
 var& int? i = &v1;
 i = &v2;
-escape v1!;
+escape i!;
 ]],
-    inits = 'line 4 : invalid binding : variable "i" is already bound (/tmp/tmp.ceu:3)',
+    run = 1,
+    --inits = 'line 4 : invalid binding : variable "i" is already bound',-- (/tmp/tmp.ceu:3)',
     --ref = 'line 4 : invalid attribution : variable "i" is already bound',
     --ref = 'line 4 : invalid attribution : l-value already bounded',
 }
@@ -29925,14 +30952,14 @@ escape v;
 ]],
     wrn = true,
     --env = 'line 4 : invalid operands to binary "+"',
-    exps = 'line 4 : invalid operand to `+´ : expected numeric type',
+    dcls = 'line 4 : invalid operand to `+´ : expected numeric type',
 }
 
 Test { [[
 var int v = 10;
 escape v!;
 ]],
-    locs = 'line 2 : invalid operand to `!´ : expected option type',
+    dcls = 'line 2 : invalid operand to `!´ : expected option type',
 }
 
 Test { [[
@@ -29942,7 +30969,8 @@ i = &v;
 i = &v;
 escape i!;
 ]],
-    inits = 'line 4 : invalid binding : variable "i" is already bound (/tmp/tmp.ceu:3)',
+    run = 10;
+    --inits = 'line 4 : invalid binding : variable "i" is already bound',-- (/tmp/tmp.ceu:3)',
     --ref = 'line 4 : invalid attribution : variable "i" is already bound',
 }
 
@@ -29957,7 +30985,8 @@ end
 escape v!;
 ]],
     --inits = 'line 2 : uninitialized variable "i" : reached `loop´ (/tmp/tmp.ceu:3)',
-    inits = 'line 2 : uninitialized variable "i" : reached yielding statement (/tmp/tmp.ceu:3)',
+    inits = 'line 4 : invalid binding : crossing `loop´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "i" : reached yielding statement (/tmp/tmp.ceu:3)',
     --ref = 'line 4 : invalid attribution : variable "i" is already bound',
 }
 Test { [[
@@ -30062,14 +31091,14 @@ Test { [[
 var int? i;
 escape i as int;
 ]],
-    exps = 'line 2 : invalid operand to `as´ : unexpected option type',
+    dcls = 'line 2 : invalid operand to `as´ : unexpected option type',
 }
 Test { [[
 var int? i;
 escape i is int;
 ]],
-    --exps = 'line 2 : invalid operand to `is´ : unexpected option type',
-    exps = 'line 2 : invalid operand to `is´ : expected plain `data´ type : got "int?"',
+    --dcls = 'line 2 : invalid operand to `is´ : unexpected option type',
+    dcls = 'line 2 : invalid operand to `is´ : expected plain `data´ type : got "int?"',
 }
 Test { [[
 var int? i = 10;
@@ -30087,13 +31116,14 @@ escape (i! as int);
 Test { [[
 escape 1?;
 ]],
-    parser = 'ERR : /tmp/tmp.ceu : line 1 : after `1´ : expected `is´ or `as´ or binary operator or `;´',
+    --parser = 'ERR : /tmp/tmp.ceu : line 1 : after `1´ : expected `is´ or `as´ or binary operator or `;´',
+    dcls = 'line 1 : invalid operand to `?´ : unexpected context for value "1"',
 }
 Test { [[
 var int i;
 escape i?;
 ]],
-    exps = 'line 2 : invalid operand to `?´ : expected option type',
+    dcls = 'line 2 : invalid operand to `?´ : expected option type',
 }
 Test { [[
 var int? i = 1;
@@ -30190,7 +31220,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    scopes = 'line 6 : invalid binding : expected option alias `&?´ as destination : got "_SDL_Texture"',
+    cc = '1: error: unknown type name ‘SDL_Texture’',
+    --scopes = 'line 6 : invalid binding : expected option alias `&?´ as destination : got "_SDL_Texture"',
 }
 
 Test { [[
@@ -30212,7 +31243,7 @@ escape 1;
 Test { [[
 native _SDL_Texture;
 native/nohold _g;
-var&? _SDL_Texture t_enemy_0, t_enemy_1;
+var&? _SDL_Texture t_enemy_0; var&? _SDL_Texture t_enemy_1;
 native _f;
     do t_enemy_1 = &_f();
 finalize (t_enemy_1) with
@@ -30223,6 +31254,7 @@ escape 1;
     wrn = true,
     cc = 'error: unknown type name ‘SDL_Texture’',
     --inits = 'line 3 : uninitialized variable "t_enemy_0" : reached `escape´ (/tmp/tmp.ceu:9)',
+    --inits = 'line 3 : uninitialized variable "t_enemy_0" : reached end of `par/or´ (/tmp/tmp.ceu:5)',
 }
 
 Test { [[
@@ -30380,6 +31412,7 @@ finalize(v1) with
     nothing;
 end
 ]],
+    --dcls = 'line 1 : invalid declaration : option alias : expected native or `code/await´ type',
     stmts = 'line 4 : invalid binding : expected `native´ type',
     --cc = 'error: implicit declaration of function ‘fff’',
     --stmts = 'line 4 : invalid binding : types mismatch : "int?" <= "_"',
@@ -30455,6 +31488,7 @@ interface UI with
 end
 escape 1;
 ]],
+    parser = 'line 4 : after `interface´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `?´ or `(´ or `is´ or binary operator or `;´',
     run = 1,
 }
 
@@ -30466,8 +31500,8 @@ var SDL_Color clr = val SDL_Color(10);
 var SDL_Color? bg_clr = clr;
 escape bg_clr.v;
 ]],
-    locs = 'line 6 : invalid operand to `.´ : expected plain type : got "SDL_Color?"',
-    --exps = 'line 6 : invalid member access : "bg_clr" must be of plain type',
+    dcls = 'line 6 : invalid operand to `.´ : expected plain type : got "SDL_Color?"',
+    --dcls = 'line 6 : invalid member access : "bg_clr" must be of plain type',
     --env = 'line 6 : invalid `.´ operation : cannot be an option type',
 }
 
@@ -30483,8 +31517,9 @@ every 1s do
 end
 escape 1;
 ]],
+    inits = 'line 5 : invalid binding : crossing `loop´ (/tmp/tmp.ceu:3)',
     --inits = 'line 2 : uninitialized variable "sfc" : reached `loop´ (/tmp/tmp.ceu:3)',
-    inits = 'line 2 : uninitialized variable "sfc" : reached yielding statement (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "sfc" : reached yielding statement (/tmp/tmp.ceu:3)',
     --inits = 'line 2 : uninitialized variable "sfc" : reached `await´ (/tmp/tmp.ceu:3)',
     --ref = 'line 4 : invalid attribution : variable "sfc" is already bound',
     --ref = 'line 4 : reference declaration and first binding cannot be separated by loops',
@@ -30938,6 +31973,19 @@ escape 1;
     scopes = 'line 7 : invalid `finalize´ : incompatible scopes',
 }
 Test { [[
+native/nohold _S, _F, _f;
+code/await Surface_from_desc (var _S desc) -> FOREVER
+do
+    var&? _F f = &_f(desc) finalize (f) with end;
+    await FOREVER;
+end
+]],
+    wrn = true,
+    cc = '4:57: error: implicit declaration of function ‘f’',
+    --run = 1,
+}
+
+Test { [[
 native _f;
 var int x = 0;
 do
@@ -30974,7 +32022,7 @@ end
 
 escape 1;
 ]],
-    exps = 'line 16 : invalid operand to `&&´ : unexpected option type',
+    dcls = 'line 16 : invalid operand to `&&´ : unexpected option type',
 }
 
 Test { [[
@@ -31205,9 +32253,12 @@ finalize (ptr) with
     nothing;
 end
 
-escape &ptr! == &ptr!;  // ptr.SOME fails
+escape &&ptr! == &&ptr!;  // ptr.SOME fails
 ]],
-    exps = 'line 14 : invalid expression : unexpected context for operation `&´',
+    --run = 1,
+    stmts = 'line 9 : invalid binding : expected `native´ type',
+    --dcls = 'line 8 : invalid declaration : option alias : expected native or `code/await´ type',
+    --dcls = 'line 14 : invalid expression : unexpected context for operation `&´',
     --env = 'line 14 : invalid use of operator "&" : not a binding assignment',
 }
 
@@ -31351,7 +32402,7 @@ var& int tex2 = tex1;
 
 escape &tex2==&_V;
 ]],
-    exps = 'line 17 : invalid expression : unexpected context for operation `&´',
+    dcls = 'line 17 : invalid expression : unexpected context for operation `&´',
     --env = 'line 15 : types mismatch (`int&´ <= `int&?´)',
     --run = 1,
 }
@@ -31375,7 +32426,7 @@ var& int tex2 = tex1;
 
 escape &tex2==&_V;
 ]],
-    exps = 'line 17 : invalid expression : unexpected context for operation `&´',
+    dcls = 'line 17 : invalid expression : unexpected context for operation `&´',
     --env = 'line 15 : types mismatch (`int&´ <= `int&?´)',
     --asr = true,
 }
@@ -31451,7 +32502,8 @@ var& _SDL_Window win =
     &_SDL_CreateWindow("UI - Texture", 500, 1300, 800, 480, _SDL_WINDOW_SHOWN);
 escape 0;
 ]],
-    scopes = 'line 5 : invalid binding : expected option alias `&?´ as destination : got "_SDL_Window"',
+    scopes = 'line 5 : invalid binding : expected `finalize´',
+    --scopes = 'line 5 : invalid binding : expected option alias `&?´ as destination : got "_SDL_Window"',
     --fin = 'line 6 : must assign to a option reference (declared with `&?´)',
 }
 Test { [[
@@ -31465,7 +32517,8 @@ var& _SDL_Window win =
         end
 escape 0;
 ]],
-    parser = 'line 5 : after `)´ : expected `is´ or `as´ or binary operator or `..´ or `,´ or `;´',
+    cc = '1: error: unknown type name ‘SDL_Window’',
+    --parser = 'line 5 : after `)´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `..´ or `;´',
     --scopes = 'line 4 : invalid binding : expected option alias `&?´ as destination : got "_SDL_Window"',
     --fin = 'line 6 : must assign to a option reference (declared with `&?´)',
 }
@@ -31741,6 +32794,33 @@ escape a;
 
 -- TODO: SKIP-01
 
+-->> OPTION / NIL
+
+Test { [[
+var int x = 10;
+x = nil;
+escape 1;
+]],
+    stmts = 'line 2 : invalid assignment : expected option destination',
+}
+
+Test { [[
+vector[] int x;
+x = nil;
+escape 1;
+]],
+    stmts = 'line 2 : invalid assignment : unexpected context for vector "x"',
+}
+
+Test { [[
+var int? x = 10;
+x = nil;
+escape (x? as int) + 1;
+]],
+    run = 1,
+}
+
+--<< OPTION / NIL
 --<<< OPTION TYPES
 
 -->>> WATCHING
@@ -31833,7 +32913,7 @@ escape n;
 
 Test { [[
 input (int,int) E;
-var int a,b;
+var int a; var int b;
 (a,b) =
     watching E do
         await FOREVER;
@@ -31858,7 +32938,7 @@ escape a!+b;
 
 Test { [[
 input (int,int) E;
-var int? a,b;
+var int? a; var int? b;
 (a,b) =
     watching E do
     end;
@@ -31870,7 +32950,7 @@ escape (a? as int) + (b? as int) + 1;
 Test { [[
 par/or do
     input (int,int) E;
-    var int? a,b;
+    var int? a; var int? b;
     (a,b) =
         watching E do
             await FOREVER;
@@ -32043,7 +33123,7 @@ native/pre do
     ##include <assert.h>
 end
 input void I;
-event void e, f;
+event void e; event void  f;
 par do
     watching e do       // 5
         await I;        // 1
@@ -32098,7 +33178,20 @@ escape 1;
 ]],
     --wrn = true,
     --adj = 'line 1 : missing parameter identifier',
-    adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    --adjs = 'line 1 : invalid declaration : expected identifier',
+    --adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
+}
+
+Test { [[
+code/tight Code (var int)->void;
+escape 1;
+]],
+    --wrn = true,
+    --adj = 'line 1 : missing parameter identifier',
+    --adjs = 'line 1 : invalid declaration : expected identifier',
+    --adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
 }
 
 Test { [[
@@ -32107,7 +33200,9 @@ do
 end
 escape 1;
 ]],
-    adjs = 'line 1 : invalid declaration : parameter #2 : expected identifier',
+    parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
+    --adjs = 'line 1 : invalid declaration : expected identifier',
+    --adjs = 'line 1 : invalid declaration : parameter #2 : expected identifier',
 }
 
 Test { [[
@@ -32116,7 +33211,9 @@ do
 end
 escape 1;
 ]],
-    adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    parser = 'line 1 : after `void´ : expected type modifier or internal identifier',
+    --adjs = 'line 1 : invalid declaration : expected identifier',
+    --adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
     --parser = 'line 1 : after `int´ : expected type modifier or `,´ or `)´',
     --adj = 'line 1 : wrong argument #1 : cannot be `void´',
 }
@@ -32130,7 +33227,9 @@ escape 1;
     --wrn = true,
     --adj = 'line 1 : wrong argument #1 : cannot be `void´',
     --parser = 'line 1 : after `void´ : expected type modifier or `;´',
-    adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    --adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    --adjs = 'line 1 : invalid declaration : expected identifier',
+    parser = 'line 1 : after `void´ : expected type modifier or internal identifier',
 }
 
 Test { [[
@@ -32152,7 +33251,7 @@ do
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `void´ : expected type modifier or `;´ or `do´',
+    parser = 'line 1 : after `void´ : expected type modifier or `do´ or `;´',
 }
 
 Test { [[
@@ -32204,7 +33303,7 @@ do
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `(´ : expected `vector´ or `pool´ or `event´ or `var´',
+    parser = 'line 1 : after `(´ : expected `var´ or `vector´ or `pool´ or `event´',
 }
 
 Test { [[
@@ -32250,7 +33349,7 @@ code/tight Fx (var int v)->int do
 end
 escape call Fx();
 ]],
-    exps = 'line 4 : invalid call : expected 1 argument(s)',
+    dcls = 'line 4 : invalid call : expected 1 argument(s)',
 }
 
 Test { [[
@@ -32260,7 +33359,7 @@ end
 var int&& ptr;
 escape call Fx(ptr);
 ]],
-    exps= 'line 5 : invalid call : argument #1 : types mismatch : "int" <= "int&&"',
+    dcls = 'line 5 : invalid call : argument #1 : types mismatch : "int" <= "int&&"',
 }
 
 Test { [[
@@ -32283,7 +33382,7 @@ Test { [[
 code/tight Fx (void) -> void
 escape 1;
 ]],
-    parser = 'line 1 : after `void´ : expected type modifier or `;´ or `do´'
+    parser = 'line 1 : after `void´ : expected type modifier or `do´ or `;´'
 }
 
 Test { [[
@@ -32321,7 +33420,9 @@ escape 1;
     --wrn = true,
     --env = 'line 1 : missing parameter identifier',
     --parser = 'line 1 : after `void´ : expected type modifier or `;´',
-    adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    --adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    --adjs = 'line 1 : invalid declaration : expected identifier',
+    parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
 }
 
 Test { [[
@@ -32429,7 +33530,7 @@ escape 1;
 
 Test { [[
 code/tight Fx (void) -> int;
-code/tight Fx (var int)  -> int;
+code/tight Fx (var int a)  -> int;
 escape 1;
 ]],
     wrn = true,
@@ -32448,7 +33549,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var void, var int) -> int;
+code/tight Fx (var void a, var int b) -> int;
 escape 1;
 ]],
     dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
@@ -32456,7 +33557,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var int) -> void;
+code/tight Fx (var int a) -> void;
 escape 1;
 ]],
     wrn = true,
@@ -32464,7 +33565,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var int, var int) -> int;
+code/tight Fx (var int a, var int b) -> int;
 code/tight Fx (var int a, var  int b) -> int do
     escape a + b;
 end
@@ -32475,7 +33576,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var int, var int) -> int;
+code/tight Fx (var int a, var int b) -> int;
 code/tight Fx (var int a, var  u8 b) -> int do
     escape a + b;
 end
@@ -32485,7 +33586,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var int, var int) -> int;
+code/tight Fx (var int a, var int b) -> int;
 code/tight Fx (var int a, var  int b) -> int do
     escape a + b;
 end
@@ -32495,7 +33596,7 @@ escape call Fx(1,2);
 }
 
 Test { [[
-code/tight Fx (var int, var int) -> int;
+code/tight Fx (var int a, var int b) -> int;
 code/tight Fx (var int a, var  int b) -> int do
     escape a + b;
 end
@@ -32537,15 +33638,15 @@ end
 }
 
 Test { [[
-class Tx with
+code/await Tx (void) -> int
 do
-    code/tight Fx (var int)->int;
-    code/tight Fx (var int x)->int do
-        escape x;
+    code/tight Fx (var int a)->int;
+    code/tight Fx (var int a)->int do
+        escape a;
     end
     escape call Fx(10);
 end
-var int x = do Tx;
+var int x = await Tx();
 escape x;
 ]],
     run = {['~>1s']=10},
@@ -32623,8 +33724,8 @@ var u8 v = 0;
 call Set(_);
 escape v as int;
 ]],
-    exps = 'line 5 : invalid call : invalid binding : argument #1 : expected location',
-    --exps = 'line 5 : invalid constructor : argument #1 : unexpected `_´',
+    dcls = 'line 5 : invalid call : invalid binding : argument #1 : expected location',
+    --dcls = 'line 5 : invalid constructor : argument #1 : unexpected `_´',
 }
 
 Test { [[
@@ -32635,7 +33736,7 @@ var int v = 0;
 call Ff(v);
 escape v;
 ]],
-    exps = 'line 5 : invalid call : invalid binding : argument #1 : unexpected context for variable "v"',
+    dcls = 'line 5 : invalid call : invalid binding : argument #1 : unexpected context for variable "v"',
 }
 
 Test { [[
@@ -32653,64 +33754,6 @@ end
 }
 
 Test { [[
-class Tx with
-    var int v = 10;
-do
-end
-
-var Tx t;
-
-code/tight Fx (void)->Tx&& do
-    escape &&t;
-end
-
-var Tx&& p = call Fx();
-
-escape p:v;
-]],
-    run = 10,
-}
-Test { [[
-class Tx with
-    var int v = 10;
-do
-end
-
-var Tx t;
-
-code/tight Fx (void)->Tx&& do
-    var Tx&& p = &&t;
-    escape p;
-end
-
-var Tx&& p = call Fx();
-
-escape p:v;
-]],
-    run = 10,
-}
-Test { [[
-class Tx with
-    var int v = 10;
-do
-end
-
-var Tx t;
-
-code/tight Fx (void)->Tx&& do
-    var Tx&& p = &&t;
-    escape p;
-end
-
-var Tx&& p = call Fx();
-await 1s;
-
-escape p:v;
-]],
-    fin = 'line 16 : unsafe access to pointer "p" across `await´ (/tmp/tmp.ceu : 14)',
-}
-
-Test { [[
 code/tight Fx (var int x)->int;
 var int x = 0;
 code/tight Fx (var int x)->int do
@@ -32724,7 +33767,7 @@ escape call Fx(1) + this.x;
 }
 
 Test { [[
-code/tight Code (var int)->void;
+code/tight Code (var int a)->void;
 code/tight Code (var int a)->void
 do
     escape 1;
@@ -32763,7 +33806,8 @@ escape 10;
 ]],
     wrn = true,
     --inits = 'line 2 : uninitialized variable "x" : reached `end of code´ (/tmp/tmp.ceu:5)',
-    inits = 'line 2 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:5)',
+    --inits = 'line 2 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:5)',
+    run = 10,
 }
 
 Test { [[
@@ -32799,7 +33843,7 @@ end
 escape 10;
 ]],
     wrn = true,
-    parser = 'line 1 : after `int´ : expected type modifier or `;´ or `do´',
+    parser = 'line 1 : after `int´ : expected type modifier or `do´ or `;´',
     --env = 'line 3 : invalid escape value : local reference',
     --ref = 'line 3 : attribution to reference with greater scope',
 }
@@ -32866,12 +33910,13 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var void, var int)->int do
+code/tight Fx (var void, var int b)->int do
 end
 escape 1;
 ]],
+    parser = 'line 1 : after `void´ : expected type modifier or internal identifier',
     --parser = 'line 1 : after `int´ : expected type modifier or `;´',
-    adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    --adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
 }
 
 Test { [[
@@ -32891,7 +33936,7 @@ end
 var s8 i = 0;
 escape call Fx(i);
 ]],
-    exps = 'line 5 : invalid call : argument #1 : types mismatch : "u8" <= "s8"',
+    dcls = 'line 5 : invalid call : argument #1 : types mismatch : "u8" <= "s8"',
 }
 
 Test { [[
@@ -32907,6 +33952,28 @@ call Fx(5);
 escape (_V==5) as int;
 ]],
     run = 1,
+}
+
+Test { [[
+spawn () do
+    code/tight Ff (void) -> void do end
+    await FOREVER;
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+code/tight Ff (var& int x) -> int do
+    escape x + 1;
+end
+escape call Ff(&1);
+]],
+    run = 1,
+    dcls = 'line 4 : invalid binding : unexpected context for value "1"',
+    --todo = 'support aliases to constants',
 }
 
 -->>> RECURSIVE
@@ -32954,6 +34021,17 @@ call/recursive Fa();
 escape 1;
 ]],
     wrn = true,
+    run = 1,
+}
+
+Test { [[
+code/tight Ff (void) -> int;
+var int ret = call Ff();
+code/tight Ff (void) -> int do
+    escape 1;
+end
+escape ret;
+]],
     run = 1,
 }
 
@@ -33072,9 +34150,23 @@ escape call Fx(5);
     --run = 120,
 }
 Test { [[
+1;
+]],
+    --run = 1,
+    stmts = 'line 1 : invalid call',
+    --parser = 'line 1 : after `call´ : expected external identifier or location',
+    --env = 'TODO: not a call',
+    --ast = 'line 1 : invalid call',
+    --env = 'TODO: 1 not func',
+    --parser = 'line 1 : after `1´ : expected <h,min,s,ms,us>',
+}
+
+Test { [[
 call 1;
 ]],
-    parser = 'line 1 : after `call´ : expected external identifier or location',
+    --run = 1,
+    stmts = 'line 1 : invalid call',
+    --parser = 'line 1 : after `call´ : expected external identifier or location',
     --env = 'TODO: not a call',
     --ast = 'line 1 : invalid call',
     --env = 'TODO: 1 not func',
@@ -33130,6 +34222,19 @@ escape (call/recursive Fat(10) == 3628800) as int;
     run = 1,
 }
 
+Test { [[
+code/tight/recursive Gg (void) -> void do
+    call/recursive Gg();
+end
+code/await Ff (void) -> void do
+    call/recursive Gg();
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
 --<<< RECURSIVE
 
 -->> VECTOR / CODE
@@ -33143,7 +34248,8 @@ end
 
 escape call Fx(&str);
 ]],
-    parser = 'line 3 : after `vector´ : expected `&´',
+    --parser = 'line 3 : after `vector´ : expected `&´',
+    dcls = 'line 3 : invalid declaration : vector inside `code/tight´',
 }
 Test { [[
 vector[] byte str = [0,1,2];
@@ -33179,7 +34285,7 @@ end
 
 escape call Fx(&&str);
 ]],
-    exps = 'line 7 : invalid call : invalid binding : argument #1 : unexpected context for value "str"',
+    dcls = 'line 7 : invalid call : invalid binding : argument #1 : unexpected context for value "str"',
 }
 Test { [[
 vector[1] byte str = [0,1,2];
@@ -33190,7 +34296,7 @@ end
 
 escape call Fx(&str);
 ]],
-    exps = 'line 7 : invalid call : invalid binding : argument #1 : dimension mismatch',
+    dcls = 'line 7 : invalid call : invalid binding : argument #1 : dimension mismatch',
 }
 Test { [[
 var  byte v1 = 0;
@@ -33219,7 +34325,7 @@ end
 
 escape call Fx(&str);
 ]],
-    exps = 'line 7 : invalid call : argument #1 : types mismatch : "int" <= "byte"',
+    dcls = 'line 7 : invalid call : argument #1 : types mismatch : "int" <= "byte"',
     --run = 1,
 }
 Test { [[
@@ -33246,7 +34352,7 @@ escape call Fx(str);
 ]],
     wrn = true,
     --ref = 'line 7 : invalid attribution : missing alias operator `&´',
-    exps = 'line 7 : invalid call : invalid binding : argument #1 : unexpected context for vector "str"',
+    dcls = 'line 7 : invalid call : invalid binding : argument #1 : unexpected context for vector "str"',
 }
 Test { [[
 vector[] byte str = [0,1,2];
@@ -33259,7 +34365,7 @@ vector&[] byte ref = &call Fx();
 
 escape ref[1];
 ]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
+    parser = 'line 3 : after `byte´ : expected type modifier or `do´ or `;´',
     --env = 'line 4 : invalid escape value : types mismatch (`byte[]´ <= `byte[]&´)',
 }
 
@@ -33273,7 +34379,8 @@ end
 
 escape call Fx(str);
 ]],
-    parser = 'line 3 : after `vector´ : expected `&´',
+    dcls = 'line 3 : invalid declaration : vector inside `code/tight´',
+    --parser = 'line 3 : after `vector´ : expected `&´',
     --env = 'line 3 : wrong argument #2 : vectors are not supported',
     --env = 'line 7 : wrong argument #1 : types mismatch (`int[]´ <= `byte[]´)',
 }
@@ -33297,7 +34404,7 @@ vector[10] u8 buffer;
 call FillBuffer(&buffer);
 escape buffer[0] as int;
 ]],
-    exps = 'line 5 : invalid call : invalid binding : argument #1 : dimension mismatch',
+    dcls = 'line 5 : invalid call : invalid binding : argument #1 : dimension mismatch',
     --tmp = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
 }
 
@@ -33342,8 +34449,9 @@ code/tight Build (vector[] u8 bytes)->void do
 end
 escape 1;
 ]],
-    wrn = true,
-    parser = 'line 1 : after `vector´ : expected `&´',
+    dcls = 'line 1 : invalid declaration : vector inside `code/tight´',
+    --wrn = true,
+    --parser = 'line 1 : after `vector´ : expected `&´',
     --env = 'line 1 : wrong argument #1 : vectors are not supported',
 }
 
@@ -33358,7 +34466,7 @@ vector&[] byte ref = &f();
 
 escape ref[1];
 ]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
+    parser = 'line 3 : after `byte´ : expected type modifier or `do´ or `;´',
     --run = 1,
 }
 
@@ -33374,7 +34482,7 @@ ref = [3, 4, 5];
 
 escape str[1];
 ]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
+    parser = 'line 3 : after `byte´ : expected type modifier or `do´ or `;´',
     --run = 4,
 }
 
@@ -33390,7 +34498,7 @@ ref = [] .. "ola";
 
 escape str[1] == 'l';
 ]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
+    parser = 'line 3 : after `byte´ : expected type modifier or `do´ or `;´',
     --run = 1,
 }
 
@@ -33414,7 +34522,7 @@ ref = [] .. ({g}() as _char&&) .. "ola";
 escape str[3] == 'o';
 ]],
     --run = 1,
-    parser = 'line 9 : after `byte´ : expected type modifier or `;´ or `do´',
+    parser = 'line 9 : after `byte´ : expected type modifier or `do´ or `;´',
 }
 
 Test { [[
@@ -33433,7 +34541,7 @@ f2();
 
 escape str[4] == 'u';
 ]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
+    parser = 'line 3 : after `byte´ : expected type modifier or `do´ or `;´',
     --run = 1,
 }
 
@@ -33459,7 +34567,7 @@ end
 vector[] byte str = [].."Ola Mundo!";
 escape call Strlen((&&str[0]) as _char&&);
 ]],
-    locs = 'line 3 : invalid vector : unexpected context for variable "str"',
+    dcls = 'line 3 : invalid vector : unexpected context for variable "str"',
     --run = 10,
 }
 
@@ -33471,8 +34579,9 @@ code/tight Fx (void)->void do
 end
 escape 1;
 ]],
-    wrn = true,
-    props = 'line 4 : not permitted inside `function´',
+    dcls = 'line 4 : invalid declaration : vector inside `code/tight´',
+    --wrn = true,
+    --props = 'line 4 : not permitted inside `function´',
     --props_ = 'line 4 : invalid `await´ : unexpected enclosing `code´',
 }
 
@@ -33489,119 +34598,6 @@ escape cs[0];
 
 --<< VECTOR / CODE
 
--->> CODE / TIGHT / OUTER
-
-Test { [[
-var int x;
-code/tight Ff (void)->void do
-end
-x = 1;
-escape x;
-]],
-    wrn = true,
-    --inits = 'line 1 : uninitialized variable "x" : reached `code´ (/tmp/tmp.ceu:2)',
-    inits = 'line 1 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:2)',
-}
-
-Test { [[
-var int x = 0;
-code/tight Ff (void)->void do
-    outer.y = 1;
-end
-var int y = 10;
-call Ff();
-escape x;
-]],
-    dcls = 'line 3 : internal identifier "y" is not declared',
-}
-
-Test { [[
-var int ret = 0;
-do
-    var int x = 0;
-    code/tight Ff (void)->void do
-        outer.x = 1;
-    end
-    call Ff();
-    ret = x;
-end
-call Ff();
-escape ret;
-]],
-    dcls = 'line 10 : abstraction "Ff" is not declared',
-}
-
-Test { [[
-var int x = 0;
-code/tight Ff (void)->void do
-    code/tight Gg (void)->void do end
-    outer.x = 1;
-end
-call Ff();
-escape x;
-]],
-    dcls = 'line 3 : invalid `code´ declaration : nesting is not allowed',
-}
-Test { [[
-var int x = 0;
-data Dd with
-    code/tight Ff (void)->void do
-        outer.x = 1;
-    end
-end
-call Ff();
-escape x;
-]],
-    parser = 'line 2 : after `with´ : expected `var´ or `vector´ or `pool´ or `event´',
-}
-Test { [[
-var int x = 0;
-data Dd with
-    data Ee;
-end
-call Ff();
-escape x;
-]],
-    parser = 'line 2 : after `with´ : expected `var´ or `vector´ or `pool´ or `event´',
-}
-
-Test { [[
-var int x = 0;
-code/tight Ff (void)->void do
-    outer.x = 1;
-end
-call Ff();
-escape x;
-]],
-    run = 1,
-}
-
-Test { [[
-var int ret = 0;
-do
-    var int x = 0;
-    code/tight Ff (void)->void do
-        outer.x = 1;
-    end
-    call Ff();
-    ret = x;
-end
-escape ret;
-]],
-    run = 1,
-}
-
-Test { [[
-native _int, _f;
-var& _int ren;
-_f(&&outer.ren);
-escape 0;
-]],
-    dcls = 'line 3 : invalid `outer´ : expected enclosing `code´ declaration',
-}
-
---<< CODE / TIGHT / OUTER
-
 Test { [[
 code/tight Rect (void) -> void
 do
@@ -33610,7 +34606,8 @@ await Rect();
 
 escape 0;
 ]],
-    stmts = 'line 4 : invalid `await´ : expected `code/await´ declaration (/tmp/tmp.ceu:1)',
+    --dcls = 'line 4 : invalid declaration : option alias : expected native or `code/await´ type',
+    stmts = 'line 4 : invalid `spawn´ : expected `code/await´ declaration (/tmp/tmp.ceu:1)',
 }
 
 -->> CODE / ALIAS / FINALIZE
@@ -33624,6 +34621,7 @@ var&? _void ptr = & call Ff()
         end;
 escape 0;
 ]],
+    --stmts = 'line 4 : invalid binding : expected native type',
     stmts = 'line 4 : invalid binding : types mismatch : "_void" <= "void"',
 }
 
@@ -33724,118 +34722,6 @@ escape ret;
 --<< CODE / ALIAS / FINALIZE
 
 --<<< CODE / TIGHT / FUNCTIONS
-
--->> C FIELDS / DIRECT ACCESS / TCEU_MEM
-Test { [[
-native __ceu_mem, _tceu_code_mem_ROOT;
-var int xxx = 10;
-escape (__ceu_mem as _tceu_code_mem_ROOT&&):xxx;
-]],
-    run = 10,
-}
-
-Test { [[
-native __ceu_mem, _tceu_code_mem_ROOT;
-do/_
-    var int xxx = 10;
-    escape (__ceu_mem as _tceu_code_mem_ROOT&&):xxx;
-end
-]],
-    cc = '5:2: error: ‘tceu_code_mem_ROOT {aka struct tceu_code_mem_ROOT}’ has no member named ‘xxx’',
-}
-
-Test { [[
-par/and do
-    var int xxx = 10;
-with
-    var int xxx = 10;
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native __ceu_mem, _tceu_code_mem_Ff;
-code/await Ff (void) -> int do
-    var int yyy = 10;
-    escape (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
-end
-var int v = await Ff();
-escape v;
-]],
-    run = 10,
-}
-
-Test { [[
-native __ceu_mem, _tceu_code_mem_Ff;
-code/await Ff (void) -> int do
-    do/_
-        var int yyy = 10;
-        escape (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
-    end
-end
-var int v = await Ff();
-escape v;
-]],
-    cc = '6:2: error: ‘tceu_code_mem_Ff {aka struct tceu_code_mem_Ff}’ has no member named ‘yyy’',
-}
-
-Test { [[
-native __ceu_mem, _tceu_code_mem_Ff;
-code/await Ff (void) -> FOREVER do
-    do/_
-        var int yyy = 10;
-        var int zzz = (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
-    end
-    await FOREVER;
-end
-spawn Ff();
-escape 10;
-]],
-    cc = '6:2: error: ‘tceu_code_mem_Ff {aka struct tceu_code_mem_Ff}’ has no member named ‘yyy’',
-}
-
-Test { [[
-native __ceu_mem, _tceu_code_mem_Ff;
-code/await Ff (var int xxx) -> int do
-    escape (__ceu_mem as _tceu_code_mem_Ff&&):xxx;
-end
-var int yyy = await Ff(10);
-escape yyy;
-]],
-    wrn = true,
-    run = 10,
-}
-
-Test { [[
-code/await Ff (void) -> FOREVER do
-    par do
-        var int e=_;
-    with
-        var int e=_;
-    end
-end
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-code/await Ff (void) -> FOREVER do
-    par do
-        var int yyy = 10;
-    with
-        var int yyy = 10;
-    end
-end
-spawn Ff();
-escape 10;
-]],
-    run = 10,
-}
---<< C FIELDS / DIRECT ACCESS / TCEU_MEM
 
 -->>> CODE / AWAIT
 
@@ -33952,7 +34838,7 @@ code/await Tx (void)->void do end
 call Tx();
 escape 1;
 ]],
-    exps = 'line 2 : invalid call : expected `code/tight´ : got `code/await´ (/tmp/tmp.ceu:2)',
+    dcls = 'line 2 : invalid call : expected `code/tight´ : got `code/await´ (/tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -34115,19 +35001,21 @@ Test { [[
 every do
 end
 ]],
-    parser = 'line 1 : after `every´ : expected location or external identifier or number',
+    --parser = 'line 1 : after `every´ : expected location or external identifier or number',
+    parser = 'line 1 : after `every´ : expected location or `{´ or `(´ or external identifier or number',
 }
 Test { [[
 every Code(1) do
 end
 ]],
-    parser = 'line 1 : after `every´ : expected location or number',
+    parser = 'line 1 : after `every´ : expected location or `{´ or `(´ or number',
+    --parser = 'line 1 : after `every´ : expected location or number',
 }
 Test { [[
 code/await Code (void)->void;
 await Code(1) until true;
 ]],
-    parser = 'line 2 : after `)´ : expected `->´ or `;´',
+    parser = 'line 2 : after `)´ : expected `;´',
 }
 Test { [[
 await 1s until true;
@@ -34224,7 +35112,7 @@ end
 escape 0;
 ]],
     wrn = true,
-    stmts = 'line 2 : invalid `await´ : unexpected recursive invocation',
+    stmts = 'line 2 : invalid `spawn´ : unexpected recursive invocation',
     --dcls = 'line 2 : abstraction "Tx" is not declared',
 }
 Test { [[
@@ -34234,7 +35122,7 @@ end
 escape 0;
 ]],
     wrn = true,
-    stmts = 'line 2 : invalid `await´ : unexpected recursive invocation',
+    stmts = 'line 2 : invalid `spawn´ : unexpected recursive invocation',
     --dcls = 'line 2 : abstraction "Tx" is not declared',
 }
 
@@ -34277,22 +35165,6 @@ end
 escape 1;
 ]],
     run = { ['~>100s'] = 1 },
-}
-
-Test { [[
-code/await UV_TCP_Open (void) -> (var& int v) -> void
-do
-    if false then
-        escape;
-    end
-
-    var int vv = 10;
-    v = &vv;
-end
-escape 1;
-]],
-    wrn = true,
-    run = 1,
 }
 
 Test { [[
@@ -34559,48 +35431,6 @@ escape x;
 }
 
 Test { [[
-code/await Ff (void) -> (var& int x) -> void do
-    var int v = 0;
-    x = &v;
-end
-
-var int x;
-spawn Ff() -> (x);
-
-escape 0;
-]],
-    parser = 'line 7 : after `(´ : expected `&´ or `_´',
-}
-
-Test { [[
-code/await Ff (void) -> (var& int x) -> void do
-    var int v = 0;
-    x = &v;
-end
-
-var int x;
-spawn Ff() -> (&x);
-
-escape 0;
-]],
-    stmts = 'line 7 : invalid binding : argument #1 : expected alias `&´ declaration',
-}
-
-Test { [[
-code/await Ff (void) -> (var& int x) -> void do
-    var int v = 0;
-    x = &v;
-end
-
-var& bool x;
-spawn Ff() -> (&x);
-
-escape 0;
-]],
-    stmts = 'line 7 : invalid binding : argument #1 : types mismatch : "int" <= "bool"',
-}
-
-Test { [[
 code/tight Ff (var& int x) -> void do
     var int v = 0;
     x = &v;
@@ -34611,7 +35441,8 @@ call Ff(&x);
 
 escape 0;
 ]],
-    inits = 'line 3 : invalid binding : variable "x" is already bound',
+    --inits = 'line 3 : invalid binding : variable "x" is already bound',
+    inits = 'line 6 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:7)',
 }
 
 Test { [[
@@ -34632,21 +35463,7 @@ spawn Ff(&x);
 
 escape 0;
 ]],
-    exps = 'line 6 : invalid binding : types mismatch : "Var" <= "Vec"',
-}
-
-Test { [[
-code/await Ff (void) -> (var& int x) -> void do
-    var int v = 0;
-    x = &v;
-end
-
-vector&[] int x;
-spawn Ff() -> (&x);
-
-escape 0;
-]],
-    stmts = 'line 7 : invalid binding : argument #1 : types mismatch : "Var" <= "Vec"',
+    dcls = 'line 6 : invalid binding : types mismatch : "Var" <= "Vec"',
 }
 
 Test { [[
@@ -34658,7 +35475,7 @@ var int a = &off;
 call Ff(&off);
 escape 0;
 ]],
-    exps = 'line 6 : invalid binding : argument #1 : expected declaration with `&´',
+    dcls = 'line 6 : invalid binding : argument #1 : expected declaration with `&´',
     wrn = true,
 }
 
@@ -34685,37 +35502,19 @@ every 1s do
 end
 escape 0;
 ]],
-    props_ = 'line 4 : invalid `await´ : unexpected enclosing `every´',
-    --props_ = 'line 4 : invalid `spawn´ : unexpected enclosing `every´',
-    --run = { ['~>1s']=1 },
-}
-
-Test { [[
-code/await Ff (var int xxx) -> (var& int yyy) -> FOREVER do
-    yyy = &xxx;
-    do
-        do finalize with end
-    end
-    await FOREVER;
-end
-
-var int aaa = 10;
-var& int bbb;
-spawn Ff(aaa) -> (&bbb);
-
-escape bbb;
-]],
-    run = 10,
+    --props_ = 'line 4 : invalid `await´ : unexpected enclosing `every´',
+    props_ = 'line 4 : invalid `spawn´ : unexpected enclosing `every´',
+    run = { ['~>1s']=1 },
 }
 
 --<< CODE / ALIAS
 
--->> CODE / OPTION
+-->> CODE / AWAIT / OPTION
 
 Test { [[
-code/tight Fx (var int? x) -> int do
-    if x? then
-        escape x! + 1;
+code/tight Fx (var int? xxx) -> int do
+    if xxx? then
+        escape xxx! + 1;
     else
         escape 1;
     end
@@ -34743,16 +35542,108 @@ escape v1+v2;
     run = 12,
 }
 
---<< CODE / OPTION
+Test { [[
+data Dd with
+    var int x = 10;
+end
+code/tight Ff (var Dd d) -> int do
+    escape d.x;
+end
+escape call Ff(_);
+]],
+    run = 10,
+}
+
+Test { [[
+code/tight Ff (var int? x) -> int do
+    escape (x? as int) + 1;
+end
+escape call Ff(_);
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> void do
+end
+var& Ff f = spawn Ff();
+escape 0;
+]],
+    dcls = 'line 3 : invalid declaration : `code/await´ must execute forever',
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+var& Ff f = spawn Ff();
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> void do
+end
+var&? Ff f1 = spawn Ff();
+var& Ff f2 = &f1!;
+escape 0;
+]],
+    dcls = 'line 4 : invalid declaration : `code/await´ must execute forever',
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+var&? Ff f1 = spawn Ff();
+var& Ff f2 = &f1!;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+pool[1] Ff fs;
+var& Ff f1 = spawn Ff() in fs;
+var& Ff f2 = spawn Ff() in fs;
+escape 1;
+]],
+    run = '6] runtime error: out of memory',
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+var& Ff f = spawn Ff();
+kill f;
+escape 0;
+]],
+    stmts = 'line 5 : invalid `kill´ : expected `&?´ alias',
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+pool[] Ff fs;
+every 1s do
+    var& Ff f;
+    loop f in fs do
+    end
+end
+escape 0;
+]],
+    run = false,
+}
+--<< CODE / AWAIT / OPTION
 
 -->> CODE / AWAIT / FOREVER
 
-Test { [[
-code/tight Ff (void) -> (var& int x) -> void do
-end
-]],
-    parser = 'line 1 : after `->´ : expected type',
-}
 Test { [[
 code/tight Ff (void) -> FOREVER do
 end
@@ -34817,7 +35708,8 @@ var int? x = watching Ff() do
 end;
 escape 0;
 ]],
-    stmts = 'line 3 : invalid assignment : `code´ executes forever',
+    stmts = 'line 3 : invalid `watching´ : `code´ executes forever',
+    --stmts = 'line 3 : invalid assignment : `code´ executes forever',
 }
 
 Test { [[
@@ -34828,235 +35720,6 @@ end
 escape 0;
 ]],
     stmts = 'line 3 : invalid `watching´ : `code´ executes forever',
-}
-
-Test { [[
-code/await Ff (void) -> (var& int x) -> void do
-    var int v = 10;
-    x = &v;
-end
-var& int x;
-spawn Ff() -> (&x);
-escape 0;
-]],
-    stmts = 'line 6 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
-}
-
-Test { [[
-code/await Ff (void) -> void do
-end
-pool[] Ff ffs;
-]],
-    dcls = 'line 3 : pool "ffs" declared but not used',
-}
-
-Test { [[
-code/await Ff (void) -> (var& int x) -> void do
-    var int v = 10;
-    x = &v;
-end
-pool[] Ff ffs;
-var& int x;
-spawn Ff() -> (&x) in ffs;
-escape 0;
-]],
-    stmts = 'line 7 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
-}
-
-Test { [[
-code/await Ff (void) -> (var& int x) -> void do
-    var int v = 10;
-    x = &v;
-end
-var&? int x;
-spawn Ff() -> (&x);
-escape 0;
-]],
-    stmts = 'line 6 : invalid binding : argument #1 : unmatching alias `&´ declaration',
-}
-
-Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
-    var int v = 10;
-    x = &v;
-end
-var&? int x;
-spawn Ff() -> (&x);
-escape (x? as int) + 1;
-]],
-    run = 1,
-}
-
-Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
-    var int v = 10;
-    x = &v;
-    await 1s;
-end
-var&? int zzz;
-spawn Ff() -> (&zzz);
-escape zzz! + 1;
-]],
-    run = 11,
-}
-
-Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
-    var int v = 10;
-    x = &v;
-end
-pool[] Ff ffs;
-var&? int x;
-spawn Ff() -> (&x) in ffs;
-escape (x? as int) + 1;
-]],
-    run = 1,
-}
-
-Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
-    var int v = 10;
-    x = &v;
-end
-var int n = 0;
-pool[n] Ff ffs;
-var&? int x;
-spawn Ff() -> (&x) in ffs;
-escape (x? as int) + 1;
-]],
-    consts = 'line 6 : not implemented : dynamic limit for pools',
-}
-
-Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
-    var int v = 10;
-    x = &v;
-end
-var&? int x;
-spawn Ff() -> (&x);
-await x;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-code/await Ff (void) -> (var&? int yyy) -> void do
-    var int v = 10;
-    yyy = &v;
-    await async do end;
-end
-var&? int x;
-spawn Ff() -> (&x);
-await x;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
-    var int v = 10;
-    x = &v;
-    vector[] byte c = [1,2,3];
-    await async do end;
-end
-var&? int x;
-spawn Ff() -> (&x);
-await x;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-code/await Ff (void) -> (var&? int xxx) -> void do
-    var int v = 10;
-    xxx = &v;
-    await async do end;
-end
-
-var&? int x_;
-spawn Ff() -> (&x_);
-
-await x_;
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-code/await Ff (void) -> (var&? int xxx) -> void do
-    var int v = 10;
-    xxx = &v;
-    await async do end;
-end
-pool[] Ff ffs;
-spawn Ff() in ffs;
-escape 1;
-]],
-    run = 1,
-}
-
--- test valgrind used to fail
-Test { [[
-code/await Ff (void) -> (var&? int xxx) -> void do
-    var int v = 10;
-    xxx = &v;
-    await async do end;
-end
-
-pool[] Ff ffs;
-var&? int x_;
-spawn Ff() -> (&x_) in ffs;
-
-await x_;
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-code/await Ff (void) -> (var& int x) -> FOREVER do
-    var int v = 10;
-    x = &v;
-    await FOREVER;
-end
-var& int x;
-spawn Ff() -> (&x);
-escape x + 1;
-]],
-    run = 11,
-}
-
-Test { [[
-code/await Ff (void) -> (var& int x) -> FOREVER do
-    var int v = 10;
-    x = &v;
-    await FOREVER;
-end
-pool[] Ff ffs;
-var& int x;
-spawn Ff() -> (&x) in ffs;
-escape x + 1;
-]],
-    run = 11,
-}
-
-Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
-    var int v = 10;
-    x = &v;
-    await 1s;
-end
-pool[] Ff ffs;
-var&? int x;
-spawn Ff() -> (&x) in ffs;
-escape x! + 1;
-]],
-    run = 11,
 }
 
 -->>> REACTIVE / VAR / OPT / ALIAS
@@ -35072,7 +35735,9 @@ end
 ret = ret + (ppp? as int);
 escape ret;
 ]],
-    run = 10,
+    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
+    scopes = 'line 5 : invalid binding : incompatible scopes',
+    --run = 10,
 }
 
 Test { [[
@@ -35086,6 +35751,7 @@ end
 ret = ret + (p? as int);
 escape ret;
 ]],
+    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
     dcls = 'line 2 : invalid declaration : option type : not implemented',
     --stmts = 'line 5 : invalid binding : types mismatch : "int?" <= "int"',
 }
@@ -35101,6 +35767,7 @@ end
 ret = ret + (p? as int);
 escape ret;
 ]],
+    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
     dcls = 'line 2 : invalid declaration : option type : not implemented',
     --run = 10,
 }
@@ -35117,6 +35784,7 @@ end
 ret = ret + (p? as int);
 escape ret;
 ]],
+    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
     dcls = 'line 2 : invalid declaration : option type : not implemented',
     --run = 'err acc to p!!',
 }
@@ -35134,8 +35802,494 @@ end
 ret = ret + (p? as int);
 escape ret;
 ]],
+    stmts = 'line 8 : invalid `await´ : expected `code/await´ abstraction',
+    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
     --inits = 'line 2 : uninitialized variable "p" : reached `par/or´ (/tmp/tmp.ceu:3)',
-    inits = 'line 2 : uninitialized variable "p" : reached yielding statement (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "p" : reached yielding statement (/tmp/tmp.ceu:3)',
+}
+
+-->> CODE / AWAIT / INITIALIZATION / PUBLIC
+
+Test { [[
+code/await UV_TCP_Open (void) -> (var int v) -> void
+do
+    if false then
+        escape;
+    end
+
+    v = 10;
+end
+escape 1;
+]],
+    wrn = true,
+    --inits = 'line 1 : uninitialized variable "v" : reached end of `if´ (/tmp/tmp.ceu:3)',
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> (var& int v) -> int do
+    if true then
+        escape 10;
+    end
+    var int x = 100;
+    v = &x;
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+code/await UV_TCP_Open (void) -> (var& int v) -> void
+do
+end
+var int x = 1;
+escape x;
+]],
+    wrn = true,
+    inits = 'line 1 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:4)',
+    --inits = 'line 1 : uninitialized variable "v" : reached `escape´ (/tmp/tmp.ceu:5)',
+    --inits = 'line 1 : uninitialized variable "v" : reached end of `code´ (/tmp/tmp.ceu:1)',
+}
+
+Test { [[
+code/await UV_TCP_Open (void) -> (var& int v) -> void
+do
+    if false then escape; end
+    var int vv = 10;
+    v = &vv;
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+    --inits = 'line 1 : uninitialized variable "v" : reached end of `if´ (/tmp/tmp.ceu:3)',
+}
+
+Test { [[
+code/await UV_TCP_Open (void) -> (var& int v) -> void
+do
+    do/_ escape; end
+    var int vv = 10;
+    v = &vv;
+end
+escape 1;
+]],
+    wrn = true,
+    --inits = 'line 1 : uninitialized variable "v" : reached `escape´ (/tmp/tmp.ceu:3)',
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
+    var int v = 0;
+    x = &v;
+end
+
+var int x;
+spawn Ff() -> (x);
+
+escape 0;
+]],
+    parser = 'line 7 : after `)´ : expected `in´ or `;´',
+}
+
+Test { [[
+data Dd with
+    var bool x;
+end
+
+var Dd? d = val Dd(true);
+var bool x = d!.x;
+
+escape x as int;
+]],
+    run = 1;
+}
+
+Test { [[
+code/await Ff (void) -> (var int x) -> void do
+    var int v = 0;
+    x = v;
+end
+
+var&? Ff f = spawn Ff();
+var bool x = f!.x;
+
+escape 0;
+]],
+    stmts = 'line 7 : invalid assignment : types mismatch : "bool" <= "int"',
+}
+
+Test { [[
+code/await Ff (void) -> (var int x) -> void do
+    x = 10;
+end
+
+var&? bool f = spawn Ff();
+var int x = f!.x;
+
+escape x;
+]],
+    --dcls = 'line 5 : invalid declaration : option alias : expected native or `code/await´ type',
+    stmts = 'line 5 : invalid constructor : types mismatch : "bool" <= "Ff"',
+}
+
+Test { [[
+code/await Ff (void) -> (var int x) -> void do
+    x = 10;
+end
+
+var Ff f = spawn Ff();
+var int x = f!.x;
+
+escape x;
+]],
+    dcls = 'line 5 : invalid declaration : unexpected context for `code´ "Ff"',
+}
+
+Test { [[
+code/await Ff (void) -> (var int x) -> void do
+    x = 10;
+end
+
+var&? Ff f = spawn Ff();
+var int x = f!.x;
+
+escape x;
+]],
+    run = '6] runtime error: value is not set',
+    --run = 10;
+}
+
+Test { [[
+code/await Ff (var int xxx) -> (var& int yyy) -> FOREVER do
+    yyy = &xxx;
+    do
+        do finalize with end
+    end
+    await FOREVER;
+end
+
+var int aaa = 10;
+var&? Ff f = spawn Ff(aaa);
+
+escape f!.yyy;
+]],
+    run = 10,
+}
+
+Test { [[
+code/tight Ff (void) -> (var& int x) -> void do
+end
+]],
+    parser = 'line 1 : after `->´ : expected type',
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
+    var int v = 10;
+    x = &v;
+end
+var&? Ff f = spawn Ff();
+escape f!.x;
+]],
+    --stmts = 'line 6 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
+    run = '6] runtime error: value is not set',
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+
+pool[] Ff fs;
+spawn Ff() in fs;
+
+var int ret = 0;
+var int i;
+loop i in [0->1] do
+    var&? Ff f1 = do
+        var&? Ff f2;
+        loop f2 in fs do
+            if i == 0 then
+                escape &f2;
+            end
+        end
+    end;
+    ret = ret + 1 + (f1? as int);
+end
+
+escape ret;
+]],
+    run = 3,
+}
+Test { [[
+code/await Ff (void) -> void do
+end
+pool[] Ff ffs;
+]],
+    dcls = 'line 3 : pool "ffs" declared but not used',
+}
+
+Test { [[
+native _void_ptr, _malloc;
+native/nohold _free;
+native/pre do
+    typedef void* void_ptr;
+end
+code/await Ff (void) -> (var&? _void_ptr xxx) -> void do
+    do
+        xxx = &_malloc(10);
+    finalize (xxx) with
+        _free(&&xxx!);
+    end
+    await FOREVER;
+end
+var&? Ff fff = spawn Ff();
+escape (fff!.xxx? as int) + 1;
+]],
+    run = 2,
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
+    var int v = 10;
+    x = &v;
+    await 1s;
+end
+var&? Ff f = spawn Ff();
+escape f!.x + 1;
+]],
+    run = 11,
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
+    var int v = 10;
+    x = &v;
+end
+var&? Ff f = spawn Ff();
+escape (f? as int) + 1;
+]],
+    run = 1,
+}
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
+    var int v = 10;
+    x = &v;
+end
+pool[] Ff ffs;
+var&? Ff fff = spawn Ff() in ffs;
+escape (fff? as int) + 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (event& int e, var int i) -> void do
+    par/or do
+        var int ii = await e until i==ii;
+    with
+        await async do end
+        emit e(2);
+        await FOREVER;
+    end
+end
+
+pool[] Ff fs;
+event int e;
+spawn Ff(&e, 1) in fs;
+spawn Ff(&e, 2) in fs;
+await async do end
+await async do end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
+    var int v = 10;
+    x = &v;
+end
+var int n = 0;
+pool[n] Ff ffs;
+var&? Ff f = spawn Ff() in ffs;
+escape (f? as int) + 1;
+]],
+    consts = 'line 6 : not implemented : dynamic limit for pools',
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
+    var int v = 10;
+    x = &v;
+end
+var&? Ff x = spawn Ff();
+await x;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> (var& int yyy) -> void do
+    var int v = 10;
+    yyy = &v;
+    await async do end;
+end
+var&? Ff x = spawn Ff();
+await x;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
+    var int v = 10;
+    x = &v;
+    vector[] byte c = [1,2,3];
+    await async do end;
+end
+var&? Ff x = spawn Ff();
+await x;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> (var& int xxx) -> void do
+    var int v = 10;
+    xxx = &v;
+    await async do end;
+end
+
+var&? Ff x_ = spawn Ff();
+
+await x_;
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> (var& int xxx) -> void do
+    var int v = 10;
+    xxx = &v;
+    await async do end;
+end
+pool[] Ff ffs;
+spawn Ff() in ffs;
+escape 1;
+]],
+    run = 1,
+}
+
+-- test valgrind used to fail
+Test { [[
+code/await Ff (void) -> (var& int xxx) -> void do
+    var int v = 10;
+    xxx = &v;
+    await async do end;
+end
+
+pool[] Ff ffs;
+var&? Ff x_ = spawn Ff() in ffs;
+
+await x_;
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> int do
+    await 1s;
+    escape 1;
+end
+
+pool[] Ff fs;
+var&? Ff f = spawn Ff() in fs;
+var int? ret = await f;
+escape ret!;
+]],
+    run = { ['~>1s']=1 },
+}
+Test { [[
+code/await Ff (void) -> (var& int x) -> FOREVER do
+    var int v = 10;
+    x = &v;
+    await FOREVER;
+end
+var&? Ff x = spawn Ff();
+escape x!.x + 1;
+]],
+    run = 11,
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> FOREVER do
+    var int v = 10;
+    x = &v;
+    await FOREVER;
+end
+pool[] Ff ffs;
+var&? Ff x = spawn Ff() in ffs;
+escape x!.x + 1;
+]],
+    run = 11,
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
+    var int v = 10;
+    x = &v;
+    await 1s;
+end
+pool[] Ff ffs;
+var&? Ff x = spawn Ff() in ffs;
+escape x!.x + 1;
+]],
+    run = 11,
+}
+
+Test { [[
+code/await Ff (void) -> void do
+    await 1s;
+end
+
+do
+    pool[] Ff fs;
+    var&? Ff f = spawn Ff() in fs;
+    par/or do
+        await f;
+    with
+        await FOREVER;
+    end
+end
+escape 1;
+]],
+    run = { ['~>1s']=1 },
+}
+Test { [[
+code/await Ff (event& void e) -> void do
+    emit e;
+end
+event void e;
+par/or do
+    await e;
+with
+    pool[] Ff fs;
+    spawn Ff(&e) in fs;
+end
+escape 1;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -35148,20 +36302,41 @@ end
 
 var int ret = 0;
 
-var&? int x;
-spawn Ff() -> (&x);
+var&? Ff x = spawn Ff();
 
-ret = x!;
-await x!;
+ret = x!.x;
+await x;
 ret = ret + (x? as int) + 1;
 
-escape x!;
+escape x!.x;
 ]],
-    stmts = 'line 11 : invalid binding : argument #1 : unmatching alias `&´ declaration',
+    run = {['~>1s']='16] runtime error: value is not set'};
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
+                        // err
+    var int v = 10;
+    x = &v;
+    await 1s;
+end
+
+var int ret = 0;
+
+var&? Ff x = spawn Ff();
+
+ret = x!.x;
+await x;
+ret = ret + (x? as int) + 1;
+
+escape ret;
+]],
+    --stmts = 'line 11 : invalid binding : argument #1 : unmatching alias `&´ declaration',
+    run = {['~>1s']=11};
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
     await FOREVER;
@@ -35169,25 +36344,23 @@ end
 
 var int ret = 0;
 
-var&? int x;
-spawn Ff() -> (&x);
+var&? Ff x = spawn Ff();
 
-escape x!;
+escape x!.x;
 ]],
     run = 10,
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
     await async do end;
 end
 
-var&? int x;
-spawn Ff() -> (&x);
+var&? Ff x = spawn Ff();
 
-var int ret = x!;
+var int ret = x!.x;
 await async do end;
 ret = ret + (x? as int) + 1;
 escape ret;
@@ -35196,15 +36369,35 @@ escape ret;
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
+    var int v = 10;
+    x = &v;
+    await 1s;
+end
+
+var int ret = 0;
+
+var&? Ff x = spawn Ff();
+
+ret = x!.x;
+await x;    // err
+ret = ret + (x? as int) + 1;
+
+escape ret;//x!.x;
+]],
+    run = {['~>1s']=11},
+    --stmts = 'line 13 : invalid `await´ : expected `var´ with `&?´ modifier',
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
 end
 
 var int ret = 0;
 
-var&? int x;
-spawn Ff() -> (&x);
+var&? Ff x = spawn Ff();
 
 escape (x? as int) + 1;
 ]],
@@ -35220,57 +36413,14 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
-    var int v = 10;
-    x = &v;
-    await 1s;
-end
-
-var int ret = 0;
-
-var&? int x;
-spawn Ff() -> (&x);
-
-ret = x!;
-await x!;    // err
-ret = ret + (x? as int) + 1;
-
-escape x!;
-]],
-    stmts = 'line 13 : invalid `await´ : expected `var´ with `&?´ modifier',
-}
-
-Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
-    var int v = 10;
-    x = &v;
-    await 1s;
-end
-
-var int ret = 0;
-
-var&? int x;
-spawn Ff() -> (&x);
-
-ret = x!;
-await x;
-ret = ret + (x? as int) + 1;
-
-escape ret;
-]],
-    run = { ['~>1s'] = 12 },
-}
-
-Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
 end
 
 var int ret = 0;
 
-var&? int x;
-spawn Ff() -> (&x);
+var&? Ff x = spawn Ff();
 await x;
 ret = ret + (x? as int) + 1;
 
@@ -35280,7 +36430,7 @@ escape ret;
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
     await 1s;
@@ -35290,43 +36440,58 @@ var int ret = 0;
 
 pool[] Ff fs;
 
-var&? int x;
-spawn Ff() -> (&x) in fs;
+var&? Ff x = spawn Ff() in fs;
 
-ret = x!;
+ret = x!.x;
 await x;
 ret = ret + (x? as int) + 1;
 
 escape ret;
 ]],
-    run = { ['~>1s'] = 12 },
+    run = { ['~>1s'] = 11 },
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
 end
-var&? int x;
-spawn Ff() -> (&x);
+var&? Ff x = spawn Ff();
 var int v = await x;
-escape 1;
+escape v;
 ]],
-    stmts = 'line 7 : invalid assignment : types mismatch : "(int)" <= "void"',
+    --run = 10,
+    stmts = 'line 6 : invalid assignment : types mismatch : "(int)" <= "(void?)"',
 }
 
 Test { [[
-var&? int x;
-do
-    var int y = 10;
-    x = &y;
+code/await Ff (void) -> int do
+    await async do end
+    escape 10;
 end
-escape (x? as int) + 1;
+var&? Ff x = spawn Ff();
+var int v = await x;
+escape v;
 ]],
-    run = 1,
+    stmts = 'line 6 : invalid assignment : types mismatch : "(int)" <= "(int?)"',
 }
 
+Test { [[
+code/await Ff (void) -> int do
+    await async do end
+    escape 10;
+end
+var&? Ff x = spawn Ff();
+var int? v = await x;
+escape v!;
+]],
+    run = 10,
+}
+
+--<< CODE / AWAIT / INITIALIZATION / PUBLIC
+
 --<<< REACTIVE / VAR / OPT / ALIAS
+
 -->> CODE / AWAIT / WATCHING
 
 Test { [[
@@ -35341,7 +36506,7 @@ var int&& a =
 escape 0;
 ]],
     wrn = true,
-    stmts = 'line 4 : invalid assignment : types mismatch : "int&&" <= "int"',
+    stmts = 'line 4 : invalid assignment : types mismatch : "(int&&)" <= "(int)"',
 }
 
 Test { [[
@@ -35395,22 +36560,6 @@ escape a!;
 }
 
 Test { [[
-code/await Code (void) -> (var& int y) -> void do
-    var int x = 0;
-    y = &x;
-end
-
-var int y;
-watching Code() -> (&y) do
-    escape 1;
-end
-
-escape 0;
-]],
-    stmts = 'line 7 : invalid binding : argument #1 : expected alias `&´ declaration',
-}
-
-Test { [[
 code/await Code (var& int x) -> (var& int y) -> int
 do
     y = &x;
@@ -35419,11 +36568,11 @@ do
     escape x;
 end
 
-var& int y;
 var int x = 10;
+var&? Code c = spawn Code(&x);
 var int? a =
-    watching Code(&x) -> (&y) do
-        y = y + 1;
+    watching c do
+        c!.y = c!.y + 1;
         await 5s;
         escape 1;
     end;
@@ -35439,18 +36588,20 @@ code/await Code (void) -> (var& int y) -> void do
     y = &x;
 end
 
-var& int y;
+var&? Code c;
 do
-    watching Code() -> (&y) do
+    c = spawn Code();
+    watching c do
     end
 end
 do
     vector[10] int x = [];
 end
 
-escape y;
+escape c!.y;
 ]],
-    props_ = 'line 15 : invalid access to internal identifier "y" : crossed `watching´ (/tmp/tmp.ceu:8)',
+    run = '16] runtime error: value is not set',
+    --props_ = 'line 15 : invalid access to internal identifier "y" : crossed `watching´ (/tmp/tmp.ceu:8)',
     --props_ = 'line 15 : invalid access to internal identifier "y" : crossed yielding statement (/tmp/tmp.ceu:8)',
 }
 
@@ -35463,11 +36614,11 @@ do
     await 1s;
     escape x+x;
 end
-var& int y, z;
 var int x = 10;
+var&? Code c = spawn Code(&x);
 var int? a =
-    watching Code(&x) -> (&y,&z) do
-        y = y + 1;
+    watching c do
+        c!.y = c!.y + 1;
         await 5s;
         escape 1;
     end;
@@ -35485,12 +36636,13 @@ do
     await 10s;
     escape x;
 end
-var& int y;
+var&? Code c;
 var int x = 10;
-watching Code(&x) -> (&y) do
-    y = y + 1;
+c = spawn Code(&x);
+watching c do
+    c!.y = c!.y + 1;
     await 5s;
-    escape y;
+    escape c!.y;
 end;
 
 escape x;
@@ -35531,10 +36683,10 @@ do
     win = &win_!;
 end
 
-var& _SDL_Window win;
-watching SDL_Go() -> (&win) do
+var&? SDL_Go sdl = spawn SDL_Go();
+watching sdl do
     await 1s;
-    _printf("%p\n", win);
+    _printf("%p\n", sdl!.win);
 end
 
 escape 0;
@@ -35596,7 +36748,8 @@ var int x = await Fx();
 
 escape x;
 ]],
-    exps = 'line 17 : invalid access to output variable "vv"',
+    run = 10,
+    --dcls = 'line 17 : invalid access to output variable "vv"',
 }
 
 Test { [[
@@ -35645,6 +36798,57 @@ native/pre do
     void* myalloc (void) {
         return &V;
     }
+end
+
+code/await Fx (void) -> (var& _int vv) -> void do
+    var&? _int v;
+    do
+        v = &_myalloc();
+    finalize(v) with
+    end
+    vv = &v!;
+end
+
+var&? Fx f = spawn Fx();
+escape f!.vv;
+]],
+    run = '20] runtime error: value is not set',
+}
+
+Test { [[
+native _int, _myalloc;
+native/pre do
+#include <stdio.h>
+    int V = 10;
+    void* myalloc (void) {
+        return &V;
+    }
+end
+
+code/await Fx (void) -> (var& _int vv) -> void do
+    var&? _int v;
+    do
+        v = &_myalloc();
+    finalize(v) with
+    end
+    vv = &v!;
+    await FOREVER;
+end
+
+var&? Fx f = spawn Fx();
+escape f!.vv;
+]],
+    run = 10,
+}
+
+Test { [[
+native _int, _myalloc;
+native/pre do
+#include <stdio.h>
+    int V = 10;
+    void* myalloc (void) {
+        return &V;
+    }
     void myfree (void* v) {
     }
 end
@@ -35671,10 +36875,10 @@ code/await Fx (void) -> (var& _int vv) -> int do
 end
 
 var int ret = 0;
-var& _int vvv;
+var&? Fx f = spawn Fx();
 var int? x =
-    watching Fx() -> (&vvv) do
-        ret = ret + vvv;
+    watching f do
+        ret = ret + f!.vv;
         await 1s;
     end;
 
@@ -35684,52 +36888,6 @@ escape ret+x!;
 }
 
 Test { [[
-code/await Ff (void) -> (var int x) -> void do
-    x = 1;
-    await FOREVER;
-end
-
-watching Ff() -> (&a) do
-    escape a + 1;
-end
-
-escape 0;
-]],
-    --dcls = 'line 1 : invalid `code´ declaration : `watching´ parameter #1 : expected `&´',
-    parser = 'line 1 : after `var´ : expected `&?´ or `&´',
-}
-Test { [[
-code/await Ff (void) -> (var& int x) -> void do
-    var int xx = 0;
-    x = &xx;
-    await FOREVER;
-end
-
-var& int a,b;
-watching Ff() -> (&a,&b) do
-end
-
-escape 0;
-]],
-    stmts = 'line 8 : invalid `watching´ : expected 1 argument(s)',
-}
-Test { [[
-code/await Ff (void) -> (var& int x, var& int y) -> void do
-    var int xx = 0;
-    x = &xx;
-    y = &xx;
-    await FOREVER;
-end
-
-var& int a;
-watching Ff() -> (&a) do
-end
-
-escape 0;
-]],
-    stmts = 'line 9 : invalid `watching´ : expected 2 argument(s)',
-}
-Test { [[
 code/await Ff (void) -> (var& int x, var& int y) -> void do
     var int xx = 10;
     x = &xx;
@@ -35737,9 +36895,9 @@ code/await Ff (void) -> (var& int x, var& int y) -> void do
     await FOREVER;
 end
 
-var& int a;
-watching Ff() -> (_,&a) do
-    escape a + 1;
+var&? Ff f = spawn Ff();
+watching f do
+    escape f!.y + 1;
 end
 
 escape 0;
@@ -35759,14 +36917,37 @@ do
     await FOREVER;
 end
 
-vector&[10] Int nums;
-watching Texs() -> (&nums) do
-    vector&[10] Int nums_ = &nums;
+var&? Texs t = spawn Texs();
+watching t do
+    vector&[10] Int nums_ = &t!.nums;   // TODO: deveria poder
 end
 
 escape 1;
 ]],
+    --stmts = 'line 14 : invalid binding : unexpected source with `&?´',
     run = 1,
+}
+
+Test { [[
+data Int with
+    var int x;
+end
+
+code/await Texs (void) -> (vector&[10] Int nums) -> void
+do
+    vector[10] Int nums_ = [ ];
+    nums = &nums_;
+    await FOREVER;
+end
+
+var&? Texs t = spawn Texs();
+watching t do
+    escape ($t!.nums as int)+10;
+end
+
+escape 1;
+]],
+    run = 10,
 }
 
 Test { [[
@@ -35815,7 +36996,9 @@ await 1s;
 escape ret;
 ]],
     --inits = 'line 4 : uninitialized variable "ret" : reached `par/or´ (/tmp/tmp.ceu:5)',
-    inits = 'line 4 : uninitialized variable "ret" : reached yielding statement (/tmp/tmp.ceu:5)',
+    --inits = 'line 4 : uninitialized variable "ret" : reached yielding statement (/tmp/tmp.ceu:5)',
+    inits = 'line 4 : uninitialized variable "ret" : reached end of `par/or´ (/tmp/tmp.ceu:5)',
+    --inits = 'line 5 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:9)',
 }
 
 Test { [[
@@ -35846,11 +37029,12 @@ do
     await FOREVER;
 end
 
-var& int x;
-spawn Ff() -> (&x);
-escape x;
+var&? Ff f = spawn Ff();
+spawn Ff();
+escape f!.x;
 ]],
-    stmts = 'line 9 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
+    run = 10;
+    --stmts = 'line 9 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
 }
 Test { [[
 code/await Ff (void) -> (var& int x) -> FOREVER
@@ -35860,9 +37044,8 @@ do
     await FOREVER;
 end
 
-var& int x;
-spawn Ff() -> (&x);
-escape x;
+var&? Ff f = spawn Ff();
+escape f!.x;
 ]],
     run = 10,
 }
@@ -35875,10 +37058,9 @@ do
     await FOREVER;
 end
 
-var& int x;
-spawn Ff() -> (&x);
+var&? Ff f = spawn Ff();
 await 1s;
-escape x;
+escape f!.x;
 ]],
     run = { ['~>1s']=10 },
 }
@@ -35901,22 +37083,21 @@ escape _V;
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void
+code/await Ff (void) -> (var& int x) -> void
 do
     var int x_ = 10;
     x = &x_;
 end
 
-var&? int x;
-spawn Ff() -> (&x);
+var&? Ff f = spawn Ff();
 await 1s;
-escape x!;
+escape f!.x;
 ]],
-    run = { ['~>1s']='10] runtime error: value is not set' },
+    run = { ['~>1s']='9] runtime error: value is not set' },
 }
 
 Test { [[
-code/await Show (void) -> (var&? int ret) -> void do
+code/await Show (void) -> (var& int ret) -> void do
     var int a = 0;
     ret = &a;
 end
@@ -35926,7 +37107,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-code/await Show (var int obj) -> (var&? int ret) -> int do
+code/await Show (var int obj) -> (var& int ret) -> int do
     var int a = obj;
     ret = &a;
     escape a;
@@ -35944,7 +37125,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    inits = 'line 3 : uninitialized variable "ret" : reached yielding statement (/tmp/tmp.ceu:5)',
+    --inits = 'line 3 : uninitialized variable "ret" : reached yielding statement (/tmp/tmp.ceu:5)',
+    run = 1,
 }
 Test { [[
 data Object with
@@ -35962,7 +37144,7 @@ Test { [[
 data Object with
   var int c;
 end
-code/await Show (var Object obj) -> (var&? int ret) -> int do
+code/await Show (var Object obj) -> (var& int ret) -> int do
     var int a = obj.c;
     ret = &a;
     escape a;
@@ -35984,47 +37166,32 @@ code/await Ff (void) -> (var& int v) -> void do
 end
 
 var  int vv = 0;
-var& int v;
-watching Ff() -> (&v) do
-    v = &vv;
-    escape v;
+var&? Ff f = spawn Ff();
+watching f do
+    f!.v = &vv;
+    escape f!.v;
 end
 escape 0;
 ]],
-    inits = 'line 10 : invalid binding : variable "v" is already bound (/tmp/tmp.ceu:9)',
+    stmts = 'line 10 : invalid binding : unexpected context for operator `.´',
+    --inits = 'line 10 : invalid binding : variable "v" is already bound (/tmp/tmp.ceu:9)',
 }
 Test { [[
 code/await Ff (void) -> (var& int v) -> void do
-    var int vv = 0;
+    var int vv = 10;
     v = &vv;
     await FOREVER;
 end
 
 var  int vv = 0;
-var& int v  = &vv;
-watching Ff() -> (&v) do
-    escape v;
+var&? Ff f = spawn Ff();
+watching f do
+    escape f!.v;
 end
 escape 0;
 ]],
-    inits = 'line 9 : invalid binding : variable "v" is already bound (/tmp/tmp.ceu:8)',
-
-}
-Test { [[
-code/await Ff (void) -> (var& int v1, var& int v2) -> void do
-    var int vv = 10;
-    v1 = &vv;
-    v2 = &vv;
-    await FOREVER;
-end
-
-var& int v;
-watching Ff() -> (&v,&v) do
-    escape v;
-end
-escape 0;
-]],
-    inits = 'line 9 : invalid binding : variable "v" is already bound (/tmp/tmp.ceu:9)',
+    run = 10,
+    --inits = 'line 9 : invalid binding : variable "v" is already bound (/tmp/tmp.ceu:8)',
 
 }
 Test { [[
@@ -36034,9 +37201,9 @@ code/await Ff (void) -> (var& int v) -> void do
     await FOREVER;
 end
 
-var& int v;
-watching Ff() -> (&v) do
-    escape v;
+var&? Ff f = spawn Ff();
+watching f do
+    escape f!.v;
 end
 escape 0;
 ]],
@@ -36051,9 +37218,9 @@ code/await Ff (void) -> (vector&[1] int vec) -> void do
     await FOREVER;
 end
 
-vector&[1] int vec;
-watching Ff() -> (&vec) do
-    escape vec[0];
+var&? Ff f = spawn Ff();
+watching f do
+    escape f!.vec[0];
 end
 escape 0;
 ]],
@@ -36072,6 +37239,7 @@ escape 0;
     wrn = true,
     --inits = 'line 1 : uninitialized vector "b" : reached `end of code´ (/tmp/tmp.ceu:7)',
     inits = 'line 1 : uninitialized vector "b" : reached yielding statement (/tmp/tmp.ceu:7)',
+    --inits = 'line 1 : uninitialized vector "b" : reached end of `code´ (/tmp/tmp.ceu:1)',
 }
 
 Test { [[
@@ -36083,9 +37251,25 @@ end
 escape ret;
 ]],
     --inits = 'line 2 : uninitialized variable "x" : reached `par/or´ (/tmp/tmp.ceu:3)',
-    inits = 'line 2 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:3)',
     --inits = 'line 2 : uninitialized variable "x" : reached `watching´ (/tmp/tmp.ceu:3)',
-    --inits = 'line 2 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:4)',
+    inits = 'line 2 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:4)',
+}
+
+Test { [[
+var int ret = 0;
+var int x;
+watching 1s do
+    await 2s;
+    x = 10;
+end
+ret = x;
+escape ret;
+]],
+    inits = 'line 2 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:7)',
+    --inits = 'line 2 : uninitialized variable "x" : reached end of `par/or´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:3)',
+    --run = { ['~>2s']=10 },
 }
 
 Test { [[
@@ -36097,39 +37281,74 @@ end
 ret = x;
 escape ret;
 ]],
-    --inits = 'line 2 : uninitialized variable "x" : reached `par/or´ (/tmp/tmp.ceu:3)',
-    inits = 'line 2 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:3)',
+    inits = 'line 2 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:6)',
+    --inits = 'line 2 : uninitialized variable "x" : reached end of `par/or´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:3)',
     --run = 10,
 }
 
 Test { [[
-code/await Gg (void) -> (var& int y) -> void do
-    var int yy = 10;
-    y = &yy;
+code/await Ff (void) -> (var int x) -> FOREVER do
+    x = 10;
     await FOREVER;
 end
 
-code/await Ff (var int v) -> (var& int x) -> void do
-    var& int y;
-    watching Gg() -> (&y) do
-        x = &y;
-        await FOREVER;
-    end
+var&? Ff f = spawn Ff();
+var& int x = &f!.x;
+
+escape x;
+]],
+    scopes = 'line 7 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+    --stmts = 'line 7 : invalid binding : unexpected source with `&?´',
+    --run = 11,
+    --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
+    --scopes = 'line 8 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Ff (void) -> void do
 end
 
-var& int x;
-var int x1;
-watching Ff(x1) -> (&x) do
+var int x;
+var &? Ff f = spawn Ff();
+await 1s;
+x = 10;
+escape x;
+]],
+    run = {['~>1s']=10},
+}
+
+Test { [[
+code/await Ff (void) -> void do
+    await FOREVER;
+end
+
+var int x;
+var &? Ff f = spawn Ff();
+watching f do
+    x = 10;
     escape x;
 end
-
-escape 0;
 ]],
-    wrn = true,
-    inits = 'line 16 : uninitialized variable "x1" : reached read access (/tmp/tmp.ceu:17)',
-    --inits = 'line 16 : uninitialized variable "x1" : reached `par/or´ (/tmp/tmp.ceu:17)',
-    --inits = 'line 16 : uninitialized variable "x1" : reached yielding statement (/tmp/tmp.ceu:17)',
-    --inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:9)',
+    run = 10,
+}
+
+Test { [[
+code/await Ff (void) -> void do
+end
+
+var int x;
+var &? Ff f = spawn Ff();
+watching f do
+    await 1s;
+    x = 10;
+end
+escape x;
+]],
+    inits = 'line 4 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:10)',
+    --inits = 'line 4 : uninitialized variable "x" : reached end of `par/or´ (/tmp/tmp.ceu:6)',
+    --run = 1,
 }
 
 Test { [[
@@ -36140,21 +37359,224 @@ code/await Gg (void) -> (var& int y) -> void do
 end
 
 code/await Ff (void) -> (var& int x) -> void do
-    watching Gg() -> (&x) do
+    var&? Gg g = spawn Gg();
+    x = &g!.y;
+    watching g do
+        await FOREVER;
+    end
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x = &f!.x;
+    escape f!.x;
+end
+
+escape 0;
+]],
+    scopes = 'line 9 : invalid binding : unexpected source with `&?´ : destination may outlive source'
+}
+
+Test { [[
+code/await Gg (void) -> (var& int y) -> void do
+    var int yy = 10;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var&? Gg g = spawn Gg();
+    watching g do
+        x = &g!.y;
+        await FOREVER;
+    end
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x = &f!.x;
+    escape f!.x;
+end
+
+escape 1;
+]],
+    run = 10,
+    --stmts = 'line 9 : invalid binding : unexpected source with `&?´',
+    --run = false,
+    --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
+    --scopes = 'line 8 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Gg (void) -> (var& int y) -> void do
+    var int yy = 10;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> int do
+    var&? Gg g = spawn Gg();
+    watching g do
+        x = &g!.y;
+        await FOREVER;
+    end
+    escape x;
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x = &f!.x;
+    escape f!.x;
+end
+
+escape 0;
+]],
+    inits = 'line 7 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:13)',
+    --inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:9)',
+    --stmts = 'line 9 : invalid binding : unexpected source with `&?´',
+    --run = false,
+    --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
+    --scopes = 'line 8 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Gg (void) -> (var& int y) -> void do
+    var int yy = 10;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var&? Gg g = spawn Gg();
+    watching g do
+        x = &g!.y;
+        await FOREVER;
+    end
+end
+
+var&? Ff f = spawn Ff();
+var& int x = &f!.x;
+watching f do
+    escape f!.x;
+end
+
+escape 0;
+]],
+    scopes = 'line 16 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+    --stmts = 'line 9 : invalid binding : unexpected source with `&?´',
+    --run = false,
+    --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
+    --scopes = 'line 8 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Gg (void) -> (var& int y) -> void do
+    var int yy = 10;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var&? Gg g = spawn Gg();
+    x = &g!.y;                  // no, outside watching g
+    watching g do
         await FOREVER;
     end
     await 1s;
 end
 
-var& int x;
-watching Ff() -> (&x) do
-    escape x;
+var&? Ff f = spawn Ff();
+var& int x = &f!.x;
+watching f do
+    escape f!.x;
 end
 
 escape 0;
 ]],
+    scopes = 'line 9 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+    --run = false,
     --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
-    inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
+    --scopes = 'line 8 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Gg (void) -> (var& int y) -> void do
+    var int yy = 10;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var&? Gg g = spawn Gg();
+    watching g do
+        await 1s;
+        x = &g!.y;              // no, crossing await
+        await FOREVER;
+    end
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x = &f!.x;
+    escape f!.x;
+end
+
+escape 0;
+]],
+    --stmts = 'line 9 : invalid binding : unexpected source with `&?´',
+    --run = false,
+    inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:10)',
+    --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
+    --scopes = 'line 8 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Ff (void) -> void do
+    await 1s;
+end
+
+var&? Ff f = spawn Ff();
+var&? Ff f1 = &f;
+
+escape 1;
+]],
+    --stmts = 'line 6 : invalid binding : expected `spawn´',
+    run = 1,
+    --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
+    --scopes = 'line 8 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Gg (void) -> (var& int y) -> void do
+    var int yy = 10;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var&? Gg g) -> void do
+    g = spawn Gg();
+    watching g do
+        await FOREVER;
+    end
+    await 1s;
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    escape f!.g!.y;
+end
+
+escape 0;
+]],
+    run = false,
+    --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
     --scopes = 'line 8 : invalid binding : incompatible scopes',
 }
 
@@ -36164,18 +37586,37 @@ code/await Ff (void) -> (var& int v) -> void do
     v = &x;
 end
 
-var& int v;
-watching Ff() -> (&v)
-do
+var&? Ff f = spawn Ff();
+var& int v = &f!.v;
+watching f do
     await FOREVER;
 end
 
 await 1s;
 ]],
+    scopes = 'line 7 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+    --run = false,
     --inits = 'line 7 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:12)',
-    inits = 'line 7 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:12)',
+    --inits = 'line 7 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:12)',
 }
 
+Test { [[
+code/await Gg (void) -> (var& int y) -> void do
+    var int yy = 10;
+    y = &yy;
+end
+
+code/await Ff (void) -> (var& int kkk) -> void do
+    var&? Gg g = spawn Gg();
+    kkk = &g!.y;
+end
+
+escape 1;
+]],
+    wrn = true,
+    --run = 1,
+    scopes = 'line 8 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+}
 Test { [[
 code/await Gg (void) -> (var& int y) -> void do
     var int yy = 10;
@@ -36184,28 +37625,21 @@ code/await Gg (void) -> (var& int y) -> void do
 end
 
 code/await Ff (void) -> (var& int kkk) -> void do
-    watching Gg() -> (&kkk) do
+    var&? Gg g = spawn Gg();
+    watching g do
+        kkk = &g!.y;
         await FOREVER;
     end
 end
 
-var& int xxx;
-watching Ff() -> (&xxx) do
-    escape xxx;
+var&? Ff f = spawn Ff();
+watching f do
+    escape f!.kkk;
 end
 
 escape 0;
 ]],
     run = 10,
-}
-Test { [[
-var& int x,y;
-watching Ff() -> (&x,y) do
-end
-
-escape 0;
-]],
-    parser = 'line 2 : after `,´ : expected `&´ or `_´ or `)´',
 }
 Test { [[
 code/await Gg (void) -> (var& int y) -> void do
@@ -36215,22 +37649,93 @@ code/await Gg (void) -> (var& int y) -> void do
 end
 
 code/await Ff (void) -> (var& int x, var& int y) -> void do
+    var&? Gg g = spawn Gg();
     var& int a;
-    watching Gg() -> (&a) do
+    watching g do
+        a = &g!.y;
         x = &a;
         y = &a;
         await FOREVER;
     end
 end
 
-var& int x,y;
-watching Ff() -> (&x,&y) do
+var& int x;
+var&? Ff f = spawn Ff();
+watching f do
+    x = &f!.x;
+    var& int y;
+    y = &f!.y;
+    watching f do
+        escape x+y;
+    end
+    escape 0;
+end
+]],
+    run = 20,
+    scopes = 'line 11 : invalid binding : incompatible scopes',
+}
+Test { [[
+code/await Gg (void) -> (var& int y) -> void do
+    var int yy = 10;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x, var& int y) -> void do
+    var&? Gg g = spawn Gg();
+    watching g do
+        x = &g!.y;
+        y = &g!.y;
+        await FOREVER;
+    end
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x;
+    x = &f!.x;
+    var& int y;
+    y = &f!.y;
+    watching f do
+        escape x+y;
+    end
+    escape 0;
+end
+]],
+    run = 20,
+}
+Test { [[
+code/await Gg (void) -> (var& int y) -> void do
+    var int yy = 10;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x, var& int y) -> void do
+    var&? Gg g = spawn Gg();
+    var& int a;
+    watching g do
+        a = &g!.y;
+        x = &a;
+        y = &a;
+        await FOREVER;
+    end
+end
+
+var& int x;
+var&? Ff f = spawn Ff();
+x = &f!.x;
+var& int y;
+y = &f!.y;
+watching f do
     escape x+y;
 end
 
 escape 0;
 ]],
-    run = 20,
+    scopes = 'line 11 : invalid binding : incompatible scopes',
+    --scopes = 'line 20 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+    --stmts = 'line 20 : invalid binding : unexpected source with `&?´',
 }
 Test { [[
 code/await Gg (void) -> (var& int a) -> void do
@@ -36240,24 +37745,117 @@ code/await Gg (void) -> (var& int a) -> void do
 end
 
 code/await Ff (void) -> (var& int x) -> void do
-    var& int a1;
-    watching Gg() -> (&a1) do
-        var& int a2;
-        watching Gg() -> (&a2) do
-            x = &a1;
+    var&? Gg g1 = spawn Gg();
+    var&? Gg g2;
+    watching g1 do
+        var& int a1;
+        a1 = &g1!.a;
+        //x = &a1;
+        g2 = spawn Gg();
+        watching g2 do
+            x = &g2!.a;
             await FOREVER;
         end
     end
 end
 
-var& int x;
-watching Ff() -> (&x) do
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x;
+    x = &f!.x;
     escape x;
 end
-
-escape 0;
 ]],
     run = 10,
+}
+
+Test { [[
+code/await Gg (void) -> (var& int a) -> void do
+    var int v = 10;
+    a = &v;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var&? Gg g1 = spawn Gg();
+    watching g1 do
+        //x = &a1;
+        var&? Gg g2 = spawn Gg();
+        watching g2 do
+            x = &g2!.a;
+            await FOREVER;
+        end
+    end
+end
+
+var&? Ff f = spawn Ff();
+var& int x;
+watching f do
+    x = &f!.x;
+    escape x;
+end
+]],
+    scopes = 'line 22 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Gg (void) -> (var& int a) -> void do
+    var int v = 10;
+    a = &v;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var&? Gg g1 = spawn Gg();
+    var&? Gg g2;
+    watching g1 do
+        //x = &a1;
+        g2 = spawn Gg();
+        watching g2 do
+            x = &g2!.a;
+            await FOREVER;
+        end
+    end
+end
+
+var&? Ff f = spawn Ff();
+var& int x;
+watching f do
+    x = &f!.x;
+    escape x;
+end
+]],
+    scopes = 'line 23 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Gg (void) -> (var& int a) -> void do
+    var int v = 10;
+    a = &v;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var&? Gg g1 = spawn Gg();
+    var&? Gg g2;
+    watching g1 do
+        g2 = spawn Gg();
+        watching g2 do
+            x = &g2!.a;
+            await FOREVER;
+        end
+    end
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x;
+    x = &f!.x;
+    escape x;
+end
+]],
+    run = 10,
+    --scopes = 'line 17 : invalid binding : incompatible scopes',
 }
 
 Test { [[
@@ -36269,22 +37867,36 @@ end
 
 code/await Ff (void) -> (var& int x) -> void do
     nothing;
-    var& int y;
-    watching Gg() -> (&y) do
-        x = &y;
+    var&? Gg g = spawn Gg();
+    watching g do
+        x = &g!.y;
         await FOREVER;
     end
 end
 
-var& int x;
-watching Ff() -> (&x) do
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x;
+    x = &f!.x;
     escape x;
 end
-
-escape 0;
 ]],
     run = 10,
     --scopes = 'line 10 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Gg (void) -> FOREVER do
+    await FOREVER;
+end
+
+var&? Gg g;
+g = spawn Gg();
+g = spawn Gg();
+escape 1;
+]],
+    --inits = 'line 7 : invalid binding : variable "g" is already bound',
+    run = 1,
 }
 
 Test { [[
@@ -36295,11 +37907,22 @@ code/await Gg (var int x) -> (var& int y) -> void do
 end
 
 code/await Ff (void) -> (var& int x) -> void do
-    var& int y1,y2,y3;
-    watching Gg(1) -> (&y1) do
-        watching Gg(2) -> (&y2) do
-            watching Gg(3) -> (&y3) do
-                var int v = y1+y2+y3;
+    var int y1;
+    var int y2;
+    var int y3;
+    var int v;
+    var&? Gg g1 = spawn Gg(1);
+    var&? Gg g2;
+    var&? Gg g3;
+    watching g1 do
+        y1 = g1!.y;
+        g2 = spawn Gg(2);
+        watching g2 do
+            g3 = spawn Gg(3);
+            y2 = g2!.y;
+            watching g3 do
+                y3 = g3!.y;
+                v = y1+y2+y3;
                 x = &v;
                 await FOREVER;
             end
@@ -36307,12 +37930,86 @@ code/await Ff (void) -> (var& int x) -> void do
     end
 end
 
-var& int x;
-watching Ff() -> (&x) do
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x;
+    x = &f!.x;
     escape x;
 end
+]],
+    run = 36,
+}
 
-escape 0;
+Test { [[
+code/await Gg (var int x) -> (var& int y) -> void do
+    var int yy = 10+x;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var int y1;
+    var int y2;
+    var int y3;
+    var int v;
+    var&? Gg g1 = spawn Gg(1);
+    var&? Gg g2 = spawn Gg(2);
+    var&? Gg g3 = spawn Gg(3);
+    watching g1 do
+        y1 = g1!.y;
+        watching g2 do
+            y2 = g2!.y;
+            watching g3 do
+                y3 = g3!.y;
+                v = y1+y2+y3;
+                x = &v;
+                await FOREVER;
+            end
+        end
+    end
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x;
+    x = &f!.x;
+    escape x;
+end
+]],
+    run = 36,
+}
+
+Test { [[
+code/await Gg (var int x) -> (var& int y) -> void do
+    var int yy = 10+x;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var int y1;
+    var int y2;
+    var int y3;
+    var int v;
+    var&? Gg g1 = spawn Gg(1);
+    var&? Gg g2 = spawn Gg(2);
+    var&? Gg g3 = spawn Gg(3);
+    watching g1,g2,g3 do
+        y1 = g1!.y;
+        y2 = g2!.y;
+        y3 = g3!.y;
+        v = y1+y2+y3;
+        x = &v;
+        await FOREVER;
+    end
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x;
+    x = &f!.x;
+    escape x;
+end
 ]],
     run = 36,
 }
@@ -36324,8 +38021,10 @@ code/await Gg (var int x) -> (var& int y) -> void do
 end
 
 code/await Ff (void) -> (var& int x) -> void do
-    var& int y1;
-    watching Gg(1) -> (&y1) do
+    var int y1;
+    var&? Gg g = spawn Gg(1);
+    watching g do
+        y1 = g!.y;
         do
             var int v = y1;
             x = &v;
@@ -36334,10 +38033,11 @@ code/await Ff (void) -> (var& int x) -> void do
     end
 end
 
-escape 0;
+escape 1;
 ]],
     wrn = true,
-    scopes = 'line 11 : invalid binding : incompatible scopes',
+    --scopes = 'line 13 : invalid binding : incompatible scopes',
+    run = 1,
 }
 
 Test { [[
@@ -36348,23 +38048,30 @@ code/await Gg (var int x) -> (var& int y) -> void do
 end
 
 code/await Ff (void) -> (var& int x) -> void do
-    var& int y1,y2;
-    watching Gg(1) -> (&y1) do
+    var int y1;
+    var int y2;
+    var&? Gg g1 = spawn Gg(1);
+    var&? Gg g2;
+    var int v;
+    watching g1 do
+        y1 = g1!.y;
         nothing;
-        watching Gg(2) -> (&y2) do
-            var int v = y1+y2;
+        g2 = spawn Gg(2);
+        watching g2 do
+            y2 = g2!.y;
+            v = y1+y2;
             x = &v;
             await FOREVER;
         end
     end
 end
 
-var& int x;
-watching Ff() -> (&x) do
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x;
+    x = &f!.x;
     escape x;
 end
-
-escape 0;
 ]],
     run = 23,
     --scopes = 'line 12 : invalid binding : incompatible scopes',
@@ -36377,27 +38084,24 @@ code/await Gg (var int x) -> (var& int y) -> void do
     await FOREVER;
 end
 
-code/await Ff (void) -> (var& int x) -> void do
-    var& int y1,y2;
-    watching Gg(1) -> (&y1) do
+code/await Ff (void) -> void do
+    var int y1;
+    var int y2;
+    var&? Gg g1 = spawn Gg(1);
+    var&? Gg g2 = spawn Gg(2);
+    watching g1,g2 do
+        y1 = g1!.y;
         await 1s;
-        watching Gg(2) -> (&y2) do
-            var int v = y1+y2;
-            x = &v;
-            await FOREVER;
-        end
+        y2 = g2!.y;
     end
 end
 
-var& int x;
-watching Ff() -> (&x) do
-    escape x;
-end
-
-escape 0;
+escape 1;
 ]],
+    wrn = true,
     --inits = 'line 7 : uninitialized variable "x" : reached `await´ (/tmp/tmp.ceu:10)',
-    inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:10)',
+    --inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:15)',
+    run = 1,
     --run = 23,
     --scopes = 'line 12 : invalid binding : incompatible scopes',
 }
@@ -36410,23 +38114,28 @@ code/await Gg (var int x) -> (var& int y) -> void do
 end
 
 code/await Ff (void) -> (var& int x) -> void do
-    var& int y1, y2;
-    watching Gg(1) -> (&y1) do
-        watching Gg(2) -> (&y2) do
-            var int v = y1+y2;
+    var int y1;
+    var int y2;
+    var&? Gg g1 = spawn Gg(1);
+    var&? Gg g2 = spawn Gg(2);
+    var int v;
+    watching g1 do
+        y1 = g1!.y;
+        watching g2 do
+            y2 = g2!.y;
+            v = y1+y2;
             x = &v;
             await FOREVER;
         end
-        nothing;
     end
 end
 
-var& int x;
-watching Ff() -> (&x) do
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x;
+    x = &f!.x;
     escape x;
 end
-
-escape 0;
 ]],
     run = 23,
     --scopes = 'line 11 : invalid binding : incompatible scopes',
@@ -36440,10 +38149,56 @@ code/await Gg (var int x) -> (var& int y) -> void do
 end
 
 code/await Ff (void) -> (var& int x) -> void do
-    var& int y1, y2;
-    watching Gg(1) -> (&y1) do
-        watching Gg(2) -> (&y2) do
-            var int v = y1+y2;
+    var& int y1;
+    var& int y2;
+    var&? Gg g1 = spawn Gg(1);
+    var&? Gg g2 = spawn Gg(2);
+    var int v;
+    watching g1 do
+        y1 = &g1!.y;
+        watching g2 do
+            y2 = &g2!.y;
+            v = y1+y2;
+            x = &v;
+            await FOREVER;
+        end
+        nothing;
+    end
+end
+
+var& int x;
+var&? Ff f = spawn Ff();
+watching f do
+    x = &f!.x;
+    escape x;
+end
+
+escape 0;
+]],
+    --inits = 'line 7 : uninitialized variable "x" : reached end of `par/or´ (/tmp/tmp.ceu:15)',
+    inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:15)',
+    --run = 23,
+    --scopes = 'line 11 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Gg (var int x) -> (var& int y) -> void do
+    var int yy = 10+x;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var& int y1;
+    var& int y2;
+    var&? Gg g1 = spawn Gg(1);
+    var&? Gg g2 = spawn Gg(2);
+    var int v;
+    watching g1 do
+        y1 = &g1!.y;
+        watching g2 do
+            y2 = &g2!.y;
+            v = y1+y2;
             x = &v;
             await FOREVER;
         end
@@ -36451,15 +38206,13 @@ code/await Ff (void) -> (var& int x) -> void do
     end
 end
 
-var& int x;
-watching Ff() -> (&x) do
-    escape x;
-end
-
 escape 0;
 ]],
+    wrn = true,
     --inits = 'line 10 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:15)',
-    inits = 'line 10 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:15)',
+    --inits = 'line 10 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:15)',
+    --inits = 'line 7 : uninitialized variable "x" : reached end of `par/or´ (/tmp/tmp.ceu:15)',
+    inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:15)',
 }
 
 Test { [[
@@ -36492,23 +38245,29 @@ code/await Gg (var int x) -> (var& int y) -> void do
 end
 
 code/await Ff (void) -> (var& int x) -> void do
-    var& int y1, y2, y3;
-    watching Gg(1) -> (&y1)
-           , Gg(2) -> (&y2)
-           , Gg(3) -> (&y3)
-    do
-        var int v = y1+y2+y3;
+    var int y1;
+    var int y2;
+    var int y3;
+    var int v;
+    var&? Gg g1 = spawn Gg(1);
+    var&? Gg g2 = spawn Gg(2);
+    var&? Gg g3 = spawn Gg(3);
+    watching g1, g2, g3 do
+        y1 = g1!.y;
+        y2 = g2!.y;
+        y3 = g3!.y;
+        v = y1+y2+y3;
         x = &v;
         await FOREVER;
     end
 end
 
-var& int x;
-watching Ff() -> (&x) do
+var&? Ff f = spawn Ff();
+watching f do
+    var& int x;
+    x = &f!.x;
     escape x;
 end
-
-escape 0;
 ]],
     run = 36,
 }
@@ -36519,10 +38278,120 @@ code/await Ff (var int x) -> (event& int e) -> void do
     e = &e_;
     await e;
 end
-escape 0;
+escape 1;
 ]],
     wrn = true,
-    exps = 'line 4 : invalid access to output variable "e"',
+    --dcls = 'line 4 : invalid access to output variable "e"',
+    run = 1,
+}
+
+Test { [[
+code/await Ff (var int x) -> (event& int e) -> int do
+    event int e_;
+    e = &e_;
+    var int v = await e_;
+    escape v + x;
+end
+
+var&? Ff f = spawn Ff(10);
+    watching f do
+        event& int e;
+        e = &f!.e;
+        emit e(100);
+        escape 0;
+    end;
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (var int x) -> (event& int e) -> int do
+    event int e_;
+    e = &e_;
+    var int v = await e_;
+    await 1s;
+    escape v + x;
+end
+
+var&? Ff f = spawn Ff(10);
+    watching f do
+        event& int e;
+        e = &f!.e;
+        par/or do
+            await e;
+        with
+            emit e(100);
+        end
+        escape 10;
+    end;
+
+escape 1;
+]],
+    run = 10,
+}
+
+Test { [[
+code/await Ff (var int x) -> (var& int y) -> int do
+    y = &x;
+    await 1s;
+    escape y + x;
+end
+
+var&? Ff f = spawn Ff(10);
+var int? ret =
+    watching f do
+        var& int y = &f!.y;
+        await 2s;
+        escape y;
+    end;
+
+escape ret!;
+]],
+    run = {['~>5s']=20},
+}
+
+Test { [[
+code/await Ff (var int x) -> (var& int y) -> int do
+    y = &x;
+    await 2s;
+    escape y + x;
+end
+
+var&? Ff f = spawn Ff(10);
+var int? ret =
+    watching f do
+        var& int y = &f!.y;
+        await 1s;
+        escape y;
+    end;
+
+escape ret!;
+]],
+    run = {['~>5s']=10},
+}
+
+Test { [[
+code/await Ff (var int x) -> (event& int e) -> int do
+    event int e_;
+    e = &e_;
+    var int v = await e_;
+    escape v + x;
+end
+
+var&? Ff f = spawn Ff(10);
+var int? ret =
+    watching f do
+        event& int e;
+        e = &f!.e;
+        emit e(100);
+        escape 0;
+    end;
+
+escape ret!;
+]],
+    run = 110,
 }
 
 Test { [[
@@ -36534,15 +38403,20 @@ code/await Ff (var int x) -> (event& int e) -> int do
 end
 
 event& int e;
+var&? Ff f = spawn Ff(10);
 var int? ret =
-    watching Ff(10) -> (&e) do
+    watching f do
+        e = &f!.e;
         emit e(100);
         escape 0;
     end;
 
 escape ret!;
 ]],
-    run = 110,
+    scopes = 'line 12 : invalid binding : incompatible scopes',
+    --inits = 'line 8 : uninitialized event "e" : reached end of `par/or´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : uninitialized event "e" : reached end of `par/or´ (/tmp/tmp.ceu:11)',
+    --run = 110,
 }
 
 Test { [[
@@ -36555,10 +38429,11 @@ code/await Ff (var int x) -> (event& void e, var& int v) -> int do
     escape x;
 end
 
-event& void e;
-var& int v;
+var&? Ff f = spawn Ff(10);
 var int? ret =
-    watching Ff(10) -> (&e,&v) do
+    watching f do
+        event& void e = &f!.e;
+        var& int v = &f!.v;
         emit e;
         escape 0;
     end;
@@ -36607,6 +38482,61 @@ escape ret!;
 }
 
 Test { [[
+code/await Hh (void) -> (var int x) -> FOREVER do
+    x = 10;
+    await FOREVER;
+end
+
+code/await Gg (void) -> FOREVER do
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var&? Gg g = spawn Gg();
+    watching g do
+        var&? Hh h = spawn Hh();
+        watching h do
+            x = &h!.x;
+            await FOREVER;
+        end
+        await 1s;
+    end
+end
+
+escape 1;
+]],
+    inits = 'line 10 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:14)',
+    wrn = true,
+}
+
+Test { [[
+code/await Hh (void) -> (var int x) -> FOREVER do
+    x = 10;
+    await FOREVER;
+end
+
+code/await Gg (void) -> FOREVER do
+    await FOREVER;
+end
+
+code/await Ff (void) -> (var& int x) -> void do
+    var&? Gg g = spawn Gg();
+    watching g do
+        var&? Hh h = spawn Hh();
+        watching h do
+            x = &h!.x;
+            await FOREVER;
+        end
+    end
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
 code/await Ff (var int v) -> (var& int x) -> void do
     x = &v;
     await FOREVER;
@@ -36616,11 +38546,16 @@ code/await Gg (void) -> void do
     await FOREVER;
 end
 
-var& int ctrl1, ctrl2;
+var&? Ff f1 = spawn Ff(2);
+var&? Ff f2 = spawn Ff(1);
 
-watching Ff(2) -> (&ctrl1) do
+watching f1 do
+    var& int ctrl1;
+    ctrl1 = &f1!.x;
     watching Gg() do
-        watching Ff(1) -> (&ctrl2) do
+        watching f2 do
+            var& int ctrl2;
+            ctrl2 = &f2!.x;
             escape ctrl1+ctrl2;
         end
     end
@@ -36637,20 +38572,14 @@ code/await Ff (var int v) -> (var& int x) -> void do
     x = &v;
     await FOREVER;
 end
-
-code/await Gg (void) -> void do
-    await FOREVER;
-end
-
-var& int ctrl1, ctrl2;
-
-spawn Ff(1) -> (&ctrl1);
-spawn Gg();
-spawn Ff(2) -> (&ctrl2);
-
-escape ctrl1+ctrl2;
+var& int ctrl1;
+var&? Ff f1 = spawn Ff(1);
+ctrl1 = &f1!.x;
+escape 0;
 ]],
-    stmts = 'line 12 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
+    scopes = 'line 7 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+    --stmts = 'line 7 : invalid binding : unexpected source with `&?´',
+    --stmts = 'line 12 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
 }
 Test { [[
 code/await Ff (var int v) -> (var& int x) -> FOREVER do
@@ -36662,13 +38591,11 @@ code/await Gg (void) -> void do
     await FOREVER;
 end
 
-var& int ctrl1, ctrl2;
-
-spawn Ff(1) -> (&ctrl1);
+var&? Ff f1 = spawn Ff(1);
 spawn Gg();
-spawn Ff(2) -> (&ctrl2);
+var&? Ff f2 = spawn Ff(2);
 
-escape ctrl1+ctrl2;
+escape f1!.x + f2!.x;
 ]],
     run = 3,
 }
@@ -36683,16 +38610,36 @@ end
 
 var int ret = 0;
 var& int nn;
-var& int n;
-watching Ff(10) -> (&n) do
-    ret = ret + n;
-    nn = &n;
+var&? Ff f = spawn Ff(10);
+watching f do
+    nn = &f!.y;
 end
 
 escape nn;
 ]],
-    props_ = 'line 16 : invalid access to internal identifier "nn" : crossed `watching´ (/tmp/tmp.ceu:11)',
+    inits = 'line 9 : uninitialized variable "nn" : reached read access (/tmp/tmp.ceu:15)',
+    --inits = 'line 9 : uninitialized variable "nn" : reached end of `par/or´ (/tmp/tmp.ceu:11)',
+    --scopes = 'line 12 : invalid binding : incompatible scopes',
+    --run = 10,
+    --inits = 'line 9 : uninitialized variable "nn" : reached end of `par/or´ (/tmp/tmp.ceu:11)',
+    --props_ = 'line 16 : invalid access to internal identifier "nn" : crossed `watching´ (/tmp/tmp.ceu:11)',
     --props_ = 'line 16 : invalid access to internal identifier "nn" : crossed yielding statement (/tmp/tmp.ceu:11)',
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> int
+do
+    var int xx = 10;
+    x = &xx;
+    await async do end
+    escape 100;
+end
+
+var&? Ff fff = spawn Ff();
+var int? ret = await fff;
+escape ret! + (fff? as int);
+]],
+    run = 100,
 }
 
 Test { [[
@@ -36703,12 +38650,89 @@ do
     escape 10;
 end
 
+var&? Ff fff = spawn Ff();
+var int? ret = await fff;
+escape ret!;
+]],
+    run = '10] runtime error: value is not set',
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> int
+do
+    var int xx = 10;
+    x = &xx;
+    escape 10;
+end
+
+var&? Ff fff = spawn Ff();
+var int? ret =
+    watching fff do
+    end;
+escape ret!;
+]],
+    run = '12] runtime error: value is not set',
+}
+
+Test { [[
+code/await Gg (void) -> (var& int x) -> void do
+    do finalize with
+        nothing;
+    end
+    var int y=1;
+    x = &y;
+end
+escape 10;
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+end
+code/await Gg (var& Ff f) -> (var& int x) -> void do
+    var& Ff g = &f;
+    var int y=1;
+    x = &y;
+end
+escape 10;
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+code/await Ff (void) -> void do
+end
+code/await Gg (void) -> (var& int x) -> void do
+    pool[] Ff fs;
+    var int y=1;
+    x = &y;
+end
+escape 10;
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> int
+do
+    var int xx = 10;
+    x = &xx;
+    await async do end;
+    escape 10;
+end
+
 code/await Gg (void) -> (var& int x) -> int
 do
-    var& int xx;
+    pool[] Ff fs;
+    var&? Ff f = spawn Ff() in fs;
     var int? ret =
-        watching Ff() -> (&xx) do
-            x = &xx;
+        watching f do
+            x = &f!.x;
+            await FOREVER;
         end;
     escape ret!;
 end
@@ -36718,6 +38742,80 @@ var int ret = await Gg();
 escape ret;
 ]],
     run = 10,
+    --inits = 'line 8 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:12)',
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> int
+do
+    var int xx = 10;
+    x = &xx;
+    await async do end;
+    escape 10;
+end
+
+code/await Gg (void) -> (var& int x) -> int
+do
+    pool[] Ff fs;
+    var&? Ff f = spawn Ff() in fs;
+    var int? ret =
+        watching f do
+            x = &f!.x;
+            await FOREVER;
+        end;
+    escape x;                   // error: deallocated
+end
+
+var int ret = await Gg();
+
+escape ret;
+]],
+    inits = 'line 9 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:18)',
+    --run = 10,
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> FOREVER do
+    code/await Gg (void) -> (var& int x) -> FOREVER do
+        var int y = 10;
+        x = &y;
+        await FOREVER;
+    end
+    var&? Gg g = spawn Gg();
+    watching g do
+        x = &g!.x;
+        await FOREVER;
+    end
+    code/tight Hh (void) -> void do end
+    code/tight Ii (void) -> void do end
+end
+spawn Ff();
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+code/await Ff (void) -> (var& int x) -> FOREVER do
+    code/await Gg (void) -> (var& int x) -> FOREVER do
+        var int y = 10;
+        x = &y;
+        await FOREVER;
+    end
+    var&? Gg g = spawn Gg();
+    watching g do
+        x = &g!.x;
+        await FOREVER;
+    end
+    code/tight Hh (void) -> void do end
+    nothing;
+    code/tight Ii (void) -> void do end
+end
+spawn Ff();
+escape 1;
+]],
+    inits = 'line 1 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:8)',
+    wrn = true,
 }
 
 --<< CODE / WATCHING / SCOPES
@@ -37114,6 +39212,18 @@ escape a;
 }
 
 Test { [[
+code/await Tx (void)->void do
+    await async do end
+end
+pool[] Tx ts;
+spawn Tx() in ts;
+await async do end
+escape 5;
+]],
+    run = { ['~>1s']=5 },
+}
+
+Test { [[
 code/await Tx (var& int aaa)->void do
     await 1s;
     aaa = 5;
@@ -37435,6 +39545,71 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+code/await Ff (var int i) -> void do
+    await async do end
+    if i == 1 then
+        await async do end
+    end
+end
+pool[] Ff fs;
+spawn Ff(0) in fs;
+spawn Ff(1) in fs;
+await async do end;
+await async do end;
+await async do end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+event void e;
+code/await Ff (void) -> void do
+    await async do end
+    emit outer.e;
+end
+par/or do
+    await FOREVER;
+with
+    watching e do
+        pool[] Ff fs;
+        spawn Ff() in fs;
+        spawn Ff() in fs;
+        await FOREVER;
+    end
+    await async do end;
+end
+await async do end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+event void e;
+code/await Gg (event& void e) -> void do
+    await async do end
+    emit e;
+end
+code/await Ff (void) -> void do
+    event void ee;
+    spawn Gg(&ee);
+    await ee;
+    emit outer.e;
+end
+do
+    pool[] Ff fs;
+    spawn Ff() in fs;
+    spawn Ff() in fs;
+    await e;
+end
+await async do end;
+escape 1;
+]],
+    run = 1,
+}
+
 -->> CODE / AWAIT / EMIT-INTERNAL
 
 Test { [[
@@ -37496,1716 +39671,82 @@ escape ret;
     run = { ['~>1s']=6 },
 }
 
--->> CODE / AWAIT / EMIT-INTERNAL
+--<< CODE / AWAIT / EMIT-INTERNAL
 
--->> CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
+-->> CODE / AWAIT / ALIAS
 
 Test { [[
-data Aa with
-    var int a;
-end
-
-code/tight Ff (var& Aa a, var int xxx) -> int;
-
-data Aa.Bb with
-    var int b;
-end
-
-code/tight Ff (var& Aa.Bb b, var int yyy) -> int do
-    escape 0;
-end
-
-escape 0;
-]],
-    wrn = true,
-    dcls = 'line 11 : invalid `code´ declaration : unmatching prototypes (vs. /tmp/tmp.ceu:5)',
-}
-
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/tight Ff (var& Aa a, var int xxx) -> int do
-    escape 0;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/tight Ff (var& Aa.Bb b, var int yyy) -> int do
-    escape 0;
-end
-
-escape 0;
-]],
-    wrn = true,
-    dcls = 'line 13 : invalid `code´ declaration : body for "Ff" already exists',
-}
-
-Test { [[
-data Ui with
-    var int x;
-end
-
-code/await/dynamic Ui_go (var& Ui ui) -> void do
-end
-
-var Ui ui = val Ui(10);
-await Ui_go(&ui);
-
-escape 1;
-]],
-    dcls = 'line 5 : invalid `dynamic´ declaration : expected dynamic parameter',
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Ui with
-    var int x;
-end
-
-code/await/dynamic Ui_go (dynamic var& Ui ui) -> void do
-end
-
-var Ui ui = val Ui(10);
-await Ui_go(&ui);
-
-escape 1;
-]],
-    stmts = 'line 9 : invalid `await´ : expected `/dynamic´ or `/static´ modifier',
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Ui with
-    var int x;
-end
-
-code/await/dynamic Ui_go (dynamic var& Ui ui) -> void do
-end
-
-var Ui ui = val Ui(10);
-await/dynamic Ui_go(&ui);
-
-escape 1;
-]],
-    props_ = 'line 5 : invalid `dynamic´ declaration : parameter #1 : expected `data´ in hierarchy',
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-code/tight Ff (void) -> void do
-end
-
-escape call/dynamic Ff();
-]],
-    exps = 'line 4 : invalid call : unexpected `/dynamic´ modifier',
-}
-
-Test { [[
-data Aa with
-    var int a;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/tight/dynamic Ff (dynamic var Aa&& a, var int xxx) -> int do
-    escape a:a + xxx;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/tight/dynamic Ff (dynamic var Aa.Bb&& b, var int yyy) -> int do
-    escape b:b + yyy;
-end
-
-var Aa    a = val Aa(1);
-var Aa.Bb b = val Aa.Bb(2,3);
-
-escape (call Ff(&&b,22)) + (call Ff(&&a,33));
-]],
-    exps = 'line 20 : invalid call : expected `/dynamic´ or `/static´ modifier',
-}
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/tight/dynamic Ff (dynamic var Aa&& a, var int xxx) -> int do
-    escape a:a + xxx;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/tight/dynamic Ff (dynamic var Aa.Bb&& b, var int yyy) -> int do
-    escape b:b + yyy;
-end
-
-var Aa    a = val Aa(1);
-var Aa.Bb b = val Aa.Bb(2,3);
-
-escape (call/dynamic Ff(&&b,22)) + (call/dynamic Ff(&&a,33));
-]],
-    --run = 58,
-    run = 59,
-}
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/tight/dynamic Ff (var int xxx, dynamic var Aa&& a) -> int do
-    escape a:a + xxx;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/tight/dynamic Ff (var int yyy, dynamic var Aa.Bb&& b) -> int do
-    escape b:b + yyy;
-end
-
-var Aa    a = val Aa(1);
-var Aa.Bb b = val Aa.Bb(2,3);
-
-escape (call/dynamic Ff(22,&&b)) + (call/dynamic Ff(33,&&a));
-]],
-    --run = 58,
-    run = 59,
-}
-
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/tight/dynamic Ff (dynamic var& Aa a1, var int xxx, dynamic var& Aa a2) -> int do
-    escape a1.a + xxx + a2.a;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/tight/dynamic Ff (dynamic var& Aa.Bb b1, var int yyy, dynamic var& Aa.Bb b2) -> int do
-    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
-    escape b1.b + yyy + b2.b;
-end
-
-var Aa    a = val Aa(1);
-var Aa.Bb b = val Aa.Bb(2,3);
-
-escape (call/dynamic Ff(&b,22,&b)) + (call/dynamic Ff(&a,33,&a));
-]],
-    run = 63,
-}
-
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/tight/dynamic Ff (dynamic var& Aa a, var int xxx) -> int do
-    escape a.a + xxx;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/tight/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) -> int do
-    escape b.b + (call/static Ff(&b as Aa,11)) + yyy;
-end
-
-var Aa    a = val Aa(1);
-var Aa.Bb b = val Aa.Bb(2,3);
-
-escape (call/dynamic Ff(&b,22)) + (call/dynamic Ff(&a,33));
-]],
-    run = 72,
-}
-
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/await/dynamic Ff (dynamic var& Aa a, var int xxx) -> int do
-    escape a.a + xxx;
-end
-
-var Aa a = val Aa(1);
-var int v2 = await/dynamic Ff(&a,33);
-escape v2;
-]],
-    --run = 58,
-    props_ = 'line 5 : invalid `dynamic´ declaration : parameter #1 : expected `data´ in hierarchy',
-}
-
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/await/dynamic Ff (dynamic var& Aa a, var int xxx) -> int do
-    escape a.a + xxx;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/await/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) -> int do
-    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
-    escape b.b + yyy;
-end
-
-var Aa a = val Aa(1);
-
-await Ff(&a,22);
-escape 0;
-]],
-    stmts = 'line 20 : invalid `await´ : expected `/dynamic´ or `/static´ modifier',
-}
-
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/await/dynamic Ff (dynamic var& Aa a, var int xxx) -> int do
-    escape a.a + xxx;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/await/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) -> int do
-    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
-    escape b.b + yyy;
-end
-
-var Aa a = val Aa(1);
-
-spawn Ff(&a,22);
-escape 0;
-]],
-    stmts = 'line 20 : invalid `await´ : expected `/dynamic´ or `/static´ modifier',
-}
-
-Test { [[
-code/await Ff (void) -> void do
-end
-spawn Ff();
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-code/await Ff (var& int ret) -> void do
-    ret = 1;
-end
-var int ret = 0;
-spawn Ff(&ret);
-escape ret;
-]],
-    run = 1,
-}
-
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/await/dynamic Ff (var& int ret, dynamic var& Aa a, var int xxx) -> void do
-    ret = ret + a.a + xxx;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb b, var int yyy) -> void do
-    ret = ret + b.b + yyy;
-end
-
-var  Aa    a = val Aa(1);
-var  Aa.Bb b = val Aa.Bb(2,3);
-var& Aa    c = &b;
-
-var int zzz = 0;
-spawn/dynamic Ff(&zzz,&a,1);     // 1+1
-spawn/dynamic Ff(&zzz,&b,2);     // 3+2
-spawn/dynamic Ff(&zzz,&c,3);     // 3+3
-
-escape zzz;
-]],
-    run = 13,
-}
-
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/await/dynamic Ff (var& int ret, dynamic var& Aa a, var int xxx) -> void do
-    ret = ret + a.a + xxx;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb b, var int yyy) -> void do
-    ret = ret + b.b + yyy;
-end
-
-var  Aa    a = val Aa(1);
-var  Aa.Bb b = val Aa.Bb(2,3);
-var& Aa    c = &b;
-
-var int ret = 0;
-spawn/dynamic Ff(&ret,&a,1);     // 1+1
-spawn/dynamic Ff(&ret,&b,2);     // 3+2
-spawn/dynamic Ff(&ret,&c,3);     // 3+3
-
-escape ret;
-]],
-    run = 13,
-}
-
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/await/dynamic Ff (dynamic var& Aa a, var int xxx) -> int do
-    escape a.a + xxx;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/await/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) -> int do
-    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
-    escape b.b + yyy;
-end
-
-var Aa    a = val Aa(1);
-var Aa.Bb b = val Aa.Bb(2,3);
-
-var int v1 = await/dynamic Ff(&b,22);
-var int v2 = await/dynamic Ff(&a,33);
-escape v1 + v2;
-]],
-    --run = 58,
-    run = 59,
-}
-
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/await/dynamic Ff (dynamic var& Aa a1, var int xxx, dynamic var& Aa a2) -> int do
-    escape a1.a + xxx + a2.a;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/await/dynamic Ff (dynamic var& Aa.Bb b1, var int yyy, dynamic var& Aa.Bb b2) -> int do
-    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
-    escape b1.b + yyy + b2.b;
-end
-
-var Aa    a = val Aa(1);
-var Aa.Bb b = val Aa.Bb(2,3);
-
-var int v1 = await/dynamic Ff(&b,22,&b);
-var int v2 = await/dynamic Ff(&a,33,&a);
-
-escape v1 + v2;
-]],
-    run = 63,
-}
-
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/await/dynamic Ff (dynamic var& Aa a, dynamic var int xxx) -> int do
-    escape a.a + xxx;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/await/dynamic Ff (dynamic var& Aa.Bb b, dynamic var int yyy) -> int do
-    var int v = await/static Ff(&b as Aa,11);
-    escape b.b + v + yyy;
-end
-
-var Aa    a = val Aa(1);
-var Aa.Bb b = val Aa.Bb(2,3);
-
-var int v1 = await/dynamic Ff(&b,22);
-var int v2 = await/dynamic Ff(&a,33);
-
-escape v1 + v2;
-]],
-    props_ = 'line 5 : invalid `dynamic´ declaration : parameter #2 : expected `data´ in hierarchy',
-    --run = 1,
-    --dcls = 'line 5 : invalid `dynamic´ declaration : parameter #2 : unexpected plain `data´',
-}
-
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/await/dynamic Ff (dynamic var& Aa a, var int xxx) -> int do
-    escape a.a + xxx;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/await/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) -> int do
-    var int v = await/static Ff(&b as Aa,11);
-    escape b.b + v + yyy;
-end
-
-var Aa    a = val Aa(1);
-var Aa.Bb b = val Aa.Bb(2,3);
-
-var int v1 = await/dynamic Ff(&b,22);
-var int v2 = await/dynamic Ff(&a,33);
-
-escape v1 + v2;
-]],
-    run = 72,
-}
-
-Test { [[
-data Aa;
-data Aa.Bb;
-
-code/tight/dynamic Ff (dynamic var& Aa v1, dynamic var& Aa v2) -> int do
-    escape 1;
-end
-code/tight/dynamic Ff (dynamic var& Aa.Bb v1, dynamic var& Aa.Bb v2) -> int do
-    escape 2;
-end
-
-var Aa a = val Aa();
-var Aa b = val Aa.Bb();
-
-escape call/dynamic Ff(&b, &a);
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Aa;
-data Aa.Bb;
-data Aa.Bb.Xx;
-data Aa.Cc;
-
-code/tight/dynamic Ff (dynamic var& Aa v1, dynamic var& Aa v2, dynamic var& Aa v3) -> int do
-    escape 1;
-end
-code/tight/dynamic Ff (dynamic var& Aa.Bb v1, dynamic var& Aa v2, dynamic var& Aa.Bb v3) -> int do
-    escape 2;
-end
-code/tight/dynamic Ff (dynamic var& Aa.Bb v1, dynamic var& Aa.Bb v2, dynamic var& Aa.Bb v3) -> int do
-    escape 4;
-end
-code/tight/dynamic Ff (dynamic var& Aa.Bb v1, dynamic var& Aa.Bb.Xx v2, dynamic var& Aa.Bb v3) -> int do
-    escape 8;
-end
-
-var Aa a = val Aa();
-var Aa b = val Aa.Bb();
-var Aa c = val Aa.Bb.Xx();
-
-escape (call/dynamic Ff(&b,&a,&a)) + (call/dynamic Ff(&b,&a,&b)) +
-       (call/dynamic Ff(&b,&b,&b)) + (call/dynamic Ff(&b,&c,&b));
-]],
-    wrn = true,
-    run = 15,
-}
-
-Test { [[
-data Bb with
-    var int x=10;
-end
-
-code/tight Ff (var Bb b) -> int;
-
-var int v1 = call Ff(_);
-escape v1;
-]],
-    tight_ = 'line 5 : invalid `code´ declaration : expected `/recursive´ : `call´ to unknown body (/tmp/tmp.ceu:7)',
-}
-Test { [[
-data Bb with
-    var int x=10;
-end
-data Bb.Cc with
-    var int y=20;
-end
-
-code/tight/dynamic Ff (dynamic var& Bb b) -> int do
-    escape b.x;
-end
-
-code/tight/dynamic Ff (dynamic var& Bb.Cc c) -> int do
-    escape c.x + c.y;
-end
-
-var Bb.Cc c = val Bb.Cc(_,_);
-var Bb    b = val Bb(_);
-var int v1 = call/dynamic Ff(&c);
-var int v2 = call/dynamic Ff(&b);
-escape v1 + v2;
-]],
-    run = 40,
-}
-
-Test { [[
-data Bb with
-    var int x=10;
-end
-data Bb.Cc with
-    var int y=20;
-end
-
-code/tight/dynamic Ff (dynamic var Bb b) -> int do
-    escape b.x;
-end
-
-code/tight/dynamic Ff (dynamic var Bb.Cc c) -> int do
-    escape c.x + c.y;
-end
-
-var int v2 = call/dynamic Ff(Bb(_));
-var int v1 = call/dynamic Ff(Bb.Cc(_,_));
-escape v1 + v2;
-]],
-    exps = 'line 17 : invalid call argument #1 : `data´ copy : unmatching fields',
-}
-Test { [[
-data Aa;
-data Bb with
-    var int x;
-end
-data Bb.Cc;
-
-code/tight/dynamic Ff (var Bb b, var Aa a) -> void do
-end
-
-code/tight/dynamic Ff (var Bb.Cc c, var Aa a) -> void do
-end
-]],
-    dcls = 'line 7 : invalid `dynamic´ declaration : expected dynamic parameters',
-}
-
-Test { [[
-data Aa;
-data Bb with
-    var int x;
-end
-data Bb.Cc;
-
-code/tight/dynamic Ff (dynamic var& Bb b, dynamic var Aa a) -> void do
-end
-
-code/tight/dynamic Ff (dynamic var& Bb.Cc c, dynamic var Aa a) -> void do
-end
-
-escape 1;
-]],
-    wrn = true,
-    props_ = 'line 7 : invalid `dynamic´ declaration : parameter #2 : expected `data´ in hierarchy',
-    --dcls = 'line 7 : invalid `dynamic´ declaration : parameter #2 : unexpected plain `data´',
-}
-
-Test { [[
-data Aa;
-data Bb with
-    var int x;
-end
-data Bb.Cc;
-
-code/tight/dynamic Ff (dynamic var& Bb b, var Aa a) -> void do
-end
-
-code/tight/dynamic Ff (dynamic var& Bb.Cc c, var Aa a) -> void do
-end
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Aa;
-data Bb with
-    var int x;
-end
-data Bb.Cc;
-
-code/tight/dynamic Ff (var Aa a, dynamic var& Bb b) -> void do
-end
-
-code/tight/dynamic Ff (var Aa a, dynamic var& Bb.Cc c) -> void do
-end
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Aa;
-data Bb with
-    var int x;
-end
-data Bb.Cc;
-
-code/tight/dynamic Ff (var& Aa a, dynamic var& Bb b,
-                       var Aa a2, dynamic var& Bb b2, var Aa a3) -> void do
-end
-
-code/tight/dynamic Ff (var& Aa a, dynamic var& Bb.Cc c,
-                       var Aa a2, dynamic var& Bb.Cc c2, var Aa a3) -> void do
-end
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Aa;
-data Bb with
-    var int x;
-end
-data Bb.Cc;
-
-code/tight/dynamic Ff (dynamic var& Bb b,    var& Aa a) -> void do
-end
-
-code/tight/dynamic Ff (dynamic var& Bb.Cc c, var& Aa a) -> void do
-end
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Dd;
-data Dd.Ee;
-
-code/tight Play_New (var& Dd x) -> void;
-code/tight Play_New (var& Dd x) -> void do
-end
-code/tight Play_New (var& Dd x) -> void;
-
-var Dd d = _;
-
-call Play_New(&d);
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Dd;
-data Dd.Ee;
-
-//code/tight/dynamic Play_New (dynamic var& Dd d) -> void;
-code/tight/dynamic Play_New (dynamic var& Dd d) -> void do
-end
-
-var Dd d = _;
-
-call/dynamic Play_New(&d);
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Dd;
-data Dd.Ee;
-
-code/tight/dynamic Play_New (dynamic var& Dd d) -> void;
-code/tight/dynamic Play_New (dynamic var& Dd d) -> void do
-end
-code/tight/dynamic Play_New (dynamic var& Dd d) -> void;
-
-var Dd d = _;
-
-call/dynamic Play_New(&d);
-
-escape 1;
-]],
-    dcls = 'line 7 : not implemented : prototype for non-base dynamic code',
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Aa;
-data Aa.Bb;
-
-code/await/dynamic Ff (var& int ret, dynamic var& Aa v1) -> void do
-    ret = ret + 15;
-end
-
-var Aa aaa = val Aa();
-
-var int ret = 0;
-
-pool[10] Ff ffs;
-spawn/dynamic Ff(&ret,&aaa) in ffs;
-
-escape ret;
-]],
-    wrn = true,
-    run = 15,
-}
-
-Test { [[
-data Aa;
-data Aa.Bb;
-code/await/dynamic Ff (dynamic var& Aa v1) -> void;
-var Aa a = val Aa();
-pool[10] Ff ffs;
-spawn/dynamic Ff(&a) in ffs;
-escape 1;
-]],
-    mems = 'line 3 : missing implementation',
-    wrn = true,
-    run = 15,
-}
-
-Test { [[
-data Media;
-data Media.Text;
-do
-    code/tight/dynamic Play (dynamic var& Media m) -> void do end
-    code/tight/dynamic Play (dynamic var& Media.Text m) -> void do end
-end
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-Test { [[
-data Media;
-data Media.Text;
-do/_
-    code/tight/dynamic Play (dynamic var& Media m) -> int do escape 1; end
-    code/tight/dynamic Play (dynamic var& Media.Text m) -> int do escape 2; end
-    var Media x = val Media.Text();
-    escape call/dynamic Play(&x);
-end
-]],
-    wrn = true,
-    run = 2,
-}
-Test { [[
-data Media;
-data Media.Text;
-code/tight/dynamic Play (dynamic var& Media m) -> void do end
-code/tight/dynamic Play (dynamic var& Media.Text m) -> void do end
-escape 1;
-]],
-    _opts = { ceu_features_lua='true' },
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Aa;
-data Aa.Bb;
-code/await/dynamic Ff (dynamic var& Aa v1) -> void;
-var Aa a = val Aa();
-pool[10] Ff ffs;
-code/await/dynamic Ff (dynamic var& Aa v1) -> void do end;
-spawn/dynamic Ff(&a) in ffs;
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Aa;
-data Aa.Bb;
-data Aa.Bb.Xx;
-data Aa.Cc;
-
-code/await/dynamic Ff (var& int ret, dynamic var& Aa v1, dynamic var& Aa v2, dynamic var& Aa v3) -> void;
-
-pool[10] Ff ffs;
-
-code/await/dynamic Ff (var& int ret, dynamic var& Aa v1, dynamic var& Aa v2, dynamic var& Aa v3) -> void do
-    ret = ret + 1;
-end
-code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa v2, dynamic var& Aa.Bb v3) -> void do
-    ret = ret + 2;
-end
-code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa.Bb v2, dynamic var& Aa.Bb v3) -> void do
-    ret = ret + 4;
-end
-code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa.Bb.Xx v2, dynamic var& Aa.Bb v3) -> void do
-    ret = ret + 8;
-end
-
-var Aa a = val Aa();
-var Aa b = val Aa.Bb();
-var Aa c = val Aa.Bb.Xx();
-
-var int ret = 0;
-
-spawn/dynamic Ff(&ret,&b,&a,&a) in ffs;
-spawn/dynamic Ff(&ret,&b,&a,&b) in ffs;
-spawn/dynamic Ff(&ret,&b,&b,&b) in ffs;
-spawn/dynamic Ff(&ret,&b,&c,&b) in ffs;
-
-escape ret;
-]],
-    wrn = true,
-    run = 15,
-}
-
-Test { [[
-code/tight Ff (var int x) -> void do
-end
-code/tight Ff (var int x) -> void do
-end
-escape 1;
-]],
-    wrn = true,
-    dcls = 'line 3 : invalid `code´ declaration : body for "Ff" already exists',
-}
-
-Test { [[
-data Dd;
-code/tight/dynamic Ff (dynamic var& Dd d) -> void do
-end
-code/tight Ff (var int x) -> void do
-end
-escape 1;
-]],
-    wrn = true,
-    dcls = 'line 4 : invalid `code´ declaration : body for "Ff" already exists',
-}
-
-Test { [[
-data Dd;
-code/tight/dynamic Ff (dynamic var& Dd d) -> void do
-end
-code/tight/dynamic Ff (dynamic var& Dd d) -> void do
-end
-escape 1;
-]],
-    wrn = true,
-    dcls = 'line 4 : invalid `code´ declaration : body for "Ff" already exists',
-}
-
-Test { [[
-data Dd;
-data Ee;
-code/tight/dynamic Ff (dynamic var& Dd d) -> void do
-end
-code/tight/dynamic Ff (dynamic var& Ee d) -> void do
-end
-escape 1;
-]],
-    wrn = true,
-    props_ = 'line 3 : invalid `dynamic´ declaration : parameter #1 : expected `data´ in hierarchy',
-}
-
-Test { [[
-data Dd;
-data Dd.Ee;
-code/tight/dynamic Ff (dynamic var& Dd a, dynamic var& Dd b) -> void do
-end
-code/tight/dynamic Ff (dynamic var& Dd a, dynamic var& Dd.Ee b) -> void do
-end
-code/tight/dynamic Ff (dynamic var& Dd.Ee a, dynamic var& Dd b) -> void do
-end
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Dd;
-data Dd.Ee;
-code/tight/dynamic Ff (dynamic var& Dd.Ee b) -> void do
-end
-code/tight/dynamic Ff (dynamic var& Dd b) -> void do
-end
-escape 1;
-]],
-    wrn = true,
-    mems = 'line 3 : invalid `code´ declaration : missing base case',
-}
-
-Test { [[
-data Dd;
-data Dd.Ee;
-code/tight/dynamic Ff (dynamic var& Dd a, dynamic var& Dd.Ee b) -> void do
-end
-code/tight/dynamic Ff (dynamic var& Dd.Ee a, dynamic var& Dd b) -> void do
-end
-escape 1;
-]],
-    wrn = true,
-    mems = 'line 3 : invalid `code´ declaration : missing base case',
-}
-
-Test { [[
-data Media as nothing;
-data Media.Audio as 1;
-data Media.Video as 1;
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Media as nothing;
-data Media.Audio;
-data Media.Video;
-
-code/await/dynamic Play (dynamic var& Media.Audio media) -> void do end
-code/await/dynamic Play (dynamic var& Media.Video media) -> void do end
-
-var Media.Audio m = val Media.Audio();
-await/dynamic Play(&m);
-]],
-    wrn = true,
-    mems = 'line 5 : invalid `code´ declaration : missing base case',
-}
-
-Test { [[
-data Media as nothing;
-data Media.Audio as 1;
-data Media.Video as 1;
-
-code/await/dynamic Play (dynamic var& Media media) -> void do end
-code/await/dynamic Play (dynamic var& Media.Audio media) -> void do end
-code/await/dynamic Play (dynamic var& Media.Video media) -> void do end
-
-var Media.Audio m = val Media.Audio();
-await/dynamic Play(&m);
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-do/_
- data IData;                                                                     
- data IData.Test1 with                                                           
-   var int d;                                                                    
- end                                                                             
- code/tight/dynamic                                                              
- Ff (dynamic var& IData mydata) -> int                                        
- do                                                                              
-   escape 1;
- end                                                                             
- code/tight/dynamic                                                              
- Ff (dynamic var& IData.Test1 mydata) -> int                                  
- do                                                                              
-   escape 2;
- end                                                                             
- var IData.Test1 t1 = val IData.Test1 (0);                                       
- escape call/dynamic Ff (&t1);                                                        
-end
-]],
-    wrn = true,
-    run = 2,
-}
-Test { [[
-do/_
-data IData;                                                                     
-                                                                                 
- data IData.Test1 with                                                           
-   var int d;                                                                    
- end                                                                             
-                                                                                 
- data IData.Test2 with                                                           
-   var f64 f;                                                                    
- end                                                                             
-                                                                                 
- code/tight/dynamic                                                              
- Test (dynamic var& IData mydata) -> int                                        
- do                                                                              
-   escape 1;
- end                                                                             
-                                                                                 
- code/tight/dynamic                                                              
- Test (dynamic var& IData.Test1 mydata) -> int                                  
- do                                                                              
-   escape 2;
- end                                                                             
-                                                                                 
- code/tight/dynamic                                                              
- Test (dynamic var& IData.Test2 mydata) -> int                                  
- do                                                                              
-   escape 3;
- end                                                                             
-                                                                                 
- var IData.Test1 t1 = val IData.Test1 (0);                                       
- var int v1 = call/dynamic Test (&t1);                                                        
-                                                                                 
- var IData.Test2 t2 = val IData.Test2 (0);                                       
- var int v2 = call/dynamic Test (&t2); 
-
-escape v1 + v2;
-end
-]],
-    wrn = true,
-    run = 5,
-}
-Test { [[
-do/_
-    data Media as nothing;
-    data Media.Audio with 
-        var int a = 1;
-    end
-    code/tight/dynamic Play (dynamic var& Media media) -> int do
-    end
-    code/tight/dynamic Play (dynamic var& Media.Audio media) -> int do
-        escape media.a;
-    end
-    var Media.Audio audio = val Media.Audio(_);
-    var& Media m = &audio;
-    var int ret = call/dynamic Play(&m);
-    escape ret;
-end
-]],
-    wrn = true,
-    run = 1,
-}
-Test { [[
-do/_
-    data Media as nothing;
-    data Media.Audio with 
-        var int a = 1;
-    end
-    code/await/dynamic Play (dynamic var& Media media) -> int do
-    end
-    code/await/dynamic Play (dynamic var& Media.Audio media) -> int do
-        escape media.a;
-    end
-    var Media.Audio audio = val Media.Audio(_);
-    var& Media m = &audio;
-    var int ret = await/dynamic Play(&m);
-    escape ret;
-end
-]],
-    wrn = true,
-    run = 1,
-}
-Test { [[
-do/_
-    native _ceu_dbg_assert, _printf;
-    data Media as nothing;
-
-    data Media.Audio with 
-        var int a = 1;
-    end
-
-    data Media.Video with
-        var int b = 2;
-    end
-
-
-    code/await/dynamic Play (dynamic var& Media media) -> int do
-        _ceu_dbg_assert(0);               // never dispatched
-    end
-
-    code/await/dynamic Play (dynamic var& Media.Audio media) -> int do
-        escape media.a;
-    end
-
-    code/await/dynamic Play (dynamic var& Media.Video media) -> int do
-        escape media.b;
-    end
-
-    var Media.Audio audio = val Media.Audio(_);
-
-    var& Media m = &audio; // receives one of "Media.Audio" or "Media.Video"
-
-    var int ret = await/dynamic Play(&m);
-    escape ret;
-end
-]],
-    wrn = true,
-    run = 1,
-}
-Test { [[
-native _ceu_dbg_assert, _printf;
-data Media as nothing;
-
-data Media.Audio with 
-    var int a = 1;
-end
-
-data Media.Video with
-    var int b = 2;
-end
-
-
-code/await/dynamic Play (dynamic var& Media media) -> int do
-    _ceu_dbg_assert(0);               // never dispatched
-end
-
-code/await/dynamic Play (dynamic var& Media.Audio media) -> int do
-    escape media.a;
-end
-
-code/await/dynamic Play (dynamic var& Media.Video media) -> int do
-    escape media.b;
-end
-
-var Media.Audio audio = val Media.Audio(_);
-
-var& Media m = &audio; // receives one of "Media.Audio" or "Media.Video"
-
-var int ret = await/dynamic Play(&m);
-escape ret;
-]],
-    wrn = true,
-    run = 1,
-}
-Test { [[
-do/_
-    data Media as nothing;
-
-    data Media.Audio with
-        var int a = 2;
-    end
-
-    data Media.Video with
-        var int v = 1;
-    end
-
-    code/await/dynamic Play (dynamic var& Media media) -> void do
-        escape;             // never dispatched
-    end
-
-    code/await/dynamic Play (dynamic var& Media.Audio media) -> void do
-        await 1s;                   // plays an audio
-    end
-
-    code/await/dynamic Play (dynamic var& Media.Video media) -> void do
-        await 2s;                  // plays a video
-    end
-    escape 1;
-end
-]],
-    _opts = { ceu_features_lua='true' },
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data IData;                                                                     
-data IData.Test1 with                                                           
-  var int d;                                                                    
-end                                                                             
-code/tight/dynamic Ff (dynamic var& IData mydata) -> int do
-  escape 1;
-end                                                                             
-code/tight/dynamic Ff (dynamic var& IData.Test1 mydata) -> int;
-code/tight/dynamic Ff (dynamic var& IData.Test1 mydata) -> int do
-  escape 2;
-end                                                                             
-var IData.Test1 t1 = val IData.Test1 (0);                                       
-escape call/dynamic Ff (&t1);                                                        
-]],
-    dcls = 'line 8 : not implemented : prototype for non-base dynamic code',
-    wrn = true,
-    run = 2,
-}
-
-Test { [[
-do/_
- data IData;                                                                     
- data IData.Test1 with                                                           
-   var int d;                                                                    
- end                                                                             
- code/tight/dynamic Ff (dynamic var& IData mydata) -> int do                                                                              
-   escape 1;
- end                                                                             
- //code/tight/dynamic Ff (dynamic var& IData.Test1 mydata) -> int;
- code/tight/dynamic                                                              
- Ff (dynamic var& IData.Test1 mydata) -> int                                  
- do                                                                              
-   escape 2;
- end                                                                             
- var IData.Test1 t1 = val IData.Test1 (0);                                       
- escape call/dynamic Ff (&t1);                                                        
-end
-]],
-    wrn = true,
-    run = 2,
-}
-
-Test { [[
-data Dd;
-
-code/tight Ff (void) -> Dd do
-    var Dd d = val Dd();
-    escape d;
-end
-
-var Dd d = call Ff();
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-data Dd;
-data Dd.Ee;
-
-code/tight Ff (void) -> Dd do
-    var Dd d = val Dd.Ee();
-    escape d;
-end
-
-var Dd d = call Ff();
-
-escape (d is Dd.Ee) as int;
-]],
-    run = 1,
-}
-
-Test { [[
-data Dd;
-data Dd.Ee;
-
-code/await Ff (void) -> (var& Dd d) -> FOREVER do
-    var Dd d_ = val Dd.Ee();
-    d = &d_;
-    await FOREVER;
-end
-
-var& Dd d;
-spawn Ff() -> (&d);
-
-escape (d is Dd.Ee) as int;
-]],
-    run = 1,
-}
-
-Test { [[
-data Xx;
-code/await/dynamic Ff (dynamic var Xx x1) -> (var& Xx x2) -> void;
-escape 1;
-]],
-    wrn = true,
-    props_ = 'line 2 : invalid `dynamic´ declaration : parameter #1 : expected `data´ in hierarchy',
-}
-
-Test { [[
-data Dd with
-    var int x;
-end
-data Dd.Ee;
-
-var Dd d = val Dd.Ee(10);
-
-escape ((d is Dd.Ee) as int) + d.x;
-]],
-    wrn = true,
-    run = 11,
-}
-
-Test { [[
-data Xx;
-data Xx.Yy;
-data Dd;
-
-code/await/dynamic Ff (dynamic var Xx x) -> (var& Dd d) -> FOREVER;
-
-code/await/dynamic Ff (dynamic var Xx x) -> (var& Dd d) -> FOREVER do
-    var Dd d_ = val Dd();
-    d = &d_;
-    await FOREVER;
-end
-
-var& Dd d;
-spawn/dynamic Ff(Xx.Yy()) -> (&d);
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Xx;
-data Xx.Yy;
-data Dd;
-
-//code/await/dynamic Ff (dynamic var Xx x) -> (var& Dd d) -> FOREVER;
-
-code/await/dynamic Ff (dynamic var Xx x) -> (var& Dd d) -> FOREVER do
-    var Dd d_ = val Dd();
-    d = &d_;
-    await FOREVER;
-end
-
-var& Dd d;
-spawn/dynamic Ff(Xx.Yy()) -> (&d);
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Xx with
+code/await Ff (void) -> (var& int x) -> void do
+                        // error
     var int v = 10;
-end
-data Xx.Yy;
-
-data Dd with
-    var Xx x;
-end
-data Dd.Ee;
-
-native _ceu_dbg_assert;
-code/await/dynamic Ff (dynamic var Xx x) -> (var& Dd d) -> FOREVER do
-    var Dd d_ = val Dd(x);
-    d = &d_;
-    _ceu_dbg_assert(0);
-    await FOREVER;
+    x = &v;
 end
 
-code/await/dynamic Ff (dynamic var Xx.Yy x) -> (var& Dd d) -> FOREVER do
-    var Dd d_ = val Dd.Ee(x);
-    d = &d_;
-    await FOREVER;
-end
-
-var& Dd d0;
-spawn/dynamic Ff(Xx.Yy(20)) -> (&d0);
-
-escape ((d0 is Dd.Ee) as int);
+var&? Ff f1 = spawn Ff();
+var&? Ff f2 = &f1;
+escape (f2? as int) + 1;
 ]],
-    wrn = true,
     run = 1,
 }
+
 Test { [[
-data Xx with
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
-end
-data Xx.Yy;
-
-data Dd with
-    var Xx x;
-end
-data Dd.Ee;
-
-native _ceu_dbg_assert;
-code/await/dynamic Ff (dynamic var Xx x) -> (var& Dd d1) -> FOREVER do
-    var Dd d_ = val Dd(x);
-    d1 = &d_;
-    _ceu_dbg_assert(0);
-    await FOREVER;
+    x = &v;
 end
 
-code/await/dynamic Ff (dynamic var Xx.Yy x) -> (var& Dd d2) -> FOREVER do
-    var Dd d_ = val Dd.Ee(x);
-    d2 = &d_;
-    await FOREVER;
-end
-
-var& Dd d0;
-spawn/dynamic Ff(Xx.Yy(20)) -> (&d0);
-
-escape ((d0 is Dd.Ee) as int);
+var&? Ff f1 = spawn Ff();
+var&? Ff f2 = &f1;
+escape (f2? as int) + 1;
 ]],
-    wrn = true,
     run = 1,
 }
+
 Test { [[
-data Xx with
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
-end
-data Xx.Yy;
-
-data Dd with
-    var Xx x;
-end
-data Dd.Ee;
-
-native _ceu_dbg_assert;
-code/await/dynamic Ff (dynamic var Xx x) -> (var& Dd d) -> FOREVER do
-    var Dd d_ = val Dd(x);
-    d = &d_;
-    _ceu_dbg_assert(0);
+    x = &v;
     await FOREVER;
 end
 
-code/await Gg (var Xx.Yy x) -> (var& Dd d) -> FOREVER do
-    var Dd d_ = val Dd.Ee(x);
-    d = &d_;
-    await FOREVER;
-end
-
-var& Dd d;
-spawn Gg(Xx.Yy(20)) -> (&d);
-
-escape ((d is Dd.Ee) as int);
+var&? Ff f1 = spawn Ff();
+var&? Ff f2 = &f1;
+escape (f2? as int) + 1 + f2!.x;
 ]],
-    wrn = true,
-    run = 1,
+    run = 12,
 }
 
 Test { [[
-data Xx with
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
-end
-data Xx.Yy;
-
-data Dd with
-    var Xx x;
-end
-data Dd.Ee;
-
-native _ceu_dbg_assert;
-code/await/dynamic Ff (dynamic var Xx x) -> (var& Dd d) -> FOREVER do
-    var Dd d_ = val Dd(x);
-    d = &d_;
-    _ceu_dbg_assert(0);
-    await FOREVER;
+    x = &v;
+    await 500ms;
 end
 
-code/await/dynamic Ff (dynamic var Xx.Yy x) -> (var& Dd d) -> FOREVER do
-    var Dd d_ = val Dd.Ee(x);
-    d = &d_;
-    await FOREVER;
-end
-
-var& Dd d;
-spawn/dynamic Ff(Xx.Yy(20)) -> (&d);
-
-escape ((d is Dd.Ee) as int) + d.x.v;
+var&? Ff f1 = spawn Ff();
+var&? Ff f2 = &f1;
+await 1s;
+escape (f2? as int) + 1;
 ]],
-    wrn = true,
-    run = 21,
+    run = { ['~>1s']=1 },
 }
 
 Test { [[
-data Dd with
-    var int x = 10;
+code/await Ff (void) -> (var& int x) -> void do
+    var int v = 10;
+    x = &v;
+    await 500ms;
 end
 
-data Aa;
-data Aa.Bb;
-
-code/await/dynamic Ff (var& int ret, dynamic var& Aa v1) -> (var& Dd d) -> FOREVER do
-    var Dd d_ = _;
-    d = &d_;
-    await FOREVER;
-end
-
-var Aa aaa = val Aa();
-
-var int ret = 0;
-
-pool[10] Ff ffs;
-spawn/dynamic Ff(&ret,&aaa) in ffs;
-spawn/dynamic Ff(&ret,&aaa) in ffs;
-
-var& Dd d;
-loop (d) in ffs do
-    ret = ret + d.x;
-end
-
-escape ret;
+var&? Ff f1 = spawn Ff();
+var&? Ff f2 = &f1;
+await 1s;
+escape f2!.x;
 ]],
-    wrn = true,
-    run = 20,
+    run = { ['~>1s']='10] runtime error: value is not set' },
 }
 
-Test { [[
-data Dd with
-    var int x = 10;
-end
-
-data Aa;
-data Aa.Bb;
-
-code/await/dynamic Ff (var& int ret, dynamic var& Aa v1) -> (var& Dd d) -> void do
-    var Dd d_ = _;
-    d = &d_;
-end
-
-var Aa aaa = val Aa();
-
-var int ret = 0;
-
-pool[10] Ff ffs;
-spawn/dynamic Ff(&ret,&aaa) in ffs;
-spawn/dynamic Ff(&ret,&aaa) in ffs;
-
-var& Dd d;
-loop (d) in ffs do
-    ret = ret + d.x;
-end
-
-escape ret+1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Dd with
-    var int x = 10;
-end
-
-data Aa;
-data Aa.Bb;
-
-code/await/dynamic Ff (var& int ret, dynamic var& Aa v1) -> (var&? Dd d) -> FOREVER do
-    var Dd d_ = _;
-    d = &d_;
-    await FOREVER;
-end
-
-var Aa aaa = val Aa();
-
-var int ret = 0;
-
-pool[10] Ff ffs;
-spawn/dynamic Ff(&ret,&aaa) in ffs;
-spawn/dynamic Ff(&ret,&aaa) in ffs;
-
-event void e;
-var&? Dd d;
-loop (d) in ffs do
-    ret = ret + d!.x;
-    emit e;
-end
-
-escape ret+1;
-]],
-    wrn = true,
-    run = 21,
-}
-
-Test { [[
-data Dd with
-    var int x = 10;
-end
-
-data Aa;
-data Aa.Bb;
-
-code/await/dynamic Ff (var& int ret, dynamic var& Aa v1) -> (var&? Dd d, event&? void e) -> void do
-    var Dd d_ = _;
-    d = &d_;
-    event void e_;
-    e = &e_;
-    await e_;
-end
-
-var Aa aaa = val Aa();
-
-var int ret = 0;
-
-pool[10] Ff ffs;
-spawn/dynamic Ff(&ret,&aaa) in ffs;
-spawn/dynamic Ff(&ret,&aaa) in ffs;
-
-event&? void e;
-var&? Dd d;
-loop (d,e) in ffs do
-    ret = ret + d!.x;
-    ret = ret + (d? as int);
-    emit e!;
-    ret = ret + (d? as int);
-end
-
-escape ret+1;
-]],
-    wrn = true,
-    run = 23,
-}
-
-Test { [[
-data Xx;
-data Xx.Yy;
-code/await Gg (dynamic var Xx.Yy x) -> (void) -> FOREVER do
-    await FOREVER;
-end
-escape 1;
-]],
-    dcls = 'line 3 : invalid `dynamic´ modifier : expected enclosing `code/dynamic´',
-    run = 1,
-}
-
---<< CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
+--<< CODE / AWAIT / ALIAS
 
 -->> CODE / AWAIT / FINALIZE
 
@@ -39350,7 +39891,7 @@ end
 escape 0;
 ]],
     wrn = true,
-    stmts = 'line 2 : invalid `await´ : unexpected recursive invocation',
+    stmts = 'line 2 : invalid `spawn´ : unexpected recursive invocation',
 }
 
 Test { [[
@@ -39404,10 +39945,195 @@ Test { [[
 code/await Tx (var& Tx txs) -> void;
 escape 0;
 ]],
-    dcls = 'line 1 : invalid declaration : unexpected context for `code´ "Tx"',
+    dcls = 'line 1 : invalid declaration : `code/await´ must execute forever',
+}
+
+Test { [[
+code/await Tx (var&? Tx txs) -> FOREVER;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+code/await Tx (var& Tx txs) -> FOREVER;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+code/await Ff (pool&[] Ff fs) -> (var int y) -> int do
+    y = 10;
+    await async do end
+
+    var&? Ff f;
+    loop f in fs do
+        escape f!.y;
+    end
+
+    escape 0;
+end
+
+pool[] Ff fs;
+var&? Ff f;
+f = spawn Ff(&fs) in fs;
+var int? y = await f;
+escape y!;
+]],
+    run = 10,
+}
+
+Test { [[
+code/await Ff (pool&[] Ff fs) -> (var int y) -> int do
+    y = 10;
+    code/await Gg (void) -> int do
+        var&? Ff f;
+        loop f in outer.fs do
+            escape f!.y;
+        end
+        escape 0;
+    end
+    var int x = await Gg();
+    await async do end;
+    escape x;
+end
+
+pool[] Ff fs;
+spawn Ff(&fs) in fs;
+var int x = await Ff(&fs);
+escape x;
+]],
+    run = 10,
 }
 
 --<< CODE / AWAIT / RECURSIVE
+
+-->> C FIELDS / DIRECT ACCESS / TCEU_MEM
+Test { [[
+native __ceu_mem, _tceu_code_mem_ROOT;
+var int xxx = 10;
+escape (__ceu_mem as _tceu_code_mem_ROOT&&):xxx;
+]],
+    run = 10,
+}
+
+Test { [[
+native __ceu_mem, _tceu_code_mem_ROOT;
+do/_
+    var int xxx = 10;
+    escape (__ceu_mem as _tceu_code_mem_ROOT&&):xxx;
+end
+]],
+    cc = '5:2: error: ‘tceu_code_mem_ROOT {aka struct tceu_code_mem_ROOT}’ has no member named ‘xxx’',
+}
+
+Test { [[
+par/and do
+    var int xxx = 10;
+with
+    var int xxx = 10;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native __ceu_mem, _tceu_code_mem_Ff;
+code/await Ff (void) -> int do
+    var int yyy = 10;
+    escape (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
+end
+var int v = await Ff();
+escape v;
+]],
+    run = 10,
+}
+
+Test { [[
+native __ceu_mem, _tceu_code_mem_Ff;
+code/tight Ff (void) -> int do
+    var int yyy = 10;
+    escape (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
+end
+var int v = call Ff();
+escape v;
+]],
+    run = 10,
+}
+
+Test { [[
+native __ceu_mem, _tceu_code_mem_Ff;
+code/await Ff (void) -> int do
+    do/_
+        var int yyy = 10;
+        escape (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
+    end
+end
+var int v = await Ff();
+escape v;
+]],
+    cc = '6:2: error: ‘tceu_code_mem_Ff {aka struct tceu_code_mem_Ff}’ has no member named ‘yyy’',
+}
+
+Test { [[
+native __ceu_mem, _tceu_code_mem_Ff;
+code/await Ff (void) -> FOREVER do
+    do/_
+        var int yyy = 10;
+        var int zzz = (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
+    end
+    await FOREVER;
+end
+spawn Ff();
+escape 10;
+]],
+    cc = '6:2: error: ‘tceu_code_mem_Ff {aka struct tceu_code_mem_Ff}’ has no member named ‘yyy’',
+}
+
+Test { [[
+native __ceu_mem, _tceu_code_mem_Ff;
+code/await Ff (var int xxx) -> int do
+    escape (__ceu_mem as _tceu_code_mem_Ff&&):xxx;
+end
+var int yyy = await Ff(10);
+escape yyy;
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    par do
+        var int e=_;
+    with
+        var int e=_;
+    end
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    par do
+        var int yyy = 10;
+    with
+        var int yyy = 10;
+    end
+end
+spawn Ff();
+escape 10;
+]],
+    run = 10,
+}
+--<< C FIELDS / DIRECT ACCESS / TCEU_MEM
 
 --<<< CODE / AWAIT / FUNCTIONS
 
@@ -39421,12 +40147,13 @@ loop t in ts do
 end
 escape 1;
 ]],
-    parser = 'line 2 : after `in´ : expected `[´ or `]´',
+    dcls = 'line 2 : internal identifier "t" is not declared',
+    --parser = 'line 2 : after `in´ : expected `[´ or `]´',
 }
 
 Test { [[
 var int ts = _;
-loop in ts do
+loop _ in ts do
 end
 escape 1;
 ]],
@@ -39442,7 +40169,7 @@ end
 pool[5] Ff fs;
 
 var int n = 0;
-loop in fs do
+loop _ in fs do
     n = n + 1;
 end
 
@@ -39464,7 +40191,7 @@ loop i in [0 -> 10] do
 end
 
 var int n = 0;
-loop in fs do
+loop _ in fs do
     n = n + 1;
 end
 
@@ -39488,7 +40215,7 @@ loop i in [0 -> 8] do
 end
 
 var int n = 0;
-loop in fs do
+loop _ in fs do
     n = n + 1;
 end
 
@@ -39509,7 +40236,33 @@ end
 
 escape n+1;
 ]],
-    stmts = 'line 7 : invalid `loop´ : expected 0 argument(s)',
+    parser = 'line 7 : after `loop´ : expected `do´ or internal identifier or `_´',
+}
+
+Test { [[
+code/await Ff (void) -> void do
+end
+
+pool[1] Ff fs;
+
+var&? Ff f;
+loop f in fs do
+end
+
+escape 1;
+]],
+    run = 1,
+    --dcls = 'line 6 : variable "f" declared but not used',
+    --stmts = 'line 7 : invalid `loop´ : expected 0 argument(s)',
+}
+
+Test { [[
+code/await Ff (void) -> void do
+end
+spawn Ff(_);
+escape 0;
+]],
+    dcls = 'line 3 : invalid call : expected 0 argument(s)',
 }
 
 Test { [[
@@ -39521,13 +40274,35 @@ end
 
 pool[1] Ff fs;
 
-var int n = 0;
-loop (n) in fs do
+var& Ff n;
+loop n in fs do
 end
 
 escape n+1;
 ]],
-    stmts = 'line 10 : invalid binding : argument #1 : expected alias `&´ declaration',
+    dcls = 'line 9 : invalid declaration : `code/await´ must execute forever',
+    --dcls = 'line 9 : invalid declaration : unexpected context for `code´ "Ff"',
+    --stmts = 'line 10 : invalid binding : argument #1 : expected alias `&´ declaration',
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> FOREVER do
+    var int xx = 10;
+    x = &xx;
+    await FOREVER;
+end
+
+pool[1] Ff fs;
+
+var& Ff n;
+loop n in fs do
+end
+
+escape 1;
+]],
+    run = 1,
+    --dcls = 'line 9 : invalid declaration : unexpected context for `code´ "Ff"',
+    --stmts = 'line 10 : invalid binding : argument #1 : expected alias `&´ declaration',
 }
 
 Test { [[
@@ -39539,17 +40314,19 @@ end
 
 pool[1] Ff fs;
 
-var& int n;
-loop (n) in fs do
+var&? Ff n;
+loop n in fs do
 end
 
-escape n+1;
+escape n;
 ]],
-    props_ = 'line 13 : invalid access to internal identifier "n" : crossed `loop´ (/tmp/tmp.ceu:10)',
+    stmts = 'line 13 : invalid `escape´ : expected operator `!´',
+    --props_ = 'line 13 : invalid access to internal identifier "n" : crossed `loop´ (/tmp/tmp.ceu:10)',
     --props_ = 'line 13 : invalid access to internal identifier "n" : crossed yielding statement (/tmp/tmp.ceu:10)',
 }
 
 Test { [[
+code/await Gg (var int x) -> (var& int y) -> void do end
 code/await Ff (var int x) -> (var& int y) -> void do
     y = &x;
     if x == 1 then
@@ -39565,13 +40342,52 @@ loop i in [0 -> 8] do
 end
 
 var int ret = 0;
-var& bool n;
-loop (n) in fs do
+var&? Gg n;
+loop n in fs do
 end
 
+escape 0;
+]],
+    wrn = true,
+    --stmts = 'line 17 : invalid binding : argument #1 : types mismatch : "int" <= "bool"',
+    stmts = 'line 18 : invalid control variable : types mismatch : "Gg" <= "Ff"',
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+
+pool[5] Ff fs;
+spawn Ff() in fs;
+spawn Ff() in fs;
+
+var int ret = 0;
+loop _ in fs do
+    ret = ret + 1;
+end
 escape ret;
 ]],
-    stmts = 'line 17 : invalid binding : argument #1 : types mismatch : "int" <= "bool"',
+    run = 2,
+}
+
+Test { [[
+code/await Ff (void) -> void do
+    await FOREVER;
+end
+
+pool[5] Ff fs;
+spawn Ff() in fs;
+spawn Ff() in fs;
+
+var int ret = 0;
+var&? Ff fff;
+loop fff in fs do
+    ret = ret + 1;
+end
+escape ret;
+]],
+    run = 2,
 }
 
 Test { [[
@@ -39590,14 +40406,22 @@ loop i in [0 -> 8] do
 end
 
 var int ret = 0;
-var& int n;
-loop (n) in fs do
-    ret = ret + n;
+var&? Ff fff;
+loop fff in fs do
+    ret = ret + fff!.y;
 end
 
 escape ret;
 ]],
     run = 16,
+}
+
+Test { [[
+loop in gs do
+    ret = ret + 1;
+end
+]],
+    parser = 'line 1 : after `loop´ : expected `do´ or internal identifier or `_´',
 }
 
 Test { [[
@@ -39611,13 +40435,13 @@ spawn Gg() in gs;
 pool&[3] Gg gs_ = &gs;
 
 var int ret = 0;
-loop in gs_ do
+loop _ in gs_ do
     ret = ret + 1;
 end
 
 spawn Gg() in gs_;
 
-loop in gs do
+loop _ in gs do
     ret = ret + 1;
 end
 
@@ -39633,7 +40457,7 @@ code/await Gg (void) -> void do
 end
 
 code/await Ff (pool&[4] Gg gs, var& int ret) -> void do
-    loop in gs do
+    loop _ in gs do
         ret = ret + 1;
     end
     spawn Gg() in gs;
@@ -39645,19 +40469,19 @@ spawn Gg() in gs;
 pool&[3] Gg gs_ = &gs;
 
 var int ret = 0;
-loop in gs_ do
+loop _ in gs_ do
     ret = ret + 1;
 end
 
 spawn Gg() in gs_;
 
-loop in gs do
+loop _ in gs do
     ret = ret + 1;
 end
 
 await Ff(&gs_, &ret);
 
-loop in gs_ do
+loop _ in gs_ do
     ret = ret + 1;
 end
 
@@ -39699,15 +40523,16 @@ end
 pool[5] Ff fs;
 
 var& int nn;
-var& int n;
-loop (n) in fs do
-    nn = &n;
+var&? Ff fff;
+loop fff in fs do
+    nn = &fff!.y;
 end
 
 escape nn;
 ]],
+    inits = 'line 11 : invalid binding : crossing `loop´ (/tmp/tmp.ceu:10)',
     --inits = 'line 8 : uninitialized variable "nn" : reached `loop´',
-    props_ = 'line 14 : invalid access to internal identifier "nn" : crossed `loop´ (/tmp/tmp.ceu:10)',
+    --props_ = 'line 14 : invalid access to internal identifier "nn" : crossed `loop´ (/tmp/tmp.ceu:10)',
     --props_ = 'line 14 : invalid access to internal identifier "nn" : crossed yielding statement (/tmp/tmp.ceu:10)',
 }
 
@@ -39717,7 +40542,7 @@ end
 
 pool[] Ff ffs;
 
-loop in ffs do
+loop _ in ffs do
     continue;
 end
 
@@ -39735,14 +40560,15 @@ end
 
 pool[] Ff ffs;
 
-var& int x;
-loop (x) in ffs do
+var&? Ff fff;
+loop fff in ffs do
     await 1s;
 end
 
 escape 1;
 ]],
-    props_ = 'line 11 : invalid `await´ : unexpected enclosing `loop´',
+    --props_ = 'line 11 : invalid `await´ : unexpected enclosing `loop´',
+    run = {['~>1s']=1},
 }
 
 Test { [[
@@ -39797,18 +40623,20 @@ pool[] Ff ffs;
 spawn Ff() in ffs;
 
 var&? int x = do
-    var&? int x_;
-    loop (x_) in ffs do
-        escape &x_;
+    var&? Ff fff;
+    loop fff in ffs do
+        escape &fff!.x;
     end
 end;
 
 escape (x? as int) + 1;
 ]],
-    stmts = 'line 12 : invalid binding : argument #1 : unmatching alias `&´ declaration',
+    --dcls = 'line 10 : invalid declaration : option alias : expected native or `code/await´ type',
+    stmts = 'line 13 : invalid binding : unmatching alias `&´ declaration',
 }
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
+                        // error
     var int v = 10;
     x = &v;
 end
@@ -39816,19 +40644,21 @@ end
 pool[] Ff ffs;
 spawn Ff() in ffs;
 
-var&? int x = do
-    var& int x_;
-    loop (x_) in ffs do
-        escape &x_;
+var& int x = do
+    var&? Ff fff;
+    loop fff in ffs do
+        escape &fff!.x;
     end
 end;
 
-escape (x? as int) + 1;
+escape 1;
 ]],
-    stmts = 'line 12 : invalid binding : unmatching alias `&´ declaration',
+    --dcls = 'line 10 : invalid declaration : option alias : expected native or `code/await´ type',
+    --stmts = 'line 13 : invalid binding : unmatching alias `&´ declaration',
+    scopes = 'line 13 : invalid binding : unexpected source with `&?´ : destination may outlive source',
 }
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
 end
@@ -39836,37 +40666,126 @@ end
 pool[] Ff ffs;
 spawn Ff() in ffs;
 
-var&? int x;
-loop (x) in ffs do
+var&? Ff f1 = do
+    var&? Ff f2;
+    loop f2 in ffs do
+        escape &f2;
+    end
+end;
+
+escape (f1? as int) + 1;
+]],
+    run = 1,
+    --stmts = 'line 12 : invalid binding : argument #1 : unmatching alias `&´ declaration',
+}
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
+    var int v = 10;
+    x = &v;
+    await 1ms;
+end
+
+pool[] Ff ffs;
+spawn Ff() in ffs;
+
+var&? Ff f1 = do
+    var&? Ff f2;
+    loop f2 in ffs do
+        escape &f2;
+    end
+end;
+
+var int ret = (f1? as int);
+await 1s;
+escape ret + (f1? as int);
+]],
+    run = { ['~>1s']=1 },
+    --stmts = 'line 12 : invalid binding : argument #1 : unmatching alias `&´ declaration',
+}
+
+Test { [[
+code/await Ff (void) -> void do end
+pool[] Ff fs;
+var&? Ff ff = do
+    every 1s do
+        var&? Ff f;
+        loop f in fs do
+            escape &f;
+        end
+    end
+end;
+escape 1;
+]],
+    run = false,
+}
+
+Test { [[
+code/await Ff (var int x) -> (var int y) -> FOREVER do
+    y = x;
+    await FOREVER;
+end
+
+pool[] Ff fs;
+spawn Ff(10) in fs;
+spawn Ff(20) in fs;
+spawn Ff(30) in fs;
+
+var&? Ff ff = do
+    every 1s do
+        var&? Ff f;
+        loop f in fs do
+            if f!.y == 20 then
+                escape &f;
+            end
+        end
+    end
+end;
+
+escape ff!.y;
+]],
+    run = {['~>1s']=20},
+}
+
+Test { [[
+code/await Ff (void) -> (var& int x) -> void do
+    var int v = 10;
+    x = &v;
+end
+
+pool[] Ff ffs;
+spawn Ff() in ffs;
+
+var&? Ff f;
+loop f in ffs do
     break;
 end
 
-escape (x? as int) + 1;
+escape (f? as int) + 1;
 ]],
     run = 1,
 }
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
+    await FOREVER;
 end
 
 pool[] Ff ffs;
 spawn Ff() in ffs;
 
-var&? int x = do
-    var&? int x_;
-    loop (x_) in ffs do
-        escape &x_;
-    end
-end;
+var&? Ff f;
+loop f in ffs do
+    break;
+end
 
-escape (x? as int) + 1;
+escape f!.x;
 ]],
-    run = 1,
+    run = 10,
 }
+
 Test { [[
-code/await Ff (void) -> (var&? int yyy) -> void do
+code/await Ff (void) -> (var& int yyy) -> void do
     var int v = 10;
     yyy = &v;
     await 1s;
@@ -39875,17 +40794,17 @@ end
 pool[] Ff ffs;
 spawn Ff() in ffs;
 
-    var&? int xxx;
-    loop (xxx) in ffs do
+    var&? Ff f;
+    loop f in ffs do
         break;
     end
 
-escape xxx!;
+escape f!.yyy;
 ]],
     run = 10,
 }
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
     await 1s;
@@ -39894,19 +40813,19 @@ end
 pool[] Ff ffs;
 spawn Ff() in ffs;
 
-var&? int xxx = do
-    var&? int x_;
-    loop (x_) in ffs do
-        escape &x_;
+var&? Ff f1 = do
+    var&? Ff f2;
+    loop f2 in ffs do
+        escape &f2;
     end
 end;
 
-escape xxx!;
+escape f1!.x;
 ]],
     run = 10,
 }
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
     await 1s;
@@ -39915,8 +40834,8 @@ end
 pool[] Ff ffs;
 spawn Ff() in ffs;
 
-var&? int x_;
-loop (x_) in ffs do
+var&? Ff x_;
+loop x_ in ffs do
     break;
 end
 
@@ -39926,7 +40845,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
     await 1s;
@@ -39935,11 +40854,11 @@ end
 pool[] Ff ffs;
 spawn Ff() in ffs;
 
-    var&? int x_;
-    loop (x_) in ffs do
+    var&? Ff x_;
+    loop x_ in ffs do
         break;
     end
-var int ret = x_!;
+var int ret = x_!.x;
 watching x_ do
     every 100ms do
         ret = ret + 1;
@@ -39952,7 +40871,7 @@ escape ret;
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
     await 1s;
@@ -39961,13 +40880,13 @@ end
 pool[] Ff ffs;
 spawn Ff() in ffs;
 
-var&? int x = do
-    var&? int x_;
-    loop (x_) in ffs do
+var&? Ff x = do
+    var&? Ff x_;
+    loop x_ in ffs do
         escape &x_;
     end
 end;
-var int ret = x!;
+var int ret = x!.x;
 watching x do
     every 100ms do
         ret = ret + 1;
@@ -39996,11 +40915,10 @@ pool[] Ff ffs;
 spawn Ff(&ret) in ffs;
 spawn Ff(&ret) in ffs;
 
-var& int x;
-event& void e;
-loop (x,e) in ffs do
-    x = ret;
-    emit e;
+var&? Ff x;
+loop x in ffs do
+    x!.x = ret;
+    emit x!.e;
 end
 
 escape ret;
@@ -40020,63 +40938,65 @@ end
 pool[] Ff ffs;
 spawn Ff() in ffs;
 
-var& int x;
-event& void e;
-loop (x,e) in ffs do
-    emit e;
+var&? Ff x;
+loop x in ffs do
+    emit x!.e;
 end
 
 escape 1;
 ]],
-    props_ = 'line 14 : invalid declaration : expected `&?´ modifier : yielding `loop´',
+    run = 1,
+    --props_ = 'line 14 : invalid declaration : expected `&?´ modifier : yielding `loop´',
+}
+
+Test { [[
+code/await Ff (void) -> (event void eee) -> void do
+    await eee;
+end
+
+pool[] Ff ffs;
+spawn Ff() in ffs;
+
+var&? Ff fff;
+loop fff in ffs do
+    emit fff!.eee; // kill iterator (why?)
+end
+
+loop _ in ffs do
+    escape 99;  // yes (no!)
+end
+
+escape 1;
+]],
+    run = 1,
+    --run = 99,
 }
 
 Test { [[
 input void A;
 
-code/await Ff (void) -> (event&? void eee) -> void do
+code/await Ff (void) -> (event& void eee) -> void do
     event void eee_;
     eee = &eee_;
     await eee_;
 end
 
-event void g;
 pool[] Ff ffs;
 spawn Ff() in ffs;
 
-watching g do
-    event&? void fff;
-    loop (fff) in ffs do
-        emit g; // kill iterator
+    var&? Ff fff;
+    loop fff in ffs do
+        emit fff!.eee; // kill iterator
     end
-end
 
-loop in ffs do
+loop _ in ffs do
     escape 99;  // yes
 end
 
 escape 1;
 ]],
-    run = { ['~>A']=99 },
-}
-
-Test { [[
-code/await Ff (void) -> (event&? void e) -> void do
-    event void e_;
-    e = &e_;
-    await e_;
-end
-
-pool[] Ff ffs;
-
-event&? void e;
-loop (e) in ffs do
-    emit e;     // no awake!
-end
-
-escape 0;
-]],
-    stmts = 'line 11 : invalid `emit´ : unexpected `event´ with `&?´ modifier',
+    --run = { ['~>A']=99 },
+    run = { ['~>A']=1 },
 }
 
 -- valgrind fails
@@ -40088,7 +41008,7 @@ native/pos do
     int V = 0;
 end
 
-code/await Ff (void) -> (event&? void e) -> void do
+code/await Ff (void) -> (event& void e) -> void do
     event void e_;
     e = &e_;
     await e_;
@@ -40101,16 +41021,16 @@ pool[] Ff ffs;
 spawn Ff() in ffs;
 
 watching g do
-    event&? void e;
-    loop (e) in ffs do
-        emit e!; // kill 1st, but don't delete
+    var&? Ff f;
+    loop f in ffs do
+        emit f!.e; // kill 1st, but don't delete
         emit g; // kill iterator
     end
 end
 
-event&? void e;
-loop (e) in ffs do
-    emit e!;     // no awake!
+var&? Ff f;
+loop f in ffs do
+    emit f!.e;     // no awake!
     escape 99;  // nooo
 end
 
@@ -40120,7 +41040,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x, event&? void e) -> void do
+code/await Ff (void) -> (var& int x, event& void e) -> void do
     var int v = 10;
     x = &v;
     event void e_;
@@ -40133,15 +41053,13 @@ spawn Ff() in ffs;
 spawn Ff() in ffs;
 
 var int ret = 0;
-var&? int x1;
-event&? void e1;
-loop (x1,e1) in ffs do
-    emit e1!;
-    var&? int x2;
-    event&? void e2;
-    loop (x2,e2) in ffs do
-        ret = ret + x2!;
-        emit e2!;
+var&? Ff f1;
+loop f1 in ffs do
+    emit f1!.e;
+    var&? Ff f2;
+    loop f2 in ffs do
+        ret = ret + f2!.x;
+        emit f2!.e;
     end
 end
 
@@ -40150,7 +41068,7 @@ escape ret;
     run = 10,
 }
 Test { [[
-code/await Ff (void) -> (var&? int x, event&? void e) -> void do
+code/await Ff (void) -> (var& int x, event& void e) -> void do
     var int v = 10;
     x = &v;
     event void e_;
@@ -40159,30 +41077,33 @@ code/await Ff (void) -> (var&? int x, event&? void e) -> void do
 end
 
 pool[2] Ff ffs;
-var bool b1 = spawn Ff() in ffs;
-var bool b2 = spawn Ff() in ffs;
+
+var&? Ff fa = spawn Ff() in ffs;
+var&? Ff fb = spawn Ff() in ffs;
+var bool b1 = fa?;
+var bool b2 = fb?;
 
 event void g;
 
 var int ret = 0;
 watching g do
-    var&? int x1;
-    event&? void e1;
-    loop (x1,e1) in ffs do
-        emit e1!;
-        var&? int x2;
-        event&? void e2;
-        loop (x2,e2) in ffs do
-            ret = ret + x2!;
-            emit e2!;
-            ret = ret + (x2? as int) + 1;
+    var&? Ff f1;
+    loop f1 in ffs do
+        emit f1!.e;
+        var&? Ff f2;
+        loop f2 in ffs do
+            ret = ret + f2!.x;
+            emit f2!.e;
+            ret = ret + (f2? as int) + 1;
             emit g;
         end
     end
 end
 
-var bool b3 = spawn Ff() in ffs;
-var bool b4 = spawn Ff() in ffs;
+var&? Ff fc = spawn Ff() in ffs;
+var&? Ff fd = spawn Ff() in ffs;
+var bool b3 = fc?;
+var bool b4 = fd?;
 
 escape ret + (b1 as int) + (b2 as int) + (b3 as int) + (b4 as int);
 ]],
@@ -40196,7 +41117,7 @@ if e2? then
 end
 escape 1;
 ]],
-    exps = 'line 2 : invalid operand to `?´ : unexpected context for event "e2"',
+    dcls = 'line 2 : invalid operand to `?´ : unexpected context for event "e2"',
 }
 
 Test { [[
@@ -40208,13 +41129,14 @@ escape 1;
 ]],
     --inits = 'line 1 : uninitialized event "e2" : reached `emit´ (/tmp/tmp.ceu:3)',
     --inits = 'line 1 : uninitialized event "e2" : reached yielding statement (/tmp/tmp.ceu:3)',
-    inits = 'line 1 : uninitialized event "e2" : reached read access (/tmp/tmp.ceu:3)',
+    --inits = 'line 1 : uninitialized event "e2" : reached read access (/tmp/tmp.ceu:3)',
+    parser = 'line 1 : after `&´ : expected `(´ or type',
 }
 
 Test { [[
 input void A;
 
-code/await Ff (void) -> (var&? int x, event&? void e) -> void do
+code/await Ff (void) -> (var& int x, event& void e) -> void do
     var int x_ = 0;
     x = &x_;
     event void e_;
@@ -40236,17 +41158,15 @@ spawn Ff() in ffs;
 
 await A;
 
-var&? int x1;
-event&? void e1;
-loop (x1,e1) in ffs do
-    var&? int x2;
-    event&? void e2;
-    loop (x2,e2) in ffs do
-        if e1? then
-            emit e1!;
+var&? Ff f1;
+loop f1 in ffs do
+    var&? Ff f2;
+    loop f2 in ffs do
+        if f1? then
+            emit f1!.e;
         end
-        if e2? then
-            emit e2!;
+        if f2? then
+            emit f2!.e;
         end
     end
 end
@@ -40257,7 +41177,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) -> (var&? int x, event&? int e) -> void do
+code/await Ff (void) -> (var& int x, event& int e) -> void do
     var int v = 10;
     x = &v;
 
@@ -40271,20 +41191,17 @@ end
 
 pool[] Ff ffs;
 
-var&?   int x;
-event&? int e;
-
-spawn Ff() -> (&x,&e) in ffs;
+var&? Ff f = spawn Ff() in ffs;
 
 var int ret = 0;
 
 par/and do
-    await e;
+    await f!.e;
 with
-    await x;
+    await f;
 with
-    emit e!(20);
-    ret = x!;
+    emit f!.e(20);
+    ret = f!.x;
 end
 
 escape ret;
@@ -40294,7 +41211,7 @@ escape ret;
 
 
 Test { [[
-code/await Ff (void) -> (var&? int x) -> void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
     await async do end
@@ -40302,9 +41219,8 @@ end
 
 pool[] Ff ffs;
 
-var&? int x;
-spawn Ff() -> (&x) in ffs;
-escape x!;
+var&? Ff f = spawn Ff() in ffs;
+escape f!.x;
 ]],
     run = 10,
 }
@@ -40316,7 +41232,7 @@ native/pos do
     int V = 0;
 end
 
-code/await Bird (void) -> (event&? void e) -> FOREVER
+code/await Bird (void) -> (event& void e) -> FOREVER
 do
     event void e_;
     e = &e_;
@@ -40334,14 +41250,13 @@ spawn Bird() in birds;
 
 await async do end;
 
-event&? void e;
-loop (e) in birds do
+loop _ in birds do
 end
 
-event&? void e;
-loop (e) in birds do
+var&? Bird f;
+loop f in birds do
     _V = _V + 1;
-    emit e!;
+    emit f!.e;
 end
 
 escape _V;
@@ -40357,7 +41272,7 @@ native/pos do
     int V = 0;
 end
 
-code/await Bird (void) -> (event&? void e) -> void
+code/await Bird (void) -> (event& void e) -> void
 do
     event void e_;
     e = &e_;
@@ -40374,15 +41289,15 @@ spawn Bird() in birds;
 spawn Bird() in birds;
 spawn Bird() in birds_;
 
-event&? void e1;
+var&? Bird f1;
 var int i = 0;
-loop (e1) in birds do
-    event&? void e2;
+loop f1 in birds do
+    var&? Bird f2;
     var int j = 0;
-    loop (e2) in birds do
+    loop f2 in birds do
         if (i==1 and j==2) then
             _V = _V + 1;
-            emit e2!;
+            emit f2!.e;
         end
         j = j + 1;
     end
@@ -40420,26 +41335,26 @@ spawn Cloud() in clouds;
 code/await Collides (void) -> void do end
 
 code/await Collisions (void) -> void do
-    var& Ii cloud1;
-    loop (cloud1) in outer.clouds do
-        var& Ii cloud2;
-        loop (cloud2) in outer.clouds do
-            _V = _f(&&cloud1);
+    var&? Cloud cloud1;
+    loop cloud1 in outer.clouds do
+        var&? Cloud cloud2;
+        loop cloud2 in outer.clouds do
+            _V = _f(&&cloud1!.i);
             spawn Collides();
-            _ceu_dbg_assert(_V == &&cloud1);
+            _ceu_dbg_assert(_V == &&cloud1!.i);
         end
     end
 end
 await Collisions();
 escape 1;
 ]],
-    --run = 1,
-    props_ = 'line 29 : invalid `await´ : unexpected enclosing `loop´',
+    run = 1,
+    --props_ = 'line 29 : invalid `spawn´ : unexpected enclosing `loop´',
 }
 
 Test { [[
 native _ceu_dbg_assert;
-input void A, B;
+input void A; input void  B;
 
 code/await Ph (void) -> void do
     await B;
@@ -40462,27 +41377,101 @@ await FOREVER;
     run = { ['~>A;~>B'] = '6] runtime error: bug found' },
 }
 
+Test { [[
+code/await Gg (void) -> FOREVER do
+end
+
+pool[] Gg gs;
+var&? Gg g;
+loop g in gs do
+    await 1s;
+end
+escape 1;
+]],
+    wrn = true,
+    run = {['~>1s']=1},
+}
+
+Test { [[
+code/await Gg (var& int x) -> FOREVER do
+    await FOREVER;
+end
+pool[] Gg gs;
+do
+    var int x = 10;
+    spawn Gg(&x) in gs;
+end
+escape 1;
+]],
+    wrn = true,
+    scopes = 'line 7 : invalid binding : incompatible scopes',
+}
+Test { [[
+code/await Gg (var& int x) -> FOREVER do
+    await FOREVER;
+end
+do
+    pool[] Gg gs;
+    var int x = 10;
+    spawn Gg(&x) in gs;
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+code/await Ff (void) -> (var int x) -> FOREVER do
+    x = 10;
+    await FOREVER;
+end
+
+code/await Gg (var&? Ff f, var& int x) -> FOREVER do
+    await FOREVER;
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    pool[] Gg gs;
+    spawn Gg(&f, &f!.x) in gs;
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+code/await Ff (void) -> (var int x) -> FOREVER do
+    x = 10;
+    await FOREVER;
+end
+
+code/await Gg (var&? Ff f, var& int x) -> FOREVER do
+    await FOREVER;
+end
+
+pool[] Gg gs;
+var&? Ff f = spawn Ff();
+watching f do
+    spawn Gg(&f, &f!.x) in gs;
+end
+
+escape 1;
+]],
+    wrn = true,
+    scopes = 'line 13 : invalid binding : incompatible scopes',
+}
 --<< POOL / LOOP
 --||| TODO: POOL ITERATORS
 
 Test { [[
-loop (Tx&&)t in ts do
-    ret = ret + t:v;
-end
-escape (ok1?) + ok2 + ret;
-]],
-    --parser = 'line 11 : after `loop´ : expected internal identifier or `do´',
-    parser = 'line 1 : after `(´ : expected internal identifier or `_´',
-    --fin = 'line 14 : pointer access across `await´',
-    --run = 1,
-}
-
-Test { [[
 code/await Tx (void) -> void do end
 var bool ok1 = spawn Tx();
-escape 0;
+escape 1;
 ]],
-    parser = 'line 2 : after `)´ : expected `->´ or `in´',
+    --run = 1,
+    --parser = 'line 2 : after `)´ : expected `->´ or `in´',
+    stmts = 'line 2 : invalid constructor : types mismatch : "bool" <= "Tx"',
 }
 Test { [[
 code/await Tx (void) -> void do end
@@ -40506,7 +41495,8 @@ pool[1] Tx ts;
 var int ok1 = spawn Tx() in ts;
 escape 0;
 ]],
-    stmts = 'line 3 : invalid constructor : expected `bool´ destination',
+    --stmts = 'line 3 : invalid constructor : expected `bool´ destination',
+    stmts = 'line 3 : invalid constructor : types mismatch : "int" <= "Tx"',
 }
 
 Test { [[
@@ -40514,7 +41504,7 @@ code/await Tx (void)->void do await FOREVER; end;
 pool[10] Tx ts;
 spawn Tx() in ts;
 var int ret = 0;
-loop in ts do
+loop _ in ts do
     ret = ret + 1;
     spawn Tx() in ts;
 end
@@ -40549,9 +41539,9 @@ pool[] Tx ts;
 spawn Tx(10) in ts;
 spawn Tx(20);
 var int ret = 0;
-var& int v;
-loop (v) in ts do
-    ret = ret + v;
+var&? Tx v;
+loop v in ts do
+    ret = ret + v!.v2;
 end
 escape ret + _V;
 ]],
@@ -40573,9 +41563,9 @@ pool[] Tx ts;
 spawn Tx(10);
 spawn Tx(20) in ts;
 var int ret = 0;
-var& int v;
-loop (v) in ts do
-    ret = ret + v;
+var&? Tx v;
+loop v in ts do
+    ret = ret + v!.v2;
 end
 escape ret + _V;
 ]],
@@ -40634,41 +41624,117 @@ pool[] Tx ts;
 spawn Tx(10) in ts;
 spawn Tx(20) in ts;
 var int ret = 0;
-var& int v;
-loop (v) in ts do
-    ret = ret + v;
+var&? Tx v;
+loop v in ts do
+    ret = ret + v!.v2;
 end
 escape ret + _V;
 ]],
     run = 60,
 }
 
+Test { [[
+data Dd;
+data Dd.Aa;
+
+code/await Ff (var& Dd vis) -> FOREVER do
+    await FOREVER;
+end
+
+pool[] Ff fs;
+
+code/await Gg (void) -> FOREVER do
+    var int x1 = 0;
+    var int x2 = 0;
+    var int x3 = 0;
+    var int x4 = 0;
+    await FOREVER;
+end
+
+spawn Gg() in fs;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+native/pre do
+    int V = 0;
+end
+
+code/await Gg (void) -> FOREVER do
+    every 100ms do
+        {V++;}
+    end
+end
+
+code/await Ff (void) -> (pool[1] Gg gs) -> FOREVER do
+    pool[1] Gg gs_;
+    spawn Gg() in gs_;
+    spawn Gg() in gs;
+    await FOREVER;
+end
+
+spawn Ff();
+await 1s;
+escape {V};
+]],
+    wrn = true,
+    run = {['~>1s']=20},
+}
+Test { [[
+native/pre do
+    int V = 0;
+end
+
+code/await Gg (void) -> FOREVER do
+    every 100ms do
+        {V++;}
+    end
+end
+
+code/await Ff (void) -> (pool[1] Gg gs1, pool[1] Gg gs2) -> FOREVER do
+    pool[1] Gg gs_;
+    spawn Gg() in gs_;
+    spawn Gg() in gs1;
+    spawn Gg() in gs2;
+    await FOREVER;
+end
+
+spawn Ff();
+await 1s;
+escape {V};
+]],
+    wrn = true,
+    run = {['~>1s']=30},
+}
 -->> POOL/SPAWN/OPTION
 
 Test { [[
-code/await Tx (var int v1)->(var&? int v2)->void do
+code/await Tx (var int v1)->(var& int v2)->void do
     var int x = v1;
     v2 = &x;
 end
 
-var&? int v;
-spawn Tx(10) -> (&v);
-escape v!;
+var&? Tx v;
+v = spawn Tx(10);;
+escape v!.v2;
 ]],
     --asr = '7] runtime error: invalid tag',
     run = '8] runtime error: value is not set',
 }
 
 Test { [[
-code/await Tx (var int v1)->(var&? int v2)->void do
+code/await Tx (var int v1)->(var& int v2)->void do
     var int x = v1;
     v2 = &x;
 end
 
-var&? int v;
-spawn Tx(10) -> (&v);
+var&? Tx v;
+v = spawn Tx(10);
 await async do end
-escape v!;
+escape v!.v2;
 ]],
     --asr = '7] runtime error: invalid tag',
     run = '9] runtime error: value is not set',
@@ -40679,7 +41745,7 @@ data Dd with
     var int v = 10;
 end
 
-code/await Ff (void) -> (var&? Dd d) -> FOREVER do
+code/await Ff (void) -> (var& Dd d) -> FOREVER do
     var Dd d_ = val Dd(_);
     d = &d_;
     await FOREVER;
@@ -40692,9 +41758,9 @@ var int ret = 0;
 
 watching 10s do
     every 1s do
-        var&? Dd d;
-        loop (d) in fs do
-            ret = ret + d.v;
+        var&? Ff d;
+        loop d in fs do
+            ret = ret + d.d.v;
         end
     end
 end
@@ -40702,7 +41768,7 @@ end
 escape ret;
 ]],
     wrn = true,
-    locs = 'line 20 : invalid operand to `.´ : unexpected option alias',
+    dcls = 'line 20 : invalid operand to `.´ : unexpected option alias',
 }
 
 Test { [[
@@ -40710,7 +41776,7 @@ data Dd with
     var int v = 10;
 end
 
-code/await Ff (void) -> (var&? Dd d) -> FOREVER do
+code/await Ff (void) -> (var& Dd d) -> FOREVER do
     var Dd d_ = val Dd(_);
     d = &d_;
     await FOREVER;
@@ -40723,9 +41789,9 @@ var int ret = 0;
 
 watching 10s do
     every 1s do
-        var&? Dd d;
-        loop (d) in fs do
-            ret = ret + d!.v;
+        var&? Ff f;
+        loop f in fs do
+            ret = ret + f!.d.v;
         end
     end
 end
@@ -40779,7 +41845,8 @@ escape 10;
 Test { [[
 spawn i;
 ]],
-    parser = 'line 1 : after `spawn´ : expected abstraction identifier or `do´',
+    --parser = 'line 1 : after `spawn´ : expected `(´ or `do´ or `async/isr´ or abstraction identifier',
+    parser = 'line 1 : after `i´ : expected `[´ or `:´ or `.´ or `!´ or `as´',
 }
 
 Test { [[
@@ -40802,18 +41869,18 @@ end
 escape 10;
 ]],
     wrn = true,
-    stmts = 'line 2 : invalid `await´ : unexpected recursive invocation',
+    stmts = 'line 2 : invalid `spawn´ : unexpected recursive invocation',
 }
 
 Test { [[
-code/await Tx (void)->(event&? void e)->void do
+code/await Tx (void)->(event& void e)->void do
     event void e_;
     e = &e_;
 end
 
-event&? void e;
-spawn Tx() -> (&e);
-await e!;
+var&? Tx t =
+spawn Tx();
+await t!.e;
 escape 1;
 ]],
     wrn = true,
@@ -40821,16 +41888,16 @@ escape 1;
 }
 
 Test { [[
-code/await Tx (void)->(event&? void e)->void do
+code/await Tx (void)->(event& void e)->void do
     event void e_;
     e = &e_;
     await async do end;
     emit e_;
 end
 
-event&? void e;
-spawn Tx() -> (&e);
-await e!;
+var&? Tx t =
+spawn Tx();
+await t!.e;
 escape 1;
 ]],
     wrn = true,
@@ -40864,19 +41931,19 @@ escape 1;
 Test { [[
 input void A;
 
-code/await Tx (void)->(var&? int x)->void do
+code/await Tx (void)->(var& int x)->void do
     var int x_=_;
     x = &x_;
     await A;
 end
 
-var&? int x1;
-spawn Tx() -> (&x1);
-await x1;
+var&? Tx t1 =
+spawn Tx();
+await t1;
 
-var&? int x2;
-spawn Tx() -> (&x2);
-await x2;
+var&? Tx t2 =
+spawn Tx();
+await t2;
 
 escape 1;
 ]],
@@ -40885,18 +41952,40 @@ escape 1;
 }
 
 Test { [[
-code/await Tx (void)->(var&? int x)->void do
+code/await Tx (void)->(var& int x)->void do
     var int x_=_;
     x = &x_;
     await 1us;
 end
 
-var&? int x1;
-spawn Tx() -> (&x1);
+var&? Tx t1 =
+spawn Tx();
+await t1;
+
+var&? Tx t2 =
+spawn Tx();
+await t2;
+
+escape 1;
+]],
+    wrn = true,
+    run = { ['~>2us']=1 },
+}
+
+Test { [[
+code/await Tx (void)->(var& int x)->void do
+    var int x_=_;
+    x = &x_;
+    await 1us;
+end
+
+var&? Tx x1 =
+spawn Tx();
+spawn Tx();
 await x1;
 
-var&? int x2;
-spawn Tx() -> (&x2);
+var&? Tx x2 =
+spawn Tx();
 await x2;
 
 escape 1;
@@ -40906,25 +41995,89 @@ escape 1;
 }
 
 Test { [[
-code/await Tx (void)->(var&? int x)->void do
-    var int x_=_;
-    x = &x_;
-    await 1us;
+code/await Tx (void)->(var int e)->FOREVER do
+    e = 1;
+    await FOREVER;
 end
 
-var&? int x1;
-spawn Tx() -> (&x1);
-spawn Tx();
-await x1;
+var&? Tx t = spawn Tx();
 
-var&? int x2;
-spawn Tx() -> (&x2);
-await x2;
+var& int e = &t!.e;
+
+escape 0;
+]],
+    wrn = true,
+    scopes = 'line 8 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+}
+
+Test { [[
+code/await Tx (void)->(var int e)->FOREVER do
+    e = 1;
+    await FOREVER;
+end
+
+code/await Ux (var& int e) -> void do end
+
+var&? Tx t = spawn Tx();
+spawn Ux(&t!.e);
+
+escape 0;
+]],
+    wrn = true,
+    --run = 1,
+    scopes = 'line 9 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+}
+
+Test { [[
+code/await Tx (void)->(var int e)->FOREVER do
+    e = 1;
+    await FOREVER;
+end
+
+code/await Ux (var& int e) -> void do end
+
+var&? Tx t = spawn Tx();
+watching t do
+    spawn Ux(&t!.e);
+end
 
 escape 1;
 ]],
     wrn = true,
-    run = { ['~>2us']=1 },
+    run = 1,
+    --scopes = 'line 9 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+}
+
+Test { [[
+code/await Tx (void)->(event void e)->FOREVER do
+    await FOREVER;
+end
+
+code/await Ux (event& void e) -> void do end
+
+var&? Tx t = spawn Tx();
+spawn Ux(&t!.e);
+
+escape 0;
+]],
+    wrn = true,
+    --run = 1,
+    scopes = 'line 8 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+}
+
+Test { [[
+code/tight Ff (var& int x) -> int do
+    escape x + 1;
+end
+code/await Gg (void) -> (var int x) -> FOREVER do
+    x = 10;
+    await FOREVER;
+end
+var&? Gg g = spawn Gg();
+var int ret = call Ff(&g!.x);
+escape ret;
+]],
+    run = 11,
 }
 
 -- group of tests fails w/o sudden death check while traversing children
@@ -40941,26 +42094,26 @@ code/await Tx (void)->(event& void e)->FOREVER do
     await FOREVER;
 end
 
-code/await Ux (event& void e, var bool only_await) -> void do
+code/await Ux (var&? Tx t, var bool only_await) -> void do
     par/or do
-        await e;
+        await t!.e;
         _V = _V + 1;
     with
         if only_await then
             await FOREVER;
         end
         await OS_START;
-        emit e;
+        emit t!.e;
     with
         await OS_START;
     end
 end
 
-event& void e;
-spawn Tx() -> (&e);
+var&? Tx t =
+spawn Tx();
 
-spawn Ux(&e, true);
-spawn Ux(&e, false);
+spawn Ux(&t, true);
+spawn Ux(&t, false);
 
 await OS_START;
 
@@ -41175,7 +42328,7 @@ var int a = [[a]];
 escape a;
 ]==],
     _opts = { ceu_features_lua='true' },
-    parser = 'line 3 : after `1´ : expected `is´ or `as´ or binary operator or `..´ or `;´',
+    parser = 'line 3 : after `1´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `..´ or `;´',
 }
 
 Test { [==[
@@ -41692,7 +42845,7 @@ v_ceu = { v_c + @v_ceu };       // yields 30
 }
 
 [[
-    v_lua = @v_ceu * 2 
+    v_lua = @v_ceu * 2
 ]]
 v_ceu = [[ v_lua + @v_ceu ]];
 [[
@@ -41799,15 +42952,16 @@ Test { [[
 data Tx with
     var int x;
 end
-interface Tx with
+code/await Tx (void) -> void do
 end
 escape 1;
 ]],
     wrn = true,
-    tmp = 'line 4 : top-level identifier "Tx" already taken',
+    --tmp = 'line 4 : top-level identifier "Tx" already taken',
+    dcls = 'line 4 : invalid `code´ declaration',
 }
 Test { [[
-interface Tx with
+code/await Tx (void) -> void do
 end
 data Tx with
     var int x;
@@ -41830,26 +42984,28 @@ escape 1;
     --dcls = 'line 4 : identifier "Tx" is already declared (/tmp/tmp.ceu : line 1)',
 }
 Test { [[
-class Tx with
+code/await Tx (void) -> void
 do
 end
-interface Tx with
+code/tight Tx (void) -> void
+do
 end
 escape 1;
 ]],
-    tmp = 'top-level identifier "Tx" already taken',
+    --tmp = 'top-level identifier "Tx" already taken',
+    dcls = 'line 4 : invalid `code´ declaration : body for "Tx" already exists',
 }
 
 Test { [[
 data Dx with
     var int x;
 end
-class C with
-    var Dx d = val Dx(200);
-do
+code/await Cc (void) -> (var Dx d) -> FOREVER do
+    d = val Dx(200);
+    await FOREVER;
 end
-var C c;
-escape c.d.x;
+var&? Cc c = spawn Cc();
+escape c!.d.x;
 ]],
     run = 200,
 }
@@ -41913,7 +43069,7 @@ escape 1;
 Test { [[
 data OptNIL.;
 ]],
-    parser = 'line 1 : after `OptNIL´ : expected `as´ or `;´ or `with´',
+    parser = 'line 1 : after `OptNIL´ : expected `as´ or `with´ or `;´',
     --parser = 'line 1 : after `is´ : expected abstraction identifier',
 }
 
@@ -41921,7 +43077,7 @@ Test { [[
 data OptNIL. with
 end
 ]],
-    parser = 'line 1 : after `OptNIL´ : expected `as´ or `;´ or `with´',
+    parser = 'line 1 : after `OptNIL´ : expected `as´ or `with´ or `;´',
     --parser = 'line 1 : after `is´ : expected abstraction identifier',
 }
 
@@ -41945,7 +43101,7 @@ escape 1;
 
 Test { [[
 data SDL_Rect with
-    var int x,y,w,h;
+    var int x; var int y; var int w; var int h;
 end
 
 var SDL_Rect rect;
@@ -41958,7 +43114,7 @@ escape r.x+r.y+r.w+r.h;
 }
 Test { [[
 data SDL_Rect with
-    var int x,y,w,h;
+    var int x; var int y; var int w; var int h;
 end
 
 var SDL_Rect rect = val SDL_Rect(1,2,3,4);
@@ -41970,7 +43126,7 @@ escape r.x+r.y+r.w+r.h;
 }
 Test { [[
 data Ball with
-    var int x, y;
+    var int x; var int  y;
     var int radius;
 end
 
@@ -42102,7 +43258,8 @@ var int x = 0;
 var Ee e = val x;
 escape 1;
 ]],
-    parser = 'line 3 : after `val´ : expected abstraction identifier',
+    --parser = 'line 3 : after `val´ : expected abstraction identifier',
+    parser = 'line 3 : after `x´ : expected `[´ or `:´ or `.´ or `!´ or `as´',
 }
 
 Test { [[
@@ -42152,7 +43309,7 @@ escape 1;
 ]],
     wrn = true,
     --env = 'line 7 : union data constructor requires a tag',
-    exps = 'line 7 : invalid constructor : expected 0 argument(s)',
+    dcls = 'line 7 : invalid constructor : expected 0 argument(s)',
 }
 
 Test { [[
@@ -42207,7 +43364,7 @@ var int x = 0;
 var Ee ex = val Ee(&x);
 escape 1;
 ]],
-    exps = 'line 8 : invalid constructor : argument #1 : types mismatch : "Dx" <= "int"',
+    dcls = 'line 8 : invalid constructor : argument #1 : types mismatch : "Dx" <= "int"',
 }
 
 Test { [[
@@ -42236,8 +43393,8 @@ end
 var Ee ex = val Ee(_);
 escape 1;
 ]],
-    exps = 'line 7 : invalid constructor : invalid binding : argument #1 : expected location',
-    --exps = 'line 7 : invalid constructor : argument #1 : unexpected `_´',
+    dcls = 'line 7 : invalid constructor : invalid binding : argument #1 : expected location',
+    --dcls = 'line 7 : invalid constructor : argument #1 : unexpected `_´',
 }
 
 Test { [[
@@ -42282,8 +43439,8 @@ end
 var Dx d = val Dx(10);
 escape (d as Ex).x;
 ]],
-    locs = 'line 8 : invalid operand to `as´ : unmatching `data´ abstractions',
-    --locs = 'line 8 : invalid operand to `as´ : unexpected plain `data´ : got "Dx"',
+    dcls = 'line 8 : invalid operand to `as´ : unmatching `data´ abstractions',
+    --dcls = 'line 8 : invalid operand to `as´ : unexpected plain `data´ : got "Dx"',
 }
 
 Test { [[
@@ -42540,7 +43697,7 @@ var& Ee e = &ex;
 escape (e as Xx):x;
 ]],
     wrn = true,
-    locs = 'line 7 : invalid operand to `as´ : unmatching `data´ abstractions',
+    dcls = 'line 7 : invalid operand to `as´ : unmatching `data´ abstractions',
 }
 
 Test { [[
@@ -42553,7 +43710,7 @@ var& Ee e = &ex;
 escape (e is Xx) as int;
 ]],
     wrn = true,
-    exps = 'line 7 : invalid operand to `is´ : expected `data´ type in some hierarchy : got "Ee"',
+    dcls = 'line 7 : invalid operand to `is´ : expected `data´ type in some hierarchy : got "Ee"',
 }
 
 Test { [[
@@ -42561,14 +43718,14 @@ data Aa;
 var Aa a = _;
 escape a as int;
 ]],
-    exps = 'line 3 : invalid operand to `as´ : expected `data´ type in a hierarchy : got "Aa"',
+    dcls = 'line 3 : invalid operand to `as´ : expected `data´ type in a hierarchy : got "Aa"',
 }
 
 Test { [[
 data Aa;
 escape (1 as Aa) as int;
 ]],
-    exps = 'line 2 : invalid operand to `as´ : expected `data´ type in a hierarchy : got "Aa"',
+    dcls = 'line 2 : invalid operand to `as´ : expected `data´ type in a hierarchy : got "Aa"',
 }
 
 Test { [[
@@ -42606,7 +43763,7 @@ var Ee.Xx ex = val Ee.Xx();
 escape ((ex is Ee) as int) + 1;
 ]],
     wrn = true,
-    exps = 'line 4 : invalid operand to `is´ : unmatching `data´ abstractions',
+    dcls = 'line 4 : invalid operand to `is´ : unmatching `data´ abstractions',
 }
 Test { [[
 data Ee;
@@ -42623,7 +43780,7 @@ var Ee ex = val Ee();
 escape ((ex is Ee) as int) + 1;
 ]],
     wrn = true,
-    exps = 'line 3 : invalid operand to `is´ : expected `data´ type in some hierarchy : got "Ee"',
+    dcls = 'line 3 : invalid operand to `is´ : expected `data´ type in some hierarchy : got "Ee"',
 }
 Test { [[
 data Ee;
@@ -42635,7 +43792,7 @@ var Ee&& e = &&ex;
 escape (e is Ee.Xx&&) as int;
 ]],
     wrn = true,
-    exps = 'line 7 : invalid operand to `is´ : expected plain `data´ type : got "Ee&&"',
+    dcls = 'line 7 : invalid operand to `is´ : expected plain `data´ type : got "Ee&&"',
 }
 
 Test { [[
@@ -42648,7 +43805,7 @@ var Ee&& e = &&ex;
 escape (e as Xx&&):x;
 ]],
     wrn = true,
-    locs = 'line 7 : invalid operand to `as´ : unmatching `data´ abstractions',
+    dcls = 'line 7 : invalid operand to `as´ : unmatching `data´ abstractions',
 }
 
 Test { [[
@@ -42702,24 +43859,47 @@ data Leaf.Tween with
     var& Ball ball;
 end
 
-class LeafHandler with
-    var& Leaf leaf;
-do
-    var& Ball ball = &(leaf as Tween).ball;
+code/tight LeafHandler (var& Leaf leaf) -> int do
+    var& Ball ball = &(leaf as Leaf.Tween).ball;
     escape ball.x;
 end
 
 var Ball ball = val Ball(10);
-var Leaf leaf = val Tween(&ball);
+var Leaf.Tween leaf = val Leaf.Tween(&ball);
 
-var int x = do LeafHandler with
-                this.leaf = &leaf;
-            end;
+var int x = call LeafHandler(&leaf);
 
 escape x;
 ]],
     wrn = true,
     run = 10,
+}
+
+Test { [[
+data Ball with
+    var int x;
+end
+
+data Leaf;
+data Leaf.Nothing;
+data Leaf.Tween with
+    var& Ball ball;
+end
+
+code/tight LeafHandler (var& Leaf leaf) -> int do
+    var& Ball ball = &(leaf as Leaf.Tween).ball;
+    escape ball.x;
+end
+
+var Ball ball = val Ball(10);
+var Leaf.Nothing leaf = val Leaf.Nothing();
+
+var int x = call LeafHandler(&leaf);
+
+escape x;
+]],
+    wrn = true,
+    run = '12] runtime error: invalid cast `as´',
 }
 
 Test { [[
@@ -42755,7 +43935,7 @@ var& Data dd = &d;
 
 escape (dd is Data) as int;
 ]],
-    exps = 'line 8 : invalid operand to `is´ : expected `data´ type in some hierarchy : got "Data"',
+    dcls = 'line 8 : invalid operand to `is´ : expected `data´ type in some hierarchy : got "Data"',
 }
 
 Test { [[
@@ -42767,7 +43947,8 @@ var Aa a = val Aa(10);
 
 escape a.a + a.b;
 ]],
-    locs = 'line 7 : invalid member access : "a" has no member "b" : `data´ "Aa" (/tmp/tmp.ceu:1)',
+    dcls = 'line 7 : field "b" is not declared',
+    --dcls = 'line 7 : invalid member access : "a" has no member "b" : `data´ "Aa" (/tmp/tmp.ceu:1)',
 }
 
 Test { [[
@@ -42799,7 +43980,8 @@ var Aa.Bb b = val Aa.Bb(10,20);
 
 escape a.a + b.a + b.b + b.c;
 ]],
-    locs = 'line 11 : invalid member access : "b" has no member "c" : `data´ "Aa.Bb" (/tmp/tmp.ceu:4)',
+    dcls = 'line 11 : field "c" is not declared',
+    --dcls = 'line 11 : invalid member access : "b" has no member "c" : `data´ "Aa.Bb" (/tmp/tmp.ceu:4)',
 }
 
 Test { [[
@@ -42851,7 +44033,8 @@ end
 
 var Dd d = val Dd(10);
 
-var Dd? d1, d2;
+var Dd? d1;
+var Dd? d2;
 
 d2 = d;
 
@@ -42994,7 +44177,7 @@ var& Xx x  = &x_;
 escape (x as Yy) as int;
 ]],
     wrn = true,
-    locs = 'line 5 : invalid operand to `as´ : unmatching `data´ abstractions',
+    dcls = 'line 5 : invalid operand to `as´ : unmatching `data´ abstractions',
 }
 
 Test { [[
@@ -43004,7 +44187,7 @@ var& Xx xxx  = &x_;
 escape xxx as int;
 ]],
     wrn = true,
-    exps = 'line 4 : invalid operand to `as´ : expected `data´ type in a hierarchy : got "Xx"',
+    dcls = 'line 4 : invalid operand to `as´ : expected `data´ type in a hierarchy : got "Xx"',
 }
 
 Test { [[
@@ -43224,34 +44407,6 @@ escape (call Ff(x1));
 }
 
 Test { [[
-//data Direction as nothing;
-data Direction as 0;
-data Direction.Right as 10;
-data Direction.Left as 20;
-
-code/tight/dynamic Ff (dynamic var Direction dir) -> int do
-    escape 1;
-end
-
-code/tight/dynamic Ff (dynamic var Direction.Right dir) -> int do
-    escape 10;
-end
-
-code/tight/dynamic Ff (dynamic var Direction.Left dir) -> int do
-    escape 100;
-end
-
-var Direction.Right x1 = val Direction.Right();
-var Direction y1 = val Direction.Left();
-var Direction y2 = val Direction();
-
-escape (call/dynamic Ff(x1)) + (call/dynamic Ff(y1)) + (call/dynamic Ff(y2));
-]],
-    wrn = true,
-    run = 111,
-}
-
-Test { [[
 data Direction as nothing;
 data Direction.Right as 10;
 data Direction.Left as 20;
@@ -43262,34 +44417,6 @@ escape 1;
     stmts = 'line 4 : invalid constructor : cannot instantiate `data´ "Direction"',
 }
 
-Test { [[
-data Direction as nothing;
-//data Direction as 0;
-data Direction.Right as 10;
-data Direction.Left as 20;
-
-code/tight/dynamic Ff (dynamic var Direction dir) -> int do
-    escape 1;
-end
-
-code/tight/dynamic Ff (dynamic var Direction.Right dir) -> int do
-    escape 10;
-end
-
-code/tight/dynamic Ff (dynamic var Direction.Left dir) -> int do
-    escape 100;
-end
-
-var Direction.Right x1 = val Direction.Right();
-var Direction y1 = val Direction.Left();
-var Direction y2 = val Direction();
-
-escape (call/dynamic Ff(x1)) + (call/dynamic Ff(y1)) + (call/dynamic Ff(y2));
-]],
-    wrn = true,
-    stmts = 'line 20 : invalid constructor : cannot instantiate `data´ "Direction"',
-}
-
 --<< DATA / HIER / ENUM
 
 --<<< DATA / HIERARCHY / SUB-DATA / SUB-TYPES / INHERITANCE
@@ -43298,21 +44425,18 @@ Test { [[
 data Dx with
     var int x;
 end
-class C with
-    var Dx d = val Dx(200);
-do
+code/await Cc (void) -> (var Dx d) -> FOREVER do
+    d = val Dx(200);
+    await FOREVER;
 end
-var C c;
-escape c.d.x;
+var&? Cc c = spawn Cc();
+escape c!.d.x;
 ]],
     run = 200,
 }
 
 Test { [[
-class Tx with
-    var& float v;
-do
-    await FOREVER;
+code/await Tx (var& float v) -> void do
 end
 
 data Dx with
@@ -43320,22 +44444,19 @@ data Dx with
 end
 
 var Dx d;
-var Tx t with
-    this.v = &d.v;   // 13
-end;
+await Tx(&d.v);
 d = val Dx(1);
 
-escape t.v;
+escape 1;
 ]],
+    wrn = true,
     --ref = 'line 11 : uninitialized variable "d" crossing compound statement (/tmp/tmp.ceu:12)',
-    tmp = 'line 13 : invalid access to uninitialized variable "d" (declared at /tmp/tmp.ceu:11)',
+    --tmp = 'line 13 : invalid access to uninitialized variable "d" (declared at /tmp/tmp.ceu:11)',
+    inits = 'line 8 : uninitialized variable "d" : reached read access (/tmp/tmp.ceu:9)',
 }
 
 Test { [[
-class Tx with
-    var& float v;
-do
-    await FOREVER;
+code/await Tx (var& float v) -> void do
 end
 
 data Dx with
@@ -43343,52 +44464,48 @@ data Dx with
 end
 
 var Dx d;
-var Tx _ with
-    this.v = &d.v;   // 13
-end;
+spawn Tx(&d.v);
+d = val Dx(1);
 
 escape 1;
 ]],
+    wrn = true,
     --ref = 'line 11 : uninitialized variable "d" crossing compound statement (/tmp/tmp.ceu:12)',
-    tmp = 'line 13 : invalid access to uninitialized variable "d" (declared at /tmp/tmp.ceu:11)',
+    --tmp = 'line 13 : invalid access to uninitialized variable "d" (declared at /tmp/tmp.ceu:11)',
+    inits = 'line 8 : uninitialized variable "d" : reached read access (/tmp/tmp.ceu:9)',
 }
 
 Test { [[
-class Tx with
-    var& float v;
-do
-    await FOREVER;
+code/await Tx (var& float v) -> void do
 end
-
-data Dx with
-    var float v;
-end
-
-var Tx _ with
-    var Dx d = val Dx(1);
-    this.v = &d.v;
-end;
-
+var float v;
+spawn Tx(&v);
+v = 1;
 escape 1;
 ]],
-    --ref = 'line 13 : attribution to reference with greater scope',
-    tmp = 'line 13 : invalid attribution : variable "d" has narrower scope than its destination',
+    wrn = true,
+    --ref = 'line 11 : uninitialized variable "d" crossing compound statement (/tmp/tmp.ceu:12)',
+    --tmp = 'line 13 : invalid access to uninitialized variable "d" (declared at /tmp/tmp.ceu:11)',
+    inits = 'line 3 : uninitialized variable "v" : reached read access (/tmp/tmp.ceu:4)',
 }
 
 Test { [[
 data Vector3f with
-    var float x, y, z;
+    var float x;
+    var float y;
+    var float z;
 end
 
-class SurfaceBackground with
-    var& _WorldObjs__SurfaceBackground me;
-do
-    code/tight Set_pos (var _Vector3f&& p)->void do
-        this.me.p = Vector3f(p:x, p:y, p:z);
+native _t,_u;
+var& _t me;
+    code/tight Set_pos (var _u&& p)->void do
+        outer.me.p = val Vector3f(p:x, p:y, p:z);
     end
-end
+escape 1;
 ]],
-    adt = 'line 9 : invalid attribution : destination is not a "data" type',
+    wrn = true,
+    --adt = 'line 9 : invalid attribution : destination is not a "data" type',
+    stmts = 'line 10 : invalid constructor : types mismatch : "_t" <= "Vector3f"',
 }
 
 Test { [[
@@ -43428,13 +44545,14 @@ data Vx with
 end
 
 var& Vx v1 = val Vx(1);
-var& Vx v2, v3;
+var& Vx v2;
+var& Vx v3;
     v2 = val Vx(2);
     v3 = val Vx(3);
 escape v1.v+v2.v+v3.v;
 ]],
-    inits = 'line 5 : invalid binding : unexpected statement in the right side',
-    --inits = 'line 5 : invalid binding : expected operator `&´ in the right side',
+    --inits = 'line 5 : invalid binding : unexpected statement in the right side',
+    inits = 'line 5 : invalid binding : expected operator `&´ in the right side',
     --ref = 'line 5 : invalid attribution : missing alias operator `&´',
     --run = 6,
 }
@@ -43446,7 +44564,8 @@ end
 
 var Vx v1_ = val Vx(1);
 var& Vx v1 = &v1_;
-var& Vx v2, v3;
+var& Vx v2;
+var& Vx v3;
 do
     var Vx v2_ = val Vx(2);
     v2 = &v2_;
@@ -43457,7 +44576,7 @@ do
 end
 escape v1.v+v2.v+v3.v;
 ]],
-    scopes = 'line 10 : invalid binding : incompatible scopes',
+    scopes = 'line 11 : invalid binding : incompatible scopes',
     --inits = 'line 7 : uninitialized variable "v2" crossing compound statement (/tmp/tmp.ceu:8)',
     --ref = 'line 10 : attribution to reference with greater scope',
     --ref = 'line 10 : invalid attribution : variable "v2_" has narrower scope than its destination',
@@ -43473,7 +44592,7 @@ var Test t = val Test();
 escape t.v[0];
 ]],
     --env = 'line 4 : arity mismatch',
-    exps = 'line 5 : invalid constructor : expected 1 argument(s)',
+    dcls = 'line 5 : invalid constructor : expected 1 argument(s)',
 }
 
 Test { [[
@@ -43679,7 +44798,7 @@ escape *dd.x;
 
 ]],
     --inits = 'line 8 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:7)',
-    inits = 'line 8 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:7)',
+    ptrs = 'line 8 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:7)',
     --run = { ['~>1s']=1 },
 }
 
@@ -43698,7 +44817,7 @@ escape *ee.dd.x;
 
 ]],
     --inits = 'line 11 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:10)',
-    inits = 'line 11 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:10)',
+    ptrs = 'line 11 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:10)',
     --run = { ['~>1s']=1 },
 }
 
@@ -43824,9 +44943,9 @@ code/await Points (void) -> (var& IPoints me) -> void do
     me = &me_;
 end
 
-var& IPoints points;
-watching Points() -> (&points) do
-    emit points.inc;
+var&? Points points = spawn Points();
+watching points do
+    emit points!.me.inc;
 end
 
 escape 1;
@@ -44205,21 +45324,21 @@ data Ts;
 pool[] Ts ts;
 escape ts + 1;
 ]],
-    exps = 'line 3 : invalid operand to `+´ : unexpected context for pool "ts"',
+    dcls = 'line 3 : invalid operand to `+´ : unexpected context for pool "ts"',
 }
 Test { [[
 data Dd;
 pool[] Dd dds;
 escape dds?;
 ]],
-    exps = 'line 3 : invalid operand to `?´ : unexpected context for pool "dds"',
+    dcls = 'line 3 : invalid operand to `?´ : unexpected context for pool "dds"',
 }
 Test { [[
 data Dd;
 pool[] Dd dds;
 escape dds!;
 ]],
-    locs = 'line 3 : invalid operand to `!´ : unexpected context for pool "dds"',
+    dcls = 'line 3 : invalid operand to `!´ : unexpected context for pool "dds"',
 }
 
 Test { [[
@@ -44312,6 +45431,19 @@ escape (call Ff ());
     run = 3,
 }
 
+Test { [[
+data Dd with
+    var int x = 10;
+end
+vector[] Dd ds = [];
+var Dd d2 = val Dd(_);
+var Dd d1 = val Dd(1);
+ds = ds .. [d2,d1];
+escape ds[0].x + ds[1].x;
+]],
+    run = 11,
+}
+
 --<< DATA / VECTOR
 
 -->> DATA / DEFAULT / CONSTRUCTOR
@@ -44334,8 +45466,8 @@ end
 var Dd ddd = _;
 escape ddd.x;
 ]],
-    inits = 'line 5 : uninitialized variable "ddd"',
-    --run = 10,
+    --inits = 'line 5 : uninitialized variable "ddd"',
+    run = 10,
 }
 
 Test { [[
@@ -44366,6 +45498,26 @@ escape d.e1.e + d.e2.e + d.e3.e;
 ]],
     --wrn = true,
     run = 120,
+}
+
+Test { [[
+data Obj with
+    var int x = 0;
+end
+
+var int ret = 0;
+
+code/await DoObj(var Obj o) -> FOREVER
+do
+    outer.ret = outer.ret + o.x;
+    await FOREVER;
+end
+
+spawn DoObj(Obj(1));
+
+escape ret;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -44544,7 +45696,7 @@ Test { [[
 data Object with
   var int c = 101;
 end
-code/await Show(var Object obj) -> (var&? int ret) -> int do
+code/await Show(var Object obj) -> (var& int ret) -> int do
     var int a = obj.c;
     ret = &a;
     escape a;
@@ -44565,9 +45717,9 @@ code/await Show(var Object obj) -> (var& int ret) -> FOREVER do
     await FOREVER;
 end
 
-var& int r;
-spawn Show(Object(1)) -> (&r); // prints 0
-escape r;
+var&? Show s;
+s = spawn Show(Object(1)); // prints 0
+escape s!.ret;
 ]],
     run = 1,
 }
@@ -44611,21 +45763,43 @@ escape 10;
     --wrn = true,
     run = 10,
 }
--- XXX-01
+
 Test { [[
 data Object with
   var int ccc = 101;
 end
-code/await Show(var Object obj) -> (var&? int rrr) -> int do
+code/await Show(var Object obj) -> (var& int rrr) -> int do
     var int aaa = obj.ccc;
     rrr = &aaa;
     await 1s;
     escape 1;
 end
 
-var&? int r;
-spawn Show(Object(_)) -> (&r);
-escape r!;
+var&? Show s =
+spawn Show(Object(_));
+var& int rr = &s!.rrr;                  // TODO: should not allow this
+await 2s;
+escape rr;
+]],
+    scopes = 'line 13 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+    --wrn = true,
+    --run = { ['~>2s']=101 },
+}
+
+Test { [[
+data Object with
+  var int ccc = 101;
+end
+code/await Show(var Object obj) -> (var& int rrr) -> int do
+    var int aaa = obj.ccc;
+    rrr = &aaa;
+    await 1s;
+    escape 1;
+end
+
+var&? Show s =
+spawn Show(Object(_));
+escape s!.rrr;
 ]],
     --wrn = true,
     run = 101,
@@ -44640,9 +45814,9 @@ code/await Show(var Object obj) -> (var& int ret) -> FOREVER do
     await FOREVER;
 end
 
-var& int r;
-spawn Show(_) -> (&r); // prints 0
-escape r;
+var&? Show s =
+spawn Show(_); // prints 0
+escape s!.ret;
 ]],
     --wrn = true,
     run = 101,
@@ -44671,8 +45845,48 @@ end
 var Aa.Bb b = _;
 escape b.b;
 ]],
-    inits = 'line 7 : uninitialized variable "b"',
-    --run = 20,
+    --inits = 'line 7 : uninitialized variable "b"',
+    run = 20,
+}
+
+Test { [[
+data Dd with
+    var int x = 111;
+end
+code/await Ff (var Dd d) -> int do
+    escape d.x;
+end
+var int ret = await Ff(_);
+escape ret;
+]],
+    run = 111,
+}
+
+Test { [[
+data Dd with
+    var int x = 111;
+end
+code/tight Ff (var Dd d) -> int do
+    escape d.x;
+end
+var int ret = call Ff(_);
+escape ret;
+]],
+    run = 111,
+}
+
+Test { [[
+data Dd with
+    var int x = 111;
+end
+code/await Ff (void) -> (var Dd d) -> FOREVER do
+    d = val Dd(_);
+    await FOREVER;
+end
+var&? Ff f = spawn Ff();
+escape f!.d.x;
+]],
+    run = 111,
 }
 
 --<< DATA / DEFAULT / CONSTRUCTOR
@@ -44785,12 +45999,193 @@ escape 1;
 
 --<< DATA / CODE / SCOPE
 
+-->> CODE / RETURN / DATA
+
+Test { [[
+data Dd;
+
+code/await Ff (void) -> Dd do
+    var Dd d = _;
+    escape d;
+end
+
+var Dd d = await Ff();
+
+escape 10;
+]],
+    run = 10,
+}
+Test { [[
+data Dd with
+    var int x = 10;
+end
+
+code/await Ff (void) -> Dd do
+    var Dd d = val Dd(_);
+    escape d;
+end
+
+var Dd d = await Ff();
+
+escape d.x;
+]],
+    run = 10,
+}
+Test { [[
+data Dd with
+    var int x = 10;
+end
+
+code/tight Ff (void) -> Dd do
+    var Dd d = val Dd(_);
+    escape d;
+end
+
+var Dd d = call Ff();
+
+escape d.x;
+]],
+    run = 10,
+}
+
+Test { [[
+data Dd with
+    var int x = 10;
+end
+code/await Ff (void) -> Dd do
+    code/tight Gg (void) -> Dd do
+        var Dd d = _;
+        escape d;
+    end
+    var Dd d = call Gg();
+    escape d;
+end
+var Dd d = await Ff();
+escape d.x;
+]],
+    run = 10,
+}
+
+Test { [[
+data Dd with
+    var int x = 10;
+end
+code/await Ff (void) -> Dd do
+    code/tight Gg (void) -> Dd do
+        var Dd d = _;
+        escape d;
+    end
+    escape call Gg();
+end
+var Dd d = await Ff();
+escape d.x;
+]],
+    run = 10,
+}
+
+Test { [[
+code/tight Ff (void) -> int do
+    data Dd with
+        var int x;
+    end
+    var Dd d = val Dd(10);
+    escape d.x;
+end
+escape call Ff();
+]],
+    run = 10,
+}
+
+--<< CODE / RETURN / DATA
+
+-->> DATA / RECURSIVE / OPTION ALIAS
+
+Test { [[
+data Dd with
+    var int x;
+    var&? Dd d;
+end
+var Dd d = val Dd(10,_);
+escape d.x;
+]],
+    dcls = 'line 5 : invalid constructor : invalid binding : argument #2 : expected location',
+}
+
+Test { [[
+data Dd with
+    var int x;
+    var&? Dd d;
+end
+var Dd d = val Dd(10,nil);
+escape d.x;
+]],
+    run = 10,
+}
+
+Test { [[
+data Dd with
+    var int x;
+    var&? Dd d;
+end
+var Dd d1 = val Dd(10,nil);
+var Dd d2 = val Dd(20,&d1);
+escape d2.x + d2.d!.x;
+]],
+    run = 30,
+}
+
+Test { [[
+data Dd with
+    var int x = 1;
+    var&? Dd d;
+end
+code/tight/recursive Dd_D(var& Dd d, var& Dd ret) -> void do
+    if d.d? then
+        call/recursive Dd_D(&d.d!, &ret);
+    end
+    ret.x = ret.x + d.x;
+end
+var Dd d1 = val Dd(10,nil);
+var Dd d2 = val Dd(20,&d1);
+var Dd d = _;
+call/recursive Dd_D(&d2,&d);
+escape d.x;
+]],
+    run = 31,
+}
+
+Test { [[
+data Dd with
+    var int x = 1;
+    var&? Dd d;
+end
+code/tight/recursive Dd_D_(var& Dd d, var& Dd ret) -> void do
+    if d.d? then
+        call/recursive Dd_D_(&d.d!, &ret);
+    end
+    ret.x = ret.x + d.x;
+end
+code/tight/recursive Dd_D(var& Dd d, var& Dd ret) -> void do
+    ret = val Dd(0,nil);
+    call/recursive Dd_D_(&d, &ret);
+end
+var Dd d1 = val Dd(10,nil);
+var Dd d2 = val Dd(20,&d1);
+var Dd d = _;
+call/recursive Dd_D(&d2,&d);
+escape d.x;
+]],
+    run = 30,
+}
+
+--<< DATA / RECURSIVE / OPTION ALIAS
+
 --<<< DATA
 
 -->>> ASYNCS // THREADS
 
 Test { [[
-var int  a=10, b=5;
+var int  a=10; var int  b=5;
 var& int p = &b;
 await async/thread do
 end
@@ -44999,7 +46394,7 @@ escape 0;
     props_ = 'line 3 : invalid `async/thread´ : unexpected enclosing `finalize´',
 }
 Test { [[
-var int  a=10, b=5;
+var int  a=10; var int  b=5;
 var& int p = &b;
 await async/thread (a, p) do
     a = a + p;
@@ -45014,7 +46409,7 @@ escape a + b + p;
 }
 
 Test { [[
-var int  a=10, b=5;
+var int  a=10; var int  b=5;
 var& int p = &b;
 var bool ret =
     await async/thread (a, p) do
@@ -45098,7 +46493,7 @@ escape x;
 }
 
 Test { [[
-var int  a=10, b=5;
+var int  a=10; var int  b=5;
 var& int p = &b;
 await async/thread (a, p) do
     a = a + p;
@@ -45111,7 +46506,7 @@ escape a + b + p;
 }
 
 Test { [[
-var int  a=10, b=5;
+var int  a=10; var int  b=5;
 var int&& p = &&b;
 await async/thread (p) do
     *p = 1;
@@ -45119,14 +46514,14 @@ end
 escape 1;
 ]],
     --inits = 'line 3 : invalid pointer access : crossed `async/thread´ (/tmp/tmp.ceu:3)',
-    inits = 'line 3 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:3)',
+    ptrs = 'line 3 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:3)',
     --fin = 'line 3 : unsafe access to pointer "p" across `async/thread´',
     _opts = { ceu_features_thread='true' },
 }
 
 Test { [[
 native _usleep;
-var int  a=10, b=5;
+var int  a=10; var int  b=5;
 var& int p = &b;
 par/and do
     await async/thread (a, p) do
@@ -45147,7 +46542,7 @@ escape a + b + p;
 }
 
 Test { [[
-var int  a=10, b=5;
+var int  a=10; var int  b=5;
 var& int p = &b;
 await async/thread (a, p) do
     atomic do
@@ -45216,7 +46611,7 @@ escape rrr;
 end
 
 Test { [[
-var int  v1=10, v2=5;
+var int  v1=10; var int  v2=5;
 var& int p1 = &v1;
 var& int p2 = &v2;
 
@@ -45240,7 +46635,7 @@ escape v1+v2;
 }
 
 Test { [[
-var int  v1=0, v2=0;
+var int  v1=0; var int  v2=0;
 var& int p1 = &v1;
 var& int p2 = &v2;
 
@@ -45284,7 +46679,7 @@ escape v1;
 
 Test { [[
 native _assert;
-var int  v1=0, v2=0;
+var int  v1=0; var int  v2=0;
 var& int p1 = &v1;
 var& int p2 = &v2;
 
@@ -45326,7 +46721,7 @@ escape v1;
 }
 
 Test { [[
-var int  v1=0, v2=0;
+var int  v1=0; var int  v2=0;
 var& int p1 = &v1;
 var& int p2 = &v2;
 
@@ -45371,7 +46766,7 @@ escape v1;
 
 Test { [[
 native _assert;
-var int  v1=0, v2=0;
+var int  v1=0; var int  v2=0;
 var& int p1 = &v1;
 var& int p2 = &v2;
 
@@ -45544,7 +46939,7 @@ escape a + 1;
 
 Test { [[
 par do
-    var int v1=4,v2=4;
+    var int v1=4; var int v2=4;
     par/or do
         await 10ms;
         v1 = 1;
@@ -45572,7 +46967,7 @@ end
 }
 Test { [[
 par do
-    var int v1=4,v2=4;
+    var int v1=4; var int v2=4;
     par/or do
         await 10ms;
         v1 = 1;
@@ -46191,18 +47586,192 @@ code/tight Fx (void)->int do
 end
 var int v = call Fx();
 par/or do
-    await async/thread do
-        call Fx();
+    await async/thread (v) do
+        v = v + call Fx();
     end
 with
 end
 escape v;
 ]],
     --isr = 'line 7 : call breaks the static check for `atomic´ sections',
-    dcls = 'line 6 : abstraction inside `async´ : not implemented',
-    run = 2,
+    --dcls = 'line 6 : abstraction inside `async´ : not implemented',
+    run = 4,
     _opts = { ceu_features_thread='true' },
 }
+
+-->> KILL
+
+Test { [[
+event int a;
+kill a;
+escape 1;
+]],
+    stmts = 'line 2 : invalid `kill´ : unexpected context for event "a"',
+}
+
+Test { [[
+var int a = 0;
+kill a;
+escape 1;
+]],
+    stmts = 'line 2 : invalid `kill´ : expected `code/await´ abstraction',
+}
+
+Test { [[
+code/await Ff (void) -> void do
+    await 1s;
+end
+var&? Ff f = spawn Ff();
+par/and do
+    await f;
+with
+    kill f;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+var&? Ff f = spawn Ff();
+par/and do
+    await f;
+with
+    kill f;
+end
+
+escape 1;
+]],
+    --stmts = 'line 8 : invalid kill : `code/await´ executes forever',
+    run = 1,
+}
+Test { [[
+code/await Ff (void) -> void do
+    await 1s;
+end
+var&? Ff f = spawn Ff();
+par/or do
+    await f;
+with
+    kill f;
+    {ceu_dbg_assert(0);}
+end
+
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+code/await Ff (void) -> void do
+    await 1s;
+end
+event void e;
+watching e do
+    pool[] Ff fs;
+    var&? Ff f = spawn Ff() in fs;
+    par/or do
+        await f;
+        emit e;
+    with
+        kill f;
+        {ceu_dbg_assert(0);}
+    end
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Tx (void) -> void do
+    await 1s;
+end
+var&? Tx aaa = spawn Tx();
+par/and do
+    kill aaa;
+with
+    await aaa;
+end
+escape 1;
+]],
+    _ana = { acc=3 },
+    run = 1,
+}
+
+Test { [[
+code/await Tx (void) -> (var int a) -> void do
+    a = 1;
+    await 1s;
+end
+var&? Tx a = spawn Tx();
+var int ret = 0;
+par/and do
+    await a;
+    ret = ret + 1;
+with
+    kill a;
+with
+    await a;
+    ret = ret * 2;
+end
+escape ret;
+]],
+    _ana = { acc=3 },
+    run = 2,
+}
+
+Test { [[
+code/await Tx (void) -> (var int a) -> void do
+    a = 1;
+    await 1s;
+end
+var&? Tx a = spawn Tx();
+
+var int ret = 0;
+par/and do
+    watching a do
+        await FOREVER;
+    end
+    ret = 10;
+with
+    kill a;
+end
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+native/pre do
+    int V = 0;
+end
+
+code/await Gg (void) -> void do
+    every 100ms do
+        {V++;}
+    end
+end
+
+code/await Ff (void) -> (pool[1] Gg gs) -> FOREVER do
+    var&? Gg g1 = spawn Gg() in gs;
+    kill g1;
+    var&? Gg g2 = spawn Gg() in gs;
+    await FOREVER;
+end
+
+spawn Ff();
+await 1s;
+escape {V};
+]],
+    wrn = true,
+    run = {['~>1s']=10},
+}
+
+--<< KILL
 
 -->> CODE / FINALIZE / EMIT / SPAWN / THREADS
 
@@ -46262,7 +47831,7 @@ await 1s;
 
 escape ret;
 ]],
-    props_ = 'line 11 : invalid `await´ : unexpected enclosing `finalize´',
+    props_ = 'line 11 : invalid `spawn´ : unexpected enclosing `finalize´',
 }
 
 Test { [[
@@ -46474,7 +48043,8 @@ with
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `do´ : expected `nothing´ or `var´ or `vector´',
+    parser = 'line 1 : after `do´ : expected statement',
+    --parser = 'line 1 : after `do´ : expected `nothing´ or `var´ or `vector´',
     --adj = 'line 2 : `async/isr´ must be followed by `await FOREVER´',
     _opts = { ceu_features_isr='true' },
 }
@@ -46757,7 +48327,7 @@ var int&& v = null;
     end
     await FOREVER;
 ]],
-    inits = 'line 22 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:21)',
+    ptrs = 'line 22 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:21)',
     --isr = 'line 4 : pointer access breaks the static check for `atomic´ sections',
     --run = 1,
     _opts = { ceu_features_isr='true' },
@@ -46774,7 +48344,7 @@ with
 end
 escape 1;
 ]],
-    inits = 'line 23 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:22)',
+    ptrs = 'line 23 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:22)',
     --inits = 'line 22 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:21)',
     --inits = 'line 23 : invalid pointer access : crossed `par/or´ (/tmp/tmp.ceu:22)',
     --isr = 'line 4 : pointer access breaks the static check for `atomic´ sections',
@@ -46796,7 +48366,7 @@ with
 end
 escape v;
 ]],
-    dcls = 'line 25 : abstraction inside `async´ : not implemented',
+    --dcls = 'line 25 : abstraction inside `async´ : not implemented',
     --isr = 'line 7 : call breaks the static check for `atomic´ sections',
     run = 2,
     _opts = { ceu_features_isr='true' },
@@ -46960,7 +48530,7 @@ end
 escape 1;
 ]],
     run = 1,
-    --exps = 'line 4 : invalid operand to `&&´ : unexpected context for vector "v"',
+    --dcls = 'line 4 : invalid operand to `&&´ : unexpected context for vector "v"',
     --env = 'line 4 : types mismatch (`int&&´ <= `int[]&&´)',
     --env = 'line 4 : invalid operand to unary "&&"',
     _opts = { ceu_features_isr='true' },
@@ -47181,7 +48751,7 @@ escape v;
     --isr = 'line 4 : access to "Fx" must be atomic',
     run = 2,
     _opts = { ceu_features_isr='true' },
-    dcls = 'line 25 : abstraction inside `async´ : not implemented',
+    --dcls = 'line 25 : abstraction inside `async´ : not implemented',
 }
 
 Test { [[
@@ -47227,7 +48797,7 @@ native/pos do
     ##else
         int V = 0;
     ##endif
-    ##ifdef CEU_ISR__f__lpar__0__rpar__                                             
+    ##ifdef CEU_ISR__f__lpar__0__rpar__
         int U = 1;
     ##else
         int U = 0;
@@ -47275,6 +48845,591 @@ escape 1;
 }
 
 --<<< ASYNCS / ISR / ATOMIC
+
+-->>> OUTER
+
+Test { [[
+var int x;
+code/tight Ff (void)->void do
+end
+x = 1;
+escape x;
+]],
+    wrn = true,
+    --inits = 'line 1 : uninitialized variable "x" : reached end of `code´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:2)',
+    run = 1,
+}
+
+Test { [[
+var int x = 0;
+code/tight Ff (void)->void do
+    outer.y = 1;
+end
+var int y = 10;
+call Ff();
+escape x;
+]],
+    dcls = 'line 3 : internal identifier "y" is not declared',
+}
+
+Test { [[
+var int ret = 0;
+do
+    var int x = 0;
+    code/tight Ff (void)->void do
+        outer.x = 1;
+    end
+    call Ff();
+    ret = x;
+end
+call Ff();
+escape ret;
+]],
+    dcls = 'line 10 : abstraction "Ff" is not declared',
+}
+
+Test { [[
+var int x = 0;
+code/tight Ff (void)->void do
+    code/tight Gg (void)->void do end
+    outer.x = 1;
+end
+call Ff();
+escape x;
+]],
+    wrn = true,
+    --dcls = 'line 3 : invalid `code´ declaration : nesting is not allowed',
+    run = 1,
+}
+Test { [[
+var int x = 0;
+data Dd with
+    code/tight Ff (void)->void do
+        outer.x = 1;
+    end
+end
+call Ff();
+escape x;
+]],
+    parser = 'line 2 : after `with´ : expected `var´ or `vector´ or `pool´ or `event´',
+}
+Test { [[
+var int x = 0;
+data Dd with
+    data Ee;
+end
+call Ff();
+escape x;
+]],
+    parser = 'line 2 : after `with´ : expected `var´ or `vector´ or `pool´ or `event´',
+}
+
+Test { [[
+var int x = 0;
+code/tight Ff (void)->void do
+    outer.x = 1;
+end
+call Ff();
+escape x;
+]],
+    run = 1,
+}
+
+Test { [[
+var int ret = 0;
+do
+    var int x = 0;
+    code/tight Ff (void)->void do
+        outer.x = 1;
+    end
+    call Ff();
+    ret = x;
+end
+escape ret;
+]],
+    run = 1,
+}
+
+Test { [[
+native _int, _f;
+var& _int ren;
+_f(&&outer.ren);
+escape 0;
+]],
+    dcls = 'line 3 : invalid `outer´',
+}
+
+Test { [[
+code/await Ff (void) -> int do
+    var int xxx = 10;
+    code/await Gg (void) -> int do
+        escape xxx;
+    end
+    var int yyy = await Gg();
+    escape yyy;
+end
+var int zzz = await Ff();
+escape zzz;
+]],
+    dcls = 'line 4 : internal identifier "xxx" is not declared',
+}
+
+Test { [[
+code/await Ff (void) -> int do
+    var int xxx = 10;
+    code/await Gg (void) -> int do
+        escape outer.xxx;
+    end
+    var int yyy = await Gg();
+    escape yyy;
+end
+var int zzz = await Ff();
+escape zzz;
+]],
+    run = 10,
+}
+
+Test { [[
+code/await Ff (void) -> int do
+    var int xxx = 10;
+    code/await Gg (void) -> int do
+        var int aaa = 10;
+        code/tight Hh (void) -> int do
+            escape outer.xxx + outer.aaa;
+        end
+        escape call Hh();
+    end
+    var int yyy = await Gg();
+    escape yyy;
+end
+var int zzz = await Ff();
+escape zzz;
+]],
+    run = 20,
+}
+
+Test { [[
+code/tight Ff (var int xxx) -> int do
+    var int b = 0;
+    var int yyy = xxx;
+    code/tight Get (void) -> int do
+        escape outer.yyy + outer.xxx;
+    end
+    escape b + call Get();
+end
+escape call Ff(10);
+]],
+    run = 20,
+}
+
+Test { [[
+var int x = 10;
+code/tight Gg (void) -> int do
+    escape outer.x;
+end
+escape call Gg();
+]],
+    run = 10,
+}
+Test { [[
+code/tight Ff (void) -> int do
+    var int x = 10;
+    code/tight Gg (void) -> int do
+        escape outer.x;
+    end
+    escape call Gg();
+end
+escape call Ff();
+]],
+    run = 10,
+}
+Test { [[
+code/tight Ff (void) -> int do
+    var int x = 10;
+    code/tight Gg (void) -> int do
+        escape outer.x;
+    end
+    code/tight Hh (void) -> int do
+        escape call Gg();
+    end
+    escape call Hh();
+end
+escape call Ff();
+]],
+    run = 10,
+}
+Test { [[
+code/tight Ff (void) -> int do
+    var int x = 10;
+    code/tight Gg (void) -> int do
+        escape outer.x;
+    end
+    code/tight Hh (void) -> int do
+        code/tight Ii (void) -> int do
+            escape call Gg();
+        end
+        escape call Ii();
+    end
+    escape call Hh();
+end
+escape call Ff();
+]],
+    run = 10,
+}
+Test { [[
+    var int x = 10;
+    code/tight Gg (void) -> int do
+        escape outer.x;
+    end
+    code/tight Hh (void) -> int do
+        code/tight Ii (void) -> int do
+            escape call Gg();
+        end
+        escape call Ii();
+    end
+    escape call Hh();
+]],
+    run = 10,
+}
+Test { [[
+code/await Ff (void) -> int do
+    var int x = 10;
+    code/await Gg (void) -> int do
+        escape outer.x;
+    end
+    code/await Hh (void) -> int do
+        code/await Ii (void) -> int do
+            var int a = await Gg();
+            escape a;
+        end
+        var int b = await Ii();
+        escape b;
+    end
+    var int c = await Hh();
+    escape c;
+end
+var int d = await Ff();
+escape d;
+]],
+    run = 10,
+}
+Test { [[
+    var int x = 10;
+    code/await Gg (void) -> int do
+        escape outer.x;
+    end
+    code/await Hh (void) -> int do
+        code/await Ii (void) -> int do
+            var int c = await Gg();
+            escape c;
+        end
+        var int d = await Ii();
+        escape d;
+    end
+    var int e = await Hh();
+    escape e;
+]],
+    run = 10,
+}
+
+Test { [[
+code/tight Pingus (void) -> int do
+    var int x = 10;
+    code/tight GetVelocity (void) -> int do
+        escape outer.x;
+    end
+    escape call GetVelocity();
+end
+escape call Pingus();
+]],
+    run = 10,
+}
+Test { [[
+code/tight Pingus (void) -> int do
+    var int x = 10;
+    code/tight GetVelocity (void) -> int do
+        escape outer.x;
+    end
+    code/tight LinearMover (void) -> int do
+        escape call GetVelocity();
+    end
+    code/tight Faller (void) -> int do
+        escape call LinearMover();
+    end
+    escape call Faller();
+end
+escape call Pingus();
+]],
+    run = 10,
+}
+Test { [[
+code/await Pingus (void) -> int do
+    var int xxx = 10;
+    code/await GetVelocity (void) -> int do
+        escape outer.xxx;
+    end
+    code/await LinearMover (void) -> int do
+        var int x = await GetVelocity();
+        escape x;
+    end
+    code/await Faller (void) -> int do
+        var int x = await LinearMover();
+        escape x;
+    end
+    var int x = await Faller();
+    escape x;
+end
+var int x = await Pingus();
+escape x;
+]],
+    run = 10,
+}
+
+Test { [[
+code/await Ff (var int x) -> FOREVER do
+    code/tight Get_X (void) -> int do
+        escape outer.x;
+    end
+    await FOREVER;
+end
+
+pool[] Ff fs;
+spawn Ff(1) in fs;
+spawn Ff(2) in fs;
+
+var int ret = 0;
+
+var&? Ff f;
+loop f in fs do
+    ret = ret + (call f!.Get_X());
+end
+
+escape ret;
+]],
+    wrn = true,     -- TODO
+    run = 3,
+}
+
+Test { [[
+code/await Ff (var int x) -> FOREVER do
+    code/await Get_X (void) -> int do
+        escape outer.x;
+    end
+    await FOREVER;
+end
+
+pool[] Ff fs;
+spawn Ff(1) in fs;
+spawn Ff(2) in fs;
+
+var int ret = 0;
+
+var&? Ff f;
+loop f in fs do
+    var int v = await f!.Get_X();
+    ret = ret + v;
+end
+
+escape ret;
+]],
+    todo = 'dot for spawn/await',
+    wrn = true,     -- TODO
+    run = 3,
+}
+
+Test { [[
+data Dd with
+    var int x = 10;
+    code/tight Get_X (void) -> int do
+        escape outer.x;
+    end
+end
+
+var Dd d = _;
+escape call d.Get_X();
+]],
+    todo = 'dot for data',
+    run = 10,
+}
+
+Test { [[
+data Dd with
+    var int x = 10;
+    code/await Get_X (void) -> int do
+        escape outer.x;
+    end
+end
+
+var Dd d = val Dd(20);
+var int x = await d.Get_X();
+escape x;
+]],
+    todo = 'dot for spawn/await',
+    run = 10,
+}
+
+Test { [[
+code/await Ff (void) -> void do
+    code/tight Gg (void) -> void do end
+end
+pool[] Ff fs;
+var&? Ff f;
+loop f in fs do
+    call f!.Gg();
+end
+escape 1;
+]],
+    wrn = true,
+    --dcls = 'line 7 : invalid `call´',
+    run = 1,
+}
+
+Test { [[
+spawn () do
+    var bool v = true;
+    code/tight Is_At (var int x, var int y) -> bool do
+        escape outer.v;
+    end
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+var int a = 1;
+par/or do
+with
+    var int a = 1;
+    code/await Ff (void) -> FOREVER do
+        code/tight Gg (void) -> void do
+            var int b = outer.a;
+        end
+        await FOREVER;
+    end
+    spawn Ff();
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> int do
+    event void ok_escape;
+
+    code/await Gg (void) -> FOREVER do
+        emit outer.ok_escape;
+        await FOREVER;
+    end
+
+    par do
+        await ok_escape;
+        escape 1;
+    with
+        spawn Gg();
+        escape 99;
+    end
+end
+var int ret = await Ff();
+escape ret;
+]],
+    run = 1,
+}
+
+--<<< OUTER
+
+-->>> TCO
+
+Test { [[
+par/or do
+with
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int i;
+loop i in [0->10000[ do      // 6000 already fails
+    par/or do with end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+var usize i;
+loop i in [0->10000[ do      // 5000 already fails
+    spawn Ff();
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var usize i;
+loop i in [0->10000[ do
+    do
+        par do
+            escape;
+        with
+        end
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var usize i;
+loop i in [0->100000[ do
+    do
+        par do
+            escape;
+        with
+        end
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int i;
+loop i in [0->100000[ do
+    par/or do with end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+var usize i;
+loop i in [0->100000[ do
+    spawn Ff();
+end
+escape 1;
+]],
+    run = 1,
+}
+
+--<<< TCO
 
 -->>> CEU_FEATURES_*
 
@@ -47331,3 +49486,1769 @@ escape 1;
 }
 
 --<<< CEU_FEATURES_*
+
+do return end
+-->> CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/tight Ff (var& Aa a, var int xxx) -> int;
+
+data Aa.Bb with
+    var int b;
+end
+
+code/tight Ff (var& Aa.Bb b, var int yyy) -> int do
+    escape 0;
+end
+
+escape 0;
+]],
+    wrn = true,
+    dcls = 'line 11 : invalid `code´ declaration : unmatching prototypes (vs. /tmp/tmp.ceu:5)',
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/tight Ff (var& Aa a, var int xxx) -> int do
+    escape 0;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/tight Ff (var& Aa.Bb b, var int yyy) -> int do
+    escape 0;
+end
+
+escape 0;
+]],
+    wrn = true,
+    dcls = 'line 13 : invalid `code´ declaration : body for "Ff" already exists',
+}
+
+Test { [[
+data Ui with
+    var int x;
+end
+
+code/await/dynamic Ui_go (var& Ui ui) -> void do
+end
+
+var Ui ui = val Ui(10);
+await Ui_go(&ui);
+
+escape 1;
+]],
+    dcls = 'line 5 : invalid `dynamic´ declaration : expected dynamic parameter',
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Ui with
+    var int x;
+end
+
+code/await/dynamic Ui_go (var&/dynamic Ui ui) -> void do
+end
+
+var Ui ui = val Ui(10);
+await Ui_go(&ui);
+
+escape 1;
+]],
+    stmts = 'line 9 : invalid `spawn´ : expected `/dynamic´ or `/static´ modifier',
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Ui with
+    var int x;
+end
+
+code/await/dynamic Ui_go (var&/dynamic Ui ui) -> void do
+end
+
+var Ui ui = val Ui(10);
+await/dynamic Ui_go(&ui);
+
+escape 1;
+]],
+    props_ = 'line 5 : invalid `dynamic´ declaration : parameter #1 : expected `data´ in hierarchy',
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+code/tight Ff (void) -> void do
+end
+
+escape call/dynamic Ff();
+]],
+    dcls = 'line 4 : invalid call : unexpected `/dynamic´ modifier',
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/tight/dynamic Ff (var/dynamic Aa&& a, var int xxx) -> int do
+    escape a:a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/tight/dynamic Ff (var/dynamic Aa.Bb&& b, var int yyy) -> int do
+    escape b:b + yyy;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+escape (call Ff(&&b,22)) + (call Ff(&&a,33));
+]],
+    dcls = 'line 20 : invalid call : expected `/dynamic´ or `/static´ modifier',
+}
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/tight/dynamic Ff (var/dynamic Aa&& a, var int xxx) -> int do
+    escape a:a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/tight/dynamic Ff (var/dynamic Aa.Bb&& b, var int yyy) -> int do
+    escape b:b + yyy;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+escape (call/dynamic Ff(&&b,22)) + (call/dynamic Ff(&&a,33));
+]],
+    --run = 58,
+    run = 59,
+}
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/tight/dynamic Ff (var int xxx, var/dynamic Aa&& a) -> int do
+    escape a:a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/tight/dynamic Ff (var int yyy, var/dynamic Aa.Bb&& b) -> int do
+    escape b:b + yyy;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+escape (call/dynamic Ff(22,&&b)) + (call/dynamic Ff(33,&&a));
+]],
+    --run = 58,
+    run = 59,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/tight/dynamic Ff (var&/dynamic Aa a1, var int xxx, var&/dynamic Aa a2) -> int do
+    escape a1.a + xxx + a2.a;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/tight/dynamic Ff (var&/dynamic Aa.Bb b1, var int yyy, var&/dynamic Aa.Bb b2) -> int do
+    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
+    escape b1.b + yyy + b2.b;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+escape (call/dynamic Ff(&b,22,&b)) + (call/dynamic Ff(&a,33,&a));
+]],
+    run = 63,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/tight/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
+    escape a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/tight/dynamic Ff (var&/dynamic Aa.Bb b, var int yyy) -> int do
+    escape b.b + (call/static Ff(&b as Aa,11)) + yyy;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+escape (call/dynamic Ff(&b,22)) + (call/dynamic Ff(&a,33));
+]],
+    run = 72,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
+    escape a.a + xxx;
+end
+
+var Aa a = val Aa(1);
+var int v2 = await/dynamic Ff(&a,33);
+escape v2;
+]],
+    --run = 58,
+    props_ = 'line 5 : invalid `dynamic´ declaration : parameter #1 : expected `data´ in hierarchy',
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
+    escape a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa.Bb b, var int yyy) -> int do
+    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
+    escape b.b + yyy;
+end
+
+var Aa a = val Aa(1);
+
+await Ff(&a,22);
+escape 0;
+]],
+    stmts = 'line 20 : invalid `await´ : expected `/dynamic´ or `/static´ modifier',
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
+    escape a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa.Bb b, var int yyy) -> int do
+    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
+    escape b.b + yyy;
+end
+
+var Aa a = val Aa(1);
+
+spawn Ff(&a,22);
+escape 0;
+]],
+    stmts = 'line 20 : invalid `await´ : expected `/dynamic´ or `/static´ modifier',
+}
+
+Test { [[
+code/await Ff (void) -> void do
+end
+spawn Ff();
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (var& int ret) -> void do
+    ret = 1;
+end
+var int ret = 0;
+spawn Ff(&ret);
+escape ret;
+]],
+    run = 1,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa a, var int xxx) -> void do
+    ret = ret + a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa.Bb b, var int yyy) -> void do
+    ret = ret + b.b + yyy;
+end
+
+var  Aa    a = val Aa(1);
+var  Aa.Bb b = val Aa.Bb(2,3);
+var& Aa    c = &b;
+
+var int zzz = 0;
+spawn/dynamic Ff(&zzz,&a,1);     // 1+1
+spawn/dynamic Ff(&zzz,&b,2);     // 3+2
+spawn/dynamic Ff(&zzz,&c,3);     // 3+3
+
+escape zzz;
+]],
+    run = 13,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa a, var int xxx) -> void do
+    ret = ret + a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa.Bb b, var int yyy) -> void do
+    ret = ret + b.b + yyy;
+end
+
+var  Aa    a = val Aa(1);
+var  Aa.Bb b = val Aa.Bb(2,3);
+var& Aa    c = &b;
+
+var int ret = 0;
+spawn/dynamic Ff(&ret,&a,1);     // 1+1
+spawn/dynamic Ff(&ret,&b,2);     // 3+2
+spawn/dynamic Ff(&ret,&c,3);     // 3+3
+
+escape ret;
+]],
+    run = 13,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
+    escape a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa.Bb b, var int yyy) -> int do
+    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
+    escape b.b + yyy;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+var int v1 = await/dynamic Ff(&b,22);
+var int v2 = await/dynamic Ff(&a,33);
+escape v1 + v2;
+]],
+    --run = 58,
+    run = 59,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa a1, var int xxx, var&/dynamic Aa a2) -> int do
+    escape a1.a + xxx + a2.a;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa.Bb b1, var int yyy, var&/dynamic Aa.Bb b2) -> int do
+    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
+    escape b1.b + yyy + b2.b;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+var int v1 = await/dynamic Ff(&b,22,&b);
+var int v2 = await/dynamic Ff(&a,33,&a);
+
+escape v1 + v2;
+]],
+    run = 63,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa a, var/dynamic int xxx) -> int do
+    escape a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa.Bb b, var/dynamic int yyy) -> int do
+    var int v = await/static Ff(&b as Aa,11);
+    escape b.b + v + yyy;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+var int v1 = await/dynamic Ff(&b,22);
+var int v2 = await/dynamic Ff(&a,33);
+
+escape v1 + v2;
+]],
+    props_ = 'line 5 : invalid `dynamic´ declaration : parameter #2 : expected `data´ in hierarchy',
+    --run = 1,
+    --dcls = 'line 5 : invalid `dynamic´ declaration : parameter #2 : unexpected plain `data´',
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
+    escape a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa.Bb b, var int yyy) -> int do
+    var int v = await/static Ff(&b as Aa,11);
+    escape b.b + v + yyy;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+var int v1 = await/dynamic Ff(&b,22);
+var int v2 = await/dynamic Ff(&a,33);
+
+escape v1 + v2;
+]],
+    run = 72,
+}
+
+Test { [[
+data Aa;
+data Aa.Bb;
+
+code/tight/dynamic Ff (var&/dynamic Aa v1, var&/dynamic Aa v2) -> int do
+    escape 1;
+end
+code/tight/dynamic Ff (var&/dynamic Aa.Bb v1, var&/dynamic Aa.Bb v2) -> int do
+    escape 2;
+end
+
+var Aa a = val Aa();
+var Aa b = val Aa.Bb();
+
+escape call/dynamic Ff(&b, &a);
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Aa;
+data Aa.Bb;
+data Aa.Bb.Xx;
+data Aa.Cc;
+
+code/tight/dynamic Ff (var&/dynamic Aa v1, var&/dynamic Aa v2, var&/dynamic Aa v3) -> int do
+    escape 1;
+end
+code/tight/dynamic Ff (var&/dynamic Aa.Bb v1, var&/dynamic Aa v2, var&/dynamic Aa.Bb v3) -> int do
+    escape 2;
+end
+code/tight/dynamic Ff (var&/dynamic Aa.Bb v1, var&/dynamic Aa.Bb v2, var&/dynamic Aa.Bb v3) -> int do
+    escape 4;
+end
+code/tight/dynamic Ff (var&/dynamic Aa.Bb v1, var&/dynamic Aa.Bb.Xx v2, var&/dynamic Aa.Bb v3) -> int do
+    escape 8;
+end
+
+var Aa a = val Aa();
+var Aa b = val Aa.Bb();
+var Aa c = val Aa.Bb.Xx();
+
+escape (call/dynamic Ff(&b,&a,&a)) + (call/dynamic Ff(&b,&a,&b)) +
+       (call/dynamic Ff(&b,&b,&b)) + (call/dynamic Ff(&b,&c,&b));
+]],
+    wrn = true,
+    run = 15,
+}
+
+Test { [[
+data Bb with
+    var int x=10;
+end
+
+code/tight Ff (var Bb b) -> int;
+
+var int v1 = call Ff(_);
+escape v1;
+]],
+    tight_ = 'line 5 : invalid `code´ declaration : expected `/recursive´ : `call´ to unknown body (/tmp/tmp.ceu:7)',
+}
+Test { [[
+data Bb with
+    var int x=10;
+end
+data Bb.Cc with
+    var int y=20;
+end
+
+code/tight/dynamic Ff (var&/dynamic Bb b) -> int do
+    escape b.x;
+end
+
+code/tight/dynamic Ff (var&/dynamic Bb.Cc c) -> int do
+    escape c.x + c.y;
+end
+
+var Bb.Cc c = val Bb.Cc(_,_);
+var Bb    b = val Bb(_);
+var int v1 = call/dynamic Ff(&c);
+var int v2 = call/dynamic Ff(&b);
+escape v1 + v2;
+]],
+    run = 40,
+}
+
+Test { [[
+data Bb with
+    var int x=10;
+end
+data Bb.Cc with
+    var int y=20;
+end
+
+code/tight/dynamic Ff (var/dynamic Bb b) -> int do
+    escape b.x;
+end
+
+code/tight/dynamic Ff (var/dynamic Bb.Cc c) -> int do
+    escape c.x + c.y;
+end
+
+var int v2 = call/dynamic Ff(Bb(_));
+var int v1 = call/dynamic Ff(Bb.Cc(_,_));
+escape v1 + v2;
+]],
+    dcls = 'line 17 : invalid call argument #1 : `data´ copy : unmatching fields',
+}
+Test { [[
+data Aa;
+data Bb with
+    var int x;
+end
+data Bb.Cc;
+
+code/tight/dynamic Ff (var Bb b, var Aa a) -> void do
+end
+
+code/tight/dynamic Ff (var Bb.Cc c, var Aa a) -> void do
+end
+]],
+    dcls = 'line 7 : invalid `dynamic´ declaration : expected dynamic parameters',
+}
+
+Test { [[
+data Aa;
+data Bb with
+    var int x;
+end
+data Bb.Cc;
+
+code/tight/dynamic Ff (var&/dynamic Bb b, var/dynamic Aa a) -> void do
+end
+
+code/tight/dynamic Ff (var&/dynamic Bb.Cc c, var/dynamic Aa a) -> void do
+end
+
+escape 1;
+]],
+    wrn = true,
+    props_ = 'line 7 : invalid `dynamic´ declaration : parameter #2 : expected `data´ in hierarchy',
+    --dcls = 'line 7 : invalid `dynamic´ declaration : parameter #2 : unexpected plain `data´',
+}
+
+Test { [[
+data Aa;
+data Bb with
+    var int x;
+end
+data Bb.Cc;
+
+code/tight/dynamic Ff (var&/dynamic Bb b, var Aa a) -> void do
+end
+
+code/tight/dynamic Ff (var&/dynamic Bb.Cc c, var Aa a) -> void do
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Aa;
+data Bb with
+    var int x;
+end
+data Bb.Cc;
+
+code/tight/dynamic Ff (var Aa a, var&/dynamic Bb b) -> void do
+end
+
+code/tight/dynamic Ff (var Aa a, var&/dynamic Bb.Cc c) -> void do
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Aa;
+data Bb with
+    var int x;
+end
+data Bb.Cc;
+
+code/tight/dynamic Ff (var& Aa a, var&/dynamic Bb b,
+                       var Aa a2, var&/dynamic Bb b2, var Aa a3) -> void do
+end
+
+code/tight/dynamic Ff (var& Aa a, var&/dynamic Bb.Cc c,
+                       var Aa a2, var&/dynamic Bb.Cc c2, var Aa a3) -> void do
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Aa;
+data Bb with
+    var int x;
+end
+data Bb.Cc;
+
+code/tight/dynamic Ff (var&/dynamic Bb b,    var& Aa a) -> void do
+end
+
+code/tight/dynamic Ff (var&/dynamic Bb.Cc c, var& Aa a) -> void do
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Dd;
+data Dd.Ee;
+
+code/tight Play_New (var& Dd x) -> void;
+code/tight Play_New (var& Dd x) -> void do
+end
+code/tight Play_New (var& Dd x) -> void;
+
+var Dd d = _;
+
+call Play_New(&d);
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Dd;
+data Dd.Ee;
+
+//code/tight/dynamic Play_New (var&/dynamic Dd d) -> void;
+code/tight/dynamic Play_New (var&/dynamic Dd d) -> void do
+end
+
+var Dd d = _;
+
+call/dynamic Play_New(&d);
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Dd;
+data Dd.Ee;
+
+code/tight/dynamic Play_New (var&/dynamic Dd d) -> void;
+code/tight/dynamic Play_New (var&/dynamic Dd d) -> void do
+end
+code/tight/dynamic Play_New (var&/dynamic Dd d) -> void;
+
+var Dd d = _;
+
+call/dynamic Play_New(&d);
+
+escape 1;
+]],
+    dcls = 'line 7 : not implemented : prototype for non-base dynamic code',
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Aa;
+data Aa.Bb;
+
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa v1) -> void do
+    ret = ret + 15;
+end
+
+var Aa aaa = val Aa();
+
+var int ret = 0;
+
+pool[10] Ff ffs;
+spawn/dynamic Ff(&ret,&aaa) in ffs;
+
+escape ret;
+]],
+    wrn = true,
+    run = 15,
+}
+
+Test { [[
+data Aa;
+data Aa.Bb;
+code/await/dynamic Ff (var&/dynamic Aa v1) -> void;
+var Aa a = val Aa();
+pool[10] Ff ffs;
+spawn/dynamic Ff(&a) in ffs;
+escape 1;
+]],
+    mems = 'line 3 : missing implementation',
+    wrn = true,
+    run = 15,
+}
+
+Test { [[
+data Media;
+data Media.Text;
+do
+    code/tight/dynamic Play (var&/dynamic Media m) -> void do end
+    code/tight/dynamic Play (var&/dynamic Media.Text m) -> void do end
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+data Media;
+data Media.Text;
+do/_
+    code/tight/dynamic Play (var&/dynamic Media m) -> int do escape 1; end
+    code/tight/dynamic Play (var&/dynamic Media.Text m) -> int do escape 2; end
+    var Media x = val Media.Text();
+    escape call/dynamic Play(&x);
+end
+]],
+    wrn = true,
+    run = 2,
+}
+Test { [[
+data Media;
+data Media.Text;
+code/tight/dynamic Play (var&/dynamic Media m) -> void do end
+code/tight/dynamic Play (var&/dynamic Media.Text m) -> void do end
+escape 1;
+]],
+    _opts = { ceu_features_lua='true' },
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Aa;
+data Aa.Bb;
+code/await/dynamic Ff (var&/dynamic Aa v1) -> void;
+var Aa a = val Aa();
+pool[10] Ff ffs;
+code/await/dynamic Ff (var&/dynamic Aa v1) -> void do end;
+spawn/dynamic Ff(&a) in ffs;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Aa;
+data Aa.Bb;
+data Aa.Bb.Xx;
+data Aa.Cc;
+
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa v1, var&/dynamic Aa v2, var&/dynamic Aa v3) -> void;
+
+pool[10] Ff ffs;
+
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa v1, var&/dynamic Aa v2, var&/dynamic Aa v3) -> void do
+    ret = ret + 1;
+end
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa.Bb v1, var&/dynamic Aa v2, var&/dynamic Aa.Bb v3) -> void do
+    ret = ret + 2;
+end
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa.Bb v1, var&/dynamic Aa.Bb v2, var&/dynamic Aa.Bb v3) -> void do
+    ret = ret + 4;
+end
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa.Bb v1, var&/dynamic Aa.Bb.Xx v2, var&/dynamic Aa.Bb v3) -> void do
+    ret = ret + 8;
+end
+
+var Aa a = val Aa();
+var Aa b = val Aa.Bb();
+var Aa c = val Aa.Bb.Xx();
+
+var int ret = 0;
+
+spawn/dynamic Ff(&ret,&b,&a,&a) in ffs;
+spawn/dynamic Ff(&ret,&b,&a,&b) in ffs;
+spawn/dynamic Ff(&ret,&b,&b,&b) in ffs;
+spawn/dynamic Ff(&ret,&b,&c,&b) in ffs;
+
+escape ret;
+]],
+    wrn = true,
+    run = 15,
+}
+
+Test { [[
+code/tight Ff (var int x) -> void do
+end
+code/tight Ff (var int x) -> void do
+end
+escape 1;
+]],
+    wrn = true,
+    dcls = 'line 3 : invalid `code´ declaration : body for "Ff" already exists',
+}
+
+Test { [[
+data Dd;
+code/tight/dynamic Ff (var&/dynamic Dd d) -> void do
+end
+code/tight Ff (var int x) -> void do
+end
+escape 1;
+]],
+    wrn = true,
+    dcls = 'line 4 : invalid `code´ declaration : body for "Ff" already exists',
+}
+
+Test { [[
+data Dd;
+code/tight/dynamic Ff (var&/dynamic Dd d) -> void do
+end
+code/tight/dynamic Ff (var&/dynamic Dd d) -> void do
+end
+escape 1;
+]],
+    wrn = true,
+    dcls = 'line 4 : invalid `code´ declaration : body for "Ff" already exists',
+}
+
+Test { [[
+data Dd;
+data Ee;
+code/tight/dynamic Ff (var&/dynamic Dd d) -> void do
+end
+code/tight/dynamic Ff (var&/dynamic Ee d) -> void do
+end
+escape 1;
+]],
+    wrn = true,
+    props_ = 'line 3 : invalid `dynamic´ declaration : parameter #1 : expected `data´ in hierarchy',
+}
+
+Test { [[
+data Dd;
+data Dd.Ee;
+code/tight/dynamic Ff (var&/dynamic Dd a, var&/dynamic Dd b) -> void do
+end
+code/tight/dynamic Ff (var&/dynamic Dd a, var&/dynamic Dd.Ee b) -> void do
+end
+code/tight/dynamic Ff (var&/dynamic Dd.Ee a, var&/dynamic Dd b) -> void do
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Dd;
+data Dd.Ee;
+code/tight/dynamic Ff (var&/dynamic Dd.Ee b) -> void do
+end
+code/tight/dynamic Ff (var&/dynamic Dd b) -> void do
+end
+escape 1;
+]],
+    wrn = true,
+    mems = 'line 3 : invalid `code´ declaration : missing base case',
+}
+
+Test { [[
+data Dd;
+data Dd.Ee;
+code/tight/dynamic Ff (var&/dynamic Dd a, var&/dynamic Dd.Ee b) -> void do
+end
+code/tight/dynamic Ff (var&/dynamic Dd.Ee a, var&/dynamic Dd b) -> void do
+end
+escape 1;
+]],
+    wrn = true,
+    mems = 'line 3 : invalid `code´ declaration : missing base case',
+}
+
+Test { [[
+data Media as nothing;
+data Media.Audio as 1;
+data Media.Video as 1;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Media as nothing;
+data Media.Audio;
+data Media.Video;
+
+code/await/dynamic Play (var&/dynamic Media.Audio media) -> void do end
+code/await/dynamic Play (var&/dynamic Media.Video media) -> void do end
+
+var Media.Audio m = val Media.Audio();
+await/dynamic Play(&m);
+]],
+    wrn = true,
+    mems = 'line 5 : invalid `code´ declaration : missing base case',
+}
+
+Test { [[
+data Media as nothing;
+data Media.Audio as 1;
+data Media.Video as 1;
+
+code/await/dynamic Play (var&/dynamic Media media) -> void do end
+code/await/dynamic Play (var&/dynamic Media.Audio media) -> void do end
+code/await/dynamic Play (var&/dynamic Media.Video media) -> void do end
+
+var Media.Audio m = val Media.Audio();
+await/dynamic Play(&m);
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+do/_
+ data IData;
+ data IData.Test1 with
+   var int d;
+ end
+ code/tight/dynamic
+ Ff (var&/dynamic IData mydata) -> int
+ do
+   escape 1;
+ end
+ code/tight/dynamic
+ Ff (var&/dynamic IData.Test1 mydata) -> int
+ do
+   escape 2;
+ end
+ var IData.Test1 t1 = val IData.Test1 (0);
+ escape call/dynamic Ff (&t1);
+end
+]],
+    wrn = true,
+    run = 2,
+}
+Test { [[
+do/_
+data IData;
+
+ data IData.Test1 with
+   var int d;
+ end
+
+ data IData.Test2 with
+   var f64 f;
+ end
+
+ code/tight/dynamic
+ Test (var&/dynamic IData mydata) -> int
+ do
+   escape 1;
+ end
+
+ code/tight/dynamic
+ Test (var&/dynamic IData.Test1 mydata) -> int
+ do
+   escape 2;
+ end
+
+ code/tight/dynamic
+ Test (var&/dynamic IData.Test2 mydata) -> int
+ do
+   escape 3;
+ end
+
+ var IData.Test1 t1 = val IData.Test1 (0);
+ var int v1 = call/dynamic Test (&t1);
+
+ var IData.Test2 t2 = val IData.Test2 (0);
+ var int v2 = call/dynamic Test (&t2);
+
+escape v1 + v2;
+end
+]],
+    wrn = true,
+    run = 5,
+}
+Test { [[
+do/_
+    data Media as nothing;
+    data Media.Audio with
+        var int a = 1;
+    end
+    code/tight/dynamic Play (var&/dynamic Media media) -> int do
+    end
+    code/tight/dynamic Play (var&/dynamic Media.Audio media) -> int do
+        escape media.a;
+    end
+    var Media.Audio audio = val Media.Audio(_);
+    var& Media m = &audio;
+    var int ret = call/dynamic Play(&m);
+    escape ret;
+end
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+do/_
+    data Media as nothing;
+    data Media.Audio with
+        var int a = 1;
+    end
+    code/await/dynamic Play (var&/dynamic Media media) -> int do
+    end
+    code/await/dynamic Play (var&/dynamic Media.Audio media) -> int do
+        escape media.a;
+    end
+    var Media.Audio audio = val Media.Audio(_);
+    var& Media m = &audio;
+    var int ret = await/dynamic Play(&m);
+    escape ret;
+end
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+do/_
+    native _ceu_dbg_assert, _printf;
+    data Media as nothing;
+
+    data Media.Audio with
+        var int a = 1;
+    end
+
+    data Media.Video with
+        var int b = 2;
+    end
+
+
+    code/await/dynamic Play (var&/dynamic Media media) -> int do
+        _ceu_dbg_assert(0);               // never dispatched
+    end
+
+    code/await/dynamic Play (var&/dynamic Media.Audio media) -> int do
+        escape media.a;
+    end
+
+    code/await/dynamic Play (var&/dynamic Media.Video media) -> int do
+        escape media.b;
+    end
+
+    var Media.Audio audio = val Media.Audio(_);
+
+    var& Media m = &audio; // receives one of "Media.Audio" or "Media.Video"
+
+    var int ret = await/dynamic Play(&m);
+    escape ret;
+end
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+native _ceu_dbg_assert, _printf;
+data Media as nothing;
+
+data Media.Audio with
+    var int a = 1;
+end
+
+data Media.Video with
+    var int b = 2;
+end
+
+
+code/await/dynamic Play (var&/dynamic Media media) -> int do
+    _ceu_dbg_assert(0);               // never dispatched
+end
+
+code/await/dynamic Play (var&/dynamic Media.Audio media) -> int do
+    escape media.a;
+end
+
+code/await/dynamic Play (var&/dynamic Media.Video media) -> int do
+    escape media.b;
+end
+
+var Media.Audio audio = val Media.Audio(_);
+
+var& Media m = &audio; // receives one of "Media.Audio" or "Media.Video"
+
+var int ret = await/dynamic Play(&m);
+escape ret;
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+do/_
+    data Media as nothing;
+
+    data Media.Audio with
+        var int a = 2;
+    end
+
+    data Media.Video with
+        var int v = 1;
+    end
+
+    code/await/dynamic Play (var&/dynamic Media media) -> void do
+        escape;             // never dispatched
+    end
+
+    code/await/dynamic Play (var&/dynamic Media.Audio media) -> void do
+        await 1s;                   // plays an audio
+    end
+
+    code/await/dynamic Play (var&/dynamic Media.Video media) -> void do
+        await 2s;                  // plays a video
+    end
+    escape 1;
+end
+]],
+    _opts = { ceu_features_lua='true' },
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data IData;
+data IData.Test1 with
+  var int d;
+end
+code/tight/dynamic Ff (var&/dynamic IData mydata) -> int do
+  escape 1;
+end
+code/tight/dynamic Ff (var&/dynamic IData.Test1 mydata) -> int;
+code/tight/dynamic Ff (var&/dynamic IData.Test1 mydata) -> int do
+  escape 2;
+end
+var IData.Test1 t1 = val IData.Test1 (0);
+escape call/dynamic Ff (&t1);
+]],
+    dcls = 'line 8 : not implemented : prototype for non-base dynamic code',
+    wrn = true,
+    run = 2,
+}
+
+Test { [[
+do/_
+ data IData;
+ data IData.Test1 with
+   var int d;
+ end
+ code/tight/dynamic Ff (var&/dynamic IData mydata) -> int do
+   escape 1;
+ end
+ //code/tight/dynamic Ff (var&/dynamic IData.Test1 mydata) -> int;
+ code/tight/dynamic
+ Ff (var&/dynamic IData.Test1 mydata) -> int
+ do
+   escape 2;
+ end
+ var IData.Test1 t1 = val IData.Test1 (0);
+ escape call/dynamic Ff (&t1);
+end
+]],
+    wrn = true,
+    run = 2,
+}
+
+Test { [[
+data Dd;
+
+code/tight Ff (void) -> Dd do
+    var Dd d = val Dd();
+    escape d;
+end
+
+var Dd d = call Ff();
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+data Dd;
+data Dd.Ee;
+
+code/tight Ff (void) -> Dd do
+    var Dd d = val Dd.Ee();
+    escape d;
+end
+
+var Dd d = call Ff();
+
+escape (d is Dd.Ee) as int;
+]],
+    run = 1,
+}
+
+Test { [[
+data Dd;
+data Dd.Ee;
+
+code/await Ff (void) -> (var& Dd d) -> FOREVER do
+    var Dd d_ = val Dd.Ee();
+    d = &d_;
+    await FOREVER;
+end
+
+var& Dd d;
+spawn Ff() -> (&d);
+
+escape (d is Dd.Ee) as int;
+]],
+    run = 1,
+}
+
+Test { [[
+data Xx;
+code/await/dynamic Ff (var/dynamic Xx x1) -> (var& Xx x2) -> void;
+escape 1;
+]],
+    wrn = true,
+    props_ = 'line 2 : invalid `dynamic´ declaration : parameter #1 : expected `data´ in hierarchy',
+}
+
+Test { [[
+data Dd with
+    var int x;
+end
+data Dd.Ee;
+
+var Dd d = val Dd.Ee(10);
+
+escape ((d is Dd.Ee) as int) + d.x;
+]],
+    wrn = true,
+    run = 11,
+}
+
+Test { [[
+data Xx;
+data Xx.Yy;
+data Dd;
+
+code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> FOREVER;
+
+code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> FOREVER do
+    var Dd d_ = val Dd();
+    d = &d_;
+    await FOREVER;
+end
+
+var& Dd d;
+spawn/dynamic Ff(Xx.Yy()) -> (&d);
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Xx;
+data Xx.Yy;
+data Dd;
+
+//code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> FOREVER;
+
+code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> FOREVER do
+    var Dd d_ = val Dd();
+    d = &d_;
+    await FOREVER;
+end
+
+var& Dd d;
+spawn/dynamic Ff(Xx.Yy()) -> (&d);
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Xx with
+    var int v = 10;
+end
+data Xx.Yy;
+
+data Dd with
+    var Xx x;
+end
+data Dd.Ee;
+
+native _ceu_dbg_assert;
+code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> FOREVER do
+    var Dd d_ = val Dd(x);
+    d = &d_;
+    _ceu_dbg_assert(0);
+    await FOREVER;
+end
+
+code/await/dynamic Ff (var/dynamic Xx.Yy x) -> (var& Dd d) -> FOREVER do
+    var Dd d_ = val Dd.Ee(x);
+    d = &d_;
+    await FOREVER;
+end
+
+var& Dd d0;
+spawn/dynamic Ff(Xx.Yy(20)) -> (&d0);
+
+escape ((d0 is Dd.Ee) as int);
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+data Xx with
+    var int v = 10;
+end
+data Xx.Yy;
+
+data Dd with
+    var Xx x;
+end
+data Dd.Ee;
+
+native _ceu_dbg_assert;
+code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d1) -> FOREVER do
+    var Dd d_ = val Dd(x);
+    d1 = &d_;
+    _ceu_dbg_assert(0);
+    await FOREVER;
+end
+
+code/await/dynamic Ff (var/dynamic Xx.Yy x) -> (var& Dd d2) -> FOREVER do
+    var Dd d_ = val Dd.Ee(x);
+    d2 = &d_;
+    await FOREVER;
+end
+
+var& Dd d0;
+spawn/dynamic Ff(Xx.Yy(20)) -> (&d0);
+
+escape ((d0 is Dd.Ee) as int);
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+data Xx with
+    var int v = 10;
+end
+data Xx.Yy;
+
+data Dd with
+    var Xx x;
+end
+data Dd.Ee;
+
+native _ceu_dbg_assert;
+code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> FOREVER do
+    var Dd d_ = val Dd(x);
+    d = &d_;
+    _ceu_dbg_assert(0);
+    await FOREVER;
+end
+
+code/await Gg (var Xx.Yy x) -> (var& Dd d) -> FOREVER do
+    var Dd d_ = val Dd.Ee(x);
+    d = &d_;
+    await FOREVER;
+end
+
+var& Dd d;
+spawn Gg(Xx.Yy(20)) -> (&d);
+
+escape ((d is Dd.Ee) as int);
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Xx with
+    var int v = 10;
+end
+data Xx.Yy;
+
+data Dd with
+    var Xx x;
+end
+data Dd.Ee;
+
+native _ceu_dbg_assert;
+code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> FOREVER do
+    var Dd d_ = val Dd(x);
+    d = &d_;
+    _ceu_dbg_assert(0);
+    await FOREVER;
+end
+
+code/await/dynamic Ff (var/dynamic Xx.Yy x) -> (var& Dd d) -> FOREVER do
+    var Dd d_ = val Dd.Ee(x);
+    d = &d_;
+    await FOREVER;
+end
+
+var& Dd d;
+spawn/dynamic Ff(Xx.Yy(20)) -> (&d);
+
+escape ((d is Dd.Ee) as int) + d.x.v;
+]],
+    wrn = true,
+    run = 21,
+}
+
+Test { [[
+data Dd with
+    var int x = 10;
+end
+
+data Aa;
+data Aa.Bb;
+
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa v1) -> (var& Dd d) -> FOREVER do
+    var Dd d_ = _;
+    d = &d_;
+    await FOREVER;
+end
+
+var Aa aaa = val Aa();
+
+var int ret = 0;
+
+pool[10] Ff ffs;
+spawn/dynamic Ff(&ret,&aaa) in ffs;
+spawn/dynamic Ff(&ret,&aaa) in ffs;
+
+var& Dd d;
+loop (d) in ffs do
+    ret = ret + d.x;
+end
+
+escape ret;
+]],
+    wrn = true,
+    run = 20,
+}
+
+Test { [[
+data Dd with
+    var int x = 10;
+end
+
+data Aa;
+data Aa.Bb;
+
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa v1) -> (var& Dd d) -> void do
+    var Dd d_ = _;
+    d = &d_;
+end
+
+var Aa aaa = val Aa();
+
+var int ret = 0;
+
+pool[10] Ff ffs;
+spawn/dynamic Ff(&ret,&aaa) in ffs;
+spawn/dynamic Ff(&ret,&aaa) in ffs;
+
+var& Dd d;
+loop (d) in ffs do
+    ret = ret + d.x;
+end
+
+escape ret+1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Dd with
+    var int x = 10;
+end
+
+data Aa;
+data Aa.Bb;
+
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa v1) -> (var&? Dd d) -> FOREVER do
+    var Dd d_ = _;
+    d = &d_;
+    await FOREVER;
+end
+
+var Aa aaa = val Aa();
+
+var int ret = 0;
+
+pool[10] Ff ffs;
+spawn/dynamic Ff(&ret,&aaa) in ffs;
+spawn/dynamic Ff(&ret,&aaa) in ffs;
+
+event void e;
+var&? Dd d;
+loop (d) in ffs do
+    ret = ret + d!.x;
+    emit e;
+end
+
+escape ret+1;
+]],
+    wrn = true,
+    run = 21,
+}
+
+Test { [[
+data Dd with
+    var int x = 10;
+end
+
+data Aa;
+data Aa.Bb;
+
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa v1) -> (var&? Dd d, event&? void e) -> void do
+    var Dd d_ = _;
+    d = &d_;
+    event void e_;
+    e = &e_;
+    await e_;
+end
+
+var Aa aaa = val Aa();
+
+var int ret = 0;
+
+pool[10] Ff ffs;
+spawn/dynamic Ff(&ret,&aaa) in ffs;
+spawn/dynamic Ff(&ret,&aaa) in ffs;
+
+event&? void e;
+var&? Dd d;
+loop (d,e) in ffs do
+    ret = ret + d!.x;
+    ret = ret + (d? as int);
+    emit e!;
+    ret = ret + (d? as int);
+end
+
+escape ret+1;
+]],
+    wrn = true,
+    run = 23,
+}
+
+Test { [[
+data Xx;
+data Xx.Yy;
+code/await Gg (var/dynamic Xx.Yy x) -> (void) -> FOREVER do
+    await FOREVER;
+end
+escape 1;
+]],
+    dcls = 'line 3 : invalid `dynamic´ modifier : expected enclosing `code/dynamic´',
+    run = 1,
+}
+
+Test { [[
+data Direction as nothing;
+//data Direction as 0;
+data Direction.Right as 10;
+data Direction.Left as 20;
+
+code/tight/dynamic Ff (var/dynamic Direction dir) -> int do
+    escape 1;
+end
+
+code/tight/dynamic Ff (var/dynamic Direction.Right dir) -> int do
+    escape 10;
+end
+
+code/tight/dynamic Ff (var/dynamic Direction.Left dir) -> int do
+    escape 100;
+end
+
+var Direction.Right x1 = val Direction.Right();
+var Direction y1 = val Direction.Left();
+var Direction y2 = val Direction();
+
+escape (call/dynamic Ff(x1)) + (call/dynamic Ff(y1)) + (call/dynamic Ff(y2));
+]],
+    wrn = true,
+    stmts = 'line 20 : invalid constructor : cannot instantiate `data´ "Direction"',
+}
+
+Test { [[
+//data Direction as nothing;
+data Direction as 0;
+data Direction.Right as 10;
+data Direction.Left as 20;
+
+code/tight/dynamic Ff (var/dynamic Direction dir) -> int do
+    escape 1;
+end
+
+code/tight/dynamic Ff (var/dynamic Direction.Right dir) -> int do
+    escape 10;
+end
+
+code/tight/dynamic Ff (var/dynamic Direction.Left dir) -> int do
+    escape 100;
+end
+
+var Direction.Right x1 = val Direction.Right();
+var Direction y1 = val Direction.Left();
+var Direction y2 = val Direction();
+
+escape (call/dynamic Ff(x1)) + (call/dynamic Ff(y1)) + (call/dynamic Ff(y2));
+]],
+    wrn = true,
+    run = 111,
+}
+
+--<< CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC

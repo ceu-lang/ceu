@@ -1,3 +1,5 @@
+#define CEU_FEATURES_LONGJMP
+
 === FEATURES ===        /* CEU_FEATURES */
 
 #include <stddef.h>     /* offsetof */
@@ -5,6 +7,10 @@
 #include <string.h>     /* memset, strlen */
 #ifdef CEU_TESTS
 #include <stdio.h>
+#endif
+
+#ifdef CEU_FEATURES_LONGJMP
+#include <setjmp.h>
 #endif
 
 #ifdef CEU_FEATURES_LUA
@@ -42,18 +48,17 @@ CEU_API void ceu_start (void);
 CEU_API void ceu_stop  (void);
 CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params);
 CEU_API int  ceu_loop  (void);
-void ceu_input_one (tceu_nevt evt_id, void* evt_params);
 
 struct tceu_stk;
 struct tceu_code_mem;
-struct tceu_code_mem_dyn;
+struct tceu_pool_pak;
 struct tceu_evt_occ;
 
 typedef struct tceu_evt {
     tceu_nevt id;
     union {
-        void* mem;                              /* CEU_INPUT__CODE, CEU_EVENT__MIN */
-        struct tceu_code_mem_dyn* pool_first;   /* CEU_INPUT__CODE_POOL */
+        void* mem;                   /* CEU_INPUT__PROPAGATE_CODE, CEU_EVENT__MIN */
+        struct tceu_pool_pak* pak;   /* CEU_INPUT__PROPAGATE_POOL */
     };
 } tceu_evt;
 
@@ -93,11 +98,11 @@ typedef struct tceu_trl {
     };
 } tceu_trl;
 
-struct tceu_pool_pak;
 typedef struct tceu_code_mem {
     struct tceu_pool_pak* pak;
     struct tceu_code_mem* up_mem;
     tceu_ntrl  up_trl;
+    u8         depth;
 #ifdef CEU_FEATURES_LUA
     lua_State* lua;
 #endif
@@ -105,16 +110,10 @@ typedef struct tceu_code_mem {
     tceu_trl   _trails[0];
 } tceu_code_mem;
 
-typedef enum tceu_code_mem_dyn_state {
-    CEU_CODE_MEM_DYN_STATE_NONE,
-    CEU_CODE_MEM_DYN_STATE_TRAVERSING,
-    CEU_CODE_MEM_DYN_STATE_DELETE,
-} tceu_code_mem_dyn_state;
-
 typedef struct tceu_code_mem_dyn {
     struct tceu_code_mem_dyn* prv;
     struct tceu_code_mem_dyn* nxt;
-    u8 state;
+    u8 is_alive: 1;
     tceu_code_mem mem[0];   /* actual tceu_code_mem is in sequence */
 } tceu_code_mem_dyn;
 
@@ -123,13 +122,8 @@ typedef struct tceu_pool_pak {
     tceu_code_mem_dyn first;
     tceu_code_mem*    up_mem;
     tceu_ntrl         up_trl;
+    u8                n_traversing;
 } tceu_pool_pak;
-
-typedef struct tceu_opt_alias {
-    void*          alias;
-    tceu_evt       evt;     /* TODO: alias points to copied evt (extra space) */
-    tceu_evt_range range;
-} tceu_opt_alias;
 
 static tceu_evt* CEU_OPTION_EVT (tceu_evt* alias, const char* file, int line) {
     ceu_callback_assert_msg_ex(alias != NULL, "value is not set", file, line);
@@ -178,11 +172,12 @@ enum {
     CEU_INPUT__NONE = 0,
     CEU_INPUT__FINALIZE,
     CEU_INPUT__PAUSE_BLOCK,
-    CEU_INPUT__CODE,
-    CEU_INPUT__CODE_POOL,
+    CEU_INPUT__PROPAGATE_CODE,
+    CEU_INPUT__PROPAGATE_POOL,
 
     /* emitable */
     CEU_INPUT__CLEAR,           /* 5 */
+    CEU_INPUT__CODE_TERMINATED,
     CEU_INPUT__PAUSE,
     CEU_INPUT__RESUME,
 CEU_INPUT__SEQ,
@@ -233,7 +228,9 @@ static void* ceu_data_as (tceu_ndata* supers, tceu_ndata* me, tceu_ndata cmp,
 /*****************************************************************************/
 
 === CODES_MEMS ===
+#if 0
 === CODES_ARGS ===
+#endif
 
 === EXTS_TYPES ===
 === EVTS_TYPES ===
@@ -243,10 +240,29 @@ enum {
     === LABELS ===
 };
 
+typedef struct tceu_stk {
+    u8               is_alive : 1;
+    u8               is_base  : 1;
+    struct tceu_stk* down;
+    tceu_evt_range   range;
+} tceu_stk;
+
+typedef struct tceu_jmp {
+    tceu_nlbl      lbl;
+    tceu_code_mem* mem;
+    tceu_ntrl      trl;
+} tceu_jmp;
+
 typedef struct tceu_app {
     bool end_ok;
     int  end_val;
 
+    /* LONGJMP */
+#ifdef CEU_FEATURES_LONGJMP
+    tceu_jmp jmp;
+#endif
+
+    /* SEQ */
     tceu_nseq seq;
     tceu_nseq seq_base;
 
@@ -269,26 +285,81 @@ typedef struct tceu_app {
 
 static tceu_app CEU_APP;
 
+#ifdef CEU_FEATURES_LONGJMP
+#define CEU_LONGJMP_SET(me,_lbl)                            \
+        /*fprintf(stderr, "set?\n");*/                      \
+    if (!(me)->is_alive) {                                  \
+        /*fprintf(stderr, "set %d\n", __LINE__);*/          \
+        ceu_dbg_assert(CEU_APP.jmp.lbl==CEU_LABEL_NONE);    \
+        CEU_APP.jmp.lbl = _lbl;                             \
+        CEU_APP.jmp.mem = _ceu_mem;                         \
+        CEU_APP.jmp.trl = _ceu_trlK;                        \
+        return;                                             \
+case _lbl:;                                                 \
+        /*fprintf(stderr, "cnt\n");*/                       \
+        /* continue from here */                            \
+    }
+
+#define CEU_LONGJMP_JMP(me)                                 \
+        /*fprintf(stderr, "jmp? %d\n", __LINE__);*/         \
+    if (!(me)->is_alive) {                                  \
+        /*fprintf(stderr, "dead %d\n", __LINE__);*/         \
+        if (CEU_APP.jmp.lbl == CEU_LABEL_NONE) {            \
+            return;                                         \
+        }                                                   \
+        if (!(me)->down->is_alive) {                        \
+            /*fprintf(stderr, "<<<\n");*/                   \
+            return;                                         \
+        } else {                                            \
+            tceu_nlbl __ceu_lbl = CEU_APP.jmp.lbl;          \
+            /*fprintf(stderr, "jmp\n");*/                   \
+            CEU_APP.jmp.lbl = CEU_LABEL_NONE;               \
+            RETURN_CEU_LBL(NULL,(me)->down,CEU_APP.jmp.mem,CEU_APP.jmp.trl,__ceu_lbl); \
+        }                                                   \
+    } else {                                                \
+        /* continue */                                      \
+    }
+
+#define CEU_LONGJMP_JMP_(me)                                \
+        /*fprintf(stderr, "jmp? %d\n", __LINE__);*/         \
+    if (!(me)->is_alive) {                                  \
+        /*fprintf(stderr, "dead %d\n", __LINE__);*/         \
+        if (CEU_APP.jmp.lbl == CEU_LABEL_NONE) {            \
+            return;                                         \
+        }                                                   \
+        if (!(me)->down->is_alive) {                        \
+            /*fprintf(stderr, "<<<\n");*/                   \
+            return;                                         \
+        } else {                                            \
+            tceu_nlbl __ceu_lbl = CEU_APP.jmp.lbl;          \
+            /*fprintf(stderr, "jmp\n");*/                   \
+            CEU_APP.jmp.lbl = CEU_LABEL_NONE;               \
+            return ceu_lbl(NULL,(me)->down,CEU_APP.jmp.mem,CEU_APP.jmp.trl,__ceu_lbl); \
+        }                                                   \
+    } else {                                                \
+        /* continue */                                      \
+    }
+#endif
+
 /*****************************************************************************/
 
-typedef struct tceu_stk {
-    u8               is_alive : 1;
-    struct tceu_stk* down;
-    tceu_evt_range   range;
-} tceu_stk;
+static tceu_code_mem* ceu_outer (tceu_code_mem* mem, u8 n) {
+    for (; mem->depth!=n; mem=mem->up_mem);
+    return mem;
+}
 
 static int ceu_mem_is_child (tceu_code_mem* me, tceu_code_mem* par_mem,
                              tceu_ntrl par_trl1, tceu_ntrl par_trl2)
 {
     if (me == par_mem) {
-        return (par_trl1==0 && par_trl2==me->trails_n-1);
+        return (par_trl1==0 && par_trl2==me->trails_n-1) ? 1 : 0;
     }
 
     tceu_code_mem* cur_mem;
     for (cur_mem=me; cur_mem!=NULL; cur_mem=cur_mem->up_mem) {
         if (cur_mem->up_mem == par_mem) {
             if (cur_mem->up_trl>=par_trl1 && cur_mem->up_trl<=par_trl2) {
-                return 1;
+                return 2;
             }
         }
     }
@@ -298,7 +369,7 @@ static int ceu_mem_is_child (tceu_code_mem* me, tceu_code_mem* par_mem,
 static void ceu_stack_clear (tceu_stk* stk, tceu_code_mem* mem,
                              tceu_ntrl trl0, tceu_ntrl trlF) {
     for (; stk!=NULL; stk=stk->down) {
-        if (!stk->is_alive) {
+        if (!stk->is_alive || stk->is_base) {
             continue;
         }
         if (stk->range.mem != mem) {
@@ -369,6 +440,30 @@ void ceu_code_mem_dyn_free (tceu_pool* pool, tceu_code_mem_dyn* cur) {
     }
 }
 
+void ceu_code_mem_dyn_remove (tceu_pool* pool, tceu_code_mem_dyn* cur) {
+    cur->is_alive = 0;
+
+    if (cur->mem[0].pak->n_traversing == 0) {
+        ceu_code_mem_dyn_free(pool, cur);
+    }
+}
+
+void ceu_code_mem_dyn_gc (tceu_pool_pak* pak) {
+    if (pak->n_traversing == 0) {
+        /* TODO-OPT: one element killing another is unlikely:
+                     set bit in pool when this happens and only
+                     traverses in this case */
+        tceu_code_mem_dyn* cur = pak->first.nxt;
+        while (cur != &pak->first) {
+            tceu_code_mem_dyn* nxt = cur->nxt;
+            if (!cur->is_alive) {
+                ceu_code_mem_dyn_free(&pak->pool, cur);
+            }
+            cur = nxt;
+        }
+    }
+}
+
 /*****************************************************************************/
 
 #ifdef CEU_FEATURES_LUA
@@ -382,17 +477,17 @@ int ceu_lua_atpanic (lua_State* lua) {
 
 /*****************************************************************************/
 
-static void ceu_bcast (tceu_evt_occ* occ, tceu_stk* stk);
+static void ceu_bcast (tceu_evt_occ* occ, tceu_stk* stk, bool is_prim);
 static void ceu_lbl (tceu_evt_occ* _ceu_occ, tceu_stk* _ceu_stk,
                      tceu_code_mem* _ceu_mem, tceu_ntrl _ceu_trlK, tceu_nlbl _ceu_lbl);
 
 === NATIVE_POS ===
 
+=== CODES_WRAPPERS ===
+
 === ISRS ===
 
 === THREADS ===
-
-=== CODES_WRAPPERS ===
 
 /*****************************************************************************/
 
@@ -440,9 +535,20 @@ int ceu_threads_gc (int force_join) {
 
 /*****************************************************************************/
 
+void ceu_input_one (tceu_nevt evt_id, void* evt_params, tceu_stk* stk);
+
+#define RETURN_CEU_LBL(_1,_2,_3,_4,_5)  \
+    _ceu_occ  = _1;                     \
+    _ceu_stk  = _2;                     \
+    _ceu_mem  = _3;                     \
+    _ceu_trlK = _4;                     \
+    _ceu_lbl  = _5;                     \
+    goto _CEU_LBL_;
+
 static void ceu_lbl (tceu_evt_occ* _ceu_occ, tceu_stk* _ceu_stk,
                      tceu_code_mem* _ceu_mem, tceu_ntrl _ceu_trlK, tceu_nlbl _ceu_lbl)
 {
+_CEU_LBL_:
     switch (_ceu_lbl) {
         CEU_LABEL_NONE:
             break;
@@ -455,17 +561,19 @@ static void ceu_lbl (tceu_evt_occ* _ceu_occ, tceu_stk* _ceu_stk,
 static int xxx = 0;
 #endif
 
-static void ceu_bcast (tceu_evt_occ* occ, tceu_stk* stk)
+static void ceu_bcast (tceu_evt_occ* occ, tceu_stk* stk, bool is_prim)
 {
     tceu_ntrl trlK;
     tceu_trl* trl;
     tceu_evt_range range = occ->range;
 
-    ceu_callback_assert_msg(((tceu_nseq)(CEU_APP.seq+1)) != CEU_APP.seq_base,
-                            "too many internal reactions");
-    CEU_APP.seq++;
+    if (is_prim && occ->evt.id>CEU_INPUT__SEQ) {
+        ceu_callback_assert_msg(((tceu_nseq)(CEU_APP.seq+1)) != CEU_APP.seq_base,
+                                "too many internal reactions");
+        CEU_APP.seq++;
+    }
 
-    tceu_stk _stk = { 1, stk, range }; /* maybe nested bcast aborts it */
+    tceu_stk _stk = { 1, 0, stk, range }; /* maybe nested bcast aborts it */
 
     /* MARK TRAILS TO EXECUTE */
 
@@ -487,6 +595,10 @@ xxx += 4;
         trlF = tmp;
     }
 
+#ifdef CEU_TESTS
+    _ceu_tests_bcasts_++;
+#endif
+
     for (trlK=trl0, trl=&range.mem->_trails[trlK]; ;)
     {
 #ifdef CEU_TESTS
@@ -505,33 +617,62 @@ fprintf(stderr, "??? trlK=%d, evt=%d, seq=%d\n", trlK, trl->evt.id, trl->seq);
         switch (trl->evt.id)
         {
             /* propagate "occ" to nested "code/pool" */
-            case CEU_INPUT__CODE: {
-                tceu_evt_range _range = { (tceu_code_mem*)trl->evt.mem,
-                                          0, (tceu_ntrl)(((tceu_code_mem*)trl->evt.mem)->trails_n-1) };
-                occ->range = _range;
-                ceu_bcast(occ, &_stk);
-                if (!_stk.is_alive) {
-                    goto _CEU_BREAK_;
+            case CEU_INPUT__PROPAGATE_CODE: {
+#if 0
+                // TODO: simple optimization that could be done
+                //          - do it also for POOL?
+                if (occ->evt.id==CEU_INPUT__CODE_TERMINATED && occ->params==trl->evt.mem ) {
+                    // dont propagate when I am terminating
+                } else
+#endif
+                {
+                    tceu_evt_range _range = {
+                        (tceu_code_mem*)trl->evt.mem,
+                        0,
+                        (tceu_ntrl)(((tceu_code_mem*)trl->evt.mem)->trails_n-1)
+                    };
+                    occ->range = _range;
+                    ceu_bcast(occ, &_stk, 0);
+#ifdef CEU_FEATURES_LONGJMP
+                    CEU_LONGJMP_JMP_((&_stk));
+#else
+                    if (!_stk.is_alive) {
+ceu_dbg_assert(0);
+                        goto _CEU_BREAK_;
+                    }
+#endif
                 }
                 break;
             }
-            case CEU_INPUT__CODE_POOL: {
-                tceu_code_mem_dyn* cur = trl->evt.pool_first->nxt;
+            case CEU_INPUT__PROPAGATE_POOL: {
+                ceu_dbg_assert(trl->evt.pak->n_traversing < 255);
+                trl->evt.pak->n_traversing++;
+                tceu_code_mem_dyn* cur = trl->evt.pak->first.nxt;
 #if 0
 printf(">>> BCAST[%p]:\n", trl->pool_first);
 printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
 #endif
-                while (cur != trl->evt.pool_first) {
-                    tceu_code_mem_dyn* nxt = cur->nxt;
-                    tceu_evt_range _range = { &cur->mem[0],
-                                              0, (tceu_ntrl)((&cur->mem[0])->trails_n-1) };
-                    occ->range = _range;
-                    ceu_bcast(occ, &_stk);
-                    if (!_stk.is_alive) {
-                        goto _CEU_BREAK_;
+                while (cur != &trl->evt.pak->first) {
+                    if (cur->is_alive) {
+                        tceu_evt_range _range = { &cur->mem[0],
+                                                  0, (tceu_ntrl)((&cur->mem[0])->trails_n-1) };
+                        occ->range = _range;
+                        tceu_stk _stk = { 1, 0, stk,
+                                          {cur->mem[0].up_mem,cur->mem[0].up_trl,cur->mem[0].up_trl} };
+                        ceu_bcast(occ, &_stk, 0);
+#ifdef CEU_FEATURES_LONGJMP
+                        CEU_LONGJMP_JMP_((&_stk));
+#else
+                        if (!_stk.is_alive) {
+ceu_dbg_assert(0);
+                            goto _CEU_BREAK_;
+                        }
+#endif
                     }
-                    cur = nxt;
+                    cur = cur->nxt;
                 }
+                trl->evt.pak->n_traversing--;
+                ceu_code_mem_dyn_gc(trl->evt.pak);
                 break;
             }
 
@@ -549,17 +690,15 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                                                   {range.mem,
                                                    (tceu_ntrl)(trlK+1), (tceu_ntrl)(trlK+trl->pse_skip)}
                                                 };
-                            ceu_bcast(&occ2, &_stk);
+                            ceu_bcast(&occ2, &_stk, 0);
                         } else {
                             tceu_evt_occ occ2 = { {CEU_INPUT__RESUME,{NULL}}, CEU_APP.seq, occ->params,
                                                   {range.mem,
                                                    (tceu_ntrl)(trlK+1), (tceu_ntrl)(trlK+trl->pse_skip)}
                                                 };
-                            ceu_bcast(&occ2, &_stk);
+                            ceu_bcast(&occ2, &_stk, 0);
                         }
-                        if (!_stk.is_alive) {
-                            goto _CEU_BREAK_;
-                        }
+                        ceu_dbg_assert(_stk.is_alive);
                     }
                 }
                 /* don't skip if pausing now */
@@ -576,43 +715,17 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
         /* normal trails: check if awakes */
 
         if (occ->evt.id == CEU_INPUT__CLEAR) {
-            tceu_evt_range* clr_range = (tceu_evt_range*) occ->params;
-
-            int matches_clear_vs_trail = (clr_range->mem  == range.mem  &&
-                                          clr_range->trl0 <= trlK       &&
-                                          clr_range->trlF >= trlK)
-                                            || ceu_mem_is_child(range.mem,
-                                                    clr_range->mem,
-                                                    clr_range->trl0,
-                                                    clr_range->trlF);
-
-            /* clearing this trail? */
-            if (matches_clear_vs_trail) {
-                tceu_nevt trl_evt_id = trl->evt.id;
-                trl->evt.id = CEU_INPUT__NONE;
-                if (trl_evt_id == CEU_INPUT__FINALIZE) {
-                    /* FINALIZE awakes now on "mark" */
-                    ceu_lbl(occ, &_stk, range.mem, trlK, trl->lbl);
-                }
-
-            /* clear matches CLEAR? */
-            } else if (trl->evt.id == CEU_INPUT__CLEAR) {
-                int matches_clear_vs_clear =
-                        (clr_range->mem  == trl->clr_range.mem  &&
-                         clr_range->trl0 <= trl->clr_range.trl0 &&
-                         clr_range->trlF >= trl->clr_range.trlF);
-                if (matches_clear_vs_clear) {
-                    goto _CEU_AWAKE_YES_;
-                }
-
-            /* clear matches CODE? */
-            } else if (trl->evt.id == CEU_INPUT__CODE) {
-                if (ceu_mem_is_child((tceu_code_mem*)trl->evt.mem,
-                                     clr_range->mem,
-                                     clr_range->trl0, clr_range->trlF))
-                {
-                    goto _CEU_AWAKE_YES_;
-                }
+            tceu_nevt trl_evt_id = trl->evt.id;
+            trl->evt.id = CEU_INPUT__NONE;
+            if (trl_evt_id == CEU_INPUT__FINALIZE) {
+                /* FINALIZE awakes now on "mark" */
+                ceu_lbl(occ, &_stk, range.mem, trlK, trl->lbl);
+            }
+        } else if (occ->evt.id==CEU_INPUT__CODE_TERMINATED &&
+            (trl->evt.id==CEU_INPUT__CODE_TERMINATED || trl->evt.id==CEU_INPUT__PROPAGATE_CODE))
+        {
+            if (trl->evt.mem == occ->evt.mem) {
+                goto _CEU_AWAKE_YES_;
             }
         } else if (trl->evt.id == occ->evt.id) {
             if (occ->evt.id==CEU_INPUT__PAUSE || occ->evt.id==CEU_INPUT__RESUME) {
@@ -622,7 +735,7 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                 ((tceu_nseq)(occ->seq-CEU_APP.seq_base))) {
                 goto _CEU_AWAKE_NO_;
             }
-            if (trl->evt.id > CEU_EVENT__MIN) {
+            if (trl->evt.id>CEU_EVENT__MIN) {
                 if (trl->evt.mem == occ->evt.mem) {
                     goto _CEU_AWAKE_YES_;   /* internal event matches "mem" */
                 }
@@ -645,12 +758,17 @@ fprintf(stderr, "+++ %d\n", trl->lbl);
 
         trl->evt.id = CEU_INPUT__NONE;
         ceu_lbl(occ, &_stk, range.mem, trlK, trl->lbl);
+#ifdef CEU_FEATURES_LONGJMP
+        CEU_LONGJMP_JMP_((&_stk));
+#else
         if (!_stk.is_alive) {
+ceu_dbg_assert(0);
 #ifdef _CEU_DEBUG
 fprintf(stderr, "break\n");
 #endif
             goto _CEU_BREAK_;
         }
+#endif
 
 _CEU_AWAKE_NO_:
         if ((trl->evt.id > CEU_INPUT__SEQ) && (occ->seq == ((tceu_nseq)(CEU_APP.seq_base+0)))) {
@@ -665,9 +783,9 @@ _CEU_AWAKE_NO_:
             trlK++; trl++;
         }
     }
-_CEU_BREAK_:
+_CEU_BREAK_:;
 
-    occ->range = range;
+    /*occ->range = range;*/
 
 #ifdef _CEU_DEBUG
 xxx -= 4;
@@ -678,7 +796,7 @@ fprintf(stderr, "<<< %d [%p] %d->%d\n", occ->evt.id, range.mem, range.trl0, rang
 #endif
 }
 
-void ceu_input_one (tceu_nevt evt_id, void* evt_params)
+void ceu_input_one (tceu_nevt evt_id, void* evt_params, tceu_stk* stk)
 {
     CEU_APP.seq_base = CEU_APP.seq;
 
@@ -693,35 +811,35 @@ void ceu_input_one (tceu_nevt evt_id, void* evt_params)
 /* TODO: remove this extra bcast to reset seqs */
 #if 1
 {
+    tceu_stk _stk = { 1, 1, stk,
+                     { (tceu_code_mem*)&CEU_APP.root,
+                       0, (tceu_ntrl)(CEU_APP.root._mem.trails_n-1) } };
     tceu_evt_occ occ = { {CEU_INPUT__NONE,{NULL}}, CEU_APP.seq, evt_params,
                          {(tceu_code_mem*)&CEU_APP.root,
                           0, (tceu_ntrl)(CEU_APP.root._mem.trails_n-1)}
                        };
-    tceu_stk stk = { 1, NULL,
-                     { (tceu_code_mem*)&CEU_APP.root,
-                       0, (tceu_ntrl)(CEU_APP.root._mem.trails_n-1) } };
-    ceu_bcast(&occ, &stk);
+    ceu_bcast(&occ, &_stk, 1);
 }
 #endif
 
+    tceu_stk _stk = { 1, 1, stk,
+                     { (tceu_code_mem*)&CEU_APP.root,
+                       0, (tceu_ntrl)(CEU_APP.root._mem.trails_n-1) } };
     tceu_evt_occ occ = { {evt_id,{NULL}}, (tceu_nseq)(CEU_APP.seq+1), evt_params,
                          {(tceu_code_mem*)&CEU_APP.root,
                           0, (tceu_ntrl)(CEU_APP.root._mem.trails_n-1)}
                        };
-    tceu_stk stk = { 1, NULL,
-                     { (tceu_code_mem*)&CEU_APP.root,
-                       0, (tceu_ntrl)(CEU_APP.root._mem.trails_n-1) } };
-    ceu_bcast(&occ, &stk);
+    ceu_bcast(&occ, &_stk, 1);
 }
 
 CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params)
 {
     s32 dt = ceu_callback_void_void(CEU_CALLBACK_WCLOCK_DT).value.num;
     if (dt != CEU_WCLOCK_INACTIVE) {
-        ceu_input_one(CEU_INPUT__WCLOCK, &dt);
+        ceu_input_one(CEU_INPUT__WCLOCK, &dt, NULL);
     }
     if (evt_id != CEU_INPUT__NONE) {
-        ceu_input_one(evt_id, evt_params);
+        ceu_input_one(evt_id, evt_params, NULL);
     }
 }
 
@@ -729,6 +847,10 @@ CEU_API void ceu_start (void) {
     ceu_callback_void_void(CEU_CALLBACK_START);
 
     CEU_APP.end_ok   = 0;
+
+#ifdef CEU_FEATURES_LONGJMP
+    CEU_APP.jmp.lbl = CEU_LABEL_NONE;
+#endif
 
     CEU_APP.seq      = 0;
     CEU_APP.seq_base = 0;
@@ -751,7 +873,7 @@ CEU_API void ceu_start (void) {
     CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
 #endif
 
-    tceu_stk stk = { 1, NULL,
+    tceu_stk stk = { 1, 1, NULL,
                      { (tceu_code_mem*)&CEU_APP.root,
                        0, (tceu_ntrl)(CEU_APP.root._mem.trails_n-1) } };
     ceu_lbl(NULL, &stk, (tceu_code_mem*)&CEU_APP.root, 0, CEU_LABEL_ROOT);
@@ -788,6 +910,7 @@ CEU_API int ceu_loop (void)
     ceu_stop();
 
 #ifdef CEU_TESTS
+    printf("_ceu_tests_bcasts_ = %d\n", _ceu_tests_bcasts_);
     printf("_ceu_tests_trails_visited_ = %d\n", _ceu_tests_trails_visited_);
 #endif
 

@@ -12,6 +12,7 @@ end
 
 AST.tag2id = {
     Abs_Await        = 'await',
+    Abs_Spawn        = 'spawn',
     Abs_Spawn_Pool   = 'spawn',
     Alias            = 'alias',
     Async            = 'async',
@@ -37,6 +38,7 @@ AST.tag2id = {
     Ext_Code         = 'external code',
     Ext              = 'external',
     Finalize         = 'finalize',
+    If               = 'if',
     Kill             = 'kill',
     Loop             = 'loop',
     Loop_Num         = 'loop',
@@ -138,6 +140,18 @@ function AST.is_equal (n1, n2, ignore)
         else
             return false
         end
+    elseif type(n1)=='table' and type(n2)=='table' then
+        for k,v in pairs(n1) do
+            if n2[k] ~= v then
+                return false
+            end
+        end
+        for k,v in pairs(n2) do
+            if n1[k] ~= v then
+                return false
+            end
+        end
+        return true
     else
         return false
     end
@@ -176,6 +190,7 @@ function AST.get (me, tag, ...)
     end
 
     if idx then
+        idx = (idx>=0 and idx or (#me+idx+1))
         return AST.get(me[idx], tag2, select(3,...))
     else
         return me
@@ -192,10 +207,11 @@ function AST.asr (me, tag, ...)
 end
 
 function AST.set (par, i, child)
-    assert(AST.is_node(child))
     par[i] = child
-    child.__par = par
-    child.__i   = i
+    if AST.is_node(child) then
+        child.__par = par
+        child.__i   = i
+    end
 end
 
 function AST.insert (par, i, child)

@@ -41,8 +41,6 @@ local function run (me, Loop)
     elseif me.tag=='Break' or me.tag=='Escape' then
         if AST.depth(Loop) >= AST.depth(me.outer) then
             return 'breaks'
-else
-error'TODO'
         end
 
     elseif me.tag=='If' or me.tag=='Par_Or' then
@@ -82,7 +80,7 @@ error'TODO'
         for _, child in ipairs(me) do
             if AST.is_node(child) then
                 local ret = run(child, Loop)
-                if ret ~= 'tight' then
+                if ret and ret~='tight' then
                     return ret
                 end
             end
@@ -131,7 +129,7 @@ G = {
         if not me.is_impl then
             return
         end
-        local _,_,id = unpack(me)
+        local _,id = unpack(me)
         local blk = AST.par(me, 'Block')
         local old = DCLS.get(blk, id)
         impls[old] = true
@@ -139,11 +137,13 @@ G = {
 
     Abs_Call = function (me)
         local mods_call, Abs_Cons = unpack(me)
-        local Code = AST.asr(Abs_Cons,'', 1,'ID_abs').dcl
-        local _,mods_dcl = unpack(Code)
+        local Code = AST.asr(Abs_Cons,'Abs_Cons', 2,'ID_abs').dcl
+        local mods_dcl = unpack(Code)
 
-        -- calling known Code
-        if impls[Code] then
+        local Par = AST.par(me,'Code')
+
+        -- calling known Code (or not calling from a tight)
+        if impls[Code] or (not (Par and Par[1].tight)) then
             if mods_call.recursive then
                 ASR(mods_dcl.recursive, me,
                     'invalid `call´ : unexpected `/recursive´')
@@ -164,11 +164,10 @@ G = {
         end
 
         -- calling from Par code with '/recursive'
-        local Par = AST.par(me,'Code')
         if Par and mods_call.recursive then
             -- Par must be '/recursive'
-            local _,mods_dcl = unpack(Par)
-            ASR(mods_dcl.recursive, Par,
+            local mods_dcl = unpack(Par)
+            ASR(mods_dcl.await or mods_dcl.recursive, Par,
                 'invalid `code´ declaration : expected `/recursive´ : nested `call/recursive´ ('..me.ln[1]..':'..me.ln[2]..')')
         end
     end,

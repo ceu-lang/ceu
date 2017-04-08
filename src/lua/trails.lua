@@ -21,17 +21,11 @@ TRAILS.F = {
         if not TRAILS.F[me.tag] then
             MAX_all(me)
         end
-
-        if me.tag=='Code' and me[2].await then
-            me.trails_n = me.trails_n + 1   -- TODO-NOW
-        end
     end,
 
     Loop_Pool = function (me)
         local _, _, _, body = unpack(me)
-        if me.yields then
-            me.trails_n = body.trails_n + 1
-        end
+        me.trails_n = body.trails_n + 2
     end,
 
     Pause_If = function (me)
@@ -73,22 +67,12 @@ G = {
         if (not me.trails) and me.__par then
             me.trails = { unpack(me.__par.trails) }
         end
-
--- TODO-NOW
-if me.tag == 'Block' then
-    local Code = AST.get(AST.par(me,'Code'),'')
-    if Code and Code[2].await and AST.get(Code,'',4,'Block')==me then
-        me.trails[2] = me.trails[2] - 1
-    end
-end
     end,
 
     Loop_Pool__PRE = function (me)
         local _, _, _, body = unpack(me)
         body.trails = { unpack(me.trails) }
-        if me.yields then
-            body.trails[1] = body.trails[1] + 1
-        end
+        body.trails[1] = body.trails[1] + 2
     end,
 
     Pause_If__PRE = function (me)

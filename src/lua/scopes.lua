@@ -2,31 +2,44 @@
 local function check_blk (to_blk, fr_blk)
     local Code = AST.par(fr_blk,'Code')
     local Stmts = Code and AST.get(Code,'',4,'Block',1,'Stmts',4,'Block',1,'Stmts')
+
+    -- changes nested watchings to pars
+    local watch = AST.par(fr_blk, 'Watching')
+    while watch do
+        fr_blk = AST.par(watch, 'Block')
+        watch = AST.par(watch, 'Watching')
+    end
+
+    -- changes fr_blk from body->mid
+    local ok = false
+    if Code and fr_blk==Code.__adjs_3 then
+        ok = true
+        fr_blk = Code.__adjs_2
+    end
+
     if AST.depth(to_blk) >= AST.depth(fr_blk) then
-        assert(AST.is_par(fr_blk,to_blk), 'bug found')
+        assert(ok or AST.is_par(fr_blk,to_blk), 'bug found')
         return true
     elseif Stmts and (
-                AST.get(Stmts,'',1,'Do', 2,'Block')==fr_blk -- code ... -> ...
+                AST.get(Stmts,'',1,'Do', 3,'Block')==fr_blk -- code ... -> ...
             or
                 AST.get(Stmts,'',1,'Block')==fr_blk         -- code ... -> FOREVER
             ) then
         return 'maybe'
     else
-        assert(AST.is_par(to_blk,fr_blk), 'bug found')
+        --assert(AST.is_par(to_blk,fr_blk), 'bug found')
         return false
     end
 end
 
 local function f2mod (f)
-    local Loc = AST.asr(f,'Loc')
-    local Node = unpack(Loc)
-    if Node.tag == 'Exp_as' then
-        local _,_,mod = unpack(Node)
+    if f.tag == 'Exp_as' then
+        local _,_,mod = unpack(f)
         return mod
     else
-        local nat = AST.get(Loc.info.dcl,'Nat')
+        local nat = AST.get(f.info.dcl,'Nat')
         if nat then
-            local mod = unpack(AST.asr(Loc.info.dcl,'Nat'))
+            local mod = unpack(AST.asr(f.info.dcl,'Nat'))
             return mod
         else
             return nil
@@ -40,7 +53,7 @@ F = {
 
         local fr_ptr = TYPES.check(fr.info.tp,'&&')
         local to_ptr = TYPES.check(TYPES.pop(to.info.tp,'?'),'&&')
-        local to_nat = TYPES.is_nat(TYPES.pop(to.info.tp,'?'))
+        local to_nat = TYPES.is_nat_not_plain(TYPES.pop(to.info.tp,'?'))
 
         -- NO:
         --  d1; do d2=d1 end;   // d1>d2 and d1-has-pointers
@@ -49,15 +62,15 @@ F = {
                                 ID.dcl.tag=='Data' and ID.dcl.weaker~='plain'
 
         -- ptr = _f()
-        if fr.tag=='Nat_Call' and (to_ptr or to_nat) then
-            local mod = f2mod(AST.asr(fr,'',2,'Loc'))
+        if fr.tag=='Exp_call' and (to_ptr or to_nat) then
+            local mod = f2mod(fr[2])
             ASR(mod=='nohold' or mod=='pure' or mod=='plain', me,
                 'invalid assignment : expected binding for "'..fr.info.dcl.id..'"')
         end
 
         if to_ptr or fr_ptr or fr_data_ptr then
             local fr_nat = TYPES.is_nat(fr.info.tp)
-            assert((to_ptr or to_nat) and (fr_ptr or fr_nat) or fr_data_ptr, 'bug found')
+            --assert((to_ptr or to_nat) and (fr_ptr or fr_nat) or fr_data_ptr, 'bug found')
 
             local to_blk, fr_blk
             local ok do
@@ -103,9 +116,13 @@ F = {
     Set_Alias = function (me)
         local fr, to = unpack(me)
 
+        if fr.tag == 'NIL' then
+            return
+        end
+
         local _, call = unpack(fr)
-        if (call.tag=='Nat_Call' or call.tag=='Abs_Call') then
-            ASR(to.info.dcl[1] == '&?', me,
+        if (call.tag=='Exp_call' or call.tag=='Abs_Call') then
+            ASR(to.info.dcl[1], me,
                 'invalid binding : expected option alias `&?´ as destination : got "'
                 ..TYPES.tostring(to.info.tp)..'"')
 
@@ -119,6 +136,7 @@ F = {
             blk.needs_clear = true
 
             if fin.__fin_vars then
+                --ASR(check_blk(blk,fin.__fin_vars.blk), me,
                 ASR(blk == fin.__fin_vars.blk, me,
                     'invalid `finalize´ : incompatible scopes')
                 fin.__fin_vars[#fin.__fin_vars+1] = assert(to.info.dcl)
@@ -126,30 +144,78 @@ F = {
                 fin.__fin_vars = { blk=blk, assert(to.info.dcl) }
             end
         else
-            local ok = is_call or check_blk(to.info.dcl.blk, fr.info.dcl.blk)
-            if not ok then
-                if to.info.dcl.is_mid_idx then
-                    local watch = AST.par(me, 'Watching')
-                    if watch then
-                        --  code/await Ff (void) => (Dcl) => void do
-                        --      watching Gg(1) => (y1) do
-                        --          var int v = ...
-                        --          Dcl = &v;   // OK
-                        ok = (fr.info.dcl.blk == AST.asr(watch,'',1,'Par_Or',2,'Block'))
-                    end
-                end
-            end
-            if to.info.dcl[1] == '&?' then
-                ok = true
-                to.info.dcl.is_local_set_alias = true
-                fr.info.dcl.blk.needs_clear = true
-                assert(AST.par(to.info.dcl,'Code') == AST.par(fr.info.dcl,'Code'), 'not implemented')
-            end
-            ASR(ok, me, 'invalid binding : incompatible scopes')
+            ASR(is_call or to.info.dcl.__dcls_code_alias or
+                check_blk(to.info.dcl.blk, (fr.info.dcl_obj or fr.info.dcl).blk),
+                me, 'invalid binding : incompatible scopes')
         end
     end,
 
-    Nat_Call = function (me)
+    Abs_Spawn_Pool = function (me)
+        local _, Abs_Cons, pool = unpack(me)
+        local ps = AST.asr(Abs_Cons,'Abs_Cons', 3,'Abslist')
+        for _, p in ipairs(ps) do
+            if p.info and p.info.dcl then
+                if p.info.tag == 'Alias' then
+                    ASR(check_blk(pool.info.dcl.blk, p.info.blk or p.info.dcl.blk), me,
+                        'invalid binding : incompatible scopes')
+                end
+            end
+        end
+    end,
+
+    ['Exp_.'] = function (me)
+        -- NO: x = &f!.*            // f may die (unless surrounded by "watching f")
+        -- NO:
+        if AST.par(me,'Exp_1&') and me.info.dcl_obj and me.info.dcl_obj.orig and me.info.dcl_obj.orig[1]=='&?' then
+            if AST.par(me, 'Abs_Call') then
+                return      -- call Ff(&obj!.x)
+            end
+
+            local to do
+                local set   = AST.par(me, 'Set_Alias')
+                local spawn = AST.par(me, 'Abs_Spawn_Pool')
+                if set then
+                    _,to = unpack(set)
+                elseif spawn then
+                    to = AST.asr(spawn,'', 3,'Loc')
+                else
+                    --return
+                end
+            end
+
+            local watch = AST.par(me, 'Watching')
+            local ok = false
+            while watch do
+                local awt = watch and AST.get(watch,'', 1,'Par_Or', 1,'Block', 1,'Stmts', 1,'Await_Int', 1,'')
+                                   or AST.get(watch,'', 1,'Par_Or', 1,'Block', 1,'Stmts', 1,'Set_Await_many',1,'Await_Int', 1,'')
+                if awt and awt.info.dcl==me.info.dcl_obj.orig then
+                    if to then
+                        -- watching.depth < to.dcl.blk.depth
+                        if to.info.dcl.blk.__adjs_2 then
+                            -- ok: allow mid destination binding even outliving source
+                            -- TODO: check it is not accessed outside the watching
+                            ok = true
+                        else
+                            ok = check_blk(to.info.dcl.blk, watch)
+                            ASR(ok, me, 'invalid binding : incompatible scopes')
+                        end
+                    else
+                        -- var&? Tx t = spawn Tx();
+                        -- watching t do
+                        --    spawn Ux(&t!.e);
+                        -- end
+                        ok = true   -- Ux is scoped inside watching
+                    end
+                    break
+                end
+                watch = AST.par(watch, 'Watching')
+            end
+            ASR(ok, me,
+                'invalid binding : unexpected source with `&?´ : destination may outlive source')
+        end
+    end,
+
+    Exp_call = function (me)
         local _,f,ps = unpack(me)
 
         -- ignore if "f" is "nohold" or "pure"
@@ -165,7 +231,7 @@ F = {
             then
                 local fin = AST.par(me, 'Finalize')
                 local ok = fin and (
-                            (AST.get(fin,'',1,'Stmt_Call',1,'')            == me) or
+                            (AST.get(fin,'',1,'Stmt_Call',1,'Exp_call')    == me) or
                             (AST.get(fin,'',1,'Set_Alias',1,'Exp_1&',2,'') == me) or
                             (AST.get(fin,'',1,'Set_Exp',1,'')              == me) )
 

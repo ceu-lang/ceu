@@ -49,7 +49,7 @@ Example:
 
 ```ceu
 vector[9] byte buf = [1,2,3];   // write access
-buf[$buf+1] = 4;                // write access
+buf = buf .. [4];               // write access
 escape buf[1];                  // read access (yields 2)
 ```
 
