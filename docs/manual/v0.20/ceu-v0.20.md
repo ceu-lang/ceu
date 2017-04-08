@@ -611,7 +611,7 @@ Example:
 
 ```ceu
 vector[9] byte buf = [1,2,3];   // write access
-buf[$buf+1] = 4;                // write access
+buf = buf .. [4];               // write access
 escape buf[1];                  // read access (yields 2)
 ```
 
@@ -1136,18 +1136,18 @@ Sources ::= ( Do
 
 Céu supports the following constructs as assignment sources:
 
-- [`do-end` blocks](#do-end-and-escape)
-- [external emits](#events_1)
-- [awaits](#await)
-- [watching statements](#watching)
-- [threads](#thread)
-- [lua states](#lua-state)
-- [lua statements](#lua-statement)
-- [code awaits](#code-invocation)
-- [code spawns](#code-invocation)
-- [vector constructors](../expressions/#constructor)
-- [data constructors](#data-constructor)
-- [expressions](../expressions/#locations-expressions)
+- [`do-end` block](#do-end-and-escape)
+- [external emit](#events_1)
+- [await](#await)
+- [watching statement](#watching)
+- [thread](#thread)
+- [lua state](#lua-state)
+- [lua statement](#lua-statement)
+- [code await](#code-invocation)
+- [code spawn](#code-invocation)
+- vector [length](../expressions/#length) & [constructor](../expressions/#constructor)
+- [data constructor](#data-constructor)
+- [expression](../expressions/#locations-expressions)
 - the neutral identifier `_`
 
 The anonymous identifier makes the assignment innocuous.
@@ -2995,6 +2995,17 @@ Vec_Max ::= `$$´ Loc
 ```
 
 `TODO: max`
+
+The vector length can also be assigned:
+
+```ceu
+vector[] int vec = [ 1, 2, 3 ];
+$vec = 1;
+```
+
+The new length must be smaller or equal to the current length, otherwise the
+assignment raises a runtime error.
+The space for [dynamic vectors](../statements/#dimension) shrinks automatically.
 
 #### Constructor
 

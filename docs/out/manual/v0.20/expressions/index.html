@@ -386,6 +386,14 @@ Vec_Max ::= `$$´ Loc
 </code></pre>
 
 <p><code>TODO: max</code></p>
+<p>The vector length can also be assigned:</p>
+<pre><code class="ceu">vector[] int vec = [ 1, 2, 3 ];
+$vec = 1;
+</code></pre>
+
+<p>The new length must be smaller or equal to the current length, otherwise the
+assignment raises a runtime error.
+The space for <a href="./../statements/#dimension">dynamic vectors</a> shrinks automatically.</p>
 <h3 id="constructor">Constructor<a class="headerlink" href="#constructor" title="Permanent link">&para;</a></h3>
 <p>Vector constructors are only valid in <a href="./../statements/#assignments">assignments</a>:</p>
 <pre><code class="ceu">Vec_Cons ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´) }
@@ -410,7 +418,7 @@ Colon ::= Loc `:´ (ID_int|ID_nat)
 <!--
 Example:
 
-wzxhzdk:18
+wzxhzdk:19
 
 -->
               

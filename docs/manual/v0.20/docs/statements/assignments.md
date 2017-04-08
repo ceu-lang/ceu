@@ -23,18 +23,18 @@ Sources ::= ( Do
 
 Céu supports the following constructs as assignment sources:
 
-- [`do-end` blocks](#do-end-and-escape)
-- [external emits](#events_1)
-- [awaits](#await)
-- [watching statements](#watching)
-- [threads](#thread)
-- [lua states](#lua-state)
-- [lua statements](#lua-statement)
-- [code awaits](#code-invocation)
-- [code spawns](#code-invocation)
-- [vector constructors](../expressions/#constructor)
-- [data constructors](#data-constructor)
-- [expressions](../expressions/#locations-expressions)
+- [`do-end` block](#do-end-and-escape)
+- [external emit](#events_1)
+- [await](#await)
+- [watching statement](#watching)
+- [thread](#thread)
+- [lua state](#lua-state)
+- [lua statement](#lua-statement)
+- [code await](#code-invocation)
+- [code spawn](#code-invocation)
+- vector [length](../expressions/#length) & [constructor](../expressions/#constructor)
+- [data constructor](#data-constructor)
+- [expression](../expressions/#locations-expressions)
 - the neutral identifier `_`
 
 The anonymous identifier makes the assignment innocuous.
