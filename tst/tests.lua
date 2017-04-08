@@ -9,41 +9,45 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
---
-    vector[] byte right1 = [] .. "pingus/player"
-                           .. (call Pingu_Get_Owner_Str(&pingu) as _char&&) // requires as _char&&
-                           .. "/walker/right";
+-- BUG #89
+Test { [[
+code/await Ff (void) -> (var& int x) -> FOREVER do
+    code/tight Gg (void) -> void;
+    call Gg();
 
---
-            if (call Get_Velocity().y > 5.0) then
+    var int y = 10;
+    x = &y;
 
---
-    var IPingu pingu = val IPingu(rect_, _, _);
-    pingu.direction = do
-        if direction_? then
-            escape direction_!;
-        else
-            escape {LEFT};
-        end
-    end;
+    code/tight Gg (void) -> void do
+        outer.x = 10;
+    end
 
-pause Ff;
-resume Ff;
-
-code/await Ff (var int x) -> int
-with
-do
-    await 1s;
-    escape x+10;
+    await FOREVER;
 end
+spawn Ff();
+escape 1;
+]],
+    run = 1,
+}
 
-var&? Ff f = spawn Ff();
-var int x1 = f!.x;
-var int x2 = f;
-escape x1+x2;
+-- BUG #89
+Test { [[
+code/await Ff (void) -> (var& int x) -> FOREVER do
+    code/tight Gg (void) -> void do
+        outer.x = 10;
+    end
+    call Gg();
 
-var/nohold int x;
-var/dynamic int x;
+    var int y = 10;
+    x = &y;
+    await FOREVER;
+end
+spawn Ff();
+escape 1;
+]],
+    --inits = 'line 1 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:3)',
+    run = 1,
+}
 
 -- BUG #96
 Test { [[
@@ -121,97 +125,19 @@ escape 1;
     run = 1,
 }
 
--- BUG #89
-Test { [[
-code/await Ff (void) -> (var& int x) -> FOREVER do
-    code/tight Gg (void) -> void;
-    call Gg();
-
-    var int y = 10;
-    x = &y;
-
-    code/tight Gg (void) -> void do
-        outer.x = 10;
-    end
-
-    await FOREVER;
-end
-spawn Ff();
-escape 1;
-]],
-    run = 1,
-}
-
--- BUG #89
-Test { [[
-code/await Ff (void) -> (var& int x) -> FOREVER do
-    code/tight Gg (void) -> void do
-        outer.x = 10;
-    end
-    call Gg();
-
-    var int y = 10;
-    x = &y;
-    await FOREVER;
-end
-spawn Ff();
-escape 1;
-]],
-    --inits = 'line 1 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:3)',
-    run = 1,
-}
-
+-- BUG #99
 Test { [=[
-code/await Ff (void) -> int do
-    [[ G = 111 ]];
-    await async/thread do end;
-    var int ret = [[G]];
-    escape ret;
-end
-var int ret = 0;
-par/and do
-    lua[] do
-        var int v = await Ff();
-        ret = ret + v;
-    end
-with
-    lua[] do
-        var int v = await Ff();
-        ret = ret + v;
-    end
-end
-escape ret;
-]=],
-    _opts = { ceu_features_lua='true' , ceu_features_thread='true' },
-    run = 222,
-}
-do return end
-
-Test { [=[
-vector[] byte xxx = [1];
-var int ret = [[ @xxx[0] ]];
-escape ret;
+var int xxx = 0;
+[[
+    @xxx = 123;
+]]
+escape xxx;
 ]=],
     _opts = { ceu_features_lua='true' },
-    run = 1,
-}
-
-Test { [[
-var int ret = 0;
-var int i;
-loop i do
-    ret = 1;
-    do finalize with
-        ret = ret * 2;
-    end
-    break;
-end
-ret = ret + 1;
-escape ret;
-]],
     run = 3,
 }
 
+-- BUG #100
 Test { [=[
 event void a;
 var int ret = 0;
@@ -239,20 +165,87 @@ escape ret;
     run = 20;
 }
 
+-- BUG #100
+Test { [=[
+native/pre do
+    int V = 0;
+end
+
+code/await UV_FS_Write2 (void) -> void do
+    await 1s;
+    {V++;}
+end
+
+do
+    await UV_FS_Write2();
+end
+par/or do
+    await FOREVER;
+with
+    await UV_FS_Write2();
+end
+
+escape {V};
+]=],
+    wrn = true,
+    run = {['~>2s']=2},
+}
+
+-- BUG #101
 Test { [[
-    do/_
-        var int flags = _O_CREAT|_O_WRONLY|_O_TRUNC;
-        var _mode_t mode = _S_IRUSR|_S_IWUSR|_S_IRGRP|_S_IWGRP|_S_IROTH;
-        var&? UV_FS_Open f = spawn UV_FS_Open(&&path[0], flags, mode);
-        await f!.file.ok;
-        if f!.file.fd < 0 then
-            escape f!.file.fd;
-        end
+code/await Ff (void) -> (event void ok) -> void do
+    await async do end;
+    if false then
+        emit ok;
     end
+end
+
+var&? Ff f = spawn Ff();
+await f!.ok;
+
+escape 1;
 ]],
-    todo = 'on error, await never awakes // 1. force watching // 2. raise exception',
+    --todo = 'on error, await never awakes // 1. force watching // 2. raise exception',
     run = 1,
 }
+
+-------------------------------------------------------------------------------
+
+--
+    vector[] byte right1 = [] .. "pingus/player"
+                           .. (call Pingu_Get_Owner_Str(&pingu) as _char&&) // requires as _char&&
+                           .. "/walker/right";
+
+--
+            if (call Get_Velocity().y > 5.0) then
+
+--
+    var IPingu pingu = val IPingu(rect_, _, _);
+    pingu.direction = do
+        if direction_? then
+            escape direction_!;
+        else
+            escape {LEFT};
+        end
+    end;
+
+pause Ff;
+resume Ff;
+
+code/await Ff (var int x) -> int
+with
+do
+    await 1s;
+    escape x+10;
+end
+
+var&? Ff f = spawn Ff();
+var int x1 = f!.x;
+var int x2 = f;
+escape x1+x2;
+
+var/nohold int x;
+var/dynamic int x;
 
 do return end -- OK
 --]=====]
@@ -20097,6 +20090,22 @@ var& _void tcp = &_alloc()
 escape 0;
 ]],
     run = '8] runtime error: call failed',
+}
+
+Test { [[
+var int ret = 0;
+var int i;
+loop i do
+    ret = 1;
+    do finalize with
+        ret = ret * 2;
+    end
+    break;
+end
+ret = ret + 1;
+escape ret;
+]],
+    run = 3,
 }
 
 --<<< FINALLY / FINALIZE
@@ -42862,6 +42871,27 @@ escape v_ceu;
     run = 90,
 }
 
+Test { [=[
+vector[] byte vec = [].."123";
+[[
+    str = @vec
+]]
+var int len = [[ #str ]];
+escape len;
+]=],
+    _opts = { ceu_features_lua='true' },
+    run = 3,
+}
+
+Test { [=[
+vector[] byte xxx = [1];
+var int ret = [[ @xxx[0] ]];
+escape ret;
+]=],
+    _opts = { ceu_features_lua='true' },
+    run = 1,
+}
+
 --<<< LUA
 
 -- TODO: SKIP-05
@@ -49514,6 +49544,30 @@ escape 1;
     props_ = 'line 1 : `async/thread´ support is disabled',
 }
 
+Test { [=[
+code/await Ff (void) -> int do
+    [[ G = 111 ]];
+    await async/thread do end;
+    var int ret = [[G]];
+    escape ret;
+end
+var int ret = 0;
+par/and do
+    lua[] do
+        var int v = await Ff();
+        ret = ret + v;
+    end
+with
+    lua[] do
+        var int v = await Ff();
+        ret = ret + v;
+    end
+end
+escape ret;
+]=],
+    _opts = { ceu_features_lua='true' , ceu_features_thread='true' },
+    run = 222,
+}
 --<<< CEU_FEATURES_*
 
 do return end
