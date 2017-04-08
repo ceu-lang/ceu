@@ -48,10 +48,6 @@ local T = {
     },
 
     {
-        '`&%?´ or `&´ or `%(´ or primitive type or abstraction identifier or native identifier',
-        'type'
-    },
-    {
         'primitive type or abstraction identifier or native identifier',
         'type'
     },
@@ -69,10 +65,6 @@ local T = {
         '`end´'
     },
 
-    {
-        '`vector´ or `pool´ or `event´ or `dynamic´ or `var´',
-        '`vector´ or `pool´ or `event´ or `var´',
-    },
     {
         ' or `/dynamic´ or `/static´ or `/recursive´',
         '',
