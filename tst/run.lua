@@ -610,6 +610,15 @@ stats = {
 # results
 
 stats = {
+    count  = 3195,
+    trails = 5922,
+    bytes  = 58066656,
+    bcasts = 866575,
+    visits = 2177461,
+}
+(./run.lua: 669.16s 40636k)
+
+stats = {
     count  = 2856,
     trails = 5388,
     bytes  = 44183320,

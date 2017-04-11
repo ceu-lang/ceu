@@ -177,10 +177,10 @@ enum {
 
     /* emitable */
     CEU_INPUT__CLEAR,           /* 5 */
-    CEU_INPUT__CODE_TERMINATED,
     CEU_INPUT__PAUSE,
     CEU_INPUT__RESUME,
 CEU_INPUT__SEQ,
+    CEU_INPUT__CODE_TERMINATED,
     CEU_INPUT__ASYNC,
     CEU_INPUT__THREAD,
     CEU_INPUT__WCLOCK,
@@ -721,9 +721,7 @@ ceu_dbg_assert(0);
                 /* FINALIZE awakes now on "mark" */
                 ceu_lbl(occ, &_stk, range.mem, trlK, trl->lbl);
             }
-        } else if (occ->evt.id==CEU_INPUT__CODE_TERMINATED &&
-            (trl->evt.id==CEU_INPUT__CODE_TERMINATED || trl->evt.id==CEU_INPUT__PROPAGATE_CODE))
-        {
+        } else if (occ->evt.id==CEU_INPUT__CODE_TERMINATED && trl->evt.id==CEU_INPUT__PROPAGATE_CODE) {
             if (trl->evt.mem == occ->evt.mem) {
                 goto _CEU_AWAKE_YES_;
             }
@@ -735,7 +733,7 @@ ceu_dbg_assert(0);
                 ((tceu_nseq)(occ->seq-CEU_APP.seq_base))) {
                 goto _CEU_AWAKE_NO_;
             }
-            if (trl->evt.id>CEU_EVENT__MIN) {
+            if (trl->evt.id>CEU_EVENT__MIN || trl->evt.id==CEU_INPUT__CODE_TERMINATED) {
                 if (trl->evt.mem == occ->evt.mem) {
                     goto _CEU_AWAKE_YES_;   /* internal event matches "mem" */
                 }

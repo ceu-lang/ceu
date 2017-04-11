@@ -243,6 +243,7 @@ if (]]..V(c)..[[) {
             HALT(me, {
                 { ['evt.id']  = 'CEU_INPUT__CODE_TERMINATED' },
                 { ['evt.mem'] = 'NULL' },   -- will be set on Set_Alias/Spawn
+                { seq = '(tceu_nseq)(CEU_APP.seq+1)' },
                 { lbl = me.lbl.id },
                 lbl = me.lbl.id,
                 exec = code,
@@ -1387,6 +1388,7 @@ if (]]..V(Loc)..[[ != NULL) {
             HALT(me, {
                 { ['evt.id']  = 'CEU_INPUT__CODE_TERMINATED' },
                 { ['evt.mem'] = '(tceu_code_mem*)'..V(Loc) },
+                { seq = '(tceu_nseq)(CEU_APP.seq+1)' },
                 { lbl = me.lbl_out.id },
                 lbl = me.lbl_out.id,
             })

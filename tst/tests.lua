@@ -9,6 +9,42 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+--
+    vector[] byte right1 = [] .. "pingus/player"
+                           .. (call Pingu_Get_Owner_Str(&pingu) as _char&&) // requires as _char&&
+                           .. "/walker/right";
+
+--
+            if (call Get_Velocity().y > 5.0) then
+
+--
+    var IPingu pingu = val IPingu(rect_, _, _);
+    pingu.direction = do
+        if direction_? then
+            escape direction_!;
+        else
+            escape {LEFT};
+        end
+    end;
+
+pause Ff;
+resume Ff;
+
+code/await Ff (var int x) -> int
+with
+do
+    await 1s;
+    escape x+10;
+end
+
+var&? Ff f = spawn Ff();
+var int x1 = f!.x;
+var int x2 = f;
+escape x1+x2;
+
+var/nohold int x;
+var/dynamic int x;
+
 -- BUG #89
 Test { [[
 code/await Ff (void) -> (var& int x) -> FOREVER do
@@ -137,60 +173,6 @@ escape xxx;
     run = 3,
 }
 
--- BUG #100
-Test { [=[
-event void a;
-var int ret = 0;
-
-spawn do
-    await async do end;
-    emit a;
-    ret = 10;
-    emit a;
-    ret = 20;
-end
-
-do
-    await a;
-end
-par/or do
-    await FOREVER;
-with
-    await a;
-end
-
-escape ret;
-]=],
-    wrn = true,
-    run = 20;
-}
-
--- BUG #100
-Test { [=[
-native/pre do
-    int V = 0;
-end
-
-code/await UV_FS_Write2 (void) -> void do
-    await 1s;
-    {V++;}
-end
-
-do
-    await UV_FS_Write2();
-end
-par/or do
-    await FOREVER;
-with
-    await UV_FS_Write2();
-end
-
-escape {V};
-]=],
-    wrn = true,
-    run = {['~>2s']=2},
-}
-
 -- BUG #101
 Test { [[
 code/await Ff (void) -> (event void ok) -> void do
@@ -210,42 +192,6 @@ escape 1;
 }
 
 -------------------------------------------------------------------------------
-
---
-    vector[] byte right1 = [] .. "pingus/player"
-                           .. (call Pingu_Get_Owner_Str(&pingu) as _char&&) // requires as _char&&
-                           .. "/walker/right";
-
---
-            if (call Get_Velocity().y > 5.0) then
-
---
-    var IPingu pingu = val IPingu(rect_, _, _);
-    pingu.direction = do
-        if direction_? then
-            escape direction_!;
-        else
-            escape {LEFT};
-        end
-    end;
-
-pause Ff;
-resume Ff;
-
-code/await Ff (var int x) -> int
-with
-do
-    await 1s;
-    escape x+10;
-end
-
-var&? Ff f = spawn Ff();
-var int x1 = f!.x;
-var int x2 = f;
-escape x1+x2;
-
-var/nohold int x;
-var/dynamic int x;
 
 do return end -- OK
 --]=====]
@@ -5106,77 +5052,6 @@ escape ret;
 }
 
 --<<< EVERY
-
--->>> LOCK
-
-Test { [[
-var Lock l1 = _;
-var int ret =
-    do
-        var int v = 0;
-        par do
-            watching 5s do
-                lock l1 do
-                    every 1s do
-                        v = v + 1;
-                    end
-                end
-            end
-        with
-            await l1.ok_unlocked;
-        with
-            native _ceu_dbg_assert;
-            _ceu_dbg_assert(l1.is_locked);
-            lock l1 do
-                escape v;
-            end
-        end
-    end;
-_ceu_dbg_assert(not l1.is_locked);
-escape ret;
-]],
-    run = { ['~>10s']=4 },
-}
-
-Test { [[
-native _ceu_dbg_assert;
-var Lock l1 = _;
-var int ret =
-    do
-        var int v = 0;
-        par do
-            watching 5s do
-                lock l1 do
-                    every 1s do
-                        v = v + 1;
-                    end
-                end
-            end
-        with
-            await l1.ok_unlocked;
-        with
-            _ceu_dbg_assert(l1.is_locked);
-            lock l1 do
-                watching 5s do
-                    every 1s do
-                        v = v + 1;
-                    end
-                end
-            end
-        with
-            _ceu_dbg_assert(l1.is_locked);
-            lock l1 do
-                escape v;
-            end
-        end
-    end;
-_ceu_dbg_assert(not l1.is_locked);
-escape ret;
-]],
-    run = { ['~>10s']=8 },
-}
-
---<<< LOCK
 
 Test { [[
 var int ret = 0;
@@ -20109,6 +19984,77 @@ escape ret;
 }
 
 --<<< FINALLY / FINALIZE
+
+-->>> LOCK
+
+Test { [[
+var Lock l1 = _;
+var int ret =
+    do
+        var int v = 0;
+        par do
+            watching 5s do
+                lock l1 do
+                    every 1s do
+                        v = v + 1;
+                    end
+                end
+            end
+        with
+            await l1.ok_unlocked;
+        with
+            native _ceu_dbg_assert;
+            _ceu_dbg_assert(l1.is_locked);
+            lock l1 do
+                escape v;
+            end
+        end
+    end;
+_ceu_dbg_assert(not l1.is_locked);
+escape ret;
+]],
+    run = { ['~>10s']=4 },
+}
+
+Test { [[
+native _ceu_dbg_assert;
+var Lock l1 = _;
+var int ret =
+    do
+        var int v = 0;
+        par do
+            watching 5s do
+                lock l1 do
+                    every 1s do
+                        v = v + 1;
+                    end
+                end
+            end
+        with
+            await l1.ok_unlocked;
+        with
+            _ceu_dbg_assert(l1.is_locked);
+            lock l1 do
+                watching 5s do
+                    every 1s do
+                        v = v + 1;
+                    end
+                end
+            end
+        with
+            _ceu_dbg_assert(l1.is_locked);
+            lock l1 do
+                escape v;
+            end
+        end
+    end;
+_ceu_dbg_assert(not l1.is_locked);
+escape ret;
+]],
+    run = { ['~>10s']=8 },
+}
+
+--<<< LOCK
 
 Test { [[
 native _t;
@@ -40125,6 +40071,60 @@ escape 10;
     run = 10,
 }
 --<< C FIELDS / DIRECT ACCESS / TCEU_MEM
+
+-- BUG #100
+Test { [=[
+event void a;
+var int ret = 0;
+
+spawn do
+    await async do end;
+    ret = 10;
+    emit a;
+    ret = 20;
+    emit a;
+end
+
+do
+    await a;
+end
+par/or do
+    await FOREVER;
+with
+    await a;
+end
+
+escape ret;
+]=],
+    wrn = true,
+    run = 20;
+}
+
+-- BUG #100
+Test { [=[
+native/pre do
+    int V = 0;
+end
+
+code/await UV_FS_Write2 (void) -> void do
+    await 1s;
+    {V++;}
+end
+
+do
+    await UV_FS_Write2();
+end
+par/or do
+    await FOREVER;
+with
+    await UV_FS_Write2();
+end
+
+escape {V};
+]=],
+    wrn = true,
+    run = {['~>2s']=2},
+}
 
 --<<< CODE / AWAIT / FUNCTIONS
 
