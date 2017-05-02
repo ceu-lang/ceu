@@ -193,8 +193,67 @@ escape 1;
 
 -------------------------------------------------------------------------------
 
-do return end -- OK
 --]=====]
+Test { [=[
+var int len = [[ string.len('@@ceu-lang.org') ]];
+escape len;
+]=],
+    run = 13,
+    _opts = { ceu_features_lua='true' },
+}
+
+Test { [=[
+var bool ok = { '@@' == 64 } as bool;
+escape ok as int;
+]=],
+    run = 1,
+}
+
+Test { [[
+native _f;
+native/plain _u8;
+vector[2] _u8 vec = _;
+do
+    _f(&&vec[0]);
+finalize (vec) with
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+event (void) e;                                                                 
+var int i = 0;                                                                  
+loop do                                                                         
+   par/and do                                                                   
+        await e;                                                                
+        i = i + 1;                                                              
+   with                                                                         
+        emit e;                                                                 
+   end                                                                          
+end                                                                             
+escape 0;                                                                       
+]],
+    run = 1,
+}
+
+Test { [[
+loop do
+    watching 2s do
+        if false then
+            continue;
+        end
+    end
+    break;
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+--do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested

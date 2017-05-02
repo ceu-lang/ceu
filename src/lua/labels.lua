@@ -53,6 +53,7 @@ F = {
     Loop = function (me)
         me.lbl_clr = new{'Loop__CLR'}
         me.lbl_cnt = new{'Loop_Continue__CNT'}
+        me.lbl_cnt_clr = new{'Loop_Continue__CLR'}
         me.lbl_out = new{'Loop_Break__OUT'}
         if AST.par(me,'Async') then
             me.lbl_asy = new{'Loop_Async__CNT'}

@@ -44,13 +44,13 @@ local function CASE (me, lbl)
     end
 end
 
-local function CLEAR (me)
+local function CLEAR (me, lbl)
     LINE(me, [[
 {
     ceu_stack_clear(_ceu_stk, _ceu_mem,
                     ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
 #ifdef CEU_FEATURES_LONGJMP
-    CEU_LONGJMP_SET(_ceu_stk,]]..me.lbl_clr.id..[[)
+    CEU_LONGJMP_SET(_ceu_stk,]]..(lbl and lbl.id or me.lbl_clr.id)..[[)
 #endif
     tceu_evt_range __ceu_range = { _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[ };
     tceu_evt_occ __ceu_occ = { {CEU_INPUT__CLEAR,{NULL}}, (tceu_nseq)(CEU_APP.seq+1),
@@ -222,10 +222,16 @@ if (]]..V(c)..[[) {
     end,
 
     Block = function (me)
+        LINE(me, [[
+{
+]])
         CONC_ALL(me)
         if me.needs_clear then
             CLEAR(me)
         end
+        LINE(me, [[
+}
+]])
     end,
 
     Var = function (me, base)
@@ -775,7 +781,7 @@ while (1) {
         CASE(me, me.lbl_cnt)
 
         if me.has_continue and me.trails_n>1 then
-            CLEAR(me)
+            CLEAR(me, me.lbl_cnt_clr)
         end
 
         assert(body.trails[1]==me.trails[1] and body.trails[2]==me.trails[2])
