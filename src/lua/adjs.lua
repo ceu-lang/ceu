@@ -685,7 +685,7 @@ error'TODO: luacov never executes this?'
         for _, v in ipairs(me) do
             if type(v) == 'table' then
                 params[#params+1] = v
-                code[#code+1] = '_ceu_'..#params
+                code[#code+1] = '_ceu_'..#params..' '
                 names[#names+1] = code[#code]
             else
                 code[#code+1] = v;
@@ -697,15 +697,15 @@ error'TODO: luacov never executes this?'
         -- me.lua:    code as string
 
         if AST.par(me,'Set_Lua') or AST.par(me,'Set_Vec') then
-           table.insert(code, 1, 'return')
+           table.insert(code, 1, 'return ')
         end
 
         me.params = params
         if #params == 0 then
-            me.lua = table.concat(code,' ')
+            me.lua = table.concat(code,'')
         else
             me.lua = table.concat(names,', ')..' = ...\n'..
-                     table.concat(code,' ')
+                     table.concat(code,'')
         end
 
         me.tag = 'Lua'

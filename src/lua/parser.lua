@@ -517,8 +517,9 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , __luacmp = m.Cmt(V'__luacl' * m.Cb'lua',
                     function (s,i,a,b) return a == b end)
 
-    , __exp = P'@' * KK'(' * V'__Exp' * KK')'
-            + P'@' * V'__Exp'
+    , __exp = (P'@'-'@@') * KK'(' * V'__Exp' * KK')'
+            + (P'@'-'@@') * V'__Exp'
+            + m.Cs(P'@@'/'@')
 
 -- VARS, VECTORS, POOLS, VTS, EXTS
 
