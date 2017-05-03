@@ -1767,6 +1767,7 @@ if (lua_isnumber(]]..LUA(me)..[[,-1)) {
 ceu_dbg_assert(]]..CUR('__lua_'..n)..[[ != NULL);
 luaL_openlibs(]]..CUR('__lua_'..n)..[[);
 lua_atpanic(]]..CUR('__lua_'..n)..[[, ceu_lua_atpanic);
+ceu_lua_createargtable(]]..CUR('__lua_'..n)..[[, CEU_APP.argv, CEU_APP.argc, CEU_APP.argc);
 ]])
     end,
     Lua_Do_Close = function (me)

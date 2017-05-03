@@ -44,10 +44,10 @@ typedef === TCEU_NTRL === tceu_ntrl;
 typedef === TCEU_NLBL === tceu_nlbl;
 
 #define CEU_API
-CEU_API void ceu_start (void);
+CEU_API void ceu_start (int argc, char* argv[]);
 CEU_API void ceu_stop  (void);
 CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params);
-CEU_API int  ceu_loop  (void);
+CEU_API int  ceu_loop  (int argc, char* argv[]);
 
 struct tceu_stk;
 struct tceu_code_mem;
@@ -254,6 +254,9 @@ typedef struct tceu_jmp {
 } tceu_jmp;
 
 typedef struct tceu_app {
+    int    argc;
+    char** argv;
+
     bool end_ok;
     int  end_val;
 
@@ -473,6 +476,19 @@ int ceu_lua_atpanic (lua_State* lua) {
     ceu_callback_assert_msg(0, msg);
     return 0;
 }
+
+static void ceu_lua_createargtable (lua_State* lua, char** argv, int argc, int script) {
+    int i, narg;
+    if (script == argc) script = 0;  /* no script name? */
+    narg = argc - (script + 1);  /* number of positive indices */
+    lua_createtable(lua, narg, script + 1);
+    for (i = 0; i < argc; i++) {
+        lua_pushstring(lua, argv[i]);
+        lua_rawseti(lua, -2, i - script);
+    }
+    lua_setglobal(lua, "arg");
+}
+
 #endif
 
 /*****************************************************************************/
@@ -841,8 +857,11 @@ CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params)
     }
 }
 
-CEU_API void ceu_start (void) {
+CEU_API void ceu_start (int argc, char* argv[]) {
     ceu_callback_void_void(CEU_CALLBACK_START);
+
+    CEU_APP.argc     = argc;
+    CEU_APP.argv     = argv;
 
     CEU_APP.end_ok   = 0;
 
@@ -887,9 +906,9 @@ CEU_API void ceu_stop (void) {
 
 /*****************************************************************************/
 
-CEU_API int ceu_loop (void)
+CEU_API int ceu_loop (int argc, char* argv[])
 {
-    ceu_start();
+    ceu_start(argc, argv);
 
     while (!CEU_APP.end_ok) {
         ceu_callback_void_void(CEU_CALLBACK_STEP);
