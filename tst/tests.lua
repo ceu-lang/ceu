@@ -193,7 +193,6 @@ escape 1;
 
 -------------------------------------------------------------------------------
 
---]=====]
 Test { [=[
 var int len = [[ string.len('@@ceu-lang.org') ]];
 escape len;
@@ -254,6 +253,7 @@ escape 1;
 }
 
 --do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -3504,9 +3504,9 @@ Test { [[
 native/plain _xxx;
 native/pre do
     typedef int xxx;
-    ##define f(x) x
+    ##define ff(x) x
 end
-var _xxx x = {f}(1);
+var _xxx x = {ff}(1);
 escape x;
 ]],
     run = 1,
@@ -23968,7 +23968,6 @@ escape v.a + v.b;
 
 Test { [[
 native/pre do
-    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
     ##include <assert.h>
     typedef struct t {
         int a;
@@ -23976,7 +23975,7 @@ native/pre do
     } t;
 end
 native/pos do
-    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
         tceu_callback_ret ret;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             ret.is_handled = 0;
@@ -23991,7 +23990,10 @@ native/pos do
         }
         return ret;
     }
+    tceu_callback CB = { &CB_F, NULL };
 end
+{ ceu_callback_register(&CB); }
+
 native/plain _t;
 output _t&& A;
 output int B;
@@ -24008,7 +24010,6 @@ escape a + b;
 
 Test { [[
 native/pre do
-    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
     ##include <assert.h>
     typedef struct t {
         int a;
@@ -24016,7 +24017,7 @@ native/pre do
     } t;
 end
 native/pos do
-    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
         tceu_callback_ret ret;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             ret.is_handled = 0;
@@ -24031,7 +24032,9 @@ native/pos do
         }
         return ret;
     }
+    tceu_callback CB = { &CB_F, NULL };
 end
+{ ceu_callback_register(&CB); }
 native/plain _t;
 output _t A;
 output int B;
@@ -24152,8 +24155,7 @@ escape 1;
 
 Test { [[
 native/pos do
-    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
-    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
         tceu_callback_ret ret;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             ret.is_handled = 0;
@@ -24167,7 +24169,9 @@ native/pos do
         }
         return ret;
     }
+    tceu_callback CB = { &CB_F, NULL };
 end
+{ ceu_callback_register(&CB); }
 
 output (int&&,  int&&) RADIO_SEND;
 var int a=1; var int b=1;
@@ -24180,8 +24184,7 @@ escape a + b;
 
 Test { [[
 native/pos do
-    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
-    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
         tceu_callback_ret ret;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             ret.is_handled = 0;
@@ -24195,7 +24198,9 @@ native/pos do
         }
         return ret;
     }
+    tceu_callback CB = { &CB_F, NULL };
 end
+{ ceu_callback_register(&CB); }
 
 output (int&&,  int&&) RADIO_SEND;
 var int a=1; var int b=1;
@@ -24530,8 +24535,7 @@ escape ret;
 
 Test { [[
 native/pos do
-    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
-    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
         tceu_callback_ret ret;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             ret.is_handled = 0;
@@ -24541,7 +24545,9 @@ native/pos do
         }
         return ret;
     }
+    tceu_callback CB = { &CB_F, NULL };
 end
+{ ceu_callback_register(&CB); }
 
 output void Z;
 var int ret = (emit Z);
@@ -24552,8 +24558,7 @@ escape ret;
 
 Test { [[
 native/pos do
-    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
-    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
         tceu_callback_ret ret;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             ret.is_handled = 0;
@@ -24563,7 +24568,9 @@ native/pos do
         }
         return ret;
     }
+    tceu_callback CB = { &CB_F, NULL };
 end
+{ ceu_callback_register(&CB); }
 
 output void Z;
 var int ret = (emit Z);
@@ -48178,8 +48185,7 @@ escape 1;
 Test { [[
 native/pre do
     int V = 1;
-    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
-    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
         tceu_callback_ret ret = {.is_handled=1};
         int* args = (int*) p2.ptr;
         switch (cmd) {
@@ -48194,7 +48200,9 @@ native/pre do
         }
         return ret;
     }
+    tceu_callback CB = { &CB_F, NULL };
 end
+{ ceu_callback_register(&CB); }
 par/or do
 do
     spawn async/isr [3,4] do
@@ -48213,8 +48221,7 @@ escape _V;
 Test { [[
 native/pre do
     int V = 1;
-    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
-    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
         tceu_callback_ret ret = {.is_handled=1};
         int* args = (int*) p2.ptr;
         switch (cmd) {
@@ -48229,7 +48236,9 @@ native/pre do
         }
         return ret;
     }
+    tceu_callback CB = { &CB_F, NULL };
 end
+{ ceu_callback_register(&CB); }
 par/or do
     do
         spawn async/isr [3] do
@@ -48693,7 +48702,6 @@ escape 1;
 Test { [[
 native/pre do
     int V = 0;
-    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
     tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
         tceu_callback_ret ret = {.is_handled=1};
         int* args = (int*) p2.ptr;
@@ -48709,7 +48717,9 @@ native/pre do
         }
         return ret;
     }
+    tceu_callback CB_ = { &CB, NULL };
 end
+{ ceu_callback_register(&CB_); }
 native _ceu_dbg_assert;
 native _V;
 par/or do

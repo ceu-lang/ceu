@@ -100,6 +100,7 @@ PAK = {
     ceu_git = ']=]..CEU_GIT..[=[',
     files = {
         ceu_c =
+            [====[]=]..'\n'..assert(io.open'../c/ceu_callback.c'):read'*a'..[=[]====]..
             [====[]=]..'\n'..assert(io.open'../c/ceu_vector.c'):read'*a'..[=[]====]..
             [====[]=]..'\n'..assert(io.open'../c/ceu_pool.c'):read'*a'..[=[]====]..
             [====[]=]..'\n'..assert(io.open'../c/ceu.c'):read'*a'..[=[]====],

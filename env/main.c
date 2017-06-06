@@ -1,15 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+tceu_callback_ret ceu_callback_ceu (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
     tceu_callback_ret ret;
-
-#ifdef ceu_callback_env
-    ret = ceu_callback_env(cmd, p1, p2);
-    if (ret.is_handled) {
-        return ret;
-    }
-#endif
 
     switch (cmd) {
         case CEU_CALLBACK_WCLOCK_DT:
@@ -53,6 +46,7 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg
 #endif
             ret.is_handled = 1;
             ret.value.ptr = realloc(p1.ptr, p2.size);
+            break;
         default:
             ret.is_handled = 0;
     }
@@ -61,6 +55,7 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg
 
 int main (int argc, char* argv[])
 {
-    int ret = ceu_loop(argc, argv);
+    tceu_callback cb = { &ceu_callback_ceu, NULL };
+    int ret = ceu_loop(&cb, argc, argv);
     return ret;
 }

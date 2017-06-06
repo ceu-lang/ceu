@@ -44,10 +44,11 @@ typedef === TCEU_NTRL === tceu_ntrl;
 typedef === TCEU_NLBL === tceu_nlbl;
 
 #define CEU_API
-CEU_API void ceu_start (int argc, char* argv[]);
+CEU_API void ceu_start (tceu_callback* cb, int argc, char* argv[]);
 CEU_API void ceu_stop  (void);
 CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params);
-CEU_API int  ceu_loop  (int argc, char* argv[]);
+CEU_API int  ceu_loop  (tceu_callback* cb, int argc, char* argv[]);
+CEU_API void ceu_callback_register (struct tceu_callback* cb);
 
 struct tceu_stk;
 struct tceu_code_mem;
@@ -253,6 +254,8 @@ typedef struct tceu_jmp {
     tceu_ntrl      trl;
 } tceu_jmp;
 
+/*****************************************************************************/
+
 typedef struct tceu_app {
     int    argc;
     char** argv;
@@ -268,6 +271,9 @@ typedef struct tceu_app {
     /* SEQ */
     tceu_nseq seq;
     tceu_nseq seq_base;
+
+    /* CALLBACKS */
+    tceu_callback* cbs;
 
     /* ASYNC */
     bool async_pending;
@@ -286,7 +292,7 @@ typedef struct tceu_app {
     tceu_code_mem_ROOT root;
 } tceu_app;
 
-static tceu_app CEU_APP;
+CEU_API static tceu_app CEU_APP;
 
 #ifdef CEU_FEATURES_LONGJMP
 #define CEU_LONGJMP_SET(me,_lbl)                            \
@@ -490,6 +496,26 @@ static void ceu_lua_createargtable (lua_State* lua, char** argv, int argc, int s
 }
 
 #endif
+
+/*****************************************************************************/
+
+CEU_API void ceu_callback_register (tceu_callback* cb) {
+    cb->nxt = CEU_APP.cbs;
+    CEU_APP.cbs = cb;
+}
+
+static tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback* cur = CEU_APP.cbs;
+    while (cur) {
+        tceu_callback_ret ret = cur->f(cmd,p1,p2);
+        if (ret.is_handled) {
+            return ret;
+        }
+        cur = cur->nxt;
+    }
+    tceu_callback_ret ret = { .is_handled=0 };
+    return ret;
+}
 
 /*****************************************************************************/
 
@@ -857,7 +883,7 @@ CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params)
     }
 }
 
-CEU_API void ceu_start (int argc, char* argv[]) {
+CEU_API void ceu_start (tceu_callback* cb, int argc, char* argv[]) {
     ceu_callback_void_void(CEU_CALLBACK_START);
 
     CEU_APP.argc     = argc;
@@ -871,6 +897,8 @@ CEU_API void ceu_start (int argc, char* argv[]) {
 
     CEU_APP.seq      = 0;
     CEU_APP.seq_base = 0;
+
+    CEU_APP.cbs = cb;
 
     CEU_APP.async_pending = 0;
 
@@ -906,9 +934,9 @@ CEU_API void ceu_stop (void) {
 
 /*****************************************************************************/
 
-CEU_API int ceu_loop (int argc, char* argv[])
+CEU_API int ceu_loop (tceu_callback* cb, int argc, char* argv[])
 {
-    ceu_start(argc, argv);
+    ceu_start(cb, argc, argv);
 
     while (!CEU_APP.end_ok) {
         ceu_callback_void_void(CEU_CALLBACK_STEP);
