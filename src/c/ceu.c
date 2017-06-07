@@ -840,12 +840,17 @@ void ceu_input_one (tceu_nevt evt_id, void* evt_params, tceu_stk* stk)
 {
     CEU_APP.seq_base = CEU_APP.seq;
 
-    if (evt_id == CEU_INPUT__WCLOCK) {
-        CEU_APP.wclk_min_cmp = CEU_APP.wclk_min_set;    /* swap "cmp" to last "set" */
-        CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;     /* new "set" resets to inactive */
-        if (CEU_APP.wclk_min_cmp <= *((s32*)evt_params)) {
-            CEU_APP.wclk_late = *((s32*)evt_params) - CEU_APP.wclk_min_cmp;
-        }
+    switch (evt_id) {
+        case CEU_INPUT__WCLOCK:
+            CEU_APP.wclk_min_cmp = CEU_APP.wclk_min_set;    /* swap "cmp" to last "set" */
+            CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;     /* new "set" resets to inactive */
+            if (CEU_APP.wclk_min_cmp <= *((s32*)evt_params)) {
+                CEU_APP.wclk_late = *((s32*)evt_params) - CEU_APP.wclk_min_cmp;
+            }
+            break;
+        case CEU_INPUT__ASYNC:
+            CEU_APP.async_pending = 0;
+            break;
     }
 
 /* TODO: remove this extra bcast to reset seqs */
