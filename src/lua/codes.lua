@@ -103,6 +103,19 @@ function SET (me, to, fr, fr_ok, fr_ctx, to_ctx)
     local to_is_opt = TYPES.check(to.info.tp,'?')
     if to_is_opt then
         to_val = '('..to_val..'.value)'
+
+        if fr_is_opt then
+            LINE(me, [[
+]]..V(to)..[[.is_set = ]]..fr_val..[[.is_set;
+]])
+        else
+            LINE(me, [[
+]]..V(to)..[[.is_set = 1;
+]])
+        end
+    end
+    if fr_is_opt then
+        fr_val = '('..fr_val..'.value)'
     end
 
 -- TODO: unify-01
@@ -120,13 +133,14 @@ function SET (me, to, fr, fr_ok, fr_ctx, to_ctx)
             --  x = y;
             -- to
             --  x = Base(y)
-            local name = 'CEU_'..TYPES.toc(fr.info.tp)..'__TO__'..TYPES.toc(to_tp)
+            local fr_tp = TYPES.toc(TYPES.pop(fr.info.tp,'?'))
+            local name = 'CEU_'..fr_tp..'__TO__'..TYPES.toc(to_tp)
             fr_val = name..'('..fr_val..')'
 
             if not MEMS.datas.casts[name] then
                 MEMS.datas.casts[name] = true
                 MEMS.datas.casts[#MEMS.datas.casts+1] = [[
-]]..TYPES.toc(to_tp)..' '..name..[[ (]]..TYPES.toc(fr.info.tp)..[[ x)
+]]..TYPES.toc(to_tp)..' '..name..[[ (]]..fr_tp..[[ x)
 {
     return (*(]]..TYPES.toc(to_tp)..[[*)&x);
 }
@@ -135,20 +149,6 @@ function SET (me, to, fr, fr_ok, fr_ctx, to_ctx)
         end
     end
 
-    if to_is_opt then
-        if fr_is_opt then
-            LINE(me, [[
-]]..V(to)..[[.is_set = ]]..fr_val..[[.is_set;
-]])
-        else
-            LINE(me, [[
-]]..V(to)..[[.is_set = 1;
-]])
-        end
-    end
-    if fr_is_opt then
-        fr_val = '('..fr_val..'.value)'
-    end
     LINE(me, [[
 ]]..to_val..' = '..fr_val..[[;
 ]])

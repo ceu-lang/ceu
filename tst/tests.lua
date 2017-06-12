@@ -44253,6 +44253,47 @@ escape e.d1!.x;
     run = 10,
 }
 
+Test { [[
+data Dd with
+    var int v;
+end
+var Dd? d_ = val Dd(10);
+var Dd? d;
+d = d_;
+escape d!.v;
+]],
+    run = 10,
+}
+
+Test { [[
+code/await Ff (var int? v_) -> (var int? v) -> FOREVER do
+    v = v_;
+    await FOREVER;
+end
+var&? Ff f = spawn Ff(_);
+var int ret = f!.v? as int;
+f!.v = 10;
+escape ret + f!.v!;
+]],
+    run = 10,
+}
+
+Test { [[
+data Dd with
+    var int v;
+end
+code/await Ff (var Dd? d_) -> (var Dd? d) -> FOREVER do
+    d = d_;
+    await FOREVER;
+end
+var&? Ff f = spawn Ff(_);
+var int ret = f!.d? as int;
+f!.d = val Dd(10);
+escape ret + f!.d!.v;
+]],
+    run = 10,
+}
+
 --<< OPTION / DATA
 
 -->> DATA / HIER / ENUM
