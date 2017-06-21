@@ -592,7 +592,8 @@ for _, dcl in ipairs(MEMS.exts) do
     -- type
     local mem = 'typedef struct tceu_'..inout..'_'..dcl.id..' {\n'
     for i,Type in ipairs(Typelist) do
-        mem = mem..'    '..TYPES.toc(Type)..' _'..i..';\n'
+        local ptr = (dcl.are_aliases and dcl.are_aliases[i] and '*') or ''
+        mem = mem..'    '..TYPES.toc(Type)..ptr..' _'..i..';\n'
     end
     mem = mem..'} tceu_'..inout..'_'..dcl.id..';\n'
 

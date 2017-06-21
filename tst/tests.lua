@@ -252,42 +252,8 @@ escape 1;
     run = 1,
 }
 
---]=====]
-Test { [[
-native/pos do
-    static tceu_data_Dd DD = { 1 };
-end
-data Dd with
-    var int x;
-end
-output Dd O;
-var Dd d = _;
-emit O({DD} as Dd);
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-code/await Ff (void) -> FOREVER do
-    do finalize with
-        {printf("2\n");}
-    end
-    await FOREVER;
-end
-
-spawn Ff();
-watching 1s do
-    do finalize with
-        {printf("1\n");}
-    end
-end
-
-escape 0;
-]],
-    run = 1,
-}
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -23800,7 +23766,7 @@ Test { [[
 output xxx A;
 escape(1);
 ]],
-    parser = 'line 1 : after `output´ : expected `(´ or type',
+    parser = 'line 1 : after `output´ : expected `(´ or `&´ or type',
 }
 Test { [[
 native/pos do
@@ -23840,14 +23806,14 @@ output t A;
 emit A(1);
 escape(1);
 ]],
-    parser = 'after `output´ : expected `(´ or type',
+    parser = 'after `output´ : expected `(´ or `&´ or type',
 }
 Test { [[
 output t A;
 emit A(1);
 escape(1);
 ]],
-    parser = 'after `output´ : expected `(´ or type',
+    parser = 'after `output´ : expected `(´ or `&´ or type',
 }
 Test { [[
 native _t;
@@ -23915,6 +23881,49 @@ escape 1;
     wrn = true,
     run = 1,
     --env = "line 1 : invalid event type",
+}
+
+Test { [[
+native/pos do
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+        tceu_callback_ret ret;
+        if (cmd != CEU_CALLBACK_OUTPUT) {
+            ret.is_handled = 0;
+        } else {
+            ret.is_handled = 1;
+            if (p1.num == CEU_OUTPUT_O) {
+                *(*((int**)p2.ptr)) = 10;
+            } else {
+                *((int*)p2.ptr) = 5;
+            }
+        }
+        return ret;
+    }
+    tceu_callback CB = { &CB_F, NULL };
+end
+{ ceu_callback_register(&CB); }
+
+output &int O;
+var int xxx = _;
+emit O(&xxx);
+escape xxx;
+]],
+    run = 10,
+}
+
+Test { [[
+native/pos do
+    static tceu_data_Dd DD = { 1 };
+end
+data Dd with
+    var int x;
+end
+output Dd O;
+var Dd d = _;
+emit O({DD} as Dd);
+escape 1;
+]],
+    run = 1,
 }
 
 --<<< OUTPUT
@@ -24420,7 +24429,7 @@ Test { [[
 output Z  (var int)->int;
 escape call Z(1);
 ]],
-    parser = 'line 1 : after `output´ : expected `(´ or type',
+    parser = 'line 1 : after `output´ : expected `(´ or `&´ or type',
     --parser = 'line 2 : after `call´ : expected expression',
     --parser = 'line 2 : after `Z´ : expected `;´',
     --parser = 'line 2 : after `Z´ : expected `(´',

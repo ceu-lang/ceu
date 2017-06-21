@@ -787,7 +787,27 @@ error'TODO: luacov never executes this?'
     -- input void X -> input () X;
     Ext__PRE = 'Evt__PRE',
     Evt__PRE = function (me)
-        local _,Type = unpack(me)
+        local class,Type,x = unpack(me)
+        if class == 'output' then
+            me.are_aliases = {}
+            if Type and Type.tag=='_Typelist_amp' then
+                for i=#Type, 1, -2 do
+                    local is_alias,tp = Type[i-1], Type[i]
+                    ASR(is_alias==false or is_alias=='&')
+                    ASR(tp.tag == 'Type')
+                    table.remove(Type,i-1)
+                    table.insert(me.are_aliases, 1, is_alias)
+                end
+                Type.tag = '_Typelist'
+            else
+                ASR(Type==false or Type=='&')
+                ASR(x.tag=='Type')
+                me.are_aliases[1] = Type
+                table.remove(me, 2)
+                Type = x
+            end
+        end
+
         if Type.tag == 'Type' then
             AST.set(me, 2, node('_Typelist', me.ln, Type))
         end

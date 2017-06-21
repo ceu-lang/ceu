@@ -536,8 +536,10 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , _Pool_set = K'pool'   * OPT(CKK'&') * V'__Dim' * V'Type'             * V'__var_set'
     , _Evt_set  = K'event'  * OPT(CKK'&') * (PARENS(V'_Typelist')+V'Type') * V'__var_set'
 
-    , Ext       = (CK'input'+CK'output') * (PARENS(V'_Typelist')+V'Type') * V'__ID_ext'
-    , _Typelist = LIST(V'Type')
+    , Ext = CK'input'  * (PARENS(V'_Typelist')     + V'Type')             * V'__ID_ext'
+          + CK'output' * (PARENS(V'_Typelist_amp') + OPT(CKK'&')*V'Type') * V'__ID_ext'
+    , _Typelist     = LIST(V'Type')
+    , _Typelist_amp = LIST(OPT(CKK'&') * V'Type')
 
     , __Dcls    = V'_Var_set' + V'_Vec_set' + V'_Pool_set' + V'_Evt_set'
 -- AWAIT, EMIT

@@ -608,8 +608,13 @@ STMTS.F = {
         for i, e in ipairs(me) do
             -- ctx
 -- TODO: call/emit, argument
-            INFO.asr_tag(e, {'Val','Nat','Var'},
-                'invalid expression list : item #'..i)
+            if AST.par(me,'Exp_call') then
+                INFO.asr_tag(e, {'Val','Nat','Var'},
+                    'invalid expression list : item #'..i)
+            else
+                INFO.asr_tag(e, {'Val','Nat','Var','Alias'},
+                    'invalid expression list : item #'..i)
+            end
 
             -- info
             Typelist[i] = AST.copy(e.info.tp)
