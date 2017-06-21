@@ -528,15 +528,15 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
         end
 
         local ret do
-            if Type[1].tag=='ID_abs' and Type[1].dcl.tag=='Data' then
+            local base = (Type[1].tag=='ID_abs' and Type[1].dcl.tag=='Data')
+                            and DCLS.base(Type[1].dcl)
+            if base then
                 local ptr1,ptr2,ptr3 = '*', '*', '&'
                 if TYPES.check(Type,'&&') then
                     ptr1, ptr2, ptr3 = '', '', ''
                 elseif e.info.tag == 'Alias' then
                     ptr1, ptr2, ptr3 = '', '*', ''
                 end
-
-                local base = DCLS.base(Type[1].dcl)
                 ret = [[
 (]]..ptr1..[[(
 (]]..TYPES.toc(Type)..ptr2..[[)

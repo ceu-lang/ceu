@@ -154,11 +154,14 @@ function DCLS.is_super (super, sub)
 end
 
 function DCLS.base (data)
-    assert(data.hier)
-    if data.hier.up then
-        return DCLS.base(data.hier.up)
+    if data.hier then
+        if data.hier.up then
+            return DCLS.base(data.hier.up)
+        else
+            return data
+        end
     else
-        return data
+        return false
     end
 end
 

@@ -252,8 +252,42 @@ escape 1;
     run = 1,
 }
 
---do return end -- OK
 --]=====]
+Test { [[
+native/pos do
+    static tceu_data_Dd DD = { 1 };
+end
+data Dd with
+    var int x;
+end
+output Dd O;
+var Dd d = _;
+emit O({DD} as Dd);
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    do finalize with
+        {printf("2\n");}
+    end
+    await FOREVER;
+end
+
+spawn Ff();
+watching 1s do
+    do finalize with
+        {printf("1\n");}
+    end
+end
+
+escape 0;
+]],
+    run = 1,
+}
+do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -23964,6 +23998,48 @@ var _t v = { (struct t){1,2} };
 escape v.a + v.b;
 ]],
     run = 3,
+}
+
+Test { [[
+native/pre do
+    ##include <assert.h>
+    typedef struct t {
+        int a;
+        int b;
+    } t;
+end
+native/pos do
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+        tceu_callback_ret ret;
+        if (cmd != CEU_CALLBACK_OUTPUT) {
+            ret.is_handled = 0;
+        } else {
+            ret.is_handled = 1;
+            if (p1.num == CEU_OUTPUT_A) {
+                t* x = ((tceu_output_A*)p2.ptr)->_1;
+                ret.value.num = x->a + x->b;
+            } else {
+                ret.value.num = *((int*)p2.ptr);
+            }
+        }
+        return ret;
+    }
+    tceu_callback CB = { &CB_F, NULL };
+end
+{ ceu_callback_register(&CB); }
+
+native/plain _t;
+output _t&& A;
+output int B;
+var int a; var int  b;
+
+var _t v = { (struct t){1,-1} };
+a = emit A(&&v);
+b = emit B(5);
+escape a + b;
+]],
+    run = 5,
+    --parser = 'line 26 : after `=´ : expected expression',
 }
 
 Test { [[
