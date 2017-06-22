@@ -126,9 +126,9 @@ EXPS.F = {
         -- ctx
         if e.tag ~= 'Type' then
             if e.info.dcl.tag~='Evt' and TYPES.is_nat(TYPES.get(e.info.tp,1)) then
-                INFO.asr_tag(e, {'Val','Nat','Var','Vec'}, 'invalid operand to `sizeof´')
+                INFO.asr_tag(e, {'Val','Nat','Var','Vec'}, 'invalid operand to `sizeof`')
             else
-                INFO.asr_tag(e, {'Val','Nat','Var'}, 'invalid operand to `sizeof´')
+                INFO.asr_tag(e, {'Val','Nat','Var'}, 'invalid operand to `sizeof`')
             end
         end
 
@@ -162,11 +162,11 @@ EXPS.F = {
 
         if mods_dcl.dynamic then
             ASR(mods_call.dynamic or mods_call.static, me,
-                'invalid call : expected `/dynamic´ or `/static´ modifier')
+                'invalid call : expected `/dynamic` or `/static` modifier')
         else
             local mod = (mods_call.dynamic or mods_call.static)
             ASR(not mod, me, mod and
-                'invalid call : unexpected `/'..mod..'´ modifier')
+                'invalid call : unexpected `/'..mod..'` modifier')
         end
 
         -- ctx
@@ -176,7 +176,7 @@ EXPS.F = {
                                          ..' "'..(ID_abs.dcl.id or '')..'"')
         ASR(mods_dcl.tight, me,
                 'invalid call : '..
-                'expected `code/tight´ : got `code/await´ ('..ID_abs.dcl.ln[1]..':'..ID_abs.ln[2]..')')
+                'expected `code/tight` : got `code/await` ('..ID_abs.dcl.ln[1]..':'..ID_abs.ln[2]..')')
 
         -- info
         me.info = INFO.new(me, 'Val', nil,
@@ -194,7 +194,7 @@ EXPS.F = {
             assert(Loc.info.dcl)
             local alias = unpack(Loc.info.dcl)
             ASR(alias~='&?', me,
-                'invalid operand to `.´ : unexpected option alias')
+                'invalid operand to `.` : unexpected option alias')
         end
 
         local err_str
@@ -250,7 +250,7 @@ EXPS.F = {
                 end
             else
                 ASR(val.tag=='ID_any' or (not (val.info and val.info.tag=='Alias')), me,
-                    'invalid binding : argument #'..i..' : expected declaration with `&´')
+                    'invalid binding : argument #'..i..' : expected declaration with `&`')
             end
 
             if val.tag == 'NIL' then
@@ -288,10 +288,10 @@ error'TODO: remove below'
                         assert(not is_alias)
 
                         ASR(to_abs.n_vars == fr_abs.n_vars, me,
-                            err_str..' argument #'..i..' : `data´ copy : unmatching fields')
+                            err_str..' argument #'..i..' : `data` copy : unmatching fields')
 
                         --ASR(to_abs.weaker=='plain', me,
-                            --'invalid assignment : `data´ copy : expected plain `data´')
+                            --'invalid assignment : `data` copy : expected plain `data`')
                     end
                 end
             end
@@ -308,7 +308,7 @@ error'TODO: remove below'
 
         -- ctx
         -- all?
-        --INFO.asr_tag(e, {'Var','Evt','Pool','Nat','Vec'}, 'invalid operand to `'..op..'´')
+        --INFO.asr_tag(e, {'Var','Evt','Pool','Nat','Vec'}, 'invalid operand to `'..op..'`')
 
         local par = me.__par
         if par.tag == 'Exp_as' then
@@ -316,10 +316,10 @@ error'TODO: remove below'
             par = par.__par
         end
         ASR(par.tag=='Set_Alias' or par.tag=='List_Exp' or par.tag=='Abslist', me,
-            'invalid expression : unexpected context for operation `&´')
+            'invalid expression : unexpected context for operation `&`')
 
         if e.info.tag == 'Nat' then
-            ASR(e.tag == 'Exp_call', me, 'invalid operand to `'..op..'´ : expected native call')
+            ASR(e.tag == 'Exp_call', me, 'invalid operand to `'..op..'` : expected native call')
         end
 
         -- tp
@@ -336,11 +336,11 @@ error'TODO: remove below'
         local op,e = unpack(me)
 
         -- ctx
-        INFO.asr_tag(e, {'Nat','Var','Evt'}, 'invalid operand to `'..op..'´')
+        INFO.asr_tag(e, {'Nat','Var','Evt'}, 'invalid operand to `'..op..'`')
 
         -- tp
         ASR((e.info.dcl[1]=='&?') or TYPES.check(e.info.tp,'?'), me,
-            'invalid operand to `'..op..'´ : expected option type : got "'..
+            'invalid operand to `'..op..'` : expected option type : got "'..
             TYPES.tostring(e.info.tp)..'"')
 
         -- info
@@ -406,13 +406,13 @@ error'TODO: remove below'
             me.info.id = 'outer.'..member
         else
             ASR(TYPES.ID_plain(e.info.tp), me,
-                'invalid operand to `.´ : expected plain type : got "'..
+                'invalid operand to `.` : expected plain type : got "'..
                 TYPES.tostring(e.info.tp)..'"')
 
             if e.info.dcl then
                 local alias = unpack(e.info.dcl)
                 ASR(alias~='&?', me,
-                    'invalid operand to `.´ : unexpected option alias')
+                    'invalid operand to `.` : unexpected option alias')
 
                 local ID_abs = unpack(e.info.tp)
                 if ID_abs and (ID_abs.dcl.tag=='Data' or ID_abs.dcl.tag=='Code') then
@@ -443,7 +443,7 @@ error'TODO: remove below'
                 end
             else
                 ASR(TYPES.is_nat(e.info.tp), me,
-                    'invalid operand to `.´ : expected native or data type')
+                    'invalid operand to `.` : expected native or data type')
             end
         end
     end,
@@ -454,14 +454,14 @@ error'TODO: remove below'
         local op, e = unpack(me)
 
         -- ctx
-        INFO.asr_tag(e, {'Nat','Var','Pool','Vec','Val'}, 'invalid operand to `'..op..'´')
+        INFO.asr_tag(e, {'Nat','Var','Pool','Vec','Val'}, 'invalid operand to `'..op..'`')
 
         -- tp
         if e.info.tag == 'Val' then
             ASR(TYPES.is_nat(e.info.tp), me, 'expected native type')
         else
             ASR(not (e.info.dcl[1]=='&?' or TYPES.check(e.info.tp,'?')), me,
-                'invalid operand to `'..op..'´ : unexpected option type')
+                'invalid operand to `'..op..'` : unexpected option type')
         end
 
         -- info
@@ -474,7 +474,7 @@ error'TODO: remove below'
         local op,e = unpack(me)
 
         -- ctx
-        INFO.asr_tag(e, {'Nat','Var','Pool','Val'}, 'invalid operand to `'..op..'´')
+        INFO.asr_tag(e, {'Nat','Var','Pool','Val'}, 'invalid operand to `'..op..'`')
 --DBG('TODO: remove pool')
 
         -- tp
@@ -482,7 +482,7 @@ error'TODO: remove below'
         local is_ptr = TYPES.check(e.info.tp,'&&')
         local is_nat = TYPES.is_nat(e.info.tp)
         ASR(is_ptr or is_nat, me,
-            'invalid operand to `'..op..'´ : expected pointer type : got "'..
+            'invalid operand to `'..op..'` : expected pointer type : got "'..
             TYPES.tostring(e.info.tp)..'"')
 
         -- info
@@ -498,15 +498,15 @@ error'TODO: remove below'
         local op,e = unpack(me)
 
         -- ctx
-        INFO.asr_tag(e, {'Nat','Var','Evt'}, 'invalid operand to `'..op..'´')
+        INFO.asr_tag(e, {'Nat','Var','Evt'}, 'invalid operand to `'..op..'`')
         if e.info.dcl.tag == 'Evt' then
             ASR(e.info.dcl[1] == '&?', me,
-                'invalid operand to `?´ : unexpected context for event "'..e.info.dcl.id..'"')
+                'invalid operand to `?` : unexpected context for event "'..e.info.dcl.id..'"')
         end
 
         -- tp
         ASR((e.info.dcl[1]=='&?') or TYPES.check(e.info.tp,'?'), me,
-            'invalid operand to `'..op..'´ : expected option type')
+            'invalid operand to `'..op..'` : expected option type')
 
         -- info
         me.info = INFO.new(me, 'Val', nil, 'bool')
@@ -519,7 +519,7 @@ error'TODO: remove below'
         local op,vec = unpack(me)
 
         -- ctx
-        INFO.asr_tag(vec, {'Vec'}, 'invalid operand to `'..op..'´')
+        INFO.asr_tag(vec, {'Vec'}, 'invalid operand to `'..op..'`')
 
         -- tp
         -- any
@@ -536,11 +536,11 @@ error'TODO: remove below'
         local op, e = unpack(me)
 
         -- ctx
-        INFO.asr_tag(e, {'Val','Nat','Var'}, 'invalid operand to `'..op..'´')
+        INFO.asr_tag(e, {'Val','Nat','Var'}, 'invalid operand to `'..op..'`')
 
         -- tp
         ASR(TYPES.check(e.info.tp,'bool'), me,
-            'invalid operand to `'..op..'´ : expected boolean type')
+            'invalid operand to `'..op..'` : expected boolean type')
 
         -- info
         me.info = INFO.new(me, 'Val', nil, 'bool')
@@ -554,11 +554,11 @@ error'TODO: remove below'
         local op, e = unpack(me)
 
         -- ctx
-        INFO.asr_tag(e, {'Val','Nat','Var'}, 'invalid operand to `'..op..'´')
+        INFO.asr_tag(e, {'Val','Nat','Var'}, 'invalid operand to `'..op..'`')
 
         -- tp
         ASR(TYPES.is_num(e.info.tp), me,
-            'invalid operand to `'..op..'´ : expected numeric type')
+            'invalid operand to `'..op..'` : expected numeric type')
 
         -- info
         me.info = INFO.copy(e.info)
@@ -577,16 +577,16 @@ error'TODO: remove below'
         local op, e1, e2 = unpack(me)
 
         -- ctx
-        INFO.asr_tag(e1, {'Val','Nat','Var'}, 'invalid operand to `'..op..'´')
-        INFO.asr_tag(e2, {'Val','Nat','Var'}, 'invalid operand to `'..op..'´')
+        INFO.asr_tag(e1, {'Val','Nat','Var'}, 'invalid operand to `'..op..'`')
+        INFO.asr_tag(e2, {'Val','Nat','Var'}, 'invalid operand to `'..op..'`')
 
         -- tp
         ASR(TYPES.is_num(e1.info.tp) and TYPES.is_num(e2.info.tp), me,
-            'invalid operand to `'..op..'´ : expected numeric type')
+            'invalid operand to `'..op..'` : expected numeric type')
 
         -- info
         local max = TYPES.max(e1.info.tp, e2.info.tp)
-        ASR(max, me, 'invalid operands to `'..op..'´ : '..
+        ASR(max, me, 'invalid operands to `'..op..'` : '..
                         'incompatible numeric types : "'..
                         TYPES.tostring(e1.info.tp)..'" vs "'..
                         TYPES.tostring(e2.info.tp)..'"')
@@ -603,16 +603,16 @@ error'TODO: remove below'
         local op, e1, e2 = unpack(me)
 
         -- ctx
-        INFO.asr_tag(e1, {'Val','Nat','Var'}, 'invalid operand to `'..op..'´')
-        INFO.asr_tag(e2, {'Val','Nat','Var'}, 'invalid operand to `'..op..'´')
+        INFO.asr_tag(e1, {'Val','Nat','Var'}, 'invalid operand to `'..op..'`')
+        INFO.asr_tag(e2, {'Val','Nat','Var'}, 'invalid operand to `'..op..'`')
 
         -- tp
         ASR(TYPES.is_int(e1.info.tp) and TYPES.is_int(e2.info.tp), me,
-            'invalid operand to `'..op..'´ : expected integer type')
+            'invalid operand to `'..op..'` : expected integer type')
 
         -- info
         local max = TYPES.max(e1.info.tp, e2.info.tp)
-        ASR(max, me, 'invalid operands to `'..op..'´ : '..
+        ASR(max, me, 'invalid operands to `'..op..'` : '..
                         'incompatible integer types : "'..
                         TYPES.tostring(e1.info.tp)..'" vs "'..
                         TYPES.tostring(e2.info.tp)..'"')
@@ -623,11 +623,11 @@ error'TODO: remove below'
         local op, e = unpack(me)
 
         -- ctx
-        INFO.asr_tag(e, {'Val','Nat','Var'}, 'invalid operand to `'..op..'´')
+        INFO.asr_tag(e, {'Val','Nat','Var'}, 'invalid operand to `'..op..'`')
 
         -- tp
         ASR(TYPES.is_int(e.info.tp), me,
-            'invalid operand to `'..op..'´ : expected integer type')
+            'invalid operand to `'..op..'` : expected integer type')
 
         -- info
         me.info = INFO.copy(e.info)
@@ -644,12 +644,12 @@ error'TODO: remove below'
         local op, e1, e2 = unpack(me)
 
         -- ctx
-        INFO.asr_tag(e1, {'Val','Nat','Var'}, 'invalid operand to `'..op..'´')
-        INFO.asr_tag(e2, {'Val','Nat','Var'}, 'invalid operand to `'..op..'´')
+        INFO.asr_tag(e1, {'Val','Nat','Var'}, 'invalid operand to `'..op..'`')
+        INFO.asr_tag(e2, {'Val','Nat','Var'}, 'invalid operand to `'..op..'`')
 
         -- tp
         ASR(TYPES.is_num(e1.info.tp) and TYPES.is_num(e2.info.tp), me,
-            'invalid operand to `'..op..'´ : expected numeric type')
+            'invalid operand to `'..op..'` : expected numeric type')
 
         -- info
         me.info = INFO.new(me, 'Val', nil, 'bool')
@@ -663,8 +663,8 @@ error'TODO: remove below'
         local op, e1, e2 = unpack(me)
 
         -- ctx
-        INFO.asr_tag(e1, {'Val','Nat','Var'}, 'invalid operand to `'..op..'´')
-        INFO.asr_tag(e2, {'Val','Nat','Var'}, 'invalid operand to `'..op..'´')
+        INFO.asr_tag(e1, {'Val','Nat','Var'}, 'invalid operand to `'..op..'`')
+        INFO.asr_tag(e2, {'Val','Nat','Var'}, 'invalid operand to `'..op..'`')
 
         -- tp
 
@@ -672,11 +672,11 @@ error'TODO: remove below'
         local ID2 = TYPES.ID_plain(e2.info.tp)
         ASR( (not (ID1 and ID1.tag=='ID_abs')) and
              (not (ID2 and ID2.tag=='ID_abs')), me,
-            'invalid operands to `'..op..'´ : unexpected `data´ value' )
+            'invalid operands to `'..op..'` : unexpected `data` value' )
 
         ASR(TYPES.contains(e1.info.tp,e2.info.tp) or
             TYPES.contains(e2.info.tp,e1.info.tp), me,
-            'invalid operands to `'..op..'´ : '..
+            'invalid operands to `'..op..'` : '..
             'incompatible types : "'..
                 TYPES.tostring(e1.info.tp)..'" vs "'..
                 TYPES.tostring(e2.info.tp)..'"')
@@ -693,12 +693,12 @@ error'TODO: remove below'
         local op, e1, e2 = unpack(me)
 
         -- ctx
-        INFO.asr_tag(e1, {'Val','Nat','Var'}, 'invalid operand to `'..op..'´')
-        INFO.asr_tag(e2, {'Val','Nat','Var'}, 'invalid operand to `'..op..'´')
+        INFO.asr_tag(e1, {'Val','Nat','Var'}, 'invalid operand to `'..op..'`')
+        INFO.asr_tag(e2, {'Val','Nat','Var'}, 'invalid operand to `'..op..'`')
 
         -- tp
         ASR(TYPES.check(e1.info.tp,'bool') and TYPES.check(e2.info.tp,'bool'), me,
-            'invalid operand to `'..op..'´ : expected boolean type')
+            'invalid operand to `'..op..'` : expected boolean type')
 
         -- info
         me.info = INFO.new(me, 'Val', nil, 'bool')
@@ -712,11 +712,11 @@ error'TODO: remove below'
 
         -- ctx
         INFO.asr_tag(e, {'Alias','Val','Nat','Var','Pool'},
-                     'invalid operand to `'..op..'´')
+                     'invalid operand to `'..op..'`')
 
         -- tp
         ASR(not TYPES.check(e.info.tp,'?'), me,
-            'invalid operand to `'..op..'´ : unexpected option type : got "'..
+            'invalid operand to `'..op..'` : unexpected option type : got "'..
             TYPES.tostring(e.info.tp)..'"')
 
         local dcl = e.info.tp[1].dcl
@@ -725,14 +725,14 @@ error'TODO: remove below'
             if TYPES.check(Type,'int') then
                 -- OK: "d as int"
                 ASR(dcl.hier, me,
-                    'invalid operand to `'..op..'´ : expected `data´ type in a hierarchy : got "'..TYPES.tostring(e.info.tp)..'"')
+                    'invalid operand to `'..op..'` : expected `data` type in a hierarchy : got "'..TYPES.tostring(e.info.tp)..'"')
             else
                 -- NO: not alias
                 --  var Dx d = ...;
                 --  (d as Ex)...
                 local is_alias = unpack(dcl)
                 ASR(is_alias, me,
-                    'invalid operand to `'..op..'´ : unexpected plain `data´ : got "'..
+                    'invalid operand to `'..op..'` : unexpected plain `data` : got "'..
                     TYPES.tostring(e.info.tp)..'"')
 
                 -- NO:
@@ -747,7 +747,7 @@ error'TODO: remove below'
                                 (DCLS.is_super(cast,dcl) or     -- to dyn/call super
                                  DCLS.is_super(dcl,cast))
                     ASR(ok, me,
-                        'invalid operand to `'..op..'´ : unmatching `data´ abstractions')
+                        'invalid operand to `'..op..'` : unmatching `data` abstractions')
                 end
             end
         end
@@ -766,18 +766,18 @@ DBG'TODO: type annotation'
         local op,e,cast = unpack(me)
 
         -- ctx
-        INFO.asr_tag(e, {'Val','Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
+        INFO.asr_tag(e, {'Val','Nat','Var','Pool'}, 'invalid operand to `'..op..'`')
 
         -- tp
         local plain = TYPES.ID_plain(e.info.tp)
         ASR(plain and plain.dcl.tag=='Data', me,
-            'invalid operand to `'..op..'´ : expected plain `data´ type : got "'..TYPES.tostring(e.info.tp)..'"')
+            'invalid operand to `'..op..'` : expected plain `data` type : got "'..TYPES.tostring(e.info.tp)..'"')
         ASR(plain and plain.dcl.hier, me,
-            'invalid operand to `'..op..'´ : expected `data´ type in some hierarchy : got "'..TYPES.tostring(e.info.tp)..'"')
+            'invalid operand to `'..op..'` : expected `data` type in some hierarchy : got "'..TYPES.tostring(e.info.tp)..'"')
 
         cast = cast[1].dcl
         ASR(cast and cast.hier and DCLS.is_super(plain.dcl,cast), me,
-            'invalid operand to `'..op..'´ : unmatching `data´ abstractions')
+            'invalid operand to `'..op..'` : unmatching `data` abstractions')
 
         -- info
         me.info = INFO.new(me, 'Val', nil, 'bool')

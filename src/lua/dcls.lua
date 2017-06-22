@@ -20,7 +20,7 @@ local function iter_boundary (cur, id, can_cross)
                 if string.match(c.tag,'^.?Async') and string.sub(id,1,1)==string.upper(string.sub(id,1,1))
                     and string.sub(id,1,1) ~= '_'
                 then
-                    ASR(false, cur, 'abstraction inside `async´ : not implemented') -- TODO: ID_abs is ok
+                    ASR(false, cur, 'abstraction inside `async` : not implemented') -- TODO: ID_abs is ok
                     can_cross2 = true
                 end
 
@@ -53,7 +53,7 @@ function DCLS.outer (me)
     local async = AST.par(me,'_Async_Isr') or AST.par(me,'Async_Isr')
     local do_   = AST.iter(__do)()
     local code  = AST.par(me,'Code')
-    ASR(async or do_ or code, me, 'invalid `outer´')
+    ASR(async or do_ or code, me, 'invalid `outer`')
 
     local ret = async
     if do_ and ((not ret) or AST.depth(do_)>AST.depth(ret)) then
@@ -91,7 +91,7 @@ function DCLS.asr (me, blk_or_data, id, can_cross, err)
             ASR(false, me, 
                 'invalid member access : "'..
                 err..  '" has no member "'..id..'" : '..
-                '`data´ "'..data.id..
+                '`data` "'..data.id..
                 '" ('..data.ln[1]..':'..  data.ln[2]..')')
         else
             -- recursive use
@@ -165,7 +165,7 @@ function DCLS.base (data)
     end
 end
 
--- native declarations are allowed until `native/end´
+-- native declarations are allowed until `native/end`
 local native_end = false
 
 DCLS.F = {
@@ -270,7 +270,7 @@ DCLS.F = {
                 end
             end
             ASR(ok, tp,
-                'invalid declaration : unexpected context for `'..AST.tag2id[ID.dcl.tag]..'´ "'..
+                'invalid declaration : unexpected context for `'..AST.tag2id[ID.dcl.tag]..'` "'..
                     (ID.dcl.id or ID.dcl[2])..'"')
         end
     end,
@@ -287,7 +287,7 @@ DCLS.F = {
                 if alias == '&' then
                     local tp = AST.get(ID.dcl,'Code', 3,'Block', 1,'Stmts',
                                                       1,'Code_Ret', 1,'', 2,'Type')
-                    ASR(not tp, me, 'invalid declaration : `code/await´ must execute forever')
+                    ASR(not tp, me, 'invalid declaration : `code/await` must execute forever')
                 end
                 me.__dcls_code_alias = true
                 -- ok
@@ -305,13 +305,13 @@ DCLS.F = {
             -- NO: alias to pointer
             --  var& int&& x = ...;
             ASR(not TYPES.check(Type,'&&'), me,
-                'invalid declaration : unexpected `&&´ : cannot alias a pointer')
+                'invalid declaration : unexpected `&&` : cannot alias a pointer')
         end
 
         local ID_prim,mod = unpack(Type)
         if ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod) then
             ASR(alias, me,
-                'invalid declaration : variable cannot be of type `void´') 
+                'invalid declaration : variable cannot be of type `void`') 
         end
 
         local inits = DCLS.F.Var__POS__POS(me)
@@ -413,14 +413,14 @@ DCLS.F = {
         local code = AST.par(me, 'Code')
         if code and code[1].tight and (not is_alias) then
             ASR(false, me,
-                'invalid declaration : vector inside `code/tight´')
+                'invalid declaration : vector inside `code/tight`')
         end
 
         -- vector[] void vec;
         local ID_prim,mod = unpack(Type)
         if ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod) then
             ASR(false, me,
-                'invalid declaration : vector cannot be of type `void´') 
+                'invalid declaration : vector cannot be of type `void`') 
         end
     end,
 
@@ -443,7 +443,7 @@ DCLS.F = {
             ASR(id.dcl.tag=='Prim' or TYPES.is_nat_plain(Type), me,
                 'invalid event type : must be primitive')
             ASR(not mod, me,
-                mod and 'invalid event type : cannot use `'..mod..'´')
+                mod and 'invalid event type : cannot use `'..mod..'`')
         end
 
         dcls_new(AST.par(me,'Block'), me)
@@ -503,7 +503,7 @@ DCLS.F = {
             local _,_,_,dcl_mods = unpack(dcl)
             if dcl_mods and dcl_mods.dynamic then
                 ASR(mods.dynamic, me,
-                    'invalid `dynamic´ modifier : expected enclosing `code/dynamic´')
+                    'invalid `dynamic` modifier : expected enclosing `code/dynamic`')
                 local is_alias,Type = unpack(dcl)
                 dcl.id_dyn = '_'..i..'_'..dcl.tag..
                              '_'..(is_alias and 'y' or 'n')..
@@ -515,7 +515,7 @@ DCLS.F = {
 
         if mods.dynamic and #me>0 then
             ASR(me.ids_dyn ~= '', me,
-                'invalid `dynamic´ declaration : expected dynamic parameters')
+                'invalid `dynamic` declaration : expected dynamic parameters')
         end
     end,
 
@@ -561,7 +561,7 @@ DCLS.F = {
         local mods1,id,body1 = unpack(me)
 
         --ASR(not AST.par(me,'Code'), me,
-            --'invalid `code´ declaration : nesting is not allowed')
+            --'invalid `code` declaration : nesting is not allowed')
 
         me.depth = 0
         local par = AST.par(me, 'Code')
@@ -598,11 +598,11 @@ DCLS.F = {
         end
 
         if old then
-            ASR(old.tag == 'Code', me, 'invalid `code´ declaration')
+            ASR(old.tag == 'Code', me, 'invalid `code` declaration')
             local mods2,_,body2 = unpack(old)
             if me.is_impl then
                 ASR(not (old.is_impl or old.__impl), me,
-                    'invalid `code´ declaration : body for "'..id..'" already exists')
+                    'invalid `code` declaration : body for "'..id..'" already exists')
                 old.__impl = true
             end
 
@@ -627,7 +627,7 @@ DCLS.F = {
             end
 
             ASR(ok, me,
-                'invalid `code´ declaration : unmatching prototypes '..
+                'invalid `code` declaration : unmatching prototypes '..
                 '(vs. '..proto1.ln[1]..':'..proto2.ln[2]..')')
         else
             dcls_new(blk,me)
@@ -709,7 +709,7 @@ DCLS.F = {
                 local ID_prim,mod = unpack(Type)
                 if ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod) then
                     ASR(false, me,
-                        'invalid declaration : unexpected type `void´')
+                        'invalid declaration : unexpected type `void`')
                 end
             end
         end
@@ -933,12 +933,12 @@ DCLS.F = {
     Break = function (me)
         me.outer = DCLS.F.__outer(me)
         ASR(me.outer, me,
-            'invalid `break´ : expected matching enclosing `loop´')
+            'invalid `break` : expected matching enclosing `loop`')
     end,
     Continue = function (me)
         me.outer = DCLS.F.__outer(me)
         ASR(me.outer, me,
-            'invalid `continue´ : expected matching enclosing `loop´')
+            'invalid `continue` : expected matching enclosing `loop`')
     end,
 
     TODO__POS = function (me)
@@ -962,7 +962,7 @@ DCLS.F = {
                     end
                 end
             end
-            ASR(do_, esc, 'invalid `escape´ : no matching enclosing `do´')
+            ASR(do_, esc, 'invalid `escape` : no matching enclosing `do`')
             esc.outer = do_
             local _,outer,_,to = unpack(do_)
             local set = AST.get(me.__par,'Set_Exp') or AST.asr(me.__par,'Set_Alias')
@@ -970,12 +970,12 @@ DCLS.F = {
             local fr = unpack(set)
             if to and type(to)~='boolean' then
                 ASR(type(fr)~='boolean', me,
-                    'invalid `escape´ : expected expression')
+                    'invalid `escape` : expected expression')
                 to.__dcls_is_escape = true
                 return AST.copy(to)
             else
                 ASR(type(fr)=='boolean', me,
-                    'invalid `escape´ : unexpected expression')
+                    'invalid `escape` : unexpected expression')
                 set.tag = 'Nothing'
                 return node('Nothing', me.ln)
             end

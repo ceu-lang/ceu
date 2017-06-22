@@ -117,7 +117,7 @@ error'oi'
                     local _,Type,id = unpack(dcl)
                     local data = AST.asr(Type,'',1,'ID_abs')
                     ASR(data.dcl.hier and (not data.dcl.hier.up), me,
-                        'invalid `code´ declaration : missing base case')
+                        'invalid `code` declaration : missing base case')
 --[=[
                     me.mems.args = me.mems.args .. [[
 tceu_ndata _data_]]..i..[[;     /* force multimethod arg data id */
@@ -270,7 +270,7 @@ assert(me.hier)
     end,
 
     Var = function (me)
-        -- new `?´ type
+        -- new `?` type
         local alias,tp = unpack(me)
         if not (alias=='&?' or TYPES.check(tp,'?')) then
             return

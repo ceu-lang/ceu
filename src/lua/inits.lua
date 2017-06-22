@@ -2,7 +2,7 @@ local function err_inits (dcl, stmt, msg, endof)
     endof = (endof and 'end of ') or ''
     ASR(false, dcl,
         'uninitialized '..AST.tag2id[dcl.tag]..' "'..dcl.id..'" : '..
-        'reached '..(msg or (endof..'`'..AST.tag2id[stmt.tag]..'´'))..
+        'reached '..(msg or (endof..'`'..AST.tag2id[stmt.tag]..'`'))..
                 ' ('..stmt.ln[1]..':'..stmt.ln[2]..')')
 end
 
@@ -143,7 +143,7 @@ local function run_inits (par, i, Dcl, stop, dont_await)
                 return true, me
             else
                 -- don't allow only one because of alias binding (2x)
-                err_inits(Dcl, me, 'end of `'..AST.tag2id[me.tag]..'´')
+                err_inits(Dcl, me, 'end of `'..AST.tag2id[me.tag]..'`')
             end
         else
             return run_inits(me, #me, Dcl, stop, dont_await)
@@ -182,10 +182,10 @@ local function run_inits (par, i, Dcl, stop, dont_await)
                             local loop = AST.par(me, DCLS.F.__loop)
                             if loop then
                                 ASR(AST.depth(loop) < AST.depth(Dcl), me,
-                                    'invalid binding : crossing `loop´ ('..loop.ln[1]..':'..loop.ln[2]..')')
+                                    'invalid binding : crossing `loop` ('..loop.ln[1]..':'..loop.ln[2]..')')
                             end
                             ASR(me.tag=='Set_Alias' or me.tag=='Set_Abs_Spawn', me,
-                                'invalid binding : expected operator `&´ in the right side')
+                                'invalid binding : expected operator `&` in the right side')
                         else
                             --assert(me.tag ~= 'Set_Alias')
                         end

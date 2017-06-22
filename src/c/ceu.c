@@ -217,7 +217,7 @@ static int ceu_data_is (tceu_ndata* supers, tceu_ndata me, tceu_ndata cmp) {
 static void* ceu_data_as (tceu_ndata* supers, tceu_ndata* me, tceu_ndata cmp,
                           const char* file, u32 line) {
     ceu_callback_assert_msg_ex(ceu_data_is(supers, *me, cmp),
-                               "invalid cast `as´", file, line);
+                               "invalid cast `as`", file, line);
     return me;
 }
 

@@ -94,15 +94,15 @@ F = {
             if not ok then
                 local stmts = AST.get(me,1,'Stmts')
                 if stmts and AST.get(stmts,'', #stmts,'Escape') and stmts[#stmts-1]==me then
-                    ASR(false, me, 'invalid `escape´ : incompatible scopes')
+                    ASR(false, me, 'invalid `escape` : incompatible scopes')
                 elseif fr_data_ptr then
                     ASR(false, me,
-                        'invalid assignment : incompatible scopes : `data´ "'..
+                        'invalid assignment : incompatible scopes : `data` "'..
                             ID.dcl.id..'" is not plain')
                 else
                     local fin = AST.par(me, 'Finalize')
                     ASR(fin and fin[1]==me, me,
-                        'invalid pointer assignment : expected `finalize´ for variable "'..fr.info.id..'"')
+                        'invalid pointer assignment : expected `finalize` for variable "'..fr.info.id..'"')
                     assert(not fin.__fin_vars, 'TODO')
                     fin.__fin_vars = {
                         blk = assert(fr_blk),
@@ -123,12 +123,12 @@ F = {
         local _, call = unpack(fr)
         if (call.tag=='Exp_call' or call.tag=='Abs_Call') then
             ASR(to.info.dcl[1], me,
-                'invalid binding : expected option alias `&?´ as destination : got "'
+                'invalid binding : expected option alias `&?` as destination : got "'
                 ..TYPES.tostring(to.info.tp)..'"')
 
             local fin = AST.par(me, 'Finalize')
             ASR(fin, me,
-                'invalid binding : expected `finalize´')
+                'invalid binding : expected `finalize`')
 
             -- all finalization vars must be in the same block
             local blk = to.info.dcl_obj and to.info.dcl_obj.blk or
@@ -138,7 +138,7 @@ F = {
             if fin.__fin_vars then
                 --ASR(check_blk(blk,fin.__fin_vars.blk), me,
                 ASR(blk == fin.__fin_vars.blk, me,
-                    'invalid `finalize´ : incompatible scopes')
+                    'invalid `finalize` : incompatible scopes')
                 fin.__fin_vars[#fin.__fin_vars+1] = assert(to.info.dcl)
             else
                 fin.__fin_vars = { blk=blk, assert(to.info.dcl) }
@@ -211,7 +211,7 @@ F = {
                 watch = AST.par(watch, 'Watching')
             end
             ASR(ok, me,
-                'invalid binding : unexpected source with `&?´ : destination may outlive source')
+                'invalid binding : unexpected source with `&?` : destination may outlive source')
         end
     end,
 
@@ -239,13 +239,13 @@ F = {
                     -- x = &_f(...);
                     -- x = _f(...);
                 ASR(ok, me,
-                    'invalid `call´ : expected `finalize´ for variable "'..p.info.id..'"')
+                    'invalid `call` : expected `finalize` for variable "'..p.info.id..'"')
                 -- all finalization vars must be in the same block
                 local blk = p.info.dcl_obj and p.info.dcl_obj.blk or
                                 p.info.dcl.blk
                 if fin.__fin_vars then
                     ASR(blk == fin.__fin_vars.blk, me,
-                        'invalid `finalize´ : incompatible scopes')
+                        'invalid `finalize` : incompatible scopes')
                     fin.__fin_vars[#fin.__fin_vars+1] = assert(p.info.dcl)
                 else
                     fin.__fin_vars = { blk=blk, p.info.dcl }
@@ -264,7 +264,7 @@ F = {
         local Stmt, List_Loc = unpack(me)
         if not Stmt then
             ASR(List_Loc==false, me,
-                'invalid `finalize´ : unexpected `varlist´')
+                'invalid `finalize` : unexpected `varlist`')
             me.blk = AST.par(me, 'Block')
             return
         end
@@ -273,17 +273,17 @@ F = {
         -- NO: |do r=await... finalize...end|
         local tag_id = AST.tag2id[Stmt.tag]
         ASR(F.__stmts[Stmt.tag], Stmt,
-            'invalid `finalize´ : unexpected '..
-            (tag_id and '`'..tag_id..'´' or 'statement'))
+            'invalid `finalize` : unexpected '..
+            (tag_id and '`'..tag_id..'`' or 'statement'))
 
         ASR(me.__fin_vars, me,
-            'invalid `finalize´ : nothing to finalize')
+            'invalid `finalize` : nothing to finalize')
         ASR(List_Loc and List_Loc.tag=='List_Loc', List_Loc or me,
-            'invalid `finalize´ : expected `varlist´')
+            'invalid `finalize` : expected `varlist`')
 
         for _, v1 in ipairs(me.__fin_vars) do
             ASR(v1.tag=='Nat' or v1.tag=='Var', Stmt,
-                'invalid `finalize´ : expected identifier : got "'..v1.id..'"')
+                'invalid `finalize` : expected identifier : got "'..v1.id..'"')
 
             local ok = false
             for _, v2 in ipairs(List_Loc) do
@@ -294,7 +294,7 @@ F = {
                 end
             end
             ASR(ok, List_Loc,
-                'invalid `finalize´ : unmatching identifiers : expected "'..
+                'invalid `finalize` : unmatching identifiers : expected "'..
                 v1.id..'" (vs. '..Stmt.ln[1]..':'..Stmt.ln[2]..')')
         end
 

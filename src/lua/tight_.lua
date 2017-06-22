@@ -105,7 +105,7 @@ TIGHT_.F = {
         local in_async = AST.par(me,'Async') or AST.par(me,'Async_Thread')
                             or AST.par(me,'Async_Isr')
         WRN(in_async, me,
-            'invalid tight `loop´ : unbounded number of non-awaiting iterations')
+            'invalid tight `loop` : unbounded number of non-awaiting iterations')
     end,
 
     Loop = function (me)
@@ -146,21 +146,21 @@ G = {
         if impls[Code] or (not (Par and Par[1].tight)) then
             if mods_call.recursive then
                 ASR(mods_dcl.recursive, me,
-                    'invalid `call´ : unexpected `/recursive´')
+                    'invalid `call` : unexpected `/recursive`')
             else
                 ASR(not mods_dcl.recursive, me,
-                    'invalid `call´ : expected `/recursive´')
+                    'invalid `call` : expected `/recursive`')
             end
 
         -- calling unknown Code
         else
             -- Code must be '/recursive'
             ASR(mods_dcl.recursive, Code,
-                'invalid `code´ declaration : expected `/recursive´ : `call´ to unknown body ('..me.ln[1]..':'..me.ln[2]..')')
+                'invalid `code` declaration : expected `/recursive` : `call` to unknown body ('..me.ln[1]..':'..me.ln[2]..')')
 
             -- Call must be '/recursive'
             ASR(mods_call.recursive, me,
-                'invalid `call´ : expected `/recursive´ : `call´ to unknown body')
+                'invalid `call` : expected `/recursive` : `call` to unknown body')
         end
 
         -- calling from Par code with '/recursive'
@@ -168,7 +168,7 @@ G = {
             -- Par must be '/recursive'
             local mods_dcl = unpack(Par)
             ASR(mods_dcl.await or mods_dcl.recursive, Par,
-                'invalid `code´ declaration : expected `/recursive´ : nested `call/recursive´ ('..me.ln[1]..':'..me.ln[2]..')')
+                'invalid `code` declaration : expected `/recursive` : nested `call/recursive` ('..me.ln[1]..':'..me.ln[2]..')')
         end
     end,
 }

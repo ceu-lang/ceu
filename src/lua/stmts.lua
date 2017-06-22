@@ -9,7 +9,7 @@ STMTS.F = {
 
         local err do
             if AST.get(me.__par,'Stmts', me.__i+1,'Escape') then
-                err = 'invalid `escape´'
+                err = 'invalid `escape`'
             else
                 err = 'invalid assignment'
             end
@@ -24,14 +24,14 @@ STMTS.F = {
         INFO.asr_tag(to, {'Nat','Var','Pool'}, err)
         INFO.asr_tag(fr, {'Val','Nat','Var'}, err)
         ASR((not fr.info.dcl) or (fr.info.dcl[1]~='&?'), me,
-            err..' : expected operator `!´')
+            err..' : expected operator `!`')
 
         -- tp
         EXPS.check_tp(me, to.info.tp, fr.info.tp, err)
 
         if not TYPES.check(to.info.tp,'?') then
             ASR(not TYPES.check(fr.info.tp,'?'), me,
-                'invalid assignment : expected operator `!´')
+                'invalid assignment : expected operator `!`')
         end
 
         -- abs vs abs
@@ -45,10 +45,10 @@ STMTS.F = {
 
                 EXPS.check_tp(me, to.info.tp, fr.info.tp, 'invalid assignment')
                 ASR(to_abs.n_vars == fr_abs.n_vars, me,
-                    'invalid assignment : `data´ copy : unmatching fields')
+                    'invalid assignment : `data` copy : unmatching fields')
 
                 --ASR(to_abs.weaker=='plain', me,
-                    --'invalid assignment : `data´ copy : expected plain `data´')
+                    --'invalid assignment : `data` copy : expected plain `data`')
             end
         end
     end,
@@ -150,12 +150,12 @@ STMTS.F = {
         local Loc = AST.asr(to,'Loc')
         local ID_int = AST.get(Loc,'', 1,'ID_int')
         local op = unpack(Loc[1])
-        ASR(ID_int, me, 'invalid binding : unexpected context for operator `'..op..'´')
-        ASR(ID_int.dcl[1], me, 'invalid binding : expected declaration with `&´')
+        ASR(ID_int, me, 'invalid binding : unexpected context for operator `'..op..'`')
+        ASR(ID_int.dcl[1], me, 'invalid binding : expected declaration with `&`')
 
         -- NO: f1 = &f              // f may die
         if to.info.tag=='Var' and TYPES.abs_dcl(to.info.tp,'Code') then
-            --ASR(alias == '&?', me, 'invalid binding : expected `spawn´')
+            --ASR(alias == '&?', me, 'invalid binding : expected `spawn`')
         end
 
         -- tp
@@ -168,7 +168,7 @@ STMTS.F = {
             if fr[2].tag == 'Exp_call' then
                 assert(fr.info.dcl and fr.info.dcl.tag=='Nat')
                 ASR(TYPES.is_nat(to.info.tp), me,
-                    'invalid binding : expected `native´ type')
+                    'invalid binding : expected `native` type')
             else
                 local ID_abs = AST.asr(fr,'', 2,'Abs_Call', 2,'Abs_Cons',
                                               2,'ID_abs')
@@ -185,7 +185,7 @@ STMTS.F = {
 
             if fr.info.dcl[1] then
                 ASR(to.info.dcl[1] == fr.info.dcl[1], me,
-                    'invalid binding : unmatching alias `&´ declaration')
+                    'invalid binding : unmatching alias `&` declaration')
             end
         end
 
@@ -226,11 +226,11 @@ STMTS.F = {
         local _,to = unpack(me)
 
         -- ctx
-        INFO.asr_tag(to, {'Nat','Var'}, 'invalid `async/thread´ assignment')
+        INFO.asr_tag(to, {'Nat','Var'}, 'invalid `async/thread` assignment')
 
         -- tp
         ASR(TYPES.check(to.info.tp,'bool'), me,
-            'invalid `async/thread´ assignment : expected `bool´ destination')
+            'invalid `async/thread` assignment : expected `bool` destination')
     end,
 
 -- ABS
@@ -243,7 +243,7 @@ STMTS.F = {
         -- ctx
         INFO.asr_tag(to, {'Var'}, 'invalid constructor')
         ASR(ID_abs.dcl.tag == 'Data', me,
-            'invalid constructor : expected `data´ abstraction : got `code´ "'..
+            'invalid constructor : expected `data` abstraction : got `code` "'..
             ID_abs.dcl.id..'" ('..ID_abs.dcl.ln[1]..':'..ID_abs.dcl.ln[2]..')')
 
         -- tp
@@ -254,7 +254,7 @@ STMTS.F = {
         --  var Dd d = val Dd();
         local _, num = unpack(ID_abs.dcl)
         ASR(num ~= 'nothing', me,
-            'invalid constructor : cannot instantiate `data´ "'..ID_abs.dcl.id..'"')
+            'invalid constructor : cannot instantiate `data` "'..ID_abs.dcl.id..'"')
 
         -- exact match on constructor
         local to_str = TYPES.tostring(to.info.tp)
@@ -291,7 +291,7 @@ STMTS.F = {
         local ID_ext = AST.asr(me,'', 1,'Emit_Ext_emit', 1,'ID_ext')
         local io,_ = unpack(ID_ext.dcl)
         ASR(io=='output', me,
-            'invalid assignment : `input´')
+            'invalid assignment : `input`')
     end,
 
     Set_Await_one = function (me)
@@ -303,7 +303,7 @@ STMTS.F = {
         if me.__adjs_is_watching then
             -- var int? us = watching 1s do ... end
             ASR(TYPES.check(to.info.tp,'?'), me,
-                'invalid `watching´ assignment : expected option type `?´ : got "'..TYPES.tostring(to.info.tp)..'"')
+                'invalid `watching` assignment : expected option type `?` : got "'..TYPES.tostring(to.info.tp)..'"')
         end
     end,
 
@@ -320,7 +320,7 @@ STMTS.F = {
         -- tp
         if fr.tag == 'Await_Int' then
             ASR(fr.tp, me,
-                'invalid assignment : `code´ executes forever')
+                'invalid assignment : `code` executes forever')
         end
 
         EXPS.check_tp(me, to.tp, fr.tp, 'invalid assignment')
@@ -329,7 +329,7 @@ STMTS.F = {
             for _, e in ipairs(to) do
                 -- var int? us = watching 1s do ... end
                 ASR(TYPES.check(e.info.tp,'?'), me,
-                    'invalid `watching´ assignment : expected option type `?´ : got "'..TYPES.tostring(e.info.tp)..'"')
+                    'invalid `watching` assignment : expected option type `?` : got "'..TYPES.tostring(e.info.tp)..'"')
             end
         end
     end,
@@ -346,7 +346,7 @@ STMTS.F = {
         if inout_have == inout_expected then
             return true
         else
-            return false, 'expected `'..inout_expected..'´ external identifier'
+            return false, 'expected `'..inout_expected..'` external identifier'
         end
     end,
 
@@ -355,7 +355,7 @@ STMTS.F = {
 
         -- ctx
         local ok, msg = STMTS.F.__await_ext_err(ID_ext, 'input')
-        ASR(ok, me, msg and 'invalid `await´ : '..msg)
+        ASR(ok, me, msg and 'invalid `await` : '..msg)
 
         me.tp = ID_ext.dcl[2]
     end,
@@ -380,20 +380,20 @@ STMTS.F = {
 
         local mods_dcl = unpack(me.__code)
         ASR(mods_dcl.await, me,
-            'invalid `'..AST.tag2id[me.tag]..'´ : expected `code/await´ declaration '..
+            'invalid `'..AST.tag2id[me.tag]..'` : expected `code/await` declaration '..
                 '('..me.__code.ln[1]..':'..me.__code.ln[2]..')')
 
         if mods_dcl.dynamic then
             ASR(mods_call.dynamic or mods_call.static, me,
-                'invalid `'..AST.tag2id[me.tag]..'´ : expected `/dynamic´ or `/static´ modifier')
+                'invalid `'..AST.tag2id[me.tag]..'` : expected `/dynamic` or `/static` modifier')
         else
             local mod = (mods_call.dynamic or mods_call.static)
             ASR(not mod, me, mod and
-                'invalid `'..AST.tag2id[me.tag]..'´ : unexpected `/'..mod..'´ modifier')
+                'invalid `'..AST.tag2id[me.tag]..'` : unexpected `/'..mod..'` modifier')
         end
 
         ASR(AST.par(me,'Code') ~= me.__code, me,
-            'invalid `'..AST.tag2id[me.tag]..'´ : unexpected recursive invocation')
+            'invalid `'..AST.tag2id[me.tag]..'` : unexpected recursive invocation')
 
         local ret = AST.get(me.__code,'', 3,'Block', 1,'Stmts',
                                           1,'Code_Ret', 1,'', 2,'Type')
@@ -406,7 +406,7 @@ STMTS.F = {
                                           1,'Stmts',  1,'Set_Abs_Spawn',
                                           1,'Abs_Spawn')
             if me1 == me then
-                ASR(ret, watch, 'invalid `watching´ : `code´ executes forever')
+                ASR(ret, watch, 'invalid `watching` : `code` executes forever')
             end
         end
      end,
@@ -416,16 +416,16 @@ STMTS.F = {
         local alias, _ = unpack(e.info.dcl)
 
         -- ctx
-        INFO.asr_tag(e, {'Var','Evt','Pool'}, 'invalid `await´')
+        INFO.asr_tag(e, {'Var','Evt','Pool'}, 'invalid `await`')
         if e.info.tag == 'Var' then
             ASR(e.info.dcl[1] == '&?', me,
-                'invalid `await´ : expected `var´ with `&?´ modifier')
+                'invalid `await` : expected `var` with `&?` modifier')
         end
 
         -- tp
         if e.info.tag == 'Var' then
             local abs = TYPES.abs_dcl(e.info.tp, 'Code')
-            ASR(abs, me, 'invalid `await´ : expected `code/await´ abstraction')
+            ASR(abs, me, 'invalid `await` : expected `code/await` abstraction')
             assert(alias == '&?')
             local tp = AST.get(abs,'Code', 3,'Block', 1,'Stmts',
                                            1,'Code_Ret', 1,'', 2,'Type')
@@ -448,15 +448,15 @@ STMTS.F = {
         local alias = unpack(loc.info.dcl)
 
         -- ctx
-        INFO.asr_tag(loc, {'Var'}, 'invalid `kill´')
+        INFO.asr_tag(loc, {'Var'}, 'invalid `kill`')
 
         -- tp
         local abs = TYPES.abs_dcl(loc.info.tp, 'Code')
-        ASR(abs, me, 'invalid `kill´ : expected `code/await´ abstraction')
-        ASR(alias=='&?', me, 'invalid `kill´ : expected `&?´ alias')
+        ASR(abs, me, 'invalid `kill` : expected `code/await` abstraction')
+        ASR(alias=='&?', me, 'invalid `kill` : expected `&?` alias')
         local tp = AST.get(abs,'Code', 3,'Block', 1,'Stmts',
                                        1,'Code_Ret', 1,'', 2,'Type')
-        --ASR(tp, me, 'invalid kill : `code/await´ executes forever')
+        --ASR(tp, me, 'invalid kill : `code/await` executes forever')
         -- TODO: check e vs tp
     end,
 
@@ -466,7 +466,7 @@ STMTS.F = {
         local _, cond = unpack(me)
         if cond then
             ASR(TYPES.check(cond.info.tp,'bool'), me,
-                'invalid expression : `until´ condition must be of boolean type')
+                'invalid expression : `until` condition must be of boolean type')
         end
     end,
 
@@ -476,13 +476,13 @@ STMTS.F = {
         -- ctx
         local ok, msg = STMTS.F.__await_ext_err(e, 'input')
         if not ok then
-            INFO.asr_tag(e, {'Evt'}, 'invalid `pause/if´')
+            INFO.asr_tag(e, {'Evt'}, 'invalid `pause/if`')
         end
 
         -- tp
         local Typelist = AST.asr((e.dcl and e.dcl[2]) or e.info.tp,'Typelist')
         ASR(#Typelist==1 and TYPES.check(Typelist[1],'bool'), me,
-            'invalid `pause/if´ : expected event of type `bool´')
+            'invalid `pause/if` : expected event of type `bool`')
     end,
 
     Do = function (me)
@@ -495,7 +495,7 @@ STMTS.F = {
     If = function (me)
         local cnd = unpack(me)
         ASR(TYPES.check(cnd.info.tp,'bool'), me,
-            'invalid `if´ condition : expected boolean type')
+            'invalid `if` condition : expected boolean type')
     end,
 
     Loop_Num = function (me)
@@ -505,7 +505,7 @@ STMTS.F = {
                                          fr.info.tp,
                                          (to.info and to.info.tp or step.info.tp),
                                          step.info.tp
-        ASR(TYPES.is_num(i_tp), me, 'invalid `loop´ : expected numeric variable')
+        ASR(TYPES.is_num(i_tp), me, 'invalid `loop` : expected numeric variable')
         ASR(TYPES.contains(i_tp,fr_tp), me,
             'invalid control variable : types mismatch : "'..TYPES.tostring(i_tp)..'" <= "'..TYPES.tostring(fr_tp)..'"')
         ASR(TYPES.contains(i_tp,to_tp), me,
@@ -518,7 +518,7 @@ STMTS.F = {
         local _,i,pool = unpack(me)
 
         -- ctx
-        INFO.asr_tag(pool, {'Pool'}, 'invalid `pool´ iterator')
+        INFO.asr_tag(pool, {'Pool'}, 'invalid `pool` iterator')
 
         -- tp
         if i.tag ~= 'ID_any' then
@@ -533,13 +533,13 @@ STMTS.F = {
         local e, ps = unpack(me)
 
         -- ctx
-        INFO.asr_tag(e, {'Evt'}, 'invalid `emit´')
+        INFO.asr_tag(e, {'Evt'}, 'invalid `emit`')
 
         -- tp
-        EXPS.check_tp(me, e.info.tp, ps.tp, 'invalid `emit´')
+        EXPS.check_tp(me, e.info.tp, ps.tp, 'invalid `emit`')
 
         ASR(e.info.dcl[1] ~= '&?', me,
-            'invalid `emit´ : unexpected `event´ with `&?´ modifier')
+            'invalid `emit` : unexpected `event` with `&?` modifier')
     end,
 
     Emit_Ext_emit = function (me)
@@ -558,12 +558,12 @@ STMTS.F = {
         end
 
         ASR(have==expects, me,
-            'invalid `emit´ : '..
+            'invalid `emit` : '..
             'unexpected context for '..AST.tag2id[ID_ext.dcl.tag]..' `'..
-            have..'´ "'..ID_ext.dcl.id..'"')
+            have..'` "'..ID_ext.dcl.id..'"')
 
         -- tp
-        EXPS.check_tp(me, ID_ext.dcl[2], ps.tp, 'invalid `emit´')
+        EXPS.check_tp(me, ID_ext.dcl[2], ps.tp, 'invalid `emit`')
     end,
 
     Emit_Ext_call = function (me)
@@ -591,12 +591,12 @@ STMTS.F = {
             -- tp
             local is_opt = (p.info.dcl and p.info.dcl[1]=='&?')
             ASR(not (is_opt or TYPES.check(p.info.tp,'?')), me,
-                'invalid call : unexpected context for operator `?´')
+                'invalid call : unexpected context for operator `?`')
 
             if p.info.tag ~= 'Nat' then
                 local is_alias = unpack(p.info)
                 ASR(not is_alias, me,
-                    'invalid call : unexpected context for operator `&´')
+                    'invalid call : unexpected context for operator `&`')
             end
         end
     end,

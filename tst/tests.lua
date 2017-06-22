@@ -259,7 +259,7 @@ do return end -- OK
 -- OK: well tested
 ----------------------------------------------------------------------------
 
-Test { [[]], run='1] runtime error: reached end of `do´' }
+Test { [[]], run='1] runtime error: reached end of `do`' }
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
 
@@ -270,7 +270,7 @@ Test { [[escape /*
 */ 1;]], run=1 }
 Test { [[escape /**/* **/ 1;]], run=1 }
 Test { [[escape /**/* */ 1;]],
-    parser = 'line 1 : after `escape´ : expected internal identifier',
+    parser = 'line 1 : after `escape` : expected internal identifier',
 }
 
 Test { [[
@@ -330,19 +330,19 @@ Test { [[escape --1;]], run=1 }
 Test { [[escape - -1;]], run=1 }
 Test { [[escape -9999;]], run=-9999 }
 Test { [[escape 'A';]],
-    parser = 'line 1 : after `escape´ : expected expression or `;´',
+    parser = 'line 1 : after `escape` : expected expression or `;`',
 }
 Test { [[escape {'A'};]], run=65, }
 Test { [[escape (((1)));]], run=1 }
 Test { [[
 escape 1 + null;
 ]],
-    dcls = 'line 1 : invalid operand to `+´ : expected numeric type',
+    dcls = 'line 1 : invalid operand to `+` : expected numeric type',
 }
 Test { [[
 escape 1 or false;
 ]],
-    dcls = 'line 1 : invalid operand to `or´ : expected boolean type',
+    dcls = 'line 1 : invalid operand to `or` : expected boolean type',
 }
 
 Test { [[escape (1 >= 0) as int;]], run=1 }
@@ -354,13 +354,13 @@ Test { [[escape 1 as int;]],
     run = 1,
 }
 
-Test { [[escape 1==2;]], stmts='line 1 : invalid `escape´ : types mismatch : "int" <= "bool"', }
+Test { [[escape 1==2;]], stmts='line 1 : invalid `escape` : types mismatch : "int" <= "bool"', }
 Test { [[escape (1!=2) as int;]], run=1 }
 Test { [[escape 0  or  10;]],
-    dcls = 'line 1 : invalid operand to `or´ : expected boolean type',
+    dcls = 'line 1 : invalid operand to `or` : expected boolean type',
 }
 Test { [[escape (0 as bool)  or  (10 as bool) as int;]],
-    parser = 'line 1 : after `)´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or binary operator or `;´',
+    parser = 'line 1 : after `)` : expected `[` or `:` or `.` or `!` or `?` or `(` or binary operator or `;`',
     --run = 1,
 }
 Test { [[escape ((0 as bool)  or  (10 as bool)) as int;]],
@@ -368,7 +368,7 @@ Test { [[escape ((0 as bool)  or  (10 as bool)) as int;]],
 }
 Test { [[escape ((0 as bool) and (10 as bool)) as int;]], run=0 }
 Test { [[escape (10==true) as int;]],
-    dcls = 'line 1 : invalid operands to `==´ : incompatible types : "int" vs "bool"',
+    dcls = 'line 1 : invalid operands to `==` : incompatible types : "int" vs "bool"',
 }
 Test { [[escape (10!=0) as int;]], run=1 }
 Test { [[escape (true and true) as int;]], run=1 }
@@ -378,23 +378,23 @@ Test { [[escape ((1<=2) as int) + ((1<2) as int) + 2/1 - 2%3;]], run=2 }
 -- TODO: linux gcc only?
 --Test { [[escape (~(~0b1010 & 0XF) | 0b0011 ^ 0B0010) & 0xF;]], run=11 }
 Test { [[nt a;]],
-    --parser = "line 1 : after `nt´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´",
-    --parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
-    parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `?´ or `(´ or `is´ or binary operator or `;´',
+    --parser = "line 1 : after `nt` : expected `(` or `[` or `:` or `.` or `?` or `!` or `is` or `as` or binary operator or `=` or `:=` or `;`",
+    --parser = 'line 1 : after `nt` : expected `[` or `:` or `.` or `!` or `as` or `=` or `:=` or `(`',
+    parser = 'line 1 : after `nt` : expected `[` or `:` or `.` or `!` or `as` or `=` or `?` or `(` or `is` or binary operator or `;`',
 }
 Test { [[nt sizeof;]],
-    --parser = "line 1 : after `nt´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´",
-    parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `?´ or `(´ or `is´ or binary operator or `;´',
-    --parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
-    --parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `(´',
+    --parser = "line 1 : after `nt` : expected `(` or `[` or `:` or `.` or `?` or `!` or `is` or `as` or binary operator or `=` or `:=` or `;`",
+    parser = 'line 1 : after `nt` : expected `[` or `:` or `.` or `!` or `as` or `=` or `?` or `(` or `is` or binary operator or `;`',
+    --parser = 'line 1 : after `nt` : expected `[` or `:` or `.` or `!` or `as` or `=` or `:=` or `(`',
+    --parser = 'line 1 : after `nt` : expected `[` or `:` or `.` or `!` or `=` or `(`',
 }
 Test { [[var int sizeof;]],
-    parser = "line 1 : after `int´ : expected type modifier or internal identifier",
+    parser = "line 1 : after `int` : expected type modifier or internal identifier",
 }
-Test { [[escape sizeof(int);]], stmts='line 1 : invalid `escape´ : types mismatch : "int" <= "usize"' }
+Test { [[escape sizeof(int);]], stmts='line 1 : invalid `escape` : types mismatch : "int" <= "usize"' }
 Test { [[escape sizeof(int) as int;]], run=4 }
 Test { [[escape 1<2>3;]],
-    dcls = 'line 1 : invalid operand to `>´ : expected numeric type',
+    dcls = 'line 1 : invalid operand to `>` : expected numeric type',
 }
 Test { [[escape (((1<2) as int)<3) as int;]], run=1 }
 
@@ -419,7 +419,7 @@ escape 0x1 + 0X1 + 0a01;
 Test { [[
 escape 1.;
 ]],
-    stmts = 'line 1 : invalid `escape´ : types mismatch : "int" <= "float"',
+    stmts = 'line 1 : invalid `escape` : types mismatch : "int" <= "float"',
     --run = 1,
 }
 
@@ -503,33 +503,33 @@ Test { [[
 var uint x = 1.5;
 escape x + 0.5;
 ]],
-    dcls = 'line 2 : invalid operands to `+´ : incompatible numeric types : "uint" vs "float"',
+    dcls = 'line 2 : invalid operands to `+` : incompatible numeric types : "uint" vs "float"',
 }
 
 Test { [[
 escape *1;
 ]],
-    --parser = 'line 1 : after `*´ : expected location',
-    --dcls = 'line 1 : invalid operand to `*´ : expected location',
-    dcls = 'line 1 : invalid operand to `*´ : expected pointer type',
-    --dcls = 'line 1 : invalid operand to `*´ : unexpected context for value "1"',
+    --parser = 'line 1 : after `*` : expected location',
+    --dcls = 'line 1 : invalid operand to `*` : expected location',
+    dcls = 'line 1 : invalid operand to `*` : expected pointer type',
+    --dcls = 'line 1 : invalid operand to `*` : unexpected context for value "1"',
 }
 
 Test { [[
 escape &&1;
 ]],
-    --parser = 'line 1 : after `&&´ : expected location',
-    --dcls = 'line 1 : invalid operand to `&&´ : unexpected context for value "1"',
+    --parser = 'line 1 : after `&&` : expected location',
+    --dcls = 'line 1 : invalid operand to `&&` : unexpected context for value "1"',
     dcls = 'line 1 : expected native type',
-    --dcls = 'line 1 : invalid operand to `&&´ : expected location',
-    --dcls = 'line 1 : invalid expression : operand to `&&´ must be a name',
+    --dcls = 'line 1 : invalid operand to `&&` : expected location',
+    --dcls = 'line 1 : invalid expression : operand to `&&` must be a name',
 }
 
 Test { [[
 var int x = 1;
 escape &&x == &&x as int ();
 ]],
-    parser = 'line 2 : after `x´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or binary operator or `;´',
+    parser = 'line 2 : after `x` : expected `[` or `:` or `.` or `!` or `?` or `(` or binary operator or `;`',
     --run = 1,
 }
 
@@ -537,9 +537,9 @@ Test { [[
 var int x = 1;
 escape *&&x;
 ]],
-    --parser = 'line 2 : after `*´ : expected location',
-    --dcls = 'line 2 : invalid operand to `*´ : expected location',
-    --dcls = 'line 2 : invalid operand to `*´ : unexpected context for value "x"',
+    --parser = 'line 2 : after `*` : expected location',
+    --dcls = 'line 2 : invalid operand to `*` : expected location',
+    --dcls = 'line 2 : invalid operand to `*` : unexpected context for value "x"',
     run = 1,
 }
 
@@ -547,8 +547,8 @@ Test { [[
 var int x = 1;
 escape *&&*&&x;
 ]],
-    --parser = 'line 2 : after `*´ : expected location',
-    --dcls = 'line 2 : invalid operand to `*´ : expected location',
+    --parser = 'line 2 : after `*` : expected location',
+    --dcls = 'line 2 : invalid operand to `*` : expected location',
     dcls = 'line 2 : expected native type',
     --run = 1,
 }
@@ -556,7 +556,7 @@ escape *&&*&&x;
 Test { [[
 escape not 1;
 ]],
-    dcls = 'line 1 : invalid operand to `not´ : expected boolean type',
+    dcls = 'line 1 : invalid operand to `not` : expected boolean type',
 }
 Test { [[
 escape (not false) as int;
@@ -753,12 +753,12 @@ Test { [[var int a;]],
 Test { [[var int a;]],
     wrn = true,
     --inits = 'uninitialized variable "a" : reached yielding statement (/tmp/tmp.ceu:1)',
-    --inits = 'uninitialized variable "a" : reached `end of file´ (/tmp/tmp.ceu:1)',
+    --inits = 'uninitialized variable "a" : reached `end of file` (/tmp/tmp.ceu:1)',
     run = false,
 }
 
 Test { [[var int a=0;]],
-    ana = 'line 1 : missing `escape´ statement for the block',
+    ana = 'line 1 : missing `escape` statement for the block',
 }
 
 Test { [[var int a=0;]],
@@ -782,8 +782,8 @@ escape (_x);
 Test { [[
 escape (1+1).v;
 ]],
-    --parser = 'line 1 : after `)´ : expected `(´ or `is´ or `as´ or binary operator or `;´',
-    dcls = 'line 1 : invalid operand to `.´ : expected native or data type',
+    --parser = 'line 1 : after `)` : expected `(` or `is` or `as` or binary operator or `;`',
+    dcls = 'line 1 : invalid operand to `.` : expected native or data type',
 }
 
 Test { [[
@@ -791,7 +791,7 @@ var int a, b;
 a=0; b=0;
 escape 10;
 ]],
-    parser = 'line 1 : after `a´ : expected `=´ or `;´',
+    parser = 'line 1 : after `a` : expected `=` or `;`',
     run = 10,
 }
 
@@ -838,17 +838,17 @@ Test { [[var int a=1; var int a=0; escape a;]],
     run = 0,
 }
 Test { [[var int a; a = b = 1]],
-    --parser = "line 1 : after `b´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `;´",
-    parser = 'line 1 : after `b´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `..´ or `?´ or `(´ or `is´ or binary operator or `;´',
+    --parser = "line 1 : after `b` : expected `(` or `[` or `:` or `.` or `?` or `!` or `is` or `as` or binary operator or `;`",
+    parser = 'line 1 : after `b` : expected `[` or `:` or `.` or `!` or `as` or `..` or `?` or `(` or `is` or binary operator or `;`',
 }
 Test { [[var int a = b; escape 0;]],
     dcls = 'internal identifier "b" is not declared',
 }
 Test { [[escape 1;2;]],
-    parser = "line 1 : after `;´ : expected end of file",
+    parser = "line 1 : after `;` : expected end of file",
 }
 Test { [[escape 1;2]],
-    parser = "line 1 : after `;´ : expected end of file",
+    parser = "line 1 : after `;` : expected end of file",
 }
 Test { [[var int aAa; aAa=1; escape aAa;]],
     run = 1,
@@ -892,7 +892,7 @@ Test { [[
 native do
 end
 ]],
-    parser = 'line 1 : after `native´ : expected `/pre´ or `/pos´ or `/´ or native identifier',
+    parser = 'line 1 : after `native` : expected `/pre` or `/pos` or `/` or native identifier',
 }
 
 Test { [[
@@ -924,16 +924,16 @@ Test { [[
 inputintMY_EVT;
 ifv==0thenbreak;end
 ]],
-    --parser = 'line 1 : after `inputintMY_EVT´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `(´',
-    --parser = 'line 2 : after `ifv´ : `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
-    parser = 'line 2 : after `==´ : expected expression',
-    --parser = 'line 2 : after `0´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´',
+    --parser = 'line 1 : after `inputintMY_EVT` : expected `[` or `:` or `.` or `!` or `=` or `(`',
+    --parser = 'line 2 : after `ifv` : `[` or `:` or `.` or `!` or `as` or `=` or `:=` or `(`',
+    parser = 'line 2 : after `==` : expected expression',
+    --parser = 'line 2 : after `0` : expected `(` or `[` or `:` or `.` or `?` or `!` or `is` or `as` or binary operator or `=` or `:=` or `;`',
 }
 Test { [[
 inputintMY_EVT;
 escape 1;
 ]],
-    --parser = 'line 1 : after `inputintMY_EVT´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `(´',
+    --parser = 'line 1 : after `inputintMY_EVT` : expected `[` or `:` or `.` or `!` or `=` or `(`',
     dcls = 'line 1 : internal identifier "inputintMY_EVT" is not declared',
 }
 
@@ -950,9 +950,9 @@ Test { [[
 native_printf();
 loopdo await250ms;_printf("Hello World!\n");end
 ]],
-    --parser = 'line 2 : after `loopdo´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `(´',
-    parser = 'line 2 : after `loopdo´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `?´ or `(´ or `is´ or binary operator or `;´',
-    --parser = 'line 2 : after `loopdo´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´',
+    --parser = 'line 2 : after `loopdo` : expected `[` or `:` or `.` or `!` or `=` or `(`',
+    parser = 'line 2 : after `loopdo` : expected `[` or `:` or `.` or `!` or `as` or `=` or `?` or `(` or `is` or binary operator or `;`',
+    --parser = 'line 2 : after `loopdo` : expected `(` or `[` or `:` or `.` or `?` or `!` or `is` or `as` or binary operator or `=` or `:=` or `;`',
 }
 
 -- TYPE / BOOL
@@ -960,7 +960,7 @@ loopdo await250ms;_printf("Hello World!\n");end
 Test { [[
 input void A, A;
 ]],
-    parser = 'line 1 : after `A´ : expected `;´',
+    parser = 'line 1 : after `A` : expected `;`',
     --dcls = 'line 1 : declaration of "A" hides previous declaration (/tmp/tmp.ceu : line 1)',
 }
 Test { [[
@@ -980,7 +980,7 @@ var bool a? = 1;
 a? = 2;
 escape a?;
 ]],
-    parser = 'line 2 : after `a´ : expected `=´ or `;´',
+    parser = 'line 2 : after `a` : expected `=` or `;`',
     --run = 2,
 }
 
@@ -1028,7 +1028,7 @@ output void O;
 await O;
 escape 1;
 ]],
-    stmts = 'line 2 : invalid `await´ : expected `input´ external identifier',
+    stmts = 'line 2 : invalid `await` : expected `input` external identifier',
 }
 
 Test { [[
@@ -1075,9 +1075,9 @@ var int _ = 2;
 
 escape __;
 ]],
-    parser = 'line 6 : after `int´ : expected type modifier or internal identifier',
-    --parser = 'line 6 : after `=´ : expected class identifier',
-    --env = 'line 6 : invalid access to `_´',
+    parser = 'line 6 : after `int` : expected type modifier or internal identifier',
+    --parser = 'line 6 : after `=` : expected class identifier',
+    --env = 'line 6 : invalid access to `_`',
     --dcls = 'line 6 : internal identifier "_" is not declared',
     --run = 3,
 }
@@ -1086,14 +1086,14 @@ native/pos do
     int _ = 3;
 end
 native/const __;
-native/const _;      // `_´ is special (not C)
+native/const _;      // `_` is special (not C)
 
 var int _ = 1;
 var int _ = 2;
 
 escape __;
 ]],
-    parser = 'line 5 : after `const´ : expected native identifier',
+    parser = 'line 5 : after `const` : expected native identifier',
     --run = 3,
 }
 Test { [[
@@ -1110,8 +1110,8 @@ end
 
 escape (int) __;
 ]],
-    parser = 'line 6 : after `int´ : expected type modifier or internal identifier',
-    --parser = 'line 6 : after `_´ : expected `with´',
+    parser = 'line 6 : after `int` : expected type modifier or internal identifier',
+    --parser = 'line 6 : after `_` : expected `with`',
     --run = 3,
 }
 
@@ -1281,7 +1281,7 @@ escape a as int;
 Test { [[
 escape a && b;
 ]],
-    parser = 'line 1 : after `a´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `;´',
+    parser = 'line 1 : after `a` : expected `[` or `:` or `.` or `!` or `?` or `(` or `is` or `as` or binary operator or `;`',
 }
 
 Test { [[
@@ -1292,14 +1292,14 @@ native _ISPOINTER, _MINDIST, _TILESHIFT;
                                 escape 0;
 end
 ]],
-    parser = 'line 3 : after `)´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `)´',
+    parser = 'line 3 : after `)` : expected `[` or `:` or `.` or `!` or `?` or `(` or `is` or `as` or binary operator or `)`',
     --dcls = 'line 3 : internal identifier "check" is not declared',
 }
 
     -- IF
 
 Test { [[if 1 then escape 1; end; escape 0;]],
-    stmts = 'line 1 : invalid `if´ condition : expected boolean type',
+    stmts = 'line 1 : invalid `if` condition : expected boolean type',
 }
 Test { [[if true then escape 1; end; escape 0;]],
     _ana = {
@@ -1379,11 +1379,11 @@ else
     escape 0;
 end;
 ]],
-    run = '1] runtime error: reached end of `do´',
+    run = '1] runtime error: reached end of `do`',
     _ana = {
         reachs = 1,
     },
-    --run = '1] runtime error: missing `escape´ statement',
+    --run = '1] runtime error: missing `escape` statement',
 }
 
 -- IF vs Seq priority
@@ -1454,7 +1454,7 @@ end;
 escape a+c;
 ]],
     run = 4,
-    --ref = 'line 5 : invalid extra access to variable "a" inside the initializing `if-then-else´',
+    --ref = 'line 5 : invalid extra access to variable "a" inside the initializing `if-then-else`',
 }
 Test { [[
 var int a;
@@ -1495,9 +1495,9 @@ if true then
 end;
 escape a;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached end of `if` (/tmp/tmp.ceu:2)',
     --inits = 'line 1 : uninitialized variable "a" : reached read access (/tmp/tmp.ceu:8)',
-    --ref = 'line 5 : missing initialization for variable "a" in the other branch of the `if-then-else´',
+    --ref = 'line 5 : missing initialization for variable "a" in the other branch of the `if-then-else`',
 }
 Test { [[
 var int a;
@@ -1546,7 +1546,7 @@ end;
 a = 1;
 escape a;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached end of `if` (/tmp/tmp.ceu:2)',
     --run = 1,
 }
 Test { [[
@@ -1560,7 +1560,7 @@ end;
 a = 1;
 escape a;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached end of `if` (/tmp/tmp.ceu:2)',
     --run = 1,
 }
 Test { [[
@@ -1574,7 +1574,7 @@ end;
 a = 1;
 escape a;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached end of `if` (/tmp/tmp.ceu:2)',
     --run = 1,
 }
 Test { [[
@@ -1590,7 +1590,7 @@ end;
 a = 1;
 escape a;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:5)',
+    inits = 'line 1 : uninitialized variable "a" : reached end of `if` (/tmp/tmp.ceu:5)',
     --run = 1,
 }
 Test { [[
@@ -1602,7 +1602,7 @@ end;
 a = 1;
 escape a;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached end of `if` (/tmp/tmp.ceu:2)',
     --run = 1,
 }
 Test { [[
@@ -1627,9 +1627,9 @@ if true then
 end;
 escape a;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached end of `if` (/tmp/tmp.ceu:2)',
     --inits = 'line 1 : uninitialized variable "a" : reached read access (/tmp/tmp.ceu:10)',
-    --inits = 'line 3 : missing initialization for variable "a" in the other branch of the `if-then-else´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 3 : missing initialization for variable "a" in the other branch of the `if-then-else` (/tmp/tmp.ceu:2)',
 }
 Test { [[
 var int a;
@@ -1639,9 +1639,9 @@ else
     a=1;a=2; escape 3;
 end;
 ]],
-    --inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:2)',
-    --inits = 'line 1 : uninitialized variable "a" : reached `escape´ (/tmp/tmp.ceu:3)',
-    --ref = 'line 5 : invalid extra access to variable "a" inside the initializing `if-then-else´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "a" : reached end of `if` (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "a" : reached `escape` (/tmp/tmp.ceu:3)',
+    --ref = 'line 5 : invalid extra access to variable "a" inside the initializing `if-then-else` (/tmp/tmp.ceu:2)',
     run = 3,
 }
 Test { [[
@@ -1652,9 +1652,9 @@ else
     escape 1;
 end;
 ]],
-    --inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:2)',
-    --inits = 'line 1 : uninitialized variable "a" : reached `escape´ (/tmp/tmp.ceu:5)',
-    --ref = 'line 5 : invalid extra access to variable "a" inside the initializing `if-then-else´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "a" : reached end of `if` (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "a" : reached `escape` (/tmp/tmp.ceu:5)',
+    --ref = 'line 5 : invalid extra access to variable "a" inside the initializing `if-then-else` (/tmp/tmp.ceu:2)',
     run = 1,
 }
 Test { [[
@@ -1697,8 +1697,8 @@ x = 10;
 escape x;
 ]],
     --run = 10,
-    --inits = 'line 1 : uninitialized variable "x" : reached `escape´ (/tmp/tmp.ceu:3)',
-    inits = 'line 1 : uninitialized variable "x" : reached end of `if´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "x" : reached `escape` (/tmp/tmp.ceu:3)',
+    inits = 'line 1 : uninitialized variable "x" : reached end of `if` (/tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -1712,18 +1712,18 @@ x = 10;
 escape x;
 ]],
     inits = 'line 1 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:5)',
-    --inits = 'line 1 : uninitialized variable "x" : reached `escape´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 1 : uninitialized variable "x" : reached `escape` (/tmp/tmp.ceu:3)',
 }
 
     -- EVENTS
 
 Test { [[input int A=1;
 ]],
-    parser="line 1 : after `A´ : expected `;´"
+    parser="line 1 : after `A` : expected `;`"
 }
 
 Test { [[input int A=1;]],
-    parser="line 1 : after `A´ : expected `;´"
+    parser="line 1 : after `A` : expected `;`"
 }
 
 Test { [[
@@ -1732,8 +1732,8 @@ input int A;
 
 A=1;
 ]],
-    parser = 'line 1 : after `;´ : expected statement',
-    --parser = 'line 4 : after `A´ : expected `(´',
+    parser = 'line 1 : after `;` : expected statement',
+    --parser = 'line 4 : after `A` : expected `(`',
 }
 
 Test { [[
@@ -1742,9 +1742,9 @@ A=1;
 escape 1;
 ]],
     --adj = 'line 2 : invalid expression',
-    parser = 'line 1 : after `;´ : expected statement',
-    --parser = 'line 2 : after `A´ : expected `(´',
-    --parser = 'line 1 : after `;´ : expected statement (usually a missing `var´ or C prefix `_´)',
+    parser = 'line 1 : after `;` : expected statement',
+    --parser = 'line 2 : after `A` : expected `(`',
+    --parser = 'line 1 : after `;` : expected statement (usually a missing `var` or C prefix `_`)',
 }
 
 Test { [[input  int A;]],
@@ -1803,7 +1803,7 @@ async do
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `begin of file´ : expected statement',
+    parser = 'line 1 : after `begin of file` : expected statement',
 }
 Test { [[
 input void A;
@@ -1901,7 +1901,7 @@ var int v;
 v = await A until 1;
 escape v;
 ]],
-    stmts = 'line 3 : invalid expression : `until´ condition must be of boolean type',
+    stmts = 'line 3 : invalid expression : `until` condition must be of boolean type',
 }
 Test { [[
 input int A;
@@ -1939,7 +1939,7 @@ with
 end
 escape ret;
 ]],
-    inits = 'line 2 : uninitialized variable "ret" : reached end of `par/or´ (/tmp/tmp.ceu:3)',
+    inits = 'line 2 : uninitialized variable "ret" : reached end of `par/or` (/tmp/tmp.ceu:3)',
     --inits = 'line 2 : uninitialized variable "ret" : reached yielding statement (/tmp/tmp.ceu:3)',
 }
 
@@ -1954,8 +1954,8 @@ with
 end;
 escape A;
 ]],
-    parser = "line 9 : after `escape´ : expected expression",
-    --parser = 'line 9 : after `A´ : expected `(´',
+    parser = "line 9 : after `escape` : expected expression",
+    --parser = 'line 9 : after `A` : expected `(`',
     --adj = 'line 9 : invalid expression',
 }
 
@@ -1996,13 +1996,13 @@ Test { [[var int a = a+1; escape a;]],
 }
 
 Test { [[var int a; a = emit a(1; escape a);]],
-    --parser = 'line 1 : after `=´ : expected expression',
-    parser = "line 1 : after `emit´ : expected number or `(´ or external identifier",
+    --parser = 'line 1 : after `=` : expected expression',
+    parser = "line 1 : after `emit` : expected number or `(` or external identifier",
     --trig_wo = 1,
 }
 
 Test { [[var int a; emit a(1); escape a;]],
-    stmts = 'line 1 : invalid `emit´ : unexpected context for variable "a"',
+    stmts = 'line 1 : invalid `emit` : unexpected context for variable "a"',
     --env = 'line 1 : identifier "a" is not an event (/tmp/tmp.ceu : line 1)',
     --trig_wo = 1,
 }
@@ -2051,19 +2051,19 @@ escape 0;
 }
 
 Test { [[await -1ms; escape 0;]],
-    --ast = "line 1 : after `await´ : expected event",
-    --parser = 'line 1 : after `1´ : expected `;´',
-    --parser = 'line 1 : after `1´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `until´ or `;´',
-    --parser = 'line 1 : after `await´ : expected `async´ or `async/thread´ or number or `(´ or abstraction identifier or external identifier or location or `{´ or `pause´ or `resume´ or `FOREVER´',
-    parser = 'line 1 : after `await´ : expected `async´ or `async/thread´ or number or `(´ or location or `{´ or abstraction identifier or external identifier or `pause´ or `resume´ or `FOREVER´',
+    --ast = "line 1 : after `await` : expected event",
+    --parser = 'line 1 : after `1` : expected `;`',
+    --parser = 'line 1 : after `1` : expected `(` or `[` or `:` or `.` or `?` or `!` or `is` or `as` or binary operator or `until` or `;`',
+    --parser = 'line 1 : after `await` : expected `async` or `async/thread` or number or `(` or abstraction identifier or external identifier or location or `{` or `pause` or `resume` or `FOREVER`',
+    parser = 'line 1 : after `await` : expected `async` or `async/thread` or number or `(` or location or `{` or abstraction identifier or external identifier or `pause` or `resume` or `FOREVER`',
 }
 
 Test { [[await 1; escape 0;]],
-    parser = 'line 1 : after `1´ : expected `h´ or `min´ or `s´ or `ms´ or `us´',
+    parser = 'line 1 : after `1` : expected `h` or `min` or `s` or `ms` or `us`',
 }
 Test { [[await -1; escape 0;]],
-    --parser = 'line 1 : after `await´ : expected `async´ or `async/thread´ or number or `(´ or abstraction identifier or external identifier or location or `{´ or `pause´ or `resume´ or `FOREVER´',
-    parser = 'line 1 : after `await´ : expected `async´ or `async/thread´ or number or `(´ or location or `{´ or abstraction identifier or external identifier or `pause´ or `resume´ or `FOREVER´',
+    --parser = 'line 1 : after `await` : expected `async` or `async/thread` or number or `(` or abstraction identifier or external identifier or location or `{` or `pause` or `resume` or `FOREVER`',
+    parser = 'line 1 : after `await` : expected `async` or `async/thread` or number or `(` or location or `{` or abstraction identifier or external identifier or `pause` or `resume` or `FOREVER`',
     --env = 'line 1 : event "?" is not declared',
 }
 
@@ -2121,14 +2121,14 @@ escape a + ___ceu_a_1;
 }
 
 Test { [[await FOREVER; await FOREVER;]],
-    parser = "line 1 : after `;´ : expected end of file",
+    parser = "line 1 : after `;` : expected end of file",
 }
 Test { [[await FOREVER; escape 0;]],
-    parser = "line 1 : after `;´ : expected end of file",
+    parser = "line 1 : after `;` : expected end of file",
 }
 
 Test { [[emit 1ms; escape 0;]],
-    props_ = 'line 1 : invalid `emit´ : expected enclosing `async´ or `async/isr´',
+    props_ = 'line 1 : invalid `emit` : expected enclosing `async` or `async/isr`',
 }
 
 Test { [[
@@ -2162,9 +2162,9 @@ end;
 escape a + 1;
 ]],
     --dcls = 'line 1 : internal identifier "_ret" is not declared',
-    --props = 'line 4 : not permitted inside `async´',
-    --props = 'line 4 : not permitted across `async´ declaration',
-    dcls = 'line 4 : invalid `escape´ : no matching enclosing `do´',
+    --props = 'line 4 : not permitted inside `async`',
+    --props = 'line 4 : not permitted across `async` declaration',
+    dcls = 'line 4 : invalid `escape` : no matching enclosing `do`',
 }
 
 Test { [[
@@ -2174,7 +2174,7 @@ await async (a) do
 end;
 escape a + 1;
 ]],
-    --inits = 'line 1 : uninitialized variable "a" : reached `async´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "a" : reached `async` (/tmp/tmp.ceu:2)',
     --inits = 'line 1 : uninitialized variable "a" : reached yielding statement (/tmp/tmp.ceu:2)',
     run = 2,
 }
@@ -2332,7 +2332,7 @@ escape ret;
 ]],
     run = 1,
     --inits = 'line 1 : uninitialized variable "ret" : reached yielding statement (/tmp/tmp.ceu:2)',
-    --inits = 'line 1 : uninitialized variable "ret" : reached `par/or´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "ret" : reached `par/or` (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "ret" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 
@@ -2348,7 +2348,7 @@ end
 ]],
     run = 1,
     --inits = 'line 1 : uninitialized variable "ret" : reached yielding statement (/tmp/tmp.ceu:2)',
-    --inits = 'line 1 : uninitialized variable "ret" : reached `par/or´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "ret" : reached `par/or` (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "ret" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 
@@ -2363,7 +2363,7 @@ escape ret;
 ]],
     run = 2,
     --inits = 'line 1 : uninitialized variable "ret" : reached yielding statement (/tmp/tmp.ceu:2)',
-    --inits = 'line 1 : uninitialized variable "ret" : reached `par/or´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "ret" : reached `par/or` (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "ret" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 
@@ -2510,7 +2510,7 @@ end
 
 escape 0;
 ]],
-    parser = 'line 13 : after `end´ : expected `;´ or end of file',
+    parser = 'line 13 : after `end` : expected `;` or end of file',
 }
 
 Test { [[
@@ -2652,8 +2652,8 @@ if true then
 end;
 escape v;
 ]],
-    inits = 'line 2 : uninitialized variable "v" : reached end of `if´ (/tmp/tmp.ceu:3)',
-    --ref = 'line 4 : missing initialization for variable "v" in the other branch of the `if-then-else´ (/tmp/tmp.ceu:3)',
+    inits = 'line 2 : uninitialized variable "v" : reached end of `if` (/tmp/tmp.ceu:3)',
+    --ref = 'line 4 : missing initialization for variable "v" in the other branch of the `if-then-else` (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -2688,7 +2688,7 @@ do/
     escape/A 1;
 end
 ]],
-    parser = 'line 1 : after `do´ : expected internal identifier',
+    parser = 'line 1 : after `do` : expected internal identifier',
 }
 
 Test { [[
@@ -2696,7 +2696,7 @@ do/A
     escape/ 1;
 end
 ]],
-    parser = 'line 1 : after `do´ : expected internal identifier',
+    parser = 'line 1 : after `do` : expected internal identifier',
 }
 
 Test { [[
@@ -2704,7 +2704,7 @@ do/a
     escape/ 1;
 end
 ]],
-    parser = 'line 2 : after `escape´ : expected internal identifier',
+    parser = 'line 2 : after `escape` : expected internal identifier',
 }
 
 Test { [[
@@ -2721,7 +2721,7 @@ do/a
     escape/a 1;
 end
 ]],
-    dcls = 'line 3 : invalid `escape´ : unexpected expression',
+    dcls = 'line 3 : invalid `escape` : unexpected expression',
 }
 
 Test { [[
@@ -2729,7 +2729,7 @@ var int x = do/x
     escape/x;
 end;
 ]],
-    dcls = 'line 2 : invalid `escape´ : expected expression',
+    dcls = 'line 2 : invalid `escape` : expected expression',
 }
 
 Test { [[
@@ -2751,7 +2751,7 @@ a = 1;
 escape a;
 ]],
     run = 1,
-    --inits = 'line 1 : uninitialized variable "a" : reached `escape´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 1 : uninitialized variable "a" : reached `escape` (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -2760,7 +2760,7 @@ do/a
     escape;
 end
 ]],
-    dcls = 'line 3 : invalid `escape´ : expected expression',
+    dcls = 'line 3 : invalid `escape` : expected expression',
 }
 
 Test { [[
@@ -2795,7 +2795,7 @@ var bool a = do/a
 end;
 escape 1;
 ]],
-    stmts = 'line 2 : invalid `escape´ : types mismatch : "bool" <= "int"',
+    stmts = 'line 2 : invalid `escape` : types mismatch : "bool" <= "int"',
 }
 
 Test { [[
@@ -2813,7 +2813,7 @@ var bool a = do/a
 end;
 escape 1;
 ]],
-    dcls = 'line 2 : invalid `escape´ : expected expression',
+    dcls = 'line 2 : invalid `escape` : expected expression',
 }
 
 Test { [[
@@ -2830,8 +2830,8 @@ var int a = do
 end;
 escape a;
 ]],
-    --inits = 'line 1 : uninitialized variable "a" : reached end of `do´ (/tmp/tmp.ceu:1)',
-    run = '1] runtime error: reached end of `do´',
+    --inits = 'line 1 : uninitialized variable "a" : reached end of `do` (/tmp/tmp.ceu:1)',
+    run = '1] runtime error: reached end of `do`',
 }
 
 Test { [[
@@ -2896,7 +2896,7 @@ var int a = do/a
 end;
 escape a;
 ]],
-    dcls = 'line 5 : invalid `escape´ : no matching enclosing `do´',
+    dcls = 'line 5 : invalid `escape` : no matching enclosing `do`',
 }
 
 Test { [[
@@ -2910,7 +2910,7 @@ var u8&& ptr =
     end;
 escape ptr == null;
 ]],
-    parser = 'line 1 : after `=´ : expected expression',
+    parser = 'line 1 : after `=` : expected expression',
 }
 Test { [[
 var u8&& ptr = do
@@ -2951,7 +2951,7 @@ escape ret;
 Test { [[
 var int a = do end;
 ]],
-    --parser = 'line 1 : after `do´ : expected `/´',
+    --parser = 'line 1 : after `do` : expected `/`',
     todo = 'forever'
 }
 
@@ -2964,7 +2964,7 @@ a = do/a end;
 Test { [[
 var int a = do/a end;
 ]],
-    run = '1] runtime error: reached end of `do´',
+    run = '1] runtime error: reached end of `do`',
 }
 
 Test { [[
@@ -3317,7 +3317,7 @@ with
 end;
 escape a;
 ]],
-    inits = 'line 8 : uninitialized variable "a" : reached end of `par/or´ (/tmp/tmp.ceu:9)',
+    inits = 'line 8 : uninitialized variable "a" : reached end of `par/or` (/tmp/tmp.ceu:9)',
     --inits = 'line 8 : uninitialized variable "a" : reached yielding statement (/tmp/tmp.ceu:9)',
     --ref = 'line 8 : uninitialized variable "a" crossing compound statement (/tmp/tmp.ceu:9)',
 }
@@ -3677,7 +3677,7 @@ var int a = do/_
 escape a;
 ]],
     -- TODO: melhor seria: unexpected statement
-    parser = "line 16 : after `;´ : expected `with´",
+    parser = "line 16 : after `;` : expected `with`",
     --unreachs = 1,
     run = {
         ['1~>B; ~>20ms; 1~>C'] = 1,
@@ -3732,7 +3732,7 @@ b = 1;
 escape b;
 ]],
     --inits = 'line 2 : uninitialized variable "b" : reached yielding statement (/tmp/tmp.ceu:3)',
-    --inits = 'line 2 : uninitialized variable "b" : reached `await´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "b" : reached `await` (/tmp/tmp.ceu:3)',
     run = { ['1~>A']=1 },
 }
 
@@ -3753,7 +3753,7 @@ else
 end;
 escape b;
 ]],
-    --inits = 'line 2 : uninitialized variable "b" : reached `await´ (/tmp/tmp.ceu:4)',
+    --inits = 'line 2 : uninitialized variable "b" : reached `await` (/tmp/tmp.ceu:4)',
     --inits = 'line 2 : uninitialized variable "b" : reached yielding statement (/tmp/tmp.ceu:4)',
     run = { ['1~>A']=10 },
 }
@@ -3800,7 +3800,7 @@ var int b =
 escape b;
 ]],
     tmp = 'TODO: missing escape',
-    --ref = 'line 9 : missing initialization for variable "b" in the other branch of the `if-then-else´ (/tmp/tmp.ceu:7)'
+    --ref = 'line 9 : missing initialization for variable "b" in the other branch of the `if-then-else` (/tmp/tmp.ceu:7)'
 }
 
 -->>> LOOP
@@ -3810,7 +3810,7 @@ loop i in 10 do
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `in´ : expected `[´ or `]´',
+    parser = 'line 1 : after `in` : expected `[` or `]`',
     --env = 'TODO: not a pool',
 }
 
@@ -3868,8 +3868,8 @@ loop i in [1->4], -2 do
 end
 escape ret;
 ]],
-    --run = '2] runtime error: invalid `loop´ step : expected positive number',
-    codes = 'line 3 : invalid `loop´ step : expected positive number : got "-2"',
+    --run = '2] runtime error: invalid `loop` step : expected positive number',
+    codes = 'line 3 : invalid `loop` step : expected positive number : got "-2"',
 }
 
 Test { [[
@@ -3881,7 +3881,7 @@ loop i in [1->4], step do
 end
 escape ret;
 ]],
-    run = '4] runtime error: invalid `loop´ step : expected positive number',
+    run = '4] runtime error: invalid `loop` step : expected positive number',
 }
 
 Test { [[
@@ -3928,7 +3928,7 @@ loop i in [_->0] do
 end
 escape sum;
 ]],
-    parser = 'line 3 : after `_´ : expected `<-´',
+    parser = 'line 3 : after `_` : expected `<-`',
 }
 Test { [[
 var int sum = 0;
@@ -3941,14 +3941,14 @@ loop i in [0<-_] do
 end
 escape sum;
 ]],
-    parser = 'line 3 : after `<-´ : expected expression',
+    parser = 'line 3 : after `<-` : expected expression',
 }
 
 Test { [[
 loop do end
 escape 0;
 ]],
-    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 1 : invalid tight `loop` : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
@@ -3962,7 +3962,7 @@ loop i in [0->_] do
 end
 escape sum;
 ]],
-    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 3 : invalid tight `loop` : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
@@ -3988,8 +3988,8 @@ loop i in [1 <- 4], -1 do
 end
 escape ret;
 ]],
-    --run = '2] runtime error: invalid `loop´ step : expected positive number',
-    codes = 'line 3 : invalid `loop´ step : expected positive number : got "-1"',
+    --run = '2] runtime error: invalid `loop` step : expected positive number',
+    codes = 'line 3 : invalid `loop` step : expected positive number : got "-1"',
 }
 
 Test { [[
@@ -4079,7 +4079,7 @@ loop i in [0->n[ do
 end
 escape n;
 ]],
-    tight_ = 'line 4 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 4 : invalid tight `loop` : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
@@ -4113,13 +4113,13 @@ escape sum;
 Test { [[
 break;
 ]],
-    dcls = 'line 1 : invalid `break´ : expected matching enclosing `loop´',
-    --props = 'line 1 : `break´ without loop',
+    dcls = 'line 1 : invalid `break` : expected matching enclosing `loop`',
+    --props = 'line 1 : `break` without loop',
 }
 Test { [[
 continue;
 ]],
-    dcls = 'line 1 : invalid `continue´ : expected matching enclosing `loop´',
+    dcls = 'line 1 : invalid `continue` : expected matching enclosing `loop`',
 }
 
 Test { [[
@@ -4178,7 +4178,7 @@ escape 0;
         isForever = true,
         unreachs = 2,
     },
-    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 1 : invalid tight `loop` : unbounded number of non-awaiting iterations',
     --tight = 'tight loop',
 }
 
@@ -4262,8 +4262,8 @@ loop do
 end;
 escape 1;
 ]],
-    props_ = 'line 3 : invalid `break´ : unexpected enclosing `async´',
-    --props = '`break´ without loop',
+    props_ = 'line 3 : invalid `break` : unexpected enclosing `async`',
+    --props = '`break` without loop',
 }
 
 Test { [[
@@ -4286,8 +4286,8 @@ var int a;
 loop do a=1; end;
 escape a;
 ]],
-    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
-    --inits = 'line 1 : uninitialized variable "a" : reached `loop´ (/tmp/tmp.ceu:2)',
+    tight_ = 'line 2 : invalid tight `loop` : unbounded number of non-awaiting iterations',
+    --inits = 'line 1 : uninitialized variable "a" : reached `loop` (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "a" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 
@@ -4300,14 +4300,14 @@ escape a;
         --isForever = true,
         --unreachs = 1,
     --},
-    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 2 : invalid tight `loop` : unbounded number of non-awaiting iterations',
 }
 
 Test { [[break; escape 1;]],
-    parser="line 1 : after `;´ : expected end of file"
+    parser="line 1 : after `;` : expected end of file"
 }
 Test { [[break; break;]],
-    parser="line 1 : after `;´ : expected end of file"
+    parser="line 1 : after `;` : expected end of file"
 }
 Test { [[loop do break; end; escape 1;]],
     _ana = {
@@ -4353,7 +4353,7 @@ loop do
     end;
 end;
 ]],
-    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 1 : invalid tight `loop` : unbounded number of non-awaiting iterations',
     --_ana = {
         --isForever = true,
         --unreachs = 1,
@@ -4441,7 +4441,7 @@ end
 escape 0;
 ]],
     run = { ['~>1s']=2 },
-    --tight_ = 'line 3 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    --tight_ = 'line 3 : invalid tight `loop` : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
@@ -4455,7 +4455,7 @@ end
 escape 0;
 ]],
     run = { ['~>1s']=2 },
-    --tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    --tight_ = 'line 2 : invalid tight `loop` : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
@@ -4541,7 +4541,7 @@ loop x do
     await 1s;
 end
 ]],
-    stmts = 'line 2 : invalid `loop´ : expected numeric variable',
+    stmts = 'line 2 : invalid `loop` : expected numeric variable',
 }
 
 Test { [[
@@ -4702,8 +4702,8 @@ loop/_V do
 end
 escape 1;
 ]],
-    consts = 'line 5 : invalid `loop´ : limit must be an integer constant',
-    --tight = 'line 4 : `loop´ bound must be constant',
+    consts = 'line 5 : invalid `loop` : limit must be an integer constant',
+    --tight = 'line 4 : `loop` bound must be constant',
 }
 Test { [[
 native/const _V;
@@ -4721,7 +4721,7 @@ loop/10 do
 end
 escape 1;
 ]],
-    run = 'runtime error: `loop´ overflow',
+    run = 'runtime error: `loop` overflow',
     --run = 1,
 }
 
@@ -4740,7 +4740,7 @@ loop/3 do
 end
 escape ret;
 ]],
-    run = 'runtime error: `loop´ overflow',
+    run = 'runtime error: `loop` overflow',
 }
 
 Test { [[
@@ -4758,8 +4758,8 @@ loop/a i do
 end
 escape 1;
 ]],
-    consts = 'line 3 : invalid `loop´ : limit must be an integer constant',
-    --tight = '`loop´ bound must be constant',
+    consts = 'line 3 : invalid `loop` : limit must be an integer constant',
+    --tight = '`loop` bound must be constant',
 }
 Test { [[
 var int i;
@@ -4767,7 +4767,7 @@ loop/10 i do
 end
 escape 1;
 ]],
-    run = '2] runtime error: `loop´ overflow',
+    run = '2] runtime error: `loop` overflow',
 }
 
 Test { [[
@@ -4806,7 +4806,7 @@ loop/1 i in [0->k[ do
 end
 escape 1;
 ]],
-    run = '3] runtime error: `loop´ overflow',
+    run = '3] runtime error: `loop` overflow',
 }
 
 Test { [[
@@ -4974,8 +4974,8 @@ every A do
 end
 ]],
     run = { ['~>A; ~>A; ~>A'] = 3 },
-    --props_ = 'line 6 : invalid `escape´ : unexpected enclosing `every´',
-    --props = 'line 6 : not permitted inside `every´',
+    --props_ = 'line 6 : invalid `escape` : unexpected enclosing `every`',
+    --props = 'line 6 : not permitted inside `every`',
 }
 
 Test { [[
@@ -5022,8 +5022,8 @@ every 1s do
     end
 end
 ]],
-    props_ = 'line 3 : invalid `await´ : unexpected enclosing `every´',
-    --props = 'line 3 : `every´ cannot contain `await´',
+    props_ = 'line 3 : invalid `await` : unexpected enclosing `every`',
+    --props = 'line 3 : `every` cannot contain `await`',
 }
 
 Test { [[
@@ -5225,7 +5225,7 @@ with
 end
 ]],
     run = false,
-    ana = 'line 3 : `loop´ iteration is not reachable',
+    ana = 'line 3 : `loop` iteration is not reachable',
     --run = 4;
 }
 
@@ -5243,7 +5243,7 @@ with
 end
 ]],
     run = 4,
-    --props_ = 'line 5 : invalid `escape´ : unexpected enclosing `every´',
+    --props_ = 'line 5 : invalid `escape` : unexpected enclosing `every`',
     --dcls = 'line 4 : implicit declaration of "a" hides previous declaration',
 }
 Test { [[
@@ -5309,8 +5309,8 @@ with
 end
 ]],
     run = 4,
-    --props_ = 'line 5 : invalid `escape´ : unexpected enclosing `every´',
-    --props = 'line 4 : not permitted inside `every´',
+    --props_ = 'line 5 : invalid `escape` : unexpected enclosing `every`',
+    --props = 'line 4 : not permitted inside `every`',
 }
 Test { [[
 input (int,int) A;
@@ -5327,7 +5327,7 @@ with
 end
 ]],
     run = false,
-    ana = 'line 3 : `loop´ iteration is not reachable',
+    ana = 'line 3 : `loop` iteration is not reachable',
 }
 Test { [[
 input (int,int) A;
@@ -5344,7 +5344,7 @@ with
 end
 ]],
     run = 4,
-    --inits = 'line 3 : uninitialized variable "a" : reached `loop´ (/tmp/tmp.ceu:4)',
+    --inits = 'line 3 : uninitialized variable "a" : reached `loop` (/tmp/tmp.ceu:4)',
     --ref = 'line 3 : uninitialized variable "a" crossing compound statement (/tmp/tmp.ceu:4)',
 }
 
@@ -5373,7 +5373,7 @@ every 1s do
 end
 escape 0;
 ]],
-    props_ = 'line 2 : invalid `every´ : unexpected enclosing `every´',
+    props_ = 'line 2 : invalid `every` : unexpected enclosing `every`',
 }
 
 Test { [[
@@ -5400,8 +5400,8 @@ loop do
 end
 ]],
     run = { ['~>1s']=1 },
-    --props_ = 'line 3 : invalid `break´ : unexpected enclosing `every´',
-    --props = 'line 2 : not permitted inside `every´',
+    --props_ = 'line 3 : invalid `break` : unexpected enclosing `every`',
+    --props = 'line 2 : not permitted inside `every`',
 }
 Test { [[
 every 1s do
@@ -5410,8 +5410,8 @@ end
 escape 1;
 ]],
     run = { ['~>1s']=1 },
-    --dcls = 'line 2 : invalid `break´ : expected matching enclosing `loop´',
-    --props = 'line 2 : not permitted inside `every´',
+    --dcls = 'line 2 : invalid `break` : expected matching enclosing `loop`',
+    --props = 'line 2 : not permitted inside `every`',
 }
 Test { [[
 loop do
@@ -5421,8 +5421,8 @@ loop do
 end
 ]],
     run = false,
-    --props_ = 'line 3 : invalid `continue´ : unexpected enclosing `every´',
-    --props = 'line 2 : not permitted inside `every´',
+    --props_ = 'line 3 : invalid `continue` : unexpected enclosing `every`',
+    --props = 'line 2 : not permitted inside `every`',
 }
 Test { [[
 every 1s do
@@ -5430,8 +5430,8 @@ every 1s do
 end
 ]],
     run = false,
-    --dcls = 'line 2 : invalid `continue´ : expected matching enclosing `loop´',
-    --props = 'line 2 : not permitted inside `every´',
+    --dcls = 'line 2 : invalid `continue` : expected matching enclosing `loop`',
+    --props = 'line 2 : not permitted inside `every`',
 }
 
 Test { [[
@@ -5440,8 +5440,8 @@ every 1s do
 end
 ]],
     run = { ['~>1s']=1 },
-    --props_ = 'line 2 : invalid `escape´ : unexpected enclosing `every´',
-    --props = 'line 2 : not permitted inside `every´',
+    --props_ = 'line 2 : invalid `escape` : unexpected enclosing `every`',
+    --props = 'line 2 : not permitted inside `every`',
 }
 
 Test { [[
@@ -5453,7 +5453,7 @@ every 1s do
     end
 end
 ]],
-    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 2 : invalid tight `loop` : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
@@ -5511,7 +5511,7 @@ loop do
     end
 end
 ]],
-    todo = 'line 3 : invalid `continue´',
+    todo = 'line 3 : invalid `continue`',
 }
 
 Test { [[
@@ -5519,7 +5519,7 @@ loop do
     do continue; end
 end
 ]],
-    todo = 'line 2 : invalid `continue´',
+    todo = 'line 2 : invalid `continue`',
 }
 
 Test { [[
@@ -5531,7 +5531,7 @@ loop do
     end
 end
 ]],
-    todo = 'line 4 : invalid `continue´',
+    todo = 'line 4 : invalid `continue`',
 }
 
 Test { [[
@@ -5574,7 +5574,7 @@ every 1s do
 end
 ]],
     run = false,
-    --dcls = 'line 3 : invalid `continue´ : expected matching enclosing `loop´',
+    --dcls = 'line 3 : invalid `continue` : expected matching enclosing `loop`',
     _ana = {
         isForever = true,
     },
@@ -5759,7 +5759,7 @@ loop do
 end;
 escape a;
 ]],
-    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 2 : invalid tight `loop` : unbounded number of non-awaiting iterations',
 }
 Test { [[
 var int a=0;
@@ -5788,7 +5788,7 @@ loop do
 end;
 escape 0;
 ]],
-    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 1 : invalid tight `loop` : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
@@ -5839,7 +5839,7 @@ loop do
 end;
 escape 0;
 ]],
-    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 2 : invalid tight `loop` : unbounded number of non-awaiting iterations',
     --run = false,
     --loop='tight loop',
     _ana = {
@@ -5860,7 +5860,7 @@ loop do
 end;
 escape 0;
 ]],
-    tight_ = 'line 4 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 4 : invalid tight `loop` : unbounded number of non-awaiting iterations',
     run = false,
     loop='tight loop',
     _ana = {
@@ -6280,7 +6280,7 @@ end
 escape sum;
 ]],
     --loop = true,
-    --adj = 'line 2 : constant should not be `0´',
+    --adj = 'line 2 : constant should not be `0`',
     run = 4,
 }
 Test { [[
@@ -6506,7 +6506,7 @@ input int A;
 _ = await A;
 escape 0;
 ]],
-    parser = 'line 1 : after `;´ : expected statement',
+    parser = 'line 1 : after `;` : expected statement',
 }
 
 Test { [[
@@ -6568,37 +6568,37 @@ Test { [[
 event void e;
 escape 0  or  e;
 ]],
-    dcls = 'line 2 : invalid operand to `or´ : unexpected context for event "e"',
+    dcls = 'line 2 : invalid operand to `or` : unexpected context for event "e"',
 }
 Test { [[
 event void e;
 escape sizeof(e);
 ]],
-    dcls = 'line 2 : invalid operand to `sizeof´ : unexpected context for event "e"',
+    dcls = 'line 2 : invalid operand to `sizeof` : unexpected context for event "e"',
 }
 Test { [[
 event void e;
 escape not e;
 ]],
-    dcls = 'line 2 : invalid operand to `not´ : unexpected context for event "e"',
+    dcls = 'line 2 : invalid operand to `not` : unexpected context for event "e"',
 }
 Test { [[
 event int e;
 escape e?;
 ]],
-    dcls = 'line 2 : invalid operand to `?´ : unexpected context for event "e"',
+    dcls = 'line 2 : invalid operand to `?` : unexpected context for event "e"',
 }
 Test { [[
 event int e;
 escape e|e;
 ]],
-    dcls = 'line 2 : invalid operand to `|´ : unexpected context for event "e"',
+    dcls = 'line 2 : invalid operand to `|` : unexpected context for event "e"',
 }
 Test { [[
 event void e;
 escape -e;
 ]],
-    dcls = 'line 2 : invalid operand to `-´ : unexpected context for event "e"',
+    dcls = 'line 2 : invalid operand to `-` : unexpected context for event "e"',
 }
 
 Test { [[
@@ -6627,7 +6627,7 @@ var u8 k = 5;
 
 emit a(&&k); // leads to compiler error
 ]],
-    dcls = 'line 1 : invalid event type : cannot use `&&´'
+    dcls = 'line 1 : invalid event type : cannot use `&&`'
 }
 
 Test { [[
@@ -6636,7 +6636,7 @@ event (int,int) e;
 escape 1;
 ]],
     wrn = true,
-    --inits = 'line 1 : uninitialized variable "x" : reached `escape´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 1 : uninitialized variable "x" : reached `escape` (/tmp/tmp.ceu:3)',
     run = 1,
 }
 
@@ -6670,8 +6670,8 @@ emit c(10);
 emit c(10);
 escape c;
 ]],
-    stmts = 'line 4 : invalid `escape´ : unexpected context for event "c"',
-    --env = 'line 4 : types mismatch (`int´ <= `void´)',
+    stmts = 'line 4 : invalid `escape` : unexpected context for event "c"',
+    --env = 'line 4 : types mismatch (`int` <= `void`)',
     --trig_wo = 2,
 }
 
@@ -6829,7 +6829,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    ana = 'line 4 : `loop´ iteration is not reachable',
+    ana = 'line 4 : `loop` iteration is not reachable',
     --ana = 'line 4 : statement is not reachable',    -- TODO: should be line 7
     run = 2,
 }
@@ -7132,7 +7132,7 @@ with
 end
 escape ret;
 ]],
-    dcls = 'line 3 : invalid event type : cannot use `&&´',
+    dcls = 'line 3 : invalid event type : cannot use `&&`',
     --env = 'line 11 : wrong argument : cannot pass pointers',
     --run = { ['~>1s']=10 },
 }
@@ -7300,7 +7300,7 @@ end;
 escape 0;
 ]],
     run = false,
-    --tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    --tight_ = 'line 2 : invalid tight `loop` : unbounded number of non-awaiting iterations',
     --run = 4,
 }
 
@@ -7393,8 +7393,8 @@ end
 emit a;
 escape ret;
 ]],
-    --env = 'line 10 : missing parameters on `emit´',
-    stmts = 'line 10 : invalid `emit´ : types mismatch : "(int)" <= "()"',
+    --env = 'line 10 : missing parameters on `emit`',
+    stmts = 'line 10 : invalid `emit` : types mismatch : "(int)" <= "()"',
 }
 
 Test { [[
@@ -7442,7 +7442,7 @@ var _abc a = _;
 
 Test { [[event int a=0; emit a(1); escape a;]],
     stmts = 'line 1 : invalid assignment : unexpected context for event "a"',
-    --parser = 'line 1 : after `a´ : expected `;´',
+    --parser = 'line 1 : after `a` : expected `;`',
     --trig_wo = 1,
 }
 Test { [[
@@ -7450,7 +7450,7 @@ event int a;
 emit a(1);
 escape a;
 ]],
-    stmts = 'line 3 : invalid `escape´ : unexpected context for event "a"',
+    stmts = 'line 3 : invalid `escape` : unexpected context for event "a"',
     --run = 1,
     --trig_wo = 1,
 }
@@ -7613,7 +7613,7 @@ end;
 escape 0;
 ]],
     stmts = 'line 2 : invalid assignment : unexpected context for event "a"',
-    --env = 'line 4 : types mismatch (`void´ <= `int´)',
+    --env = 'line 4 : types mismatch (`void` <= `int`)',
 }
 
 Test { [[
@@ -7628,7 +7628,7 @@ end;
 escape 0;
 ]],
     stmts = 'line 3 : invalid assignment : unexpected context for event "a"',
-    --env = 'line 4 : types mismatch (`void´ <= `int´)',
+    --env = 'line 4 : types mismatch (`void` <= `int`)',
 }
 
 Test { [[
@@ -7665,7 +7665,7 @@ var int i;
 end
 escape 10;
 ]],
-    props = 'line 7 : not permitted inside `every´',
+    props = 'line 7 : not permitted inside `every`',
 }
 
 Test { [[
@@ -7681,7 +7681,7 @@ var int i;
 end
 escape 10;
 ]],
-    ana = 'line 3 : `loop´ iteration is not reachable',
+    ana = 'line 3 : `loop` iteration is not reachable',
     run = { ['~>A']=10 },
 }
 
@@ -7775,7 +7775,7 @@ every inc do
 end
 ]],
     run = false,
-    --tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    --tight_ = 'line 2 : invalid tight `loop` : unbounded number of non-awaiting iterations',
     _ana = { isForever=true },
 }
 
@@ -7788,7 +7788,7 @@ with
 end;
 escape 0;
 ]],
-    tight_ = 'line 5 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 5 : invalid tight `loop` : unbounded number of non-awaiting iterations',
     loop='tight loop',
     _ana = {
         isForever = true,
@@ -7873,7 +7873,7 @@ escape a;
 ]],
     run = {['6~>A']=6},
     _ana = {acc=true},
-    --ref = 'line 6 : missing initialization for variable "a" in the other branch of the `if-then-else´ (/tmp/tmp.ceu:4)',
+    --ref = 'line 6 : missing initialization for variable "a" in the other branch of the `if-then-else` (/tmp/tmp.ceu:4)',
 }
 Test { [[
 input int A;
@@ -9615,9 +9615,9 @@ await async do
 end
 escape 1;
 ]],
-    stmts = 'line 3 : invalid `emit´ : types mismatch : "(int)" <= "()"',
+    stmts = 'line 3 : invalid `emit` : types mismatch : "(int)" <= "()"',
     --env = 'line 3 : arity mismatch',
-    --env = 'line 3 : missing parameters on `emit´',
+    --env = 'line 3 : missing parameters on `emit`',
 }
 
 Test { [[
@@ -9715,8 +9715,8 @@ var int a; var int  b;
 (a,b) = await 1s;
 escape 1;
 ]],
-    parser = 'line 2 : after `await´ : expected external identifier',
-    --parser = 'line 2 : after `1´ : expected number or `/_´',
+    parser = 'line 2 : after `await` : expected external identifier',
+    --parser = 'line 2 : after `1` : expected number or `/_`',
     --stmts = 'line 2 : invalid assignment : types mismatch',
     --env = 'line 2 : arity mismatch',
     --gcc = 'error: ‘tceu__s32’ has no member named ‘_2’',
@@ -10150,7 +10150,7 @@ escape v1+v2;
 ]],
     run = 5,
     --inits = 'line 1 : uninitialized variable "v1" : reached yielding statement (/tmp/tmp.ceu:2)',
-    --inits = 'line 1 : uninitialized variable "v1" : reached `par/or´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "v1" : reached `par/or` (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "v1" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 Test { [[
@@ -12308,7 +12308,7 @@ loop do
     end
 end
 ]],
-    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 2 : invalid tight `loop` : unbounded number of non-awaiting iterations',
     _ana = {
         loop = true,
     },
@@ -12329,7 +12329,7 @@ with
     emit a(aa);
 end;
 ]],
-    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 3 : invalid tight `loop` : unbounded number of non-awaiting iterations',
     _ana = {
         abrt = 1,
         acc = 2,
@@ -12598,7 +12598,7 @@ var int ret = loop do
     end;
 escape ret;
 ]],
-    parser = 'line 2 : after `=´ : expected expression',
+    parser = 'line 2 : after `=` : expected expression',
     run = {
         ['1~>A ; 5~>B'] = 5,
         ['1~>A ; 1~>A ; 3~>B ; 1~>A ; 5~>B'] = 5,
@@ -13744,7 +13744,7 @@ end;
 ]],
     inits = 'line 1 : uninitialized variable "a" : reached read access (/tmp/tmp.ceu:3)',
     --inits = 'line 1 : uninitialized variable "a" : reached yielding statement (/tmp/tmp.ceu:2)',
-    --inits = 'line 1 : uninitialized variable "a" : reached `par´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "a" : reached `par` (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "a" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 Test { [[
@@ -14630,8 +14630,8 @@ loop do
     break;
 end;
 ]],
-    --ast = "line 4 : after `;´ : expected `end´",
-    parser = 'line 4 : after `;´ : expected `end´',
+    --ast = "line 4 : after `;` : expected `end`",
+    parser = 'line 4 : after `;` : expected `end`',
 }
 
 Test { [[
@@ -15609,7 +15609,7 @@ c = d + 1;
 await A;
 escape c;
 ]],
-    parser = 'line 3 : after `=´ : expected expression',
+    parser = 'line 3 : after `=` : expected expression',
 }
 
 Test { [[
@@ -15760,7 +15760,7 @@ event int a; event int b;
     end;
 escape 0;
 ]],
-    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 2 : invalid tight `loop` : unbounded number of non-awaiting iterations',
 }
 Test { [[
 event int a; event int b;
@@ -15773,7 +15773,7 @@ event int a; event int b;
     end;
 escape 0;
 ]],
-    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 2 : invalid tight `loop` : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
@@ -15901,7 +15901,7 @@ end;
 escape v;
 ]],
     run = 2.
-    --inits = 'line 1 : uninitialized variable "v" : reached `par/and´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "v" : reached `par/and` (/tmp/tmp.ceu:2)',
     --inits = 'line 1 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:2)'
 }
@@ -15914,9 +15914,9 @@ with
 end;
 escape v;
 ]],
-    inits = 'line 1 : uninitialized variable "v" : reached end of `par/and´ (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "v" : reached end of `par/and` (/tmp/tmp.ceu:2)',
     --inits = 'line 1 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:2)',
-    --inits = 'line 1 : uninitialized variable "v" : reached `par/and´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "v" : reached `par/and` (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 
@@ -15934,9 +15934,9 @@ escape a;
 ]],
     wrn = true,
     inits = 'line 1 : uninitialized variable "a" : reached read access (/tmp/tmp.ceu:10)',
-    --inits = 'line 1 : uninitialized variable "a" : reached `break´ (/tmp/tmp.ceu:6)',
+    --inits = 'line 1 : uninitialized variable "a" : reached `break` (/tmp/tmp.ceu:6)',
     --inits = 'line 1 : uninitialized variable "a" : reached yielding statement (/tmp/tmp.ceu:6)',
-    --inits = 'line 1 : uninitialized variable "a" : reached `loop´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "a" : reached `loop` (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "a" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 
@@ -15949,7 +15949,7 @@ end;
 escape v;
 ]],
     --inits = 'line 1 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:2)',
-    inits = 'line 1 : uninitialized variable "v" : reached end of `par/or´ (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "v" : reached end of `par/or` (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 
@@ -15977,7 +15977,7 @@ end;
     wrn = true,
     inits = 'line 3 : uninitialized variable "v" : reached read access (/tmp/tmp.ceu:12)',
     --inits = 'line 3 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:4)',
-    --inits = 'line 3 : uninitialized variable "v" : reached `par/or´ (/tmp/tmp.ceu:4)',
+    --inits = 'line 3 : uninitialized variable "v" : reached `par/or` (/tmp/tmp.ceu:4)',
     --ref = 'line 3 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:4)',
 }
 
@@ -17609,7 +17609,7 @@ event int a;
 ]],
     run = false,
     --inits = 'line 2 : uninitialized variable "v2" : reached yielding statement (/tmp/tmp.ceu:3)',
-    --inits = 'line 2 : uninitialized variable "v2" : reached `await´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "v2" : reached `await` (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -18108,7 +18108,7 @@ escape x;
         unreachs = 2,
     },
     run = 1,
-    stmts = 'line 6 : invalid `emit´ : types mismatch : "()" <= "(int)"',
+    stmts = 'line 6 : invalid `emit` : types mismatch : "()" <= "(int)"',
 }
 
 -- TODO: STACK
@@ -18492,7 +18492,7 @@ Test { [[
 event a;
 escape 0;
 ]],
-    parser = 'line 1 : after `event´ : expected `&´ or `(´ or type',
+    parser = 'line 1 : after `event` : expected `&` or `(` or type',
 }
 
 Test { [[
@@ -18523,9 +18523,9 @@ end;
 escape a;
 ]],
     wrn = true,
-    stmts = 'line 8 : invalid `emit´ : unexpected context for variable "a"',
+    stmts = 'line 8 : invalid `emit` : unexpected context for variable "a"',
     --env = 'line 8 : identifier "a" is not an event (/tmp/tmp.ceu : line 5)',
-    --dcls = 'line 23 : invalid use of `event´',
+    --dcls = 'line 23 : invalid use of `event`',
 }
 
 Test { [[
@@ -18733,8 +18733,8 @@ var& int b = a;
 a = 2;
 escape b;
 ]],
-    inits = 'line 2 : invalid binding : expected operator `&´ in the right side',
-    --ref = 'line 2 : invalid attribution : missing alias operator `&´ on the right',
+    inits = 'line 2 : invalid binding : expected operator `&` in the right side',
+    --ref = 'line 2 : invalid attribution : missing alias operator `&` on the right',
 }
 
 Test { [[
@@ -18778,7 +18778,7 @@ end
 escape a+b;
 ]],
     run = 110,
-    --ref = 'line 6 : invalid extra access to variable "c" inside the initializing `if-then-else´ (/tmp/tmp.ceu:4)',
+    --ref = 'line 6 : invalid extra access to variable "c" inside the initializing `if-then-else` (/tmp/tmp.ceu:4)',
 }
 Test { [[
 var int a = 1;
@@ -18793,7 +18793,7 @@ end
 escape a+b;
 ]],
     run = 11,
-    --ref = 'line 8 : invalid extra access to variable "c" inside the initializing `if-then-else´ (/tmp/tmp.ceu:4)',
+    --ref = 'line 8 : invalid extra access to variable "c" inside the initializing `if-then-else` (/tmp/tmp.ceu:4)',
 }
 
 Test { [[
@@ -18804,7 +18804,7 @@ end
 var& int v = &_V;
 escape v;
 ]],
-    dcls = 'line 5 : invalid operand to `&´ : expected native call',
+    dcls = 'line 5 : invalid operand to `&` : expected native call',
     --stmts = 'line 5 : invalid binding : unexpected native identifier',
     --gcc = 'error: assignment makes pointer from integer without a cast',
     --run = 10;
@@ -18816,8 +18816,8 @@ var&? _int v1 = &_f() finalize (v1) with end;
 var&? _int v2 = &{f()};
 escape v1! + v2!;
 ]],
-    dcls = 'line 3 : invalid operand to `&´ : expected native call',
-    --dcls = 'line 3 : invalid operand to `&´ : unexpected context for native "_{}"',
+    dcls = 'line 3 : invalid operand to `&` : expected native call',
+    --dcls = 'line 3 : invalid operand to `&` : unexpected context for native "_{}"',
     --stmts = 'line 3 : invalid binding : unexpected native identifier',
 }
 
@@ -18827,7 +18827,7 @@ var&? _int v1 = &_f() finalize (v1) with end;
 var&? _int v2 = &{f()} finalize (v2) with end;
 escape v1! + v2!;
 ]],
-    fins = 'line 3 : invalid operand to `&´ : expected native call',
+    fins = 'line 3 : invalid operand to `&` : expected native call',
 }
 
 Test { [[
@@ -18851,7 +18851,7 @@ a = 2;
 escape b;
 ]],
     stmts = 'line 2 : invalid assignment : types mismatch : "int" <= "int&&"',
-    --env = 'line 2 : types mismatch (`int&´ <= `int&&´)',
+    --env = 'line 2 : types mismatch (`int&` <= `int&&`)',
     --run = 2,
 }
 Test { [[
@@ -18859,7 +18859,7 @@ var int x = 10;
 var& int y = &&x;
 escape y;
 ]],
-    --env = 'line 2 : types mismatch (`int&´ <= `int&&´)',
+    --env = 'line 2 : types mismatch (`int&` <= `int&&`)',
     stmts = 'line 2 : invalid assignment : types mismatch : "int" <= "int&&"',
 }
 
@@ -18872,8 +18872,8 @@ var& int v;
 v = &_V;
 escape v;
 ]],
-    dcls = 'line 6 : invalid operand to `&´ : expected native call',
-    --dcls = 'line 6 : invalid operand to `&´ : unexpected context for native "_V"',
+    dcls = 'line 6 : invalid operand to `&` : expected native call',
+    --dcls = 'line 6 : invalid operand to `&` : unexpected context for native "_V"',
     --stmts = 'line 6 : invalid binding : unexpected native identifier',
     --gcc = 'error: assignment makes pointer from integer without a cast',
     --env = 'line 5 : invalid attribution (int& vs _&&)',
@@ -18926,8 +18926,8 @@ var& int v;
 v = &_V;
 escape v;
 ]],
-    dcls = 'line 6 : invalid operand to `&´ : expected native call',
-    --dcls = 'line 6 : invalid operand to `&´ : unexpected context for native "_V"',
+    dcls = 'line 6 : invalid operand to `&` : expected native call',
+    --dcls = 'line 6 : invalid operand to `&` : unexpected context for native "_V"',
     --stmts = 'line 6 : invalid binding : unexpected native identifier',
     --gcc = 'error: assignment makes pointer from integer without a cast',
     --run = 10;
@@ -18942,7 +18942,7 @@ var int&& c = a;
 escape 1;
 ]],
     stmts = 'line 3 : invalid assignment : types mismatch : "int" <= "int&&"',
-    --env = 'line 3 : types mismatch (`int&´ <= `int&&´)',
+    --env = 'line 3 : types mismatch (`int&` <= `int&&`)',
     --run = { ['~>1s']=1 },
 }
 Test { [[
@@ -18957,8 +18957,8 @@ var& int v;
 v = &&vv;
 escape *v;
 ]],
-    dcls = 'line 4 : invalid operand to `*´ : expected pointer type',
-    --env = 'line 6 : types mismatch (`int&´ <= `int&&´)'
+    dcls = 'line 4 : invalid operand to `*` : expected pointer type',
+    --env = 'line 6 : types mismatch (`int&` <= `int&&`)'
 }
 Test { [[
 native/pos do
@@ -18988,9 +18988,9 @@ end
 v = 5;
 escape a + b + v;
 ]],
-    inits = 'line 2 : uninitialized variable "v" : reached end of `if´ (/tmp/tmp.ceu:3)',
+    inits = 'line 2 : uninitialized variable "v" : reached end of `if` (/tmp/tmp.ceu:3)',
     --ref = 'line 5 : reference must be bounded in the other if-else branch',
-    --ref = 'line 5 : missing initialization for variable "v" in the other branch of the `if-then-else´ (/tmp/tmp.ceu:3)',
+    --ref = 'line 5 : missing initialization for variable "v" in the other branch of the `if-then-else` (/tmp/tmp.ceu:3)',
 }
 Test { [[
 var int a=1; var int  b=2;
@@ -19002,8 +19002,8 @@ end
 v = 5;
 escape a + b + v;
 ]],
-    inits = '/tmp/tmp.ceu : line 2 : uninitialized variable "v" : reached end of `if´ (/tmp/tmp.ceu:3)',
-    --ref = 'line 4 : missing initialization for variable "v" in the other branch of the `if-then-else´ (/tmp/tmp.ceu:3)',
+    inits = '/tmp/tmp.ceu : line 2 : uninitialized variable "v" : reached end of `if` (/tmp/tmp.ceu:3)',
+    --ref = 'line 4 : missing initialization for variable "v" in the other branch of the `if-then-else` (/tmp/tmp.ceu:3)',
 }
 Test { [[
 var int a=1; var int  b=2;
@@ -19041,8 +19041,8 @@ end
 v = 1;
 escape _V1+_V2;
 ]],
-    dcls = 'line 8 : invalid operand to `&´ : expected native call',
-    --dcls = 'line 8 : invalid operand to `&´ : unexpected context for native "_V1"',
+    dcls = 'line 8 : invalid operand to `&` : expected native call',
+    --dcls = 'line 8 : invalid operand to `&` : unexpected context for native "_V1"',
     --stmts = 'line 8 : invalid binding : unexpected native identifier',
     --gcc = 'error: assignment makes pointer from integer without a cast',
     --run = 6,
@@ -19139,8 +19139,8 @@ escape v;
     --ref = 'reference declaration and first binding cannot be separated by loops',
     --ref = 'line 2 : uninitialized variable "i" crossing compound statement (/tmp/tmp.ceu:3)',
     --inits = 'line 2 : uninitialized variable "i" : reached yielding statement (/tmp/tmp.ceu:3)',
-    --inits = 'line 2 : uninitialized variable "i" : reached `loop´ (/tmp/tmp.ceu:3)',
-    inits = 'line 4 : invalid binding : crossing `loop´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "i" : reached `loop` (/tmp/tmp.ceu:3)',
+    inits = 'line 4 : invalid binding : crossing `loop` (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -19177,7 +19177,7 @@ finalize () with
     _SDL_FreeSurface(&&(sfc!));
 end
 ]],
-    parser = 'line 3 : after `(´ : expected location',
+    parser = 'line 3 : after `(` : expected location',
 }
 
 Test { [[
@@ -19188,7 +19188,7 @@ finalize with
 end
 escape 0;
 ]],
-    scopes = 'line 2 : invalid `finalize´ : unexpected `nothing´',
+    scopes = 'line 2 : invalid `finalize` : unexpected `nothing`',
 }
 
 Test { [[
@@ -19239,7 +19239,7 @@ native _Cnt;
         var _Cnt&& snd = _Radio_getPayload(&&msg, sizeof(_Cnt));
     end
 ]],
-    --fin = 'line 5 : pointer access across `await´',
+    --fin = 'line 5 : pointer access across `await`',
     cc = '1: error: unknown type name ‘message_t’',
     _ana = {
         isForever = true,
@@ -19275,7 +19275,7 @@ do finalize with
 end
 escape 0;
 ]],
-    props_ = 'line 2 : invalid `escape´ : unexpected enclosing `finalize´',
+    props_ = 'line 2 : invalid `escape` : unexpected enclosing `finalize`',
 }
 
 Test { [[
@@ -19283,7 +19283,7 @@ native _malloc;
 var int&& ptr = _malloc();
 ]],
     scopes = 'line 2 : invalid assignment : expected binding for "_malloc"',
-    --fin = 'line 1 : must assign to a option reference (declared with `&?´)',
+    --fin = 'line 1 : must assign to a option reference (declared with `&?`)',
 }
 
 Test { [[
@@ -19295,8 +19295,8 @@ finalize with
     do await FOREVER; end;
 end
 ]],
-    scopes = 'line 3 : invalid `finalize´ : nothing to finalize',
-    --scopes = 'line 5 : invalid `finalize´ : expected `varlist´',
+    scopes = 'line 3 : invalid `finalize` : nothing to finalize',
+    --scopes = 'line 5 : invalid `finalize` : expected `varlist`',
 }
 
 Test { [[
@@ -19308,7 +19308,7 @@ finalize (_f) with
     do await FOREVER; end;
 end
 ]],
-    scopes = 'line 5 : invalid `finalize´ : unmatching identifiers : expected "a" (vs. /tmp/tmp.ceu:4)',
+    scopes = 'line 5 : invalid `finalize` : unmatching identifiers : expected "a" (vs. /tmp/tmp.ceu:4)',
 }
 
 Test { [[
@@ -19353,10 +19353,10 @@ loop do
     end
 end
 ]],
-    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 1 : invalid tight `loop` : unbounded number of non-awaiting iterations',
     --tight = 'line 1 : tight loop', -- TODO: par/and
-    --props = "line 8 : not permitted inside `finalize´",
-    --fin = 'line 6 : attribution does not require `finalize´',
+    --props = "line 8 : not permitted inside `finalize`",
+    --fin = 'line 6 : attribution does not require `finalize`',
     --fin = 'line 6 : attribution to pointer with greater scope',
 }
 
@@ -19367,8 +19367,8 @@ await 1s;
 escape *ptr;
 ]],
     ptrs = 'line 4 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:3)',
-    --inits = 'line 4 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
-    --fin = 'line 4 : unsafe access to pointer "ptr" across `await´',
+    --inits = 'line 4 : invalid pointer access : crossed `await` (/tmp/tmp.ceu:3)',
+    --fin = 'line 4 : unsafe access to pointer "ptr" across `await`',
 }
 
 Test { [[
@@ -19380,7 +19380,7 @@ var int&& c = a;
 escape 1;
 ]],
     ptrs = 'line 5 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:4)',
-    --fin = 'line 5 : unsafe access to pointer "a" across `await´',
+    --fin = 'line 5 : unsafe access to pointer "a" across `await`',
 }
 
 Test { [[
@@ -19392,7 +19392,7 @@ var int&& c = a;
 escape 1;
 ]],
     ptrs = 'line 5 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:4)',
-    --fin = 'line 5 : unsafe access to pointer "a" across `await´',
+    --fin = 'line 5 : unsafe access to pointer "a" across `await`',
 }
 
 Test { [[
@@ -19407,7 +19407,7 @@ escape v;
 ]],
     run = { ['~>10s']=11 },
     --inits = 'line 5 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:4)',
-    --fin = 'line 4 : unsafe access to pointer "x" across `loop´ (/tmp/tmp.ceu : 3)',
+    --fin = 'line 4 : unsafe access to pointer "x" across `loop` (/tmp/tmp.ceu : 3)',
 }
 
 Test { [[
@@ -19422,8 +19422,8 @@ end
 escape v;
 ]],
     run = 11,
-    --inits = 'line 5 : invalid pointer access : crossed `loop´ (/tmp/tmp.ceu:4)',
-    --fin = 'line 5 : unsafe access to pointer "x" across `loop´ (/tmp/tmp.ceu : 4)',
+    --inits = 'line 5 : invalid pointer access : crossed `loop` (/tmp/tmp.ceu:4)',
+    --fin = 'line 5 : unsafe access to pointer "x" across `loop` (/tmp/tmp.ceu : 4)',
 }
 
 Test { [[
@@ -19437,7 +19437,7 @@ end
 escape v;
 ]],
     run = { ['~>20s']=2 },
-    --tight_ = 'line 3 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    --tight_ = 'line 3 : invalid tight `loop` : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
@@ -19467,10 +19467,10 @@ loop do
 end
 ]],
     wrn = true,
-    scopes = 'line 5 : invalid `finalize´ : nothing to finalize',
+    scopes = 'line 5 : invalid `finalize` : nothing to finalize',
     --loop = 'line 1 : tight loop', -- TODO: par/and
-    --props = "line 8 : not permitted inside `finalize´",
-    --fin = 'line 6 : attribution does not require `finalize´',
+    --props = "line 8 : not permitted inside `finalize`",
+    --fin = 'line 6 : attribution does not require `finalize`',
     --fin = 'line 6 : attribution to pointer with greater scope',
 }
 
@@ -19486,11 +19486,11 @@ loop do
     end
 end
 ]],
-    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
-    --scopes = 'line 5 : invalid `finalize´ : nothing to finalize',
+    tight_ = 'line 1 : invalid tight `loop` : unbounded number of non-awaiting iterations',
+    --scopes = 'line 5 : invalid `finalize` : nothing to finalize',
     --loop = 'line 1 : tight loop', -- TODO: par/and
-    --props = "line 8 : not permitted inside `finalize´",
-    --fin = 'line 6 : attribution does not require `finalize´',
+    --props = "line 8 : not permitted inside `finalize`",
+    --fin = 'line 6 : attribution does not require `finalize`',
     --fin = 'line 6 : attribution to pointer with greater scope',
 }
 
@@ -19508,10 +19508,10 @@ loop do
 end
 ]],
     --loop = 'line 1 : tight loop', -- TODO: par/and
-    --props = "line 8 : not permitted inside `finalize´",
-    --fin = 'line 6 : attribution does not require `finalize´',
-    --scopes = 'line 5 : invalid `finalize´ : nothing to finalize',
-    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    --props = "line 8 : not permitted inside `finalize`",
+    --fin = 'line 6 : attribution does not require `finalize`',
+    --scopes = 'line 5 : invalid `finalize` : nothing to finalize',
+    tight_ = 'line 1 : invalid tight `loop` : unbounded number of non-awaiting iterations',
 }
 Test { [[
 loop do
@@ -19527,10 +19527,10 @@ loop do
 end
 ]],
     --loop = 'line 1 : tight loop', -- TODO: par/and
-    --props = "line 8 : not permitted inside `finalize´",
-    --fin = 'line 6 : attribution does not require `finalize´',
+    --props = "line 8 : not permitted inside `finalize`",
+    --fin = 'line 6 : attribution does not require `finalize`',
     wrn = true,
-    scopes = 'line 5 : invalid `finalize´ : nothing to finalize',
+    scopes = 'line 5 : invalid `finalize` : nothing to finalize',
 }
 
 Test { [[
@@ -19594,7 +19594,7 @@ escape(a);
     --dcls = 'line 12 : invalid call : unexpected context for variable "v"',
     --env = 'line 8 : native variable/function "_f" is not declared',
     --fin = 'line 8 : attribution to pointer with greater scope',
-    --inits = 'line 12 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:10)',
+    --inits = 'line 12 : invalid pointer access : crossed `await` (/tmp/tmp.ceu:10)',
     ptrs = 'line 12 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:10)',
     --run = { ['~>1s']=10 },
 }
@@ -19602,7 +19602,7 @@ escape(a);
 Test { [[
 do/_ v(&&a); finalize with nothing; end;
 ]],
-    parser = 'line 1 : after `;´ : expected statement',
+    parser = 'line 1 : after `;` : expected statement',
 }
 Test { [[
 native _f;
@@ -19622,7 +19622,7 @@ escape(a);
     --dcls = 'line 12 : invalid call : unexpected context for variable "v"',
     --env = 'line 8 : native variable/function "_f" is not declared',
     --fin = 'line 8 : attribution to pointer with greater scope',
-    --inits = 'line 12 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:10)',
+    --inits = 'line 12 : invalid pointer access : crossed `await` (/tmp/tmp.ceu:10)',
     ptrs = 'line 12 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:10)',
 }
 Test { [[
@@ -19631,7 +19631,7 @@ var int a = 0;
 _f(&&a);
 escape 0;
 ]],
-    scopes = 'line 3 : invalid `call´ : expected `finalize´ for variable "a"',
+    scopes = 'line 3 : invalid `call` : expected `finalize` for variable "a"',
 }
 
 Test { [[
@@ -19659,7 +19659,7 @@ end
 ]],
     --env = 'line 8 : native variable/function "_f" is not declared',
     --fin = 'line 8 : attribution to pointer with greater scope',
-    --fin = 'line 11 : pointer access across `await´',
+    --fin = 'line 11 : pointer access across `await`',
     run = { ['~>1s']=10 },
 }
 
@@ -19682,7 +19682,7 @@ escape(a);
 ]],
     --env = 'line 8 : native variable/function "_f" is not declared',
     --fin = 'line 8 : attribution to pointer with greater scope',
-    --fin = 'line 11 : pointer access across `await´',
+    --fin = 'line 11 : pointer access across `await`',
     run = { ['~>1s']=10 },
 }
 
@@ -19731,7 +19731,7 @@ finalize with
 end
 escape i;
 ]],
-    parser = 'line 2 : after `;´ : expected statement',
+    parser = 'line 2 : after `;` : expected statement',
     --env = 'line 11 : wrong argument #2 : cannot pass pointers',
     --fin = 'line 6 : invalid block for awoken pointer "p"',
     --run = 1,
@@ -19743,7 +19743,7 @@ do
 finalize (a) with
 end
 ]],
-    scopes = 'line 2 : invalid `finalize´ : unexpected `varlist´',
+    scopes = 'line 2 : invalid `finalize` : unexpected `varlist`',
 }
 
 Test { [[
@@ -19755,7 +19755,7 @@ finalize with
 end
 escape 1;
 ]],
-    scopes = 'line 3 : invalid `finalize´ : expected `varlist´',
+    scopes = 'line 3 : invalid `finalize` : expected `varlist`',
 }
 
 Test { [[
@@ -19767,7 +19767,7 @@ var&? _int p = &_f(&&v)
                 end;
 escape p!;
 ]],
-    scopes = 'line 4 : invalid `finalize´ : unmatching identifiers : expected "p" (vs. /tmp/tmp.ceu:3)',
+    scopes = 'line 4 : invalid `finalize` : unmatching identifiers : expected "p" (vs. /tmp/tmp.ceu:3)',
     --run = 5,
 }
 
@@ -19786,7 +19786,7 @@ escape 10;
 ]],
     --loop = true,
     --fin = 'line 5 : invalid pointer "ptr"',
-    --inits = 'line 6 : invalid pointer access : crossed `loop´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 6 : invalid pointer access : crossed `loop` (/tmp/tmp.ceu:3)',
     ptrs = 'line 6 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:4)',
 }
 
@@ -19802,8 +19802,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    scopes = 'line 6 : invalid `call´ : expected `finalize´ for variable "p1"',
-    --fin = 'line 6 : call requires `finalize´',
+    scopes = 'line 6 : invalid `call` : expected `finalize` for variable "p1"',
+    --fin = 'line 6 : call requires `finalize`',
     -- multiple scopes
 }
 
@@ -19818,8 +19818,8 @@ var int v = _;
 escape _f(&&v);
 ]],
     wrn = true,
-    scopes = 'line 8 : invalid `call´ : expected `finalize´ for variable "v"',
-    --fin = 'line 8 : call requires `finalize´',
+    scopes = 'line 8 : invalid `call` : expected `finalize` for variable "v"',
+    --fin = 'line 8 : call requires `finalize`',
 }
 
 Test { [[
@@ -19892,7 +19892,7 @@ _hold(tcp!);
 
 escape 0;
 ]],
-    scopes = 'line 5 : invalid `call´ : expected `finalize´ for variable "tcp"',
+    scopes = 'line 5 : invalid `call` : expected `finalize` for variable "tcp"',
 }
 
 Test { [[
@@ -20148,7 +20148,7 @@ var int x;
 var _char p = &x;
 escape 0;
 ]],
-    stmts = 'line 2 : invalid binding : expected declaration with `&´',
+    stmts = 'line 2 : invalid binding : expected declaration with `&`',
 }
 
 Test { [[
@@ -20175,8 +20175,8 @@ var _t t;
 t.ptr = &_f(&&v);
 escape (t.ptr);
 ]],
-    stmts = 'line 13 : invalid binding : unexpected context for operator `.´',
-    --stmts = 'line 13 : invalid binding : expected declaration with `&´',
+    stmts = 'line 13 : invalid binding : unexpected context for operator `.`',
+    --stmts = 'line 13 : invalid binding : expected declaration with `&`',
     --ref = 'line 12 : invalid access to uninitialized variable "t" (declared at /tmp/tmp.ceu:11)',
     --run = 10,
 }
@@ -20197,8 +20197,8 @@ var& _t t;
 t.ptr = &_f(&&v);
 escape (t.ptr);
 ]],
-    stmts = 'line 13 : invalid binding : unexpected context for operator `.´',
-    --stmts = 'line 13 : invalid binding : expected declaration with `&´',
+    stmts = 'line 13 : invalid binding : unexpected context for operator `.`',
+    --stmts = 'line 13 : invalid binding : expected declaration with `&`',
     --ref = 'line 12 : invalid access to uninitialized variable "t" (declared at /tmp/tmp.ceu:11)',
     --run = 10,
 }
@@ -20290,7 +20290,7 @@ Test { [[
 var int* v;
 escape 1;
 ]],
-    parser = 'after `int´ : expected type modifier or internal identifier',
+    parser = 'after `int` : expected type modifier or internal identifier',
 }
 Test { [[
 var& int v;
@@ -20304,7 +20304,7 @@ escape 1;
 ]],
     wrn = true,
     --inits = 'line 1 : uninitialized variable "v"',
-    dcls = 'line 1 : invalid declaration : unexpected `&&´ : cannot alias a pointer',
+    dcls = 'line 1 : invalid declaration : unexpected `&&` : cannot alias a pointer',
 }
 Test { [[
 var& int  v;
@@ -20340,8 +20340,8 @@ Test { [[
 var& int&  v;
 escape 1;
 ]],
-    parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
-    --env = 'line 1 : invalid type modifier : `&&´',
+    parser = 'line 1 : after `int` : expected type modifier or internal identifier',
+    --env = 'line 1 : invalid type modifier : `&&`',
 }
 
 -- REFS: void&
@@ -20350,7 +20350,7 @@ var int v = 10;
 var& void p = &v;
 escape *((&&p) as int&&);
 ]],
-    --parser = 'line 3 : after `(´ : expected location',
+    --parser = 'line 3 : after `(` : expected location',
     run = 10,
 }
 Test { [[
@@ -20381,7 +20381,7 @@ var int&& x = null;
 var& int&& y = &x;
 escape 0;
 ]],
-    dcls = 'line 2 : invalid declaration : unexpected `&&´ : cannot alias a pointer',
+    dcls = 'line 2 : invalid declaration : unexpected `&&` : cannot alias a pointer',
 }
 
 -->> ALIAS / ESCAPE / DO
@@ -20424,7 +20424,7 @@ var& int x = do
 end;
 escape x;
 ]],
-    --stmts = 'line 1 : invalid binding : expected `&?´ modifier',
+    --stmts = 'line 1 : invalid binding : expected `&?` modifier',
     scopes = 'line 3 : invalid binding : incompatible scopes',
 }
 
@@ -20433,7 +20433,7 @@ var int x=0;
 var&? int xxx = &x;
 escape 2;
 ]],
-    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
+    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await` type',
     run = 2,
 }
 
@@ -20445,7 +20445,7 @@ end;
 escape (xxx? as int) + 1;
 ]],
     scopes = 'line 3 : invalid binding : incompatible scopes',
-    --dcls = 'line 1 : invalid declaration : option alias : expected native or `code/await´ type',
+    --dcls = 'line 1 : invalid declaration : option alias : expected native or `code/await` type',
     --run = 1,
 }
 
@@ -20494,7 +20494,7 @@ code/await Ff (var& Dd x) -> int do
 end
 escape await Ff(&Dd(1));
 ]],
-    parser = 'line 7 : after `escape´ : expected expression or `;´',
+    parser = 'line 7 : after `escape` : expected expression or `;`',
     --todo = 'support aliases to data',
     --run = 1,
 }
@@ -20537,7 +20537,7 @@ loop do
 end
 escape v;
 ]],
-    inits = 'line 5 : invalid binding : crossing `loop´ (/tmp/tmp.ceu:4)',
+    inits = 'line 5 : invalid binding : crossing `loop` (/tmp/tmp.ceu:4)',
 }
 
 Test { [[
@@ -20724,8 +20724,8 @@ do _f(); finalize with nothing;
     end;
 escape 1;
 ]],
-    scopes = 'line 2 : invalid `finalize´ : nothing to finalize',
-    --fin = 'line 2 : invalid `finalize´',
+    scopes = 'line 2 : invalid `finalize` : nothing to finalize',
+    --fin = 'line 2 : invalid `finalize`',
 }
 
 Test { [[
@@ -20768,8 +20768,8 @@ do _f(p!=null); finalize with nothing;
     end;
 escape 1;
 ]],
-    scopes = 'line 5 : invalid `finalize´ : nothing to finalize',
-    --fin = 'line 5 : invalid `finalize´',
+    scopes = 'line 5 : invalid `finalize` : nothing to finalize',
+    --fin = 'line 5 : invalid `finalize`',
     --run = 1,
 }
 
@@ -20784,7 +20784,7 @@ do
 end
 escape 1;
 ]],
-    scopes = 'line 6 : invalid `call´ : expected `finalize´ for variable "p1"',
+    scopes = 'line 6 : invalid `call` : expected `finalize` for variable "p1"',
 }
 Test { [[
 native _f;
@@ -20800,7 +20800,7 @@ do
 end
 escape 1;
 ]],
-    scopes = 'line 7 : invalid `finalize´ : incompatible scopes',
+    scopes = 'line 7 : invalid `finalize` : incompatible scopes',
     --fin = 'line 6 : invalid call (multiple scopes)',
 }
 Test { [[
@@ -20809,8 +20809,8 @@ var byte&& buf = _V;
 _enqueue(buf);
 escape 1;
 ]],
-    scopes = 'line 3 : invalid `call´ : expected `finalize´ for variable "buf"',
-    --fin = 'line 2 : call requires `finalize´',
+    scopes = 'line 3 : invalid `call` : expected `finalize` for variable "buf"',
+    --fin = 'line 2 : call requires `finalize`',
 }
 
 Test { [[
@@ -20824,9 +20824,9 @@ native/pos do
 end
 escape _f(_v);
 ]],
-    --fin = 'line 3 : call requires `finalize´',
+    --fin = 'line 3 : call requires `finalize`',
     run = 2,
-    --fin = 'line 9 : attribution requires `finalize´',
+    --fin = 'line 9 : attribution requires `finalize`',
 }
 Test { [[
 native/pure _f;
@@ -20839,7 +20839,7 @@ native/pos do
 end
 escape _f(_v);
 ]],
-    --fin = 'line 3 : call requires `finalize´',
+    --fin = 'line 3 : call requires `finalize`',
     run = 2,
 }
 
@@ -20881,8 +20881,8 @@ end
 var int v=0;
 escape (_f(&&v) == 1 )as int;
 ]],
-    scopes = 'line 8 : invalid `call´ : expected `finalize´ for variable "v"',
-    --fin = 'line 8 : call requires `finalize´',
+    scopes = 'line 8 : invalid `call` : expected `finalize` for variable "v"',
+    --fin = 'line 8 : call requires `finalize`',
 }
 
 Test { [[
@@ -20944,8 +20944,8 @@ end
 escape ret;
 ]],
     --run = 1,
-    --fin = 'line 7 : attribution does not require `finalize´',
-    scopes = 'line 5 : invalid pointer assignment : expected `finalize´',
+    --fin = 'line 7 : attribution does not require `finalize`',
+    scopes = 'line 5 : invalid pointer assignment : expected `finalize`',
 }
 Test { [[
 var int ret = 0;
@@ -20960,8 +20960,8 @@ do
 end
 escape ret;
 ]],
-    scopes = 'line 7 : invalid `finalize´ : unmatching identifiers : expected "v" (vs. /tmp/tmp.ceu:6)',
-    --fin = 'line 7 : attribution does not require `finalize´',
+    scopes = 'line 7 : invalid `finalize` : unmatching identifiers : expected "v" (vs. /tmp/tmp.ceu:6)',
+    --fin = 'line 7 : attribution does not require `finalize`',
 }
 Test { [[
 var int ret = 0;
@@ -20977,7 +20977,7 @@ end
 escape ret;
 ]],
     run = 1,
-    --fin = 'line 7 : attribution does not require `finalize´',
+    --fin = 'line 7 : attribution does not require `finalize`',
 }
 Test { [[
 var int ret = 0;
@@ -20993,7 +20993,7 @@ end
 escape ret;
 ]],
     run = 1,
-    --fin = 'line 7 : attribution does not require `finalize´',
+    --fin = 'line 7 : attribution does not require `finalize`',
 }
 Test { [[
 var int ret = 0;
@@ -21015,8 +21015,8 @@ end
 escape ret;
 ]],
     --run = 1,
-    scopes = 'line 6 : invalid `finalize´ : nothing to finalize',
-    --fin = 'line 7 : attribution does not require `finalize´',
+    scopes = 'line 6 : invalid `finalize` : nothing to finalize',
+    --fin = 'line 7 : attribution does not require `finalize`',
 }
 Test { [[
 var int ret = 0;
@@ -21032,7 +21032,7 @@ end
 escape ret;
 ]],
     --run = 1,
-    scopes = 'line 6 : invalid pointer assignment : expected `finalize´',
+    scopes = 'line 6 : invalid pointer assignment : expected `finalize`',
     --fin = 'line 6 : attribution to pointer with greater scope',
 }
 
@@ -21406,7 +21406,7 @@ with
 end
 escape ret;
 ]],
-    props = 'line 9 : not permitted inside `finalize´',
+    props = 'line 9 : not permitted inside `finalize`',
 }
 
 Test { [[
@@ -21759,7 +21759,7 @@ var int ret = do/_
             ret1 = ret1 + 1;
             do/_ escape ret1 * 2; end
             do finalize with
-                ret1 = ret1 + 4;  // executed after `escape´ assigns to outer `ret1´
+                ret1 = ret1 + 4;  // executed after `escape` assigns to outer `ret1`
     end
         end
     end
@@ -21780,7 +21780,7 @@ var int ret = do/_
             await 1s;
             ret2 = ret2 + 1;
             do finalize with
-                ret2 = ret2 + 4;  // executed after `escape´ assigns to outer `ret´
+                ret2 = ret2 + 4;  // executed after `escape` assigns to outer `ret`
     end
             escape ret2 * 2;
         end
@@ -21991,7 +21991,7 @@ if _A!=0 then
 end
 escape(ret);
 ]],
-    --fin = 'line 32 : pointer access across `await´',
+    --fin = 'line 32 : pointer access across `await`',
     run = 20,
 }
 Test { [[
@@ -22003,8 +22003,8 @@ with
 end
 escape v;
 ]],
-    --parser = 'line 5 : after `(´ : expected location',
-    --dcls = 'line 5 : invalid operand to `*´ : expected location',
+    --parser = 'line 5 : after `(` : expected location',
+    --dcls = 'line 5 : invalid operand to `*` : expected location',
     run = 1,
 }
 
@@ -22041,7 +22041,7 @@ event void&& e;
 var void&& v = await e;
 escape 1;
 ]],
-    dcls = 'line 1 : invalid event type : cannot use `&&´',
+    dcls = 'line 1 : invalid event type : cannot use `&&`',
 }
 
 Test { [[
@@ -22058,7 +22058,7 @@ var int v = await e;
 await e;
 escape 1;
 ]],
-    --fin = 'line 3 : cannot `await´ again on this block',
+    --fin = 'line 3 : cannot `await` again on this block',
     run = false,
 }
 
@@ -22068,10 +22068,10 @@ var int&& v = await E;
 await E;
 escape *v;
 ]],
-    --inits = 'line 4 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 4 : invalid pointer access : crossed `await` (/tmp/tmp.ceu:3)',
     ptrs = 'line 4 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:3)',
-    --fin = 'line 4 : unsafe access to pointer "v" across `await´',
-    --fin = 'line 3 : cannot `await´ again on this block',
+    --fin = 'line 4 : unsafe access to pointer "v" across `await`',
+    --fin = 'line 3 : cannot `await` again on this block',
     --run = 0,
 }
 
@@ -22099,10 +22099,10 @@ do/_
 end
 escape 1;
 ]],
-    --fin = 'line 6 : attribution requires `finalize´',
-    --fin = 'line 8 : pointer access across `await´',
+    --fin = 'line 6 : attribution requires `finalize`',
+    --fin = 'line 8 : pointer access across `await`',
     --fin = 'line 6 : attribution to pointer with greater scope',
-    scopes = 'line 6 : invalid pointer assignment : expected `finalize´',
+    scopes = 'line 6 : invalid pointer assignment : expected `finalize`',
 }
 
 Test { [[
@@ -22117,12 +22117,12 @@ do/_
 end
 escape 1;
 ]],
-    --fin = 'line 6 : attribution requires `finalize´',
-    --fin = 'line 8 : pointer access across `await´',
+    --fin = 'line 6 : attribution requires `finalize`',
+    --fin = 'line 8 : pointer access across `await`',
     --fin = 'line 6 : attribution to pointer with greater scope',
-    --inits = 'line 6 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:5)',
+    --inits = 'line 6 : invalid pointer access : crossed `await` (/tmp/tmp.ceu:5)',
     ptrs = 'line 6 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:5)',
-    --scopes = 'line 6 : invalid pointer assignment : expected `finalize´',
+    --scopes = 'line 6 : invalid pointer assignment : expected `finalize`',
 }
 
 Test { [[
@@ -22138,8 +22138,8 @@ do/_
 end
 escape 1;
 ]],
-    scopes = 'line 7 : invalid `call´ : expected `finalize´ for variable "p"',
-    --fin = 'line 6 : call requires `finalize´',
+    scopes = 'line 7 : invalid `call` : expected `finalize` for variable "p"',
+    --fin = 'line 6 : call requires `finalize`',
 }
 
 Test { [[
@@ -22155,9 +22155,9 @@ do/_
 end
 escape 1;
 ]],
-    --inits = 'line 9 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:6)',
+    --inits = 'line 9 : invalid pointer access : crossed `await` (/tmp/tmp.ceu:6)',
     ptrs = 'line 9 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:6)',
-    --fin = 'line 6 : call requires `finalize´',
+    --fin = 'line 6 : call requires `finalize`',
 }
 
 Test { [[
@@ -22170,7 +22170,7 @@ await 1s;
 escape 1;
 ]],
     run = false,
-    --fin = 'line 4 : invalid block for pointer across `await´',
+    --fin = 'line 4 : invalid block for pointer across `await`',
 }
 
 Test { [[
@@ -22181,11 +22181,11 @@ with
 end
 escape 0;
 ]],
-    --inits = 'line 4 : invalid pointer access : crossed `par/or´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 4 : invalid pointer access : crossed `par/or` (/tmp/tmp.ceu:2)',
     ptrs = 'line 4 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:2)',
-    --fin = 'line 8 : pointer access across `await´',
-    --fin = 'line 6 : invalid block for pointer across `await´',
-    --fin = 'line 6 : cannot `await´ again on this block',
+    --fin = 'line 8 : pointer access across `await`',
+    --fin = 'line 6 : invalid block for pointer across `await`',
+    --fin = 'line 6 : cannot `await` again on this block',
     --run = { ['~>1s']=10 },
 }
 Test { [[
@@ -22200,9 +22200,9 @@ with
 end
 escape x;
 ]],
-    --fin = 'line 8 : pointer access across `await´',
-    --fin = 'line 6 : invalid block for pointer across `await´',
-    --fin = 'line 6 : cannot `await´ again on this block',
+    --fin = 'line 8 : pointer access across `await`',
+    --fin = 'line 6 : invalid block for pointer across `await`',
+    --fin = 'line 6 : cannot `await` again on this block',
     run = { ['~>1s']=10 },
 }
 
@@ -22283,7 +22283,7 @@ with
 end
 escape v;
 ]],
-    stmts = 'line 12 : invalid `emit´ : types mismatch : "(int&&)" <= "(void&&)"',
+    stmts = 'line 12 : invalid `emit` : types mismatch : "(int&&)" <= "(void&&)"',
     --env = 'line 12 : wrong argument #1',
     --wrn = true,
     --run = 10,
@@ -22314,11 +22314,11 @@ do
 end;
 escape ret + p;
 ]],
-    scopes = 'line 9 : invalid `finalize´ : unexpected `await´',
-    --adj = 'line 7 : invalid `finalize´',
-    --fin = 'line 8 : attribution does not require `finalize´',
+    scopes = 'line 9 : invalid `finalize` : unexpected `await`',
+    --adj = 'line 7 : invalid `finalize`',
+    --fin = 'line 8 : attribution does not require `finalize`',
     --fin = 'line 8 : invalid block for awoken pointer "p"',
-    --fin = 'line 14 : cannot `await´ again on this block',
+    --fin = 'line 14 : cannot `await` again on this block',
 }
 
 Test { [[
@@ -22346,11 +22346,11 @@ do
 end;
 escape ret + *p;
 ]],
-    scopes = 'line 13 : invalid `escape´ : incompatible scopes',
-    --adj = 'line 7 : invalid `finalize´',
-    --fin = 'line 8 : attribution does not require `finalize´',
+    scopes = 'line 13 : invalid `escape` : incompatible scopes',
+    --adj = 'line 7 : invalid `finalize`',
+    --fin = 'line 8 : attribution does not require `finalize`',
     --fin = 'line 8 : invalid block for awoken pointer "p"',
-    --fin = 'line 14 : cannot `await´ again on this block',
+    --fin = 'line 14 : cannot `await` again on this block',
 }
 
 Test { [[
@@ -22376,12 +22376,12 @@ do
 end
 escape ret + *p;
 ]],
-    --inits = 'line 8 : invalid pointer access : crossed `par/and´ (/tmp/tmp.ceu:6)',
+    --inits = 'line 8 : invalid pointer access : crossed `par/and` (/tmp/tmp.ceu:6)',
     ptrs = 'line 8 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:6)',
-    --adj = 'line 7 : invalid `finalize´',
-    --fin = 'line 8 : attribution does not require `finalize´',
+    --adj = 'line 7 : invalid `finalize`',
+    --fin = 'line 8 : attribution does not require `finalize`',
     --fin = 'line 8 : invalid block for awoken pointer "p"',
-    --fin = 'line 14 : cannot `await´ again on this block',
+    --fin = 'line 14 : cannot `await` again on this block',
 }
 
 Test { [[
@@ -22389,7 +22389,7 @@ var int&& p = null;
 await async do end
 escape *p;
 ]],
-    --inits = 'line 3 : invalid pointer access : crossed `async´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 3 : invalid pointer access : crossed `async` (/tmp/tmp.ceu:2)',
     ptrs = 'line 3 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:2)',
 }
 Test { [[
@@ -22404,13 +22404,13 @@ do
 end
 escape ret + *p;
 ]],
-    --inits = 'line 6 : invalid pointer access : crossed `par/and´ (/tmp/tmp.ceu:5)',
+    --inits = 'line 6 : invalid pointer access : crossed `par/and` (/tmp/tmp.ceu:5)',
     ptrs = 'line 6 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:5)',
     --env = 'line 11 : wrong argument : cannot pass pointers',
-    --fin = 'line 16 : unsafe access to pointer "p" across `async´ (/tmp/tmp.ceu : 11)',
-    --fin = 'line 14 : unsafe access to pointer "p" across `par/and´',
+    --fin = 'line 16 : unsafe access to pointer "p" across `async` (/tmp/tmp.ceu : 11)',
+    --fin = 'line 14 : unsafe access to pointer "p" across `par/and`',
     --fin = 'line 8 : invalid block for awoken pointer "p"',
-    --fin = 'line 14 : cannot `await´ again on this block',
+    --fin = 'line 14 : cannot `await` again on this block',
 }
 
 Test { [[
@@ -22441,8 +22441,8 @@ end
 ]],
     todo = 'escape PTR',
     wrn = true,
-    --parser = 'line 10 : after `i´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `)´',
-    --adj = 'line 9 : invalid `finalize´',
+    --parser = 'line 10 : after `i` : expected `(` or `[` or `:` or `.` or `?` or `!` or `is` or `as` or binary operator or `)`',
+    --adj = 'line 9 : invalid `finalize`',
     run = 1,
     -- TODO: impossible to place the finally in the correct parameter?
 }
@@ -22569,7 +22569,7 @@ var int i;
 await 1s;
 escape i;
 ]],
-    --fin = 'line 5 : cannot `await´ again on this block',
+    --fin = 'line 5 : cannot `await` again on this block',
     run = false,
 }
 
@@ -22615,7 +22615,7 @@ escape i;
 ]],
     --env = 'line 10 : wrong argument #2 : cannot pass pointers',
     --fin = 'line 7 : wrong operator',
-    --fin = 'line 7 : attribution does not require `finalize´',
+    --fin = 'line 7 : attribution does not require `finalize`',
     run = 1,
 }
 
@@ -22639,7 +22639,7 @@ end
 escape i;
 ]],
     --fin = 'line 7 : wrong operator',
-    --fin = 'line 7 : attribution does not require `finalize´',
+    --fin = 'line 7 : attribution does not require `finalize`',
     --env = 'line 12 : wrong argument #2 : cannot pass pointers',
     run = 1,
 }
@@ -22662,7 +22662,7 @@ finalize with
 end
 escape 1;
 ]],
-    scopes = 'line 2 : invalid `finalize´ : nothing to finalize',
+    scopes = 'line 2 : invalid `finalize` : nothing to finalize',
 }
 
 Test { [[
@@ -22723,8 +22723,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    props_ = 'line 3 : invalid `break´ : unexpected enclosing `finalize´',
-    --props = 'line 3 : not permitted inside `finalize´',
+    props_ = 'line 3 : invalid `break` : unexpected enclosing `finalize`',
+    --props = 'line 3 : not permitted inside `finalize`',
 }
 
 Test { [[
@@ -22733,8 +22733,8 @@ do finalize with
 end
 escape 1;
 ]],
-    props_ = 'line 2 : invalid `escape´ : unexpected enclosing `finalize´',
-    --props = 'line 2 : not permitted inside `finalize´',
+    props_ = 'line 2 : invalid `escape` : unexpected enclosing `finalize`',
+    --props = 'line 2 : not permitted inside `finalize`',
 }
 
 Test { [[
@@ -22747,7 +22747,7 @@ do finalize with
 end
 escape 1;
 ]],
-    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 2 : invalid tight `loop` : unbounded number of non-awaiting iterations',
     --tight = 'line 2 : tight loop',
     --run = 1,
 }
@@ -22760,7 +22760,7 @@ do finalize with
 end
 escape 1;
 ]],
-    props_ = 'line 3 : invalid `escape´ : unexpected enclosing `finalize´',
+    props_ = 'line 3 : invalid `escape` : unexpected enclosing `finalize`',
 }
 
 Test { [[
@@ -22822,9 +22822,9 @@ await async do
 end;
 escape 0;
 ]],
-    --props = 'line 2 : not permitted inside `async´',
-    --props = 'line 2 : not permitted across `async´ declaration',
-    dcls = 'line 2 : invalid `escape´ : no matching enclosing `do´',
+    --props = 'line 2 : not permitted inside `async`',
+    --props = 'line 2 : not permitted across `async` declaration',
+    dcls = 'line 2 : invalid `escape` : no matching enclosing `do`',
 }
 
 Test { [[
@@ -22833,7 +22833,7 @@ var int a = async do
 end;
 escape a;
 ]],
-    parser = 'line 1 : after `=´ : expected expression',
+    parser = 'line 1 : after `=` : expected expression',
 }
 
 Test { [[
@@ -22867,9 +22867,9 @@ with
     escape 2;
 end;
 ]],
-    dcls = 'line 3 : invalid `escape´ : no matching enclosing `do´',
-    --props = 'line 3 : not permitted across `async´ declaration',
-    --props = 'line 3 : not permitted inside `async´',
+    dcls = 'line 3 : invalid `escape` : no matching enclosing `do`',
+    --props = 'line 3 : not permitted across `async` declaration',
+    --props = 'line 3 : not permitted inside `async`',
 }
 
 Test { [[
@@ -22928,9 +22928,9 @@ await async do
     escape 1+2;
 end;
 ]],
-    --props = 'line 2 : not permitted inside `async´',
-    --props = 'line 2 : not permitted across `async´ declaration',
-    dcls = 'line 2 : invalid `escape´ : no matching enclosing `do´',
+    --props = 'line 2 : not permitted inside `async`',
+    --props = 'line 2 : not permitted across `async` declaration',
+    dcls = 'line 2 : invalid `escape` : no matching enclosing `do`',
 }
 
 Test { [[
@@ -22945,9 +22945,9 @@ end;
 escape a;
 ]],
     wrn = true,
-    props = 'line 7 : not permitted across `async´ declaration',
-    --props = 'line 5 : not permitted inside `async´',
-    dcls = 'line 7 : invalid `escape´ : no matching enclosing `do´',
+    props = 'line 7 : not permitted across `async` declaration',
+    --props = 'line 5 : not permitted inside `async`',
+    dcls = 'line 7 : invalid `escape` : no matching enclosing `do`',
 }
 
 Test { [[
@@ -22983,7 +22983,7 @@ escape a;
 ]],
     --env = "line 4 : invalid attribution",
     dcls = 'line 4 : internal identifier "a" is not declared',
-    --parser = 'line 4 : after `=´ : expected expression',
+    --parser = 'line 4 : after `=` : expected expression',
 }
 
 Test { [[
@@ -22994,7 +22994,7 @@ await async do
 end;
 escape 1;
 ]],
-    stmts = 'line 4 : invalid assignment : `input´',
+    stmts = 'line 4 : invalid assignment : `input`',
 }
 Test { [[
 input void A;
@@ -23003,7 +23003,7 @@ await async do
 end;
 escape 1;
 ]],
-    stmts = 'line 3 : invalid `emit´ : types mismatch : "()" <= "(int)"',
+    stmts = 'line 3 : invalid `emit` : types mismatch : "()" <= "(int)"',
 }
 
 Test { [[
@@ -23030,7 +23030,7 @@ await async do
 end;
 escape 0;
 ]],
-    props_ = 'line 2 : invalid `await´ : unexpected enclosing `async´',
+    props_ = 'line 2 : invalid `await` : unexpected enclosing `async`',
 }
 Test { [[
 input int X;
@@ -23040,7 +23040,7 @@ end;
 emit X(1);
 escape 0;
 ]],
-    stmts = 'line 5 : invalid `emit´ : unexpected context for external `input´ "X"',
+    stmts = 'line 5 : invalid `emit` : unexpected context for external `input` "X"',
 }
 Test { [[
 await async do
@@ -23048,8 +23048,8 @@ await async do
     end;
 end;
 ]],
-    props_ = 'line 2 : invalid `async´ : unexpected enclosing `async´',
-    --props='not permitted inside `async´'
+    props_ = 'line 2 : invalid `async` : unexpected enclosing `async`',
+    --props='not permitted inside `async`'
 }
 Test { [[
 await async do
@@ -23058,8 +23058,8 @@ await async do
     end;
 end;
 ]],
-    props_ = 'line 2 : invalid `par/or´ : unexpected enclosing `async´',
-    --props='not permitted inside `async´'
+    props_ = 'line 2 : invalid `par/or` : unexpected enclosing `async`',
+    --props='not permitted inside `async`'
 }
 
 Test { [[
@@ -23070,8 +23070,8 @@ loop do
 end;
 escape 0;
 ]],
-    props_ = 'line 3 : invalid `break´ : unexpected enclosing `async´',
-    --props='`break´ without loop'
+    props_ = 'line 3 : invalid `break` : unexpected enclosing `async`',
+    --props='`break` without loop'
 }
 
 Test { [[
@@ -23446,7 +23446,7 @@ await async (pi) do
 end;
 escape i;
 ]],
-    dcls = 'line 7 : invalid operand to `not´ : expected boolean type',
+    dcls = 'line 7 : invalid operand to `not` : expected boolean type',
     wrn = true,
 }
 
@@ -23667,9 +23667,9 @@ every qu_ in GO do
     end
 end
 ]],
-    --inits = 'line 7 : invalid pointer access : crossed `async´ (/tmp/tmp.ceu:7)',
+    --inits = 'line 7 : invalid pointer access : crossed `async` (/tmp/tmp.ceu:7)',
     ptrs = 'line 7 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:7)',
-    --fin = 'line 5 : unsafe access to pointer "qu" across `async´',
+    --fin = 'line 5 : unsafe access to pointer "qu" across `async`',
     --_ana = { isForever=true },
     --run = 1,
 }
@@ -23686,7 +23686,7 @@ every qu_ in GO do
     end
 end
 ]],
-    props_ = 'line 7 : invalid `async´ : unexpected enclosing `every´',
+    props_ = 'line 7 : invalid `async` : unexpected enclosing `every`',
 }
 
 Test { [[
@@ -23766,7 +23766,7 @@ Test { [[
 output xxx A;
 escape(1);
 ]],
-    parser = 'line 1 : after `output´ : expected `(´ or `&´ or type',
+    parser = 'line 1 : after `output` : expected `(` or `&` or type',
 }
 Test { [[
 native/pos do
@@ -23786,7 +23786,7 @@ if emit A(1) then
 end
 escape(1);
 ]],
-    parser = 'line 2 : after `if´ : expected expression',
+    parser = 'line 2 : after `if` : expected expression',
 }
 Test { [[
 native/pos do
@@ -23798,7 +23798,7 @@ if emit A(1) then
 end
 escape(1);
 ]],
-    parser = 'line 5 : after `if´ : expected expression',
+    parser = 'line 5 : after `if` : expected expression',
 }
 
 Test { [[
@@ -23806,14 +23806,14 @@ output t A;
 emit A(1);
 escape(1);
 ]],
-    parser = 'after `output´ : expected `(´ or `&´ or type',
+    parser = 'after `output` : expected `(` or `&` or type',
 }
 Test { [[
 output t A;
 emit A(1);
 escape(1);
 ]],
-    parser = 'after `output´ : expected `(´ or `&´ or type',
+    parser = 'after `output` : expected `(` or `&` or type',
 }
 Test { [[
 native _t;
@@ -23821,7 +23821,7 @@ output _t&& A;
 emit A(1);
 escape(1);
 ]],
-    stmts = 'line 3 : invalid `emit´ : types mismatch : "(_t&&)" <= "(int)"',
+    stmts = 'line 3 : invalid `emit` : types mismatch : "(_t&&)" <= "(int)"',
     --env = 'line 2 : wrong argument #1',
 }
 Test { [[
@@ -23831,8 +23831,8 @@ var _t v=1;
 emit A(v);
 escape(1);
 ]],
-    --env = 'line 2 : undeclared type `_t´',
-    --env = 'line 3 : non-matching types on `emit´',
+    --env = 'line 2 : undeclared type `_t`',
+    --env = 'line 3 : non-matching types on `emit`',
     cc = 'error: unknown type name',
 }
 Test { [[
@@ -23849,8 +23849,8 @@ var _t v=1;
 emit A(v);
 escape(1);
 ]],
-    --env = 'line 2 : undeclared type `_t´',
-    --env = 'line 3 : non-matching types on `emit´',
+    --env = 'line 2 : undeclared type `_t`',
+    --env = 'line 3 : non-matching types on `emit`',
     run = 1,
 }
 Test { [[
@@ -23859,7 +23859,7 @@ var int a;
 emit A(&&a);
 escape(1);
 ]],
-    stmts = 'line 3 : invalid `emit´ : types mismatch : "(int)" <= "(int&&)"',
+    stmts = 'line 3 : invalid `emit` : types mismatch : "(int)" <= "(int&&)"',
     --env = 'line 3 : wrong argument #1',
 }
 Test { [[
@@ -23870,8 +23870,8 @@ if emit A(&&a) then
 end
 escape(1);
 ]],
-    parser = 'line 3 : after `if´ : expected expression',
-    --env = 'line 3 : non-matching types on `emit´',
+    parser = 'line 3 : after `if` : expected expression',
+    --env = 'line 3 : non-matching types on `emit`',
 }
 Test { [[
 native _char;
@@ -24091,7 +24091,7 @@ b = emit B(5);
 escape a + b;
 ]],
     run = 5,
-    --parser = 'line 26 : after `=´ : expected expression',
+    --parser = 'line 26 : after `=` : expected expression',
 }
 
 Test { [[
@@ -24133,7 +24133,7 @@ b = emit B(5);
 escape a + b;
 ]],
     run = 5,
-    --parser = 'line 26 : after `=´ : expected expression',
+    --parser = 'line 26 : after `=` : expected expression',
 }
 
 Test { [[
@@ -24174,7 +24174,7 @@ b = emit B(5);
 escape a + b;
 ]],
     run = 5,
-    --parser = 'line 26 : after `=´ : expected expression',
+    --parser = 'line 26 : after `=` : expected expression',
 }
 
 Test { [[
@@ -24186,11 +24186,11 @@ end
 var _cahr v = emit A(1);
 escape 0;
 ]],
-    stmts = 'line 6 : invalid `emit´ : types mismatch : "()" <= "(int)"',
+    stmts = 'line 6 : invalid `emit` : types mismatch : "()" <= "(int)"',
     --env = 'line 6 : arity mismatch',
-    --env = 'line 6 : non-matching types on `emit´',
-    --parser = 'line 6 : after `=´ : expected expression',
-    --env = 'line 6 : undeclared type `_cahr´',
+    --env = 'line 6 : non-matching types on `emit`',
+    --parser = 'line 6 : after `=` : expected expression',
+    --env = 'line 6 : undeclared type `_cahr`',
 }
 Test { [[
 native _char;
@@ -24198,8 +24198,8 @@ output void A;
 var _char v = emit A(;
 escape v;
 ]],
-    parser = 'line 3 : after `(´ : expected expression',
-    --parser = 'line 3 : before `->´ : expected `;´',
+    parser = 'line 3 : after `(` : expected expression',
+    --parser = 'line 3 : before `->` : expected `;`',
     --env = 'line 3 : invalid attribution',
 }
 Test { [[
@@ -24211,10 +24211,10 @@ native _char;
 var _char v = emit A(1);
 escape 0;
 ]],
-    --parser = 'line 6 : after `=´ : expected expression',
-    --env = 'line 6 : non-matching types on `emit´',
+    --parser = 'line 6 : after `=` : expected expression',
+    --env = 'line 6 : non-matching types on `emit`',
     --env = 'line 6 : arity mismatch',
-    stmts = 'line 6 : invalid `emit´ : types mismatch : "()" <= "(int)"',
+    stmts = 'line 6 : invalid `emit` : types mismatch : "()" <= "(int)"',
 }
 
 Test { [[
@@ -24472,31 +24472,31 @@ Test { [[
 output Z  (var int)->int;
 escape call Z(1);
 ]],
-    parser = 'line 1 : after `output´ : expected `(´ or `&´ or type',
-    --parser = 'line 2 : after `call´ : expected expression',
-    --parser = 'line 2 : after `Z´ : expected `;´',
-    --parser = 'line 2 : after `Z´ : expected `(´',
+    parser = 'line 1 : after `output` : expected `(` or `&` or type',
+    --parser = 'line 2 : after `call` : expected expression',
+    --parser = 'line 2 : after `Z` : expected `;`',
+    --parser = 'line 2 : after `Z` : expected `(`',
 }
 
 Test { [[
 output/input/tight Z  (var int)->int;
 escape call Z(1);
 ]],
-    parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
-    --parser = 'line 2 : after `call´ : expected location',
-    --parser = 'line 2 : after `call´ : expected expression',
-    --parser = 'line 2 : after `Z´ : expected `;´',
-    --parser = 'line 2 : after `Z´ : expected `(´',
+    parser = 'line 1 : after `int` : expected type modifier or internal identifier',
+    --parser = 'line 2 : after `call` : expected location',
+    --parser = 'line 2 : after `call` : expected expression',
+    --parser = 'line 2 : after `Z` : expected `;`',
+    --parser = 'line 2 : after `Z` : expected `(`',
 }
 
 Test { [[
 output/input/tight Z  (var int a)->int;
 escape call Z(1);
 ]],
-    parser = 'line 2 : after `call´ : expected location',
-    --parser = 'line 2 : after `call´ : expected expression',
-    --parser = 'line 2 : after `Z´ : expected `;´',
-    --parser = 'line 2 : after `Z´ : expected `(´',
+    parser = 'line 2 : after `call` : expected location',
+    --parser = 'line 2 : after `call` : expected expression',
+    --parser = 'line 2 : after `Z` : expected `;`',
+    --parser = 'line 2 : after `Z` : expected `(`',
 }
 
 Test { [[
@@ -24512,7 +24512,7 @@ output/input/tight Z  (var int a)->int;
 emit Z(1);
 escape 1;
 ]],
-    stmts = 'line 2 : invalid `emit´ : unexpected context for external code',
+    stmts = 'line 2 : invalid `emit` : unexpected context for external code',
     --run = 1,
 }
 
@@ -24581,7 +24581,7 @@ output int E;
 emit E(1,2);
 escape 1;
 ]],
-    stmts = 'line 2 : invalid `emit´ : types mismatch : "(int)" <= "(int,int)"',
+    stmts = 'line 2 : invalid `emit` : types mismatch : "(int)" <= "(int,int)"',
     --env = 'line 2 : arity mismatch',
 }
 
@@ -24590,7 +24590,7 @@ event (int) e;
 emit e(1,2);
 escape 1;
 ]],
-    stmts = 'line 2 : invalid `emit´ : types mismatch : "(int)" <= "(int,int)"',
+    stmts = 'line 2 : invalid `emit` : types mismatch : "(int)" <= "(int,int)"',
 }
 
 Test { [[
@@ -24598,7 +24598,7 @@ event (int) e;
 emit e;
 escape 1;
 ]],
-    stmts = 'line 2 : invalid `emit´ : types mismatch : "(int)" <= "()"',
+    stmts = 'line 2 : invalid `emit` : types mismatch : "(int)" <= "()"',
 }
 
 Test { [[
@@ -24606,7 +24606,7 @@ output int E;
 emit E;
 escape 1;
 ]],
-    stmts = 'line 2 : invalid `emit´ : types mismatch : "(int)" <= "()"',
+    stmts = 'line 2 : invalid `emit` : types mismatch : "(int)" <= "()"',
     --env = 'line 2 : arity mismatch',
 }
 
@@ -24615,7 +24615,7 @@ output (int,int) E;
 emit E(1);
 escape 1;
 ]],
-    stmts = 'line 2 : invalid `emit´ : types mismatch : "(int,int)" <= "(int)"',
+    stmts = 'line 2 : invalid `emit` : types mismatch : "(int,int)" <= "(int)"',
     --env = 'line 2 : arity mismatch',
 }
 
@@ -24624,7 +24624,7 @@ event (int,int) e;
 emit e(1);
 escape 1;
 ]],
-    stmts = 'line 2 : invalid `emit´ : types mismatch : "(int,int)" <= "(int)"',
+    stmts = 'line 2 : invalid `emit` : types mismatch : "(int,int)" <= "(int)"',
 }
 
 Test { [[
@@ -24754,7 +24754,7 @@ input/output/tight Z,W  (var int a)->int do
     escape a + 1;
 end
 ]],
-    parser = 'line 1 : after `Z´ : expected `(´',
+    parser = 'line 1 : after `Z` : expected `(`',
     --adj = 'line 1 : same body for multiple declarations',
 }
 
@@ -24829,25 +24829,25 @@ Test { [[
 input (void,int) A;
 escape 1;
 ]],
-    dcls = 'line 1 : invalid declaration : unexpected type `void´',
+    dcls = 'line 1 : invalid declaration : unexpected type `void`',
 }
 Test { [[
 input (int,void) A;
 escape 1;
 ]],
-    dcls = 'line 1 : invalid declaration : unexpected type `void´',
+    dcls = 'line 1 : invalid declaration : unexpected type `void`',
 }
 Test { [[
 output (void,int) A;
 escape 1;
 ]],
-    dcls = 'line 1 : invalid declaration : unexpected type `void´',
+    dcls = 'line 1 : invalid declaration : unexpected type `void`',
 }
 Test { [[
 output (int,void) A;
 escape 1;
 ]],
-    dcls = 'line 1 : invalid declaration : unexpected type `void´',
+    dcls = 'line 1 : invalid declaration : unexpected type `void`',
 }
 
 Test { [[
@@ -24876,7 +24876,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
+    dcls = 'line 1 : invalid declaration : variable cannot be of type `void`',
 }
 
 Test { [[
@@ -24911,7 +24911,7 @@ end
 call IB(0);
 escape 0;
 ]],
-    scopes = 'line 3 : invalid `call´ : expected `finalize´ for variable "c"',
+    scopes = 'line 3 : invalid `call` : expected `finalize` for variable "c"',
 }
 Test { [[
 native/pure ___ceu_nothing;
@@ -24949,7 +24949,7 @@ var _char&&&& argv;
 _assert(_strcmp(argv[1],"arg")==0);
 escape argc;
 ]],
-    --ana = 'line 3 : `loop´ iteration is not reachable',
+    --ana = 'line 3 : `loop` iteration is not reachable',
     todo = 'argv',
     wrn = true,
     run = 2,
@@ -24966,7 +24966,7 @@ var _char&&&& argv;
 _assert(argv[1][0] == {'a'});
 escape argc;
 ]],
-    --ana = 'line 3 : `loop´ iteration is not reachable',
+    --ana = 'line 3 : `loop` iteration is not reachable',
     todo = 'argv',
     wrn = true,
     run = 2,
@@ -24980,7 +24980,7 @@ await OS_START;
 emit e;
 escape 10;
 ]],
-    --ana = 'line 3 : `loop´ iteration is not reachable',
+    --ana = 'line 3 : `loop` iteration is not reachable',
     wrn = true,
     run = 10,
 }
@@ -24998,7 +24998,7 @@ var int i;
 end
 escape 10;
 ]],
-    --ana = 'line 3 : `loop´ iteration is not reachable',
+    --ana = 'line 3 : `loop` iteration is not reachable',
     wrn = true,
     run = 10,
 }
@@ -25016,28 +25016,28 @@ escape 1;
 Test { [[
 input (int);
 ]],
-    parser = 'line 1 : after `)´ : expected external identifier',
+    parser = 'line 1 : after `)` : expected external identifier',
 }
 Test { [[
 input (xxx);
 ]],
-    parser = 'line 1 : after `(´ : expected type',
+    parser = 'line 1 : after `(` : expected type',
 }
 Test { [[
 input ();
 ]],
-    parser = 'line 1 : after `(´ : expected type',
+    parser = 'line 1 : after `(` : expected type',
 }
 Test { [[
 input (u8);
 ]],
-    parser = 'line 1 : after `)´ : expected external identifier',
+    parser = 'line 1 : after `)` : expected external identifier',
 }
 
 Test { [[
 input (xxx tilex) X;;
 ]],
-    parser = 'line 1 : after `(´ : expected type',
+    parser = 'line 1 : after `(` : expected type',
 }
 
 Test { [[
@@ -25053,42 +25053,42 @@ input (int tilex, int tiley, bool vertical, int lock, int door, usize&& position
     every (tilex,tiley,vertical,lock,door,position) in DOOR_SPAWN do
     end
 ]],
-    parser = 'line 2 : after `int´ : expected type modifier or `,´ or `)´',
+    parser = 'line 2 : after `int` : expected type modifier or `,` or `)`',
 }
 
     -- POINTERS & ARRAYS
 
 -- int_int
 Test { [[var int&&p; escape p/10;]],
-    dcls = 'line 1 : invalid operand to `/´ : expected numeric type'
+    dcls = 'line 1 : invalid operand to `/` : expected numeric type'
 }
 Test { [[var int&&p; escape p|10;]],
-    dcls = 'line 1 : invalid operand to `|´ : expected integer type',
+    dcls = 'line 1 : invalid operand to `|` : expected integer type',
 }
 Test { [[var int&&p; escape p>>10;]],
-    dcls = 'line 1 : invalid operand to `>>´ : expected integer type',
+    dcls = 'line 1 : invalid operand to `>>` : expected integer type',
 }
 Test { [[var int&&p; escape p^10;]],
-    dcls = 'line 1 : invalid operand to `^´ : expected numeric type',
+    dcls = 'line 1 : invalid operand to `^` : expected numeric type',
 }
 Test { [[var int&&p; escape ~p;]],
-    dcls = 'line 1 : invalid operand to `~´ : expected integer type',
+    dcls = 'line 1 : invalid operand to `~` : expected integer type',
 }
 
 -- same
 Test { [[var int&&p; var int a; escape p==a;]],
-    dcls = 'line 1 : invalid operands to `==´ : incompatible types : "int&&" vs "int"',
+    dcls = 'line 1 : invalid operands to `==` : incompatible types : "int&&" vs "int"',
 }
 Test { [[var int&&p; var int a; escape p!=a;]],
-    dcls = 'line 1 : invalid operands to `!=´ : incompatible types : "int&&" vs "int"',
+    dcls = 'line 1 : invalid operands to `!=` : incompatible types : "int&&" vs "int"',
 }
 Test { [[var int&&p; var int a; escape p>a;]],
-    dcls = 'line 1 : invalid operand to `>´ : expected numeric type',
+    dcls = 'line 1 : invalid operand to `>` : expected numeric type',
 }
 
 -- any
 Test { [[var int&&p=null; escape p or 10;]],
-    dcls = 'line 1 : invalid operand to `or´ : expected boolean type',
+    dcls = 'line 1 : invalid operand to `or` : expected boolean type',
 }
 Test { [[var int&&p=null; escape (p!=null or true) as int;]], run=1 }
 Test { [[var int&&p=null; escape (p!=null and false) as int;]],  run=0 }
@@ -25096,24 +25096,24 @@ Test { [[var int&&p=null; escape( not (p!=null)) as int;]], run=1 }
 
 -- arith
 Test { [[var int&&p; escape p+p;]],
-    dcls = 'line 1 : invalid operand to `+´ : expected numeric type',
+    dcls = 'line 1 : invalid operand to `+` : expected numeric type',
 }--TODO: "+"'}
 Test { [[var int&&p; escape p+10;]],
-    dcls = 'line 1 : invalid operand to `+´ : expected numeric type',
+    dcls = 'line 1 : invalid operand to `+` : expected numeric type',
 }
 Test { [[var int&&p; escape p+10 and 0;]],
-    dcls = 'line 1 : invalid operand to `+´ : expected numeric type',
+    dcls = 'line 1 : invalid operand to `+` : expected numeric type',
 }
 
 -- ptr
 Test { [[var int a; escape *a;]],
-    dcls = 'line 1 : invalid operand to `*´ : expected pointer type',
+    dcls = 'line 1 : invalid operand to `*` : expected pointer type',
 }
 Test { [[var int a; var int&&pa; (pa+10)=&&a; escape a;]],
-    parser = 'line 1 : after `)´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `;´',
-    --parser = 'line 1 : after `)´ : expected `(´',
-    --parser = 'line 1 : after `pa´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `)´ or `,´',
-    --dcls = 'line 1 : invalid operand to `+´ : expected numeric type',
+    parser = 'line 1 : after `)` : expected `[` or `:` or `.` or `!` or `?` or `(` or `is` or `as` or binary operator or `;`',
+    --parser = 'line 1 : after `)` : expected `(`',
+    --parser = 'line 1 : after `pa` : expected `[` or `:` or `.` or `!` or `as` or `)` or `,`',
+    --dcls = 'line 1 : invalid operand to `+` : expected numeric type',
 }
 Test { [[var int a; var int&&pa; a=1; pa=&&a; *pa=3; escape a;]], run=3 }
 
@@ -25130,8 +25130,8 @@ native _V;
 *(0x100 as u32&&) = _V;
 escape 1;
 ]],
-    parser = 'line 2 : after `)´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `;´',
-    --parser = 'line 2 : after `(´ : expected location',
+    parser = 'line 2 : after `)` : expected `[` or `:` or `.` or `!` or `?` or `(` or `is` or `as` or binary operator or `;`',
+    --parser = 'line 2 : after `(` : expected location',
     --gcc = 'error: ‘V’ undeclared (first use in this function)',
 }
 
@@ -25150,7 +25150,7 @@ var int&& pa = do
 end;
 escape a;
 ]],
-    stmts = 'line 3 : invalid `escape´ : types mismatch : "int&&" <= "int"',
+    stmts = 'line 3 : invalid `escape` : types mismatch : "int&&" <= "int"',
     --env='types mismatch'
 }
 Test { [[
@@ -25161,7 +25161,7 @@ end;
 escape a;
 ]],
     --env='types mismatch'
-    stmts = 'line 3 : invalid `escape´ : types mismatch : "int" <= "int&&"',
+    stmts = 'line 3 : invalid `escape` : types mismatch : "int" <= "int&&"',
 }
 
 Test { [[
@@ -25173,7 +25173,7 @@ else
     escape -1;
 end;
 ]],
-    stmts = 'line 3 : invalid `if´ condition : expected boolean type',
+    stmts = 'line 3 : invalid `if` condition : expected boolean type',
 }
 
 Test { [[
@@ -25186,7 +25186,7 @@ end;
 a = null;
 escape 1;
 ]],
-    --inits = 'line 7 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:4)',
+    --inits = 'line 7 : invalid pointer access : crossed `await` (/tmp/tmp.ceu:4)',
     ptrs = 'line 7 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:4)',
 }
 
@@ -25242,7 +25242,7 @@ end;
 escape 1;
 ]],
     --gcc = 'may be used uninitialized in this function',
-    --fin = 'line 6 : pointer access across `await´',
+    --fin = 'line 6 : pointer access across `await`',
     run = 1,
 }
 
@@ -25256,7 +25256,7 @@ else
 end;
 escape 1;
 ]],
-    --fin = 'line 6 : pointer access across `await´',
+    --fin = 'line 6 : pointer access across `await`',
     run = 1,
 }
 
@@ -25278,7 +25278,7 @@ ptr2 = ptr1;
 escape 1;
 ]],
     stmts = 'line 4 : invalid assignment : types mismatch : "int&&" <= "void&&"',
-    --env = 'line 4 : types mismatch (`int&&´ <= `void&&´)',
+    --env = 'line 4 : types mismatch (`int&&` <= `void&&`)',
     run = 1,
 }
 
@@ -25291,7 +25291,7 @@ ptr2 = ptr1;
 escape ptr2 as int;
 ]],
     stmts = 'line 3 : invalid assignment : types mismatch : "int&&" <= "void&&"',
-    --env = 'line 3 : types mismatch (`int&&´ <= `void&&´)',
+    --env = 'line 3 : types mismatch (`int&&` <= `void&&`)',
     --env = 'line 4 : invalid attribution',
     --run = 255,
     --gcc = 'error: assignment from incompatible pointer type'
@@ -25305,7 +25305,7 @@ ptr2 =  ptr1 as int&&;
 escape (ptr2 as int);
 ]],
     stmts = 'line 3 : invalid assignment : types mismatch : "int&&" <= "void&&"',
-    --env = 'line 3 : types mismatch (`int&&´ <= `void&&´)',
+    --env = 'line 3 : types mismatch (`int&&` <= `void&&`)',
     --env = 'line 4 : invalid attribution',
     --run = 255,
     --gcc = 'error: cast from pointer to integer of different size',
@@ -25573,8 +25573,8 @@ with
 end
 escape 1;
 ]],
-    scopes = 'line 6 : invalid `finalize´ : nothing to finalize',
-    --fin = 'line 5 : invalid `finalize´',
+    scopes = 'line 6 : invalid `finalize` : nothing to finalize',
+    --fin = 'line 5 : invalid `finalize`',
     --run = 1,
 }
 
@@ -25623,21 +25623,21 @@ escape p;
 Test { [[input int[1] E; escape 0;]],
     --run = 0,
     --env = 'invalid event type',
-    parser = 'line 1 : after `int´ : expected type modifier or external identifier',
+    parser = 'line 1 : after `int` : expected type modifier or external identifier',
 }
 Test { [[vector[2] int v; escape v;]],
-    stmts = 'line 1 : invalid `escape´ : unexpected context for vector "v"',
+    stmts = 'line 1 : invalid `escape` : unexpected context for vector "v"',
     --env = 'types mismatch'
 }
 Test { [[native _u8; vector[2] _u8 v=_; escape (&&v==&&v) as int;]],
     wrn = true,
     run = 1,
-    --dcls = 'line 1 : invalid operand to `&&´ : unexpected context for vector "v"',
-    --env = 'line 1 : types mismatch (`int´ <= `_u8[]&&´)',
+    --dcls = 'line 1 : invalid operand to `&&` : unexpected context for vector "v"',
+    --env = 'line 1 : types mismatch (`int` <= `_u8[]&&`)',
     --env = 'invalid operand to unary "&&"',
 }
 Test { [[native _u8; var _u8[2] v; escape &&v;]],
-    parser = 'line 1 : after `_u8´ : expected type modifier or internal identifier',
+    parser = 'line 1 : after `_u8` : expected type modifier or internal identifier',
 }
 
 Test { [[
@@ -25653,22 +25653,22 @@ Test { [[
 N;
 ]],
     --adj = 'line 1 : invalid expression',
-    --parser = 'line 1 : after `<BOF>´ : expected statement',
-    parser = 'line 1 : after `begin of file´ : expected statement',
-    --parser = 'after `N´ : expected `(´',
+    --parser = 'line 1 : after `<BOF>` : expected statement',
+    parser = 'line 1 : after `begin of file` : expected statement',
+    --parser = 'after `N` : expected `(`',
 }
 
 Test { [[
 void[10] a;
 ]],
-    parser = 'line 1 : after `begin of file´ : expected statement',
+    parser = 'line 1 : after `begin of file` : expected statement',
 }
 
 Test { [[
 vector[10] void a;
 ]],
     wrn = true,
-    dcls = 'line 1 : invalid declaration : vector cannot be of type `void´',
+    dcls = 'line 1 : invalid declaration : vector cannot be of type `void`',
 }
 
 Test { [[
@@ -25710,7 +25710,7 @@ Test { [[
 vector[1] void b;
 ]],
     wrn = true,
-    dcls = 'line 1 : invalid declaration : vector cannot be of type `void´',
+    dcls = 'line 1 : invalid declaration : vector cannot be of type `void`',
 }
 
 Test { [[
@@ -25741,7 +25741,7 @@ escape 1;
     wrn = true,
     run = 1,
     --cval = 'line 1 : invalid dimension',
-    --inits = 'line 2 : uninitialized vector "v" : reached `escape´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized vector "v" : reached `escape` (/tmp/tmp.ceu:3)',
 }
 Test { [[
 native _int;
@@ -25759,7 +25759,7 @@ vector[10] _u8 v = [_V];
 escape v[0];
 ]],
     stmts = 'line 2 : invalid constructor : expected internal type : got "_u8"',
-    --tmp = 'invalid attribution : external vectors accept only empty initialization `[]´',
+    --tmp = 'invalid attribution : external vectors accept only empty initialization `[]`',
 }
 
 Test { [[
@@ -25783,19 +25783,19 @@ escape v[0];
 
 Test { [[vector[2] int v; await v;     escape 0;]],
     --env='event "v" is not declared'
-    stmts = 'line 1 : invalid `await´ : unexpected context for vector "v"',
+    stmts = 'line 1 : invalid `await` : unexpected context for vector "v"',
 }
 Test { [[vector[2] int v; emit v;    escape 0;]],
-    stmts = 'line 1 : invalid `emit´ : unexpected context for vector "v"',
+    stmts = 'line 1 : invalid `emit` : unexpected context for vector "v"',
     --env = 'line 1 : identifier "v" is not an event (/tmp/tmp.ceu : line 1)',
 }
 Test { [[vector[0] int[2] v; await v;  escape 0;]],
         --env='line 1 : event "?" is not declared'
-        parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
+        parser = 'line 1 : after `int` : expected type modifier or internal identifier',
 }
 Test { [[vector[0] int[2] v; emit v; escape 0;]],
         --env='event "?" is not declared'
-        parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
+        parser = 'line 1 : after `int` : expected type modifier or internal identifier',
 }
 Test { [[
 native _int;
@@ -25807,7 +25807,7 @@ escape 0;
     --env='types mismatch'
 }
 Test { [[vector[1] int v; escape v;]],
-    stmts = 'line 1 : invalid `escape´ : unexpected context for vector "v"',
+    stmts = 'line 1 : invalid `escape` : unexpected context for vector "v"',
     --env='cannot index a non array'
 }
 Test { [[native _int; vector[2] _int v; escape v[v];]],
@@ -25819,8 +25819,8 @@ Test { [[
 vector[2] int v ;
 escape v == &&v[0] ;
 ]],
-    dcls = 'line 2 : invalid operand to `==´ : unexpected context for vector "v"',
-    --dcls = 'line 2 : invalid expression : operand to `&&´ must be a name',
+    dcls = 'line 2 : invalid operand to `==` : unexpected context for vector "v"',
+    --dcls = 'line 2 : invalid expression : operand to `&&` must be a name',
     --env = 'line 2 : invalid operands to binary "=="',
     --run = 1,
 }
@@ -25829,8 +25829,8 @@ native _int;
 vector[2] _int v ;
 escape v == &&v[0] ;
 ]],
-    dcls = 'line 3 : invalid operand to `==´ : unexpected context for vector "v"',
-    --dcls = 'line 3 : invalid operand to `==´ : expected the same type',
+    dcls = 'line 3 : invalid operand to `==` : unexpected context for vector "v"',
+    --dcls = 'line 3 : invalid operand to `==` : expected the same type',
     --env = 'line 2 : invalid operands to binary "=="',
     --run = 1,
 }
@@ -26016,7 +26016,7 @@ escape v[0] + v[1];
     _ana = {
         acc = 1,
     },
-    --fin = 'line 6 : pointer access across `await´',
+    --fin = 'line 6 : pointer access across `await`',
     run = 3;
 }
 Test { [[
@@ -26068,7 +26068,7 @@ var int x = 1;
 escape *(&&x);
 ]],
     run = 1,
-    --parser = 'line 2 : after `(´ : expected location',
+    --parser = 'line 2 : after `(` : expected location',
 }
 
 --<<< NATIVE/POINTERS/VECTORS
@@ -26137,8 +26137,8 @@ finalize with
 end
 escape p! ==null;
 ]],
-    dcls = 'line 2 : invalid operand to `&´ : expected native call',
-    --dcls = 'line 6 : invalid operands to `==´ : incompatible types : "void" vs "null&&"',
+    dcls = 'line 2 : invalid operand to `&` : expected native call',
+    --dcls = 'line 6 : invalid operands to `==` : incompatible types : "void" vs "null&&"',
     --env = 'line 7 : invalid operands to binary "=="',
     --run = 1,
 }
@@ -26149,18 +26149,18 @@ p = { NULL };
 escape 1;
 //escape p==null;
 ]],
-    inits = 'line 2 : invalid binding : expected operator `&´ in the right side',
-    --tmp = 'line 2 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
-    --ref = 'line 2 : invalid attribution : missing alias operator `&´',
-    --fin = 'line 2 : attribution requires `finalize´',
+    inits = 'line 2 : invalid binding : expected operator `&` in the right side',
+    --tmp = 'line 2 : invalid attribution : missing `!` (in the left) or `&` (in the right)',
+    --ref = 'line 2 : invalid attribution : missing alias operator `&`',
+    --fin = 'line 2 : attribution requires `finalize`',
 }
 
 Test { [[
 _f()
 ]],
-    parser = 'line 1 : after `)´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `;´',
-    --parser = 'line 1 : after `)´ : expected `;´',
-    --parser = 'line 1 : after `)´ : expected `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´',
+    parser = 'line 1 : after `)` : expected `[` or `:` or `.` or `!` or `?` or `(` or `is` or `as` or binary operator or `;`',
+    --parser = 'line 1 : after `)` : expected `;`',
+    --parser = 'line 1 : after `)` : expected `[` or `:` or `.` or `?` or `!` or `is` or `as` or binary operator or `=` or `:=` or `;`',
 }
 
 Test { [[
@@ -26225,9 +26225,9 @@ A = 1;
 escape 1;
 ]],
     --adj = 'line 4 : invalid expression',
-    --parser = 'line 3 : after `end´ : expected statement'
-    parser = 'line 3 : after `end´ : expected `;´ or statement',
-    --parser = 'line 4 : after `A´ : expected `(´',
+    --parser = 'line 3 : after `end` : expected statement'
+    parser = 'line 3 : after `end` : expected `;` or statement',
+    --parser = 'line 4 : after `A` : expected `(`',
 }
 
 Test { [[
@@ -26361,7 +26361,7 @@ end
 var void v = _VD(10);
 escape 0;
 ]],
-    dcls = 'line 6 : invalid declaration : variable cannot be of type `void´',
+    dcls = 'line 6 : invalid declaration : variable cannot be of type `void`',
 }
 
 Test { [[
@@ -26474,7 +26474,7 @@ native _V;
 _V = v;
 escape 1;
 ]],
-    scopes = 'line 6 : invalid pointer assignment : expected `finalize´',
+    scopes = 'line 6 : invalid pointer assignment : expected `finalize`',
 }
 
 Test { [[
@@ -26503,7 +26503,7 @@ await 1s;
 escape (_V==null) as int;
 ]],
     run = false,
-    --fin = 'line 7 : pointer access across `await´',
+    --fin = 'line 7 : pointer access across `await`',
 }
 
 Test { [[
@@ -26518,9 +26518,9 @@ end
 ]],
     wrn = true,
     --run = 1,
-    --inits = 'line 5 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:4)',
+    --inits = 'line 5 : invalid pointer access : crossed `await` (/tmp/tmp.ceu:4)',
     ptrs = 'line 5 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:4)',
-    --fin = 'line 7 : unsafe access to pointer "p1" across `await´',
+    --fin = 'line 7 : unsafe access to pointer "p1" across `await`',
 }
 
 Test { [[
@@ -26537,7 +26537,7 @@ await 1s;
 _b = _a;    // _a pode ter escopo menor e nao reclama de FIN
 await FOREVER;
 ]],
-    --fin = 'line 7 : pointer access across `await´',
+    --fin = 'line 7 : pointer access across `await`',
     cc = '1: error: unknown type name ‘tp’',
     _ana = {
         isForever = true,
@@ -26558,9 +26558,9 @@ else
 end
 escape ret;
 ]],
-    --inits = 'line 10 : invalid pointer access : crossed `emit´ (/tmp/tmp.ceu:9)',
+    --inits = 'line 10 : invalid pointer access : crossed `emit` (/tmp/tmp.ceu:9)',
     ptrs = 'line 10 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:9)',
-    --fin = 'line 10 : unsafe access to pointer "x" across `emit´',
+    --fin = 'line 10 : unsafe access to pointer "x" across `emit`',
 }
 
 Test { [[
@@ -26686,7 +26686,7 @@ Test { [[
 var int xxx = 10;
 escape ((__ceu_app:data as _CEU_Main&&)):xxx;
 ]],
-    parser = 'line 2 : after `:´ : expected internal identifier or native identifier',
+    parser = 'line 2 : after `:` : expected internal identifier or native identifier',
 }
 Test { [[
 native __ceu_app, _CEU_Main;
@@ -26695,7 +26695,7 @@ escape ((__ceu_app:_data as _CEU_Main&&)):xxx;
 ]],
     todo = 'C access to internal data',
     run = 10,
-    --parser = 'line 3 : after `)´ : expected `(´ or binary operator or `is´ or `as´ or `;´',
+    --parser = 'line 3 : after `)` : expected `(` or binary operator or `is` or `as` or `;`',
 }
 Test { [[
 native __ceu_app, _CEU_Main;
@@ -26704,7 +26704,7 @@ escape (__ceu_app:_data as _CEU_Main&&):xxx;
 ]],
     todo = 'C access to internal data',
     run = 10,
-    --parser = 'line 3 : after `)´ : expected `(´ or `?´ or `is´ or `as´ or binary operator or `;´',
+    --parser = 'line 3 : after `)` : expected `(` or `?` or `is` or `as` or binary operator or `;`',
 }
 Test { [[
 //native __ceu_app, _CEU_Main;
@@ -27341,7 +27341,7 @@ end
         acc = true,
         isForever = true,
     },
-    --fin = 'line 4 : call requires `finalize´',
+    --fin = 'line 4 : call requires `finalize`',
 }
 
 Test { [[
@@ -27382,7 +27382,7 @@ end
 Test { [[
 {fff}(1,2);
 ]],
-    parser = 'line 1 : after `1´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `)´',
+    parser = 'line 1 : after `1` : expected `[` or `:` or `.` or `!` or `?` or `(` or `is` or `as` or binary operator or `)`',
 }
 
 Test { [[
@@ -27398,7 +27398,7 @@ var int i = {fff}(3,4);
 escape i;
 ]],
     run = 10,
-    --parser = 'line 8 : after `)´ : expected `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´',
+    --parser = 'line 8 : after `)` : expected `[` or `:` or `.` or `?` or `!` or `is` or `as` or binary operator or `=` or `:=`',
 }
 
 Test { [[
@@ -27493,7 +27493,7 @@ a = "oioioi";
 escape 1;
 ]],
     stmts = 'line 2 : invalid assignment : types mismatch : "int" <= "_char&&"',
-    --env = 'line 2 : types mismatch (`int´ <= `_char&&´)',
+    --env = 'line 2 : types mismatch (`int` <= `_char&&`)',
 }
 
 Test { [[
@@ -27605,7 +27605,7 @@ var int a;
 a = _inv(_inv(1));
 escape a;
 ]],
-    --fin = 'line 8 : call requires `finalize´',
+    --fin = 'line 8 : call requires `finalize`',
     run = 1,
 }
 
@@ -27809,28 +27809,28 @@ escape a as int;
 -- Exps
 
 Test { [[var int a = ]],
-    parser = "line 1 : after `=´ : expected expression",
+    parser = "line 1 : after `=` : expected expression",
 }
 
 Test { [[escape]],
-    parser = "line 1 : after `escape´ : expected expression",
+    parser = "line 1 : after `escape` : expected expression",
 }
 
 Test { [[escape()]],
-    --parser = "line 1 : after `(´ : expected expression",
-    parser = "line 1 : after `(´ : expected expression",
+    --parser = "line 1 : after `(` : expected expression",
+    parser = "line 1 : after `(` : expected expression",
 }
 
 Test { [[escape 1+;]],
-    parser = "line 1 : after `+´ : expected expression",
+    parser = "line 1 : after `+` : expected expression",
 }
 
 Test { [[if then]],
-    parser = "line 1 : after `if´ : expected expression",
+    parser = "line 1 : after `if` : expected expression",
 }
 
 Test { [[b = ;]],
-    parser = "line 1 : after `=´ : expected expression",
+    parser = "line 1 : after `=` : expected expression",
 }
 
 
@@ -27844,7 +27844,7 @@ escape 1
 
 ;
 ]],
-    parser = "line 5 : after `+´ : expected expression"
+    parser = "line 5 : after `+` : expected expression"
 }
 
 Test { [[
@@ -27853,7 +27853,7 @@ a = do/_
     var int b;
 end
 ]],
-    parser = "line 4 : after `end´ : expected `;´",
+    parser = "line 4 : after `end` : expected `;`",
 }
 
     -- POINTER ASSIGNMENTS
@@ -27897,8 +27897,8 @@ finalize with
 end
 escape 1;
 ]],
-    scopes = 'line 2 : invalid `finalize´ : nothing to finalize',
-    --fin = 'line 3 : attribution does not require `finalize´',
+    scopes = 'line 2 : invalid `finalize` : nothing to finalize',
+    --fin = 'line 3 : attribution does not require `finalize`',
 }
 Test { [[
 var int&& a;
@@ -27908,8 +27908,8 @@ finalize with
 end
 escape 1;
 ]],
-    scopes = 'line 2 : invalid `finalize´ : nothing to finalize',
-    --fin = 'line 3 : attribution does not require `finalize´',
+    scopes = 'line 2 : invalid `finalize` : nothing to finalize',
+    --fin = 'line 3 : attribution does not require `finalize`',
 }
 Test { [[
 var int a=0;
@@ -27920,8 +27920,8 @@ finalize with
 end
 escape 1;
 ]],
-    scopes = 'line 3 : invalid `finalize´ : nothing to finalize',
-    --fin = 'line 4 : attribution does not require `finalize´',
+    scopes = 'line 3 : invalid `finalize` : nothing to finalize',
+    --fin = 'line 4 : attribution does not require `finalize`',
 }
 
 Test { [[
@@ -27933,7 +27933,7 @@ u = i;
 escape 1;
 ]],
     stmts = 'line 5 : invalid assignment : unexpected context for vector "i"',
-    --env = 'line 4 : types mismatch (`_int&&´ <= `_int[]´)',
+    --env = 'line 4 : types mismatch (`_int&&` <= `_int[]`)',
     --run = { ['~>1s']=1 },
 }
 Test { [[
@@ -27943,9 +27943,9 @@ await 1s;
 escape (ptr == null) as int;
 ]],
     wrn = true,
-    --inits = 'line 4 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 4 : invalid pointer access : crossed `await` (/tmp/tmp.ceu:3)',
     ptrs = 'line 4 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:3)',
-    --fin = 'line 4 : unsafe access to pointer "i" across `await´ (/tmp/tmp.ceu : 3)',
+    --fin = 'line 4 : unsafe access to pointer "i" across `await` (/tmp/tmp.ceu : 3)',
 }
 Test { [[
 native _int;
@@ -27956,9 +27956,9 @@ u = &&i[0];
 escape 1;
 ]],
     wrn = true,
-    --inits = 'line 5 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 5 : invalid pointer access : crossed `await` (/tmp/tmp.ceu:3)',
     ptrs = 'line 5 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:3)',
-    --fin = 'line 4 : unsafe access to pointer "i" across `await´ (/tmp/tmp.ceu : 3)',
+    --fin = 'line 4 : unsafe access to pointer "i" across `await` (/tmp/tmp.ceu : 3)',
 }
 Test { [[
 native/plain _int;
@@ -27980,7 +27980,7 @@ u = i;
 escape 1;
 ]],
     stmts = 'line 4 : invalid assignment : unexpected context for vector "i"',
-    --env = 'line 4 : types mismatch (`int&&´ <= `int[]´)',
+    --env = 'line 4 : types mismatch (`int&&` <= `int[]`)',
     --run = { ['~>1s']=1 },
 }
 Test { [[
@@ -27998,7 +27998,7 @@ end
 escape *u;
 ]],
     stmts = 'line 6 : invalid assignment : unexpected context for vector "i"',
-    --env = 'line 5 : types mismatch (`_int&&´ <= `_int[]´)',
+    --env = 'line 5 : types mismatch (`_int&&` <= `_int[]`)',
 }
 Test { [[
 native _int;
@@ -28166,8 +28166,8 @@ Test { [[
 escape 1;
 ]],
     opts_pre = true,
-    --parser = 'line 3 : after `(´ : expected location',
-    parser = 'line 3 : after `)´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `;´',
+    --parser = 'line 3 : after `(` : expected location',
+    parser = 'line 3 : after `)` : expected `[` or `:` or `.` or `!` or `?` or `(` or `is` or `as` or binary operator or `;`',
 }
 
 Test { [[
@@ -28209,7 +28209,7 @@ await async do
 end
 escape 1;
 ]],
-    props_ = 'line 3 : invalid `await´ : unexpected enclosing `async´',
+    props_ = 'line 3 : invalid `await` : unexpected enclosing `async`',
 }
 
 Test { [[
@@ -28222,8 +28222,8 @@ await async do
     end
 end
 ]],
-    props_ = 'line 3 : invalid `par/or´ : unexpected enclosing `async´',
-    --props = "line 3 : not permitted inside `async´",
+    props_ = 'line 3 : invalid `par/or` : unexpected enclosing `async`',
+    --props = "line 3 : not permitted inside `async`",
 }
 Test { [[
 await async do
@@ -28236,8 +28236,8 @@ await async do
     end
 end
 ]],
-    props_ = 'line 4 : invalid `par/and´ : unexpected enclosing `async´',
-    --props = "line 4 : not permitted inside `async´",
+    props_ = 'line 4 : invalid `par/and` : unexpected enclosing `async`',
+    --props = "line 4 : not permitted inside `async`",
 }
 Test { [[
 await async do
@@ -28248,8 +28248,8 @@ await async do
     end
 end
 ]],
-    props_ = 'line 2 : invalid `par´ : unexpected enclosing `async´',
-    --props = "line 2 : not permitted inside `async´",
+    props_ = 'line 2 : invalid `par` : unexpected enclosing `async`',
+    --props = "line 2 : not permitted inside `async`",
 }
 
 -- DFA
@@ -28392,14 +28392,14 @@ end
 Test { [[
 loop do end
 ]],
-    tight_ = 'line 1 : invalid tight `loop´ :',
+    tight_ = 'line 1 : invalid tight `loop` :',
     --tight = 'line 1 : tight loop',
 }
 Test { [[
 var int i;
 loop i do end
 ]],
-    tight_ = 'line 2 : invalid tight `loop´ :',
+    tight_ = 'line 2 : invalid tight `loop` :',
     --tight = 'line 1 : tight loop',
 }
 Test { [[
@@ -28414,7 +28414,7 @@ var int v=1;
 var int i;
 loop i in [0->v[ do end
 ]],
-    tight_ = 'line 3 : invalid tight `loop´ :',
+    tight_ = 'line 3 : invalid tight `loop` :',
     --tight = 'line 2 : tight loop',
 }
 
@@ -28426,7 +28426,7 @@ loop do
 end
 escape 1;
 ]],
-    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 1 : invalid tight `loop` : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
@@ -28461,7 +28461,7 @@ loop do
 end
 escape 1;
 ]],
-    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 1 : invalid tight `loop` : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
@@ -28489,7 +28489,7 @@ loop do
 end
 escape 1;
 ]],
-    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 1 : invalid tight `loop` : unbounded number of non-awaiting iterations',
 }
 -- INFINITE LOOP/EXECUTION
 Test { [[
@@ -28837,7 +28837,7 @@ pause/if a do
 end
 escape 1;
 ]],
-    stmts = 'line 2 : invalid `pause/if´ : unexpected context for variable "a"',
+    stmts = 'line 2 : invalid `pause/if` : unexpected context for variable "a"',
 }
 
 Test { [[
@@ -28846,7 +28846,7 @@ pause/if A do
 end
 escape 0;
 ]],
-    stmts = 'line 2 : invalid `pause/if´ : expected event of type `bool´',
+    stmts = 'line 2 : invalid `pause/if` : expected event of type `bool`',
 }
 
 Test { [[
@@ -28876,7 +28876,7 @@ pause/if a do
 end
 escape 0;
 ]],
-    stmts = 'line 2 : invalid `pause/if´ : expected event of type `bool´',
+    stmts = 'line 2 : invalid `pause/if` : expected event of type `bool`',
     --env = 'line 2 : event type must be numeric',
     --env = 'line 2 : arity mismatch',
     --env = 'line 2 : invalid attribution',
@@ -28898,7 +28898,7 @@ with
     end
 end
 ]],
-    stmts = 'line 6 : invalid `emit´ : types mismatch : "(bool)" <= "(int)"',
+    stmts = 'line 6 : invalid `emit` : types mismatch : "(bool)" <= "(int)"',
 }
 
 Test { [[
@@ -28974,7 +28974,7 @@ with
 end
 escape ret;
 ]],
-    stmts = 'line 7 : invalid `emit´ : types mismatch : "(bool)" <= "(int)"',
+    stmts = 'line 7 : invalid `emit` : types mismatch : "(bool)" <= "(int)"',
 }
 
 Test { [[
@@ -29330,14 +29330,14 @@ Test { [[
 var u8 v;
 escape ($$v) as int;
 ]],
-    dcls = 'line 2 : invalid operand to `$$´ : unexpected context for variable "v"',
+    dcls = 'line 2 : invalid operand to `$$` : unexpected context for variable "v"',
     --env = 'line 2 : invalid operand to unary "$$" : vector expected',
 }
 Test { [[
 var u8 v;
 escape ($v) as int;
 ]],
-    dcls = 'line 2 : invalid operand to `$´ : unexpected context for variable "v"',
+    dcls = 'line 2 : invalid operand to `$` : unexpected context for variable "v"',
 }
 
 Test { [[
@@ -29358,42 +29358,42 @@ Test { [[
 vector[] int c;
 escape [];
 ]],
-    parser = 'line 2 : after `escape´ : expected expression',
+    parser = 'line 2 : after `escape` : expected expression',
     --env = 'line 2 : invalid attribution : destination is not a vector',
-    --env = 'line 2 : types mismatch (`int´ <= `any[]´)',
+    --env = 'line 2 : types mismatch (`int` <= `any[]`)',
 }
 
 Test { [[
 vector[] int c;
 escape [1]..[]..c;
 ]],
-    parser = 'line 2 : after `escape´ : expected expression',
+    parser = 'line 2 : after `escape` : expected expression',
     --env = 'line 2 : invalid attribution : destination is not a vector',
-    --env = 'line 2 : types mismatch (`int´ <= `int[]´)',
+    --env = 'line 2 : types mismatch (`int` <= `int[]`)',
 }
 
 Test { [[
 vector[10] u8 vec = [ [1,2,3] ];
 escape 1;
 ]],
-    parser = 'line 1 : after `[´ : expected `]´',
-    --parser = 'line 1 : after `[´ : expected `]´',
+    parser = 'line 1 : after `[` : expected `]`',
+    --parser = 'line 1 : after `[` : expected `]`',
     --env = 'line 1 : wrong argument #1 : arity mismatch',
-    --env = 'line 1 : types mismatch (`u8[]´ <= `int[][]´)',
-    --env = 'line 1 : wrong argument #1 : types mismatch (`u8´ <= `int[]..´)',
+    --env = 'line 1 : types mismatch (`u8[]` <= `int[][]`)',
+    --env = 'line 1 : wrong argument #1 : types mismatch (`u8` <= `int[]..`)',
 }
 Test { [[
 vector[10] u8 vec = (1,2,3);
 escape 1;
 ]],
-    --parser = 'line 1 : after `1´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `is´ or `as´ or binary operator',
-    parser = 'line 1 : after `1´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `)´ or `..´',
+    --parser = 'line 1 : after `1` : expected `[` or `:` or `.` or `!` or `?` or `is` or `as` or binary operator',
+    parser = 'line 1 : after `1` : expected `[` or `:` or `.` or `!` or `?` or `(` or `is` or `as` or binary operator or `)` or `..`',
 }
 Test { [[
 vector[10] u8 vec = (1);
 escape 1;
 ]],
-    --env = 'line 1 : types mismatch (`u8[]´ <= `int´)',
+    --env = 'line 1 : types mismatch (`u8[]` <= `int`)',
     stmts = 'line 1 : invalid assignment : unexpected context for vector "vec"',
 }
 Test { [[
@@ -29425,7 +29425,7 @@ var int x;
 vector[10] u8 vec = [ &&x ];
 escape 1;
 ]],
-    --env = 'line 2 : wrong argument #1 : types mismatch (`u8´ <= `int&&´)',
+    --env = 'line 2 : wrong argument #1 : types mismatch (`u8` <= `int&&`)',
     stmts = 'line 2 : invalid constructor : item #1 : invalid expression list : item #1 : types mismatch : "u8" <= "int&&"',
 }
 
@@ -29433,9 +29433,9 @@ Test { [[
 vector[] int v = [] ..;
 escape 1;
 ]],
-    --parser = 'line 1 : after `..´ : expected item',
-    --parser = 'line 1 : after `..´ : invalid constructor syntax',
-    parser = 'line 1 : after `..´ : expected expression or `[´',
+    --parser = 'line 1 : after `..` : expected item',
+    --parser = 'line 1 : after `..` : invalid constructor syntax',
+    parser = 'line 1 : after `..` : expected expression or `[`',
 }
 
 Test { [[
@@ -29444,14 +29444,14 @@ vector[] int  v2 = []..v1;
 escape 1;
 ]],
     stmts = 'line 2 : invalid constructor : item #2 : types mismatch : "int" <= "int&&"',
-    --env = 'line 2 : wrong argument #2 : types mismatch (`int´ <= `int&&´)',
+    --env = 'line 2 : wrong argument #2 : types mismatch (`int` <= `int&&`)',
 }
 
 Test { [[
 vector[10] u8 vec = [1,2,3];
 escape $$vec + $vec + vec[0] + vec[1] + vec[2];
 ]],
-    dcls = 'line 2 : invalid operands to `+´ : incompatible numeric types : "usize" vs "u8"',
+    dcls = 'line 2 : invalid operands to `+` : incompatible numeric types : "usize" vs "u8"',
 }
 Test { [[
 vector[10] u8 vec = [1,2,3];
@@ -29515,8 +29515,8 @@ vector[10] u8 vec = [1,2,3];
 $$vec = 0;
 escape vec[0] as int;
 ]],
-    parser = 'line 2 : after `vec´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `;´',
-    --parser = 'line 1 : after `;´ : expected statement',
+    parser = 'line 2 : after `vec` : expected `[` or `:` or `.` or `!` or `?` or `(` or `is` or `as` or binary operator or `;`',
+    --parser = 'line 1 : after `;` : expected statement',
     --env = 'line 2 : invalid attribution',
 }
 Test { [[
@@ -29578,7 +29578,7 @@ vector[20] u8 v2 = v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
     stmts = 'line 2 : invalid assignment : unexpected context for vector "v2"',
-    --env = 'line 2 : types mismatch (`u8[]´ <= `u8[]´)',
+    --env = 'line 2 : types mismatch (`u8[]` <= `u8[]`)',
 }
 
 Test { [[
@@ -29588,8 +29588,8 @@ v1 = v2..v3;
 escape $v1+1;
 ]],
     stmts = 'line 2 : invalid assignment : unexpected context for vector "v1"',
-    --parser = 'line 3 : after `v2´ : expected `[´ or `:´ or `!´ or `(´ or `?´ or `is´ or `as´ or binary operator or `;´',
-    --parser = 'line 3 : after `v2´ : expected `[´ or `:´ or `!´ or `(´ or `?´ or binary operator or `is´ or `as´ or `;´',
+    --parser = 'line 3 : after `v2` : expected `[` or `:` or `!` or `(` or `?` or `is` or `as` or binary operator or `;`',
+    --parser = 'line 3 : after `v2` : expected `[` or `:` or `!` or `(` or `?` or binary operator or `is` or `as` or `;`',
 }
 
 Test { [[
@@ -29664,10 +29664,10 @@ Test { [[
 vector[2] int v ;
 escape v == &&v[0] ;
 ]],
-    --dcls = 'line 2 : invalid operand to `==´ : expected the same type',
+    --dcls = 'line 2 : invalid operand to `==` : expected the same type',
     --env = 'line 2 : invalid operand to unary "&&" : vector elements are not addressable',
-    --dcls = 'line 2 : invalid expression : operand to `&&´ must be a name',
-    dcls = 'line 2 : invalid operand to `==´ : unexpected context for vector "v"',
+    --dcls = 'line 2 : invalid expression : operand to `&&` must be a name',
+    dcls = 'line 2 : invalid operand to `==` : unexpected context for vector "v"',
 }
 
 Test { [[
@@ -29695,7 +29695,7 @@ loop i in [0 -> ($foo) as int[ do
 end
 escape tot;
 ]],
-    tight_ = 'line 4 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 4 : invalid tight `loop` : unbounded number of non-awaiting iterations',
     --tight = 'line 3 : tight loop',
 }
 Test { [[
@@ -29733,7 +29733,7 @@ loop i in [0 -> ($$foo) as int[ do
 end
 escape tot+1;
 ]],
-    tight_ = 'line 4 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 4 : invalid tight `loop` : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
@@ -29753,17 +29753,17 @@ escape tot+1;
 Test { [[
 escape 1..2;
 ]],
-    --parser = 'line 1 : after `..´ : invalid constructor syntax',
-    --parser = 'line 1 : after `1´ : expected `[´ or `:´ or `!´ or `?´ or `is´ or `as´ or binary operator or `;´',
-    parser = 'line 1 : after `1´ : expected `[´ or `:´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `;´',
+    --parser = 'line 1 : after `..` : invalid constructor syntax',
+    --parser = 'line 1 : after `1` : expected `[` or `:` or `!` or `?` or `is` or `as` or binary operator or `;`',
+    parser = 'line 1 : after `1` : expected `[` or `:` or `!` or `?` or `(` or `is` or `as` or binary operator or `;`',
 }
 Test { [[
 escape 1 .. 2;
 ]],
-    --parser = 'line 1 : after `..´ : invalid constructor syntax',
-    --parser = 'line 1 : after `1´ : expected `;´',
-    --parser = 'line 1 : after `1´ : expected `[´ or `:´ or `!´ or `?´ or `is´ or `as´ or binary operator or `;´',
-    parser = 'line 1 : after `1´ : expected `[´ or `:´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `;´',
+    --parser = 'line 1 : after `..` : invalid constructor syntax',
+    --parser = 'line 1 : after `1` : expected `;`',
+    --parser = 'line 1 : after `1` : expected `[` or `:` or `!` or `?` or `is` or `as` or binary operator or `;`',
+    parser = 'line 1 : after `1` : expected `[` or `:` or `!` or `?` or `(` or `is` or `as` or binary operator or `;`',
 }
 Test { [[
 vector[] int x = [1]..2;
@@ -29777,7 +29777,7 @@ escape 1;
 Test { [[
 escape [1]..[2];
 ]],
-    parser = 'line 1 : after `escape´ : expected expression',
+    parser = 'line 1 : after `escape` : expected expression',
     --env = 'line 1 : invalid attribution : destination is not a vector',
 }
 
@@ -29785,7 +29785,7 @@ Test { [[
 escape [1]..[&&this];
 ]],
     --env = 'line 1 : invalid attribution : destination is not a vector',
-    parser = 'line 1 : after `escape´ : expected expression',
+    parser = 'line 1 : after `escape` : expected expression',
 }
 
 Test { [[
@@ -29934,8 +29934,8 @@ escape (str[4]=={'i'}) as int;
 
 Test { [[vector[2] u8 v; escape (&&v==&&v) as int;]],
     run = 1,
-    --dcls = 'line 1 : invalid operand to `&&´ : unexpected context for vector "v"',
-    --env = 'line 1 : types mismatch (`int´ <= `u8[]&&´)',
+    --dcls = 'line 1 : invalid operand to `&&` : unexpected context for vector "v"',
+    --env = 'line 1 : types mismatch (`int` <= `u8[]&&`)',
     --env = 'invalid operand to unary "&&"',
 }
 
@@ -30049,25 +30049,25 @@ Test { [[
 vector[] int v;
 escape v > 0;
 ]],
-    dcls = 'line 2 : invalid operand to `>´ : unexpected context for vector "v"',
+    dcls = 'line 2 : invalid operand to `>` : unexpected context for vector "v"',
 }
 Test { [[
 vector[] int v;
 escape v?;
 ]],
-    dcls = 'line 2 : invalid operand to `?´ : unexpected context for vector "v"',
+    dcls = 'line 2 : invalid operand to `?` : unexpected context for vector "v"',
 }
 Test { [[
 vector[] int v;
 escape v!;
 ]],
-    dcls = 'line 2 : invalid operand to `!´ : unexpected context for vector "v"',
+    dcls = 'line 2 : invalid operand to `!` : unexpected context for vector "v"',
 }
 Test { [[
 vector[] int v;
 escape ~v;
 ]],
-    dcls = 'line 2 : invalid operand to `~´ : unexpected context for vector "v"',
+    dcls = 'line 2 : invalid operand to `~` : unexpected context for vector "v"',
 }
 
 Test { [[
@@ -30081,17 +30081,17 @@ Test { [[
 vector int[1][1] v;
 escape 1;
 ]],
-    --adj = 'line 1 : not implemented : multiple `[]´',
-    --env = 'line 1 : invalid type modifier : `[][]´',
-    parser = 'line 1 : after `vector´ : expected `&´ or `[´',
+    --adj = 'line 1 : not implemented : multiple `[]`',
+    --env = 'line 1 : invalid type modifier : `[][]`',
+    parser = 'line 1 : after `vector` : expected `&` or `[`',
 }
 Test { [[
 vector[1][1] int v;
 escape 1;
 ]],
-    --adj = 'line 1 : not implemented : multiple `[]´',
-    --env = 'line 1 : invalid type modifier : `[][]´',
-    parser = 'line 1 : after `]´ : expected type',
+    --adj = 'line 1 : not implemented : multiple `[]`',
+    --env = 'line 1 : invalid type modifier : `[][]`',
+    parser = 'line 1 : after `]` : expected type',
 }
 
 Test { [[
@@ -30126,8 +30126,8 @@ vector[255] byte buf;
 _enqueue(&&buf[0]);
 escape 1;
 ]],
-    scopes = 'line 3 : invalid `call´ : expected `finalize´ for variable "buf"',
-    --fin = 'line 2 : call requires `finalize´',
+    scopes = 'line 3 : invalid `call` : expected `finalize` for variable "buf"',
+    --fin = 'line 2 : call requires `finalize`',
 }
 
 Test { [[
@@ -30138,7 +30138,7 @@ escape 1;
 ]],
     stmts = 'line 3 : invalid expression list : item #1 : unexpected context for vector "buf"',
     --env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
-    --fin = 'line 2 : call requires `finalize´',
+    --fin = 'line 2 : call requires `finalize`',
 }
 Test { [[
 native/pure _enqueue;
@@ -30150,8 +30150,8 @@ _enqueue(&&buf);
 escape 1;
 ]],
     run = 1,
-    --dcls = 'line 3 : invalid operand to `&&´ : unexpected context for vector "buf"',
-    --fin = 'line 2 : call requires `finalize´',
+    --dcls = 'line 3 : invalid operand to `&&` : unexpected context for vector "buf"',
+    --fin = 'line 2 : call requires `finalize`',
 }
 
 Test { [[
@@ -30164,7 +30164,7 @@ str = [].."oioioi";
 escape _strlen(&&str[0]);
 ]],
     stmts = 'line 5 : invalid constructor : expected internal type : got "_char"',
-    --dcls = 'line 5 : invalid use of `vector´ "str"',
+    --dcls = 'line 5 : invalid use of `vector` "str"',
     --cc = '4:34: error: assignment to expression with array type',
 }
 
@@ -30252,8 +30252,8 @@ _f([1]);
 escape 1;
 ]],
     --env = 'line 1 : wrong argument #1 : cannot pass plain vectors to native calls',
-    --parser = 'line 1 : after `(´ : expected `)´',
-    parser = 'line 1 : after `(´ : expected expression',
+    --parser = 'line 1 : after `(` : expected `)`',
+    parser = 'line 1 : after `(` : expected expression',
     --run = 1,
 }
 Test { [[
@@ -30261,8 +30261,8 @@ _f([1]..[2]);
 escape 1;
 ]],
     --env = 'line 1 : wrong argument #1 : cannot pass plain vectors to native calls',
-    --parser = 'line 1 : after `(´ : expected `)´',
-    parser = 'line 1 : after `(´ : expected expression',
+    --parser = 'line 1 : after `(` : expected `)`',
+    parser = 'line 1 : after `(` : expected expression',
     --run = 1,
 }
 Test { [[
@@ -30271,8 +30271,8 @@ _f([1]..v);
 escape 1;
 ]],
     --env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
-    parser = 'line 2 : after `(´ : expected expression',
-    --parser = 'line 2 : after `(´ : expected `)´',
+    parser = 'line 2 : after `(` : expected expression',
+    --parser = 'line 2 : after `(` : expected `)`',
     --run = 1,
 }
 Test { [[
@@ -30280,8 +30280,8 @@ vector[] int v;
 _f(v..[1]);
 escape 1;
 ]],
-    --parser = 'line 2 : after `..´ : invalid constructor syntax',
-    parser = 'line 2 : after `v´ : expected `[´ or `:´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `,´ or `)´',
+    --parser = 'line 2 : after `..` : invalid constructor syntax',
+    parser = 'line 2 : after `v` : expected `[` or `:` or `!` or `?` or `(` or `is` or `as` or binary operator or `,` or `)`',
     --run = 1,
 }
 
@@ -30291,8 +30291,8 @@ vector[] byte v = [].."abc";
 native _char;
 escape _strlen(v as _char&&);
 ]],
-    dcls = 'line 4 : invalid operand to `as´ : unexpected context for vector "v"',
-    --env = 'line 2 : types mismatch (`byte[]´ <= `_char&&´)',
+    dcls = 'line 4 : invalid operand to `as` : unexpected context for vector "v"',
+    --env = 'line 2 : types mismatch (`byte[]` <= `_char&&`)',
     --run = 3,
 }
 Test { [[
@@ -30523,7 +30523,7 @@ escape 1;
 ]],
     stmts = 'line 3 : invalid constructor : expected internal type : got "_char"',
     --cc = '2:32: error: assignment to expression with array type',
-    --env = 'line 2 : types mismatch (`_char[]´ <= `_char&&´)',
+    --env = 'line 2 : types mismatch (`_char[]` <= `_char&&`)',
     --env = 'line 2 : invalid attribution',
 }
 
@@ -30617,7 +30617,7 @@ cnt = #v;
 _printf("oi\n");
 escape cnt;
 ]],
-    parser = 'line 7 : after `=´ : expected expression',
+    parser = 'line 7 : after `=` : expected expression',
 }
 
 Test { [[
@@ -30740,7 +30740,7 @@ escape( ($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
 ]],
     run = 1,
     stmts = 'line 2 : invalid binding : dimension mismatch',
-    --env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
+    --env = 'line 2 : types mismatch (`u8[]&` <= `u8[]&`) : dimension mismatch',
 }
 
 Test { [[
@@ -30749,7 +30749,7 @@ vector&[9] byte ref = &vec;
 escape (($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
 ]],
     stmts = 'line 2 : invalid binding : dimension mismatch',
-    --env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
+    --env = 'line 2 : types mismatch (`u8[]&` <= `u8[]&`) : dimension mismatch',
 }
 
 Test { [[
@@ -30837,7 +30837,7 @@ vector&[-_X] int iis;
 escape 1;
 ]],
     wrn = true,
-    --inits = 'line 5 : uninitialized vector "iis" : reached `escape´ (/tmp/tmp.ceu:6)',
+    --inits = 'line 5 : uninitialized vector "iis" : reached `escape` (/tmp/tmp.ceu:6)',
     run = 1,
 }
 
@@ -30870,7 +30870,7 @@ Test { [[
 vector&[] int v;
 escape 1;
 ]],
-    --inits = 'line 1 : uninitialized vector "v" : reached `escape´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized vector "v" : reached `escape` (/tmp/tmp.ceu:2)',
     wrn = true,
     run = 1,
 }
@@ -30900,7 +30900,7 @@ end
 vector&[_N] _u8 xxxx = _;
 escape 1;
 ]],
-    inits = 'line 6 : invalid binding : expected operator `&´ in the right side',
+    inits = 'line 6 : invalid binding : expected operator `&` in the right side',
     --inits = 'line 6 : invalid binding : unexpected statement in the right side',
     --gcc = '6:26: error: variably modified ‘xxxx’ at file scope',
 }
@@ -31019,7 +31019,7 @@ var& int? i = &v1;
 i = v2;
 escape v1!;
 ]],
-    tmp = 'line 4 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
+    tmp = 'line 4 : invalid attribution : missing `!` (in the left) or `&` (in the right)',
 }
 Test { [[
 var int? v1 = 0;
@@ -31083,14 +31083,14 @@ escape v;
 ]],
     wrn = true,
     --env = 'line 4 : invalid operands to binary "+"',
-    dcls = 'line 4 : invalid operand to `+´ : expected numeric type',
+    dcls = 'line 4 : invalid operand to `+` : expected numeric type',
 }
 
 Test { [[
 var int v = 10;
 escape v!;
 ]],
-    dcls = 'line 2 : invalid operand to `!´ : expected option type',
+    dcls = 'line 2 : invalid operand to `!` : expected option type',
 }
 
 Test { [[
@@ -31115,8 +31115,8 @@ loop do
 end
 escape v!;
 ]],
-    --inits = 'line 2 : uninitialized variable "i" : reached `loop´ (/tmp/tmp.ceu:3)',
-    inits = 'line 4 : invalid binding : crossing `loop´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "i" : reached `loop` (/tmp/tmp.ceu:3)',
+    inits = 'line 4 : invalid binding : crossing `loop` (/tmp/tmp.ceu:3)',
     --inits = 'line 2 : uninitialized variable "i" : reached yielding statement (/tmp/tmp.ceu:3)',
     --ref = 'line 4 : invalid attribution : variable "i" is already bound',
 }
@@ -31126,10 +31126,10 @@ var& int? i;
 i! = &v;
 escape i!;
 ]],
-    --stmts = 'line 3 : invalid binding : expected declaration with `&´',
-    stmts = 'line 3 : invalid binding : unexpected context for operator `!´',
+    --stmts = 'line 3 : invalid binding : expected declaration with `&`',
+    stmts = 'line 3 : invalid binding : unexpected context for operator `!`',
     --inits = 'line 2 : uninitialized variable "i" : reached read access (/tmp/tmp.ceu:3)',
-    --ref = 'line 3 : invalid attribution : cannot bind with operator `!´',
+    --ref = 'line 3 : invalid attribution : cannot bind with operator `!`',
 }
 
 Test { [[
@@ -31146,9 +31146,9 @@ loop do
 end
 escape v!;
 ]],
-    --stmts = 'line 4 : invalid binding : expected declaration with `&´',
-    stmts = 'line 4 : invalid binding : unexpected context for operator `!´',
-    --inits = 'line 2 : uninitialized variable "i" : reached `loop´ (/tmp/tmp.ceu:3)',
+    --stmts = 'line 4 : invalid binding : expected declaration with `&`',
+    stmts = 'line 4 : invalid binding : unexpected context for operator `!`',
+    --inits = 'line 2 : uninitialized variable "i" : reached `loop` (/tmp/tmp.ceu:3)',
     --ref = 'line 4 : invalid attribution : variable "i" is already bound',
     --run = 11,
     --ref = 'reference declaration and first binding cannot be separated by loops',
@@ -31165,7 +31165,7 @@ finalize (x) with
 end
 escape 0;
 ]],
-    scopes = 'line 4 : invalid `finalize´ : unexpected `await´',
+    scopes = 'line 4 : invalid `finalize` : unexpected `await`',
 }
 
 Test { [[
@@ -31180,7 +31180,7 @@ var int? v1 = 10;
 var int? v2 = v1;
 escape v2!;
 ]],
-    --stmts = 'line 2 : invalid assignment : expected operator `!´',
+    --stmts = 'line 2 : invalid assignment : expected operator `!`',
     run = 10;
 }
 
@@ -31222,14 +31222,14 @@ Test { [[
 var int? i;
 escape i as int;
 ]],
-    dcls = 'line 2 : invalid operand to `as´ : unexpected option type',
+    dcls = 'line 2 : invalid operand to `as` : unexpected option type',
 }
 Test { [[
 var int? i;
 escape i is int;
 ]],
-    --dcls = 'line 2 : invalid operand to `is´ : unexpected option type',
-    dcls = 'line 2 : invalid operand to `is´ : expected plain `data´ type : got "int?"',
+    --dcls = 'line 2 : invalid operand to `is` : unexpected option type',
+    dcls = 'line 2 : invalid operand to `is` : expected plain `data` type : got "int?"',
 }
 Test { [[
 var int? i = 10;
@@ -31247,14 +31247,14 @@ escape (i! as int);
 Test { [[
 escape 1?;
 ]],
-    --parser = 'ERR : /tmp/tmp.ceu : line 1 : after `1´ : expected `is´ or `as´ or binary operator or `;´',
-    dcls = 'line 1 : invalid operand to `?´ : unexpected context for value "1"',
+    --parser = 'ERR : /tmp/tmp.ceu : line 1 : after `1` : expected `is` or `as` or binary operator or `;`',
+    dcls = 'line 1 : invalid operand to `?` : unexpected context for value "1"',
 }
 Test { [[
 var int i;
 escape i?;
 ]],
-    dcls = 'line 2 : invalid operand to `?´ : expected option type',
+    dcls = 'line 2 : invalid operand to `?` : expected option type',
 }
 Test { [[
 var int? i = 1;
@@ -31273,9 +31273,9 @@ Test { [[
 var int?&& v;
 escape 1;
 ]],
-    parser = 'line 1 : after `?´ : expected internal identifier',
-    --env = 'line 1 : invalid type modifier : `?&&´',
-    --adj = 'line 1 : not implemented : `?´ must be last modifier',
+    parser = 'line 1 : after `?` : expected internal identifier',
+    --env = 'line 1 : invalid type modifier : `?&&`',
+    --adj = 'line 1 : not implemented : `?` must be last modifier',
 }
 Test { [[
 var& int? v;
@@ -31283,9 +31283,9 @@ escape 1;
 ]],
     wrn = true,
     run = 1,
-    --inits = 'line 1 : uninitialized variable "v" : reached `escape´ (/tmp/tmp.ceu:2)',
-    --env = 'line 1 : invalid type modifier : `?&´',
-    --adj = 'line 1 : not implemented : `?´ must be last modifier',
+    --inits = 'line 1 : uninitialized variable "v" : reached `escape` (/tmp/tmp.ceu:2)',
+    --env = 'line 1 : invalid type modifier : `?&`',
+    --adj = 'line 1 : not implemented : `?` must be last modifier',
 }
 Test { [[
 var int? k;
@@ -31314,9 +31314,9 @@ Test { [[
 var int?? v;
 escape 1;
 ]],
-    parser = 'line 1 : after `?´ : expected internal identifier',
-    --env = 'line 1 : invalid type modifier : `??´',
-    --adj = 'line 1 : not implemented : `?´ must be last modifier',
+    parser = 'line 1 : after `?` : expected internal identifier',
+    --env = 'line 1 : invalid type modifier : `??`',
+    --adj = 'line 1 : not implemented : `?` must be last modifier',
 }
 
 -->> OPTION / NATIVE
@@ -31334,8 +31334,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    stmts = 'line 6 : invalid binding : expected `native´ type',
-    --scopes = 'line 6 : invalid binding : expected option alias `&?´ as destination : got "_SDL_Texture?"',
+    stmts = 'line 6 : invalid binding : expected `native` type',
+    --scopes = 'line 6 : invalid binding : expected option alias `&?` as destination : got "_SDL_Texture?"',
 }
 
 Test { [[
@@ -31352,7 +31352,7 @@ escape 1;
 ]],
     wrn = true,
     cc = '1: error: unknown type name ‘SDL_Texture’',
-    --scopes = 'line 6 : invalid binding : expected option alias `&?´ as destination : got "_SDL_Texture"',
+    --scopes = 'line 6 : invalid binding : expected option alias `&?` as destination : got "_SDL_Texture"',
 }
 
 Test { [[
@@ -31384,8 +31384,8 @@ escape 1;
 ]],
     wrn = true,
     cc = 'error: unknown type name ‘SDL_Texture’',
-    --inits = 'line 3 : uninitialized variable "t_enemy_0" : reached `escape´ (/tmp/tmp.ceu:9)',
-    --inits = 'line 3 : uninitialized variable "t_enemy_0" : reached end of `par/or´ (/tmp/tmp.ceu:5)',
+    --inits = 'line 3 : uninitialized variable "t_enemy_0" : reached `escape` (/tmp/tmp.ceu:9)',
+    --inits = 'line 3 : uninitialized variable "t_enemy_0" : reached end of `par/or` (/tmp/tmp.ceu:5)',
 }
 
 Test { [[
@@ -31468,7 +31468,7 @@ var& _void_ptr? v = &x;
 v! = null;
 escape (x! == null) as int;
 ]],
-    --dcls = 'line 5 : invalid declaration : expected `&´',
+    --dcls = 'line 5 : invalid declaration : expected `&`',
     run = 1,
 }
 Test { [[
@@ -31543,8 +31543,8 @@ finalize(v1) with
     nothing;
 end
 ]],
-    --dcls = 'line 1 : invalid declaration : option alias : expected native or `code/await´ type',
-    stmts = 'line 4 : invalid binding : expected `native´ type',
+    --dcls = 'line 1 : invalid declaration : option alias : expected native or `code/await` type',
+    stmts = 'line 4 : invalid binding : expected `native` type',
     --cc = 'error: implicit declaration of function ‘fff’',
     --stmts = 'line 4 : invalid binding : types mismatch : "int?" <= "_"',
 }
@@ -31619,7 +31619,7 @@ interface UI with
 end
 escape 1;
 ]],
-    parser = 'line 4 : after `interface´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `?´ or `(´ or `is´ or binary operator or `;´',
+    parser = 'line 4 : after `interface` : expected `[` or `:` or `.` or `!` or `as` or `=` or `?` or `(` or `is` or binary operator or `;`',
     run = 1,
 }
 
@@ -31631,9 +31631,9 @@ var SDL_Color clr = val SDL_Color(10);
 var SDL_Color? bg_clr = clr;
 escape bg_clr.v;
 ]],
-    dcls = 'line 6 : invalid operand to `.´ : expected plain type : got "SDL_Color?"',
+    dcls = 'line 6 : invalid operand to `.` : expected plain type : got "SDL_Color?"',
     --dcls = 'line 6 : invalid member access : "bg_clr" must be of plain type',
-    --env = 'line 6 : invalid `.´ operation : cannot be an option type',
+    --env = 'line 6 : invalid `.` operation : cannot be an option type',
 }
 
 Test { [[
@@ -31648,10 +31648,10 @@ every 1s do
 end
 escape 1;
 ]],
-    inits = 'line 5 : invalid binding : crossing `loop´ (/tmp/tmp.ceu:3)',
-    --inits = 'line 2 : uninitialized variable "sfc" : reached `loop´ (/tmp/tmp.ceu:3)',
+    inits = 'line 5 : invalid binding : crossing `loop` (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "sfc" : reached `loop` (/tmp/tmp.ceu:3)',
     --inits = 'line 2 : uninitialized variable "sfc" : reached yielding statement (/tmp/tmp.ceu:3)',
-    --inits = 'line 2 : uninitialized variable "sfc" : reached `await´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "sfc" : reached `await` (/tmp/tmp.ceu:3)',
     --ref = 'line 4 : invalid attribution : variable "sfc" is already bound',
     --ref = 'line 4 : reference declaration and first binding cannot be separated by loops',
     --ref = 'line 1 : uninitialized variable "sfc" crossing compound statement (/tmp/tmp.ceu:2)',
@@ -31675,9 +31675,9 @@ finalize (r) with
 end
 escape r;
 ]],
-    stmts = 'line 16 : invalid `escape´ : expected operator `!´',
-    --stmts = 'line 17 : invalid `escape´ : types mismatch : "int" <= "_int?"',
-    --env = 'line 16 : types mismatch (`int´ <= `int&?´)',
+    stmts = 'line 16 : invalid `escape` : expected operator `!`',
+    --stmts = 'line 17 : invalid `escape` : types mismatch : "int" <= "_int?"',
+    --env = 'line 16 : types mismatch (`int` <= `int&?`)',
 }
 
 Test { [[
@@ -31685,7 +31685,7 @@ native _f, _int;
 var&? _int v = &_f();
 escape 0;
 ]],
-    scopes = 'line 2 : invalid binding : expected `finalize´',
+    scopes = 'line 2 : invalid binding : expected `finalize`',
 }
 
 Test { [[
@@ -31708,8 +31708,8 @@ do
     end
 end
 ]],
-    props_ = 'line 7 : invalid `await´ : unexpected enclosing `finalize´',
-    --props = "line 7 : not permitted inside `finalize´",
+    props_ = 'line 7 : invalid `await` : unexpected enclosing `finalize`',
+    --props = "line 7 : not permitted inside `finalize`",
 }
 
 Test { [[
@@ -31723,8 +31723,8 @@ do
     end
 end
 ]],
-    props_ = 'line 6 : invalid `async´ : unexpected enclosing `finalize´',
-    --props = "line 7 : not permitted inside `finalize´",
+    props_ = 'line 6 : invalid `async` : unexpected enclosing `finalize`',
+    --props = "line 7 : not permitted inside `finalize`",
 }
 
 Test { [[
@@ -31737,8 +31737,8 @@ do/_
     end
 end
 ]],
-    props_ = 'line 6 : invalid `escape´ : unexpected enclosing `finalize´',
-    --props = "line 7 : not permitted inside `finalize´",
+    props_ = 'line 6 : invalid `escape` : unexpected enclosing `finalize`',
+    --props = "line 7 : not permitted inside `finalize`",
 }
 
 Test { [[
@@ -31872,7 +31872,7 @@ do/_
 end
 escape r;
 ]],
-    --props = "line 8 : not permitted inside `finalize´",
+    --props = "line 8 : not permitted inside `finalize`",
     --cc = '9:27: error: variable ‘__ceu_a_3’ set but not used [-Werror=unused-but-set-variable]',
     run = 1,
 }
@@ -31897,7 +31897,7 @@ do/_
 end
 escape r;
 ]],
-    --props = "line 8 : not permitted inside `finalize´",
+    --props = "line 8 : not permitted inside `finalize`",
     run = 1,
 }
 
@@ -31970,7 +31970,7 @@ end
 escape *v1!+*v2!+_V;
 ]],
     todo = 'opt-ro',
-    --env = 'line 14 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
+    --env = 'line 14 : invalid attribution : missing `!` (in the left) or `&` (in the right)',
     run = 60,
 }
 Test { [[
@@ -32054,7 +32054,7 @@ finalize (x) with
 end
 escape 0;
 ]],
-    scopes = 'line 7 : invalid `finalize´ : unmatching identifiers : expected "r" (vs. /tmp/tmp.ceu:6)',
+    scopes = 'line 7 : invalid `finalize` : unmatching identifiers : expected "r" (vs. /tmp/tmp.ceu:6)',
 }
 Test { [[
 native _int;
@@ -32068,7 +32068,7 @@ finalize (r) with
 end
 escape 0;
 ]],
-    scopes = 'line 7 : invalid `finalize´ : unmatching identifiers : expected "x" (vs. /tmp/tmp.ceu:6)',
+    scopes = 'line 7 : invalid `finalize` : unmatching identifiers : expected "x" (vs. /tmp/tmp.ceu:6)',
 }
 Test { [[
 native _int;
@@ -32101,7 +32101,7 @@ do
 end
 escape 1;
 ]],
-    scopes = 'line 7 : invalid `finalize´ : incompatible scopes',
+    scopes = 'line 7 : invalid `finalize` : incompatible scopes',
 }
 Test { [[
 native/nohold _S, _F, _f;
@@ -32129,7 +32129,7 @@ do
 end
 escape 1;
 ]],
-    scopes = 'line 6 : invalid `finalize´ : incompatible scopes',
+    scopes = 'line 6 : invalid `finalize` : incompatible scopes',
 }
 
 Test { [[
@@ -32153,7 +32153,7 @@ end
 
 escape 1;
 ]],
-    dcls = 'line 16 : invalid operand to `&&´ : unexpected option type',
+    dcls = 'line 16 : invalid operand to `&&` : unexpected option type',
 }
 
 Test { [[
@@ -32231,7 +32231,7 @@ end
 
 escape _V;
 ]],
-    stmts = 'line 20 : invalid call : unexpected context for operator `?´',
+    stmts = 'line 20 : invalid call : unexpected context for operator `?`',
     --env = 'line 19 : wrong argument #1 : cannot pass option values to native calls',
     --run = 1,
 }
@@ -32272,7 +32272,7 @@ end
 escape _V;
 ]],
     stmts = 'line 20 : invalid expression list : item #1 : unexpected context for alias "tex"',
-    --stmts = 'line 19 : invalid call : unexpected context for operator `&´',
+    --stmts = 'line 19 : invalid call : unexpected context for operator `&`',
     --env = 'line 19 : wrong argument #1 : cannot pass aliases to native calls',
     --run = '19] runtime error: invalid tag',
 }
@@ -32387,9 +32387,9 @@ end
 escape &&ptr! == &&ptr!;  // ptr.SOME fails
 ]],
     --run = 1,
-    stmts = 'line 9 : invalid binding : expected `native´ type',
-    --dcls = 'line 8 : invalid declaration : option alias : expected native or `code/await´ type',
-    --dcls = 'line 14 : invalid expression : unexpected context for operation `&´',
+    stmts = 'line 9 : invalid binding : expected `native` type',
+    --dcls = 'line 8 : invalid declaration : option alias : expected native or `code/await` type',
+    --dcls = 'line 14 : invalid expression : unexpected context for operation `&`',
     --env = 'line 14 : invalid use of operator "&" : not a binding assignment',
 }
 
@@ -32533,8 +32533,8 @@ var& int tex2 = tex1;
 
 escape &tex2==&_V;
 ]],
-    dcls = 'line 17 : invalid expression : unexpected context for operation `&´',
-    --env = 'line 15 : types mismatch (`int&´ <= `int&?´)',
+    dcls = 'line 17 : invalid expression : unexpected context for operation `&`',
+    --env = 'line 15 : types mismatch (`int&` <= `int&?`)',
     --run = 1,
 }
 
@@ -32557,8 +32557,8 @@ var& int tex2 = tex1;
 
 escape &tex2==&_V;
 ]],
-    dcls = 'line 17 : invalid expression : unexpected context for operation `&´',
-    --env = 'line 15 : types mismatch (`int&´ <= `int&?´)',
+    dcls = 'line 17 : invalid expression : unexpected context for operation `&`',
+    --env = 'line 15 : types mismatch (`int&` <= `int&?`)',
     --asr = true,
 }
 
@@ -32633,9 +32633,9 @@ var& _SDL_Window win =
     &_SDL_CreateWindow("UI - Texture", 500, 1300, 800, 480, _SDL_WINDOW_SHOWN);
 escape 0;
 ]],
-    scopes = 'line 5 : invalid binding : expected `finalize´',
-    --scopes = 'line 5 : invalid binding : expected option alias `&?´ as destination : got "_SDL_Window"',
-    --fin = 'line 6 : must assign to a option reference (declared with `&?´)',
+    scopes = 'line 5 : invalid binding : expected `finalize`',
+    --scopes = 'line 5 : invalid binding : expected option alias `&?` as destination : got "_SDL_Window"',
+    --fin = 'line 6 : must assign to a option reference (declared with `&?`)',
 }
 Test { [[
 native _SDL_Window, _SDL_CreateWindow, _SDL_WINDOW_SHOWN;
@@ -32649,9 +32649,9 @@ var& _SDL_Window win =
 escape 0;
 ]],
     cc = '1: error: unknown type name ‘SDL_Window’',
-    --parser = 'line 5 : after `)´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `..´ or `;´',
-    --scopes = 'line 4 : invalid binding : expected option alias `&?´ as destination : got "_SDL_Window"',
-    --fin = 'line 6 : must assign to a option reference (declared with `&?´)',
+    --parser = 'line 5 : after `)` : expected `[` or `:` or `.` or `!` or `?` or `(` or `is` or `as` or binary operator or `..` or `;`',
+    --scopes = 'line 4 : invalid binding : expected option alias `&?` as destination : got "_SDL_Window"',
+    --fin = 'line 6 : must assign to a option reference (declared with `&?`)',
 }
 
 Test { [[
@@ -32699,7 +32699,7 @@ with
 end
 escape 1;
 ]],
-    props_ = 'line 14 : invalid `finalize´ : unexpected enclosing `every´',
+    props_ = 'line 14 : invalid `finalize` : unexpected enclosing `every`',
     wrn = true,
     run = { ['~>SDL_REDRAW;~>SDL_REDRAW;~>SDL_REDRAW;~>SDL_REDRAW;~>1s']=114 },
 }
@@ -32751,9 +32751,9 @@ end
 var& int? p = _f();
 escape 0;
 ]],
-    --stmts = 'line 9 : invalid `escape´ : types mismatch : "int" <= "int?"',
-    --inits = 'line 8 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
-    inits = 'line 8 : invalid binding : expected operator `&´ in the right side',
+    --stmts = 'line 9 : invalid `escape` : types mismatch : "int" <= "int?"',
+    --inits = 'line 8 : invalid attribution : missing `!` (in the left) or `&` (in the right)',
+    inits = 'line 8 : invalid binding : expected operator `&` in the right side',
 }
 
 Test { [[
@@ -32767,9 +32767,9 @@ end
 var&? _int p = &_f();
 escape p;
 ]],
-    stmts = 'line 9 : invalid `escape´ : expected operator `!´',
-    --stmts = 'line 10 : invalid `escape´ : types mismatch : "int" <= "_int?"',
-    --env = 'line 9 : types mismatch (`int´ <= `int&?´)',
+    stmts = 'line 9 : invalid `escape` : expected operator `!`',
+    --stmts = 'line 10 : invalid `escape` : types mismatch : "int" <= "_int?"',
+    --env = 'line 9 : types mismatch (`int` <= `int&?`)',
 }
 
 Test { [[
@@ -32783,8 +32783,8 @@ end
 var&? _int p = &_f();
 escape p!;
 ]],
-    scopes = 'line 8 : invalid binding : expected `finalize´',
-    --fin = 'line 8 : attribution requires `finalize´',
+    scopes = 'line 8 : invalid binding : expected `finalize`',
+    --fin = 'line 8 : attribution requires `finalize`',
 }
 
 Test { [[
@@ -32975,8 +32975,8 @@ var int e =
     end;
 escape 0;
 ]],
-    parser = 'line 3 : after `E´ : expected `,´ or `do´',
-    --adjs = 'line 3 : unexpected `->´',
+    parser = 'line 3 : after `E` : expected `,` or `do`',
+    --adjs = 'line 3 : unexpected `->`',
 }
 
 Test { [[
@@ -32998,7 +32998,7 @@ var int n =
     end;
 escape n/10;
 ]],
-    stmts = 'line 1 : invalid `watching´ assignment : expected option type `?´ : got "int"',
+    stmts = 'line 1 : invalid `watching` assignment : expected option type `?` : got "int"',
     --run = { ['~>1001ms'] = 100 },
 }
 
@@ -33051,7 +33051,7 @@ var int a; var int b;
     end;
 escape a+b;
 ]],
-    stmts = 'line 3 : invalid `watching´ assignment : expected option type `?´ : got "int"',
+    stmts = 'line 3 : invalid `watching` assignment : expected option type `?` : got "int"',
 }
 
 Test { [[
@@ -33064,7 +33064,7 @@ var int  b;
     end;
 escape a!+b;
 ]],
-    stmts = 'line 4 : invalid `watching´ assignment : expected option type `?´ : got "int"',
+    stmts = 'line 4 : invalid `watching` assignment : expected option type `?` : got "int"',
 }
 
 Test { [[
@@ -33311,7 +33311,7 @@ escape 1;
     --adj = 'line 1 : missing parameter identifier',
     --adjs = 'line 1 : invalid declaration : expected identifier',
     --adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
-    parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
+    parser = 'line 1 : after `int` : expected type modifier or internal identifier',
 }
 
 Test { [[
@@ -33322,7 +33322,7 @@ escape 1;
     --adj = 'line 1 : missing parameter identifier',
     --adjs = 'line 1 : invalid declaration : expected identifier',
     --adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
-    parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
+    parser = 'line 1 : after `int` : expected type modifier or internal identifier',
 }
 
 Test { [[
@@ -33331,7 +33331,7 @@ do
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
+    parser = 'line 1 : after `int` : expected type modifier or internal identifier',
     --adjs = 'line 1 : invalid declaration : expected identifier',
     --adjs = 'line 1 : invalid declaration : parameter #2 : expected identifier',
 }
@@ -33342,11 +33342,11 @@ do
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `void´ : expected type modifier or internal identifier',
+    parser = 'line 1 : after `void` : expected type modifier or internal identifier',
     --adjs = 'line 1 : invalid declaration : expected identifier',
     --adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
-    --parser = 'line 1 : after `int´ : expected type modifier or `,´ or `)´',
-    --adj = 'line 1 : wrong argument #1 : cannot be `void´',
+    --parser = 'line 1 : after `int` : expected type modifier or `,` or `)`',
+    --adj = 'line 1 : wrong argument #1 : cannot be `void`',
 }
 
 Test { [[
@@ -33356,11 +33356,11 @@ end
 escape 1;
 ]],
     --wrn = true,
-    --adj = 'line 1 : wrong argument #1 : cannot be `void´',
-    --parser = 'line 1 : after `void´ : expected type modifier or `;´',
+    --adj = 'line 1 : wrong argument #1 : cannot be `void`',
+    --parser = 'line 1 : after `void` : expected type modifier or `;`',
     --adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
     --adjs = 'line 1 : invalid declaration : expected identifier',
-    parser = 'line 1 : after `void´ : expected type modifier or internal identifier',
+    parser = 'line 1 : after `void` : expected type modifier or internal identifier',
 }
 
 Test { [[
@@ -33370,9 +33370,9 @@ end
 escape 1;
 ]],
     wrn = true,
-    --adj = 'line 1 : wrong argument #1 : cannot be `void´',
-    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
-    --dcls = 'line 1 : invalid declaration : unexpected type `void´',
+    --adj = 'line 1 : wrong argument #1 : cannot be `void`',
+    dcls = 'line 1 : invalid declaration : variable cannot be of type `void`',
+    --dcls = 'line 1 : invalid declaration : unexpected type `void`',
 }
 
 Test { [[
@@ -33382,7 +33382,7 @@ do
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `void´ : expected type modifier or `do´ or `;´',
+    parser = 'line 1 : after `void` : expected type modifier or `do` or `;`',
 }
 
 Test { [[
@@ -33405,7 +33405,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
+    dcls = 'line 1 : invalid declaration : variable cannot be of type `void`',
 }
 
 Test { [[
@@ -33415,7 +33415,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
+    dcls = 'line 1 : invalid declaration : variable cannot be of type `void`',
 }
 
 Test { [[
@@ -33434,7 +33434,7 @@ do
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `(´ : expected `var´ or `vector´ or `pool´ or `event´',
+    parser = 'line 1 : after `(` : expected `var` or `vector` or `pool` or `event`',
 }
 
 Test { [[
@@ -33506,14 +33506,14 @@ Test { [[
 code/tight Fx (void);
 escape 1;
 ]],
-    parser = 'line 1 : after `)´ : expected `->´',
+    parser = 'line 1 : after `)` : expected `->`',
 }
 
 Test { [[
 code/tight Fx (void) -> void
 escape 1;
 ]],
-    parser = 'line 1 : after `void´ : expected type modifier or `do´ or `;´'
+    parser = 'line 1 : after `void` : expected type modifier or `do` or `;`'
 }
 
 Test { [[
@@ -33529,9 +33529,9 @@ code/tight Fx void -> (void);
 escape 1;
 ]],
     wrn = true,
-    parser = 'line 1 : after `Fx´ : expected `(´',
-    --parser = 'line 1 : after `Fx´ : expected param list',
-    --parser = 'line 1 : after `->´ : expected type',
+    parser = 'line 1 : after `Fx` : expected `(`',
+    --parser = 'line 1 : after `Fx` : expected param list',
+    --parser = 'line 1 : after `->` : expected type',
 }
 
 Test { [[
@@ -33550,10 +33550,10 @@ escape 1;
 ]],
     --wrn = true,
     --env = 'line 1 : missing parameter identifier',
-    --parser = 'line 1 : after `void´ : expected type modifier or `;´',
+    --parser = 'line 1 : after `void` : expected type modifier or `;`',
     --adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
     --adjs = 'line 1 : invalid declaration : expected identifier',
-    parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
+    parser = 'line 1 : after `int` : expected type modifier or internal identifier',
 }
 
 Test { [[
@@ -33565,8 +33565,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    props_ = 'line 4 : invalid `await´ : unexpected enclosing `code´',
-    --props = 'line 3 : not permitted inside `function´',
+    props_ = 'line 4 : invalid `await` : unexpected enclosing `code`',
+    --props = 'line 3 : not permitted inside `function`',
 }
 
 Test { [[
@@ -33598,8 +33598,8 @@ escape 1;
 ]],
     wrn = true,
     --gcc = 'error: ‘escape’ with a value, in function returning void',
-    --env = 'line 2 : invalid escape value : types mismatch (`void´ <= `int´)',
-    dcls = 'line 2 : invalid `escape´ : unexpected expression',
+    --env = 'line 2 : invalid escape value : types mismatch (`void` <= `int`)',
+    dcls = 'line 2 : invalid `escape` : unexpected expression',
 }
 
 Test { [[
@@ -33654,7 +33654,7 @@ code/tight Fx (void) -> int;
 code/tight Fx (var int x)  -> int do end
 escape 1;
 ]],
-    dcls = 'line 2 : invalid `code´ declaration : unmatching prototypes (vs. /tmp/tmp.ceu:1)',
+    dcls = 'line 2 : invalid `code` declaration : unmatching prototypes (vs. /tmp/tmp.ceu:1)',
     --env = 'line 2 : function declaration does not match the one at "/tmp/tmp.ceu:1"',
     wrn = true,
 }
@@ -33667,7 +33667,7 @@ escape 1;
     wrn = true,
     --env = 'line 2 : function declaration does not match the one at "/tmp/tmp.ceu:1"',
     --dcls = 'line 2 : identifier "Fx" is already declared',
-    dcls = 'line 2 : invalid `code´ declaration : unmatching prototypes (vs. /tmp/tmp.ceu:1)',
+    dcls = 'line 2 : invalid `code` declaration : unmatching prototypes (vs. /tmp/tmp.ceu:1)',
 }
 
 Test { [[
@@ -33683,8 +33683,8 @@ Test { [[
 code/tight Fx (var void a, var int b) -> int;
 escape 1;
 ]],
-    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
-    --dcls = 'line 1 : invalid declaration : unexpected type `void´',
+    dcls = 'line 1 : invalid declaration : variable cannot be of type `void`',
+    --dcls = 'line 1 : invalid declaration : unexpected type `void`',
 }
 
 Test { [[
@@ -33713,7 +33713,7 @@ code/tight Fx (var int a, var  u8 b) -> int do
 end
 escape 1;
 ]],
-    dcls = 'line 2 : invalid `code´ declaration : unmatching prototypes (vs. /tmp/tmp.ceu:1)',
+    dcls = 'line 2 : invalid `code` declaration : unmatching prototypes (vs. /tmp/tmp.ceu:1)',
 }
 
 Test { [[
@@ -33736,7 +33736,7 @@ code/tight Fx (var int a, var  int b) -> int do
 end
 escape call Fx(1,2);
 ]],
-    dcls = 'line 5 : invalid `code´ declaration : body for "Fx" already exists',
+    dcls = 'line 5 : invalid `code` declaration : body for "Fx" already exists',
 }
 
 Test { [[
@@ -33856,7 +33856,7 @@ call Set(_);
 escape v as int;
 ]],
     dcls = 'line 5 : invalid call : invalid binding : argument #1 : expected location',
-    --dcls = 'line 5 : invalid constructor : argument #1 : unexpected `_´',
+    --dcls = 'line 5 : invalid constructor : argument #1 : unexpected `_`',
 }
 
 Test { [[
@@ -33906,7 +33906,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    dcls = 'line 4 : invalid `escape´ : unexpected expression',
+    dcls = 'line 4 : invalid `escape` : unexpected expression',
     run = 1,
 }
 
@@ -33917,7 +33917,7 @@ code/tight get (void)->int&& do
 end
 escape 10;
 ]],
-    parser = 'line 1 : after `/tight´ : expected `/dynamic´ or `/recursive´ or abstraction identifier',
+    parser = 'line 1 : after `/tight` : expected `/dynamic` or `/recursive` or abstraction identifier',
     --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at /tmp/tmp.ceu:2)',
 }
 
@@ -33925,7 +33925,7 @@ Test { [[
 code/tight Fx.Fx (void)->void do
 end
 ]],
-    parser = 'line 1 : after `/tight´ : expected `/dynamic´ or `/recursive´',
+    parser = 'line 1 : after `/tight` : expected `/dynamic` or `/recursive`',
 }
 
 Test { [[
@@ -33936,7 +33936,7 @@ end
 escape 10;
 ]],
     wrn = true,
-    --inits = 'line 2 : uninitialized variable "x" : reached `end of code´ (/tmp/tmp.ceu:5)',
+    --inits = 'line 2 : uninitialized variable "x" : reached `end of code` (/tmp/tmp.ceu:5)',
     --inits = 'line 2 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:5)',
     run = 10,
 }
@@ -33949,7 +33949,7 @@ end
 escape 10;
 ]],
     wrn = true,
-    --inits = 'line 2 : uninitialized variable "x" : reached `escape´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "x" : reached `escape` (/tmp/tmp.ceu:3)',
     run = 10,
 }
 
@@ -33961,7 +33961,7 @@ end
 escape 10;
 ]],
     wrn = true,
-    scopes = 'line 3 : invalid `escape´ : incompatible scopes',
+    scopes = 'line 3 : invalid `escape` : incompatible scopes',
     --fins = 'line 3 : invalid escape value : local reference',
     --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at /tmp/tmp.ceu:2)',
 }
@@ -33974,7 +33974,7 @@ end
 escape 10;
 ]],
     wrn = true,
-    parser = 'line 1 : after `int´ : expected type modifier or `do´ or `;´',
+    parser = 'line 1 : after `int` : expected type modifier or `do` or `;`',
     --env = 'line 3 : invalid escape value : local reference',
     --ref = 'line 3 : attribution to reference with greater scope',
 }
@@ -33988,7 +33988,7 @@ end
 
 escape Fx(&str);
 ]],
-    parser = 'line 7 : after `escape´ : expected expression or `;´',
+    parser = 'line 7 : after `escape` : expected expression or `;`',
 }
 
 Test { [[
@@ -34036,8 +34036,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
-    --dcls = 'line 1 : invalid declaration : unexpected type `void´',
+    dcls = 'line 1 : invalid declaration : variable cannot be of type `void`',
+    --dcls = 'line 1 : invalid declaration : unexpected type `void`',
 }
 
 Test { [[
@@ -34045,8 +34045,8 @@ code/tight Fx (var void, var int b)->int do
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `void´ : expected type modifier or internal identifier',
-    --parser = 'line 1 : after `int´ : expected type modifier or `;´',
+    parser = 'line 1 : after `void` : expected type modifier or internal identifier',
+    --parser = 'line 1 : after `int` : expected type modifier or `;`',
     --adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
 }
 
@@ -34056,8 +34056,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
-    --dcls = 'line 1 : invalid declaration : unexpected type `void´',
+    dcls = 'line 1 : invalid declaration : variable cannot be of type `void`',
+    --dcls = 'line 1 : invalid declaration : unexpected type `void`',
 }
 
 Test { [[
@@ -34118,7 +34118,7 @@ escape 1;
 ]],
     wrn = true,
     --env = 'line 4 : function declaration does not match the one at "/tmp/tmp.ceu:3"',
-    dcls = 'line 4 : invalid `code´ declaration : unmatching prototypes (vs. /tmp/tmp.ceu:3)',
+    dcls = 'line 4 : invalid `code` declaration : unmatching prototypes (vs. /tmp/tmp.ceu:3)',
 }
 Test { [[
 code/tight/recursive Fx (void)->void;
@@ -34129,7 +34129,7 @@ escape 1;
 ]],
     wrn = true,
     --env = 'line 4 : function declaration does not match the one at "/tmp/tmp.ceu:3"',
-    dcls = 'line 4 : invalid `code´ declaration : unmatching prototypes (vs. /tmp/tmp.ceu:3)',
+    dcls = 'line 4 : invalid `code` declaration : unmatching prototypes (vs. /tmp/tmp.ceu:3)',
 }
 Test { [[
 //var int x;
@@ -34183,7 +34183,7 @@ call Fa();
 
 escape 1;
 ]],
-    tight_ = 'line 4 : invalid `code´ declaration : expected `/recursive´ : `call´ to unknown body (/tmp/tmp.ceu:7)',
+    tight_ = 'line 4 : invalid `code` declaration : expected `/recursive` : `call` to unknown body (/tmp/tmp.ceu:7)',
 }
 
 Test { [[
@@ -34224,8 +34224,8 @@ call Fa();
 
 escape 1;
 ]],
-    tight_ = 'line 4 : invalid `code´ declaration : expected `/recursive´ : `call´ to unknown body (/tmp/tmp.ceu:7)',
-    --tight = 'line 10 : function must be annotated as `@rec´ (recursive)',
+    tight_ = 'line 4 : invalid `code` declaration : expected `/recursive` : `call` to unknown body (/tmp/tmp.ceu:7)',
+    --tight = 'line 10 : function must be annotated as `@rec` (recursive)',
 }
 
 Test { [[
@@ -34248,8 +34248,8 @@ call Fa();
 
 escape 1;
 ]],
-    tight_ = 'line 6 : invalid `code´ declaration : expected `/recursive´ : nested `call/recursive´ (/tmp/tmp.ceu:8)',
-    --tight = 'line 3 : function must be annotated as `@rec´ (recursive)',
+    tight_ = 'line 6 : invalid `code` declaration : expected `/recursive` : nested `call/recursive` (/tmp/tmp.ceu:8)',
+    --tight = 'line 3 : function must be annotated as `@rec` (recursive)',
 }
 
 Test { [[
@@ -34262,7 +34262,7 @@ code/tight Fx (var int v)->int do
 end
 escape call Fx(5);
 ]],
-    dcls = 'line 2 : invalid `code´ declaration : unmatching prototypes (vs. /tmp/tmp.ceu:1)',
+    dcls = 'line 2 : invalid `code` declaration : unmatching prototypes (vs. /tmp/tmp.ceu:1)',
     --env = 'line 2 : function declaration does not match the one at "/tmp/tmp.ceu:1"',
     --run = 120,
 }
@@ -34276,8 +34276,8 @@ code/tight/recursive Fx (var int v)->int do
 end
 escape call Fx(5);
 ]],
-    tight_ = 'line 6 : invalid `call´ : expected `/recursive´ : `call´ to unknown body',
-    --tight = 'line 6 : `call/recursive´ is required for "Fx"',
+    tight_ = 'line 6 : invalid `call` : expected `/recursive` : `call` to unknown body',
+    --tight = 'line 6 : `call/recursive` is required for "Fx"',
     --run = 120,
 }
 Test { [[
@@ -34285,11 +34285,11 @@ Test { [[
 ]],
     --run = 1,
     stmts = 'line 1 : invalid call',
-    --parser = 'line 1 : after `call´ : expected external identifier or location',
+    --parser = 'line 1 : after `call` : expected external identifier or location',
     --env = 'TODO: not a call',
     --ast = 'line 1 : invalid call',
     --env = 'TODO: 1 not func',
-    --parser = 'line 1 : after `1´ : expected <h,min,s,ms,us>',
+    --parser = 'line 1 : after `1` : expected <h,min,s,ms,us>',
 }
 
 Test { [[
@@ -34297,11 +34297,11 @@ call 1;
 ]],
     --run = 1,
     stmts = 'line 1 : invalid call',
-    --parser = 'line 1 : after `call´ : expected external identifier or location',
+    --parser = 'line 1 : after `call` : expected external identifier or location',
     --env = 'TODO: not a call',
     --ast = 'line 1 : invalid call',
     --env = 'TODO: 1 not func',
-    --parser = 'line 1 : after `1´ : expected <h,min,s,ms,us>',
+    --parser = 'line 1 : after `1` : expected <h,min,s,ms,us>',
 }
 
 Test { [[
@@ -34314,8 +34314,8 @@ code/tight/recursive Fx (var int v)->int do
 end
 escape call Fx(5);
 ]],
-    tight_ = 'line 8 : invalid `call´ : expected `/recursive´',
-    --tight = 'line 8 : `call/recursive´ is required for "Fx"',
+    tight_ = 'line 8 : invalid `call` : expected `/recursive`',
+    --tight = 'line 8 : `call/recursive` is required for "Fx"',
 }
 Test { [[
 code/tight Fx (var int v)->int do
@@ -34323,8 +34323,8 @@ code/tight Fx (var int v)->int do
 end
 escape call/recursive Fx(5);
 ]],
-    tight_ = 'line 4 : invalid `call´ : unexpected `/recursive´',
-    --tight = 'line 8 : `call/recursive´ is required for "Fx"',
+    tight_ = 'line 4 : invalid `call` : unexpected `/recursive`',
+    --tight = 'line 8 : `call/recursive` is required for "Fx"',
 }
 Test { [[
 code/tight/recursive Fx (var int v)->int;
@@ -34379,8 +34379,8 @@ end
 
 escape call Fx(&str);
 ]],
-    --parser = 'line 3 : after `vector´ : expected `&´',
-    dcls = 'line 3 : invalid declaration : vector inside `code/tight´',
+    --parser = 'line 3 : after `vector` : expected `&`',
+    dcls = 'line 3 : invalid declaration : vector inside `code/tight`',
 }
 Test { [[
 vector[] byte str = [0,1,2];
@@ -34469,8 +34469,8 @@ end
 escape call Fx(&str);
 ]],
     wrn = true,
-    stmts = 'line 4 : invalid `escape´ : types mismatch : "bool" <= "byte"',
-    --env = 'line 7 : wrong argument #1 : types mismatch (`int´ <= `byte´)',
+    stmts = 'line 4 : invalid `escape` : types mismatch : "bool" <= "byte"',
+    --env = 'line 7 : wrong argument #1 : types mismatch (`int` <= `byte`)',
 }
 Test { [[
 vector[] byte str = [0,1,2];
@@ -34482,7 +34482,7 @@ end
 escape call Fx(str);
 ]],
     wrn = true,
-    --ref = 'line 7 : invalid attribution : missing alias operator `&´',
+    --ref = 'line 7 : invalid attribution : missing alias operator `&`',
     dcls = 'line 7 : invalid call : invalid binding : argument #1 : unexpected context for vector "str"',
 }
 Test { [[
@@ -34496,8 +34496,8 @@ vector&[] byte ref = &call Fx();
 
 escape ref[1];
 ]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `do´ or `;´',
-    --env = 'line 4 : invalid escape value : types mismatch (`byte[]´ <= `byte[]&´)',
+    parser = 'line 3 : after `byte` : expected type modifier or `do` or `;`',
+    --env = 'line 4 : invalid escape value : types mismatch (`byte[]` <= `byte[]&`)',
 }
 
 -- vectors as argument (NO)
@@ -34510,10 +34510,10 @@ end
 
 escape call Fx(str);
 ]],
-    dcls = 'line 3 : invalid declaration : vector inside `code/tight´',
-    --parser = 'line 3 : after `vector´ : expected `&´',
+    dcls = 'line 3 : invalid declaration : vector inside `code/tight`',
+    --parser = 'line 3 : after `vector` : expected `&`',
     --env = 'line 3 : wrong argument #2 : vectors are not supported',
-    --env = 'line 7 : wrong argument #1 : types mismatch (`int[]´ <= `byte[]´)',
+    --env = 'line 7 : wrong argument #1 : types mismatch (`int[]` <= `byte[]`)',
 }
 
 Test { [[
@@ -34536,7 +34536,7 @@ call FillBuffer(&buffer);
 escape buffer[0] as int;
 ]],
     dcls = 'line 5 : invalid call : invalid binding : argument #1 : dimension mismatch',
-    --tmp = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
+    --tmp = 'line 5 : wrong argument #1 : types mismatch (`u8[]&` <= `u8[]&`) : dimension mismatch',
 }
 
 Test { [[
@@ -34580,9 +34580,9 @@ code/tight Build (vector[] u8 bytes)->void do
 end
 escape 1;
 ]],
-    dcls = 'line 1 : invalid declaration : vector inside `code/tight´',
+    dcls = 'line 1 : invalid declaration : vector inside `code/tight`',
     --wrn = true,
-    --parser = 'line 1 : after `vector´ : expected `&´',
+    --parser = 'line 1 : after `vector` : expected `&`',
     --env = 'line 1 : wrong argument #1 : vectors are not supported',
 }
 
@@ -34597,7 +34597,7 @@ vector&[] byte ref = &f();
 
 escape ref[1];
 ]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `do´ or `;´',
+    parser = 'line 3 : after `byte` : expected type modifier or `do` or `;`',
     --run = 1,
 }
 
@@ -34613,7 +34613,7 @@ ref = [3, 4, 5];
 
 escape str[1];
 ]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `do´ or `;´',
+    parser = 'line 3 : after `byte` : expected type modifier or `do` or `;`',
     --run = 4,
 }
 
@@ -34629,7 +34629,7 @@ ref = [] .. "ola";
 
 escape str[1] == 'l';
 ]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `do´ or `;´',
+    parser = 'line 3 : after `byte` : expected type modifier or `do` or `;`',
     --run = 1,
 }
 
@@ -34653,7 +34653,7 @@ ref = [] .. ({g}() as _char&&) .. "ola";
 escape str[3] == 'o';
 ]],
     --run = 1,
-    parser = 'line 9 : after `byte´ : expected type modifier or `do´ or `;´',
+    parser = 'line 9 : after `byte` : expected type modifier or `do` or `;`',
 }
 
 Test { [[
@@ -34672,7 +34672,7 @@ f2();
 
 escape str[4] == 'u';
 ]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `do´ or `;´',
+    parser = 'line 3 : after `byte` : expected type modifier or `do` or `;`',
     --run = 1,
 }
 
@@ -34685,7 +34685,7 @@ end
 vector[] byte str = [].."Ola Mundo!";
 escape call Strlen(&&str[0]);
 ]],
-    --env = 'line 6 : wrong argument #1 : types mismatch (`byte&&´ <= `byte[]&&´)',
+    --env = 'line 6 : wrong argument #1 : types mismatch (`byte&&` <= `byte[]&&`)',
     run = 10,
 }
 
@@ -34710,10 +34710,10 @@ code/tight Fx (void)->void do
 end
 escape 1;
 ]],
-    dcls = 'line 4 : invalid declaration : vector inside `code/tight´',
+    dcls = 'line 4 : invalid declaration : vector inside `code/tight`',
     --wrn = true,
-    --props = 'line 4 : not permitted inside `function´',
-    --props_ = 'line 4 : invalid `await´ : unexpected enclosing `code´',
+    --props = 'line 4 : not permitted inside `function`',
+    --props_ = 'line 4 : invalid `await` : unexpected enclosing `code`',
 }
 
 Test { [[
@@ -34737,8 +34737,8 @@ await Rect();
 
 escape 0;
 ]],
-    --dcls = 'line 4 : invalid declaration : option alias : expected native or `code/await´ type',
-    stmts = 'line 4 : invalid `spawn´ : expected `code/await´ declaration (/tmp/tmp.ceu:1)',
+    --dcls = 'line 4 : invalid declaration : option alias : expected native or `code/await` type',
+    stmts = 'line 4 : invalid `spawn` : expected `code/await` declaration (/tmp/tmp.ceu:1)',
 }
 
 -->> CODE / ALIAS / FINALIZE
@@ -34863,7 +34863,7 @@ do
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `/await´ : expected `/dynamic´ or `/recursive´ or abstraction identifier',
+    parser = 'line 1 : after `/await` : expected `/dynamic` or `/recursive` or abstraction identifier',
 }
 
 Test { [[
@@ -34874,9 +34874,9 @@ end
 escape 1;
 ]],
     wrn = true,
-    dcls = 'line 3 : invalid `escape´ : unexpected expression',
+    dcls = 'line 3 : invalid `escape` : unexpected expression',
     --stmts = 'line 3 : invalid assignment : types mismatch : "void" <= "int"',
-    --adj = 'line 3 : invalid `escape´',
+    --adj = 'line 3 : invalid `escape`',
     run = 1,
 }
 
@@ -34969,7 +34969,7 @@ code/await Tx (void)->void do end
 call Tx();
 escape 1;
 ]],
-    dcls = 'line 2 : invalid call : expected `code/tight´ : got `code/await´ (/tmp/tmp.ceu:2)',
+    dcls = 'line 2 : invalid call : expected `code/tight` : got `code/await` (/tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -35048,7 +35048,7 @@ await 1s;
 
 escape 1;
 ]],
-    dcls = 'line 5 : invalid declaration : unexpected context for `code´ "Tx"',
+    dcls = 'line 5 : invalid declaration : unexpected context for `code` "Tx"',
     wrn = true,
     run = { ['~>1s'] = 1 },
 }
@@ -35132,26 +35132,26 @@ Test { [[
 every do
 end
 ]],
-    --parser = 'line 1 : after `every´ : expected location or external identifier or number',
-    parser = 'line 1 : after `every´ : expected location or `{´ or `(´ or external identifier or number',
+    --parser = 'line 1 : after `every` : expected location or external identifier or number',
+    parser = 'line 1 : after `every` : expected location or `{` or `(` or external identifier or number',
 }
 Test { [[
 every Code(1) do
 end
 ]],
-    parser = 'line 1 : after `every´ : expected location or `{´ or `(´ or number',
-    --parser = 'line 1 : after `every´ : expected location or number',
+    parser = 'line 1 : after `every` : expected location or `{` or `(` or number',
+    --parser = 'line 1 : after `every` : expected location or number',
 }
 Test { [[
 code/await Code (void)->void;
 await Code(1) until true;
 ]],
-    parser = 'line 2 : after `)´ : expected `;´',
+    parser = 'line 2 : after `)` : expected `;`',
 }
 Test { [[
 await 1s until true;
 ]],
-    parser = 'line 1 : after `s´ : expected number or `/_´ or `;´',
+    parser = 'line 1 : after `s` : expected number or `/_` or `;`',
 }
 Test { [[
 code/await Code (var int x) -> int
@@ -35225,7 +35225,7 @@ end
 event Tx a;
 escape 0;
 ]],
-    dcls = 'line 3 : invalid declaration : unexpected context for `code´ "Tx"',
+    dcls = 'line 3 : invalid declaration : unexpected context for `code` "Tx"',
 }
 
 Test { [[
@@ -35233,7 +35233,7 @@ code/await Tx (void)->void do end
 var Tx a = 1;
 escape 0;
 ]],
-    dcls = 'line 2 : invalid declaration : unexpected context for `code´ "Tx"',
+    dcls = 'line 2 : invalid declaration : unexpected context for `code` "Tx"',
 }
 
 Test { [[
@@ -35243,7 +35243,7 @@ end
 escape 0;
 ]],
     wrn = true,
-    stmts = 'line 2 : invalid `spawn´ : unexpected recursive invocation',
+    stmts = 'line 2 : invalid `spawn` : unexpected recursive invocation',
     --dcls = 'line 2 : abstraction "Tx" is not declared',
 }
 Test { [[
@@ -35253,7 +35253,7 @@ end
 escape 0;
 ]],
     wrn = true,
-    stmts = 'line 2 : invalid `spawn´ : unexpected recursive invocation',
+    stmts = 'line 2 : invalid `spawn` : unexpected recursive invocation',
     --dcls = 'line 2 : abstraction "Tx" is not declared',
 }
 
@@ -35517,7 +35517,7 @@ escape x;
 ]],
     inits = 'line 4 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:5)',
     --run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
-    --mode = 'line 7 : cannot read field with mode `input´',
+    --mode = 'line 7 : cannot read field with mode `input`',
 }
 Test { [[
 code/await Fx (var& int x) -> void do
@@ -35527,11 +35527,11 @@ var int x;
 await Fx(&x);
 escape x;
 ]],
-    --inits = 'line 4 : uninitialized variable "x" : reached `await´ (/tmp/tmp.ceu:5)',
+    --inits = 'line 4 : uninitialized variable "x" : reached `await` (/tmp/tmp.ceu:5)',
     inits = 'line 4 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:5)',
     --inits = 'line 4 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:5)',
     --run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
-    --mode = 'line 7 : cannot read field with mode `input´',
+    --mode = 'line 7 : cannot read field with mode `input`',
 }
 Test { [[
 code/tight Fx (var& int x) -> void do
@@ -35543,7 +35543,7 @@ escape x;
     wrn = true,
     inits = 'line 3 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:4)',
     --run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
-    --mode = 'line 7 : cannot read field with mode `input´',
+    --mode = 'line 7 : cannot read field with mode `input`',
 }
 Test { [[
 code/await Fx (var& int x) -> void do
@@ -35554,11 +35554,11 @@ var int x;
 await Fx(&x);
 escape x;
 ]],
-    --inits = 'line 5 : uninitialized variable "x" : reached `await´ (/tmp/tmp.ceu:6)',
+    --inits = 'line 5 : uninitialized variable "x" : reached `await` (/tmp/tmp.ceu:6)',
     --inits = 'line 5 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:6)',
     inits = 'line 5 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:6)',
     --run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
-    --mode = 'line 7 : cannot read field with mode `input´',
+    --mode = 'line 7 : cannot read field with mode `input`',
 }
 
 Test { [[
@@ -35606,7 +35606,7 @@ var int a = &off;
 call Ff(&off);
 escape 0;
 ]],
-    dcls = 'line 6 : invalid binding : argument #1 : expected declaration with `&´',
+    dcls = 'line 6 : invalid binding : argument #1 : expected declaration with `&`',
     wrn = true,
 }
 
@@ -35633,8 +35633,8 @@ every 1s do
 end
 escape 0;
 ]],
-    --props_ = 'line 4 : invalid `await´ : unexpected enclosing `every´',
-    props_ = 'line 4 : invalid `spawn´ : unexpected enclosing `every´',
+    --props_ = 'line 4 : invalid `await` : unexpected enclosing `every`',
+    props_ = 'line 4 : invalid `spawn` : unexpected enclosing `every`',
     run = { ['~>1s']=1 },
 }
 
@@ -35700,7 +35700,7 @@ end
 var& Ff f = spawn Ff();
 escape 0;
 ]],
-    dcls = 'line 3 : invalid declaration : `code/await´ must execute forever',
+    dcls = 'line 3 : invalid declaration : `code/await` must execute forever',
 }
 
 Test { [[
@@ -35720,7 +35720,7 @@ var&? Ff f1 = spawn Ff();
 var& Ff f2 = &f1!;
 escape 0;
 ]],
-    dcls = 'line 4 : invalid declaration : `code/await´ must execute forever',
+    dcls = 'line 4 : invalid declaration : `code/await` must execute forever',
 }
 
 Test { [[
@@ -35754,7 +35754,7 @@ var& Ff f = spawn Ff();
 kill f;
 escape 0;
 ]],
-    stmts = 'line 5 : invalid `kill´ : expected `&?´ alias',
+    stmts = 'line 5 : invalid `kill` : expected `&?` alias',
 }
 
 Test { [[
@@ -35779,7 +35779,7 @@ Test { [[
 code/tight Ff (void) -> FOREVER do
 end
 ]],
-    parser = 'line 1 : after `->´ : expected type',
+    parser = 'line 1 : after `->` : expected type',
 }
 
 Test { [[
@@ -35787,14 +35787,14 @@ code/await Ff (void) -> FOREVER do
     escape 1;
 end
 ]],
-    dcls = 'line 2 : invalid `escape´ : no matching enclosing `do´',
+    dcls = 'line 2 : invalid `escape` : no matching enclosing `do`',
 }
 Test { [[
 code/await Ff (void) -> FOREVER do
     escape;
 end
 ]],
-    dcls = 'line 2 : invalid `escape´ : no matching enclosing `do´',
+    dcls = 'line 2 : invalid `escape` : no matching enclosing `do`',
 }
 
 Test { [[
@@ -35804,7 +35804,7 @@ end
 var int ret = await Ff();
 escape 1;
 ]],
-    stmts = 'line 4 : invalid assignment : `code´ executes forever',
+    stmts = 'line 4 : invalid assignment : `code` executes forever',
 }
 
 Test { [[
@@ -35827,7 +35827,7 @@ end
 spawn Ff();
 escape 1;
 ]],
-    run = '1] runtime error: reached end of `code´',
+    run = '1] runtime error: reached end of `code`',
 }
 
 --<< CODE / AWAIT / FOREVER
@@ -35839,8 +35839,8 @@ var int? x = watching Ff() do
 end;
 escape 0;
 ]],
-    stmts = 'line 3 : invalid `watching´ : `code´ executes forever',
-    --stmts = 'line 3 : invalid assignment : `code´ executes forever',
+    stmts = 'line 3 : invalid `watching` : `code` executes forever',
+    --stmts = 'line 3 : invalid assignment : `code` executes forever',
 }
 
 Test { [[
@@ -35850,7 +35850,7 @@ watching Ff() do
 end
 escape 0;
 ]],
-    stmts = 'line 3 : invalid `watching´ : `code´ executes forever',
+    stmts = 'line 3 : invalid `watching` : `code` executes forever',
 }
 
 -->>> REACTIVE / VAR / OPT / ALIAS
@@ -35866,7 +35866,7 @@ end
 ret = ret + (ppp? as int);
 escape ret;
 ]],
-    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
+    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await` type',
     scopes = 'line 5 : invalid binding : incompatible scopes',
     --run = 10,
 }
@@ -35882,7 +35882,7 @@ end
 ret = ret + (p? as int);
 escape ret;
 ]],
-    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
+    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await` type',
     dcls = 'line 2 : invalid declaration : option type : not implemented',
     --stmts = 'line 5 : invalid binding : types mismatch : "int?" <= "int"',
 }
@@ -35898,7 +35898,7 @@ end
 ret = ret + (p? as int);
 escape ret;
 ]],
-    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
+    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await` type',
     dcls = 'line 2 : invalid declaration : option type : not implemented',
     --run = 10,
 }
@@ -35915,7 +35915,7 @@ end
 ret = ret + (p? as int);
 escape ret;
 ]],
-    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
+    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await` type',
     dcls = 'line 2 : invalid declaration : option type : not implemented',
     --run = 'err acc to p!!',
 }
@@ -35933,9 +35933,9 @@ end
 ret = ret + (p? as int);
 escape ret;
 ]],
-    stmts = 'line 8 : invalid `await´ : expected `code/await´ abstraction',
-    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await´ type',
-    --inits = 'line 2 : uninitialized variable "p" : reached `par/or´ (/tmp/tmp.ceu:3)',
+    stmts = 'line 8 : invalid `await` : expected `code/await` abstraction',
+    --dcls = 'line 2 : invalid declaration : option alias : expected native or `code/await` type',
+    --inits = 'line 2 : uninitialized variable "p" : reached `par/or` (/tmp/tmp.ceu:3)',
     --inits = 'line 2 : uninitialized variable "p" : reached yielding statement (/tmp/tmp.ceu:3)',
 }
 
@@ -35953,7 +35953,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    --inits = 'line 1 : uninitialized variable "v" : reached end of `if´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 1 : uninitialized variable "v" : reached end of `if` (/tmp/tmp.ceu:3)',
     run = 1,
 }
 
@@ -35980,8 +35980,8 @@ escape x;
 ]],
     wrn = true,
     inits = 'line 1 : uninitialized variable "v" : reached yielding statement (/tmp/tmp.ceu:4)',
-    --inits = 'line 1 : uninitialized variable "v" : reached `escape´ (/tmp/tmp.ceu:5)',
-    --inits = 'line 1 : uninitialized variable "v" : reached end of `code´ (/tmp/tmp.ceu:1)',
+    --inits = 'line 1 : uninitialized variable "v" : reached `escape` (/tmp/tmp.ceu:5)',
+    --inits = 'line 1 : uninitialized variable "v" : reached end of `code` (/tmp/tmp.ceu:1)',
 }
 
 Test { [[
@@ -35995,7 +35995,7 @@ escape 1;
 ]],
     wrn = true,
     run = 1,
-    --inits = 'line 1 : uninitialized variable "v" : reached end of `if´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 1 : uninitialized variable "v" : reached end of `if` (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -36008,7 +36008,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    --inits = 'line 1 : uninitialized variable "v" : reached `escape´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 1 : uninitialized variable "v" : reached `escape` (/tmp/tmp.ceu:3)',
     run = 1,
 }
 
@@ -36023,7 +36023,7 @@ spawn Ff() -> (x);
 
 escape 0;
 ]],
-    parser = 'line 7 : after `)´ : expected `in´ or `;´',
+    parser = 'line 7 : after `)` : expected `in` or `;`',
 }
 
 Test { [[
@@ -36063,7 +36063,7 @@ var int x = f!.x;
 
 escape x;
 ]],
-    --dcls = 'line 5 : invalid declaration : option alias : expected native or `code/await´ type',
+    --dcls = 'line 5 : invalid declaration : option alias : expected native or `code/await` type',
     stmts = 'line 5 : invalid constructor : types mismatch : "bool" <= "Ff"',
 }
 
@@ -36077,7 +36077,7 @@ var int x = f!.x;
 
 escape x;
 ]],
-    dcls = 'line 5 : invalid declaration : unexpected context for `code´ "Ff"',
+    dcls = 'line 5 : invalid declaration : unexpected context for `code` "Ff"',
 }
 
 Test { [[
@@ -36115,7 +36115,7 @@ Test { [[
 code/tight Ff (void) -> (var& int x) -> void do
 end
 ]],
-    parser = 'line 1 : after `->´ : expected type',
+    parser = 'line 1 : after `->` : expected type',
 }
 
 Test { [[
@@ -36126,7 +36126,7 @@ end
 var&? Ff f = spawn Ff();
 escape f!.x;
 ]],
-    --stmts = 'line 6 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
+    --stmts = 'line 6 : invalid binding : argument #1 : terminating `code` : expected alias `&?` declaration',
     run = '6] runtime error: value is not set',
 }
 
@@ -36462,7 +36462,7 @@ ret = ret + (x? as int) + 1;
 
 escape ret;
 ]],
-    --stmts = 'line 11 : invalid binding : argument #1 : unmatching alias `&´ declaration',
+    --stmts = 'line 11 : invalid binding : argument #1 : unmatching alias `&` declaration',
     run = {['~>1s']=11};
 }
 
@@ -36517,7 +36517,7 @@ ret = ret + (x? as int) + 1;
 escape ret;//x!.x;
 ]],
     run = {['~>1s']=11},
-    --stmts = 'line 13 : invalid `await´ : expected `var´ with `&?´ modifier',
+    --stmts = 'line 13 : invalid `await` : expected `var` with `&?` modifier',
 }
 
 Test { [[
@@ -36540,7 +36540,7 @@ var int x = 0;
 await x;
 escape 0;
 ]],
-    stmts = 'line 2 : invalid `await´ : expected `var´ with `&?´ modifier',
+    stmts = 'line 2 : invalid `await` : expected `var` with `&?` modifier',
 }
 
 Test { [[
@@ -36732,7 +36732,7 @@ end
 escape c!.y;
 ]],
     run = '16] runtime error: value is not set',
-    --props_ = 'line 15 : invalid access to internal identifier "y" : crossed `watching´ (/tmp/tmp.ceu:8)',
+    --props_ = 'line 15 : invalid access to internal identifier "y" : crossed `watching` (/tmp/tmp.ceu:8)',
     --props_ = 'line 15 : invalid access to internal identifier "y" : crossed yielding statement (/tmp/tmp.ceu:8)',
 }
 
@@ -37055,7 +37055,7 @@ end
 
 escape 1;
 ]],
-    --stmts = 'line 14 : invalid binding : unexpected source with `&?´',
+    --stmts = 'line 14 : invalid binding : unexpected source with `&?`',
     run = 1,
 }
 
@@ -37126,9 +37126,9 @@ end
 await 1s;
 escape ret;
 ]],
-    --inits = 'line 4 : uninitialized variable "ret" : reached `par/or´ (/tmp/tmp.ceu:5)',
+    --inits = 'line 4 : uninitialized variable "ret" : reached `par/or` (/tmp/tmp.ceu:5)',
     --inits = 'line 4 : uninitialized variable "ret" : reached yielding statement (/tmp/tmp.ceu:5)',
-    inits = 'line 4 : uninitialized variable "ret" : reached end of `par/or´ (/tmp/tmp.ceu:5)',
+    inits = 'line 4 : uninitialized variable "ret" : reached end of `par/or` (/tmp/tmp.ceu:5)',
     --inits = 'line 5 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:9)',
 }
 
@@ -37165,7 +37165,7 @@ spawn Ff();
 escape f!.x;
 ]],
     run = 10;
-    --stmts = 'line 9 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
+    --stmts = 'line 9 : invalid binding : argument #1 : terminating `code` : expected alias `&?` declaration',
 }
 Test { [[
 code/await Ff (void) -> (var& int x) -> FOREVER
@@ -37304,7 +37304,7 @@ watching f do
 end
 escape 0;
 ]],
-    stmts = 'line 10 : invalid binding : unexpected context for operator `.´',
+    stmts = 'line 10 : invalid binding : unexpected context for operator `.`',
     --inits = 'line 10 : invalid binding : variable "v" is already bound (/tmp/tmp.ceu:9)',
 }
 Test { [[
@@ -37368,9 +37368,9 @@ end
 escape 0;
 ]],
     wrn = true,
-    --inits = 'line 1 : uninitialized vector "b" : reached `end of code´ (/tmp/tmp.ceu:7)',
+    --inits = 'line 1 : uninitialized vector "b" : reached `end of code` (/tmp/tmp.ceu:7)',
     inits = 'line 1 : uninitialized vector "b" : reached yielding statement (/tmp/tmp.ceu:7)',
-    --inits = 'line 1 : uninitialized vector "b" : reached end of `code´ (/tmp/tmp.ceu:1)',
+    --inits = 'line 1 : uninitialized vector "b" : reached end of `code` (/tmp/tmp.ceu:1)',
 }
 
 Test { [[
@@ -37381,9 +37381,9 @@ watching 1s do
 end
 escape ret;
 ]],
-    --inits = 'line 2 : uninitialized variable "x" : reached `par/or´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "x" : reached `par/or` (/tmp/tmp.ceu:3)',
     --inits = 'line 2 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:3)',
-    --inits = 'line 2 : uninitialized variable "x" : reached `watching´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "x" : reached `watching` (/tmp/tmp.ceu:3)',
     inits = 'line 2 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:4)',
 }
 
@@ -37398,7 +37398,7 @@ ret = x;
 escape ret;
 ]],
     inits = 'line 2 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:7)',
-    --inits = 'line 2 : uninitialized variable "x" : reached end of `par/or´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "x" : reached end of `par/or` (/tmp/tmp.ceu:3)',
     --inits = 'line 2 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:3)',
     --run = { ['~>2s']=10 },
 }
@@ -37413,7 +37413,7 @@ ret = x;
 escape ret;
 ]],
     inits = 'line 2 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:6)',
-    --inits = 'line 2 : uninitialized variable "x" : reached end of `par/or´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "x" : reached end of `par/or` (/tmp/tmp.ceu:3)',
     --inits = 'line 2 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:3)',
     --run = 10,
 }
@@ -37429,10 +37429,10 @@ var& int x = &f!.x;
 
 escape x;
 ]],
-    scopes = 'line 7 : invalid binding : unexpected source with `&?´ : destination may outlive source',
-    --stmts = 'line 7 : invalid binding : unexpected source with `&?´',
+    scopes = 'line 7 : invalid binding : unexpected source with `&?` : destination may outlive source',
+    --stmts = 'line 7 : invalid binding : unexpected source with `&?`',
     --run = 11,
-    --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : invalid binding : active scope reached yielding `await` (/tmp/tmp.ceu:11)',
     --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
     --scopes = 'line 8 : invalid binding : incompatible scopes',
 }
@@ -37478,7 +37478,7 @@ end
 escape x;
 ]],
     inits = 'line 4 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:10)',
-    --inits = 'line 4 : uninitialized variable "x" : reached end of `par/or´ (/tmp/tmp.ceu:6)',
+    --inits = 'line 4 : uninitialized variable "x" : reached end of `par/or` (/tmp/tmp.ceu:6)',
     --run = 1,
 }
 
@@ -37505,7 +37505,7 @@ end
 
 escape 0;
 ]],
-    scopes = 'line 9 : invalid binding : unexpected source with `&?´ : destination may outlive source'
+    scopes = 'line 9 : invalid binding : unexpected source with `&?` : destination may outlive source'
 }
 
 Test { [[
@@ -37532,9 +37532,9 @@ end
 escape 1;
 ]],
     run = 10,
-    --stmts = 'line 9 : invalid binding : unexpected source with `&?´',
+    --stmts = 'line 9 : invalid binding : unexpected source with `&?`',
     --run = false,
-    --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : invalid binding : active scope reached yielding `await` (/tmp/tmp.ceu:11)',
     --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
     --scopes = 'line 8 : invalid binding : incompatible scopes',
 }
@@ -37565,9 +37565,9 @@ escape 0;
 ]],
     inits = 'line 7 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:13)',
     --inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:9)',
-    --stmts = 'line 9 : invalid binding : unexpected source with `&?´',
+    --stmts = 'line 9 : invalid binding : unexpected source with `&?`',
     --run = false,
-    --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : invalid binding : active scope reached yielding `await` (/tmp/tmp.ceu:11)',
     --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
     --scopes = 'line 8 : invalid binding : incompatible scopes',
 }
@@ -37595,10 +37595,10 @@ end
 
 escape 0;
 ]],
-    scopes = 'line 16 : invalid binding : unexpected source with `&?´ : destination may outlive source',
-    --stmts = 'line 9 : invalid binding : unexpected source with `&?´',
+    scopes = 'line 16 : invalid binding : unexpected source with `&?` : destination may outlive source',
+    --stmts = 'line 9 : invalid binding : unexpected source with `&?`',
     --run = false,
-    --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : invalid binding : active scope reached yielding `await` (/tmp/tmp.ceu:11)',
     --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
     --scopes = 'line 8 : invalid binding : incompatible scopes',
 }
@@ -37627,9 +37627,9 @@ end
 
 escape 0;
 ]],
-    scopes = 'line 9 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+    scopes = 'line 9 : invalid binding : unexpected source with `&?` : destination may outlive source',
     --run = false,
-    --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : invalid binding : active scope reached yielding `await` (/tmp/tmp.ceu:11)',
     --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
     --scopes = 'line 8 : invalid binding : incompatible scopes',
 }
@@ -37658,10 +37658,10 @@ end
 
 escape 0;
 ]],
-    --stmts = 'line 9 : invalid binding : unexpected source with `&?´',
+    --stmts = 'line 9 : invalid binding : unexpected source with `&?`',
     --run = false,
     inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:10)',
-    --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : invalid binding : active scope reached yielding `await` (/tmp/tmp.ceu:11)',
     --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
     --scopes = 'line 8 : invalid binding : incompatible scopes',
 }
@@ -37676,9 +37676,9 @@ var&? Ff f1 = &f;
 
 escape 1;
 ]],
-    --stmts = 'line 6 : invalid binding : expected `spawn´',
+    --stmts = 'line 6 : invalid binding : expected `spawn`',
     run = 1,
-    --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : invalid binding : active scope reached yielding `await` (/tmp/tmp.ceu:11)',
     --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
     --scopes = 'line 8 : invalid binding : incompatible scopes',
 }
@@ -37706,7 +37706,7 @@ end
 escape 0;
 ]],
     run = false,
-    --inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : invalid binding : active scope reached yielding `await` (/tmp/tmp.ceu:11)',
     --inits = 'line 8 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:11)',
     --scopes = 'line 8 : invalid binding : incompatible scopes',
 }
@@ -37725,9 +37725,9 @@ end
 
 await 1s;
 ]],
-    scopes = 'line 7 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+    scopes = 'line 7 : invalid binding : unexpected source with `&?` : destination may outlive source',
     --run = false,
-    --inits = 'line 7 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:12)',
+    --inits = 'line 7 : invalid binding : active scope reached yielding `await` (/tmp/tmp.ceu:12)',
     --inits = 'line 7 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:12)',
 }
 
@@ -37746,7 +37746,7 @@ escape 1;
 ]],
     wrn = true,
     --run = 1,
-    scopes = 'line 8 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+    scopes = 'line 8 : invalid binding : unexpected source with `&?` : destination may outlive source',
 }
 Test { [[
 code/await Gg (void) -> (var& int y) -> void do
@@ -37865,8 +37865,8 @@ end
 escape 0;
 ]],
     scopes = 'line 11 : invalid binding : incompatible scopes',
-    --scopes = 'line 20 : invalid binding : unexpected source with `&?´ : destination may outlive source',
-    --stmts = 'line 20 : invalid binding : unexpected source with `&?´',
+    --scopes = 'line 20 : invalid binding : unexpected source with `&?` : destination may outlive source',
+    --stmts = 'line 20 : invalid binding : unexpected source with `&?`',
 }
 Test { [[
 code/await Gg (void) -> (var& int a) -> void do
@@ -38230,7 +38230,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    --inits = 'line 7 : uninitialized variable "x" : reached `await´ (/tmp/tmp.ceu:10)',
+    --inits = 'line 7 : uninitialized variable "x" : reached `await` (/tmp/tmp.ceu:10)',
     --inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:15)',
     run = 1,
     --run = 23,
@@ -38306,7 +38306,7 @@ end
 
 escape 0;
 ]],
-    --inits = 'line 7 : uninitialized variable "x" : reached end of `par/or´ (/tmp/tmp.ceu:15)',
+    --inits = 'line 7 : uninitialized variable "x" : reached end of `par/or` (/tmp/tmp.ceu:15)',
     inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:15)',
     --run = 23,
     --scopes = 'line 11 : invalid binding : incompatible scopes',
@@ -38340,9 +38340,9 @@ end
 escape 0;
 ]],
     wrn = true,
-    --inits = 'line 10 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:15)',
+    --inits = 'line 10 : invalid binding : active scope reached yielding `await` (/tmp/tmp.ceu:15)',
     --inits = 'line 10 : invalid binding : active scope reached yielding statement (/tmp/tmp.ceu:15)',
-    --inits = 'line 7 : uninitialized variable "x" : reached end of `par/or´ (/tmp/tmp.ceu:15)',
+    --inits = 'line 7 : uninitialized variable "x" : reached end of `par/or` (/tmp/tmp.ceu:15)',
     inits = 'line 7 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:15)',
 }
 
@@ -38545,8 +38545,8 @@ var int? ret =
 escape ret!;
 ]],
     scopes = 'line 12 : invalid binding : incompatible scopes',
-    --inits = 'line 8 : uninitialized event "e" : reached end of `par/or´ (/tmp/tmp.ceu:11)',
-    --inits = 'line 8 : uninitialized event "e" : reached end of `par/or´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : uninitialized event "e" : reached end of `par/or` (/tmp/tmp.ceu:11)',
+    --inits = 'line 8 : uninitialized event "e" : reached end of `par/or` (/tmp/tmp.ceu:11)',
     --run = 110,
 }
 
@@ -38708,9 +38708,9 @@ var&? Ff f1 = spawn Ff(1);
 ctrl1 = &f1!.x;
 escape 0;
 ]],
-    scopes = 'line 7 : invalid binding : unexpected source with `&?´ : destination may outlive source',
-    --stmts = 'line 7 : invalid binding : unexpected source with `&?´',
-    --stmts = 'line 12 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
+    scopes = 'line 7 : invalid binding : unexpected source with `&?` : destination may outlive source',
+    --stmts = 'line 7 : invalid binding : unexpected source with `&?`',
+    --stmts = 'line 12 : invalid binding : argument #1 : terminating `code` : expected alias `&?` declaration',
 }
 Test { [[
 code/await Ff (var int v) -> (var& int x) -> FOREVER do
@@ -38749,11 +38749,11 @@ end
 escape nn;
 ]],
     inits = 'line 9 : uninitialized variable "nn" : reached read access (/tmp/tmp.ceu:15)',
-    --inits = 'line 9 : uninitialized variable "nn" : reached end of `par/or´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 9 : uninitialized variable "nn" : reached end of `par/or` (/tmp/tmp.ceu:11)',
     --scopes = 'line 12 : invalid binding : incompatible scopes',
     --run = 10,
-    --inits = 'line 9 : uninitialized variable "nn" : reached end of `par/or´ (/tmp/tmp.ceu:11)',
-    --props_ = 'line 16 : invalid access to internal identifier "nn" : crossed `watching´ (/tmp/tmp.ceu:11)',
+    --inits = 'line 9 : uninitialized variable "nn" : reached end of `par/or` (/tmp/tmp.ceu:11)',
+    --props_ = 'line 16 : invalid access to internal identifier "nn" : crossed `watching` (/tmp/tmp.ceu:11)',
     --props_ = 'line 16 : invalid access to internal identifier "nn" : crossed yielding statement (/tmp/tmp.ceu:11)',
 }
 
@@ -40022,7 +40022,7 @@ end
 escape 0;
 ]],
     wrn = true,
-    stmts = 'line 2 : invalid `spawn´ : unexpected recursive invocation',
+    stmts = 'line 2 : invalid `spawn` : unexpected recursive invocation',
 }
 
 Test { [[
@@ -40076,7 +40076,7 @@ Test { [[
 code/await Tx (var& Tx txs) -> void;
 escape 0;
 ]],
-    dcls = 'line 1 : invalid declaration : `code/await´ must execute forever',
+    dcls = 'line 1 : invalid declaration : `code/await` must execute forever',
 }
 
 Test { [[
@@ -40333,7 +40333,7 @@ end
 escape 1;
 ]],
     dcls = 'line 2 : internal identifier "t" is not declared',
-    --parser = 'line 2 : after `in´ : expected `[´ or `]´',
+    --parser = 'line 2 : after `in` : expected `[` or `]`',
 }
 
 Test { [[
@@ -40343,7 +40343,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    stmts = 'line 2 : invalid `pool´ iterator : unexpected context for variable "ts"',
+    stmts = 'line 2 : invalid `pool` iterator : unexpected context for variable "ts"',
 }
 
 Test { [[
@@ -40421,7 +40421,7 @@ end
 
 escape n+1;
 ]],
-    parser = 'line 7 : after `loop´ : expected `do´ or internal identifier or `_´',
+    parser = 'line 7 : after `loop` : expected `do` or internal identifier or `_`',
 }
 
 Test { [[
@@ -40438,7 +40438,7 @@ escape 1;
 ]],
     run = 1,
     --dcls = 'line 6 : variable "f" declared but not used',
-    --stmts = 'line 7 : invalid `loop´ : expected 0 argument(s)',
+    --stmts = 'line 7 : invalid `loop` : expected 0 argument(s)',
 }
 
 Test { [[
@@ -40465,9 +40465,9 @@ end
 
 escape n+1;
 ]],
-    dcls = 'line 9 : invalid declaration : `code/await´ must execute forever',
-    --dcls = 'line 9 : invalid declaration : unexpected context for `code´ "Ff"',
-    --stmts = 'line 10 : invalid binding : argument #1 : expected alias `&´ declaration',
+    dcls = 'line 9 : invalid declaration : `code/await` must execute forever',
+    --dcls = 'line 9 : invalid declaration : unexpected context for `code` "Ff"',
+    --stmts = 'line 10 : invalid binding : argument #1 : expected alias `&` declaration',
 }
 
 Test { [[
@@ -40486,8 +40486,8 @@ end
 escape 1;
 ]],
     run = 1,
-    --dcls = 'line 9 : invalid declaration : unexpected context for `code´ "Ff"',
-    --stmts = 'line 10 : invalid binding : argument #1 : expected alias `&´ declaration',
+    --dcls = 'line 9 : invalid declaration : unexpected context for `code` "Ff"',
+    --stmts = 'line 10 : invalid binding : argument #1 : expected alias `&` declaration',
 }
 
 Test { [[
@@ -40505,8 +40505,8 @@ end
 
 escape n;
 ]],
-    stmts = 'line 13 : invalid `escape´ : expected operator `!´',
-    --props_ = 'line 13 : invalid access to internal identifier "n" : crossed `loop´ (/tmp/tmp.ceu:10)',
+    stmts = 'line 13 : invalid `escape` : expected operator `!`',
+    --props_ = 'line 13 : invalid access to internal identifier "n" : crossed `loop` (/tmp/tmp.ceu:10)',
     --props_ = 'line 13 : invalid access to internal identifier "n" : crossed yielding statement (/tmp/tmp.ceu:10)',
 }
 
@@ -40606,7 +40606,7 @@ loop in gs do
     ret = ret + 1;
 end
 ]],
-    parser = 'line 1 : after `loop´ : expected `do´ or internal identifier or `_´',
+    parser = 'line 1 : after `loop` : expected `do` or internal identifier or `_`',
 }
 
 Test { [[
@@ -40715,9 +40715,9 @@ end
 
 escape nn;
 ]],
-    inits = 'line 11 : invalid binding : crossing `loop´ (/tmp/tmp.ceu:10)',
-    --inits = 'line 8 : uninitialized variable "nn" : reached `loop´',
-    --props_ = 'line 14 : invalid access to internal identifier "nn" : crossed `loop´ (/tmp/tmp.ceu:10)',
+    inits = 'line 11 : invalid binding : crossing `loop` (/tmp/tmp.ceu:10)',
+    --inits = 'line 8 : uninitialized variable "nn" : reached `loop`',
+    --props_ = 'line 14 : invalid access to internal identifier "nn" : crossed `loop` (/tmp/tmp.ceu:10)',
     --props_ = 'line 14 : invalid access to internal identifier "nn" : crossed yielding statement (/tmp/tmp.ceu:10)',
 }
 
@@ -40752,7 +40752,7 @@ end
 
 escape 1;
 ]],
-    --props_ = 'line 11 : invalid `await´ : unexpected enclosing `loop´',
+    --props_ = 'line 11 : invalid `await` : unexpected enclosing `loop`',
     run = {['~>1s']=1},
 }
 
@@ -40816,8 +40816,8 @@ end;
 
 escape (x? as int) + 1;
 ]],
-    --dcls = 'line 10 : invalid declaration : option alias : expected native or `code/await´ type',
-    stmts = 'line 13 : invalid binding : unmatching alias `&´ declaration',
+    --dcls = 'line 10 : invalid declaration : option alias : expected native or `code/await` type',
+    stmts = 'line 13 : invalid binding : unmatching alias `&` declaration',
 }
 Test { [[
 code/await Ff (void) -> (var& int x) -> void do
@@ -40838,9 +40838,9 @@ end;
 
 escape 1;
 ]],
-    --dcls = 'line 10 : invalid declaration : option alias : expected native or `code/await´ type',
-    --stmts = 'line 13 : invalid binding : unmatching alias `&´ declaration',
-    scopes = 'line 13 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+    --dcls = 'line 10 : invalid declaration : option alias : expected native or `code/await` type',
+    --stmts = 'line 13 : invalid binding : unmatching alias `&` declaration',
+    scopes = 'line 13 : invalid binding : unexpected source with `&?` : destination may outlive source',
 }
 Test { [[
 code/await Ff (void) -> (var& int x) -> void do
@@ -40861,7 +40861,7 @@ end;
 escape (f1? as int) + 1;
 ]],
     run = 1,
-    --stmts = 'line 12 : invalid binding : argument #1 : unmatching alias `&´ declaration',
+    --stmts = 'line 12 : invalid binding : argument #1 : unmatching alias `&` declaration',
 }
 Test { [[
 code/await Ff (void) -> (var& int x) -> void do
@@ -40885,7 +40885,7 @@ await 1s;
 escape ret + (f1? as int);
 ]],
     run = { ['~>1s']=1 },
-    --stmts = 'line 12 : invalid binding : argument #1 : unmatching alias `&´ declaration',
+    --stmts = 'line 12 : invalid binding : argument #1 : unmatching alias `&` declaration',
 }
 
 Test { [[
@@ -41131,7 +41131,7 @@ end
 escape 1;
 ]],
     run = 1,
-    --props_ = 'line 14 : invalid declaration : expected `&?´ modifier : yielding `loop´',
+    --props_ = 'line 14 : invalid declaration : expected `&?` modifier : yielding `loop`',
 }
 
 Test { [[
@@ -41302,7 +41302,7 @@ if e2? then
 end
 escape 1;
 ]],
-    dcls = 'line 2 : invalid operand to `?´ : unexpected context for event "e2"',
+    dcls = 'line 2 : invalid operand to `?` : unexpected context for event "e2"',
 }
 
 Test { [[
@@ -41312,10 +41312,10 @@ if e2? then
 end
 escape 1;
 ]],
-    --inits = 'line 1 : uninitialized event "e2" : reached `emit´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 1 : uninitialized event "e2" : reached `emit` (/tmp/tmp.ceu:3)',
     --inits = 'line 1 : uninitialized event "e2" : reached yielding statement (/tmp/tmp.ceu:3)',
     --inits = 'line 1 : uninitialized event "e2" : reached read access (/tmp/tmp.ceu:3)',
-    parser = 'line 1 : after `&´ : expected `(´ or type',
+    parser = 'line 1 : after `&` : expected `(` or type',
 }
 
 Test { [[
@@ -41534,7 +41534,7 @@ await Collisions();
 escape 1;
 ]],
     run = 1,
-    --props_ = 'line 29 : invalid `spawn´ : unexpected enclosing `loop´',
+    --props_ = 'line 29 : invalid `spawn` : unexpected enclosing `loop`',
 }
 
 Test { [[
@@ -41655,7 +41655,7 @@ var bool ok1 = spawn Tx();
 escape 1;
 ]],
     --run = 1,
-    --parser = 'line 2 : after `)´ : expected `->´ or `in´',
+    --parser = 'line 2 : after `)` : expected `->` or `in`',
     stmts = 'line 2 : invalid constructor : types mismatch : "bool" <= "Tx"',
 }
 Test { [[
@@ -41664,7 +41664,7 @@ pool[1] Tx ts;
 var Tx&&?  ok1 = spawn Tx() in ts;
 escape 0;
 ]],
-    dcls = 'line 3 : invalid declaration : unexpected context for `code´ "Tx"',
+    dcls = 'line 3 : invalid declaration : unexpected context for `code` "Tx"',
 }
 Test { [[
 code/await Tx (void) -> void do end
@@ -41680,7 +41680,7 @@ pool[1] Tx ts;
 var int ok1 = spawn Tx() in ts;
 escape 0;
 ]],
-    --stmts = 'line 3 : invalid constructor : expected `bool´ destination',
+    --stmts = 'line 3 : invalid constructor : expected `bool` destination',
     stmts = 'line 3 : invalid constructor : types mismatch : "int" <= "Tx"',
 }
 
@@ -41696,7 +41696,7 @@ end
 escape ret;
 ]],
     run = 10,
-    --props = 'line 6 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
+    --props = 'line 6 : pool iterator cannot contain yielding statements (`await`, `emit`, `spawn`, `kill`)',
 }
 
 Test { [[
@@ -41973,7 +41973,7 @@ end
 escape ret;
 ]],
     wrn = true,
-    dcls = 'line 20 : invalid operand to `.´ : unexpected option alias',
+    dcls = 'line 20 : invalid operand to `.` : unexpected option alias',
 }
 
 Test { [[
@@ -42050,15 +42050,15 @@ escape 10;
 Test { [[
 spawn i;
 ]],
-    --parser = 'line 1 : after `spawn´ : expected `(´ or `do´ or `async/isr´ or abstraction identifier',
-    parser = 'line 1 : after `i´ : expected `[´ or `:´ or `.´ or `!´ or `as´',
+    --parser = 'line 1 : after `spawn` : expected `(` or `do` or `async/isr` or abstraction identifier',
+    parser = 'line 1 : after `i` : expected `[` or `:` or `.` or `!` or `as`',
 }
 
 Test { [[
 _f(spawn Tx);
 ]],
-    --parser = 'line 1 : after `(´ : expected `)´',
-    parser = 'line 1 : after `(´ : expected expression',
+    --parser = 'line 1 : after `(` : expected `)`',
+    parser = 'line 1 : after `(` : expected expression',
 }
 
 Test { [[
@@ -42074,7 +42074,7 @@ end
 escape 10;
 ]],
     wrn = true,
-    stmts = 'line 2 : invalid `spawn´ : unexpected recursive invocation',
+    stmts = 'line 2 : invalid `spawn` : unexpected recursive invocation',
 }
 
 Test { [[
@@ -42212,7 +42212,7 @@ var& int e = &t!.e;
 escape 0;
 ]],
     wrn = true,
-    scopes = 'line 8 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+    scopes = 'line 8 : invalid binding : unexpected source with `&?` : destination may outlive source',
 }
 
 Test { [[
@@ -42230,7 +42230,7 @@ escape 0;
 ]],
     wrn = true,
     --run = 1,
-    scopes = 'line 9 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+    scopes = 'line 9 : invalid binding : unexpected source with `&?` : destination may outlive source',
 }
 
 Test { [[
@@ -42250,7 +42250,7 @@ escape 1;
 ]],
     wrn = true,
     run = 1,
-    --scopes = 'line 9 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+    --scopes = 'line 9 : invalid binding : unexpected source with `&?` : destination may outlive source',
 }
 
 Test { [[
@@ -42267,7 +42267,7 @@ escape 0;
 ]],
     wrn = true,
     --run = 1,
-    scopes = 'line 8 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+    scopes = 'line 8 : invalid binding : unexpected source with `&?` : destination may outlive source',
 }
 
 Test { [[
@@ -42533,7 +42533,7 @@ var int a = [[a]];
 escape a;
 ]==],
     _opts = { ceu_features_lua='true' },
-    parser = 'line 3 : after `1´ : expected `[´ or `:´ or `.´ or `!´ or `?´ or `(´ or `is´ or `as´ or binary operator or `..´ or `;´',
+    parser = 'line 3 : after `1` : expected `[` or `:` or `.` or `!` or `?` or `(` or `is` or `as` or binary operator or `..` or `;`',
 }
 
 Test { [==[
@@ -42944,7 +42944,7 @@ lua do
     escape 1;
 end
 ]],
-    parser = 'line 1 : after `lua´ : expected `[´',
+    parser = 'line 1 : after `lua` : expected `[`',
     _opts = { ceu_features_lua='true' },
 }
 
@@ -43161,7 +43161,7 @@ end
 escape 1;
 ]],
     -- TODO: better error message
-    parser = 'line 1 : after `data´ : expected abstraction identifier'
+    parser = 'line 1 : after `data` : expected abstraction identifier'
 }
 Test { [[
 data Tx with
@@ -43184,7 +43184,7 @@ escape 1;
 ]],
     wrn = true,
     --tmp = 'line 4 : top-level identifier "Tx" already taken',
-    dcls = 'line 4 : invalid `code´ declaration',
+    dcls = 'line 4 : invalid `code` declaration',
 }
 Test { [[
 code/await Tx (void) -> void do
@@ -43219,7 +43219,7 @@ end
 escape 1;
 ]],
     --tmp = 'top-level identifier "Tx" already taken',
-    dcls = 'line 4 : invalid `code´ declaration : body for "Tx" already exists',
+    dcls = 'line 4 : invalid `code` declaration : body for "Tx" already exists',
 }
 
 Test { [[
@@ -43295,23 +43295,23 @@ escape 1;
 Test { [[
 data OptNIL.;
 ]],
-    parser = 'line 1 : after `OptNIL´ : expected `as´ or `with´ or `;´',
-    --parser = 'line 1 : after `is´ : expected abstraction identifier',
+    parser = 'line 1 : after `OptNIL` : expected `as` or `with` or `;`',
+    --parser = 'line 1 : after `is` : expected abstraction identifier',
 }
 
 Test { [[
 data OptNIL. with
 end
 ]],
-    parser = 'line 1 : after `OptNIL´ : expected `as´ or `with´ or `;´',
-    --parser = 'line 1 : after `is´ : expected abstraction identifier',
+    parser = 'line 1 : after `OptNIL` : expected `as` or `with` or `;`',
+    --parser = 'line 1 : after `is` : expected abstraction identifier',
 }
 
 Test { [[
 data OptNIL with
 end
 ]],
-    parser = 'line 1 : after `with´ : expected `var´ or `vector´ or `pool´ or `event´',
+    parser = 'line 1 : after `with` : expected `var` or `vector` or `pool` or `event`',
 }
 
 Test { [[
@@ -43484,8 +43484,8 @@ var int x = 0;
 var Ee e = val x;
 escape 1;
 ]],
-    --parser = 'line 3 : after `val´ : expected abstraction identifier',
-    parser = 'line 3 : after `x´ : expected `[´ or `:´ or `.´ or `!´ or `as´',
+    --parser = 'line 3 : after `val` : expected abstraction identifier',
+    parser = 'line 3 : after `x` : expected `[` or `:` or `.` or `!` or `as`',
 }
 
 Test { [[
@@ -43496,7 +43496,7 @@ var Ee e = val Fx();
 
 escape 1;
 ]],
-    stmts = 'line 4 : invalid constructor : expected `data´ abstraction : got `code´ "Fx" (/tmp/tmp.ceu:1)',
+    stmts = 'line 4 : invalid constructor : expected `data` abstraction : got `code` "Fx" (/tmp/tmp.ceu:1)',
 }
 
 Test { [[
@@ -43517,7 +43517,7 @@ end
 event Dd e;
 escape 1;
 ]],
-    dcls = 'line 4 : invalid declaration : unexpected context for `data´ "Dd"',
+    dcls = 'line 4 : invalid declaration : unexpected context for `data` "Dd"',
 }
 
 -->>> DATA / HIERARCHY / SUB-DATA / SUB-TYPES
@@ -43620,7 +43620,7 @@ var Ee ex = val Ee(_);
 escape 1;
 ]],
     dcls = 'line 7 : invalid constructor : invalid binding : argument #1 : expected location',
-    --dcls = 'line 7 : invalid constructor : argument #1 : unexpected `_´',
+    --dcls = 'line 7 : invalid constructor : argument #1 : unexpected `_`',
 }
 
 Test { [[
@@ -43665,8 +43665,8 @@ end
 var Dx d = val Dx(10);
 escape (d as Ex).x;
 ]],
-    dcls = 'line 8 : invalid operand to `as´ : unmatching `data´ abstractions',
-    --dcls = 'line 8 : invalid operand to `as´ : unexpected plain `data´ : got "Dx"',
+    dcls = 'line 8 : invalid operand to `as` : unmatching `data` abstractions',
+    --dcls = 'line 8 : invalid operand to `as` : unexpected plain `data` : got "Dx"',
 }
 
 Test { [[
@@ -43679,7 +43679,7 @@ var Ee&& e = &&ex;
 escape (e as Ee.Xx&&):x;
 ]],
     wrn = true,
-    run = '7] runtime error: invalid cast `as´',
+    run = '7] runtime error: invalid cast `as`',
 }
 
 Test { [[
@@ -43744,8 +43744,8 @@ end
 escape 1;//e.Xx.d.x;
 ]],
     wrn = true,
-    --stmts = 'line 14 : invalid binding : expected declaration with `&´',
-    stmts = 'line 14 : invalid binding : unexpected context for operator `.´',
+    --stmts = 'line 14 : invalid binding : expected declaration with `&`',
+    stmts = 'line 14 : invalid binding : unexpected context for operator `.`',
     --inits = 'line 11 : uninitialized variable "e" : reached read access (/tmp/tmp.ceu:14)',
     --ref = 'line 11 : uninitialized variable "e" crossing compound statement (/tmp/tmp.ceu:14)',
 }
@@ -43800,7 +43800,7 @@ var& Ee e = &e1;
 escape (e as Ee.Xx).d.x;
 ]],
     wrn = true,
-    run = '12] runtime error: invalid cast `as´',
+    run = '12] runtime error: invalid cast `as`',
 }
 
 Test { [[
@@ -43813,7 +43813,7 @@ var Ee e1 = val Ee();
 var& Ee e = &e1;
 escape (e as Ee.Xx).x;
 ]],
-    run = '8] runtime error: invalid cast `as´',
+    run = '8] runtime error: invalid cast `as`',
 }
 
 Test { [[
@@ -43874,8 +43874,8 @@ var& Ee e = &ex;
 escape (e as Ee.Xx).d.x;
 ]],
     wrn = true,
-    --stmts = 'line 13 : invalid binding : expected declaration with `&´',
-    stmts = 'line 14 : invalid binding : unexpected context for operator `.´',
+    --stmts = 'line 13 : invalid binding : expected declaration with `&`',
+    stmts = 'line 14 : invalid binding : unexpected context for operator `.`',
     --run = 1,
 }
 Test { [[
@@ -43910,7 +43910,7 @@ var Ee&& e = &&ex;
 escape (e as Ee.Xx&&):x;
 ]],
     wrn = true,
-    run = '7] runtime error: invalid cast `as´',
+    run = '7] runtime error: invalid cast `as`',
 }
 
 Test { [[
@@ -43923,7 +43923,7 @@ var& Ee e = &ex;
 escape (e as Xx):x;
 ]],
     wrn = true,
-    dcls = 'line 7 : invalid operand to `as´ : unmatching `data´ abstractions',
+    dcls = 'line 7 : invalid operand to `as` : unmatching `data` abstractions',
 }
 
 Test { [[
@@ -43936,7 +43936,7 @@ var& Ee e = &ex;
 escape (e is Xx) as int;
 ]],
     wrn = true,
-    dcls = 'line 7 : invalid operand to `is´ : expected `data´ type in some hierarchy : got "Ee"',
+    dcls = 'line 7 : invalid operand to `is` : expected `data` type in some hierarchy : got "Ee"',
 }
 
 Test { [[
@@ -43944,14 +43944,14 @@ data Aa;
 var Aa a = _;
 escape a as int;
 ]],
-    dcls = 'line 3 : invalid operand to `as´ : expected `data´ type in a hierarchy : got "Aa"',
+    dcls = 'line 3 : invalid operand to `as` : expected `data` type in a hierarchy : got "Aa"',
 }
 
 Test { [[
 data Aa;
 escape (1 as Aa) as int;
 ]],
-    dcls = 'line 2 : invalid operand to `as´ : expected `data´ type in a hierarchy : got "Aa"',
+    dcls = 'line 2 : invalid operand to `as` : expected `data` type in a hierarchy : got "Aa"',
 }
 
 Test { [[
@@ -43989,7 +43989,7 @@ var Ee.Xx ex = val Ee.Xx();
 escape ((ex is Ee) as int) + 1;
 ]],
     wrn = true,
-    dcls = 'line 4 : invalid operand to `is´ : unmatching `data´ abstractions',
+    dcls = 'line 4 : invalid operand to `is` : unmatching `data` abstractions',
 }
 Test { [[
 data Ee;
@@ -44006,7 +44006,7 @@ var Ee ex = val Ee();
 escape ((ex is Ee) as int) + 1;
 ]],
     wrn = true,
-    dcls = 'line 3 : invalid operand to `is´ : expected `data´ type in some hierarchy : got "Ee"',
+    dcls = 'line 3 : invalid operand to `is` : expected `data` type in some hierarchy : got "Ee"',
 }
 Test { [[
 data Ee;
@@ -44018,7 +44018,7 @@ var Ee&& e = &&ex;
 escape (e is Ee.Xx&&) as int;
 ]],
     wrn = true,
-    dcls = 'line 7 : invalid operand to `is´ : expected plain `data´ type : got "Ee&&"',
+    dcls = 'line 7 : invalid operand to `is` : expected plain `data` type : got "Ee&&"',
 }
 
 Test { [[
@@ -44031,7 +44031,7 @@ var Ee&& e = &&ex;
 escape (e as Xx&&):x;
 ]],
     wrn = true,
-    dcls = 'line 7 : invalid operand to `as´ : unmatching `data´ abstractions',
+    dcls = 'line 7 : invalid operand to `as` : unmatching `data` abstractions',
 }
 
 Test { [[
@@ -44051,7 +44051,7 @@ var Cx c = val Cx(Bx(Ax(1)));
 
 escape c.b.a;
 ]],
-    stmts = 'line 15 : invalid `escape´ : types mismatch : "int" <= "Ax"',
+    stmts = 'line 15 : invalid `escape` : types mismatch : "int" <= "Ax"',
 }
 
 Test { [[
@@ -44125,7 +44125,7 @@ var int x = call LeafHandler(&leaf);
 escape x;
 ]],
     wrn = true,
-    run = '12] runtime error: invalid cast `as´',
+    run = '12] runtime error: invalid cast `as`',
 }
 
 Test { [[
@@ -44161,7 +44161,7 @@ var& Data dd = &d;
 
 escape (dd is Data) as int;
 ]],
-    dcls = 'line 8 : invalid operand to `is´ : expected `data´ type in some hierarchy : got "Data"',
+    dcls = 'line 8 : invalid operand to `is` : expected `data` type in some hierarchy : got "Data"',
 }
 
 Test { [[
@@ -44174,7 +44174,7 @@ var Aa a = val Aa(10);
 escape a.a + a.b;
 ]],
     dcls = 'line 7 : field "b" is not declared',
-    --dcls = 'line 7 : invalid member access : "a" has no member "b" : `data´ "Aa" (/tmp/tmp.ceu:1)',
+    --dcls = 'line 7 : invalid member access : "a" has no member "b" : `data` "Aa" (/tmp/tmp.ceu:1)',
 }
 
 Test { [[
@@ -44207,7 +44207,7 @@ var Aa.Bb b = val Aa.Bb(10,20);
 escape a.a + b.a + b.b + b.c;
 ]],
     dcls = 'line 11 : field "c" is not declared',
-    --dcls = 'line 11 : invalid member access : "b" has no member "c" : `data´ "Aa.Bb" (/tmp/tmp.ceu:4)',
+    --dcls = 'line 11 : invalid member access : "b" has no member "c" : `data` "Aa.Bb" (/tmp/tmp.ceu:4)',
 }
 
 Test { [[
@@ -44432,7 +44432,7 @@ var Xx x = val Xx();
 escape 1;
 ]],
     wrn = true,
-    --stmts = 'line 2 : invalid declaration : cannot instantiate abstract `data´ "Xx"',
+    --stmts = 'line 2 : invalid declaration : cannot instantiate abstract `data` "Xx"',
     run = 1,
 }
 
@@ -44444,7 +44444,7 @@ var& Xx x  = &x_;
 escape (x as Yy) as int;
 ]],
     wrn = true,
-    dcls = 'line 5 : invalid operand to `as´ : unmatching `data´ abstractions',
+    dcls = 'line 5 : invalid operand to `as` : unmatching `data` abstractions',
 }
 
 Test { [[
@@ -44454,7 +44454,7 @@ var& Xx xxx  = &x_;
 escape xxx as int;
 ]],
     wrn = true,
-    dcls = 'line 4 : invalid operand to `as´ : expected `data´ type in a hierarchy : got "Xx"',
+    dcls = 'line 4 : invalid operand to `as` : expected `data` type in a hierarchy : got "Xx"',
 }
 
 Test { [[
@@ -44464,7 +44464,7 @@ var& Xx xxx  = &x_;
 escape 1;
 ]],
     wrn = true,
-    props_ = 'line 1 : invalid `as´ declaration : expected `data´ hierarchy',
+    props_ = 'line 1 : invalid `as` declaration : expected `data` hierarchy',
 }
 
 Test { [[
@@ -44475,7 +44475,7 @@ var& Xx xxx  = &x_;
 escape xxx as int;
 ]],
     wrn = true,
-    props_ = 'line 2 : invalid `data´ declaration : missing `as´',
+    props_ = 'line 2 : invalid `data` declaration : missing `as`',
 }
 
 Test { [[
@@ -44486,7 +44486,7 @@ var& Xx xxx  = &x_;
 escape xxx as int;
 ]],
     wrn = true,
-    props_ = 'line 1 : invalid `data´ declaration : missing `as´',
+    props_ = 'line 1 : invalid `data` declaration : missing `as`',
 }
 
 Test { [[
@@ -44517,7 +44517,7 @@ var Xx x = _;
 escape 1;
 ]],
     wrn = true,
-    consts = 'line 2 : invalid `data´ declaration : after `is´ : expected integer constant',
+    consts = 'line 2 : invalid `data` declaration : after `is` : expected integer constant',
 }
 
 Test { [[
@@ -44591,7 +44591,7 @@ escape (y1 as int) + (y2 as int);
 ]],
     wrn = true,
     run = 30,
-    --stmts = 'line 5 : invalid assignment : `data´ copy : expected same `data´',
+    --stmts = 'line 5 : invalid assignment : `data` copy : expected same `data`',
 }
 
 Test { [[
@@ -44605,7 +44605,7 @@ escape (y1 as int) + (y2! as int);
 ]],
     wrn = true,
     run = 30,
-    --stmts = 'line 5 : invalid assignment : `data´ copy : expected same `data´',
+    --stmts = 'line 5 : invalid assignment : `data` copy : expected same `data`',
 }
 
 Test { [[
@@ -44637,14 +44637,14 @@ data Dd as 0;
 escape 1;
 ]],
     wrn = true,
-    props_ = 'line 1 : invalid `as´ declaration : expected `data´ hierarchy',
+    props_ = 'line 1 : invalid `as` declaration : expected `data` hierarchy',
 }
 Test { [[
 data Dd as nothing;
 escape 1;
 ]],
     wrn = true,
-    props_ = 'line 1 : invalid `as´ declaration : expected `data´ hierarchy',
+    props_ = 'line 1 : invalid `as` declaration : expected `data` hierarchy',
 }
 Test { [[
 data Dd as nothing;
@@ -44653,8 +44653,8 @@ escape 1;
 ]],
     wrn = true,
     --run = 1,
-    props_ = 'line 1 : invalid `as´ declaration : expected `data´ hierarchy',
-    --dcls = 'line 2 : invalid declaration : cannot instantiate `data´ "Dd"',
+    props_ = 'line 1 : invalid `as` declaration : expected `data` hierarchy',
+    --dcls = 'line 2 : invalid declaration : cannot instantiate `data` "Dd"',
 }
 
 Test { [[
@@ -44681,7 +44681,7 @@ var Direction y = val Direction();
 escape 1;
 ]],
     wrn = true,
-    stmts = 'line 4 : invalid constructor : cannot instantiate `data´ "Direction"',
+    stmts = 'line 4 : invalid constructor : cannot instantiate `data` "Direction"',
 }
 
 --<< DATA / HIER / ENUM
@@ -44819,8 +44819,8 @@ var& Vx v3;
 escape v1.v+v2.v+v3.v;
 ]],
     --inits = 'line 5 : invalid binding : unexpected statement in the right side',
-    inits = 'line 5 : invalid binding : expected operator `&´ in the right side',
-    --ref = 'line 5 : invalid attribution : missing alias operator `&´',
+    inits = 'line 5 : invalid binding : expected operator `&` in the right side',
+    --ref = 'line 5 : invalid attribution : missing alias operator `&`',
     --run = 6,
 }
 
@@ -44931,7 +44931,7 @@ data Tx;
 event Tx a;
 escape 0;
 ]],
-    dcls = 'line 2 : invalid declaration : unexpected context for `data´ "Tx"',
+    dcls = 'line 2 : invalid declaration : unexpected context for `data` "Tx"',
     --dcls = 'line 2 : invalid event type : must be primitive',
 }
 
@@ -45009,7 +45009,7 @@ end
 
 escape d1.v;
 ]],
-    scopes = 'line 9 : invalid assignment : incompatible scopes : `data´ "Dd" is not plain',
+    scopes = 'line 9 : invalid assignment : incompatible scopes : `data` "Dd" is not plain',
 }
 
 Test { [[
@@ -45029,7 +45029,7 @@ end
 
 escape *d1.v;
 ]],
-    scopes = 'line 9 : invalid assignment : incompatible scopes : `data´ "Dd" is not plain',
+    scopes = 'line 9 : invalid assignment : incompatible scopes : `data` "Dd" is not plain',
 }
 
 Test { [[
@@ -45064,7 +45064,7 @@ await 1s;
 escape *dd.x;
 
 ]],
-    --inits = 'line 8 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:7)',
+    --inits = 'line 8 : invalid pointer access : crossed `await` (/tmp/tmp.ceu:7)',
     ptrs = 'line 8 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:7)',
     --run = { ['~>1s']=1 },
 }
@@ -45083,7 +45083,7 @@ await 1s;
 escape *ee.dd.x;
 
 ]],
-    --inits = 'line 11 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:10)',
+    --inits = 'line 11 : invalid pointer access : crossed `await` (/tmp/tmp.ceu:10)',
     ptrs = 'line 11 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:10)',
     --run = { ['~>1s']=1 },
 }
@@ -45118,7 +45118,7 @@ escape (dd.h != null) as int;
 Test { [[
 var Ddd d = Ddd(1);
 ]],
-    parser = 'line 1 : after `=´ : expected expression',
+    parser = 'line 1 : after `=` : expected expression',
 }
 
 Test { [[
@@ -45244,7 +45244,7 @@ await t.e;
 
 escape 1;
 ]],
-    stmts = 'line 15 : invalid `emit´ : types mismatch : "(int)" <= "()"',
+    stmts = 'line 15 : invalid `emit` : types mismatch : "(int)" <= "()"',
 }
 
 Test { [[
@@ -45505,7 +45505,7 @@ emit t.x;
 
 escape 1;
 ]],
-    stmts = 'line 9 : invalid `emit´ : unexpected context for variable "t.x"',
+    stmts = 'line 9 : invalid `emit` : unexpected context for variable "t.x"',
 }
 
 Test { [[
@@ -45525,7 +45525,7 @@ emit b.a.x;
 
 escape 1;
 ]],
-    stmts = 'line 13 : invalid `emit´ : unexpected context for variable "b.a.x"',
+    stmts = 'line 13 : invalid `emit` : unexpected context for variable "b.a.x"',
 }
 
 Test { [[
@@ -45591,21 +45591,21 @@ data Ts;
 pool[] Ts ts;
 escape ts + 1;
 ]],
-    dcls = 'line 3 : invalid operand to `+´ : unexpected context for pool "ts"',
+    dcls = 'line 3 : invalid operand to `+` : unexpected context for pool "ts"',
 }
 Test { [[
 data Dd;
 pool[] Dd dds;
 escape dds?;
 ]],
-    dcls = 'line 3 : invalid operand to `?´ : unexpected context for pool "dds"',
+    dcls = 'line 3 : invalid operand to `?` : unexpected context for pool "dds"',
 }
 Test { [[
 data Dd;
 pool[] Dd dds;
 escape dds!;
 ]],
-    dcls = 'line 3 : invalid operand to `!´ : unexpected context for pool "dds"',
+    dcls = 'line 3 : invalid operand to `!` : unexpected context for pool "dds"',
 }
 
 Test { [[
@@ -46048,7 +46048,7 @@ var& int rr = &s!.rrr;                  // TODO: should not allow this
 await 2s;
 escape rr;
 ]],
-    scopes = 'line 13 : invalid binding : unexpected source with `&?´ : destination may outlive source',
+    scopes = 'line 13 : invalid binding : unexpected source with `&?` : destination may outlive source',
     --wrn = true,
     --run = { ['~>2s']=101 },
 }
@@ -46478,7 +46478,7 @@ event& void ret =
     end;
 escape 0;
 ]],
-    stmts = 'line 1 : invalid `async/thread´ assignment : unexpected context for event "ret"',
+    stmts = 'line 1 : invalid `async/thread` assignment : unexpected context for event "ret"',
     _opts = { ceu_features_thread='true' },
 }
 
@@ -46488,7 +46488,7 @@ var int ret =
     end;
 escape (ret == 1) as int;
 ]],
-    stmts = 'line 2 : invalid `async/thread´ assignment : expected `bool´ destination',
+    stmts = 'line 2 : invalid `async/thread` assignment : expected `bool` destination',
     _opts = { ceu_features_thread='true' },
 }
 
@@ -46658,7 +46658,7 @@ end
 escape 0;
 ]],
     _opts = { ceu_features_thread='true' },
-    props_ = 'line 3 : invalid `async/thread´ : unexpected enclosing `finalize´',
+    props_ = 'line 3 : invalid `async/thread` : unexpected enclosing `finalize`',
 }
 Test { [[
 var int  a=10; var int  b=5;
@@ -46696,7 +46696,7 @@ atomic do
     escape 1;
 end
 ]],
-    props = 'line 2 : not permitted inside `atomic´',
+    props = 'line 2 : not permitted inside `atomic`',
     _opts = { ceu_features_thread='true' },
 }
 
@@ -46712,7 +46712,7 @@ await async do
 end
 escape 1;
 ]],
-    --props = 'line 2 : not permitted outside `thread´',
+    --props = 'line 2 : not permitted outside `thread`',
     run = 1,
     _opts = { ceu_features_thread='true' },
 }
@@ -46780,9 +46780,9 @@ await async/thread (p) do
 end
 escape 1;
 ]],
-    --inits = 'line 3 : invalid pointer access : crossed `async/thread´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 3 : invalid pointer access : crossed `async/thread` (/tmp/tmp.ceu:3)',
     ptrs = 'line 3 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:3)',
-    --fin = 'line 3 : unsafe access to pointer "p" across `async/thread´',
+    --fin = 'line 3 : unsafe access to pointer "p" across `async/thread`',
     _opts = { ceu_features_thread='true' },
 }
 
@@ -47157,9 +47157,9 @@ escape 10;
         isForever = false,
     },
     --run = 10,
-    stmts = 'line 6 : invalid `emit´ : unexpected context for external `input´ "A"',
-    --props = 'not permitted inside `thread´',
-    --props = 'line 6 : invalid `emit´',
+    stmts = 'line 6 : invalid `emit` : unexpected context for external `input` "A"',
+    --props = 'not permitted inside `thread`',
+    --props = 'line 6 : invalid `emit`',
     _opts = { ceu_features_thread='true' },
 }
 Test { [[
@@ -47189,7 +47189,7 @@ end;
 escape a + 1;
 ]],
     --run = 11,
-    props_ = 'line 4 : invalid `emit´ : expected enclosing `async´ or `async/isr´',
+    props_ = 'line 4 : invalid `emit` : expected enclosing `async` or `async/isr`',
     _opts = { ceu_features_thread='true' },
 }
 Test { [[
@@ -47229,7 +47229,7 @@ end
     --run = 5,
     --run = 3,
     --todo = 'nd excpt',
-    props_ = 'line 13 : invalid `emit´ : expected enclosing `async´ or `async/isr´',
+    props_ = 'line 13 : invalid `emit` : expected enclosing `async` or `async/isr`',
     _opts = { ceu_features_thread='true' },
 }
 Test { [[
@@ -47329,7 +47329,7 @@ end
 escape ret;
 ]],
     --run = 72000,
-    stmts = 'line 27 : invalid `emit´ : unexpected context for external `input´ "A"',
+    stmts = 'line 27 : invalid `emit` : unexpected context for external `input` "A"',
     _opts = { ceu_features_thread='true' },
 }
 Test { [[
@@ -47423,7 +47423,7 @@ with
 end;
 ]],
     --run = 0,
-    stmts = 'line 17 : invalid `emit´ : unexpected context for external `input´ "P2"',
+    stmts = 'line 17 : invalid `emit` : unexpected context for external `input` "P2"',
     _opts = { ceu_features_thread='true' },
 }
 Test { [[
@@ -47686,7 +47686,7 @@ await async (v) do
 end;
 escape v;
 ]],
-    props_ = 'line 3 : invalid `finalize´ : unexpected enclosing `async´',
+    props_ = 'line 3 : invalid `finalize` : unexpected enclosing `async`',
     _opts = { ceu_features_thread='true' },
 }
 Test { [[
@@ -47698,7 +47698,7 @@ await async/thread (v) do
 end;
 escape v;
 ]],
-    props = 'line 3 : not permitted inside `thread´',
+    props = 'line 3 : not permitted inside `thread`',
     _opts = { ceu_features_thread='true' },
 }
 
@@ -47817,7 +47817,7 @@ atomic do
     escape 1;
 end
 ]],
-    props_ = 'line 1 : `atomic´ support is disabled: enable `--ceu-features-thread´ or `--ceu-features-isr´',
+    props_ = 'line 1 : `atomic` support is disabled: enable `--ceu-features-thread` or `--ceu-features-isr`',
 }
 
 -- TODO: no escape
@@ -47860,8 +47860,8 @@ with
 end
 escape v;
 ]],
-    --isr = 'line 7 : call breaks the static check for `atomic´ sections',
-    --dcls = 'line 6 : abstraction inside `async´ : not implemented',
+    --isr = 'line 7 : call breaks the static check for `atomic` sections',
+    --dcls = 'line 6 : abstraction inside `async` : not implemented',
     run = 4,
     _opts = { ceu_features_thread='true' },
 }
@@ -47873,7 +47873,7 @@ event int a;
 kill a;
 escape 1;
 ]],
-    stmts = 'line 2 : invalid `kill´ : unexpected context for event "a"',
+    stmts = 'line 2 : invalid `kill` : unexpected context for event "a"',
 }
 
 Test { [[
@@ -47881,7 +47881,7 @@ var int a = 0;
 kill a;
 escape 1;
 ]],
-    stmts = 'line 2 : invalid `kill´ : expected `code/await´ abstraction',
+    stmts = 'line 2 : invalid `kill` : expected `code/await` abstraction',
 }
 
 Test { [[
@@ -47912,7 +47912,7 @@ end
 
 escape 1;
 ]],
-    --stmts = 'line 8 : invalid kill : `code/await´ executes forever',
+    --stmts = 'line 8 : invalid kill : `code/await` executes forever',
     run = 1,
 }
 Test { [[
@@ -48098,7 +48098,7 @@ await 1s;
 
 escape ret;
 ]],
-    props_ = 'line 11 : invalid `spawn´ : unexpected enclosing `finalize´',
+    props_ = 'line 11 : invalid `spawn` : unexpected enclosing `finalize`',
 }
 
 Test { [[
@@ -48223,7 +48223,7 @@ atomic do
 end
 escape 1;
 ]],
-    props = 'line 2 : not permitted inside `atomic´',
+    props = 'line 2 : not permitted inside `atomic`',
     _opts = { ceu_features_isr='true' },
 }
 
@@ -48237,7 +48237,7 @@ atomic do
 end
 escape 1;
 ]],
-    props = 'line 2 : not permitted inside `atomic´',
+    props = 'line 2 : not permitted inside `atomic`',
     _opts = { ceu_features_isr='true' },
 }
 
@@ -48248,7 +48248,7 @@ atomic do
 end
 escape 1;
 ]],
-    props = 'line 3 : not permitted inside `atomic´',
+    props = 'line 3 : not permitted inside `atomic`',
     _opts = { ceu_features_isr='true' },
 }
 
@@ -48274,7 +48274,7 @@ end
 escape 1;
 ]],
     run = 1,
-    --props = 'line 4 : not permitted inside `atomic´',
+    --props = 'line 4 : not permitted inside `atomic`',
     _opts = { ceu_features_isr='true' },
 }
 
@@ -48285,7 +48285,7 @@ atomic do
 end
 escape 1;
 ]],
-    props = 'line 3 : not permitted inside `atomic´',
+    props = 'line 3 : not permitted inside `atomic`',
     wrn = true,
     _opts = { ceu_features_isr='true' },
 }
@@ -48298,7 +48298,7 @@ loop do
 end
 escape 1;
 ]],
-    props = 'line 3 : not permitted inside `atomic´',
+    props = 'line 3 : not permitted inside `atomic`',
     _opts = { ceu_features_isr='true' },
 }
 
@@ -48310,9 +48310,9 @@ with
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `do´ : expected statement',
-    --parser = 'line 1 : after `do´ : expected `nothing´ or `var´ or `vector´',
-    --adj = 'line 2 : `async/isr´ must be followed by `await FOREVER´',
+    parser = 'line 1 : after `do` : expected statement',
+    --parser = 'line 1 : after `do` : expected `nothing` or `var` or `vector`',
+    --adj = 'line 2 : `async/isr` must be followed by `await FOREVER`',
     _opts = { ceu_features_isr='true' },
 }
 
@@ -48456,7 +48456,7 @@ atomic do
     escape v[0];
 end
 ]],
-    props = 'line 13 : not permitted inside `atomic´',
+    props = 'line 13 : not permitted inside `atomic`',
     _opts = { ceu_features_isr='true' },
 }
 
@@ -48511,7 +48511,7 @@ native _f;
 end
 await FOREVER;
 ]],
-    props = 'line 2 : not permitted inside `async/isr´',
+    props = 'line 2 : not permitted inside `async/isr`',
     _opts = { ceu_features_isr='true' },
 }
 
@@ -48597,7 +48597,7 @@ var int&& v = null;
     await FOREVER;
 ]],
     ptrs = 'line 22 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:21)',
-    --isr = 'line 4 : pointer access breaks the static check for `atomic´ sections',
+    --isr = 'line 4 : pointer access breaks the static check for `atomic` sections',
     --run = 1,
     _opts = { ceu_features_isr='true' },
 }
@@ -48615,8 +48615,8 @@ escape 1;
 ]],
     ptrs = 'line 23 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:22)',
     --inits = 'line 22 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:21)',
-    --inits = 'line 23 : invalid pointer access : crossed `par/or´ (/tmp/tmp.ceu:22)',
-    --isr = 'line 4 : pointer access breaks the static check for `atomic´ sections',
+    --inits = 'line 23 : invalid pointer access : crossed `par/or` (/tmp/tmp.ceu:22)',
+    --isr = 'line 4 : pointer access breaks the static check for `atomic` sections',
     --run = 1,
     _opts = { ceu_features_isr='true' },
 }
@@ -48635,8 +48635,8 @@ with
 end
 escape v;
 ]],
-    --dcls = 'line 25 : abstraction inside `async´ : not implemented',
-    --isr = 'line 7 : call breaks the static check for `atomic´ sections',
+    --dcls = 'line 25 : abstraction inside `async` : not implemented',
+    --isr = 'line 7 : call breaks the static check for `atomic` sections',
     run = 2,
     _opts = { ceu_features_isr='true' },
 }
@@ -48758,7 +48758,7 @@ end
 escape v;
 ]],
     --isr = 'line 12 : access to "v" must be atomic',
-    props = 'line 27 : not permitted inside `async/isr´',
+    props = 'line 27 : not permitted inside `async/isr`',
     _opts = { ceu_features_isr='true' },
 }
 
@@ -48778,7 +48778,7 @@ with
 end
 escape 1;
 ]],
-    --isr = 'line 5 : reference access breaks the static check for `atomic´ sections',
+    --isr = 'line 5 : reference access breaks the static check for `atomic` sections',
     run = 1,
     _opts = { ceu_features_isr='true' },
 }
@@ -48799,8 +48799,8 @@ end
 escape 1;
 ]],
     run = 1,
-    --dcls = 'line 4 : invalid operand to `&&´ : unexpected context for vector "v"',
-    --env = 'line 4 : types mismatch (`int&&´ <= `int[]&&´)',
+    --dcls = 'line 4 : invalid operand to `&&` : unexpected context for vector "v"',
+    --env = 'line 4 : types mismatch (`int&&` <= `int[]&&`)',
     --env = 'line 4 : invalid operand to unary "&&"',
     _opts = { ceu_features_isr='true' },
 }
@@ -48831,7 +48831,7 @@ end
 escape 1;
 ]],
     --adj = 'line 3 : missing ISR identifier',
-    parser = 'line 3 : after `[´ : expected expression',
+    parser = 'line 3 : after `[` : expected expression',
     _opts = { ceu_features_isr='true' },
 }
 
@@ -48846,7 +48846,7 @@ with
 end
 escape 1;
 ]],
-    stmts = 'line 4 : invalid `emit´ : types mismatch : "(int)" <= "()"',
+    stmts = 'line 4 : invalid `emit` : types mismatch : "(int)" <= "()"',
     --env = ' line 4 : arity mismatch',
     _opts = { ceu_features_isr='true' },
 }
@@ -48923,7 +48923,7 @@ escape 1;
 ]],
     --_ana = {acc=1},
     todo = 'acc',
-    acc = 'line 8 : access to symbol "_digitalWrite" must be atomic (vs symbol `_digitalRead´ (/tmp/tmp.ceu:4))',
+    acc = 'line 8 : access to symbol "_digitalWrite" must be atomic (vs symbol `_digitalRead` (/tmp/tmp.ceu:4))',
     run = 1,
     _opts = { ceu_features_isr='true' },
 }
@@ -48977,7 +48977,7 @@ end
 escape 1;
 ]],
     todo = 'acc',
-    acc = 'line 9 : access to symbol "i" must be atomic (vs variable/event `i´ (/tmp/tmp.ceu:5))',
+    acc = 'line 9 : access to symbol "i" must be atomic (vs variable/event `i` (/tmp/tmp.ceu:5))',
     _opts = { ceu_features_isr='true' },
 }
 
@@ -49021,7 +49021,7 @@ escape v;
     --isr = 'line 4 : access to "Fx" must be atomic',
     run = 2,
     _opts = { ceu_features_isr='true' },
-    --dcls = 'line 25 : abstraction inside `async´ : not implemented',
+    --dcls = 'line 25 : abstraction inside `async` : not implemented',
 }
 
 Test { [[
@@ -49126,7 +49126,7 @@ x = 1;
 escape x;
 ]],
     wrn = true,
-    --inits = 'line 1 : uninitialized variable "x" : reached end of `code´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "x" : reached end of `code` (/tmp/tmp.ceu:2)',
     --inits = 'line 1 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:2)',
     run = 1,
 }
@@ -49169,7 +49169,7 @@ call Ff();
 escape x;
 ]],
     wrn = true,
-    --dcls = 'line 3 : invalid `code´ declaration : nesting is not allowed',
+    --dcls = 'line 3 : invalid `code` declaration : nesting is not allowed',
     run = 1,
 }
 Test { [[
@@ -49182,7 +49182,7 @@ end
 call Ff();
 escape x;
 ]],
-    parser = 'line 2 : after `with´ : expected `var´ or `vector´ or `pool´ or `event´',
+    parser = 'line 2 : after `with` : expected `var` or `vector` or `pool` or `event`',
 }
 Test { [[
 var int x = 0;
@@ -49192,7 +49192,7 @@ end
 call Ff();
 escape x;
 ]],
-    parser = 'line 2 : after `with´ : expected `var´ or `vector´ or `pool´ or `event´',
+    parser = 'line 2 : after `with` : expected `var` or `vector` or `pool` or `event`',
 }
 
 Test { [[
@@ -49227,7 +49227,7 @@ var& _int ren;
 _f(&&outer.ren);
 escape 0;
 ]],
-    dcls = 'line 3 : invalid `outer´',
+    dcls = 'line 3 : invalid `outer`',
 }
 
 Test { [[
@@ -49551,7 +49551,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    --dcls = 'line 7 : invalid `call´',
+    --dcls = 'line 7 : invalid `call`',
     run = 1,
 }
 
@@ -49563,7 +49563,7 @@ end
 var&? Ff f = spawn Ff();
 escape f.x;
 ]],
-    dcls = 'line 6 : invalid operand to `.´ : unexpected option alias',
+    dcls = 'line 6 : invalid operand to `.` : unexpected option alias',
 }
 
 Test { [[
@@ -49579,7 +49579,7 @@ var&? Ff f = spawn Ff(&buf);
 call f.Reset();
 escape ($buf as int) + 1;
 ]],
-    dcls = 'line 10 : invalid operand to `.´ : unexpected option alias',
+    dcls = 'line 10 : invalid operand to `.` : unexpected option alias',
 }
 
 Test { [[
@@ -49751,7 +49751,7 @@ escape 1;
         ceu = true,
         ceu_features_lua = 'false',
     },
-    props_ = 'line 1 : `lua´ support is disabled',
+    props_ = 'line 1 : `lua` support is disabled',
 }
 Test { [=[
 
@@ -49761,7 +49761,7 @@ escape ret;
     _opts = {
         ceu_features_lua = 'false',
     },
-    props_ = 'line 2 : `lua´ support is disabled',
+    props_ = 'line 2 : `lua` support is disabled',
 }
 Test { [=[
 [[ ]];
@@ -49770,7 +49770,7 @@ escape 1;
     _opts = {
         ceu_features_lua = 'false',
     },
-    props_ = 'line 1 : `lua´ support is disabled',
+    props_ = 'line 1 : `lua` support is disabled',
 }
 Test { [[
 await async/thread do end
@@ -49779,7 +49779,7 @@ escape 1;
     _opts = {
         ceu_features_thread = 'false',
     },
-    props_ = 'line 1 : `async/thread´ support is disabled',
+    props_ = 'line 1 : `async/thread` support is disabled',
 }
 
 Test { [=[
@@ -49829,7 +49829,7 @@ end
 escape 0;
 ]],
     wrn = true,
-    dcls = 'line 11 : invalid `code´ declaration : unmatching prototypes (vs. /tmp/tmp.ceu:5)',
+    dcls = 'line 11 : invalid `code` declaration : unmatching prototypes (vs. /tmp/tmp.ceu:5)',
 }
 
 Test { [[
@@ -49852,7 +49852,7 @@ end
 escape 0;
 ]],
     wrn = true,
-    dcls = 'line 13 : invalid `code´ declaration : body for "Ff" already exists',
+    dcls = 'line 13 : invalid `code` declaration : body for "Ff" already exists',
 }
 
 Test { [[
@@ -49868,7 +49868,7 @@ await Ui_go(&ui);
 
 escape 1;
 ]],
-    dcls = 'line 5 : invalid `dynamic´ declaration : expected dynamic parameter',
+    dcls = 'line 5 : invalid `dynamic` declaration : expected dynamic parameter',
     wrn = true,
     run = 1,
 }
@@ -49886,7 +49886,7 @@ await Ui_go(&ui);
 
 escape 1;
 ]],
-    stmts = 'line 9 : invalid `spawn´ : expected `/dynamic´ or `/static´ modifier',
+    stmts = 'line 9 : invalid `spawn` : expected `/dynamic` or `/static` modifier',
     wrn = true,
     run = 1,
 }
@@ -49904,7 +49904,7 @@ await/dynamic Ui_go(&ui);
 
 escape 1;
 ]],
-    props_ = 'line 5 : invalid `dynamic´ declaration : parameter #1 : expected `data´ in hierarchy',
+    props_ = 'line 5 : invalid `dynamic` declaration : parameter #1 : expected `data` in hierarchy',
     wrn = true,
     run = 1,
 }
@@ -49915,7 +49915,7 @@ end
 
 escape call/dynamic Ff();
 ]],
-    dcls = 'line 4 : invalid call : unexpected `/dynamic´ modifier',
+    dcls = 'line 4 : invalid call : unexpected `/dynamic` modifier',
 }
 
 Test { [[
@@ -49954,7 +49954,7 @@ var Aa.Bb b = val Aa.Bb(2,3);
 
 escape (call Ff(&&b,22)) + (call Ff(&&a,33));
 ]],
-    dcls = 'line 20 : invalid call : expected `/dynamic´ or `/static´ modifier',
+    dcls = 'line 20 : invalid call : expected `/dynamic` or `/static` modifier',
 }
 Test { [[
 data Aa with
@@ -50072,7 +50072,7 @@ var int v2 = await/dynamic Ff(&a,33);
 escape v2;
 ]],
     --run = 58,
-    props_ = 'line 5 : invalid `dynamic´ declaration : parameter #1 : expected `data´ in hierarchy',
+    props_ = 'line 5 : invalid `dynamic` declaration : parameter #1 : expected `data` in hierarchy',
 }
 
 Test { [[
@@ -50098,7 +50098,7 @@ var Aa a = val Aa(1);
 await Ff(&a,22);
 escape 0;
 ]],
-    stmts = 'line 20 : invalid `await´ : expected `/dynamic´ or `/static´ modifier',
+    stmts = 'line 20 : invalid `await` : expected `/dynamic` or `/static` modifier',
 }
 
 Test { [[
@@ -50124,7 +50124,7 @@ var Aa a = val Aa(1);
 spawn Ff(&a,22);
 escape 0;
 ]],
-    stmts = 'line 20 : invalid `await´ : expected `/dynamic´ or `/static´ modifier',
+    stmts = 'line 20 : invalid `await` : expected `/dynamic` or `/static` modifier',
 }
 
 Test { [[
@@ -50293,9 +50293,9 @@ var int v2 = await/dynamic Ff(&a,33);
 
 escape v1 + v2;
 ]],
-    props_ = 'line 5 : invalid `dynamic´ declaration : parameter #2 : expected `data´ in hierarchy',
+    props_ = 'line 5 : invalid `dynamic` declaration : parameter #2 : expected `data` in hierarchy',
     --run = 1,
-    --dcls = 'line 5 : invalid `dynamic´ declaration : parameter #2 : unexpected plain `data´',
+    --dcls = 'line 5 : invalid `dynamic` declaration : parameter #2 : unexpected plain `data`',
 }
 
 Test { [[
@@ -50387,7 +50387,7 @@ code/tight Ff (var Bb b) -> int;
 var int v1 = call Ff(_);
 escape v1;
 ]],
-    tight_ = 'line 5 : invalid `code´ declaration : expected `/recursive´ : `call´ to unknown body (/tmp/tmp.ceu:7)',
+    tight_ = 'line 5 : invalid `code` declaration : expected `/recursive` : `call` to unknown body (/tmp/tmp.ceu:7)',
 }
 Test { [[
 data Bb with
@@ -50434,7 +50434,7 @@ var int v2 = call/dynamic Ff(Bb(_));
 var int v1 = call/dynamic Ff(Bb.Cc(_,_));
 escape v1 + v2;
 ]],
-    dcls = 'line 17 : invalid call argument #1 : `data´ copy : unmatching fields',
+    dcls = 'line 17 : invalid call argument #1 : `data` copy : unmatching fields',
 }
 Test { [[
 data Aa;
@@ -50449,7 +50449,7 @@ end
 code/tight/dynamic Ff (var Bb.Cc c, var Aa a) -> void do
 end
 ]],
-    dcls = 'line 7 : invalid `dynamic´ declaration : expected dynamic parameters',
+    dcls = 'line 7 : invalid `dynamic` declaration : expected dynamic parameters',
 }
 
 Test { [[
@@ -50468,8 +50468,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    props_ = 'line 7 : invalid `dynamic´ declaration : parameter #2 : expected `data´ in hierarchy',
-    --dcls = 'line 7 : invalid `dynamic´ declaration : parameter #2 : unexpected plain `data´',
+    props_ = 'line 7 : invalid `dynamic` declaration : parameter #2 : expected `data` in hierarchy',
+    --dcls = 'line 7 : invalid `dynamic` declaration : parameter #2 : unexpected plain `data`',
 }
 
 Test { [[
@@ -50741,7 +50741,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    dcls = 'line 3 : invalid `code´ declaration : body for "Ff" already exists',
+    dcls = 'line 3 : invalid `code` declaration : body for "Ff" already exists',
 }
 
 Test { [[
@@ -50753,7 +50753,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    dcls = 'line 4 : invalid `code´ declaration : body for "Ff" already exists',
+    dcls = 'line 4 : invalid `code` declaration : body for "Ff" already exists',
 }
 
 Test { [[
@@ -50765,7 +50765,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    dcls = 'line 4 : invalid `code´ declaration : body for "Ff" already exists',
+    dcls = 'line 4 : invalid `code` declaration : body for "Ff" already exists',
 }
 
 Test { [[
@@ -50778,7 +50778,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    props_ = 'line 3 : invalid `dynamic´ declaration : parameter #1 : expected `data´ in hierarchy',
+    props_ = 'line 3 : invalid `dynamic` declaration : parameter #1 : expected `data` in hierarchy',
 }
 
 Test { [[
@@ -50806,7 +50806,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    mems = 'line 3 : invalid `code´ declaration : missing base case',
+    mems = 'line 3 : invalid `code` declaration : missing base case',
 }
 
 Test { [[
@@ -50819,7 +50819,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    mems = 'line 3 : invalid `code´ declaration : missing base case',
+    mems = 'line 3 : invalid `code` declaration : missing base case',
 }
 
 Test { [[
@@ -50844,7 +50844,7 @@ var Media.Audio m = val Media.Audio();
 await/dynamic Play(&m);
 ]],
     wrn = true,
-    mems = 'line 5 : invalid `code´ declaration : missing base case',
+    mems = 'line 5 : invalid `code` declaration : missing base case',
 }
 
 Test { [[
@@ -51170,7 +51170,7 @@ code/await/dynamic Ff (var/dynamic Xx x1) -> (var& Xx x2) -> void;
 escape 1;
 ]],
     wrn = true,
-    props_ = 'line 2 : invalid `dynamic´ declaration : parameter #1 : expected `data´ in hierarchy',
+    props_ = 'line 2 : invalid `dynamic` declaration : parameter #1 : expected `data` in hierarchy',
 }
 
 Test { [[
@@ -51512,7 +51512,7 @@ code/await Gg (var/dynamic Xx.Yy x) -> (void) -> FOREVER do
 end
 escape 1;
 ]],
-    dcls = 'line 3 : invalid `dynamic´ modifier : expected enclosing `code/dynamic´',
+    dcls = 'line 3 : invalid `dynamic` modifier : expected enclosing `code/dynamic`',
     run = 1,
 }
 
@@ -51541,7 +51541,7 @@ var Direction y2 = val Direction();
 escape (call/dynamic Ff(x1)) + (call/dynamic Ff(y1)) + (call/dynamic Ff(y2));
 ]],
     wrn = true,
-    stmts = 'line 20 : invalid constructor : cannot instantiate `data´ "Direction"',
+    stmts = 'line 20 : invalid constructor : cannot instantiate `data` "Direction"',
 }
 
 Test { [[

@@ -98,7 +98,7 @@ F = {
                 ASR(false, me,
                     'invalid pointer access : crossed '..
                     'yielding statement '..
-                    --AST.tag2id[yield.tag]..'´ '..
+                    --AST.tag2id[yield.tag]..'` '..
                     '('..out.ln[1]..':'..out.ln[2]..')')
             end
         end
@@ -138,7 +138,7 @@ F = {
             ASR(me.__run_ptrs_ok, me,
                 'invalid pointer access : crossed '..
                 'yielding statement '..
-                --AST.tag2id[yield.tag]..'´ '..
+                --AST.tag2id[yield.tag]..'` '..
                 '('..yield.ln[1]..':'..yield.ln[2]..')')
         end
     end,

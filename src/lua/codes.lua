@@ -192,7 +192,7 @@ memset(&_ceu_mem->_trails, 0, ]]..AST.root.trails_n..[[*sizeof(tceu_trl));
         local pre_pos, code = unpack(me)
         pre_pos = string.sub(pre_pos,2)
 
-        -- unescape `##´ => `#´
+        -- unescape `##` => `#`
         code = string.gsub(code, '^%s*##',  '#')
         code = string.gsub(code, '\n%s*##', '\n#')
 
@@ -367,7 +367,7 @@ if (0)
         local Type = AST.get(body,'Block', 1,'Stmts', 1,'Code_Ret', 1,'', 2,'Type')
         if not Type then
             LINE(me, [[
-ceu_callback_assert_msg(0, "reached end of `code´");
+ceu_callback_assert_msg(0, "reached end of `code`");
 ]])
         end
 
@@ -700,7 +700,7 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].pse_paused = 0;
         local _,_,blk,set = unpack(me)
         if set and set.info.dcl[1]~='&?' and (not TYPES.check(set.info.tp,'?')) then
             LINE(me, [[
-ceu_callback_assert_msg(0, "reached end of `do´");
+ceu_callback_assert_msg(0, "reached end of `do`");
 ]])
         end
         CASE(me, me.lbl_out)
@@ -737,7 +737,7 @@ RETURN_CEU_LBL(NULL, _ceu_stk,
 ]]..CUR('__max_'..me.n)..[[ = 0;
 ]],
                 chk = [[
-ceu_callback_assert_msg(]]..CUR('__max_'..me.n)..' < '..V(max)..[[, "`loop´ overflow");
+ceu_callback_assert_msg(]]..CUR('__max_'..me.n)..' < '..V(max)..[[, "`loop` overflow");
 ]],
                 inc = [[
 ]]..CUR('__max_'..me.n)..[[++;
@@ -814,7 +814,7 @@ while (1) {
                         num = -num
                     end
                     ASR(num>0, me,
-                        'invalid `loop´ step : expected positive number : got "'..num..'"')
+                        'invalid `loop` step : expected positive number : got "'..num..'"')
                 end
             end
         end
@@ -829,7 +829,7 @@ while (1) {
         local sig = (dir=='->' and '' or '-')
         LINE(me, [[
 ]]..max.ini..[[
-ceu_callback_assert_msg(]]..sig..V(step)..[[> 0, "invalid `loop´ step : expected positive number");
+ceu_callback_assert_msg(]]..sig..V(step)..[[> 0, "invalid `loop` step : expected positive number");
 ]])
         local op = (dir=='->' and '>' or '<')
         LINE(me, [[

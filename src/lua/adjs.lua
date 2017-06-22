@@ -267,7 +267,7 @@ error'TODO: luacov never executes this?'
                                         node('ID_int', me.ln, '__max_'..me.n)),
                                     AST.copy(max)),
                                 node('STRING', me.ln,
-                                    '"`loop´ overflow"'))))
+                                    '"`loop` overflow"'))))
         end
 
         local Stmts = AST.asr(body,'Block', 1,'Stmts')

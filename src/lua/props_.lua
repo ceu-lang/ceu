@@ -62,7 +62,7 @@ PROPS_.F = {
 
                 ASR(false, me,
                     'invalid `'..AST.tag2id[me.tag]..
-                    '´ : unexpected enclosing `'..AST.tag2id[par.tag]..'´')
+                    '` : unexpected enclosing `'..AST.tag2id[par.tag]..'`')
             end
         end
     end,
@@ -71,7 +71,7 @@ PROPS_.F = {
 
     Emit_Wclock = function (me)
         ASR(AST.par(me,'Async') or AST.par(me,'Async_Isr'), me,
-            'invalid `emit´ : expected enclosing `async´ or `async/isr´')
+            'invalid `emit` : expected enclosing `async` or `async/isr`')
     end,
 
     __escape = function (me)
@@ -79,14 +79,14 @@ PROPS_.F = {
         local Async = AST.par(me,'Async')
         if Async then
             ASR(AST.depth(me.outer) > AST.depth(Async), me,
-                'invalid `'..AST.tag2id[me.tag]..'´ : unexpected enclosing `async´')
+                'invalid `'..AST.tag2id[me.tag]..'` : unexpected enclosing `async`')
         end
 
 --[[
         local Every = AST.par(me,'Every')
         if Every then
             ASR(me.outer.__depth > Every.__depth, me,
-                'invalid `'..AST.tag2id[me.tag]..'´ : unexpected enclosing `every´')
+                'invalid `'..AST.tag2id[me.tag]..'` : unexpected enclosing `every`')
         end
 ]]
 
@@ -95,7 +95,7 @@ PROPS_.F = {
             local _,_,later = unpack(Finalize)
             if AST.is_par(later,me) then
                 ASR(AST.depth(me.outer) > AST.depth(Finalize), me,
-                    'invalid `'..AST.tag2id[me.tag]..'´ : unexpected enclosing `finalize´')
+                    'invalid `'..AST.tag2id[me.tag]..'` : unexpected enclosing `finalize`')
             end
         end
     end,
@@ -147,8 +147,8 @@ error'oi'
                     local _,Type,id = unpack(dcl)
                     local data = AST.get(Type,'',1,'ID_abs')
                     ASR(data and data.dcl.hier, me,
-                        'invalid `dynamic´ declaration : parameter #'..i..
-                        ' : expected `data´ in hierarchy')
+                        'invalid `dynamic` declaration : parameter #'..i..
+                        ' : expected `data` in hierarchy')
                 end
             end
         end
@@ -156,7 +156,7 @@ error'oi'
 
     __check = function (me)
         local _,num = unpack(me)
-        ASR(num, me, 'invalid `data´ declaration : missing `as´')
+        ASR(num, me, 'invalid `data` declaration : missing `as`')
         for _, sub in ipairs(me.hier.down) do
             PROPS_.F.__check(sub)
         end
@@ -165,7 +165,7 @@ error'oi'
     Data = function (me)
         local _,num = unpack(me)
         if num then
-            ASR(me.hier, me, 'invalid `as´ declaration : expected `data´ hierarchy')
+            ASR(me.hier, me, 'invalid `as` declaration : expected `data` hierarchy')
             if num ~= 'nothing' then
                 PROPS_.F.__check(DCLS.base(me))
             end
@@ -176,18 +176,18 @@ error'oi'
 
     Lua_Do = 'Lua',
     Lua = function (me)
-        ASR(CEU.opts.ceu_features_lua, me, '`lua´ support is disabled')
+        ASR(CEU.opts.ceu_features_lua, me, '`lua` support is disabled')
     end,
 
     Async_Thread = function (me)
-        ASR(CEU.opts.ceu_features_thread, me, '`async/thread´ support is disabled')
+        ASR(CEU.opts.ceu_features_thread, me, '`async/thread` support is disabled')
     end,
     Async_Isr = function (me)
-        ASR(CEU.opts.ceu_features_isr, me, '`async/isr´ support is disabled')
+        ASR(CEU.opts.ceu_features_isr, me, '`async/isr` support is disabled')
     end,
     Atomic = function (me)
         ASR(CEU.opts.ceu_features_thread or CEU.opts.ceu_features_isr, me,
-            '`atomic´ support is disabled: enable `--ceu-features-thread´ or `--ceu-features-isr´')
+            '`atomic` support is disabled: enable `--ceu-features-thread` or `--ceu-features-isr`')
     end,
 }
 

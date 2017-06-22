@@ -105,7 +105,7 @@ F = {
         local max = unpack(me)
         if max then
             ASR(max.is_const=='int' or max.is_const==true, max,
-                'invalid `loop´ : limit must be an integer constant')
+                'invalid `loop` : limit must be an integer constant')
         end
     end,
 
@@ -113,7 +113,7 @@ F = {
         local _, num = unpack(me)
         if num and num~='nothing' then
             ASR(num.is_const=='int' or num.is_const==true, num,
-                'invalid `data´ declaration : after `is´ : expected integer constant')
+                'invalid `data` declaration : after `is` : expected integer constant')
         end
     end,
 }

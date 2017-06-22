@@ -34,16 +34,16 @@ local X = V'__SPACE'^1
 
 local T = {
     {
-        '`%*´ or `/´ or `%%´ or `%+´ or `%-´ or `>>´ or `<<´ or `&´ or `^´ or `|´ or `!=´ or `==´ or `<=´ or `>=´ or `<´ or `>´ or `and´ or `or´',
+        '`%*` or `/` or `%%` or `%+` or `%-` or `>>` or `<<` or `&` or `^` or `|` or `!=` or `==` or `<=` or `>=` or `<` or `>` or `and` or `or`',
         'binary operator'
     },
     {
-        '`%*´ or `/´ or `%%´ or `%+´ or `%-´ or `>>´ or `<<´ or `^´ or `|´ or `!=´ or `==´ or `<=´ or `>=´ or `<´ or `>´ or `and´ or `or´',
+        '`%*` or `/` or `%%` or `%+` or `%-` or `>>` or `<<` or `^` or `|` or `!=` or `==` or `<=` or `>=` or `<` or `>` or `and` or `or`',
         'binary operator'
     },
 
     {
-        '`&&´ or `%?´',
+        '`&&` or `%?`',
         'type modifier'
     },
 
@@ -53,48 +53,48 @@ local T = {
     },
 
     {
-        '`native´ or `code´ or end of file',
+        '`native` or `code` or end of file',
         'end of file'
     },
     {
-        '`;´ or `native´ or `code´ or `with´',
-        '`with´'
+        '`;` or `native` or `code` or `with`',
+        '`with`'
     },
     {
-        '`native´ or `code´ or `end´',
-        '`end´'
+        '`native` or `code` or `end`',
+        '`end`'
     },
 
     {
-        ' or `/dynamic´ or `/static´ or `/recursive´',
+        ' or `/dynamic` or `/static` or `/recursive`',
         '',
     },
 
     {
-        '`%*´ or `%$´ or internal identifier or native identifier or `outer´',
+        '`%*` or `%$` or internal identifier or native identifier or `outer`',
         'location'
     },
 
     {
-        '`do´ or `await´ or `%[´ or location or `{´ or `%(´ or `not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `&&´ or `&´ or `call´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `emit´ or `call/recursive´ or `val´ or `new´ or `spawn´ or `_´ or `nil´ or `request´ or `watching´',
+        '`do` or `await` or `%[` or location or `{` or `%(` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `call` or `sizeof` or `null` or number or `false` or `true` or `"` or string literal or `emit` or `call/recursive` or `val` or `new` or `spawn` or `_` or `nil` or `request` or `watching`',
         'expression'
     },
     {
-        '`not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `%*´ or `%$´ or `&&´ or `&´ or `call´ or internal identifier or native identifier or `outer´ or `{´ or `%(´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal',
+        '`not` or `%-` or `%+` or `~` or `%$%$` or `%*` or `%$` or `&&` or `&` or `call` or internal identifier or native identifier or `outer` or `{` or `%(` or `sizeof` or `null` or number or `false` or `true` or `"` or string literal',
         'expression'
     },
 
     {
-        --'`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or location or `{´ or `%(´ or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `do´ or `if´ or `loop´ or `every´ or `lock´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `atomic´ or `pre´ or `%[´ or `lua´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
-        '`code´ or `input/output´ or `output/input´ or `data´ or `native´ or `do´ or `if´ or `loop´ or `every´ or `lock´ or `spawn´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `await´ or `atomic´ or `pre´ or `{´ or `%[´ or `lua´ or `var´ or `nothing´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `deterministic´ or location or `%(´ or `emit´ or `call/recursive´ or `call´ or `request´ or `kill´ or `not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `escape´ or `break´ or `continue´ or `par´ or end of file',
+        --'`nothing` or `var` or `vector` or `pool` or `event` or `input` or `output` or `data` or `code` or `input/output` or `output/input` or `native` or `deterministic` or location or `{` or `%(` or `await` or `emit` or `call/recursive` or `call` or `request` or `spawn` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `"` or string literal or `do` or `if` or `loop` or `every` or `lock` or `par/or` or `par/and` or `watching` or `pause/if` or `atomic` or `pre` or `%[` or `lua` or `escape` or `break` or `continue` or `par` or end of file',
+        '`code` or `input/output` or `output/input` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `vector` or `pool` or `event` or `input` or `output` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `"` or string literal or `escape` or `break` or `continue` or `par` or end of file',
         'statement'
     },
     {
-        '`code´ or `input/output´ or `output/input´ or `data´ or `native´ or `do´ or `if´ or `loop´ or `every´ or `lock´ or `spawn´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `await´ or `atomic´ or `pre´ or `{´ or `%[´ or `lua´ or `var´ or `nothing´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `deterministic´ or location or `%(´ or `emit´ or `call/recursive´ or `call´ or `request´ or `kill´ or `not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `escape´ or `break´ or `continue´ or `par´ or `with´',
+        '`code` or `input/output` or `output/input` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `vector` or `pool` or `event` or `input` or `output` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `"` or string literal or `escape` or `break` or `continue` or `par` or `with`',
         'statement'
     },
     {
-        '`code´ or `input/output´ or `output/input´ or `data´ or `native´ or `do´ or `if´ or `loop´ or `every´ or `lock´ or `spawn´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `await´ or `atomic´ or `pre´ or `{´ or `%[´ or `lua´ or `var´ or `nothing´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `deterministic´ or location or `%(´ or `emit´ or `call/recursive´ or `call´ or `request´ or `kill´ or `not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `escape´ or `break´ or `continue´ or `par´ or `end´',
+        '`code` or `input/output` or `output/input` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `vector` or `pool` or `event` or `input` or `output` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `"` or string literal or `escape` or `break` or `continue` or `par` or `end`',
         'statement'
     },
 }
@@ -138,7 +138,7 @@ local function ERR ()
     local file, line = unpack(CEU.i2l[LST_i])
     return 'ERR : '..file..
               ' : line '..line..
-              ' : after `'..LST_str..'´'..
+              ' : after `'..LST_str..'`'..
               ' : expected '..translate(table.concat(ERR_strs,' or '))
 end
 
@@ -157,7 +157,7 @@ end
 -- KK accepts leading chars
 local function KK (patt, err, nox)
     if type(patt) == 'string' then
-        err = err or '`'..patt..'´'
+        err = err or '`'..patt..'`'
     else
         err = err or error(debug.traceback())
     end
@@ -191,7 +191,7 @@ end
 
 -- K is exact match
 local function K (patt, err, nox)
-    err = err or '`'..patt..'´'
+    err = err or '`'..patt..'`'
     patt = patt * -m.R('09','__','az','AZ','\127\255')
     return KK(patt, err, nox)
 end
@@ -636,7 +636,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     , __sets_many = V'_Set_Emit_Ext_req' + V'_Set_Await_many' + V'_Set_Watching'
 
-    -- after `=´
+    -- after `=`
 
     , _Set_Do            = #K'do'            * V'_Do'
 
@@ -684,7 +684,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , __ID_ext  = CK(m.R'AZ'*ALPHANUM^0  -KEYS, 'external identifier')
     , __ID_int  = CK(m.R'az'*Alphanum^0  -KEYS, 'internal identifier')
     , __ID_nat  = CK(P'_' * Alphanum^1,         'native identifier')
-    , __ID_any  = CK(P'_' * -Alphanum,          '`_´')
+    , __ID_any  = CK(P'_' * -Alphanum,          '`_`')
 
     , __id_abs  = m.R'AZ'*V'__one_az' -KEYS
     , __id_data = V'__id_abs' * ('.' * V'__id_abs')^1
