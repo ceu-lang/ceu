@@ -23885,7 +23885,7 @@ escape 1;
 
 Test { [[
 native/pos do
-    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
         tceu_callback_ret ret;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             ret.is_handled = 0;
@@ -23928,7 +23928,7 @@ escape 1;
 
 Test { [[
 native/pos do
-    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
         tceu_callback_ret ret;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             ret.is_handled = 0;
@@ -24061,7 +24061,7 @@ native/pre do
     } t;
 end
 native/pos do
-    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
         tceu_callback_ret ret;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             ret.is_handled = 0;
@@ -24103,7 +24103,7 @@ native/pre do
     } t;
 end
 native/pos do
-    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
         tceu_callback_ret ret;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             ret.is_handled = 0;
@@ -24145,7 +24145,7 @@ native/pre do
     } t;
 end
 native/pos do
-    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
         tceu_callback_ret ret;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             ret.is_handled = 0;
@@ -24283,7 +24283,7 @@ escape 1;
 
 Test { [[
 native/pos do
-    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
         tceu_callback_ret ret;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             ret.is_handled = 0;
@@ -24312,7 +24312,7 @@ escape a + b;
 
 Test { [[
 native/pos do
-    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
         tceu_callback_ret ret;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             ret.is_handled = 0;
@@ -24663,7 +24663,7 @@ escape ret;
 
 Test { [[
 native/pos do
-    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
         tceu_callback_ret ret;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             ret.is_handled = 0;
@@ -24686,7 +24686,7 @@ escape ret;
 
 Test { [[
 native/pos do
-    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
         tceu_callback_ret ret;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             ret.is_handled = 0;
@@ -48333,7 +48333,7 @@ escape 1;
 Test { [[
 native/pre do
     ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
-    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
         tceu_callback_ret ret;
         ret.is_handled = 0;
         return ret;
@@ -48354,7 +48354,7 @@ escape 1;
 Test { [[
 native/pre do
     int V = 1;
-    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
         tceu_callback_ret ret = {.is_handled=1};
         int* args = (int*) p2.ptr;
         switch (cmd) {
@@ -48390,7 +48390,7 @@ escape _V;
 Test { [[
 native/pre do
     int V = 1;
-    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
         tceu_callback_ret ret = {.is_handled=1};
         int* args = (int*) p2.ptr;
         switch (cmd) {
@@ -48464,7 +48464,7 @@ Test { [[
 native/pre do
     int V = 1;
     ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
-    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
         tceu_callback_ret ret = {.is_handled=1};
         int* args = (int*) p2.ptr;
         switch (cmd) {
@@ -48538,7 +48538,7 @@ Test { [[
 native/pre do
     int V = 1;
     ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
-    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
         tceu_callback_ret ret = {.is_handled=1};
         int* args = (int*) p2.ptr;
         switch (cmd) {
@@ -48871,7 +48871,7 @@ escape 1;
 Test { [[
 native/pre do
     int V = 0;
-    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
         tceu_callback_ret ret = {.is_handled=1};
         int* args = (int*) p2.ptr;
         switch (cmd) {

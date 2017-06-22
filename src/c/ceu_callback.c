@@ -9,35 +9,42 @@ typedef struct tceu_callback_ret {
     tceu_callback_arg value;
 } tceu_callback_ret;
 
-typedef tceu_callback_ret (*tceu_callback_f) (int, tceu_callback_arg, tceu_callback_arg);
+typedef tceu_callback_ret (*tceu_callback_f) (int, tceu_callback_arg, tceu_callback_arg, const char*, u32);
 typedef struct tceu_callback {
     tceu_callback_f       f;
     struct tceu_callback* nxt;
 } tceu_callback;
 
-static tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2);
+static tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line);
 
 #define ceu_callback_void_void(cmd)                     \
         ceu_callback(cmd, (tceu_callback_arg){},        \
-                          (tceu_callback_arg){})
+                          (tceu_callback_arg){},        \
+                          __FILE__, __LINE__)
 #define ceu_callback_num_void(cmd,p1)                   \
         ceu_callback(cmd, (tceu_callback_arg){.num=p1}, \
-                          (tceu_callback_arg){})
+                          (tceu_callback_arg){},        \
+                          __FILE__, __LINE__)
 #define ceu_callback_num_ptr(cmd,p1,p2)                 \
         ceu_callback(cmd, (tceu_callback_arg){.num=p1}, \
-                          (tceu_callback_arg){.ptr=p2})
+                          (tceu_callback_arg){.ptr=p2}, \
+                          __FILE__, __LINE__)
 #define ceu_callback_num_num(cmd,p1,p2)                 \
         ceu_callback(cmd, (tceu_callback_arg){.num=p1}, \
-                          (tceu_callback_arg){.num=p2})
+                          (tceu_callback_arg){.num=p2}, \
+                          __FILE__, __LINE__)
 #define ceu_callback_ptr_num(cmd,p1,p2)                 \
         ceu_callback(cmd, (tceu_callback_arg){.ptr=p1}, \
-                          (tceu_callback_arg){.num=p2})
+                          (tceu_callback_arg){.num=p2}, \
+                          __FILE__, __LINE__)
 #define ceu_callback_ptr_ptr(cmd,p1,p2)                 \
         ceu_callback(cmd, (tceu_callback_arg){.ptr=p1}, \
-                          (tceu_callback_arg){.ptr=p2})
+                          (tceu_callback_arg){.ptr=p2}, \
+                          __FILE__, __LINE__)
 #define ceu_callback_ptr_size(cmd,p1,p2)                \
         ceu_callback(cmd, (tceu_callback_arg){.ptr=p1}, \
-                          (tceu_callback_arg){.size=p2})
+                          (tceu_callback_arg){.size=p2},\
+                          __FILE__, __LINE__)
 
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 

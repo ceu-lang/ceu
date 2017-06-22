@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-tceu_callback_ret ceu_callback_ceu (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+tceu_callback_ret ceu_callback_ceu (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
     tceu_callback_ret ret;
 
     switch (cmd) {

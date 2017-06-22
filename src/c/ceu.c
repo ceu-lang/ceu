@@ -126,7 +126,7 @@ typedef struct tceu_pool_pak {
     u8                n_traversing;
 } tceu_pool_pak;
 
-static tceu_evt* CEU_OPTION_EVT (tceu_evt* alias, const char* file, int line) {
+static tceu_evt* CEU_OPTION_EVT (tceu_evt* alias, const char* file, u32 line) {
     ceu_callback_assert_msg_ex(alias != NULL, "value is not set", file, line);
     return alias;
 }
@@ -215,7 +215,7 @@ static int ceu_data_is (tceu_ndata* supers, tceu_ndata me, tceu_ndata cmp) {
 }
 
 static void* ceu_data_as (tceu_ndata* supers, tceu_ndata* me, tceu_ndata cmp,
-                          const char* file, int line) {
+                          const char* file, u32 line) {
     ceu_callback_assert_msg_ex(ceu_data_is(supers, *me, cmp),
                                "invalid cast `as´", file, line);
     return me;
@@ -504,10 +504,10 @@ CEU_API void ceu_callback_register (tceu_callback* cb) {
     CEU_APP.cbs = cb;
 }
 
-static tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+static tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
     tceu_callback* cur = CEU_APP.cbs;
     while (cur) {
-        tceu_callback_ret ret = cur->f(cmd,p1,p2);
+        tceu_callback_ret ret = cur->f(cmd,p1,p2,file,line);
         if (ret.is_handled) {
             return ret;
         }
