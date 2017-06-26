@@ -57,20 +57,10 @@ STMTS.F = {
         AST.asr(fr, 'Vec_Cons')
 
         -- ctx
-        for _, e in ipairs(fr) do
-            if e.tag=='Vec_Tup' or e.tag=='STRING' or
-               e.tag=='Exp_as'  or e.tag=='Lua' or
-               AST.get(e,'Loc',1,'Exp_as')
-            then
-                -- ok
-            else
-                INFO.asr_tag(e, {'Vec'}, 'invalid constructor')
-            end
-        end
-
-        -- tp
         for i, e in ipairs(fr) do
+            local is_vec = (e.info and e.info.tag=='Vec')
             if e.tag == 'Vec_Tup' then
+                -- tp
                 local ps = unpack(e)
                 if ps then
                     AST.asr(ps,'List_Exp')
@@ -80,14 +70,14 @@ STMTS.F = {
                             'invalid expression list : item #'..j)
                     end
                 end
-            elseif e.tag == 'STRING' then
-                local tp = TYPES.new(e, 'byte')
-                EXPS.check_tp(fr, to_info.tp, tp,
-                    'invalid constructor : item #'..i)
             elseif e.tag == 'Lua' then
-            elseif e.tag=='Exp_as' or AST.get(e,'Loc',1,'Exp_as') then
+                -- TODO
+            elseif TYPES.check(to_info.tp,'byte') and (not is_vec) then
+                ASR(TYPES.check(e.info.tp,'_char','&&'), fr,
+                    'invalid constructor : item #'..i..' : expected "_char&&"')
             else
-                assert(e.info and e.info.tag == 'Vec')
+                INFO.asr_tag(e, {'Vec'}, 'invalid constructor')
+                assert(is_vec)
                 EXPS.check_tp(fr, to_info.tp, e.info.tp,
                     'invalid constructor : item #'..i)
             end

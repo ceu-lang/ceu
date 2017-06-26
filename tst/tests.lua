@@ -9,27 +9,34 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
---
-    vector[] byte right1 = [] .. "pingus/player"
-                           .. (call Pingu_Get_Owner_Str(&pingu) as _char&&) // requires as _char&&
-                           .. "/walker/right";
 
---
-            if (call Get_Velocity().y > 5.0) then
+Test { [[
+code/tight Ff (void) -> bool do
+    escape true;
+end
+if call Ff() then
+    escape 10;
+else
+    escape 0;
+end
+]],
+    run = 10,
+}
 
---
-    var IPingu pingu = val IPingu(rect_, _, _);
-    pingu.direction = do
-        if direction_? then
-            escape direction_!;
-        else
-            escape {LEFT};
-        end
-    end;
+Test { [[
+data Dd with
+    var int v;
+end
+var Dd d = val Dd(_);
+d.v = do
+    escape 10;
+end;
+escape d.v;
+]],
+    run = 10,
+}
 
-pause Ff;
-resume Ff;
-
+Test { [[
 code/await Ff (var int x) -> int
 with
 do
@@ -41,9 +48,71 @@ var&? Ff f = spawn Ff();
 var int x1 = f!.x;
 var int x2 = f;
 escape x1+x2;
+]],
+    run = 1,
+}
 
-var/nohold int x;
-var/dynamic int x;
+Test { [=[
+var int len = [[ string.len('@@ceu-lang.org') ]];
+escape len;
+]=],
+    run = 13,
+    _opts = { ceu_features_lua='true' },
+}
+
+Test { [=[
+var bool ok = { '@@' == 64 } as bool;
+escape ok as int;
+]=],
+    run = 1,
+}
+
+Test { [[
+native _f;
+native/plain _u8;
+vector[2] _u8 vec = _;
+do
+    _f(&&vec[0]);
+finalize (vec) with
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+event (void) e;                                                                 
+var int i = 0;                                                                  
+loop do                                                                         
+   par/and do                                                                   
+        await e;                                                                
+        i = i + 1;                                                              
+   with                                                                         
+        emit e;                                                                 
+   end                                                                          
+end                                                                             
+escape 0;                                                                       
+]],
+    run = 1,
+}
+
+Test { [[
+loop do
+    watching 2s do
+        if false then
+            continue;
+        end
+    end
+    break;
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+--[[
+]]
 
 -- BUG #89
 Test { [[
@@ -191,66 +260,9 @@ escape 1;
     run = 1,
 }
 
+-- var/nohold int x;
+-- var/dynamic int x;
 -------------------------------------------------------------------------------
-
-Test { [=[
-var int len = [[ string.len('@@ceu-lang.org') ]];
-escape len;
-]=],
-    run = 13,
-    _opts = { ceu_features_lua='true' },
-}
-
-Test { [=[
-var bool ok = { '@@' == 64 } as bool;
-escape ok as int;
-]=],
-    run = 1,
-}
-
-Test { [[
-native _f;
-native/plain _u8;
-vector[2] _u8 vec = _;
-do
-    _f(&&vec[0]);
-finalize (vec) with
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-event (void) e;                                                                 
-var int i = 0;                                                                  
-loop do                                                                         
-   par/and do                                                                   
-        await e;                                                                
-        i = i + 1;                                                              
-   with                                                                         
-        emit e;                                                                 
-   end                                                                          
-end                                                                             
-escape 0;                                                                       
-]],
-    run = 1,
-}
-
-Test { [[
-loop do
-    watching 2s do
-        if false then
-            continue;
-        end
-    end
-    break;
-end
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
 
 do return end -- OK
 --]=====]
@@ -30022,7 +30034,8 @@ escape (_strcmp((&&str1[0]) as _char&&,"")==0 and _strcmp((&&str2[0]) as _char&&
 Test { [[
 vector[] u8 str = [].."Ola Mundo!";
 ]],
-    stmts = 'line 1 : invalid constructor : item #2 : types mismatch : "u8" <= "byte"',
+    --stmts = 'line 1 : invalid constructor : item #2 : types mismatch : "u8" <= "byte"',
+    stmts = 'line 1 : invalid constructor : unexpected context for value ""Ola Mundo!""',
 }
 
 Test { [[
@@ -30163,7 +30176,8 @@ str = [].."oioioi";
 
 escape _strlen(&&str[0]);
 ]],
-    stmts = 'line 5 : invalid constructor : expected internal type : got "_char"',
+    stmts = 'line 5 : invalid constructor : unexpected context for value ""oioioi""',
+    --stmts = 'line 5 : invalid constructor : expected internal type : got "_char"',
     --dcls = 'line 5 : invalid use of `vector` "str"',
     --cc = '4:34: error: assignment to expression with array type',
 }
@@ -30201,6 +30215,32 @@ escape 1;
     wrn = true,
     --mem = 'too many events',    -- TODO
     run = 1,
+}
+
+Test { [[
+vector[] byte str = [] .. (1 as int);
+escape $str as int;
+]],
+    stmts = 'line 1 : invalid constructor : item #2 : expected "_char&&"',
+}
+
+Test { [[
+code/tight Ff (void) -> _char&& do
+    escape "oi";
+end
+vector[] byte str = [] .. (call Ff());
+escape $str as int;
+]],
+    run = 2,
+}
+Test { [[
+code/tight Ff (void) -> bool do
+    escape true;
+end
+vector[] byte str = [] .. (call Ff());
+escape $str as int;
+]],
+    stmts = 'line 4 : invalid constructor : item #2 : expected "_char&&"',
 }
 
 --<< VECTORS
@@ -30521,7 +30561,8 @@ vector[10] _char a;
 a = [].."oioioi";
 escape 1;
 ]],
-    stmts = 'line 3 : invalid constructor : expected internal type : got "_char"',
+    stmts = 'line 3 : invalid constructor : unexpected context for value ""oioioi""',
+    --stmts = 'line 3 : invalid constructor : expected internal type : got "_char"',
     --cc = '2:32: error: assignment to expression with array type',
     --env = 'line 2 : types mismatch (`_char[]` <= `_char&&`)',
     --env = 'line 2 : invalid attribution',
@@ -35731,7 +35772,8 @@ var&? Ff f1 = spawn Ff();
 var& Ff f2 = &f1!;
 escape 1;
 ]],
-    dcls = 'line 4 : invalid declaration : `code/await` must not execute forever',
+    --dcls = 'line 4 : invalid declaration : `code/await` must not execute forever',
+    run = 1,
 }
 
 Test { [[
