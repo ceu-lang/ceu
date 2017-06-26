@@ -1,0 +1,15 @@
+/*
+.wy-menu-vertical li.current > a::before {
+    content: url("arrow-expanded.png");
+    float: left;
+}
+
+.wy-menu-vertical li > a[class="toctree-l4"]{
+  margin-left: 10px;
+}
+
+.wy-menu-vertical li > a[class="toctree-l4"]::before {
+  content: url("dash-.png");
+  float: left;
+}
+*/

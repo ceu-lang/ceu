@@ -1,0 +1,23 @@
+site_name: Céu v0.30 - Reference Manual
+theme:     readthedocs
+#site_dir:  site/v0.30
+
+markdown_extensions:
+    - markdown_include.include:
+        base_path: docs
+    - toc:
+        permalink: True
+    #- codehilite(linenums=true)
+
+pages:
+    - Overview:                 'index.md'
+    - Lexical Rules:            'lexical_rules/index.md'
+    - Types:                    'types/index.md'
+    - Storage Entities:         'storage_entities/index.md'
+    - Statements:               'statements/index.md'
+    - Locations & Expressions:  'expressions/index.md'
+    #- Static Checks:    'static_checks/index.md'
+    - Compilation:              'compilation/index.md'
+    #- Errors:           'errors/index.md'
+    - Syntax:                   'syntax.md'
+    - License:                  'license.md'
