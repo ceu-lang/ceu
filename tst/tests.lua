@@ -252,144 +252,6 @@ escape 1;
     run = 1,
 }
 
-Test { [[
-#include "c.ceu"
-#include "sdl/sdl.ceu"
-
-code/tight Intersects (var& SDL_Rect rct1, var& SDL_Rect rct2) -> bool
-do
-    escape rct1.x+rct1.w/2 >= rct2.x-rct2.w/2 and
-           rct1.x-rct1.w/2 <= rct2.x+rct2.w/2 and
-           rct1.y+rct1.h/2 >= rct2.y-rct2.h/2 and
-           rct1.y-rct1.h/2 <= rct2.y+rct2.h/2;
-end
-
-var&? SDL_Init sdl = spawn SDL_Init("Joguinho", 640,480, SDL_Color(0xFF,0xFF,0xFF,0xFF));
-
-watching sdl do
-
-    code/await Cloud (var int y, var float vx) -> (var SDL_Rect r, event void go_collided)-> void do
-		r = val SDL_Rect(0,0, 20,70);
-		par/or do
-            await go_collided;
-        with
-		    var float x = -r.w;
-		    par do
-		        var int dt;
-		        every dt in SDL_DT do
-		            x = x + vx*dt/1000;
-		            if x > 640 then
-		                x = -r.w;
-		            end
-		        end
-		    with
-		        every SDL_REDRAW do
-		            _SDL_SetRenderDrawColor(&&outer.sdl!.ren, 0xDD,0xDD,0xDD,0xFF);
-		            r.x = x as int;
-		            _SDL_RenderFillRect(&&outer.sdl!.ren, (&&r as _SDL_Rect&&));
-		        end
-		    end
-		end
-	end
-
-    code/await Player (void) -> (var SDL_Rect r, event void go_collided)-> void do
-
-		r = val SDL_Rect(0,0, 20,20);
-		var float x = 640/2 - 20/2;
-	    var float y = 480-50;
-	    var float vx = 0;
-	    var float vy = 0;
-		par/or do
-            await go_collided;
-        with
-		    var int dt;
-		    every dt in SDL_DT do
-		        x = x + vx*dt/1000;
-		        y = y + vy*dt/1000;
-		    end
-        with
-            par do
-                loop do
-                    var _SDL_KeyboardEvent&& key;
-                    key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_LEFT;
-                    vx = -100;
-                    key = await SDL_KEYUP   until key:keysym.sym==_SDLK_LEFT;
-                    vx = 0;
-                end
-            with
-                loop do
-                    var _SDL_KeyboardEvent&& key;
-                    key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_RIGHT;
-                    vx = 100;
-                    key = await SDL_KEYUP   until key:keysym.sym==_SDLK_RIGHT;
-                    vx = 0;
-                end
-            with
-                loop do
-                    var _SDL_KeyboardEvent&& key;
-                    key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_UP;
-                    vy = -100;
-                    key = await SDL_KEYUP   until key:keysym.sym==_SDLK_UP;
-                    vy = 0;
-                end
-            with
-                loop do
-                    var _SDL_KeyboardEvent&& key;
-                    key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_DOWN;
-                    vy = 100;
-                    key = await SDL_KEYUP   until key:keysym.sym==_SDLK_DOWN;
-                    vy = 0;
-                end
-            end
-        with
-            every SDL_REDRAW do
-                _SDL_SetRenderDrawColor(&&outer.sdl!.ren, 0x00,0x00,0x00,0xFF);
-                r.x = x as int;
-                r.y = y as int;
-                _SDL_RenderFillRect(&&outer.sdl!.ren, (&&r as _SDL_Rect&&));
-            end
-        end
-    end
-    var int i;
-	loop do
-		pool[1] Player player;
-		pool[4] Cloud clouds1;
-		pool[4] Cloud clouds2;
-		pool[4] Cloud clouds3;
-		spawn Player() in player;
-		par do
-			loop i in [1 -> 4] do
-				every 1500ms do
-					spawn Cloud(100, 350) in clouds1;
-					spawn Cloud(200, 250) in clouds2;
-					spawn Cloud(300, 150) in clouds3;
-				end	
-			end
-		with
-			every SDL_DT do
-                var&? Player player1;
-                loop player1 in player do
-                    var&? Cloud clouds;
-                    loop clouds in clouds3 do
-                        if (&&player1!.r as usize)<(&&clouds!.r as usize)
-                            and (call Intersects(&player1!.r,&clouds!.r))
-                        then
-                            emit player1!.go_collided;
-                            emit clouds!.go_collided;
-                            break;
-                        end
-                    end
-                end
-            end
-		end
-	end
-end
-
-escape 0;
-]],
-    run = 1,
-}
-
 do return end -- OK
 --]=====]
 
@@ -40548,6 +40410,21 @@ end
 
 escape n+1;
 ]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> void do
+end
+var int i;
+pool[1] Ff player;
+var&? Ff player1;
+loop player1 in player do
+    break;
+end
+escape 1;
+]],
+    wrn = true,
     run = 1,
 }
 

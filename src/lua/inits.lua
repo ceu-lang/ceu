@@ -72,7 +72,8 @@ local function run_inits (par, i, Dcl, stop, dont_await)
         end
 
     elseif me.tag == 'Break' then
-        local blk = AST.asr(me.outer,'',2,'Block')
+        local blk = AST.get(me.outer,'',2,'Block')
+                or  AST.asr(me.outer,'',4,'Block')
         if AST.depth(blk) <= AST.depth(Dcl.blk) then
             return 'Break', me
         else
