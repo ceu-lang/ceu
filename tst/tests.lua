@@ -252,6 +252,157 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+#include "c.ceu"
+#include "sdl/sdl.ceu"
+
+code/tight Intersects (var& SDL_Rect rct1, var& SDL_Rect rct2) -> bool
+do
+    escape rct1.x+rct1.w/2 >= rct2.x-rct2.w/2 and
+           rct1.x-rct1.w/2 <= rct2.x+rct2.w/2 and
+           rct1.y+rct1.h/2 >= rct2.y-rct2.h/2 and
+           rct1.y-rct1.h/2 <= rct2.y+rct2.h/2;
+end
+
+var&? SDL_Init sdl = spawn SDL_Init("Joguinho", 640,480, SDL_Color(0xFF,0xFF,0xFF,0xFF));
+
+watching sdl do
+
+    code/await Cloud (var int y, var float vx) -> (var SDL_Rect r, event void go_collided)-> void do
+		r = val SDL_Rect(0,0, 20,70);
+		par/or do
+            await go_collided;
+        with
+		    var float x = -r.w;
+		    par do
+		        var int dt;
+		        every dt in SDL_DT do
+		            x = x + vx*dt/1000;
+		            if x > 640 then
+		                x = -r.w;
+		            end
+		        end
+		    with
+		        every SDL_REDRAW do
+		            _SDL_SetRenderDrawColor(&&outer.sdl!.ren, 0xDD,0xDD,0xDD,0xFF);
+		            r.x = x as int;
+		            _SDL_RenderFillRect(&&outer.sdl!.ren, (&&r as _SDL_Rect&&));
+		        end
+		    end
+		end
+	end
+
+    code/await Player (void) -> (var SDL_Rect r, event void go_collided)-> void do
+
+		r = val SDL_Rect(0,0, 20,20);
+		var float x = 640/2 - 20/2;
+	    var float y = 480-50;
+	    var float vx = 0;
+	    var float vy = 0;
+		par/or do
+            await go_collided;
+        with
+		    var int dt;
+		    every dt in SDL_DT do
+		        x = x + vx*dt/1000;
+		        y = y + vy*dt/1000;
+		    end
+        with
+            par do
+                loop do
+                    var _SDL_KeyboardEvent&& key;
+                    key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_LEFT;
+                    vx = -100;
+                    key = await SDL_KEYUP   until key:keysym.sym==_SDLK_LEFT;
+                    vx = 0;
+                end
+            with
+                loop do
+                    var _SDL_KeyboardEvent&& key;
+                    key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_RIGHT;
+                    vx = 100;
+                    key = await SDL_KEYUP   until key:keysym.sym==_SDLK_RIGHT;
+                    vx = 0;
+                end
+            with
+                loop do
+                    var _SDL_KeyboardEvent&& key;
+                    key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_UP;
+                    vy = -100;
+                    key = await SDL_KEYUP   until key:keysym.sym==_SDLK_UP;
+                    vy = 0;
+                end
+            with
+                loop do
+                    var _SDL_KeyboardEvent&& key;
+                    key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_DOWN;
+                    vy = 100;
+                    key = await SDL_KEYUP   until key:keysym.sym==_SDLK_DOWN;
+                    vy = 0;
+                end
+            end
+        with
+            every SDL_REDRAW do
+                _SDL_SetRenderDrawColor(&&outer.sdl!.ren, 0x00,0x00,0x00,0xFF);
+                r.x = x as int;
+                r.y = y as int;
+                _SDL_RenderFillRect(&&outer.sdl!.ren, (&&r as _SDL_Rect&&));
+            end
+        end
+    end
+    var int i;
+	loop do
+		pool[1] Player player;
+		pool[4] Cloud clouds1;
+		pool[4] Cloud clouds2;
+		pool[4] Cloud clouds3;
+		spawn Player() in player;
+		par do
+			loop i in [1 -> 4] do
+				every 1500ms do
+					spawn Cloud(100, 350) in clouds1;
+					spawn Cloud(200, 250) in clouds2;
+					spawn Cloud(300, 150) in clouds3;
+				end	
+			end
+		with
+			every SDL_DT do
+                var&? Player player1;
+                loop player1 in player do
+                    var&? Cloud clouds;
+                    loop clouds in clouds3 do
+                        if (&&player1!.r as usize)<(&&clouds!.r as usize)
+                            and (call Intersects(&player1!.r,&clouds!.r))
+                        then
+                            emit player1!.go_collided;
+                            emit clouds!.go_collided;
+                            break;
+                        end
+                    end
+                end
+            end
+		end
+	end
+end
+
+escape 0;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> (void) -> void do
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    watching f do
+    end
+end
+escape 0;
+]],
+    run = 1,
+}
 do return end -- OK
 --]=====]
 
@@ -36703,7 +36854,7 @@ var int x = 10;
 var&? Code c = spawn Code(&x);
 var int? a =
     watching c do
-        c!.y = c!.y + 1;
+        c.y = c.y + 1;
         await 5s;
         escape 1;
     end;
@@ -36749,7 +36900,7 @@ var int x = 10;
 var&? Code c = spawn Code(&x);
 var int? a =
     watching c do
-        c!.y = c!.y + 1;
+        c.y = c.y + 1;
         await 5s;
         escape 1;
     end;
@@ -36771,9 +36922,9 @@ var&? Code c;
 var int x = 10;
 c = spawn Code(&x);
 watching c do
-    c!.y = c!.y + 1;
+    c.y = c.y + 1;
     await 5s;
-    escape c!.y;
+    escape c.y;
 end;
 
 escape x;
@@ -36817,7 +36968,7 @@ end
 var&? SDL_Go sdl = spawn SDL_Go();
 watching sdl do
     await 1s;
-    _printf("%p\n", sdl!.win);
+    _printf("%p\n", sdl.win);
 end
 
 escape 0;
@@ -37009,7 +37160,7 @@ var int ret = 0;
 var&? Fx f = spawn Fx();
 var int? x =
     watching f do
-        ret = ret + f!.vv;
+        ret = ret + f.vv;
         await 1s;
     end;
 
@@ -37033,6 +37184,23 @@ end
 
 escape 0;
 ]],
+    dcls = 'line 10 : invalid operand to `!´ : found enclosing matching `watching´',
+}
+Test { [[
+code/await Ff (void) -> (var& int x, var& int y) -> void do
+    var int xx = 10;
+    x = &xx;
+    y = &xx;
+    await FOREVER;
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    escape f.y + 1;
+end
+
+escape 0;
+]],
     run = 11,
 }
 
@@ -37050,7 +37218,7 @@ end
 
 var&? Texs t = spawn Texs();
 watching t do
-    vector&[10] Int nums_ = &t!.nums;   // TODO: deveria poder
+    vector&[10] Int nums_ = &t.nums;   // TODO: deveria poder
 end
 
 escape 1;
@@ -37073,7 +37241,7 @@ end
 
 var&? Texs t = spawn Texs();
 watching t do
-    escape ($t!.nums as int)+10;
+    escape ($t.nums as int)+10;
 end
 
 escape 1;
@@ -37299,8 +37467,8 @@ end
 var  int vv = 0;
 var&? Ff f = spawn Ff();
 watching f do
-    f!.v = &vv;
-    escape f!.v;
+    f.v = &vv;
+    escape f.v;
 end
 escape 0;
 ]],
@@ -37317,7 +37485,7 @@ end
 var  int vv = 0;
 var&? Ff f = spawn Ff();
 watching f do
-    escape f!.v;
+    escape f.v;
 end
 escape 0;
 ]],
@@ -37334,7 +37502,7 @@ end
 
 var&? Ff f = spawn Ff();
 watching f do
-    escape f!.v;
+    escape f.v;
 end
 escape 0;
 ]],
@@ -37351,7 +37519,7 @@ end
 
 var&? Ff f = spawn Ff();
 watching f do
-    escape f!.vec[0];
+    escape f.vec[0];
 end
 escape 0;
 ]],
@@ -37499,8 +37667,8 @@ end
 
 var&? Ff f = spawn Ff();
 watching f do
-    var& int x = &f!.x;
-    escape f!.x;
+    var& int x = &f.x;
+    escape f.x;
 end
 
 escape 0;
@@ -37518,15 +37686,15 @@ end
 code/await Ff (void) -> (var& int x) -> void do
     var&? Gg g = spawn Gg();
     watching g do
-        x = &g!.y;
+        x = &g.y;
         await FOREVER;
     end
 end
 
 var&? Ff f = spawn Ff();
 watching f do
-    var& int x = &f!.x;
-    escape f!.x;
+    var& int x = &f.x;
+    escape f.x;
 end
 
 escape 1;
@@ -37549,7 +37717,7 @@ end
 code/await Ff (void) -> (var& int x) -> int do
     var&? Gg g = spawn Gg();
     watching g do
-        x = &g!.y;
+        x = &g.y;
         await FOREVER;
     end
     escape x;
@@ -37557,8 +37725,8 @@ end
 
 var&? Ff f = spawn Ff();
 watching f do
-    var& int x = &f!.x;
-    escape f!.x;
+    var& int x = &f.x;
+    escape f.x;
 end
 
 escape 0;
@@ -37582,7 +37750,7 @@ end
 code/await Ff (void) -> (var& int x) -> void do
     var&? Gg g = spawn Gg();
     watching g do
-        x = &g!.y;
+        x = &g.y;
         await FOREVER;
     end
 end
@@ -37590,7 +37758,7 @@ end
 var&? Ff f = spawn Ff();
 var& int x = &f!.x;
 watching f do
-    escape f!.x;
+    escape f.x;
 end
 
 escape 0;
@@ -37622,7 +37790,7 @@ end
 var&? Ff f = spawn Ff();
 var& int x = &f!.x;
 watching f do
-    escape f!.x;
+    escape f.x;
 end
 
 escape 0;
@@ -37645,15 +37813,15 @@ code/await Ff (void) -> (var& int x) -> void do
     var&? Gg g = spawn Gg();
     watching g do
         await 1s;
-        x = &g!.y;              // no, crossing await
+        x = &g.y;              // no, crossing await
         await FOREVER;
     end
 end
 
 var&? Ff f = spawn Ff();
 watching f do
-    var& int x = &f!.x;
-    escape f!.x;
+    var& int x = &f.x;
+    escape f.x;
 end
 
 escape 0;
@@ -37700,7 +37868,7 @@ end
 
 var&? Ff f = spawn Ff();
 watching f do
-    escape f!.g!.y;
+    escape f.g!.y;
 end
 
 escape 0;
@@ -37758,14 +37926,14 @@ end
 code/await Ff (void) -> (var& int kkk) -> void do
     var&? Gg g = spawn Gg();
     watching g do
-        kkk = &g!.y;
+        kkk = &g.y;
         await FOREVER;
     end
 end
 
 var&? Ff f = spawn Ff();
 watching f do
-    escape f!.kkk;
+    escape f.kkk;
 end
 
 escape 0;
@@ -37783,7 +37951,7 @@ code/await Ff (void) -> (var& int x, var& int y) -> void do
     var&? Gg g = spawn Gg();
     var& int a;
     watching g do
-        a = &g!.y;
+        a = &g.y;
         x = &a;
         y = &a;
         await FOREVER;
@@ -37793,10 +37961,10 @@ end
 var& int x;
 var&? Ff f = spawn Ff();
 watching f do
-    x = &f!.x;
+    x = &f.x;
     var& int y;
-    y = &f!.y;
-    watching f do
+    y = &f.y;
+    do/_
         escape x+y;
     end
     escape 0;
@@ -37815,8 +37983,8 @@ end
 code/await Ff (void) -> (var& int x, var& int y) -> void do
     var&? Gg g = spawn Gg();
     watching g do
-        x = &g!.y;
-        y = &g!.y;
+        x = &g.y;
+        y = &g.y;
         await FOREVER;
     end
 end
@@ -37824,10 +37992,10 @@ end
 var&? Ff f = spawn Ff();
 watching f do
     var& int x;
-    x = &f!.x;
+    x = &f.x;
     var& int y;
-    y = &f!.y;
-    watching f do
+    y = &f.y;
+    do/_
         escape x+y;
     end
     escape 0;
@@ -37846,7 +38014,7 @@ code/await Ff (void) -> (var& int x, var& int y) -> void do
     var&? Gg g = spawn Gg();
     var& int a;
     watching g do
-        a = &g!.y;
+        a = &g.y;
         x = &a;
         y = &a;
         await FOREVER;
@@ -37880,11 +38048,11 @@ code/await Ff (void) -> (var& int x) -> void do
     var&? Gg g2;
     watching g1 do
         var& int a1;
-        a1 = &g1!.a;
+        a1 = &g1.a;
         //x = &a1;
         g2 = spawn Gg();
         watching g2 do
-            x = &g2!.a;
+            x = &g2.a;
             await FOREVER;
         end
     end
@@ -37893,7 +38061,7 @@ end
 var&? Ff f = spawn Ff();
 watching f do
     var& int x;
-    x = &f!.x;
+    x = &f.x;
     escape x;
 end
 ]],
@@ -37913,7 +38081,7 @@ code/await Ff (void) -> (var& int x) -> void do
         //x = &a1;
         var&? Gg g2 = spawn Gg();
         watching g2 do
-            x = &g2!.a;
+            x = &g2.a;
             await FOREVER;
         end
     end
@@ -37922,7 +38090,7 @@ end
 var&? Ff f = spawn Ff();
 var& int x;
 watching f do
-    x = &f!.x;
+    x = &f.x;
     escape x;
 end
 ]],
@@ -37943,7 +38111,7 @@ code/await Ff (void) -> (var& int x) -> void do
         //x = &a1;
         g2 = spawn Gg();
         watching g2 do
-            x = &g2!.a;
+            x = &g2.a;
             await FOREVER;
         end
     end
@@ -37952,7 +38120,7 @@ end
 var&? Ff f = spawn Ff();
 var& int x;
 watching f do
-    x = &f!.x;
+    x = &f.x;
     escape x;
 end
 ]],
@@ -37972,7 +38140,7 @@ code/await Ff (void) -> (var& int x) -> void do
     watching g1 do
         g2 = spawn Gg();
         watching g2 do
-            x = &g2!.a;
+            x = &g2.a;
             await FOREVER;
         end
     end
@@ -37981,7 +38149,7 @@ end
 var&? Ff f = spawn Ff();
 watching f do
     var& int x;
-    x = &f!.x;
+    x = &f.x;
     escape x;
 end
 ]],
@@ -38000,7 +38168,7 @@ code/await Ff (void) -> (var& int x) -> void do
     nothing;
     var&? Gg g = spawn Gg();
     watching g do
-        x = &g!.y;
+        x = &g.y;
         await FOREVER;
     end
 end
@@ -38008,7 +38176,7 @@ end
 var&? Ff f = spawn Ff();
 watching f do
     var& int x;
-    x = &f!.x;
+    x = &f.x;
     escape x;
 end
 ]],
@@ -38046,13 +38214,13 @@ code/await Ff (void) -> (var& int x) -> void do
     var&? Gg g2;
     var&? Gg g3;
     watching g1 do
-        y1 = g1!.y;
+        y1 = g1.y;
         g2 = spawn Gg(2);
         watching g2 do
             g3 = spawn Gg(3);
-            y2 = g2!.y;
+            y2 = g2.y;
             watching g3 do
-                y3 = g3!.y;
+                y3 = g3.y;
                 v = y1+y2+y3;
                 x = &v;
                 await FOREVER;
@@ -38064,7 +38232,7 @@ end
 var&? Ff f = spawn Ff();
 watching f do
     var& int x;
-    x = &f!.x;
+    x = &f.x;
     escape x;
 end
 ]],
@@ -38087,11 +38255,11 @@ code/await Ff (void) -> (var& int x) -> void do
     var&? Gg g2 = spawn Gg(2);
     var&? Gg g3 = spawn Gg(3);
     watching g1 do
-        y1 = g1!.y;
+        y1 = g1.y;
         watching g2 do
-            y2 = g2!.y;
+            y2 = g2.y;
             watching g3 do
-                y3 = g3!.y;
+                y3 = g3.y;
                 v = y1+y2+y3;
                 x = &v;
                 await FOREVER;
@@ -38103,7 +38271,7 @@ end
 var&? Ff f = spawn Ff();
 watching f do
     var& int x;
-    x = &f!.x;
+    x = &f.x;
     escape x;
 end
 ]],
@@ -38126,9 +38294,9 @@ code/await Ff (void) -> (var& int x) -> void do
     var&? Gg g2 = spawn Gg(2);
     var&? Gg g3 = spawn Gg(3);
     watching g1,g2,g3 do
-        y1 = g1!.y;
-        y2 = g2!.y;
-        y3 = g3!.y;
+        y1 = g1.y;
+        y2 = g2.y;
+        y3 = g3.y;
         v = y1+y2+y3;
         x = &v;
         await FOREVER;
@@ -38138,7 +38306,7 @@ end
 var&? Ff f = spawn Ff();
 watching f do
     var& int x;
-    x = &f!.x;
+    x = &f.x;
     escape x;
 end
 ]],
@@ -38155,7 +38323,7 @@ code/await Ff (void) -> (var& int x) -> void do
     var int y1;
     var&? Gg g = spawn Gg(1);
     watching g do
-        y1 = g!.y;
+        y1 = g.y;
         do
             var int v = y1;
             x = &v;
@@ -38185,11 +38353,11 @@ code/await Ff (void) -> (var& int x) -> void do
     var&? Gg g2;
     var int v;
     watching g1 do
-        y1 = g1!.y;
+        y1 = g1.y;
         nothing;
         g2 = spawn Gg(2);
         watching g2 do
-            y2 = g2!.y;
+            y2 = g2.y;
             v = y1+y2;
             x = &v;
             await FOREVER;
@@ -38200,7 +38368,7 @@ end
 var&? Ff f = spawn Ff();
 watching f do
     var& int x;
-    x = &f!.x;
+    x = &f.x;
     escape x;
 end
 ]],
@@ -38221,9 +38389,9 @@ code/await Ff (void) -> void do
     var&? Gg g1 = spawn Gg(1);
     var&? Gg g2 = spawn Gg(2);
     watching g1,g2 do
-        y1 = g1!.y;
+        y1 = g1.y;
         await 1s;
-        y2 = g2!.y;
+        y2 = g2.y;
     end
 end
 
@@ -38251,9 +38419,9 @@ code/await Ff (void) -> (var& int x) -> void do
     var&? Gg g2 = spawn Gg(2);
     var int v;
     watching g1 do
-        y1 = g1!.y;
+        y1 = g1.y;
         watching g2 do
-            y2 = g2!.y;
+            y2 = g2.y;
             v = y1+y2;
             x = &v;
             await FOREVER;
@@ -38264,7 +38432,7 @@ end
 var&? Ff f = spawn Ff();
 watching f do
     var& int x;
-    x = &f!.x;
+    x = &f.x;
     escape x;
 end
 ]],
@@ -38286,9 +38454,9 @@ code/await Ff (void) -> (var& int x) -> void do
     var&? Gg g2 = spawn Gg(2);
     var int v;
     watching g1 do
-        y1 = &g1!.y;
+        y1 = &g1.y;
         watching g2 do
-            y2 = &g2!.y;
+            y2 = &g2.y;
             v = y1+y2;
             x = &v;
             await FOREVER;
@@ -38300,7 +38468,7 @@ end
 var& int x;
 var&? Ff f = spawn Ff();
 watching f do
-    x = &f!.x;
+    x = &f.x;
     escape x;
 end
 
@@ -38326,9 +38494,9 @@ code/await Ff (void) -> (var& int x) -> void do
     var&? Gg g2 = spawn Gg(2);
     var int v;
     watching g1 do
-        y1 = &g1!.y;
+        y1 = &g1.y;
         watching g2 do
-            y2 = &g2!.y;
+            y2 = &g2.y;
             v = y1+y2;
             x = &v;
             await FOREVER;
@@ -38384,9 +38552,9 @@ code/await Ff (void) -> (var& int x) -> void do
     var&? Gg g2 = spawn Gg(2);
     var&? Gg g3 = spawn Gg(3);
     watching g1, g2, g3 do
-        y1 = g1!.y;
-        y2 = g2!.y;
-        y3 = g3!.y;
+        y1 = g1.y;
+        y2 = g2.y;
+        y3 = g3.y;
         v = y1+y2+y3;
         x = &v;
         await FOREVER;
@@ -38396,7 +38564,7 @@ end
 var&? Ff f = spawn Ff();
 watching f do
     var& int x;
-    x = &f!.x;
+    x = &f.x;
     escape x;
 end
 ]],
@@ -38427,7 +38595,7 @@ end
 var&? Ff f = spawn Ff(10);
     watching f do
         event& int e;
-        e = &f!.e;
+        e = &f.e;
         emit e(100);
         escape 0;
     end;
@@ -38449,7 +38617,7 @@ end
 var&? Ff f = spawn Ff(10);
     watching f do
         event& int e;
-        e = &f!.e;
+        e = &f.e;
         par/or do
             await e;
         with
@@ -38480,6 +38648,26 @@ var int? ret =
 
 escape ret!;
 ]],
+    dcls = 'line 10 : invalid operand to `!´ : found enclosing matching `watching´',
+}
+
+Test { [[
+code/await Ff (var int x) -> (var& int y) -> int do
+    y = &x;
+    await 1s;
+    escape y + x;
+end
+
+var&? Ff f = spawn Ff(10);
+var int? ret =
+    watching f do
+        var& int y = &f.y;
+        await 2s;
+        escape y;
+    end;
+
+escape ret!;
+]],
     run = {['~>5s']=20},
 }
 
@@ -38493,7 +38681,7 @@ end
 var&? Ff f = spawn Ff(10);
 var int? ret =
     watching f do
-        var& int y = &f!.y;
+        var& int y = &f.y;
         await 1s;
         escape y;
     end;
@@ -38515,7 +38703,7 @@ var&? Ff f = spawn Ff(10);
 var int? ret =
     watching f do
         event& int e;
-        e = &f!.e;
+        e = &f.e;
         emit e(100);
         escape 0;
     end;
@@ -38537,7 +38725,7 @@ event& int e;
 var&? Ff f = spawn Ff(10);
 var int? ret =
     watching f do
-        e = &f!.e;
+        e = &f.e;
         emit e(100);
         escape 0;
     end;
@@ -38563,8 +38751,8 @@ end
 var&? Ff f = spawn Ff(10);
 var int? ret =
     watching f do
-        event& void e = &f!.e;
-        var& int v = &f!.v;
+        event& void e = &f.e;
+        var& int v = &f.v;
         emit e;
         escape 0;
     end;
@@ -38627,7 +38815,7 @@ code/await Ff (void) -> (var& int x) -> void do
     watching g do
         var&? Hh h = spawn Hh();
         watching h do
-            x = &h!.x;
+            x = &h.x;
             await FOREVER;
         end
         await 1s;
@@ -38655,7 +38843,7 @@ code/await Ff (void) -> (var& int x) -> void do
     watching g do
         var&? Hh h = spawn Hh();
         watching h do
-            x = &h!.x;
+            x = &h.x;
             await FOREVER;
         end
     end
@@ -38682,11 +38870,11 @@ var&? Ff f2 = spawn Ff(1);
 
 watching f1 do
     var& int ctrl1;
-    ctrl1 = &f1!.x;
+    ctrl1 = &f1.x;
     watching Gg() do
         watching f2 do
             var& int ctrl2;
-            ctrl2 = &f2!.x;
+            ctrl2 = &f2.x;
             escape ctrl1+ctrl2;
         end
     end
@@ -38743,7 +38931,7 @@ var int ret = 0;
 var& int nn;
 var&? Ff f = spawn Ff(10);
 watching f do
-    nn = &f!.y;
+    nn = &f.y;
 end
 
 escape nn;
@@ -38862,7 +39050,7 @@ do
     var&? Ff f = spawn Ff() in fs;
     var int? ret =
         watching f do
-            x = &f!.x;
+            x = &f.x;
             await FOREVER;
         end;
     escape ret!;
@@ -38891,7 +39079,7 @@ do
     var&? Ff f = spawn Ff() in fs;
     var int? ret =
         watching f do
-            x = &f!.x;
+            x = &f.x;
             await FOREVER;
         end;
     escape x;                   // error: deallocated
@@ -38914,7 +39102,7 @@ code/await Ff (void) -> (var& int x) -> FOREVER do
     end
     var&? Gg g = spawn Gg();
     watching g do
-        x = &g!.x;
+        x = &g.x;
         await FOREVER;
     end
     code/tight Hh (void) -> void do end
@@ -38935,7 +39123,7 @@ code/await Ff (void) -> (var& int x) -> FOREVER do
     end
     var&? Gg g = spawn Gg();
     watching g do
-        x = &g!.x;
+        x = &g.x;
         await FOREVER;
     end
     code/tight Hh (void) -> void do end
@@ -41618,7 +41806,7 @@ end
 var&? Ff f = spawn Ff();
 watching f do
     pool[] Gg gs;
-    spawn Gg(&f, &f!.x) in gs;
+    spawn Gg(&f, &f.x) in gs;
 end
 escape 1;
 ]],
@@ -41638,7 +41826,7 @@ end
 pool[] Gg gs;
 var&? Ff f = spawn Ff();
 watching f do
-    spawn Gg(&f, &f!.x) in gs;
+    spawn Gg(&f, &f.x) in gs;
 end
 
 escape 1;
@@ -42243,7 +42431,7 @@ code/await Ux (var& int e) -> void do end
 
 var&? Tx t = spawn Tx();
 watching t do
-    spawn Ux(&t!.e);
+    spawn Ux(&t.e);
 end
 
 escape 1;
@@ -45212,7 +45400,7 @@ end
 
 var&? Points points = spawn Points();
 watching points do
-    emit points!.me.inc;
+    emit points.me.inc;
 end
 
 escape 1;

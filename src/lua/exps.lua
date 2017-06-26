@@ -95,6 +95,27 @@ EXPS.F = {
         }
     end,
 
+    ID_int__POS = function (me)
+        local alias = unpack(me.info.dcl)
+        if alias ~= '&?' then
+            return
+        end
+        if me.__exps_ok then
+            return
+        end
+
+        for watching in AST.iter'Watching' do
+            local loc = AST.get(watching,'',1,'Par_Or',1,'Block',1,'Stmts',1,'Await_Int',1,'Loc',1,'')
+                    or  AST.get(watching,'',1,'Par_Or',1,'Block',1,'Stmts',1,'Set_Await_many',1,'Await_Int',1,'Loc',1,'')
+            if loc and loc~=me and loc.info.dcl==me.info.dcl then
+                ASR(me.__par.tag~='Exp_!', me, 'invalid operand to `!´ : found enclosing matching `watching´')
+                me.__exps_ok = true
+                return AST.node('Exp_!', me.ln, '!', me)
+                    -- TODO: inneficient: could access directly
+            end
+        end
+    end,
+
 -- PRIMITIVES
 
     NULL = function (me)
