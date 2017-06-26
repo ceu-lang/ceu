@@ -35731,7 +35731,7 @@ var&? Ff f1 = spawn Ff();
 var& Ff f2 = &f1!;
 escape 1;
 ]],
-    run = 1,
+    dcls = 'line 4 : invalid declaration : `code/await` must not execute forever',
 }
 
 Test { [[
@@ -36109,6 +36109,41 @@ var&? Ff f = spawn Ff(aaa);
 escape f!.yyy;
 ]],
     run = 10,
+    --dcls = 'line 10 : invalid declaration : `code/await` must not execute forever',
+}
+
+Test { [[
+code/await Ff (var int xxx) -> (var& int yyy) -> FOREVER do
+    yyy = &xxx;
+    do
+        do finalize with end
+    end
+    await FOREVER;
+end
+
+var int aaa = 10;
+var& Ff f = spawn Ff(aaa);
+
+escape f!.yyy;
+]],
+    dcls = 'line 12 : invalid operand to `!` : expected option type : got "Ff"',
+}
+
+Test { [[
+code/await Ff (var int xxx) -> (var& int yyy) -> FOREVER do
+    yyy = &xxx;
+    do
+        do finalize with end
+    end
+    await FOREVER;
+end
+
+var int aaa = 10;
+var& Ff f = spawn Ff(aaa);
+
+escape f.yyy;
+]],
+    run = 10,
 }
 
 Test { [[
@@ -36142,7 +36177,7 @@ var int ret = 0;
 var int i;
 loop i in [0->1] do
     var&? Ff f1 = do
-        var&? Ff f2;
+        var& Ff f2;
         loop f2 in fs do
             if i == 0 then
                 escape &f2;
@@ -40882,7 +40917,8 @@ end;
 escape (x? as int) + 1;
 ]],
     --dcls = 'line 10 : invalid declaration : option alias : expected native or `code/await` type',
-    stmts = 'line 13 : invalid binding : unmatching alias `&` declaration',
+    --stmts = 'line 13 : invalid binding : unmatching alias `&` declaration',
+    scopes = 'line 13 : invalid binding : unexpected source with `&?` : destination may outlive source',
 }
 Test { [[
 code/await Ff (void) -> (var& int x) -> void do

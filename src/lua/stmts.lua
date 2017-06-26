@@ -184,7 +184,7 @@ STMTS.F = {
                 'invalid binding : unexpected native identifier')
 
             if fr.info.dcl[1] then
-                ASR(to.info.dcl[1] == fr.info.dcl[1], me,
+                ASR(to.info.dcl[1]=='&?' or to.info.dcl[1]==fr.info.dcl[1], me,
                     'invalid binding : unmatching alias `&` declaration')
             end
         end
