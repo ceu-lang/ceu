@@ -390,19 +390,6 @@ escape 0;
     run = 1,
 }
 
-Test { [[
-code/await Ff (void) -> (void) -> void do
-end
-
-var&? Ff f = spawn Ff();
-watching f do
-    watching f do
-    end
-end
-escape 0;
-]],
-    run = 1,
-}
 do return end -- OK
 --]=====]
 
@@ -37169,6 +37156,19 @@ escape ret+x!;
     run = { ['~>1s']=22 },
 }
 
+Test { [[
+code/await Ff (void) -> (void) -> void do
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    watching f do
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
 Test { [[
 code/await Ff (void) -> (var& int x, var& int y) -> void do
     var int xx = 10;
