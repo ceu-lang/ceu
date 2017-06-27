@@ -3331,10 +3331,12 @@ The main program interfaces with the Céu program in both directions:
 The functions that follow are called by the main program to command the
 execution of Céu programs:
 
-- `void ceu_start (void)`
+- `void ceu_start (tceu_callback* cb, int argc, char* argv[])`
 
     Initializes and starts the program.
     Should be called once.
+    Expects a callback to register for further notifications.
+    Also receives the program arguments in `argc` and `argv`.
 
 - `void ceu_stop  (void)`
 
@@ -3348,7 +3350,7 @@ execution of Céu programs:
     The call to `ceu_input(CEU_INPUT__ASYNC, NULL)` makes
     [asynchronous blocks](../statements/#asynchronous-block) to execute a step.
 
-- `int ceu_loop (void)`
+- `int ceu_loop (tceu_callback* cb, int argc, char* argv[])`
 
     Implements a simple loop encapsulating `ceu_start`, `ceu_input`, and
     `ceu_stop`.
@@ -3357,13 +3359,15 @@ execution of Céu programs:
     Should be called once.
     Returns the final value of the program.
 
+- `void ceu_callback_register (tceu_callback* cb)`
+
+    Registers a new callback.
+
 ##### Callbacks
 
 The Céu program makes callbacks to the main program in specific situations:
 
 ```c
-tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2);
-
 enum {
     CEU_CALLBACK_START,                 /* once in the beginning of `ceu_start`             */
     CEU_CALLBACK_STOP,                  /* once in the end of `ceu_stop`                    */
@@ -3386,8 +3390,44 @@ enum {
 
 `TODO: payloads`
 
-The main program must implement the `ceu_callback` prototype above to handle
-the enumerated commands.
+Céu invokes the registered callbacks in reverse register order, one after the
+other, stopping when a callback returns that it handled the request.
+
+A callback is composed of a function handler and a pointer to the next
+callback:
+
+```
+typedef struct tceu_callback {
+    tceu_callback_f       f;
+    struct tceu_callback* nxt;
+} tceu_callback;
+```
+
+The handler should expect a request identifier with two arguments, as well as
+the filename and line number in the source code in Céu making the request:
+
+```
+typedef tceu_callback_ret (*tceu_callback_f) (int, tceu_callback_arg, tceu_callback_arg, const char*, u32);
+```
+
+An argument has one of the following types:
+
+```
+typedef union tceu_callback_arg {
+    void* ptr;
+    s32   num;
+    usize size;
+} tceu_callback_arg;
+```
+
+The handler returns if it handled the request and an optional value:
+
+```
+typedef struct tceu_callback_ret {
+    bool is_handled;
+    tceu_callback_arg value;
+} tceu_callback_ret;
+```
 
 <!--
 WCLOCK_DT uses `CEU_WCLOCK_INACTIVE`
@@ -3410,38 +3450,40 @@ output int O;
 ```
 
 The `main.c` implements an event loop to sense occurrences of `I` and a
-callback handler for occurrences of `O`:
+callback to handle occurrences of `O`:
 
 ```
 ##include "types.h"      // as illustrated above in "Types"
 
 int ceu_is_running;     // detects program termination
 
-tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
-    tceu_callback_ret ret = { .is_handled=1 };
+tceu_callback_ret ceu_callback_main (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* filename, u32 line)
+{
+    tceu_callback_ret ret = { .is_handled=0 };
     switch (cmd) {
         case CEU_CALLBACK_TERMINATING:
             ceu_is_running = 0;
+            ret.is_handled = 1;
             break;
         case CEU_CALLBACK_OUTPUT:
             if (p1.num == CEU_OUTPUT_O) {
                 printf("output O has been emitted with %d\n", p2.num);
+                ret.is_handled = 1;
             }
             break;
-        default:
-            ret.is_handled = 0;
     }
     return ret;
 }
 
-int main (void) {
+int main (int argc, char* argv[])
+{
     ceu_is_running = 1;
-
-    ceu_start();
+    tceu_callback cb = { &ceu_callback_main, NULL };
+    ceu_start(&cb, argc, argv);
 
     while (ceu_is_running) {
-        if detects(CEU_INPUT_A) {
-            int v = <...>;
+        if (<call-to-detect-if-A-occurred>()) {
+            int v = <argument-to-A>;
             ceu_input(CEU_INPUT_A, &v);
         }
         ceu_input(CEU_INPUT__ASYNC, NULL);

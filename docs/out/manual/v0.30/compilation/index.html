@@ -359,9 +359,11 @@ notifies the Céu program about changes.</p>
 execution of Céu programs:</p>
 <ul>
 <li>
-<p><code>void ceu_start (void)</code></p>
+<p><code>void ceu_start (tceu_callback* cb, int argc, char* argv[])</code></p>
 <p>Initializes and starts the program.
-Should be called once.</p>
+Should be called once.
+Expects a callback to register for further notifications.
+Also receives the program arguments in <code>argc</code> and <code>argv</code>.</p>
 </li>
 <li>
 <p><code>void ceu_stop  (void)</code></p>
@@ -376,7 +378,7 @@ The call to <code>ceu_input(CEU_INPUT__ASYNC, NULL)</code> makes
 <a href="./../statements/#asynchronous-block">asynchronous blocks</a> to execute a step.</p>
 </li>
 <li>
-<p><code>int ceu_loop (void)</code></p>
+<p><code>int ceu_loop (tceu_callback* cb, int argc, char* argv[])</code></p>
 <p>Implements a simple loop encapsulating <code>ceu_start</code>, <code>ceu_input</code>, and
 <code>ceu_stop</code>.
 On each loop iteration, make a <code>CEU_CALLBACK_STEP</code> callback and generates
@@ -384,12 +386,14 @@ a <code>CEU_INPUT__ASYNC</code> input.
 Should be called once.
 Returns the final value of the program.</p>
 </li>
+<li>
+<p><code>void ceu_callback_register (tceu_callback* cb)</code></p>
+<p>Registers a new callback.</p>
+</li>
 </ul>
 <h4 id="callbacks">Callbacks<a class="headerlink" href="#callbacks" title="Permanent link">&para;</a></h4>
 <p>The Céu program makes callbacks to the main program in specific situations:</p>
-<pre><code class="c">tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2);
-
-enum {
+<pre><code class="c">enum {
     CEU_CALLBACK_START,                 /* once in the beginning of `ceu_start`             */
     CEU_CALLBACK_STOP,                  /* once in the end of `ceu_stop`                    */
     CEU_CALLBACK_STEP,                  /* on every iteration of `ceu_loop`                 */
@@ -410,8 +414,36 @@ enum {
 </code></pre>
 
 <p><code>TODO: payloads</code></p>
-<p>The main program must implement the <code>ceu_callback</code> prototype above to handle
-the enumerated commands.</p>
+<p>Céu invokes the registered callbacks in reverse register order, one after the
+other, stopping when a callback returns that it handled the request.</p>
+<p>A callback is composed of a function handler and a pointer to the next
+callback:</p>
+<pre><code>typedef struct tceu_callback {
+    tceu_callback_f       f;
+    struct tceu_callback* nxt;
+} tceu_callback;
+</code></pre>
+
+<p>The handler should expect a request identifier with two arguments, as well as
+the filename and line number in the source code in Céu making the request:</p>
+<pre><code>typedef tceu_callback_ret (*tceu_callback_f) (int, tceu_callback_arg, tceu_callback_arg, const char*, u32);
+</code></pre>
+
+<p>An argument has one of the following types:</p>
+<pre><code>typedef union tceu_callback_arg {
+    void* ptr;
+    s32   num;
+    usize size;
+} tceu_callback_arg;
+</code></pre>
+
+<p>The handler returns if it handled the request and an optional value:</p>
+<pre><code>typedef struct tceu_callback_ret {
+    bool is_handled;
+    tceu_callback_arg value;
+} tceu_callback_ret;
+</code></pre>
+
 <!--
 WCLOCK_DT uses `CEU_WCLOCK_INACTIVE`
 - `CEU_FEATURES_ISR`
@@ -430,36 +462,38 @@ output int O;
 </code></pre>
 
 <p>The <code>main.c</code> implements an event loop to sense occurrences of <code>I</code> and a
-callback handler for occurrences of <code>O</code>:</p>
+callback to handle occurrences of <code>O</code>:</p>
 <pre><code>#include &quot;types.h&quot;      // as illustrated above in &quot;Types&quot;
 
 int ceu_is_running;     // detects program termination
 
-tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
-    tceu_callback_ret ret = { .is_handled=1 };
+tceu_callback_ret ceu_callback_main (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* filename, u32 line)
+{
+    tceu_callback_ret ret = { .is_handled=0 };
     switch (cmd) {
         case CEU_CALLBACK_TERMINATING:
             ceu_is_running = 0;
+            ret.is_handled = 1;
             break;
         case CEU_CALLBACK_OUTPUT:
             if (p1.num == CEU_OUTPUT_O) {
                 printf(&quot;output O has been emitted with %d\n&quot;, p2.num);
+                ret.is_handled = 1;
             }
             break;
-        default:
-            ret.is_handled = 0;
     }
     return ret;
 }
 
-int main (void) {
+int main (int argc, char* argv[])
+{
     ceu_is_running = 1;
-
-    ceu_start();
+    tceu_callback cb = { &amp;ceu_callback_main, NULL };
+    ceu_start(&amp;cb, argc, argv);
 
     while (ceu_is_running) {
-        if detects(CEU_INPUT_A) {
-            int v = &lt;...&gt;;
+        if (&lt;call-to-detect-if-A-occurred&gt;()) {
+            int v = &lt;argument-to-A&gt;;
             ceu_input(CEU_INPUT_A, &amp;v);
         }
         ceu_input(CEU_INPUT__ASYNC, NULL);
