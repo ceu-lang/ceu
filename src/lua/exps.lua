@@ -111,7 +111,7 @@ EXPS.F = {
                 break
             end
             if loc and loc.info.dcl==me.info.dcl then
-                ASR(me.__par.tag~='Exp_!', me, 'invalid operand to `!´ : found enclosing matching `watching´')
+                ASR(me.__par.tag~='Exp_!', me, 'invalid operand to `!` : found enclosing matching `watching`')
                 me.__exps_ok = true
                 return AST.node('Exp_!', me.ln, '!', me)
                     -- TODO: inneficient: could access directly

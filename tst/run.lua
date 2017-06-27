@@ -40,13 +40,13 @@ if TESTS.cmd then
            string.find(out, '^ceu 0%.20.*Usage:.*Options:.*>>> ERROR : expected some option'))
 
     --$ ceu --pre
-    -->>> ERROR : expected option `pre-input´
+    -->>> ERROR : expected option `pre-input`
 
     local f = assert(io.popen('ceu --pre 2>&1'))
     local out = f:read'*a'
     local ok,mode,status = f:close()
     assert(ok==nil and mode=='exit' and status==1 and
-           string.find(out, '^>>> ERROR : expected option `pre%-input´'))
+           string.find(out, '^>>> ERROR : expected option `pre%-input`'))
 
     --$ ceu --pre --pre-input=/tmp/xxx.ceu
     -- OK
@@ -73,7 +73,7 @@ if TESTS.cmd then
     local out = f:read'*a'
     local ok,mode,status = f:close()
     assert(ok==nil and mode=='exit' and status==1 and
-           string.find(out, "^>>> ERROR : `pre%-output´ and `ceu%-input´ don't match"))
+           string.find(out, "^>>> ERROR : `pre%-output` and `ceu%-input` don't match"))
 
     --$ ceu --pre --pre-input=/tmp/xxx.ceu --ceu
     -- OK
@@ -92,7 +92,7 @@ if TESTS.cmd then
     local out = f:read'*a'
     local ok,mode,status = f:close()
     assert(ok==nil and mode=='exit' and status==1 and
-           string.find(out, '>>> ERROR : expected option `ceu´'))
+           string.find(out, '>>> ERROR : expected option `ceu`'))
 
     --$ ceu --pre --pre-input=/tmp/xxx.ceu --ceu --env
     -- OK
