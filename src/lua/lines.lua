@@ -10,7 +10,7 @@ CEU.i2l = {}
 local line = m.Cmt('\n',
     function (s,i)
         for i=#CEU.i2l, i do
-            CEU.i2l[i] = { FILE, LINE }
+            CEU.i2l[i] = { string.gsub(FILE,'\\','/'), LINE }
         end
         LINE = LINE + 1
         return true
@@ -28,13 +28,13 @@ local dir_lins = m.Cmt( m.P'#' *SS* m.P'line'^-1
                  ,
     function (s,i, line, file)
         LINE = tonumber(line)
-        FILE = file
+        FILE = string.gsub(file,'\\','/')
         return true
     end )
 
 patt = (line + dir_lins + 1)^0
 
 local f = ASR(io.open(CEU.opts.ceu_input))
-CEU.source = '\n#line 1 "'..FILE..'"'..'\n'..f:read'*a'..'\n'
+CEU.source = '\n#line 1 "'..string.gsub(FILE,'\\','/')..'"'..'\n'..f:read'*a'..'\n'
 f:close()
 patt:match(CEU.source)
