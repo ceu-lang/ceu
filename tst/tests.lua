@@ -9,32 +9,7 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
-
-Test { [[
-code/tight Ff (void) -> bool do
-    escape true;
-end
-if call Ff() then
-    escape 10;
-else
-    escape 0;
-end
-]],
-    run = 10,
-}
-
-Test { [[
-data Dd with
-    var int v;
-end
-var Dd d = val Dd(_);
-d.v = do
-    escape 10;
-end;
-escape d.v;
-]],
-    run = 10,
-}
+--]=====]
 
 Test { [[
 code/await Ff (var int x) -> int
@@ -260,12 +235,33 @@ escape 1;
     run = 1,
 }
 
+-- BUG #105
+Test { [[
+data Dd with
+    var int x;
+end
+code/tight Ff (void) -> Dd do
+    var Dd d = val Dd(10);
+    escape d;
+end
+if (call Ff()).x then
+    if call Ff().x then
+        escape 10;
+    else
+        escape 0;
+    end
+else
+    escape 0;
+end
+]],
+    run = 10,
+}
+
 -- var/nohold int x;
 -- var/dynamic int x;
 -------------------------------------------------------------------------------
 
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -44561,6 +44557,37 @@ var&? Ff f = spawn Ff(_);
 var int ret = f!.d? as int;
 f!.d = val Dd(10);
 escape ret + f!.d!.v;
+]],
+    run = 10,
+}
+
+Test { [[
+data Dd with
+    var int? v;
+end
+var Dd d = val Dd(_);
+var int? x = 10;
+d.v = do
+    if x? then
+        escape x!;
+    else
+        escape {0};
+    end
+end;
+escape d.v!;
+]],
+    run = 10,
+}
+
+Test { [[
+data Dd with
+    var int? v;
+end
+var Dd d = val Dd(_);
+d.v = do
+    escape {10};
+end;
+escape d.v!;
 ]],
     run = 10,
 }
