@@ -48,7 +48,7 @@ CEU_API void ceu_start (tceu_callback* cb, int argc, char* argv[]);
 CEU_API void ceu_stop  (void);
 CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params);
 CEU_API int  ceu_loop  (tceu_callback* cb, int argc, char* argv[]);
-CEU_API void ceu_callback_register (struct tceu_callback* cb);
+CEU_API void ceu_callback_register (tceu_callback* cb);
 
 struct tceu_stk;
 struct tceu_code_mem;
