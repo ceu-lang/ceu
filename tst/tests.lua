@@ -9,85 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
---]=====]
-
-Test { [[
-code/await Ff (var int x) -> int
-with
-do
-    await 1s;
-    escape x+10;
-end
-
-var&? Ff f = spawn Ff();
-var int x1 = f!.x;
-var int x2 = f;
-escape x1+x2;
-]],
-    run = 1,
-}
-
-Test { [=[
-var int len = [[ string.len('@@ceu-lang.org') ]];
-escape len;
-]=],
-    run = 13,
-    _opts = { ceu_features_lua='true' },
-}
-
-Test { [=[
-var bool ok = { '@@' == 64 } as bool;
-escape ok as int;
-]=],
-    run = 1,
-}
-
-Test { [[
-native _f;
-native/plain _u8;
-vector[2] _u8 vec = _;
-do
-    _f(&&vec[0]);
-finalize (vec) with
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-event (void) e;                                                                 
-var int i = 0;                                                                  
-loop do                                                                         
-   par/and do                                                                   
-        await e;                                                                
-        i = i + 1;                                                              
-   with                                                                         
-        emit e;                                                                 
-   end                                                                          
-end                                                                             
-escape 0;                                                                       
-]],
-    run = 1,
-}
-
-Test { [[
-loop do
-    watching 2s do
-        if false then
-            continue;
-        end
-    end
-    break;
-end
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
---[[
-]]
 
 -- BUG #89
 Test { [[
@@ -257,11 +178,25 @@ end
     run = 10,
 }
 
+-- BUG #106
+Test { [[
+code/await Ff (var int x) -> int do
+    await 1s;
+    escape x+10;
+end
+
+var&? Ff f = spawn Ff(1);
+escape f!.x;
+]],
+    run = 0,
+}
+
 -- var/nohold int x;
 -- var/dynamic int x;
 -------------------------------------------------------------------------------
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -5118,6 +5053,21 @@ escape ret;
     run = { ['~>10s']=5 },
 }
 
+Test { [[
+loop do
+    watching 2s do
+        if false then
+            continue;
+        end
+    end
+    break;
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
 --<<< EVERY
 
 Test { [[
@@ -7296,6 +7246,24 @@ escape ret;
 ]],
     run = 3,
 }
+
+Test { [[
+event (void) e;                                                                 
+var int i = 0;                                                                  
+var int j;
+loop j in [1->1] do                                                                         
+   par/and do                                                                   
+        await e;                                                                
+        i = i + 1;                                                              
+   with                                                                         
+        emit e;                                                                 
+   end                                                                          
+end                                                                             
+escape 1;                                                                       
+]],
+    run = 1,
+}
+
 --<<< INTERNAL EVENTS
 
 -- ParOr
@@ -20050,6 +20018,18 @@ escape ret;
     run = 3,
 }
 
+Test { [[
+native _f;
+native/plain _u8;
+vector[2] _u8 vec = _;
+do
+    _f(&&vec[0]);
+finalize (vec) with
+end
+escape 1;
+]],
+    cc = '5:1: error: implicit declaration of function ‘f’',
+}
 --<<< FINALLY / FINALIZE
 
 -->>> LOCK
@@ -27483,6 +27463,12 @@ escape _V + {@v};
     run = 210,
 }
 
+Test { [=[
+var bool ok = { '@@' == 64 } as bool;
+escape ok as int;
+]=],
+    run = 1,
+}
 --<< NATIVE / RAW / INTERPOLATION
 
     -- STRINGS
@@ -43223,6 +43209,14 @@ escape ret;
 ]=],
     _opts = { ceu_features_lua='true' },
     run = 1,
+}
+
+Test { [=[
+var int len = [[ string.len('@@ceu-lang.org') ]];
+escape len;
+]=],
+    run = 13,
+    _opts = { ceu_features_lua='true' },
 }
 
 --<<< LUA

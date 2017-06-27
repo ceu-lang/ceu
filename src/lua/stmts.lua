@@ -616,7 +616,7 @@ STMTS.F = {
         -- ctx
         for _, var in ipairs(me) do
             if var.tag ~= 'ID_any' then
-                INFO.asr_tag(var, {'Nat','Var'}, 'invalid variable')
+                INFO.asr_tag(var, {'Nat','Var','Vec'}, 'invalid variable')
             end
         end
 

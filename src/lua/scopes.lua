@@ -282,7 +282,7 @@ F = {
             'invalid `finalize` : expected `varlist`')
 
         for _, v1 in ipairs(me.__fin_vars) do
-            ASR(v1.tag=='Nat' or v1.tag=='Var', Stmt,
+            ASR(v1.tag=='Nat' or v1.tag=='Var' or v1.tag=='Vec', Stmt,
                 'invalid `finalize` : expected identifier : got "'..v1.id..'"')
 
             local ok = false
