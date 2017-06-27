@@ -476,8 +476,8 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     -- TYPEPARS
 
-    , Code_Pars = #KK'(' * (PARENS(P'void') + PARENS(LIST(V'__Dcls')))
-    , _Code_Pars = #KK'(' * (PARENS(P'void') + PARENS(LIST(V'__Dcls')))
+    , Code_Pars  = #KK'(' * PARENS(P'void' + LIST(V'__Dcls'))
+    , _Code_Pars = #KK'(' * PARENS(P'void' + LIST(V'__Dcls'))
     , Code_Ret = (V'Type' + CK'FOREVER')
 
 -- DATA
@@ -599,8 +599,6 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , Abs_Val    = CK'val' * V'Abs_Cons'
     , Abs_New    = CK'new' * V'Abs_Cons'
     , _Abs_Await = V'__Abs_Cons_Code' * V'Y'
-        -- TODO: "await Abs_Await" should not accept "-> (...)"
-        --       but "watching Abs_Await" does
 
     , Abs_Spawn      = K'spawn' * V'__Abs_Cons_Code' * -(KK'in' * V'Loc')
     , Abs_Spawn_Pool = K'spawn' * V'__Abs_Cons_Code' * KK'in' * V'Loc'
@@ -609,7 +607,6 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , Abs_Cons   = OPT(V'Loc'*KK'.') * V'ID_abs' * PARENS(OPT(V'Abslist'))
     , Abslist    = LIST(V'__abs_item')^-1
     , __abs_item = (V'Abs_Cons' + V'Vec_Cons' + V'__Exp' + V'ID_any' + V'NIL')
-
 
 -- SETS
 

@@ -191,6 +191,18 @@ escape f!.x;
     run = 0,
 }
 
+-- BUG #107
+Test { [[
+code/await Ff (var int x=10) -> (var int y=20) -> int do
+    escape x + y;
+end
+var int ret = await Ff(_);
+escape ret;
+]],
+    wrn = true,
+    run = 1,
+}
+
 -- var/nohold int x;
 -- var/dynamic int x;
 -------------------------------------------------------------------------------
