@@ -4,17 +4,19 @@ A declaration introduces a [storage entity](../storage_entities/#storage-entitie
 to the enclosing block.
 All declarations are subject to [lexical scope](../storage_entities/#lexical-scope).
 
-Céu supports variables, vectors, external events, internal events, and pools:
+Céu supports variables, vectors, pools, internal events, and external events:
 
 ```ceu
-Var  ::= var [`&´|`&?´] Type LIST(ID_int [`=´ Cons])
-Vec  ::= vector [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Cons])
-Ext  ::= input  (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
-      |  output (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
-Int  ::= event [`&´|`&?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Cons])
-Pool ::= pool [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Cons])
 
-Cons ::= /* (see "Assignments") */
+Var  ::= var [`&´|`&?´] [`/dynamic´|`/nohold´] Type ID_int [`=´ Sources]
+Vec  ::= vector [`&´] `[´ [Exp] `]´ Type ID_int [`=´ Sources]
+Pool ::= pool [`&´] `[´ [Exp] `]´ Type ID_int [`=´ Sources]
+Int  ::= event [`&´] (Type | `(´ LIST(Type) `)´) ID_int [`=´ Sources]
+
+Ext  ::= input  (Type | `(´ LIST(Type) `)´) ID_ext
+      |  output (Type | `(´ LIST([`&´] Type) `)´) ID_ext
+
+Sources ::= /* (see "Assignments") */
 ```
 
 Most declarations support an initialization [assignment](#assignments).
@@ -27,7 +29,6 @@ See also [Storage Classes](#TODO) for an overview of storage entities.
 
 A [variable](../storage_entities/#variables) declaration has an associated
 [type](../types/#types) and can be optionally [initialized](#assignments).
-A single statement can declare multiple variables of the same type.
 Declarations can also be
 [aliases or option aliases](../storage_entities/#aliases).
 
@@ -45,7 +46,6 @@ A [vector](../storage_entities/#vectors) declaration specifies a
 [dimension](#dimension) between brackets,
 an associated [type](../types/#types) and can be optionally
 [initialized](#assignments).
-A single statement can declare multiple vectors of the same dimension and type.
 Declarations can also be [aliases](../storage_entities/#aliases).
 
 <!--
@@ -62,51 +62,15 @@ vector[]   int vs3 = [];    // "vs3" is an unbounded vector
 vector&[]  int vs4 = &vs1;  // "vs4" is an alias to "vs1"
 ```
 
-### Events
-
-An [event](../storage_entities/#events) declaration specifies a
-[type](../types/#types) for the values it carries when occurring.
-It can be also a list of types if the event communicates multiple values.
-A single statement can declare multiple events of the same type.
-
-<!--
-See also [Introduction](#TODO) for a general overview of events.
--->
-
-#### External Events
-
-Examples:
-
-```ceu
-input  void A,B;        // "A" and "B" are input events carrying no values
-output int  MY_EVT;     // "MY_EVT" is an output event carrying integer values
-input (int,byte&&) BUF; // "BUF" is an input event carrying an "(int,byte&&)" pair
-```
-
-#### Internal Events
-
-Declarations for internal events can also be
-[aliases or option aliases](../storage_entities/#aliases).
-Only in this case they can be [initialized](#assignments).
-
-Examples:
-
-```ceu
-event  void a,b;        // "a" and "b" are internal events carrying no values
-event& void z = &a;     // "z" is an alias to event "a"
-event (int,int) c;      // "c" is a internal event carrying an "(int,int)" pair
-```
-
 ### Pools
 
 A [pool](../storage_entities/#pools) declaration specifies a dimension and an
 associated [type](../types/#types).
-A single statement can declare multiple pools of the same dimension and type.
 Declarations for pools can also be [aliases](../storage_entities/#aliases).
 Only in this case they can be [initialized](#assignments).
 
-The expression between the brackets specifies the [dimension](#dimension) of the
-pool.
+The expression between the brackets specifies the [dimension](#dimension) of
+the pool.
 
 Examples:
 
@@ -135,3 +99,39 @@ between brackets to specify a dimension as follows:
 - *omitted*: Maximum number of elements is unbounded and space is dynamically
              allocated.
              The space for dynamic dimensions grow and shrink automatically.
+
+### Events
+
+An [event](../storage_entities/#events) declaration specifies a
+[type](../types/#types) for the values it carries when occurring.
+It can be also a list of types if the event communicates multiple values.
+
+<!--
+See also [Introduction](#TODO) for a general overview of events.
+-->
+
+#### External Events
+
+Examples:
+
+```ceu
+input  void A,B;        // "A" and "B" are input events carrying no values
+output int  MY_EVT;     // "MY_EVT" is an output event carrying integer values
+input (int,byte&&) BUF; // "BUF" is an input event carrying an "(int,byte&&)" pair
+```
+
+`TODO: output &`
+
+#### Internal Events
+
+Declarations for internal events can also be
+[aliases](../storage_entities/#aliases).
+Only in this case they can be [initialized](#assignments).
+
+Examples:
+
+```ceu
+event  void a,b;        // "a" and "b" are internal events carrying no values
+event& void z = &a;     // "z" is an alias to event "a"
+event (int,int) c;      // "c" is a internal event carrying an "(int,int)" pair
+```

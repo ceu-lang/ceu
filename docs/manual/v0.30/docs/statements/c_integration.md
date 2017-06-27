@@ -19,7 +19,7 @@ Nat_Block  ::= native `/´(pre|pos) do
                end
 Nat_End    ::= native `/´ end
 
-Nat_Stmts  ::= `{´ {<code in C> | `@´ Exp} `}´
+Nat_Stmts  ::= `{´ {<code in C> | `@´ (`(´Exp`)´|Exp)} `}´     /* `@@´ escapes to `@´ */
 
 Nat_Call   ::= [call] (Loc | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
 
@@ -168,8 +168,8 @@ v_ceu = { v_c + @v_ceu };       // yields 30
 
 ### Native Call
 
-Locations and expressions that evaluate to a [native type](../types/#natives)
-can be called from Céu.
+Expressions that evaluate to a [native type](../types/#natives) can be called
+from Céu.
 
 If a call passes or returns pointers, it may require an accompanying
 [finalization statement](#resources-finalization).

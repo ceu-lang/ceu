@@ -11,11 +11,12 @@ A `data` declaration creates a new data type:
 
 ```ceu
 Data ::= data ID_abs [as (nothing|Exp)] [ with
-             { <var_dcl_set|vector_dcl_set|pool_dcl_set|event_dcl_set> `;´ {`;´} }
-         end ]
+             (Var|Vec|Pool|Int) `;´ {`;´}
+             { (Var|Vec|Pool|Int) `;´ {`;´} }
+         end
 
 Data_Cons ::= (val|new) Abs_Cons
-Abs_Cons  ::= ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
+Abs_Cons  ::= [Loc `.´] ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`nil´|`_´) `)´
 ```
 
 A declaration may pack fields with
@@ -103,31 +104,18 @@ be invoked from arbitrary points in programs:
 ```ceu
 // prototype declaration
 Code_Tight ::= code/tight Mods ID_abs `(´ Params `)´ `->´ Type
-Code_Await ::= code/await Mods ID_abs `(´ Params `)´ [`->´ `(´ Inits `)´] `->´ (Type | FOREVER)
+Code_Await ::= code/await Mods ID_abs `(´ Params `)´ [`->´ `(´ Params `)´] `->´ (Type | FOREVER)
+Params ::= void | LIST(Var|Vec|Pool|Int)
 
 // full declaration
 Code_Impl ::= (Code_Tight | Code_Await) do
                   Block
               end
 
-Mods ::= [`/´dynamic] [`/´recursive]
-
-Params ::= void | LIST(Class [ID_int])
-Class  ::= [dynamic] var   [`&´] [`/´hold] * Type
-        |            vector `&´ `[´ [Exp] `]´ Type
-        |            pool   `&´ `[´ [Exp] `]´ Type
-        |            event  `&´ (Type | `(´ LIST(Type) `)´)
-
-Inits ::= void | LIST(Class [ID_int])
-Class ::= var    (`&´|`&?`) * Type
-       |  vector (`&´|`&?`) `[´ [Exp] `]´ Type
-       |  pool   (`&´|`&?`) `[´ [Exp] `]´ Type
-       |  event  (`&´|`&?`) (Type | `(´ LIST(Type) `)´)
-
 // invocation
 Code_Call  ::= call  Mods Abs_Cons
-Code_Await ::= await Mods Abs_Cons [`->´ `(´ LIST(`&´ Var) `)´])
-Code_Spawn ::= spawn Mods Abs_Cons [`->´ `(´ LIST(`&´ Var) `)´]) [in Loc]
+Code_Await ::= await Mods Abs_Cons
+Code_Spawn ::= spawn Mods Abs_Cons [in Loc]
 
 Mods ::= [`/´dynamic | `/´static] [`/´recursive]
 ```

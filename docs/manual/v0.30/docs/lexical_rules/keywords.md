@@ -18,23 +18,23 @@ variable names):
 
     lock            loop            lua             native          new
 
-    nohold          not             nothing         null            or
+    nohold          not             nothing         nil             null
 
-    outer           output          par             pause           plain
+    or              outer           output          par             pause
 
-    pool            pos             pre             pure            recursive
+    plain           pool            pos             pre             pure
 
-    request         resume          sizeof          spawn           static
+    recursive       request         resume          sizeof          spawn
 
-    then            thread          tight           traverse        true
+    static          then            thread          tight           traverse
 
-    until           val             var             vector          watching
+    true            until           val             var             vector
 
-    with            bool            byte            f32             f64
+    watching        with            bool            byte            f32
 
-    float           int             s16             s32             s64
+    f64             float           int             s16             s32
 
-    s8              ssize           u16             u32             u64
+    s64             s8              ssize           u16             u32
 
-    u8              uint            usize           void
+    u64             u8              uint            usize           void
 ```

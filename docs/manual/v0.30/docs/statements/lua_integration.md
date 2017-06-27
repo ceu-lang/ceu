@@ -8,7 +8,7 @@ Lua_State ::= lua `[´ [Exp] `]´ do
                  Block
               end
 Lua_Stmts ::= `[´ {`=´} `[´
-                  { {<code in Lua> | `@´ Exp} }
+                  { {<code in Lua> | `@´ (`(´Exp`)´|Exp)} }   /* `@@´ escapes to `@´ */
               `]´ {`=´} `]´
 ```
 

@@ -1,8 +1,5 @@
 ## Parallel Compositions
 
-The parallel statements `par/and`, `par/or`, and `par` fork the running trail 
-in multiple others:
-
 ```ceu
 Pars ::= (par | par/and | par/or) do
              Block
@@ -12,18 +9,24 @@ Pars ::= (par | par/and | par/or) do
              Block }
          end
 
+Spawn ::= spawn [`(´ [LIST(ID_int)] `)´] do
+              Block
+          end
+
 Watching ::= watching LIST(ID_ext|Loc|WCLOCKK|WCLOCKE|Code_Cons_Init) do
                  Block
              end
-
 ```
 
-The parallel statements differ only on how trails rejoin and terminate the
-composition.
+The parallel statements `par/and`, `par/or`, and `par` fork the running trail 
+in multiple others.
+They differ only on how trails rejoin and terminate the composition.
 
-The `watching` statement terminates when one of its specified events occur.
-It evaluates to what the occurring event value(s), which can be captured with
-an optional [assignment](#assignments).
+The `spawn` statement starts to execute a block in parallel with the enclosing
+block.
+
+The `watching` statement executes a block and terminates when one of its
+specified events occur.
 
 See also [Parallel Compositions and Abortion](../#parallel-compositions-and-abortion).
 
@@ -85,10 +88,29 @@ with
 end
 ```
 
-### watching
+### spawn
 
-The `watching` statement accepts a list of events and terminates when any of
-them occur.
+The `spawn` statement starts to execute a block in parallel with the enclosing
+block.
+When the enclosing block terminates, the spawned block is aborted.
+
+Like a [`do-end` block](#do-end-and-escape), a `spawn` also supports an
+optional list of identifiers in parenthesis which restricts the visible
+variables inside the block to those matching the list.
+
+Examples:
+
+```ceu
+spawn do
+    every 1s do
+        <...>       // does something every "1s"...
+    end
+end
+
+<...>               // ...in parallel with whatever comes next
+```
+
+### watching
 
 A `watching` expands to a `par/or` with *n+1* trails:
 one to await each of the listed events,
@@ -113,6 +135,11 @@ with
     <body>
 end
 ```
+
+The `watching` statement accepts a list of events and terminates when any of
+them occur.
+It evaluates to what the occurring event value(s), which can be captured with
+an optional [assignment](#assignments).
 
 Examples:
 

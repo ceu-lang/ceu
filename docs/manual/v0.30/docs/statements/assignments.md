@@ -18,6 +18,7 @@ Sources ::= ( Do
             | Vec_Cons
             | Data_Cons
             | Exp
+            | `nil´
             | `_´ )
 ```
 
@@ -35,7 +36,10 @@ Céu supports the following constructs as assignment sources:
 - vector [length](../expressions/#length) & [constructor](../expressions/#constructor)
 - [data constructor](#data-constructor)
 - [expression](../expressions/#locations-expressions)
-- the neutral identifier `_`
+- the [option](../types/#option) `nil` value
+- the anonymous identifier `_`
+
+The option `nil` value unsets an [option variable](../types/#option).
 
 The anonymous identifier makes the assignment innocuous.
 

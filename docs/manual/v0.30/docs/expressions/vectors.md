@@ -41,7 +41,9 @@ The space for [dynamic vectors](../statements/#dimension) shrinks automatically.
 Vector constructors are only valid in [assignments](../statements/#assignments):
 
 ```ceu
-Vec_Cons ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´) }
+Vec_Cons   ::= (Loc | Exp) Vec_Concat { Vec_Concat }
+            |  `[´ [LIST(Exp)] `]´ { Vec_Concat }
+Vec_Concat ::= `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´)
 ```
 
 Examples:

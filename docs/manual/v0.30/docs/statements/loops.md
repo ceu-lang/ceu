@@ -21,7 +21,7 @@ Loop ::=
         end
 
       /* pool iterator */
-      | loop [`/´Exp] [ `(´ LIST(Var) `)´ ] in Loc do
+      | loop [`/´Exp] (ID_int|`_´) in Loc do
             Block
         end
 

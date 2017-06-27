@@ -23,7 +23,7 @@ Stmt ::= nothing
   /* Blocks */
 
       // Do ::=
-      | do [`/´(`_´|ID_int)]
+      | do [`/´(ID_int|`_´)] [`(´ [LIST(ID_int)] `)´]
             Block
         end
       |  escape [`/´ID_int] [Exp]
@@ -33,14 +33,16 @@ Stmt ::= nothing
             Block
         end
 
-  /* Storage Entities */
+  /* Storage Entities / Declarations */
 
-      | var [`&´|`&?´] Type LIST(ID_int [`=´ Sources])
-      | vector [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Sources])
-      | pool [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Sources])
-      | event [`&´|`&?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Sources])
-      | input (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
-      | output (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
+      // Dcls ::=
+      | var [`&´|`&?´] [`/dynamic´|`/nohold´] Type ID_int [`=´ Sources]
+      | vector [`&´] `[´ [Exp] `]´ Type ID_int [`=´ Sources]
+      | pool [`&´] `[´ [Exp] `]´ Type ID_int [`=´ Sources]
+      | event [`&´] (Type | `(´ LIST(Type) `)´) ID_int [`=´ Sources]
+
+      | input (Type | `(´ LIST(Type) `)´) ID_ext
+      | output (Type | `(´ LIST([`&´] Type) `)´) ID_ext
 
   /* Event Handling */
 
@@ -78,17 +80,17 @@ Stmt ::= nothing
         end
 
       /* numeric iterator */
-      | loop [`/´Exp] (`_´|ID_int) in [Range] do
+      | loop [`/´Exp] (ID_int|`_´) in [Range] do
             Block
         end
         // where
             Range ::= (`[´ | `]´)
-                        ( (      Exp `->´ (`_´|Exp))
-                        | ((`_´|Exp) `<-´ Exp      ) )
+                        ( (      Exp `->´ (Exp|`_´))
+                        | ((Exp|`_´) `<-´ Exp      ) )
                       (`[´ | `]´) [`,´ Exp]
 
       /* pool iterator */
-      | loop [`/´Exp] [ `(´ LIST(Var) `)´ ] in Loc do
+      | loop [`/´Exp] (ID_int|`_´) in Loc do
             Block
         end
 
@@ -118,7 +120,7 @@ Stmt ::= nothing
         end
 
       /* block spawn */
-      | spawn do
+      | spawn [`(´ [LIST(ID_int)] `)´] do
             Block
         end
 
@@ -157,10 +159,10 @@ Stmt ::= nothing
             <code definitions in C>
         end
       | native `/´ end
-      | `{´ {<code in C> | `@´ Exp} `}´
+      | `{´ {<code in C> | `@´ (`(´Exp`)´|Exp)} `}´     /* `@@´ escapes to `@´ */
 
       // Nat_Call ::=
-      | [call] (Loc | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
+      | [call] Exp
 
       /* finalization */
       | do [Stmt] Finalize
@@ -180,7 +182,7 @@ Stmt ::= nothing
         end
       // Lua_Stmts ::=
       | `[´ {`=´} `[´
-            { {<code in Lua> | `@´ Exp} }
+            { {<code in Lua> | `@´ (`(´Exp`)´|Exp)} }   /* `@@´ escapes to `@´ */
         `]´ {`=´} `]´
 
   /* Abstractions */
@@ -188,7 +190,8 @@ Stmt ::= nothing
       /* Data */
 
       | data ID_abs [as (nothing|Exp)] [ with
-            { <var_dcl_set|vector_dcl_set|pool_dcl_set|event_dcl_set> `;´ {`;´} }
+            Dcls `;´ {`;´}
+            { Dcls `;´ {`;´} }
         end ]
 
       /* Code */
@@ -197,18 +200,9 @@ Stmt ::= nothing
       | code/tight [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ `->´ Type
 
       // Code_Await ::=
-      | code/await [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ [ `->´ `(´ Inits `)´ ] `->´ (Type | FOREVER)
+      | code/await [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ [ `->´ `(´ Params `)´ ] `->´ (Type | FOREVER)
         // where
-            Params ::= void | LIST(Entity [ID_int])
-            Entity ::= [dynamic] var    [`&´] [`/´hold] * Type
-                    |            vector `&´ `[´ [Exp] `]´ Type
-                    |            pool   `&´ `[´ [Exp] `]´ Type
-                    |            event  `&´ (Type | `(´ LIST(Type) `)´)
-            Inits  ::= void | LIST(Entity [ID_int])
-            Entity ::= var    (`&´|`&?`) * Type
-                    |  vector (`&´|`&?`) `[´ [Exp] `]´ Type
-                    |  pool   (`&´|`&?`) `[´ [Exp] `]´ Type
-                    |  event  (`&´|`&?`) (Type | `(´ LIST(Type) `)´)
+            Params ::= void | LIST(Dcls)
 
       /* code implementation */
       | (Code_Tight | Code_Await) do
@@ -224,12 +218,11 @@ Stmt ::= nothing
       | await Mods Abs_Cons
 
       // Code_Spawn ::=
-      | spawn Mods Code_Cons_Init [in Loc]
+      | spawn Mods Abs_Cons [in Loc]
 
         // where
             Mods ::= [`/´dynamic | `/´static] [`/´recursive]
-            Abs_Cons ::= ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
-            Code_Cons_Init ::= Abs_Cons [`->´ `(´ LIST(`&´ Var) `)´])
+            Abs_Cons ::= [Loc `.´] ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`nil´|`_´) `)´
 
   /* Assignments */
 
@@ -247,8 +240,12 @@ Stmt ::= nothing
                         | Vec_Cons
                         | Data_Cons
                         | Exp
+                        | `nil´
                         | `_´ )
-            Vec_Cons  ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´) }
+            Vec_Cons  ::= (Loc | Exp) Vec_Concat { Vec_Concat }
+                       |  `[´ [LIST(Exp)] `]´ { Vec_Concat }
+                        // where
+                            Vec_Concat ::= `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´)
             Data_Cons ::= (val|new) Abs_Cons
 
 /* Identifiers */
@@ -286,24 +283,23 @@ Exp ::= NUM | STR | null | true | false
      |  `(´ Exp `)´
      |  Exp <binop> Exp
      |  <unop> Exp
+     |  Exp `[´ Exp `]´
      |  Exp is Type
      |  Exp as Type
      |  Exp as `/´(nohold|plain|pure)
-     |  `&´ (Nat_Call | Loc)
-     |  `&&´ Loc
-     |  Loc [`?´]
      |  sizeof `(´ (Type|Exp) `)´
      |  Nat_Call | Code_Call
 
 /* Locations */
 
-Loc ::= [`*´|`$´] Loc
+Loc ::= Loc [as (Type | `/´(nohold|plain|pure)) `)´
+     |  [`*´|`$´] Loc
      |  Loc { `[´Exp`]´ | (`:´|`.´) (ID_int|ID_nat) | `!´ }
-     |  `(´ Loc [as (Type | `/´(nohold|plain|pure)) `)´
      |  ID_int
      |  ID_nat
      |  outer
      |  `{´ <code in C> `}´
+     |  `(´ Loc `)´
 
 /* Operator Precedence */
 
@@ -311,11 +307,11 @@ Loc ::= [`*´|`$´] Loc
 
     // locations
     *     $
-    :     .     !
+    :     .     !     []
     as
 
     // expressions
-    is    as                            // binops
+    is    as                                            // binops
     or
     and
     !=    ==    <=    >=    <     >
@@ -325,7 +321,8 @@ Loc ::= [`*´|`$´] Loc
     <<    >>
     +     -
     *     /     %
-    not   +    -    ~    $$             // unops
+    not   +     -     ~     $$    $     *     &&    &   // unops
+    :     .     !     ?     ()    []
 
     /* highest priority */
 
