@@ -179,26 +179,22 @@ var int fat = call/recursive Fat(10);           // invokes "Fat" (yields 3628800
 
 Code abstractions specify a list of input parameters in between the symbols
 `(` and `)`.
-Each parameter specifies a [entity class](../storage_entities/#entity-classes)
-with modifiers, a type and an identifier (optional in declarations).
+Each parameter specifies an [entity class](../storage_entities/#entity-classes)
+with modifiers, a type and an identifier.
 A `void` list specifies that the abstraction has no parameters.
 
 Code abstractions also specify an output return type.
 A `code/await` may use `FOREVER` as output to indicate that it never returns.
 
-A `code/await` may also specify an optional *initialization return list*, which
-represents local resources created in the outermost scope of its body.
-These resources are exported and bound to aliases in the invoking context which
-may access them while the code executes:
+A `code/await` may also specify an optional *public parameter list*, which are
+local storage entities living the outermost scope of the abstraction body.
+These entities are visible to the invoking context which may access them while
+the abstraction executes.
 
+<!--
 - The invoker passes a list of unbound aliases to the code.
 - The code [binds](#alias-assignment) the aliases to the local resources before
   any [synchronous control statement](#synchronous-control-statements) executes.
-
-If the code does not terminate (i.e., return type is `FOREVER`), the
-initialization list specifies normal aliases `&`.
-Otherwise, since the code may terminate and deallocate the resource, the list
-must specify option aliases `&?`.
 
 Examples:
 
@@ -217,6 +213,7 @@ var& _FILE res;                             // declares resource
 spawn Open(<...>) -> (&res);                // initiliazes resource
 <...>                                       // uses resource
 ```
+-->
 
 #### Code Invocation
 
@@ -241,10 +238,12 @@ resumes.
 This makes the invocation point and a non-terminating abstraction to execute
 concurrently.
 
+<!--
 The `spawn` invocation accepts an optional list of aliases matching the
 [initialization list](#code-declaration) from the code abstraction.
 These aliases are bound to local resources in the abstraction and can be
 accessed from the invocation point.
+-->
 
 The `spawn` invocation also accepts an optional [pool](#pools) which provides
 storage and scope for invoked abstractions.

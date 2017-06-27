@@ -256,9 +256,11 @@ would remain open as a *memory leak*.
 The `finalize` ensures that `_fclose` closes the file properly.
 
 To access an external resource from Céu requires an
-[alias assignment](#alias-assignment) to an
-[option variable alias](../storage_entities/#aliases) `var&?`.
-If the external call returns `NULL`, the alias remains unbounded.
+[alias assignment](#alias-assignment) to a
+[variable alias](../storage_entities/#aliases).
+If the external call returns `NULL` and the variable is an option alias
+`var&?`, the alias remains unbounded.
+If the variable is an alias `var&`, the assigment raises a runtime error.
 
 *Note: the compiler only forces the programmer to write finalization clauses,
        but cannot check if they handle the resource properly.*

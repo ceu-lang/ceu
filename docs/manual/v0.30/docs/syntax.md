@@ -197,10 +197,10 @@ Stmt ::= nothing
       /* Code */
 
       // Code_Tight ::=
-      | code/tight [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ `->´ Type
+      | code/tight Mods ID_abs `(´ Params `)´ `->´ Type
 
       // Code_Await ::=
-      | code/await [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ [ `->´ `(´ Params `)´ ] `->´ (Type | FOREVER)
+      | code/await Mods ID_abs `(´ Params `)´ [ `->´ `(´ Params `)´ ] `->´ (Type | FOREVER)
         // where
             Params ::= void | LIST(Dcls)
 
