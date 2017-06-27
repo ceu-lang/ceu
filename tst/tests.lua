@@ -37105,7 +37105,7 @@ end
 
 escape 0;
 ]],
-    dcls = 'line 10 : invalid operand to `!´ : found enclosing matching `watching´',
+    dcls = 'line 10 : invalid operand to `!` : found enclosing matching `watching`',
 }
 Test { [[
 code/await Ff (void) -> (var& int x, var& int y) -> void do
@@ -38569,7 +38569,7 @@ var int? ret =
 
 escape ret!;
 ]],
-    dcls = 'line 10 : invalid operand to `!´ : found enclosing matching `watching´',
+    dcls = 'line 10 : invalid operand to `!` : found enclosing matching `watching`',
 }
 
 Test { [[
