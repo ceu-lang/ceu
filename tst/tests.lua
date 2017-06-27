@@ -37138,6 +37138,39 @@ escape 0;
 }
 
 Test { [[
+code/await Ff (void) -> (var int x) -> void do
+    x = 10;
+end
+var&? Ff f = spawn Ff();
+watching f do
+    code/await Gg (void) -> int do
+        escape outer.f!.x;
+    end
+end
+escape 1;
+]],
+    dcls = 'line 7 : invalid operand to `!` : found enclosing matching `watching`',
+    --wrn = true,
+    --run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> (var int x) -> void do
+    x = 10;
+end
+var&? Ff f = spawn Ff();
+watching f do
+    code/await Gg (void) -> int do
+        escape outer.f.x;
+    end
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
 data Int with
     var int x;
 end
