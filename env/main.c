@@ -56,6 +56,9 @@ tceu_callback_ret ceu_callback_ceu (int cmd, tceu_callback_arg p1, tceu_callback
 int main (int argc, char* argv[])
 {
     tceu_callback cb = { &ceu_callback_ceu, NULL };
+#ifdef CEU_CALLBACK_ENV
+    cb.nxt = &CEU_CALLBACK_ENV;
+#endif
     int ret = ceu_loop(&cb, argc, argv);
     return ret;
 }

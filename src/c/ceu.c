@@ -889,8 +889,6 @@ CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params)
 }
 
 CEU_API void ceu_start (tceu_callback* cb, int argc, char* argv[]) {
-    ceu_callback_void_void(CEU_CALLBACK_START);
-
     CEU_APP.argc     = argc;
     CEU_APP.argv     = argv;
 
@@ -922,6 +920,8 @@ CEU_API void ceu_start (tceu_callback* cb, int argc, char* argv[]) {
      */
     CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
 #endif
+
+    ceu_callback_void_void(CEU_CALLBACK_START);
 
     tceu_stk stk = { 1, 1, NULL,
                      { (tceu_code_mem*)&CEU_APP.root,
