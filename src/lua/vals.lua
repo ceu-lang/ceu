@@ -114,13 +114,14 @@ F = {
 
         local mem do
             if obj then
-                mem = '((tceu_code_mem*)&'..V(obj)..')'
+                mem = '(&'..V(obj)..')'
             else
                 mem = '_ceu_mem'
             end
         end
         assert(mem)
 
+        mem = '((tceu_code_mem*)'..mem..')'
         if CEU.opts.ceu_features_lua then
             return [[
 CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..','..LUA(me)..[[)
@@ -177,6 +178,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
                     op = '.'
                 end
 
+--[[
                 if mods and mods.dynamic and var_tp[1].dcl.hier then
                     if val.tag == 'Exp_as' then
                         ps[#ps+1] = { '_data_'..i, 'CEU_DATA_'..val.info.tp[1].dcl.id }
@@ -184,6 +186,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
                         ps[#ps+1] = { '_data_'..i, V(val,ctx)..op..'_enum' }
                     end
                 end
+]]
             end
 
             local var_is_opt = TYPES.check(var_tp,'?')
@@ -285,7 +288,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
 ({]]..id_struct..' __ceu_'..me.n..';'..ps2..'; __ceu_'..me.n..[[;})
 
 #else
-(struct ]]..id_struct..') { '..ps1..[[ }
+(]]..id_struct..') { '..ps1..[[ }
 
 #endif
 ]]

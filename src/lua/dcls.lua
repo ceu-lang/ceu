@@ -521,7 +521,7 @@ DCLS.F = {
 
     -- detect "base" dynamic multimethod: create dummy copy with plain "id"
     Code__PRE = function (me)
-        local _,mods,id = unpack(me)
+        local mods,id = unpack(me)
         if not mods.dynamic then
             return  -- not dynamic code
         end
@@ -543,7 +543,7 @@ DCLS.F = {
             return
         end
 
-        local proto_body = AST.asr(me,'', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block',1,'Stmts')
+        local proto_body = AST.asr(me,'', 3,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block',1,'Stmts')
         local orig = proto_body[2]
         AST.set(proto_body, 2, node('Stmts', me.ln))
         local new = AST.copy(me)
@@ -576,7 +576,9 @@ DCLS.F = {
         if (not me.is_dyn_base) and mods1.dynamic and me.is_impl then
             me.id = id..proto1.ids_dyn
             me.dyn_base = DCLS.asr(me,blk,id)
+-- TODO: check if both are still needed
             me.dyn_base.dyn_last = me
+            me.dyn_base.dyn_first = me.dyn_base.dyn_first or me
         else
             me.id = id
         end

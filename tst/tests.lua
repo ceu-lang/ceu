@@ -50017,7 +50017,6 @@ escape ret;
 }
 --<<< CEU_FEATURES_*
 
-do return end
 -->> CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
 
 Test { [[
@@ -50169,6 +50168,29 @@ Test { [[
 data Aa with
     var int a;
 end
+data Aa.Bb with
+    var int b;
+end
+
+code/tight/dynamic Ff (var/dynamic Aa&& a, var int xxx) -> int do
+    escape a:a + xxx;
+end
+
+var Aa a = val Aa(1);
+
+code/tight Gg (var int x) -> int do
+    escape x;
+end
+
+escape (call Gg(10)) + (call/dynamic Ff(&&a,33));
+]],
+    wrn = true,
+    run = 44,
+}
+Test { [[
+data Aa with
+    var int a;
+end
 
 code/tight/dynamic Ff (var/dynamic Aa&& a, var int xxx) -> int do
     escape a:a + xxx;
@@ -50307,7 +50329,8 @@ var Aa a = val Aa(1);
 await Ff(&a,22);
 escape 0;
 ]],
-    stmts = 'line 20 : invalid `await` : expected `/dynamic` or `/static` modifier',
+    stmts = 'line 20 : invalid `spawn` : expected `/dynamic` or `/static` modifier',
+    --stmts = 'line 20 : invalid `await` : expected `/dynamic` or `/static` modifier',
 }
 
 Test { [[
@@ -50333,7 +50356,8 @@ var Aa a = val Aa(1);
 spawn Ff(&a,22);
 escape 0;
 ]],
-    stmts = 'line 20 : invalid `await` : expected `/dynamic` or `/static` modifier',
+    stmts = 'line 20 : invalid `spawn` : expected `/dynamic` or `/static` modifier',
+    --stmts = 'line 20 : invalid `await` : expected `/dynamic` or `/static` modifier',
 }
 
 Test { [[

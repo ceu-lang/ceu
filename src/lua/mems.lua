@@ -109,7 +109,6 @@ typedef struct tceu_code_mem_]]..me.id_..[[ {
 
         local multis = {}
         if mods.dynamic then
-error'oi'
             local Code_Pars = AST.asr(body,'', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 1,'Code_Pars')
             for i, dcl in ipairs(AST.par(Code_Pars,'Block').dcls) do
                 local _,_,_,dcl_mods = unpack(dcl)
@@ -129,7 +128,7 @@ tceu_ndata _data_]]..i..[[;     /* force multimethod arg data id */
                         base = data.dcl,    -- datatype for the argument
                         dyn  = dcl.id_dyn,  -- identifier considering the "base" value
                         id   = id,          -- argument identifier
-                        i    = i,           -- position in the parameter list
+                        --i    = i,           -- position in the parameter list
                     }
                 end
             end
@@ -146,12 +145,13 @@ static tceu_ndata multis_lbl]]..dims..[[ = {
 tceu_nlbl lbl = multis_lbl
 ]]
                 for _, t in ipairs(multis) do
-                    multis.lbl = multis.lbl..'[ ps._data_'..t.i..' ]'
+                    multis.lbl = multis.lbl..'[ mem->'..t.id..'->_enum ]'
                 end
                 multis.lbl = multis.lbl..';\n'
             end
 
             -- WATCH
+--[=[
             do
                 multis.params = [[
 static tceu_ndata multis_params]]..dims..[[ = {
@@ -164,6 +164,7 @@ usize params = multis_params
                 end
                 multis.params = multis.params..';\n'
             end
+]=]
         end
 
         --me.mems.args = me.mems.args..'} tceu_code_args_'..me.id_..';\n'
@@ -174,17 +175,18 @@ usize params = multis_params
         if mods.tight then
             me.mems.wrapper = me.mems.wrapper .. [[
 static ]]..TYPES.toc(assert(Type))..[[ /* space */
-CEU_CODE_]]..me.id_..[[ (tceu_code_mem_]]..me.id_..[[ mem,
+CEU_CODE_]]..me.id_..[[ (tceu_code_mem_]]..me.id_..[[ mem_,
                         tceu_code_mem* up_mem
 #ifdef CEU_FEATURES_LUA
                       , lua_State* lua
 #endif
                         )
 {
-    mem._mem.up_mem = up_mem;
-    mem._mem.depth  = ]]..me.depth..[[;
+    tceu_code_mem_]]..me.id_..[[* mem = &mem_;
+    mem_._mem.up_mem = up_mem;
+    mem_._mem.depth  = ]]..me.depth..[[;
 #ifdef CEU_FEATURES_LUA
-    mem._mem.lua = lua;
+    mem_._mem.lua = lua;
 #endif
 ]]
             if mods.dynamic then
@@ -195,11 +197,11 @@ CEU_CODE_]]..me.id_..[[ (tceu_code_mem_]]..me.id_..[[ mem,
 ]]
             end
             me.mems.wrapper = me.mems.wrapper .. [[
-    ceu_lbl(NULL, NULL, (tceu_code_mem*)&mem, 0, lbl);
+    ceu_lbl(NULL, NULL, (tceu_code_mem*)mem, 0, lbl);
 ]]
             if Type and (not TYPES.check(Type,'void')) then
                 me.mems.wrapper = me.mems.wrapper..[[
-    return mem._ret;
+    return mem_._ret;
 ]]
             end
             me.mems.wrapper = me.mems.wrapper..[[
@@ -208,7 +210,7 @@ CEU_CODE_]]..me.id_..[[ (tceu_code_mem_]]..me.id_..[[ mem,
         else
             me.mems.wrapper = me.mems.wrapper .. [[
 static void CEU_CODE_]]..me.id_..[[ (tceu_stk* stk, tceu_ntrl trlK,
-                                       tceu_code_mem* mem)
+                                     tceu_code_mem_]]..me.id_..[[* mem)
 {
 ]]
             if mods.dynamic then
@@ -219,8 +221,8 @@ static void CEU_CODE_]]..me.id_..[[ (tceu_stk* stk, tceu_ntrl trlK,
 ]]
             end
             me.mems.wrapper = me.mems.wrapper .. [[
-    tceu_stk __ceu_stk = { 1, 0, stk, {mem,]]..me.trails[1]..','..me.trails[2]..[[} };
-    ceu_lbl(NULL, &__ceu_stk, mem, trlK, lbl);
+    tceu_stk __ceu_stk = { 1, 0, stk, {(tceu_code_mem*)mem,]]..me.trails[1]..','..me.trails[2]..[[} };
+    ceu_lbl(NULL, &__ceu_stk, (tceu_code_mem*)mem, trlK, lbl);
 #ifdef CEU_FEATURES_LONGJMP
     CEU_LONGJMP_JMP_((&__ceu_stk));
 #else
@@ -640,24 +642,10 @@ for i, code in ipairs(MEMS.codes) do
         end
     end
 
-    if me and me.dyn_base and me.dyn_base.dyn_last==me then
+    -- last "code" in the hierarchy creates the base type
+    if me and me.dyn_base and me.dyn_base.dyn_first==me then
         MEMS.codes.mems = MEMS.codes.mems..[[
-typedef union {
-    tceu_code_mem _mem;
-
-    /* only to compare params offsets */
-    struct {
-        byte _params[0];
-        ]]..me.dyn_base.mems.mem..[[
-    };
-]]
-        for i, id2 in ipairs(me.dyn_base.dyns) do
-            MEMS.codes.mems = MEMS.codes.mems..[[
-    struct tceu_code_mem_]]..id2..' _'..i..[[;
-]]
-        end
-        MEMS.codes.mems = MEMS.codes.mems..[[
-} tceu_code_mem_]]..me.dyn_base.id_..[[;
+typedef tceu_code_mem_]]..me.id..[[ tceu_code_mem_]]..me.dyn_base.id_..[[;
 ]]
     end
 end

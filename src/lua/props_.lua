@@ -139,7 +139,6 @@ PROPS_.F = {
     Code = function (me)
         local mods1,_,body = unpack(me)
         if mods1.dynamic and body then
-error'oi'
             local Code_Pars = AST.asr(body,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 1,'Code_Pars', 1,'Stmts')
             for i, dcl in ipairs(Code_Pars) do
                 local _,_,_,mods2 = unpack(dcl)

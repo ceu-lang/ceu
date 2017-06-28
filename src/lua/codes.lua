@@ -419,19 +419,19 @@ assert(not obj, 'not implemented')
         local ret = [[
 {
     *((tceu_code_mem_]]..ID_abs.dcl.id_..'*)'..mem..') = '..V(Abs_Cons)..[[;
-    ]]..mem..[[->pak     = ]]..pak..[[;
-    ]]..mem..[[->up_mem  = ]]..((pak=='NULL' and '_ceu_mem')   or (pak..'->up_mem'))..[[;
-    ]]..mem..[[->up_trl  = ]]..((pak=='NULL' and me.trails[1]) or (pak..'->up_trl'))..[[;
-    ]]..mem..[[->depth   = ]]..ID_abs.dcl.depth..[[;
+    ]]..mem..[[->_mem.pak     = ]]..pak..[[;
+    ]]..mem..[[->_mem.up_mem  = ]]..((pak=='NULL' and '_ceu_mem')   or (pak..'->up_mem'))..[[;
+    ]]..mem..[[->_mem.up_trl  = ]]..((pak=='NULL' and me.trails[1]) or (pak..'->up_trl'))..[[;
+    ]]..mem..[[->_mem.depth   = ]]..ID_abs.dcl.depth..[[;
 ]]
         if CEU.opts.ceu_features_lua then
             ret = ret .. [[
-    ]]..mem..[[->lua    = ]]..LUA(me)..[[;
+    ]]..mem..[[->_mem.lua    = ]]..LUA(me)..[[;
 ]]
         end
         ret = ret .. [[
     tceu_stk __ceu_stk  = { 1, 0, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
-    CEU_CODE_]]..ID_abs.dcl.id_..[[(&__ceu_stk, 0, (tceu_code_mem*)]]..mem..[[);
+    CEU_CODE_]]..ID_abs.dcl.id_..[[(&__ceu_stk, 0, ]]..mem..[[);
 #ifdef CEU_FEATURES_LONGJMP
     CEU_LONGJMP_JMP((&__ceu_stk));
 #else
@@ -463,7 +463,7 @@ _ceu_mem->_trails[]]..(to.dcl.trails[1])..[[].evt.mem =  &]]..CUR('__mem_'..me.n
             { ['evt.mem'] = '(tceu_code_mem*) &'..CUR('__mem_'..me.n) },
             { lbl = me.lbl_out.id },
             lbl = me.lbl_out.id,
-            exec = CODES.F.__abs(me, '(&'..CUR(' __mem_'..me.n)..'._mem)', 'NULL'),
+            exec = CODES.F.__abs(me, '(&'..CUR(' __mem_'..me.n)..')', 'NULL'),
         })
     end,
 
@@ -525,7 +525,8 @@ assert(not obj, 'not implemented')
         __ceu_new->prv = ]]..V(pool)..[[.first.prv;
         ]]..V(pool)..[[.first.prv = __ceu_new;
 
-        tceu_code_mem* __ceu_new_mem = &__ceu_new->mem[0];
+        tceu_code_mem_]]..ID_abs.dcl.id_..[[* __ceu_new_mem =
+            (tceu_code_mem_]]..ID_abs.dcl.id_..[[*) &__ceu_new->mem[0];
         ]]..CODES.F.__abs(me, '__ceu_new_mem', '(&'..V(pool)..')')..[[
     } else {
 ]])
