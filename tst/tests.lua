@@ -203,11 +203,98 @@ escape ret;
     run = 1,
 }
 
+-- BUG #(static calls)
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/tight/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
+    escape a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/tight/dynamic Ff (var&/dynamic Aa.Bb b, var int yyy) -> int do
+    escape b.b + (call/static Ff(&b as Aa,11)) + yyy;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+escape (call/dynamic Ff(&b,22)) + (call/dynamic Ff(&a,33));
+]],
+    run = 72,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa a, var/dynamic int xxx) -> int do
+    escape a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa.Bb b, var/dynamic int yyy) -> int do
+    var int v = await/static Ff(&b as Aa,11);
+    escape b.b + v + yyy;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+var int v1 = await/dynamic Ff(&b,22);
+var int v2 = await/dynamic Ff(&a,33);
+
+escape v1 + v2;
+]],
+    props_ = 'line 5 : invalid `dynamic` declaration : parameter #2 : expected `data` in hierarchy',
+    --run = 1,
+    --dcls = 'line 5 : invalid `dynamic` declaration : parameter #2 : unexpected plain `data`',
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
+    escape a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa.Bb b, var int yyy) -> int do
+    var int v = await/static Ff(&b as Aa,11);
+    escape b.b + v + yyy;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+var int v1 = await/dynamic Ff(&b,22);
+var int v2 = await/dynamic Ff(&a,33);
+
+escape v1 + v2;
+]],
+    run = 72,
+}
+
 -- var/nohold int x;
 -- var/dynamic int x;
 -------------------------------------------------------------------------------
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -48400,1625 +48487,7 @@ escape ret;
 
 --<< CODE / FINALIZE / EMIT / SPAWN / THREADS
 
---<<< ASYNCS / THREADS
-
--->>> ASYNCS / ISR / ATOMIC
-
-PRE_ISR = [[
-native/pre do
-    ##define ceu_out_isr_on()
-    ##define ceu_out_isr_off()
-    int V;
-    void ceu_sys_isr_attach (void* f, int v) {
-        V = V + v;
-    }
-    void ceu_sys_isr_detach (void* f, int v) {
-        V = V * v;
-    }
-    ##define ceu_out_isr_attach ceu_sys_isr_attach
-    ##define ceu_out_isr_detach ceu_sys_isr_detach
-end
-
-
-
-
-
-
-]]
-
-Test { [[
-atomic do
-    await 1s;
-end
-escape 1;
-]],
-    props = 'line 2 : not permitted inside `atomic`',
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-atomic do
-    par/or do
-        nothing;
-    with
-        nothing;
-    end
-end
-escape 1;
-]],
-    props = 'line 2 : not permitted inside `atomic`',
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-output void O;
-atomic do
-    emit O;
-end
-escape 1;
-]],
-    props = 'line 3 : not permitted inside `atomic`',
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { PRE_ISR..[[
-native/pos do
-    void f (void){}
-end
-atomic do
-native _f;
-    _f();
-end
-escape 1;
-]],
-    run = 1,
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { PRE_ISR..[[
-code/tight Fx (void)->void do end
-atomic do
-    call Fx();
-end
-escape 1;
-]],
-    run = 1,
-    --props = 'line 4 : not permitted inside `atomic`',
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-atomic do
-    loop do
-    end
-end
-escape 1;
-]],
-    props = 'line 3 : not permitted inside `atomic`',
-    wrn = true,
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-loop do
-    atomic do
-        break;
-    end
-end
-escape 1;
-]],
-    props = 'line 3 : not permitted inside `atomic`',
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-par/or do
-    async/isr [20] do
-    end
-with
-end
-escape 1;
-]],
-    parser = 'line 1 : after `do` : expected statement',
-    --parser = 'line 1 : after `do` : expected `nothing` or `var` or `vector`',
-    --adj = 'line 2 : `async/isr` must be followed by `await FOREVER`',
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-par/or do
-    spawn async/isr [20] do
-    end
-    await FOREVER;
-with
-end
-escape 1;
-]],
-    run = 1,
-    --cc = 'error: implicit declaration of function ‘ceu_out_isr_attach’',
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-native/pre do
-    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
-    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
-        tceu_callback_ret ret;
-        ret.is_handled = 0;
-        return ret;
-    }
-end
-par/or do
-    spawn async/isr [1] do
-    end
-    await FOREVER;
-with
-end
-escape 1;
-]],
-    run = 1,
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-native/pre do
-    int V = 1;
-    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
-        tceu_callback_ret ret = {.is_handled=1};
-        int* args = (int*) p2.ptr;
-        switch (cmd) {
-            case CEU_CALLBACK_ISR_ATTACH:
-                V = V + args[0] + args[1];
-                break;
-            case CEU_CALLBACK_ISR_DETACH:
-                V = V * args[0] - args[1];
-                break;
-            default:
-                ret.is_handled = 0;
-        }
-        return ret;
-    }
-    tceu_callback CB = { &CB_F, NULL };
-end
-{ ceu_callback_register(&CB); }
-par/or do
-do
-    spawn async/isr [3,4] do
-    end
-    await FOREVER;
-end             // TODO: forcing finalize out_isr(null)
-with
-end
-native _V;
-escape _V;
-]],
-    run = 20,
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-native/pre do
-    int V = 1;
-    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
-        tceu_callback_ret ret = {.is_handled=1};
-        int* args = (int*) p2.ptr;
-        switch (cmd) {
-            case CEU_CALLBACK_ISR_ATTACH:
-                V = V + args[0];
-                break;
-            case CEU_CALLBACK_ISR_DETACH:
-                V = V * args[0];
-                break;
-            default:
-                ret.is_handled = 0;
-        }
-        return ret;
-    }
-    tceu_callback CB = { &CB_F, NULL };
-end
-{ ceu_callback_register(&CB); }
-par/or do
-    do
-        spawn async/isr [3] do
-        end
-        await FOREVER;
-    end             // TODO: forcing finalize out_isr(null)
-with
-end
-native _V;
-escape _V;
-]],
-    run = 12,
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { PRE_ISR..[[
-vector[10] int v = [1];
-v[0] = 2;
-par/or do
-    spawn async/isr [20] do
-        outer.v[0] = 1;
-    end
-    await FOREVER;
-with
-end
-escape v[0];
-]],
-    run = 2,
-    --isr = 'line 2 : access to "v" must be atomic',
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-vector[10] int v;
-atomic do
-    v[0] = 2;
-end
-par/or do
-    spawn async/isr [20] do
-        outer.v[0] = 1;
-    end
-    await FOREVER;
-with
-end
-atomic do
-    escape v[0];
-end
-]],
-    props = 'line 13 : not permitted inside `atomic`',
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-native/pre do
-    int V = 1;
-    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
-    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
-        tceu_callback_ret ret = {.is_handled=1};
-        int* args = (int*) p2.ptr;
-        switch (cmd) {
-            case CEU_CALLBACK_ISR_ATTACH:
-                V = V + args[0];
-                break;
-            case CEU_CALLBACK_ISR_DETACH:
-                V = V * args[0];
-                break;
-            default:
-                ret.is_handled = 0;
-        }
-        return ret;
-    }
-end
-vector[10] int v = [];
-atomic do
-    v = v .. [2];
-end
-par do
-    spawn async/isr [20] do
-        outer.v[0] = 1;
-    end
-    await FOREVER;
-with
-    var int ret;
-    atomic do
-        ret = v[0];
-    end
-    escape ret;
-end
-]],
-    _ana = {acc=1},
-    run = 2,
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-spawn async/isr [20] do
-    atomic do
-native _f;
-        _f();
-    end
-end
-await FOREVER;
-]],
-    props = 'line 2 : not permitted inside `async/isr`',
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-var int x = 0;
-
-atomic do
-    x = 1;
-end
-par/or do
-    spawn async/isr [20] do
-        x = 0;
-    end
-    await FOREVER;
-with
-end
-escape x;
-]],
-    dcls = 'line 8 : internal identifier "x" is not declared',
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-native/pre do
-    int V = 1;
-    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
-    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
-        tceu_callback_ret ret = {.is_handled=1};
-        int* args = (int*) p2.ptr;
-        switch (cmd) {
-            case CEU_CALLBACK_ISR_ATTACH:
-                V = V + args[0];
-                break;
-            case CEU_CALLBACK_ISR_DETACH:
-                V = V * args[0];
-                break;
-            default:
-                ret.is_handled = 0;
-        }
-        return ret;
-    }
-end
-
-var int x = 0;
-
-atomic do
-    x = 1;
-end
-par/or do
-    spawn async/isr [20] do
-        outer.x = 0;
-    end
-    await FOREVER;
-with
-end
-escape x;
-]],
-    run = 1,
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { PRE_ISR..[[
-var int v = 2;
-par/or do
-    spawn async/isr[20] do
-        outer.v = 1;
-    end
-    await FOREVER;
-with
-end
-escape v;
-]],
-    run = 2,
-    --isr = 'line 1 : access to "v" must be atomic',
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { PRE_ISR..[[
-var int&& v = null;
-    spawn async/isr[20] do
-        *outer.v = 1;
-    end
-    await FOREVER;
-]],
-    ptrs = 'line 22 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:21)',
-    --isr = 'line 4 : pointer access breaks the static check for `atomic` sections',
-    --run = 1,
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { PRE_ISR..[[
-var int&& v = null;
-par/or do
-    spawn async/isr[20] do
-        *outer.v = 1;
-    end
-    await FOREVER;
-with
-end
-escape 1;
-]],
-    ptrs = 'line 23 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:22)',
-    --inits = 'line 22 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:21)',
-    --inits = 'line 23 : invalid pointer access : crossed `par/or` (/tmp/tmp.ceu:22)',
-    --isr = 'line 4 : pointer access breaks the static check for `atomic` sections',
-    --run = 1,
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { PRE_ISR..[[
-code/tight Fx (void)->int do
-    escape 2;
-end
-var int v = call Fx();
-par/or do
-    spawn async/isr [20] do
-        call Fx();
-    end
-    await FOREVER;
-with
-end
-escape v;
-]],
-    --dcls = 'line 25 : abstraction inside `async` : not implemented',
-    --isr = 'line 7 : call breaks the static check for `atomic` sections',
-    run = 2,
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { PRE_ISR..[[
-native/pos do
-    int f (void) { return 2; }
-end
-native _f;
-var int v = _f();
-par/or do
-    spawn async/isr [20] do
-        _f();
-    end
-    await FOREVER;
-with
-end
-escape v;
-]],
-    run = 2,
-    --wrn = true,
-    --isr = 'line 1 : access to "_f" must be atomic',
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-native/pure _f;
-native/pre do
-    int f (void) {
-        return 2;
-    }
-end
-
-var int v = _f();
-par/or do
-    spawn async/isr [20] do
-        _f();
-    end
-    await FOREVER;
-with
-end
-escape v;
-]],
-    run = 2,
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { PRE_ISR..[[
-var int v;
-v = 2;
-par/or do
-    spawn async/isr [20] do
-        outer.v = 1;
-    end
-    await FOREVER;
-with
-end
-escape v;
-]],
-    --isr = 'line 2 : access to "v" must be atomic',
-    run = 2,
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { PRE_ISR..[[
-var int v;
-atomic do
-    v = 2;
-end
-par/or do
-    spawn async/isr [20] do
-        outer.v = 1;
-    end
-    await FOREVER;
-with
-end
-escape v;
-]],
-    run = 2,
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-var int v;
-atomic do
-    v = 2;
-end
-par do
-    spawn async/isr [20] do
-        outer.v = 1;
-        outer.v = 1;
-    end
-    await FOREVER;
-with
-    var int ret;
-    atomic do
-        ret = v;
-    end
-    escape ret;
-end
-]],
-    _ana = {acc=2},
-    run = 2,
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { PRE_ISR..[[
-var int v;
-atomic do
-    v = 2;
-end
-par/or do
-    spawn async/isr [20] do
-        outer.v = 1;
-    end
-    await FOREVER;
-with
-end
-escape v;
-]],
-    --isr = 'line 12 : access to "v" must be atomic',
-    props = 'line 27 : not permitted inside `async/isr`',
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { PRE_ISR..[[
-var int v;
-var int&& p;
-atomic do
-    v = 2;
-    p = &&v;
-end
-par/or do
-    spawn async/isr [20] do
-        outer.v = 1;
-    end
-    await FOREVER;
-with
-end
-escape 1;
-]],
-    --isr = 'line 5 : reference access breaks the static check for `atomic` sections',
-    run = 1,
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-vector[10] int v;
-var int&& p;
-atomic do
-    p = &&v[0];
-end
-par/or do
-    spawn async/isr [20] do
-        //this.v[1] = 1;
-    end
-    await FOREVER;
-with
-end
-escape 1;
-]],
-    run = 1,
-    --dcls = 'line 4 : invalid operand to `&&` : unexpected context for vector "v"',
-    --env = 'line 4 : types mismatch (`int&&` <= `int[]&&`)',
-    --env = 'line 4 : invalid operand to unary "&&"',
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-par/or do
-    spawn async/isr [1] do
-        emit A;
-    end
-    await FOREVER;
-with
-end
-escape 1;
-]],
-    dcls = 'line 3 : external identifier "A" is not declared',
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-input int A;
-par/or do
-    spawn async/isr [] do
-        emit A;
-    end
-    await FOREVER;
-with
-end
-escape 1;
-]],
-    --adj = 'line 3 : missing ISR identifier',
-    parser = 'line 3 : after `[` : expected expression',
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-input int A;
-par/or do
-    spawn async/isr [1] do
-        emit A;
-    end
-    await FOREVER;
-with
-end
-escape 1;
-]],
-    stmts = 'line 4 : invalid `emit` : types mismatch : "(int)" <= "()"',
-    --env = ' line 4 : arity mismatch',
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-input int A;
-par/or do
-    spawn async/isr [1] do
-        var int x = 111;
-        emit A(1);
-        x = 222;
-    end
-    await FOREVER;
-with
-end
-escape 1;
-]],
-    run = 1,
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-native/pre do
-    int V = 0;
-    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
-        tceu_callback_ret ret = {.is_handled=1};
-        int* args = (int*) p2.ptr;
-        switch (cmd) {
-            case CEU_CALLBACK_ISR_ATTACH:
-                V = V + args[0];
-                break;
-            case CEU_CALLBACK_ISR_DETACH:
-                V = V - args[0];
-                break;
-            default:
-                ret.is_handled = 0;
-        }
-        return ret;
-    }
-    tceu_callback CB_ = { &CB, NULL };
-end
-{ ceu_callback_register(&CB_); }
-native _ceu_dbg_assert;
-native _V;
-par/or do
-    _ceu_dbg_assert(_V==0);
-    spawn async/isr [1] do
-    end
-    await FOREVER;
-with
-    _ceu_dbg_assert(_V==1);
-    await 1s;
-    _ceu_dbg_assert(_V==1);
-end             // TODO: forcing finalize out_isr(null)
-_ceu_dbg_assert(_V==0);
-escape _V+1;
-]],
-    run = { ['~>1s']=1 },
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-native _digitalRead, _digitalWrite;
-input int PIN02;
-par/or do
-    spawn async/isr [1] do
-        emit PIN02(_digitalRead(2));
-    end
-    await FOREVER;
-with
-    _digitalWrite(13, 1);
-end
-escape 1;
-]],
-    --_ana = {acc=1},
-    todo = 'acc',
-    acc = 'line 8 : access to symbol "_digitalWrite" must be atomic (vs symbol `_digitalRead` (/tmp/tmp.ceu:4))',
-    run = 1,
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-input int PIN02;
-native _digitalWrite;
-par/or do
-    var int i = 0;
-    spawn async/isr [1] do
-        emit PIN02(i);
-    end
-    await FOREVER;
-with
-    _digitalWrite(13, 1);
-end
-escape 1;
-]],
-    dcls = 'line 6 : internal identifier "i" is not declared',
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-native _digitalWrite;
-input int PIN02;
-par/or do
-    var int i = 0;
-    spawn async/isr [1] do
-        emit PIN02(outer.i);
-    end
-    await FOREVER;
-with
-    _digitalWrite(13, 1);
-end
-escape 1;
-]],
-    cc = '10:1: error: implicit declaration of function ‘digitalWrite’',
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-var int i = 0;
-par/or do
-    spawn async/isr [1] do
-        outer.i = 2;
-    end
-    await FOREVER;
-with
-    i = 1;
-end
-escape 1;
-]],
-    todo = 'acc',
-    acc = 'line 9 : access to symbol "i" must be atomic (vs variable/event `i` (/tmp/tmp.ceu:5))',
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { [[
-input int PIN02;
-var int i = 0;
-par/or do
-    spawn async/isr [1] do
-        outer.i = 2;
-    end
-    await FOREVER;
-with
-    atomic do
-        i = 1;
-    end
-end
-escape 1;
-]],
-    wrn = true,
-    _ana = {acc=1},
-    run = 1,
-    --cc = '#error "Missing definition for macro',
-    _opts = { ceu_features_isr='true' },
-}
-
-Test { PRE_ISR..[[
-code/tight Fx (void)->int do
-    escape 2;
-end
-var int v = call Fx();
-par/or do
-    spawn async/isr[20] do
-        call Fx();
-    end
-    await FOREVER;
-with
-end
-escape v;
-]],
-    --wrn = true,
-    --isr = 'line 4 : access to "Fx" must be atomic',
-    run = 2,
-    _opts = { ceu_features_isr='true' },
-    --dcls = 'line 25 : abstraction inside `async` : not implemented',
-}
-
-Test { [[
-native _CEU_APP;
-spawn async/isr [1] do
-end
-escape _CEU_APP.root.__mem.trails_n;
-]],
-    _opts = { ceu_features_isr='true' },
-    run = 2,
-}
-Test { [[
-native _CEU_APP;
-spawn async/isr [1] do
-end
-spawn do
-end
-escape _CEU_APP.root.__mem.trails_n;
-]],
-    _opts = { ceu_features_isr='true' },
-    run = 3,
-}
-
-Test { [[
-spawn async/isr [0] do
-    emit 1s;
-end
-escape 1;
-]],
-    _opts = { ceu_features_isr='true' },
-    run = 1,
-}
-
-Test { [[
-native _X, _V, _U, _f;
-native/pre do
-    ##define X 1
-end
-native/pos do
-    ##define f(x) 1
-    ##ifdef CEU_ISR__X
-        int V = 1;
-    ##else
-        int V = 0;
-    ##endif
-    ##ifdef CEU_ISR__f__lpar__0__rpar__
-        int U = 1;
-    ##else
-        int U = 0;
-    ##endif
-
-end
-
-spawn async/isr [_X] do
-    emit 1s;
-end
-spawn async/isr [_f(0)] do
-    emit 1s;
-end
-escape _V+_U;
-]],
-    _opts = { ceu_features_isr='true' },
-    run = 2,
-}
-
-Test { [[
-code/await Ff (void) -> void do
-    spawn async/isr [0] do
-        var int x = 10;
-    end
-end
-escape 1;
-]],
-    wrn = true,
-    _opts = { ceu_features_isr='true' },
-    run = 1,
-}
-
-Test { [[
-code/await Ff (var int x) -> void do
-    var int y = 0;
-    spawn async/isr [0] do
-        var int z = outer.x + outer.y;
-    end
-end
-escape 1;
-]],
-    _opts = { ceu_features_isr='true' },
-    wrn = true,
-    run = 1,
-}
-
---<<< ASYNCS / ISR / ATOMIC
-
--->>> OUTER
-
-Test { [[
-var int x;
-code/tight Ff (void)->void do
-end
-x = 1;
-escape x;
-]],
-    wrn = true,
-    --inits = 'line 1 : uninitialized variable "x" : reached end of `code` (/tmp/tmp.ceu:2)',
-    --inits = 'line 1 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:2)',
-    run = 1,
-}
-
-Test { [[
-var int x = 0;
-code/tight Ff (void)->void do
-    outer.y = 1;
-end
-var int y = 10;
-call Ff();
-escape x;
-]],
-    dcls = 'line 3 : internal identifier "y" is not declared',
-}
-
-Test { [[
-var int ret = 0;
-do
-    var int x = 0;
-    code/tight Ff (void)->void do
-        outer.x = 1;
-    end
-    call Ff();
-    ret = x;
-end
-call Ff();
-escape ret;
-]],
-    dcls = 'line 10 : abstraction "Ff" is not declared',
-}
-
-Test { [[
-var int x = 0;
-code/tight Ff (void)->void do
-    code/tight Gg (void)->void do end
-    outer.x = 1;
-end
-call Ff();
-escape x;
-]],
-    wrn = true,
-    --dcls = 'line 3 : invalid `code` declaration : nesting is not allowed',
-    run = 1,
-}
-Test { [[
-var int x = 0;
-data Dd with
-    code/tight Ff (void)->void do
-        outer.x = 1;
-    end
-end
-call Ff();
-escape x;
-]],
-    parser = 'line 2 : after `with` : expected `var` or `vector` or `pool` or `event`',
-}
-Test { [[
-var int x = 0;
-data Dd with
-    data Ee;
-end
-call Ff();
-escape x;
-]],
-    parser = 'line 2 : after `with` : expected `var` or `vector` or `pool` or `event`',
-}
-
-Test { [[
-var int x = 0;
-code/tight Ff (void)->void do
-    outer.x = 1;
-end
-call Ff();
-escape x;
-]],
-    run = 1,
-}
-
-Test { [[
-var int ret = 0;
-do
-    var int x = 0;
-    code/tight Ff (void)->void do
-        outer.x = 1;
-    end
-    call Ff();
-    ret = x;
-end
-escape ret;
-]],
-    run = 1,
-}
-
-Test { [[
-native _int, _f;
-var& _int ren;
-_f(&&outer.ren);
-escape 0;
-]],
-    dcls = 'line 3 : invalid `outer`',
-}
-
-Test { [[
-code/await Ff (void) -> int do
-    var int xxx = 10;
-    code/await Gg (void) -> int do
-        escape xxx;
-    end
-    var int yyy = await Gg();
-    escape yyy;
-end
-var int zzz = await Ff();
-escape zzz;
-]],
-    dcls = 'line 4 : internal identifier "xxx" is not declared',
-}
-
-Test { [[
-code/await Ff (void) -> int do
-    var int xxx = 10;
-    code/await Gg (void) -> int do
-        escape outer.xxx;
-    end
-    var int yyy = await Gg();
-    escape yyy;
-end
-var int zzz = await Ff();
-escape zzz;
-]],
-    run = 10,
-}
-
-Test { [[
-code/await Ff (void) -> int do
-    var int xxx = 10;
-    code/await Gg (void) -> int do
-        var int aaa = 10;
-        code/tight Hh (void) -> int do
-            escape outer.xxx + outer.aaa;
-        end
-        escape call Hh();
-    end
-    var int yyy = await Gg();
-    escape yyy;
-end
-var int zzz = await Ff();
-escape zzz;
-]],
-    run = 20,
-}
-
-Test { [[
-code/tight Ff (var int xxx) -> int do
-    var int b = 0;
-    var int yyy = xxx;
-    code/tight Get (void) -> int do
-        escape outer.yyy + outer.xxx;
-    end
-    escape b + call Get();
-end
-escape call Ff(10);
-]],
-    run = 20,
-}
-
-Test { [[
-var int x = 10;
-code/tight Gg (void) -> int do
-    escape outer.x;
-end
-escape call Gg();
-]],
-    run = 10,
-}
-Test { [[
-code/tight Ff (void) -> int do
-    var int x = 10;
-    code/tight Gg (void) -> int do
-        escape outer.x;
-    end
-    escape call Gg();
-end
-escape call Ff();
-]],
-    run = 10,
-}
-Test { [[
-code/tight Ff (void) -> int do
-    var int x = 10;
-    code/tight Gg (void) -> int do
-        escape outer.x;
-    end
-    code/tight Hh (void) -> int do
-        escape call Gg();
-    end
-    escape call Hh();
-end
-escape call Ff();
-]],
-    run = 10,
-}
-Test { [[
-code/tight Ff (void) -> int do
-    var int x = 10;
-    code/tight Gg (void) -> int do
-        escape outer.x;
-    end
-    code/tight Hh (void) -> int do
-        code/tight Ii (void) -> int do
-            escape call Gg();
-        end
-        escape call Ii();
-    end
-    escape call Hh();
-end
-escape call Ff();
-]],
-    run = 10,
-}
-Test { [[
-    var int x = 10;
-    code/tight Gg (void) -> int do
-        escape outer.x;
-    end
-    code/tight Hh (void) -> int do
-        code/tight Ii (void) -> int do
-            escape call Gg();
-        end
-        escape call Ii();
-    end
-    escape call Hh();
-]],
-    run = 10,
-}
-Test { [[
-code/await Ff (void) -> int do
-    var int x = 10;
-    code/await Gg (void) -> int do
-        escape outer.x;
-    end
-    code/await Hh (void) -> int do
-        code/await Ii (void) -> int do
-            var int a = await Gg();
-            escape a;
-        end
-        var int b = await Ii();
-        escape b;
-    end
-    var int c = await Hh();
-    escape c;
-end
-var int d = await Ff();
-escape d;
-]],
-    run = 10,
-}
-Test { [[
-    var int x = 10;
-    code/await Gg (void) -> int do
-        escape outer.x;
-    end
-    code/await Hh (void) -> int do
-        code/await Ii (void) -> int do
-            var int c = await Gg();
-            escape c;
-        end
-        var int d = await Ii();
-        escape d;
-    end
-    var int e = await Hh();
-    escape e;
-]],
-    run = 10,
-}
-
-Test { [[
-code/tight Pingus (void) -> int do
-    var int x = 10;
-    code/tight GetVelocity (void) -> int do
-        escape outer.x;
-    end
-    escape call GetVelocity();
-end
-escape call Pingus();
-]],
-    run = 10,
-}
-Test { [[
-code/tight Pingus (void) -> int do
-    var int x = 10;
-    code/tight GetVelocity (void) -> int do
-        escape outer.x;
-    end
-    code/tight LinearMover (void) -> int do
-        escape call GetVelocity();
-    end
-    code/tight Faller (void) -> int do
-        escape call LinearMover();
-    end
-    escape call Faller();
-end
-escape call Pingus();
-]],
-    run = 10,
-}
-Test { [[
-code/await Pingus (void) -> int do
-    var int xxx = 10;
-    code/await GetVelocity (void) -> int do
-        escape outer.xxx;
-    end
-    code/await LinearMover (void) -> int do
-        var int x = await GetVelocity();
-        escape x;
-    end
-    code/await Faller (void) -> int do
-        var int x = await LinearMover();
-        escape x;
-    end
-    var int x = await Faller();
-    escape x;
-end
-var int x = await Pingus();
-escape x;
-]],
-    run = 10,
-}
-
-Test { [[
-code/await Ff (var int x) -> FOREVER do
-    code/tight Get_X (void) -> int do
-        escape outer.x;
-    end
-    await FOREVER;
-end
-
-pool[] Ff fs;
-spawn Ff(1) in fs;
-spawn Ff(2) in fs;
-
-var int ret = 0;
-
-var&? Ff f;
-loop f in fs do
-    ret = ret + (call f!.Get_X());
-end
-
-escape ret;
-]],
-    wrn = true,     -- TODO
-    run = 3,
-}
-
-Test { [[
-code/await Ff (var int x) -> FOREVER do
-    code/await Get_X (void) -> int do
-        escape outer.x;
-    end
-    await FOREVER;
-end
-
-pool[] Ff fs;
-spawn Ff(1) in fs;
-spawn Ff(2) in fs;
-
-var int ret = 0;
-
-var&? Ff f;
-loop f in fs do
-    var int v = await f!.Get_X();
-    ret = ret + v;
-end
-
-escape ret;
-]],
-    todo = 'dot for spawn/await',
-    wrn = true,     -- TODO
-    run = 3,
-}
-
-Test { [[
-data Dd with
-    var int x = 10;
-    code/tight Get_X (void) -> int do
-        escape outer.x;
-    end
-end
-
-var Dd d = _;
-escape call d.Get_X();
-]],
-    todo = 'dot for data',
-    run = 10,
-}
-
-Test { [[
-data Dd with
-    var int x = 10;
-    code/await Get_X (void) -> int do
-        escape outer.x;
-    end
-end
-
-var Dd d = val Dd(20);
-var int x = await d.Get_X();
-escape x;
-]],
-    todo = 'dot for spawn/await',
-    run = 10,
-}
-
-Test { [[
-code/await Ff (void) -> void do
-    code/tight Gg (void) -> void do end
-end
-pool[] Ff fs;
-var&? Ff f;
-loop f in fs do
-    call f!.Gg();
-end
-escape 1;
-]],
-    wrn = true,
-    --dcls = 'line 7 : invalid `call`',
-    run = 1,
-}
-
-Test { [[
-code/await Ff (void) -> (var int x) -> FOREVER do
-    x = 10;
-    await FOREVER;
-end
-var&? Ff f = spawn Ff();
-escape f.x;
-]],
-    dcls = 'line 6 : invalid operand to `.` : unexpected option alias',
-}
-
-Test { [[
-code/await Ff (vector&[] byte buf) -> FOREVER do
-    code/tight Reset (void) -> void do
-        $outer.buf = 0;
-    end
-    call Reset();
-    await FOREVER;
-end
-vector[] byte buf = [1,2,3];
-var&? Ff f = spawn Ff(&buf);
-call f.Reset();
-escape ($buf as int) + 1;
-]],
-    dcls = 'line 10 : invalid operand to `.` : unexpected option alias',
-}
-
-Test { [[
-spawn () do
-    var bool v = true;
-    code/tight Is_At (var int x, var int y) -> bool do
-        escape outer.v;
-    end
-end
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-var int a = 1;
-par/or do
-with
-    var int a = 1;
-    code/await Ff (void) -> FOREVER do
-        code/tight Gg (void) -> void do
-            var int b = outer.a;
-        end
-        await FOREVER;
-    end
-    spawn Ff();
-end
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-code/await Ff (void) -> int do
-    event void ok_escape;
-
-    code/await Gg (void) -> FOREVER do
-        emit outer.ok_escape;
-        await FOREVER;
-    end
-
-    par do
-        await ok_escape;
-        escape 1;
-    with
-        spawn Gg();
-        escape 99;
-    end
-end
-var int ret = await Ff();
-escape ret;
-]],
-    run = 1,
-}
-
---<<< OUTER
-
--->>> TCO
-
-Test { [[
-par/or do
-with
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-var int i;
-loop i in [0->10000[ do      // 6000 already fails
-    par/or do with end
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-code/await Ff (void) -> FOREVER do
-    await FOREVER;
-end
-var usize i;
-loop i in [0->10000[ do      // 5000 already fails
-    spawn Ff();
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-var usize i;
-loop i in [0->10000[ do
-    do
-        par do
-            escape;
-        with
-        end
-    end
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-var usize i;
-loop i in [0->100000[ do
-    do
-        par do
-            escape;
-        with
-        end
-    end
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-var int i;
-loop i in [0->100000[ do
-    par/or do with end
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-code/await Ff (void) -> FOREVER do
-    await FOREVER;
-end
-var usize i;
-loop i in [0->100000[ do
-    spawn Ff();
-end
-escape 1;
-]],
-    run = 1,
-}
-
---<<< TCO
-
--->>> CEU_FEATURES_*
-
-Test { [[
-lua[] do
-end
-escape 1;
-]],
-    _opts = {
-        ceu = true,
-        ceu_features_lua = 1,
-    },
-    cmd = 'invalid value for option "ceu_features_lua"',
-}
-
-Test { [[
-lua[] do
-end
-escape 1;
-]],
-    _opts = {
-        ceu = true,
-        ceu_features_lua = 'false',
-    },
-    props_ = 'line 1 : `lua` support is disabled',
-}
-Test { [=[
-
-var int ret = [[1]];
-escape ret;
-]=],
-    _opts = {
-        ceu_features_lua = 'false',
-    },
-    props_ = 'line 2 : `lua` support is disabled',
-}
-Test { [=[
-[[ ]];
-escape 1;
-]=],
-    _opts = {
-        ceu_features_lua = 'false',
-    },
-    props_ = 'line 1 : `lua` support is disabled',
-}
-Test { [[
-await async/thread do end
-escape 1;
-]],
-    _opts = {
-        ceu_features_thread = 'false',
-    },
-    props_ = 'line 1 : `async/thread` support is disabled',
-}
-
-Test { [=[
-code/await Ff (void) -> int do
-    [[ G = 111 ]];
-    await async/thread do end;
-    var int ret = [[G]];
-    escape ret;
-end
-var int ret = 0;
-par/and do
-    lua[] do
-        var int v = await Ff();
-        ret = ret + v;
-    end
-with
-    lua[] do
-        var int v = await Ff();
-        ret = ret + v;
-    end
-end
-escape ret;
-]=],
-    _opts = { ceu_features_lua='true' , ceu_features_thread='true' },
-    run = 222,
-}
---<<< CEU_FEATURES_*
-
 -->> CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
---]=====]
 
 Test { [[
 data Aa with
@@ -51824,89 +50293,1621 @@ escape v1 + v2;
     run = 59,
 }
 
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/tight/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
-    escape a.a + xxx;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/tight/dynamic Ff (var&/dynamic Aa.Bb b, var int yyy) -> int do
-    escape b.b + (call/static Ff(&b as Aa,11)) + yyy;
-end
-
-var Aa    a = val Aa(1);
-var Aa.Bb b = val Aa.Bb(2,3);
-
-escape (call/dynamic Ff(&b,22)) + (call/dynamic Ff(&a,33));
-]],
-    run = 72,
-}
-
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/await/dynamic Ff (var&/dynamic Aa a, var/dynamic int xxx) -> int do
-    escape a.a + xxx;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/await/dynamic Ff (var&/dynamic Aa.Bb b, var/dynamic int yyy) -> int do
-    var int v = await/static Ff(&b as Aa,11);
-    escape b.b + v + yyy;
-end
-
-var Aa    a = val Aa(1);
-var Aa.Bb b = val Aa.Bb(2,3);
-
-var int v1 = await/dynamic Ff(&b,22);
-var int v2 = await/dynamic Ff(&a,33);
-
-escape v1 + v2;
-]],
-    props_ = 'line 5 : invalid `dynamic` declaration : parameter #2 : expected `data` in hierarchy',
-    --run = 1,
-    --dcls = 'line 5 : invalid `dynamic` declaration : parameter #2 : unexpected plain `data`',
-}
-
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/await/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
-    escape a.a + xxx;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/await/dynamic Ff (var&/dynamic Aa.Bb b, var int yyy) -> int do
-    var int v = await/static Ff(&b as Aa,11);
-    escape b.b + v + yyy;
-end
-
-var Aa    a = val Aa(1);
-var Aa.Bb b = val Aa.Bb(2,3);
-
-var int v1 = await/dynamic Ff(&b,22);
-var int v2 = await/dynamic Ff(&a,33);
-
-escape v1 + v2;
-]],
-    run = 72,
-}
-
 --<< CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
+
+--<<< ASYNCS / THREADS
+
+-->>> ASYNCS / ISR / ATOMIC
+
+PRE_ISR = [[
+native/pre do
+    ##define ceu_out_isr_on()
+    ##define ceu_out_isr_off()
+    int V;
+    void ceu_sys_isr_attach (void* f, int v) {
+        V = V + v;
+    }
+    void ceu_sys_isr_detach (void* f, int v) {
+        V = V * v;
+    }
+    ##define ceu_out_isr_attach ceu_sys_isr_attach
+    ##define ceu_out_isr_detach ceu_sys_isr_detach
+end
+
+
+
+
+
+
+]]
+
+Test { [[
+atomic do
+    await 1s;
+end
+escape 1;
+]],
+    props = 'line 2 : not permitted inside `atomic`',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+atomic do
+    par/or do
+        nothing;
+    with
+        nothing;
+    end
+end
+escape 1;
+]],
+    props = 'line 2 : not permitted inside `atomic`',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+output void O;
+atomic do
+    emit O;
+end
+escape 1;
+]],
+    props = 'line 3 : not permitted inside `atomic`',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+native/pos do
+    void f (void){}
+end
+atomic do
+native _f;
+    _f();
+end
+escape 1;
+]],
+    run = 1,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+code/tight Fx (void)->void do end
+atomic do
+    call Fx();
+end
+escape 1;
+]],
+    run = 1,
+    --props = 'line 4 : not permitted inside `atomic`',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+atomic do
+    loop do
+    end
+end
+escape 1;
+]],
+    props = 'line 3 : not permitted inside `atomic`',
+    wrn = true,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+loop do
+    atomic do
+        break;
+    end
+end
+escape 1;
+]],
+    props = 'line 3 : not permitted inside `atomic`',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+par/or do
+    async/isr [20] do
+    end
+with
+end
+escape 1;
+]],
+    parser = 'line 1 : after `do` : expected statement',
+    --parser = 'line 1 : after `do` : expected `nothing` or `var` or `vector`',
+    --adj = 'line 2 : `async/isr` must be followed by `await FOREVER`',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+par/or do
+    spawn async/isr [20] do
+    end
+    await FOREVER;
+with
+end
+escape 1;
+]],
+    run = 1,
+    --cc = 'error: implicit declaration of function ‘ceu_out_isr_attach’',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+native/pre do
+    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
+    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
+        tceu_callback_ret ret;
+        ret.is_handled = 0;
+        return ret;
+    }
+end
+par/or do
+    spawn async/isr [1] do
+    end
+    await FOREVER;
+with
+end
+escape 1;
+]],
+    run = 1,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+native/pre do
+    int V = 1;
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
+        tceu_callback_ret ret = {.is_handled=1};
+        int* args = (int*) p2.ptr;
+        switch (cmd) {
+            case CEU_CALLBACK_ISR_ATTACH:
+                V = V + args[0] + args[1];
+                break;
+            case CEU_CALLBACK_ISR_DETACH:
+                V = V * args[0] - args[1];
+                break;
+            default:
+                ret.is_handled = 0;
+        }
+        return ret;
+    }
+    tceu_callback CB = { &CB_F, NULL };
+end
+{ ceu_callback_register(&CB); }
+par/or do
+do
+    spawn async/isr [3,4] do
+    end
+    await FOREVER;
+end             // TODO: forcing finalize out_isr(null)
+with
+end
+native _V;
+escape _V;
+]],
+    run = 20,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+native/pre do
+    int V = 1;
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
+        tceu_callback_ret ret = {.is_handled=1};
+        int* args = (int*) p2.ptr;
+        switch (cmd) {
+            case CEU_CALLBACK_ISR_ATTACH:
+                V = V + args[0];
+                break;
+            case CEU_CALLBACK_ISR_DETACH:
+                V = V * args[0];
+                break;
+            default:
+                ret.is_handled = 0;
+        }
+        return ret;
+    }
+    tceu_callback CB = { &CB_F, NULL };
+end
+{ ceu_callback_register(&CB); }
+par/or do
+    do
+        spawn async/isr [3] do
+        end
+        await FOREVER;
+    end             // TODO: forcing finalize out_isr(null)
+with
+end
+native _V;
+escape _V;
+]],
+    run = 12,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+vector[10] int v = [1];
+v[0] = 2;
+par/or do
+    spawn async/isr [20] do
+        outer.v[0] = 1;
+    end
+    await FOREVER;
+with
+end
+escape v[0];
+]],
+    run = 2,
+    --isr = 'line 2 : access to "v" must be atomic',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+vector[10] int v;
+atomic do
+    v[0] = 2;
+end
+par/or do
+    spawn async/isr [20] do
+        outer.v[0] = 1;
+    end
+    await FOREVER;
+with
+end
+atomic do
+    escape v[0];
+end
+]],
+    props = 'line 13 : not permitted inside `atomic`',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+native/pre do
+    int V = 1;
+    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
+    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
+        tceu_callback_ret ret = {.is_handled=1};
+        int* args = (int*) p2.ptr;
+        switch (cmd) {
+            case CEU_CALLBACK_ISR_ATTACH:
+                V = V + args[0];
+                break;
+            case CEU_CALLBACK_ISR_DETACH:
+                V = V * args[0];
+                break;
+            default:
+                ret.is_handled = 0;
+        }
+        return ret;
+    }
+end
+vector[10] int v = [];
+atomic do
+    v = v .. [2];
+end
+par do
+    spawn async/isr [20] do
+        outer.v[0] = 1;
+    end
+    await FOREVER;
+with
+    var int ret;
+    atomic do
+        ret = v[0];
+    end
+    escape ret;
+end
+]],
+    _ana = {acc=1},
+    run = 2,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+spawn async/isr [20] do
+    atomic do
+native _f;
+        _f();
+    end
+end
+await FOREVER;
+]],
+    props = 'line 2 : not permitted inside `async/isr`',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+var int x = 0;
+
+atomic do
+    x = 1;
+end
+par/or do
+    spawn async/isr [20] do
+        x = 0;
+    end
+    await FOREVER;
+with
+end
+escape x;
+]],
+    dcls = 'line 8 : internal identifier "x" is not declared',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+native/pre do
+    int V = 1;
+    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
+    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
+        tceu_callback_ret ret = {.is_handled=1};
+        int* args = (int*) p2.ptr;
+        switch (cmd) {
+            case CEU_CALLBACK_ISR_ATTACH:
+                V = V + args[0];
+                break;
+            case CEU_CALLBACK_ISR_DETACH:
+                V = V * args[0];
+                break;
+            default:
+                ret.is_handled = 0;
+        }
+        return ret;
+    }
+end
+
+var int x = 0;
+
+atomic do
+    x = 1;
+end
+par/or do
+    spawn async/isr [20] do
+        outer.x = 0;
+    end
+    await FOREVER;
+with
+end
+escape x;
+]],
+    run = 1,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+var int v = 2;
+par/or do
+    spawn async/isr[20] do
+        outer.v = 1;
+    end
+    await FOREVER;
+with
+end
+escape v;
+]],
+    run = 2,
+    --isr = 'line 1 : access to "v" must be atomic',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+var int&& v = null;
+    spawn async/isr[20] do
+        *outer.v = 1;
+    end
+    await FOREVER;
+]],
+    ptrs = 'line 22 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:21)',
+    --isr = 'line 4 : pointer access breaks the static check for `atomic` sections',
+    --run = 1,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+var int&& v = null;
+par/or do
+    spawn async/isr[20] do
+        *outer.v = 1;
+    end
+    await FOREVER;
+with
+end
+escape 1;
+]],
+    ptrs = 'line 23 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:22)',
+    --inits = 'line 22 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:21)',
+    --inits = 'line 23 : invalid pointer access : crossed `par/or` (/tmp/tmp.ceu:22)',
+    --isr = 'line 4 : pointer access breaks the static check for `atomic` sections',
+    --run = 1,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+code/tight Fx (void)->int do
+    escape 2;
+end
+var int v = call Fx();
+par/or do
+    spawn async/isr [20] do
+        call Fx();
+    end
+    await FOREVER;
+with
+end
+escape v;
+]],
+    --dcls = 'line 25 : abstraction inside `async` : not implemented',
+    --isr = 'line 7 : call breaks the static check for `atomic` sections',
+    run = 2,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+native/pos do
+    int f (void) { return 2; }
+end
+native _f;
+var int v = _f();
+par/or do
+    spawn async/isr [20] do
+        _f();
+    end
+    await FOREVER;
+with
+end
+escape v;
+]],
+    run = 2,
+    --wrn = true,
+    --isr = 'line 1 : access to "_f" must be atomic',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+native/pure _f;
+native/pre do
+    int f (void) {
+        return 2;
+    }
+end
+
+var int v = _f();
+par/or do
+    spawn async/isr [20] do
+        _f();
+    end
+    await FOREVER;
+with
+end
+escape v;
+]],
+    run = 2,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+var int v;
+v = 2;
+par/or do
+    spawn async/isr [20] do
+        outer.v = 1;
+    end
+    await FOREVER;
+with
+end
+escape v;
+]],
+    --isr = 'line 2 : access to "v" must be atomic',
+    run = 2,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+var int v;
+atomic do
+    v = 2;
+end
+par/or do
+    spawn async/isr [20] do
+        outer.v = 1;
+    end
+    await FOREVER;
+with
+end
+escape v;
+]],
+    run = 2,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+var int v;
+atomic do
+    v = 2;
+end
+par do
+    spawn async/isr [20] do
+        outer.v = 1;
+        outer.v = 1;
+    end
+    await FOREVER;
+with
+    var int ret;
+    atomic do
+        ret = v;
+    end
+    escape ret;
+end
+]],
+    _ana = {acc=2},
+    run = 2,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+var int v;
+atomic do
+    v = 2;
+end
+par/or do
+    spawn async/isr [20] do
+        outer.v = 1;
+    end
+    await FOREVER;
+with
+end
+escape v;
+]],
+    --isr = 'line 12 : access to "v" must be atomic',
+    props = 'line 27 : not permitted inside `async/isr`',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+var int v;
+var int&& p;
+atomic do
+    v = 2;
+    p = &&v;
+end
+par/or do
+    spawn async/isr [20] do
+        outer.v = 1;
+    end
+    await FOREVER;
+with
+end
+escape 1;
+]],
+    --isr = 'line 5 : reference access breaks the static check for `atomic` sections',
+    run = 1,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+vector[10] int v;
+var int&& p;
+atomic do
+    p = &&v[0];
+end
+par/or do
+    spawn async/isr [20] do
+        //this.v[1] = 1;
+    end
+    await FOREVER;
+with
+end
+escape 1;
+]],
+    run = 1,
+    --dcls = 'line 4 : invalid operand to `&&` : unexpected context for vector "v"',
+    --env = 'line 4 : types mismatch (`int&&` <= `int[]&&`)',
+    --env = 'line 4 : invalid operand to unary "&&"',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+par/or do
+    spawn async/isr [1] do
+        emit A;
+    end
+    await FOREVER;
+with
+end
+escape 1;
+]],
+    dcls = 'line 3 : external identifier "A" is not declared',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+input int A;
+par/or do
+    spawn async/isr [] do
+        emit A;
+    end
+    await FOREVER;
+with
+end
+escape 1;
+]],
+    --adj = 'line 3 : missing ISR identifier',
+    parser = 'line 3 : after `[` : expected expression',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+input int A;
+par/or do
+    spawn async/isr [1] do
+        emit A;
+    end
+    await FOREVER;
+with
+end
+escape 1;
+]],
+    stmts = 'line 4 : invalid `emit` : types mismatch : "(int)" <= "()"',
+    --env = ' line 4 : arity mismatch',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+input int A;
+par/or do
+    spawn async/isr [1] do
+        var int x = 111;
+        emit A(1);
+        x = 222;
+    end
+    await FOREVER;
+with
+end
+escape 1;
+]],
+    run = 1,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+native/pre do
+    int V = 0;
+    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
+        tceu_callback_ret ret = {.is_handled=1};
+        int* args = (int*) p2.ptr;
+        switch (cmd) {
+            case CEU_CALLBACK_ISR_ATTACH:
+                V = V + args[0];
+                break;
+            case CEU_CALLBACK_ISR_DETACH:
+                V = V - args[0];
+                break;
+            default:
+                ret.is_handled = 0;
+        }
+        return ret;
+    }
+    tceu_callback CB_ = { &CB, NULL };
+end
+{ ceu_callback_register(&CB_); }
+native _ceu_dbg_assert;
+native _V;
+par/or do
+    _ceu_dbg_assert(_V==0);
+    spawn async/isr [1] do
+    end
+    await FOREVER;
+with
+    _ceu_dbg_assert(_V==1);
+    await 1s;
+    _ceu_dbg_assert(_V==1);
+end             // TODO: forcing finalize out_isr(null)
+_ceu_dbg_assert(_V==0);
+escape _V+1;
+]],
+    run = { ['~>1s']=1 },
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+native _digitalRead, _digitalWrite;
+input int PIN02;
+par/or do
+    spawn async/isr [1] do
+        emit PIN02(_digitalRead(2));
+    end
+    await FOREVER;
+with
+    _digitalWrite(13, 1);
+end
+escape 1;
+]],
+    --_ana = {acc=1},
+    todo = 'acc',
+    acc = 'line 8 : access to symbol "_digitalWrite" must be atomic (vs symbol `_digitalRead` (/tmp/tmp.ceu:4))',
+    run = 1,
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+input int PIN02;
+native _digitalWrite;
+par/or do
+    var int i = 0;
+    spawn async/isr [1] do
+        emit PIN02(i);
+    end
+    await FOREVER;
+with
+    _digitalWrite(13, 1);
+end
+escape 1;
+]],
+    dcls = 'line 6 : internal identifier "i" is not declared',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+native _digitalWrite;
+input int PIN02;
+par/or do
+    var int i = 0;
+    spawn async/isr [1] do
+        emit PIN02(outer.i);
+    end
+    await FOREVER;
+with
+    _digitalWrite(13, 1);
+end
+escape 1;
+]],
+    cc = '10:1: error: implicit declaration of function ‘digitalWrite’',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+var int i = 0;
+par/or do
+    spawn async/isr [1] do
+        outer.i = 2;
+    end
+    await FOREVER;
+with
+    i = 1;
+end
+escape 1;
+]],
+    todo = 'acc',
+    acc = 'line 9 : access to symbol "i" must be atomic (vs variable/event `i` (/tmp/tmp.ceu:5))',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+input int PIN02;
+var int i = 0;
+par/or do
+    spawn async/isr [1] do
+        outer.i = 2;
+    end
+    await FOREVER;
+with
+    atomic do
+        i = 1;
+    end
+end
+escape 1;
+]],
+    wrn = true,
+    _ana = {acc=1},
+    run = 1,
+    --cc = '#error "Missing definition for macro',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { PRE_ISR..[[
+code/tight Fx (void)->int do
+    escape 2;
+end
+var int v = call Fx();
+par/or do
+    spawn async/isr[20] do
+        call Fx();
+    end
+    await FOREVER;
+with
+end
+escape v;
+]],
+    --wrn = true,
+    --isr = 'line 4 : access to "Fx" must be atomic',
+    run = 2,
+    _opts = { ceu_features_isr='true' },
+    --dcls = 'line 25 : abstraction inside `async` : not implemented',
+}
+
+Test { [[
+native _CEU_APP;
+spawn async/isr [1] do
+end
+escape _CEU_APP.root.__mem.trails_n;
+]],
+    _opts = { ceu_features_isr='true' },
+    run = 2,
+}
+Test { [[
+native _CEU_APP;
+spawn async/isr [1] do
+end
+spawn do
+end
+escape _CEU_APP.root.__mem.trails_n;
+]],
+    _opts = { ceu_features_isr='true' },
+    run = 3,
+}
+
+Test { [[
+spawn async/isr [0] do
+    emit 1s;
+end
+escape 1;
+]],
+    _opts = { ceu_features_isr='true' },
+    run = 1,
+}
+
+Test { [[
+native _X, _V, _U, _f;
+native/pre do
+    ##define X 1
+end
+native/pos do
+    ##define f(x) 1
+    ##ifdef CEU_ISR__X
+        int V = 1;
+    ##else
+        int V = 0;
+    ##endif
+    ##ifdef CEU_ISR__f__lpar__0__rpar__
+        int U = 1;
+    ##else
+        int U = 0;
+    ##endif
+
+end
+
+spawn async/isr [_X] do
+    emit 1s;
+end
+spawn async/isr [_f(0)] do
+    emit 1s;
+end
+escape _V+_U;
+]],
+    _opts = { ceu_features_isr='true' },
+    run = 2,
+}
+
+Test { [[
+code/await Ff (void) -> void do
+    spawn async/isr [0] do
+        var int x = 10;
+    end
+end
+escape 1;
+]],
+    wrn = true,
+    _opts = { ceu_features_isr='true' },
+    run = 1,
+}
+
+Test { [[
+code/await Ff (var int x) -> void do
+    var int y = 0;
+    spawn async/isr [0] do
+        var int z = outer.x + outer.y;
+    end
+end
+escape 1;
+]],
+    _opts = { ceu_features_isr='true' },
+    wrn = true,
+    run = 1,
+}
+
+--<<< ASYNCS / ISR / ATOMIC
+
+-->>> OUTER
+
+Test { [[
+var int x;
+code/tight Ff (void)->void do
+end
+x = 1;
+escape x;
+]],
+    wrn = true,
+    --inits = 'line 1 : uninitialized variable "x" : reached end of `code` (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:2)',
+    run = 1,
+}
+
+Test { [[
+var int x = 0;
+code/tight Ff (void)->void do
+    outer.y = 1;
+end
+var int y = 10;
+call Ff();
+escape x;
+]],
+    dcls = 'line 3 : internal identifier "y" is not declared',
+}
+
+Test { [[
+var int ret = 0;
+do
+    var int x = 0;
+    code/tight Ff (void)->void do
+        outer.x = 1;
+    end
+    call Ff();
+    ret = x;
+end
+call Ff();
+escape ret;
+]],
+    dcls = 'line 10 : abstraction "Ff" is not declared',
+}
+
+Test { [[
+var int x = 0;
+code/tight Ff (void)->void do
+    code/tight Gg (void)->void do end
+    outer.x = 1;
+end
+call Ff();
+escape x;
+]],
+    wrn = true,
+    --dcls = 'line 3 : invalid `code` declaration : nesting is not allowed',
+    run = 1,
+}
+Test { [[
+var int x = 0;
+data Dd with
+    code/tight Ff (void)->void do
+        outer.x = 1;
+    end
+end
+call Ff();
+escape x;
+]],
+    parser = 'line 2 : after `with` : expected `var` or `vector` or `pool` or `event`',
+}
+Test { [[
+var int x = 0;
+data Dd with
+    data Ee;
+end
+call Ff();
+escape x;
+]],
+    parser = 'line 2 : after `with` : expected `var` or `vector` or `pool` or `event`',
+}
+
+Test { [[
+var int x = 0;
+code/tight Ff (void)->void do
+    outer.x = 1;
+end
+call Ff();
+escape x;
+]],
+    run = 1,
+}
+
+Test { [[
+var int ret = 0;
+do
+    var int x = 0;
+    code/tight Ff (void)->void do
+        outer.x = 1;
+    end
+    call Ff();
+    ret = x;
+end
+escape ret;
+]],
+    run = 1,
+}
+
+Test { [[
+native _int, _f;
+var& _int ren;
+_f(&&outer.ren);
+escape 0;
+]],
+    dcls = 'line 3 : invalid `outer`',
+}
+
+Test { [[
+code/await Ff (void) -> int do
+    var int xxx = 10;
+    code/await Gg (void) -> int do
+        escape xxx;
+    end
+    var int yyy = await Gg();
+    escape yyy;
+end
+var int zzz = await Ff();
+escape zzz;
+]],
+    dcls = 'line 4 : internal identifier "xxx" is not declared',
+}
+
+Test { [[
+code/await Ff (void) -> int do
+    var int xxx = 10;
+    code/await Gg (void) -> int do
+        escape outer.xxx;
+    end
+    var int yyy = await Gg();
+    escape yyy;
+end
+var int zzz = await Ff();
+escape zzz;
+]],
+    run = 10,
+}
+
+Test { [[
+code/await Ff (void) -> int do
+    var int xxx = 10;
+    code/await Gg (void) -> int do
+        var int aaa = 10;
+        code/tight Hh (void) -> int do
+            escape outer.xxx + outer.aaa;
+        end
+        escape call Hh();
+    end
+    var int yyy = await Gg();
+    escape yyy;
+end
+var int zzz = await Ff();
+escape zzz;
+]],
+    run = 20,
+}
+
+Test { [[
+code/tight Ff (var int xxx) -> int do
+    var int b = 0;
+    var int yyy = xxx;
+    code/tight Get (void) -> int do
+        escape outer.yyy + outer.xxx;
+    end
+    escape b + call Get();
+end
+escape call Ff(10);
+]],
+    run = 20,
+}
+
+Test { [[
+var int x = 10;
+code/tight Gg (void) -> int do
+    escape outer.x;
+end
+escape call Gg();
+]],
+    run = 10,
+}
+Test { [[
+code/tight Ff (void) -> int do
+    var int x = 10;
+    code/tight Gg (void) -> int do
+        escape outer.x;
+    end
+    escape call Gg();
+end
+escape call Ff();
+]],
+    run = 10,
+}
+Test { [[
+code/tight Ff (void) -> int do
+    var int x = 10;
+    code/tight Gg (void) -> int do
+        escape outer.x;
+    end
+    code/tight Hh (void) -> int do
+        escape call Gg();
+    end
+    escape call Hh();
+end
+escape call Ff();
+]],
+    run = 10,
+}
+Test { [[
+code/tight Ff (void) -> int do
+    var int x = 10;
+    code/tight Gg (void) -> int do
+        escape outer.x;
+    end
+    code/tight Hh (void) -> int do
+        code/tight Ii (void) -> int do
+            escape call Gg();
+        end
+        escape call Ii();
+    end
+    escape call Hh();
+end
+escape call Ff();
+]],
+    run = 10,
+}
+Test { [[
+    var int x = 10;
+    code/tight Gg (void) -> int do
+        escape outer.x;
+    end
+    code/tight Hh (void) -> int do
+        code/tight Ii (void) -> int do
+            escape call Gg();
+        end
+        escape call Ii();
+    end
+    escape call Hh();
+]],
+    run = 10,
+}
+Test { [[
+code/await Ff (void) -> int do
+    var int x = 10;
+    code/await Gg (void) -> int do
+        escape outer.x;
+    end
+    code/await Hh (void) -> int do
+        code/await Ii (void) -> int do
+            var int a = await Gg();
+            escape a;
+        end
+        var int b = await Ii();
+        escape b;
+    end
+    var int c = await Hh();
+    escape c;
+end
+var int d = await Ff();
+escape d;
+]],
+    run = 10,
+}
+Test { [[
+    var int x = 10;
+    code/await Gg (void) -> int do
+        escape outer.x;
+    end
+    code/await Hh (void) -> int do
+        code/await Ii (void) -> int do
+            var int c = await Gg();
+            escape c;
+        end
+        var int d = await Ii();
+        escape d;
+    end
+    var int e = await Hh();
+    escape e;
+]],
+    run = 10,
+}
+
+Test { [[
+code/tight Pingus (void) -> int do
+    var int x = 10;
+    code/tight GetVelocity (void) -> int do
+        escape outer.x;
+    end
+    escape call GetVelocity();
+end
+escape call Pingus();
+]],
+    run = 10,
+}
+Test { [[
+code/tight Pingus (void) -> int do
+    var int x = 10;
+    code/tight GetVelocity (void) -> int do
+        escape outer.x;
+    end
+    code/tight LinearMover (void) -> int do
+        escape call GetVelocity();
+    end
+    code/tight Faller (void) -> int do
+        escape call LinearMover();
+    end
+    escape call Faller();
+end
+escape call Pingus();
+]],
+    run = 10,
+}
+Test { [[
+code/await Pingus (void) -> int do
+    var int xxx = 10;
+    code/await GetVelocity (void) -> int do
+        escape outer.xxx;
+    end
+    code/await LinearMover (void) -> int do
+        var int x = await GetVelocity();
+        escape x;
+    end
+    code/await Faller (void) -> int do
+        var int x = await LinearMover();
+        escape x;
+    end
+    var int x = await Faller();
+    escape x;
+end
+var int x = await Pingus();
+escape x;
+]],
+    run = 10,
+}
+
+Test { [[
+code/await Ff (var int x) -> FOREVER do
+    code/tight Get_X (void) -> int do
+        escape outer.x;
+    end
+    await FOREVER;
+end
+
+pool[] Ff fs;
+spawn Ff(1) in fs;
+spawn Ff(2) in fs;
+
+var int ret = 0;
+
+var&? Ff f;
+loop f in fs do
+    ret = ret + (call f!.Get_X());
+end
+
+escape ret;
+]],
+    wrn = true,     -- TODO
+    run = 3,
+}
+
+Test { [[
+code/await Ff (var int x) -> FOREVER do
+    code/await Get_X (void) -> int do
+        escape outer.x;
+    end
+    await FOREVER;
+end
+
+pool[] Ff fs;
+spawn Ff(1) in fs;
+spawn Ff(2) in fs;
+
+var int ret = 0;
+
+var&? Ff f;
+loop f in fs do
+    var int v = await f!.Get_X();
+    ret = ret + v;
+end
+
+escape ret;
+]],
+    todo = 'dot for spawn/await',
+    wrn = true,     -- TODO
+    run = 3,
+}
+
+Test { [[
+data Dd with
+    var int x = 10;
+    code/tight Get_X (void) -> int do
+        escape outer.x;
+    end
+end
+
+var Dd d = _;
+escape call d.Get_X();
+]],
+    todo = 'dot for data',
+    run = 10,
+}
+
+Test { [[
+data Dd with
+    var int x = 10;
+    code/await Get_X (void) -> int do
+        escape outer.x;
+    end
+end
+
+var Dd d = val Dd(20);
+var int x = await d.Get_X();
+escape x;
+]],
+    todo = 'dot for spawn/await',
+    run = 10,
+}
+
+Test { [[
+code/await Ff (void) -> void do
+    code/tight Gg (void) -> void do end
+end
+pool[] Ff fs;
+var&? Ff f;
+loop f in fs do
+    call f!.Gg();
+end
+escape 1;
+]],
+    wrn = true,
+    --dcls = 'line 7 : invalid `call`',
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> (var int x) -> FOREVER do
+    x = 10;
+    await FOREVER;
+end
+var&? Ff f = spawn Ff();
+escape f.x;
+]],
+    dcls = 'line 6 : invalid operand to `.` : unexpected option alias',
+}
+
+Test { [[
+code/await Ff (vector&[] byte buf) -> FOREVER do
+    code/tight Reset (void) -> void do
+        $outer.buf = 0;
+    end
+    call Reset();
+    await FOREVER;
+end
+vector[] byte buf = [1,2,3];
+var&? Ff f = spawn Ff(&buf);
+call f.Reset();
+escape ($buf as int) + 1;
+]],
+    dcls = 'line 10 : invalid operand to `.` : unexpected option alias',
+}
+
+Test { [[
+spawn () do
+    var bool v = true;
+    code/tight Is_At (var int x, var int y) -> bool do
+        escape outer.v;
+    end
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+var int a = 1;
+par/or do
+with
+    var int a = 1;
+    code/await Ff (void) -> FOREVER do
+        code/tight Gg (void) -> void do
+            var int b = outer.a;
+        end
+        await FOREVER;
+    end
+    spawn Ff();
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> int do
+    event void ok_escape;
+
+    code/await Gg (void) -> FOREVER do
+        emit outer.ok_escape;
+        await FOREVER;
+    end
+
+    par do
+        await ok_escape;
+        escape 1;
+    with
+        spawn Gg();
+        escape 99;
+    end
+end
+var int ret = await Ff();
+escape ret;
+]],
+    run = 1,
+}
+
+--<<< OUTER
+
+-->>> TCO
+
+Test { [[
+par/or do
+with
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int i;
+loop i in [0->10000[ do      // 6000 already fails
+    par/or do with end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+var usize i;
+loop i in [0->10000[ do      // 5000 already fails
+    spawn Ff();
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var usize i;
+loop i in [0->10000[ do
+    do
+        par do
+            escape;
+        with
+        end
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var usize i;
+loop i in [0->100000[ do
+    do
+        par do
+            escape;
+        with
+        end
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int i;
+loop i in [0->100000[ do
+    par/or do with end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+var usize i;
+loop i in [0->100000[ do
+    spawn Ff();
+end
+escape 1;
+]],
+    run = 1,
+}
+
+--<<< TCO
+
+-->>> CEU_FEATURES_*
+
+Test { [[
+lua[] do
+end
+escape 1;
+]],
+    _opts = {
+        ceu = true,
+        ceu_features_lua = 1,
+    },
+    cmd = 'invalid value for option "ceu_features_lua"',
+}
+
+Test { [[
+lua[] do
+end
+escape 1;
+]],
+    _opts = {
+        ceu = true,
+        ceu_features_lua = 'false',
+    },
+    props_ = 'line 1 : `lua` support is disabled',
+}
+Test { [=[
+
+var int ret = [[1]];
+escape ret;
+]=],
+    _opts = {
+        ceu_features_lua = 'false',
+    },
+    props_ = 'line 2 : `lua` support is disabled',
+}
+Test { [=[
+[[ ]];
+escape 1;
+]=],
+    _opts = {
+        ceu_features_lua = 'false',
+    },
+    props_ = 'line 1 : `lua` support is disabled',
+}
+Test { [[
+await async/thread do end
+escape 1;
+]],
+    _opts = {
+        ceu_features_thread = 'false',
+    },
+    props_ = 'line 1 : `async/thread` support is disabled',
+}
+
+Test { [=[
+code/await Ff (void) -> int do
+    [[ G = 111 ]];
+    await async/thread do end;
+    var int ret = [[G]];
+    escape ret;
+end
+var int ret = 0;
+par/and do
+    lua[] do
+        var int v = await Ff();
+        ret = ret + v;
+    end
+with
+    lua[] do
+        var int v = await Ff();
+        ret = ret + v;
+    end
+end
+escape ret;
+]=],
+    _opts = { ceu_features_lua='true' , ceu_features_thread='true' },
+    run = 222,
+}
+--<<< CEU_FEATURES_*
