@@ -557,6 +557,7 @@ error'oi'
         -- "base" method with plain "id"
         new.id = id
         new.is_dyn_base = true
+        new.dyns = {}
 
         local s = node('Stmts', me.ln, new, me)
         return s
@@ -584,6 +585,9 @@ error'oi'
 -- TODO: check if both are still needed
             me.dyn_base.dyn_last = me
             me.dyn_base.dyn_first = me.dyn_base.dyn_first or me
+            if me.dyn_base.dyns then
+                me.dyn_base.dyns[#me.dyn_base.dyns+1] = me
+            end
         else
             me.id = id
         end

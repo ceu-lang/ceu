@@ -51,6 +51,12 @@ TRAILS.F = {
             me.trails_n = me.trails_n + sub.trails_n
         end
     end,
+
+    Code = function (me)
+        if me.dyn_base then
+            me.dyn_base.max_trails_n = MAX(me.dyn_base.max_trails_n or 0, me.trails_n)
+        end
+    end,
 }
 
 AST.visit(TRAILS.F)

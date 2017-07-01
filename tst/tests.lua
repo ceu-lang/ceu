@@ -208,7 +208,6 @@ escape ret;
 -------------------------------------------------------------------------------
 
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -50019,6 +50018,7 @@ escape ret;
 --<<< CEU_FEATURES_*
 
 -->> CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
+--]=====]
 
 Test { [[
 data Aa with
@@ -50270,31 +50270,6 @@ data Aa with
     var int a;
 end
 
-code/tight/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
-    escape a.a + xxx;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/tight/dynamic Ff (var&/dynamic Aa.Bb b, var int yyy) -> int do
-    escape b.b + (call/static Ff(&b as Aa,11)) + yyy;
-end
-
-var Aa    a = val Aa(1);
-var Aa.Bb b = val Aa.Bb(2,3);
-
-escape (call/dynamic Ff(&b,22)) + (call/dynamic Ff(&a,33));
-]],
-    run = 72,
-}
-
-Test { [[
-data Aa with
-    var int a;
-end
-
 code/await/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
     escape a.a + xxx;
 end
@@ -50499,66 +50474,6 @@ var int v2 = await/dynamic Ff(&a,33,&a);
 escape v1 + v2;
 ]],
     run = 63,
-}
-
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/await/dynamic Ff (var&/dynamic Aa a, var/dynamic int xxx) -> int do
-    escape a.a + xxx;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/await/dynamic Ff (var&/dynamic Aa.Bb b, var/dynamic int yyy) -> int do
-    var int v = await/static Ff(&b as Aa,11);
-    escape b.b + v + yyy;
-end
-
-var Aa    a = val Aa(1);
-var Aa.Bb b = val Aa.Bb(2,3);
-
-var int v1 = await/dynamic Ff(&b,22);
-var int v2 = await/dynamic Ff(&a,33);
-
-escape v1 + v2;
-]],
-    props_ = 'line 5 : invalid `dynamic` declaration : parameter #2 : expected `data` in hierarchy',
-    --run = 1,
-    --dcls = 'line 5 : invalid `dynamic` declaration : parameter #2 : unexpected plain `data`',
-}
-
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/await/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
-    escape a.a + xxx;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/await/dynamic Ff (var&/dynamic Aa.Bb b, var int yyy) -> int do
-    var int v = await/static Ff(&b as Aa,11);
-    escape b.b + v + yyy;
-end
-
-var Aa    a = val Aa(1);
-var Aa.Bb b = val Aa.Bb(2,3);
-
-var int v1 = await/dynamic Ff(&b,22);
-var int v2 = await/dynamic Ff(&a,33);
-
-escape v1 + v2;
-]],
-    run = 72,
 }
 
 Test { [[
@@ -51848,6 +51763,150 @@ escape (call/dynamic Ff(x1)) + (call/dynamic Ff(y1)) + (call/dynamic Ff(y2));
 ]],
     wrn = true,
     run = 111,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
+    escape a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa.Bb b, var int yyy) -> int do
+    par/or do with with end
+    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
+    escape b.b + yyy;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+var int v1 = await/dynamic Ff(&b,22);
+var int v2 = await/dynamic Ff(&a,33);
+escape v1 + v2;
+]],
+    --run = 58,
+    run = 59,
+}
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
+    par/or do with with end
+    escape a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa.Bb b, var int yyy) -> int do
+    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
+    escape b.b + yyy;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+var int v1 = await/dynamic Ff(&b,22);
+var int v2 = await/dynamic Ff(&a,33);
+escape v1 + v2;
+]],
+    --run = 58,
+    run = 59,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/tight/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
+    escape a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/tight/dynamic Ff (var&/dynamic Aa.Bb b, var int yyy) -> int do
+    escape b.b + (call/static Ff(&b as Aa,11)) + yyy;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+escape (call/dynamic Ff(&b,22)) + (call/dynamic Ff(&a,33));
+]],
+    run = 72,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa a, var/dynamic int xxx) -> int do
+    escape a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa.Bb b, var/dynamic int yyy) -> int do
+    var int v = await/static Ff(&b as Aa,11);
+    escape b.b + v + yyy;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+var int v1 = await/dynamic Ff(&b,22);
+var int v2 = await/dynamic Ff(&a,33);
+
+escape v1 + v2;
+]],
+    props_ = 'line 5 : invalid `dynamic` declaration : parameter #2 : expected `data` in hierarchy',
+    --run = 1,
+    --dcls = 'line 5 : invalid `dynamic` declaration : parameter #2 : unexpected plain `data`',
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
+    escape a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/await/dynamic Ff (var&/dynamic Aa.Bb b, var int yyy) -> int do
+    var int v = await/static Ff(&b as Aa,11);
+    escape b.b + v + yyy;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+var int v1 = await/dynamic Ff(&b,22);
+var int v2 = await/dynamic Ff(&a,33);
+
+escape v1 + v2;
+]],
+    run = 72,
 }
 
 --<< CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC

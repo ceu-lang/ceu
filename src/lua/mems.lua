@@ -73,27 +73,22 @@ typedef struct tceu_code_mem_ROOT {
     Code__POS = function (me)
         local mods,_,id = unpack(me)
 
-        if me.is_dyn_base then
-            me.dyns = {}
-        else
-            if not me.is_impl then
-                return
-            end
-            if mods.dynamic then
-                local t = me.dyn_base.dyns
-                t[#t+1] = me.id_
-            end
+        if me.is_dyn_base or me.is_impl then
+            MEMS.codes[#MEMS.codes+1] = me.mems
+        end
 
-            me.mems.mem = [[
+        if not me.is_impl then
+            return
+        end
+
+        me.mems.mem = [[
 typedef struct tceu_code_mem_]]..me.id_..[[ {
     tceu_code_mem _mem;
-    tceu_trl      _trails[]]..me.trails_n..[[];
+    tceu_trl      _trails[]]..(me.dyn_base and me.dyn_base.max_trails_n or me.trails_n)..[[];
     byte          _params[0];
     ]]..me.mems.mem..[[
 } tceu_code_mem_]]..me.id_..[[;
 ]]
-        end
-        MEMS.codes[#MEMS.codes+1] = me.mems
     end,
 
     Code = function (me)
@@ -672,57 +667,15 @@ for i, code in ipairs(MEMS.codes) do
         end
     end
 
-    -- first "code" in the hierarchy creates the base type
     if me and me.dyn_base and me.dyn_base.dyn_last==me then
-        local vars1 = AST.asr(me.dyn_base.dyn_first,'Code', 3,'Block').dcls
-        local vars2 = AST.asr(me.dyn_base.dyn_first,'Code', 3,'Block', 1,'Stmts', 2,'Do', 3,'Block').dcls
-        local vars3 = AST.asr(me.dyn_base.dyn_first,'Code', 3,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block').dcls
-        local vars = {}
-        do
-            vars[#vars+1] = 'struct'
-            for _, dcl in ipairs(vars1) do
-                vars[#vars+1] = dcl
-            end
-            vars[#vars+1] = 'struct'
-            for _, dcl in ipairs(vars2) do
-                vars[#vars+1] = dcl
-            end
-            vars[#vars+1] = 'struct'
-            for _, dcl in ipairs(vars3) do
-                vars[#vars+1] = dcl
-            end
-        end
-
-        MEMS.codes.mems = MEMS.codes.mems..[[
-typedef struct tceu_code_mem_]]..me.dyn_base.id_..[[ {
-    union {
-        struct {
-            tceu_code_mem _mem;
-            tceu_trl      _trails[1];
-            byte          _params[0];
-]]
-        for _,dcl in ipairs(vars) do
-            if dcl == 'struct' then
-                MEMS.codes.mems = MEMS.codes.mems..'struct { /*xxx*/\n'
-            else
-                MEMS.codes.mems = MEMS.codes.mems..F.__dcl2c(dcl)
-            end
-        end
-        MEMS.codes.mems = MEMS.codes.mems..[[
-                    };  // mid
-                };      // args
-            };          // ret
-        };
-]]
-        for i, id in ipairs(me.dyn_base.dyns) do
-        MEMS.codes.mems = MEMS.codes.mems..[[
-            tceu_code_mem_]]..id..' _'..i..[[;
-]]
-        end
-        MEMS.codes.mems = MEMS.codes.mems..[[
-    };
-} tceu_code_mem_]]..me.dyn_base.id_..[[;
-]]
+        local first = me.dyn_base.dyn_first
+        local mem = string.gsub(first.mems.mem,
+                                'typedef struct tceu_code_mem_'..first.id_,
+                                'typedef struct tceu_code_mem_'..me.dyn_base.id_)
+              mem = string.gsub(mem,
+                                '} tceu_code_mem_'..first.id_..';',
+                                '} tceu_code_mem_'..me.dyn_base.id_..';')
+        MEMS.codes.mems = MEMS.codes.mems..mem
     end
 end
 
