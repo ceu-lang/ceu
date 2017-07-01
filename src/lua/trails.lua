@@ -53,6 +53,7 @@ TRAILS.F = {
     end,
 
     Code = function (me)
+        MAX_all(me)
         if me.dyn_base then
             me.dyn_base.max_trails_n = MAX(me.dyn_base.max_trails_n or 0, me.trails_n)
         end

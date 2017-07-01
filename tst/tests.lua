@@ -35234,6 +35234,24 @@ escape a;
 }
 
 Test { [[
+code/await Fy (void) -> int do
+    escape 1;
+end
+
+code/await Fx (var int x) -> int do
+    var int y = await Fy();
+    escape x;
+end
+
+var int x = await Fx(10);
+
+escape x;
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
 code/await Fy (var int x) -> int do
     escape x + 1;
 end
