@@ -489,13 +489,18 @@ DCLS.F = {
         local mods = unpack(Code)
 
         -- check types only
+--[[
         do
+AST.dump(me)
             local tps = node('Typelist',me.ln)
             for i, dcl in ipairs(me) do
+DBG('>>>', dcl[2])
                 tps[i] = dcl[2]
             end
             DCLS.F.Typelist(tps)
+error'oi'
         end
+]]
 
         -- multi-methods: changes "me.id" on Code
         me.ids_dyn = ''

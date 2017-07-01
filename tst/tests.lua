@@ -34198,7 +34198,8 @@ code/tight Ff (void) -> int do
 end
 escape ret;
 ]],
-    run = 1,
+    --run = 1,
+    tight_ = 'line 1 : invalid `code` declaration : expected `/recursive` : `call` to unknown body (/tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -51389,10 +51390,9 @@ code/await Ff (void) -> (var& Dd d) -> FOREVER do
     await FOREVER;
 end
 
-var& Dd d;
-spawn Ff() -> (&d);
+var&? Ff f = spawn Ff();
 
-escape (d is Dd.Ee) as int;
+escape (f!.d is Dd.Ee) as int;
 ]],
     run = 1,
 }
@@ -51433,8 +51433,26 @@ code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> FOREVER do
     await FOREVER;
 end
 
-var& Dd d;
-spawn/dynamic Ff(Xx.Yy()) -> (&d);
+var&? Ff f = spawn/dynamic Ff(Xx.Yy());
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Xx;
+data Xx.Yy;
+data Dd;
+
+code/await Ff (var Xx x) -> (var& Dd d) -> FOREVER do
+    var Dd d_ = val Dd();
+    d = &d_;
+    await FOREVER;
+end
+
+spawn Ff(Xx.Yy());
 
 escape 1;
 ]],
@@ -51455,8 +51473,7 @@ code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> FOREVER do
     await FOREVER;
 end
 
-var& Dd d;
-spawn/dynamic Ff(Xx.Yy()) -> (&d);
+spawn/dynamic Ff(Xx.Yy());
 
 escape 1;
 ]],
@@ -51489,10 +51506,9 @@ code/await/dynamic Ff (var/dynamic Xx.Yy x) -> (var& Dd d) -> FOREVER do
     await FOREVER;
 end
 
-var& Dd d0;
-spawn/dynamic Ff(Xx.Yy(20)) -> (&d0);
+var&? Ff f = spawn/dynamic Ff(Xx.Yy(20));
 
-escape ((d0 is Dd.Ee) as int);
+escape ((f!.d is Dd.Ee) as int);
 ]],
     wrn = true,
     run = 1,
@@ -51522,10 +51538,9 @@ code/await/dynamic Ff (var/dynamic Xx.Yy x) -> (var& Dd d2) -> FOREVER do
     await FOREVER;
 end
 
-var& Dd d0;
-spawn/dynamic Ff(Xx.Yy(20)) -> (&d0);
+var&? Ff f = spawn/dynamic Ff(Xx.Yy(20));
 
-escape ((d0 is Dd.Ee) as int);
+escape ((f!.d1 is Dd.Ee) as int);
 ]],
     wrn = true,
     run = 1,
@@ -51555,10 +51570,9 @@ code/await Gg (var Xx.Yy x) -> (var& Dd d) -> FOREVER do
     await FOREVER;
 end
 
-var& Dd d;
-spawn Gg(Xx.Yy(20)) -> (&d);
+var&? Gg g = spawn Gg(Xx.Yy(20));
 
-escape ((d is Dd.Ee) as int);
+escape ((g!.d is Dd.Ee) as int);
 ]],
     wrn = true,
     run = 1,
@@ -51589,13 +51603,44 @@ code/await/dynamic Ff (var/dynamic Xx.Yy x) -> (var& Dd d) -> FOREVER do
     await FOREVER;
 end
 
-var& Dd d;
-spawn/dynamic Ff(Xx.Yy(20)) -> (&d);
+var&? Ff f = spawn/dynamic Ff(Xx.Yy(20));
 
-escape ((d is Dd.Ee) as int) + d.x.v;
+escape ((f!.d is Dd.Ee) as int) + f!.d.x.v;
 ]],
     wrn = true,
     run = 21,
+}
+
+Test { [[
+data Dd with
+    var int x = 10;
+end
+
+data Aa;
+data Aa.Bb;
+
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa v1) -> (var Dd d) -> FOREVER do
+    d = _;
+    await FOREVER;
+end
+
+var Aa aaa = val Aa();
+
+var int ret = 0;
+
+pool[10] Ff ffs;
+spawn/dynamic Ff(&ret,&aaa) in ffs;
+spawn/dynamic Ff(&ret,&aaa) in ffs;
+
+var&? Ff f;
+loop f in ffs do
+    ret = ret + f!.d.x;
+end
+
+escape ret;
+]],
+    wrn = true,
+    run = 20,
 }
 
 Test { [[
@@ -51620,9 +51665,9 @@ pool[10] Ff ffs;
 spawn/dynamic Ff(&ret,&aaa) in ffs;
 spawn/dynamic Ff(&ret,&aaa) in ffs;
 
-var& Dd d;
-loop (d) in ffs do
-    ret = ret + d.x;
+var&? Ff f;
+loop f in ffs do
+    ret = ret + f!.d.x;
 end
 
 escape ret;
@@ -51652,9 +51697,9 @@ pool[10] Ff ffs;
 spawn/dynamic Ff(&ret,&aaa) in ffs;
 spawn/dynamic Ff(&ret,&aaa) in ffs;
 
-var& Dd d;
-loop (d) in ffs do
-    ret = ret + d.x;
+var&? Ff f;
+loop f in ffs do
+    ret = ret + f!.d.x;
 end
 
 escape ret+1;
@@ -51686,9 +51731,9 @@ spawn/dynamic Ff(&ret,&aaa) in ffs;
 spawn/dynamic Ff(&ret,&aaa) in ffs;
 
 event void e;
-var&? Dd d;
-loop (d) in ffs do
-    ret = ret + d!.x;
+var&? Ff f;
+loop f in ffs do
+    ret = ret + f!.d!.x;
     emit e;
 end
 
@@ -51706,7 +51751,7 @@ end
 data Aa;
 data Aa.Bb;
 
-code/await/dynamic Ff (var& int ret, var&/dynamic Aa v1) -> (var&? Dd d, event&? void e) -> void do
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa v1) -> (var&? Dd d, event& void e) -> void do
     var Dd d_ = _;
     d = &d_;
     event void e_;
@@ -51722,19 +51767,19 @@ pool[10] Ff ffs;
 spawn/dynamic Ff(&ret,&aaa) in ffs;
 spawn/dynamic Ff(&ret,&aaa) in ffs;
 
-event&? void e;
-var&? Dd d;
-loop (d,e) in ffs do
-    ret = ret + d!.x;
-    ret = ret + (d? as int);
-    emit e!;
-    ret = ret + (d? as int);
+var&? Ff f;
+loop f in ffs do
+    ret = ret + f!.d!.x;
+    ret = ret + (f!.d? as int);
+    emit f!.e;
+    ret = ret + (f!.d? as int);
 end
 
 escape ret+1;
 ]],
     wrn = true,
-    run = 23,
+    --run = 23,
+    run = '29] runtime error: value is not set',
 }
 
 Test { [[

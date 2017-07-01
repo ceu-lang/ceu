@@ -143,7 +143,7 @@ G = {
         local Par = AST.par(me,'Code')
 
         -- calling known Code (or not calling from a tight)
-        if impls[Code] or (not (Par and Par[1].tight)) then
+        if impls[Code] then --or (not (Par and Par[1].tight)) then
             if mods_call.recursive then
                 ASR(mods_dcl.recursive, me,
                     'invalid `call` : unexpected `/recursive`')

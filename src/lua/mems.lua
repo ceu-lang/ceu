@@ -71,7 +71,7 @@ typedef struct tceu_code_mem_ROOT {
         me.mems = { me=me, mem='' }
     end,
     Code__POS = function (me)
-        local _,mods,id = unpack(me)
+        local mods,_,id = unpack(me)
 
         if me.is_dyn_base then
             me.dyns = {}
@@ -128,6 +128,7 @@ tceu_ndata _data_]]..i..[[;     /* force multimethod arg data id */
                         base = data.dcl,    -- datatype for the argument
                         dyn  = dcl.id_dyn,  -- identifier considering the "base" value
                         id   = id,          -- argument identifier
+                        dcl  = dcl,
                         --i    = i,           -- position in the parameter list
                     }
                 end
@@ -145,7 +146,9 @@ static tceu_ndata multis_lbl]]..dims..[[ = {
 tceu_nlbl lbl = multis_lbl
 ]]
                 for _, t in ipairs(multis) do
-                    multis.lbl = multis.lbl..'[ mem->'..t.id..'->_enum ]'
+                    local is_alias, tp = unpack(t.dcl)
+                    local op = ((is_alias or TYPES.check(tp,'&&')) and '->') or '.'
+                    multis.lbl = multis.lbl..'[ mem->'..t.dcl.id_..op..'_enum ]'
                 end
                 multis.lbl = multis.lbl..';\n'
             end
@@ -317,6 +320,66 @@ static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
 
     ---------------------------------------------------------------------------
 
+    __dcl2c = function (dcl)
+        if dcl.tag == 'Var' then
+            local alias, tp = unpack(dcl)
+            if alias then
+                if TYPES.abs_dcl(tp) then
+                    -- because of recursive definitions
+                    return 'struct '..TYPES.toc(tp)..'* '..dcl.id_..';\n'
+                else
+                    return TYPES.toc(tp)..'* '..dcl.id_..';\n'
+                end
+            else
+                return TYPES.toc(tp)..'  '..dcl.id_..';\n'
+            end
+
+        -- EVT
+        elseif dcl.tag == 'Evt' then
+            local alias = unpack(dcl)
+            if alias then
+                return 'tceu_evt '..dcl.id_..';\n'
+            end
+
+        -- VEC
+        elseif dcl.tag == 'Vec' then
+            local is_alias, tp, _, dim = unpack(dcl)
+            local ptr = (is_alias and '*' or '')
+            if TYPES.is_nat(TYPES.get(tp,1)) then
+                return [[
+]]..TYPES.toc(tp)..' ('..ptr..dcl.id_..')['..V(dim)..[[];
+]]
+            else
+                local ret = ''
+                if dim.is_const and (not is_alias) then
+                    ret = ret .. [[
+]]..TYPES.toc(tp)..' '..dcl.id_..'_buf['..V(dim)..[[];
+]]
+                end
+                return ret .. [[
+tceu_vector]]..ptr..' '..dcl.id_..[[;
+]]
+            end
+
+        -- POOL
+        elseif dcl.tag == 'Pool' then
+            local is_alias, tp, _, dim = unpack(dcl)
+            local ptr = (is_alias and '*' or '')
+            ret = ''
+            if dim.is_const and (not is_alias) then
+                ret = ret .. [[
+tceu_code_mem_dyn* ]]..dcl.id_..'_queue['..V(dim)..[[];
+byte ]]..dcl.id_..[[_buf[
+(sizeof(tceu_code_mem_dyn)+sizeof(]]..TYPES.toc(tp)..')) * '..V(dim)..[[
+];
+]]
+            end
+            return ret .. [[
+tceu_pool_pak]]..ptr..' '..dcl.id_..[[;
+]]
+        end
+    end,
+
     Block__PRE = function (me)
         local mem = {}
 
@@ -368,17 +431,7 @@ if dcl.tag ~= 'Prim' then
                 --if dcl.id == '_ret' then
                     --dcl.id_ = dcl.id
                 --else
-                    local alias, tp = unpack(dcl)
-                    if alias then
-                        if TYPES.abs_dcl(tp) then
-                            -- because of recursive definitions
-                            mem[#mem+1] = 'struct '..TYPES.toc(tp)..'* '..dcl.id_..';\n'
-                        else
-                            mem[#mem+1] = TYPES.toc(tp)..'* '..dcl.id_..';\n'
-                        end
-                    else
-                        mem[#mem+1] = TYPES.toc(tp)..'  '..dcl.id_..';\n'
-                    end
+                    mem[#mem+1] = F.__dcl2c(dcl)
                 --end
 
             -- EVT
@@ -387,7 +440,7 @@ if dcl.tag ~= 'Prim' then
 -- TODO: per Code evts
                     MEMS.evts[#MEMS.evts+1] = dcl
                     dcl.id_ = dcl.id
-                    mem[#mem+1] = 'tceu_evt '..dcl.id_..';\n'
+                    mem[#mem+1] = F.__dcl2c(dcl)
                 else
                     local data = AST.par(me,'Data')
                     if data then
@@ -414,20 +467,7 @@ if dcl.tag ~= 'Prim' then
                 if not toplevel then
                     dcl.id_ = dcl.id..'_'..dcl.n
                 end
-                if TYPES.is_nat(TYPES.get(tp,1)) then
-                    mem[#mem+1] = [[
-]]..TYPES.toc(tp)..' ('..ptr..dcl.id_..')['..V(dim)..[[];
-]]
-                else
-                    if dim.is_const and (not is_alias) then
-                        mem[#mem+1] = [[
-]]..TYPES.toc(tp)..' '..dcl.id_..'_buf['..V(dim)..[[];
-]]
-                    end
-                    mem[#mem+1] = [[
-tceu_vector]]..ptr..' '..dcl.id_..[[;
-]]
-                end
+                mem[#mem+1] = F.__dcl2c(dcl)
 
             -- POOL
             elseif dcl.tag == 'Pool' then
@@ -437,17 +477,7 @@ tceu_vector]]..ptr..' '..dcl.id_..[[;
                 if not toplevel then
                     dcl.id_ = dcl.id..'_'..dcl.n
                 end
-                if dim.is_const and (not is_alias) then
-                    mem[#mem+1] = [[
-tceu_code_mem_dyn* ]]..dcl.id_..'_queue['..V(dim)..[[];
-byte ]]..dcl.id_..[[_buf[
-    (sizeof(tceu_code_mem_dyn)+sizeof(]]..TYPES.toc(tp)..')) * '..V(dim)..[[
-];
-]]
-                end
-                mem[#mem+1] = [[
-tceu_pool_pak]]..ptr..' '..dcl.id_..[[;
-]]
+                mem[#mem+1] = F.__dcl2c(dcl)
 
             -- EXT
             elseif dcl.tag == 'Ext' then
@@ -642,10 +672,56 @@ for i, code in ipairs(MEMS.codes) do
         end
     end
 
-    -- last "code" in the hierarchy creates the base type
-    if me and me.dyn_base and me.dyn_base.dyn_first==me then
+    -- first "code" in the hierarchy creates the base type
+    if me and me.dyn_base and me.dyn_base.dyn_last==me then
+        local vars1 = AST.asr(me.dyn_base.dyn_first,'Code', 3,'Block').dcls
+        local vars2 = AST.asr(me.dyn_base.dyn_first,'Code', 3,'Block', 1,'Stmts', 2,'Do', 3,'Block').dcls
+        local vars3 = AST.asr(me.dyn_base.dyn_first,'Code', 3,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block').dcls
+        local vars = {}
+        do
+            vars[#vars+1] = 'struct'
+            for _, dcl in ipairs(vars1) do
+                vars[#vars+1] = dcl
+            end
+            vars[#vars+1] = 'struct'
+            for _, dcl in ipairs(vars2) do
+                vars[#vars+1] = dcl
+            end
+            vars[#vars+1] = 'struct'
+            for _, dcl in ipairs(vars3) do
+                vars[#vars+1] = dcl
+            end
+        end
+
         MEMS.codes.mems = MEMS.codes.mems..[[
-typedef tceu_code_mem_]]..me.id..[[ tceu_code_mem_]]..me.dyn_base.id_..[[;
+typedef struct tceu_code_mem_]]..me.dyn_base.id_..[[ {
+    union {
+        struct {
+            tceu_code_mem _mem;
+            tceu_trl      _trails[1];
+            byte          _params[0];
+]]
+        for _,dcl in ipairs(vars) do
+            if dcl == 'struct' then
+                MEMS.codes.mems = MEMS.codes.mems..'struct { /*xxx*/\n'
+            else
+                MEMS.codes.mems = MEMS.codes.mems..F.__dcl2c(dcl)
+            end
+        end
+        MEMS.codes.mems = MEMS.codes.mems..[[
+                    };  // mid
+                };      // args
+            };          // ret
+        };
+]]
+        for i, id in ipairs(me.dyn_base.dyns) do
+        MEMS.codes.mems = MEMS.codes.mems..[[
+            tceu_code_mem_]]..id..' _'..i..[[;
+]]
+        end
+        MEMS.codes.mems = MEMS.codes.mems..[[
+    };
+} tceu_code_mem_]]..me.dyn_base.id_..[[;
 ]]
     end
 end

@@ -229,6 +229,7 @@ F = {
         if me.is_implicit                   or      -- compiler defined
            AST.get(me.blk,4,'Code')         or      -- "code" parameter
            AST.par(me,'Data')               or      -- "data" member
+           code and code.is_dyn_base        or      -- base dynamic class
            alias == '&?'                    or      -- option alias
            TYPES.check(tp,'?') and (not alias)      -- optional initialization
         then
