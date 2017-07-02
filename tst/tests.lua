@@ -48328,8 +48328,8 @@ end
 
 escape 1;
 ]],
-    --stmts = 'line 8 : invalid kill : `code/await` executes forever',
-    run = 1,
+    stmts = 'line 8 : invalid kill : `code/await` executes forever',
+    --run = 1,
 }
 Test { [[
 code/await Ff (void) -> void do
