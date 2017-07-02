@@ -60,6 +60,7 @@ F = {
                             node('Stmts', me.ln,
                                 node('_Var_set', me.ln,
                                     false,
+                                    false,
                                     {},
                                     node('Type', me.ln,
                                         node('ID_prim', me.ln, 'bool')),
@@ -716,6 +717,20 @@ error'TODO: luacov never executes this?'
     __dcl_set__PRE = function (me)
         local is_alias, mods, dim, tp, id, set
         local tag = string.sub(me.tag,2,-5)
+
+        -- convert from 'Var' to 'Vec'
+        if tag == 'Var' then
+            local _,dim,mods = unpack(me)
+            if dim then
+                --ASR(not mods, me, 'TODO')
+                AST.remove(me, 3)
+                me.tag = 'Vec'
+                tag    = 'Vec'
+            else
+                AST.remove(me, 2)
+            end
+        end
+
         if tag=='Var' or tag=='Pool' or tag=='Vec' then
             is_alias, dim_or_mods, tp, id, set = unpack(me)
             AST.set(me, 2, tp)
@@ -739,7 +754,6 @@ error'TODO: luacov never executes this?'
     end,
 
     _Var_set__PRE = '__dcl_set__PRE',
-    _Vec_set__PRE = '__dcl_set__PRE',
     _Pool_set__PRE = '__dcl_set__PRE',
     _Evt_set__PRE = function (me)
         local _,tp = unpack(me)

@@ -85,16 +85,15 @@ local T = {
     },
 
     {
-        --'`nothing` or `var` or `vector` or `pool` or `event` or `input` or `output` or `data` or `code` or `input/output` or `output/input` or `native` or `deterministic` or location or `{` or `%(` or `await` or `emit` or `call/recursive` or `call` or `request` or `spawn` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `"` or string literal or `do` or `if` or `loop` or `every` or `lock` or `par/or` or `par/and` or `watching` or `pause/if` or `atomic` or `pre` or `%[` or `lua` or `escape` or `break` or `continue` or `par` or end of file',
-        '`code` or `input/output` or `output/input` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `vector` or `pool` or `event` or `input` or `output` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `"` or string literal or `escape` or `break` or `continue` or `par` or end of file',
+        '`code` or `input/output` or `output/input` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `pool` or `event` or `input` or `output` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `"` or string literal or `escape` or `break` or `continue` or `par` or end of file',
         'statement'
     },
     {
-        '`code` or `input/output` or `output/input` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `vector` or `pool` or `event` or `input` or `output` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `"` or string literal or `escape` or `break` or `continue` or `par` or `with`',
+        '`code` or `input/output` or `output/input` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `pool` or `event` or `input` or `output` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `"` or string literal or `escape` or `break` or `continue` or `par` or `with`',
         'statement'
     },
     {
-        '`code` or `input/output` or `output/input` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `vector` or `pool` or `event` or `input` or `output` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `"` or string literal or `escape` or `break` or `continue` or `par` or `end`',
+        '`code` or `input/output` or `output/input` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `pool` or `event` or `input` or `output` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `"` or string literal or `escape` or `break` or `continue` or `par` or `end`',
         'statement'
     },
 }
@@ -253,7 +252,6 @@ local TYPES = P'bool' + 'byte'
 KEYS = P
 'with' +
 'watching' +
-'vector' +
 'var' +
 'val' +
 'until' +
@@ -529,10 +527,9 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     , __var_set = V'__ID_int' * OPT(Ct(V'__Sets_one'+V'__Sets_many'))
 
-    , _Var_set  = K'var'    * OPT(V'__ALS')
+    , _Var_set  = K'var'    * OPT(V'__ALS') * OPT(V'__Dim')
                             * Ct((Cg(K'/dynamic','dynamic') + Cg(K'/nohold','nohold'))^-1)
                                                      * V'Type'             * V'__var_set'
-    , _Vec_set  = K'vector' * OPT(CKK'&') * V'__Dim' * V'Type'             * V'__var_set'
     , _Pool_set = K'pool'   * OPT(CKK'&') * V'__Dim' * V'Type'             * V'__var_set'
     , _Evt_set  = K'event'  * OPT(CKK'&') * (PARENS(V'_Typelist')+V'Type') * V'__var_set'
 
@@ -541,7 +538,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , _Typelist     = LIST(V'Type')
     , _Typelist_amp = LIST(OPT(CKK'&') * V'Type')
 
-    , __Dcls    = V'_Var_set' + V'_Vec_set' + V'_Pool_set' + V'_Evt_set'
+    , __Dcls    = V'_Var_set' + V'_Pool_set' + V'_Evt_set'
 -- AWAIT, EMIT
 
     , __Awaits_one  = K'await' * (V'Await_Wclock' + V'_Abs_Await')

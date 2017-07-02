@@ -11,7 +11,10 @@ endif
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 syn match	Macro	"\<_\w*\>"
-syn keyword	cConstant   null true false _ nil
+syn keyword cType       yesno none integer real text
+syn keyword	cConstant   yes no
+syn keyword cStatement  NEVER
+syn keyword	cConstant   null true false _ nil yes no
 syn keyword	cOperator   not or and sizeof
 syn keyword cType       bool byte
 syn keyword cType       f32 f64 float
@@ -24,7 +27,7 @@ syn keyword cType       const nohold recursive plain pure hold
 syn keyword cType       tight dynamic
 syn keyword	cStatement  as async await break native continue data deterministic do else emit end
 syn keyword cStatement  code event every finalize FOREVER outer if input loop nothing lock
-syn keyword cStatement  output pre pos par pause return then until var val vector with
+syn keyword cStatement  output pre pos par pause return then until var val with
 syn keyword cStatement  include kill spawn thread lua resume
 syn keyword cStatement  escape call isr atomic request in is
 syn keyword cStatement  watching new pool
@@ -33,7 +36,7 @@ syn keyword cStatement  watching new pool
 " A bunch of useful C keywords
 syn keyword	cStatement	goto break return continue asm
 syn keyword	cLabel		case default
-syn keyword	cConditional	if else switch
+syn keyword	cConditional	if else
 syn keyword	cRepeat		while for do
 
 syn keyword	cTodo		contained TODO FIXME XXX

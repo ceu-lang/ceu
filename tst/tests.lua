@@ -20119,7 +20119,7 @@ escape ret;
 Test { [[
 native _f;
 native/plain _u8;
-vector[2] _u8 vec = _;
+var[2] _u8 vec = _;
 do
     _f(&&vec[0]);
 finalize (vec) with
@@ -25711,11 +25711,11 @@ Test { [[input int[1] E; escape 0;]],
     --env = 'invalid event type',
     parser = 'line 1 : after `int` : expected type modifier or external identifier',
 }
-Test { [[vector[2] int v; escape v;]],
+Test { [[var[2] int v; escape v;]],
     stmts = 'line 1 : invalid `escape` : unexpected context for vector "v"',
     --env = 'types mismatch'
 }
-Test { [[native _u8; vector[2] _u8 v=_; escape (&&v==&&v) as int;]],
+Test { [[native _u8; var[2] _u8 v=_; escape (&&v==&&v) as int;]],
     wrn = true,
     run = 1,
     --dcls = 'line 1 : invalid operand to `&&` : unexpected context for vector "v"',
@@ -25728,7 +25728,7 @@ Test { [[native _u8; var _u8[2] v; escape &&v;]],
 
 Test { [[
 native _int;
-vector[10] _int x = _;
+var[10] _int x = _;
 escape sizeof(x) as int;
 ]],
     wrn = true,
@@ -25751,7 +25751,7 @@ void[10] a;
 }
 
 Test { [[
-vector[10] void a;
+var[10] void a;
 ]],
     wrn = true,
     dcls = 'line 1 : invalid declaration : vector cannot be of type `void`',
@@ -25759,7 +25759,7 @@ vector[10] void a;
 
 Test { [[
 native _int;
-vector[2] _int v = _;
+var[2] _int v = _;
 v[0] = 5;
 escape v[0];
 ]],
@@ -25769,7 +25769,7 @@ escape v[0];
 
 Test { [[
 native _int;
-vector[2] _int v = _;
+var[2] _int v = _;
 v[0] = 1;
 v[1] = 1;
 escape v[0] + v[1];
@@ -25780,7 +25780,7 @@ escape v[0] + v[1];
 
 Test { [[
 native _int;
-vector[2] _int v = _;
+var[2] _int v = _;
 var int i;
 v[0] = 0;
 v[1] = 5;
@@ -25793,7 +25793,7 @@ escape v[i+1];
 }
 
 Test { [[
-vector[1] void b;
+var[1] void b;
 ]],
     wrn = true,
     dcls = 'line 1 : invalid declaration : vector cannot be of type `void`',
@@ -25808,7 +25808,7 @@ native/pre do
 end
 native _Tx ;
 
-vector[10] _Tx vec = _;
+var[10] _Tx vec = _;
 var int i = 110;
 
 vec[3].v[5] = 10;
@@ -25821,7 +25821,7 @@ escape i + vec[9].c + vec[3].v[5];
 
 Test { [[
 native _int;
-vector[1] _int v;
+var[1] _int v;
 escape 1;
 ]],
     wrn = true,
@@ -25831,7 +25831,7 @@ escape 1;
 }
 Test { [[
 native _int;
-vector[1] _int v = _;
+var[1] _int v = _;
 escape 1;
 ]],
     wrn = true,
@@ -25841,7 +25841,7 @@ escape 1;
 }
 Test { [[
 native _u8, _V;
-vector[10] _u8 v = [_V];
+var[10] _u8 v = [_V];
 escape v[0];
 ]],
     stmts = 'line 2 : invalid constructor : expected internal type : got "_u8"',
@@ -25850,7 +25850,7 @@ escape v[0];
 
 Test { [[
 native _u8;
-vector[10] _u8 vvv = _;
+var[10] _u8 vvv = _;
 vvv[9] = 1;
 escape vvv[9];
 ]],
@@ -25860,49 +25860,49 @@ escape vvv[9];
 
 Test { [[
 native _u8;
-vector[10] _u8 v;
+var[10] _u8 v;
 escape v[0];
 ]],
     inits = 'line 2 : uninitialized vector "v" : reached read access (/tmp/tmp.ceu:3)',
     --ref = 'line 2 : invalid access to uninitialized variable "v" (declared at /tmp/tmp.ceu:1)',
 }
 
-Test { [[vector[2] int v; await v;     escape 0;]],
+Test { [[var[2] int v; await v;     escape 0;]],
     --env='event "v" is not declared'
     stmts = 'line 1 : invalid `await` : unexpected context for vector "v"',
 }
-Test { [[vector[2] int v; emit v;    escape 0;]],
+Test { [[var[2] int v; emit v;    escape 0;]],
     stmts = 'line 1 : invalid `emit` : unexpected context for vector "v"',
     --env = 'line 1 : identifier "v" is not an event (/tmp/tmp.ceu : line 1)',
 }
-Test { [[vector[0] int[2] v; await v;  escape 0;]],
+Test { [[var[0] int[2] v; await v;  escape 0;]],
         --env='line 1 : event "?" is not declared'
         parser = 'line 1 : after `int` : expected type modifier or internal identifier',
 }
-Test { [[vector[0] int[2] v; emit v; escape 0;]],
+Test { [[var[0] int[2] v; emit v; escape 0;]],
         --env='event "?" is not declared'
         parser = 'line 1 : after `int` : expected type modifier or internal identifier',
 }
 Test { [[
 native _int;
-vector[2] _int v;
+var[2] _int v;
 v=v;
 escape 0;
 ]],
     stmts = 'line 3 : invalid assignment : unexpected context for vector "v"',
     --env='types mismatch'
 }
-Test { [[vector[1] int v; escape v;]],
+Test { [[var[1] int v; escape v;]],
     stmts = 'line 1 : invalid `escape` : unexpected context for vector "v"',
     --env='cannot index a non array'
 }
-Test { [[native _int; vector[2] _int v; escape v[v];]],
+Test { [[native _int; var[2] _int v; escape v[v];]],
     dcls = 'line 1 : invalid index : unexpected context for vector "v"',
     --env='invalid array index'
 }
 
 Test { [[
-vector[2] int v ;
+var[2] int v ;
 escape v == &&v[0] ;
 ]],
     dcls = 'line 2 : invalid operand to `==` : unexpected context for vector "v"',
@@ -25912,7 +25912,7 @@ escape v == &&v[0] ;
 }
 Test { [[
 native _int;
-vector[2] _int v ;
+var[2] _int v ;
 escape v == &&v[0] ;
 ]],
     dcls = 'line 3 : invalid operand to `==` : unexpected context for vector "v"',
@@ -25929,7 +25929,7 @@ native/pos do
         *p = 1;
     }
 end
-vector[2] _int a = _;
+var[2] _int a = _;
 var int b=0;
 par/and do
     b = 2;
@@ -25950,7 +25950,7 @@ native/pos do
     }
 end
 native/plain _int;
-vector[2] _int a = _;
+var[2] _int a = _;
 a[0] = 0;
 a[1] = 0;
 var int b=0;
@@ -25978,7 +25978,7 @@ native/pos do
     }
 end
 native/plain _int;
-vector[2] _int a = _;
+var[2] _int a = _;
 a[0] = 0;
 a[1] = 0;
 var int b=0;
@@ -26020,7 +26020,7 @@ input (byte, u32) HTTP_GET;
 var byte p2Buff;
 var u32 len;
 (p2Buff, len) = await HTTP_GET;
-vector[0] byte c = p2Buff; // doesn't work
+var[0] byte c = p2Buff; // doesn't work
 escape 1;
 ]],
     stmts = 'line 5 : invalid assignment : unexpected context for vector "c"',
@@ -26031,7 +26031,7 @@ input (byte&&, u32) HTTP_GET;
 var byte&& p2Buff;
 var u32 len;
 (p2Buff, len) = await HTTP_GET;
-vector[0] byte c = p2Buff; // doesn't work
+var[0] byte c = p2Buff; // doesn't work
 escape 1;
 ]],
     --env = 'line 5 : cannot index pointers to internal types',
@@ -26046,7 +26046,7 @@ native/pos do
     }
 end
 native _int;
-vector[2] _int v = _;
+var[2] _int v = _;
 v[0] = 10;
 escape _f(&&v[0]);
 ]],
@@ -26059,7 +26059,7 @@ native _ceu_uv_read_start, _assert;
 input void UV_READ;
 native/plain _char, _uv_buf_t, _uv_stream_t;
 native/nohold _uv_buf_init, _uv_read_stop;
-vector[3] _char buf_ = _;
+var[3] _char buf_ = _;
 var _uv_buf_t buf = _uv_buf_init(&&buf_[0], 1);
 var _uv_stream_t client = _uv_stream_t();
 var int ret;
@@ -26079,7 +26079,7 @@ Test { [[
 native/pure _strlen;
 
 native _char;
-vector[255] _char str;
+var[255] _char str;
 str = "oioioi";
 
 escape _strlen(&&str[0]);
@@ -26089,7 +26089,7 @@ escape _strlen(&&str[0]);
 
 Test { [[
 native/plain _int;
-vector[2] _int v = _;
+var[2] _int v = _;
 par/and do
     v[0] = 1;
 with
@@ -26107,7 +26107,7 @@ escape v[0] + v[1];
 }
 Test { [[
 native/plain _int;
-vector[2] _int v = _;
+var[2] _int v = _;
 par/and do
     v[0] = 1;
 with
@@ -26123,8 +26123,8 @@ escape v[0] + v[1];
     run = 3,
 }
 Test { [[
-vector[2] int v = [0,0];
-vector[2] int p = [0,0];
+var[2] int v = [0,0];
+var[2] int p = [0,0];
 par/and do
     v[0] = 1;
 with
@@ -26542,7 +26542,7 @@ native/pos do
     }
 end
 native _u8;
-vector[2] _u8 v = _;
+var[2] _u8 v = _;
 v[0] = 8;
 v[1] = 5;
 escape _f2(&&v[0],&&v[1]) + _f1(&&v[0]) + _f1(&&v[0]);
@@ -26758,7 +26758,7 @@ native/pos do
         return 1;
     }
 end
-vector[2] _int v = _;
+var[2] _int v = _;
 v[0] = 0;
 v[1] = 1;
 v[_f()] = 2;
@@ -27632,7 +27632,7 @@ _printf("END: 1%d%d 0\n",2,3); escape 0;]],
 Test { [[
 native/nohold _strncpy, _printf, _strlen;
 native _char ;
-vector[10] _char str = _;
+var[10] _char str = _;
 _strncpy(&&str[0], "123", 4);
 _printf("END: %d %s\n", _strlen(&&str[0]) as int, &&str[0]);
 escape 0;
@@ -27645,10 +27645,10 @@ escape 0;
 Test { [[
 native/nohold _printf, _strlen, _strcpy;
 native _char;
-vector[6] _char a=_; _strcpy(&&a[0], "Hello");
-vector[2] _char b=_; _strcpy(&&b[0], " ");
-vector[7] _char c=_; _strcpy(&&c[0], "World!");
-vector[30] _char d=_;
+var[6] _char a=_; _strcpy(&&a[0], "Hello");
+var[2] _char b=_; _strcpy(&&b[0], " ");
+var[7] _char c=_; _strcpy(&&c[0], "World!");
+var[30] _char d=_;
 
 var int len = 0;
 _strcpy(&&d[0],&&a[0]);
@@ -28019,7 +28019,7 @@ escape 1;
 Test { [[
 native _int;
 var _int&& u;
-vector[1] _int i;
+var[1] _int i;
 await 1s;
 u = i;
 escape 1;
@@ -28041,7 +28041,7 @@ escape (ptr == null) as int;
 }
 Test { [[
 native _int;
-vector[1] _int i=_;
+var[1] _int i=_;
 await 1s;
 var _int&& u = _;
 u = &&i[0];
@@ -28054,7 +28054,7 @@ escape 1;
 }
 Test { [[
 native/plain _int;
-vector[1] _int i=_;
+var[1] _int i=_;
 await 1s;
 var _int&& u = _;
 u = &&i[0];
@@ -28066,7 +28066,7 @@ escape 1;
 }
 Test { [[
 var int&& u;
-vector[1] int i;
+var[1] int i;
 await 1s;
 u = i;
 escape 1;
@@ -28079,12 +28079,12 @@ Test { [[
 native _int;
 var _int&& u;
 do
-    vector[1] _int i;
+    var[1] _int i;
     i[0] = 2;
     u = i;
 end
 do
-    vector[1] _int i;
+    var[1] _int i;
     i[0] = 5;
 end
 escape *u;
@@ -28096,12 +28096,12 @@ Test { [[
 native _int;
 var _int&& u;
 do
-    vector[1] _int i;
+    var[1] _int i;
     i[0] = 2;
     u = &&i[0];
 end
 do
-    vector[1] _int i;
+    var[1] _int i;
     i[0] = 5;
 end
 escape *u;
@@ -28167,7 +28167,7 @@ native/pre do
     #define N 1
 end
 native _u8;
-vector[_N] _u8 vec = _;
+var[_N] _u8 vec = _;
 vec[0] = 10;
 escape vec[_N-1];
 ]],
@@ -28180,7 +28180,7 @@ native/pre do
     #define N 1
 end
 native _u8;
-vector[N] _u8 vec = _;
+var[N] _u8 vec = _;
 vec[0] = 10;
 escape vec[N-1];
 ]],
@@ -28194,7 +28194,7 @@ native/pre do
     #define N 1
 end
 native _u8;
-vector[N+1] _u8 vec = _;
+var[N+1] _u8 vec = _;
 vec[1] = 10;
 escape vec[1];
 ]],
@@ -28206,7 +28206,7 @@ escape vec[1];
 Test { [[
 #define N 1
 native _u8;
-vector[N+1] _u8 vec = _;
+var[N+1] _u8 vec = _;
 vec[1] = 10;
 escape vec[1];
 ]],
@@ -28216,7 +28216,7 @@ escape vec[1];
 }
 
 Test { [[
-vector[5] int vec = _;
+var[5] int vec = _;
 var int i;
 var int i;
 escape 1;
@@ -28233,7 +28233,7 @@ native/pre do
     #define N 5
 end
 native/plain _int;
-vector[_N] _int vec = _;
+var[_N] _int vec = _;
 var int i;
 loop i in [0 -> _N[ do
     vec[i] = i;
@@ -29433,21 +29433,21 @@ escape ($v) as int;
 }
 
 Test { [[
-vector[10] u8 vec;
+var[10] u8 vec;
 escape ($$vec + $vec) as int;
 ]],
     run = 10,
 }
 
 Test { [[
-vector[] u8 vec;
+var[] u8 vec;
 escape ($$vec + $vec + 1) as int;
 ]],
     run = 1,
 }
 
 Test { [[
-vector[] int c;
+var[] int c;
 escape [];
 ]],
     parser = 'line 2 : after `escape` : expected expression',
@@ -29456,7 +29456,7 @@ escape [];
 }
 
 Test { [[
-vector[] int c;
+var[] int c;
 escape [1]..[]..c;
 ]],
     parser = 'line 2 : after `escape` : expected expression',
@@ -29465,7 +29465,7 @@ escape [1]..[]..c;
 }
 
 Test { [[
-vector[10] u8 vec = [ [1,2,3] ];
+var[10] u8 vec = [ [1,2,3] ];
 escape 1;
 ]],
     parser = 'line 1 : after `[` : expected `]`',
@@ -29475,14 +29475,14 @@ escape 1;
     --env = 'line 1 : wrong argument #1 : types mismatch (`u8` <= `int[]..`)',
 }
 Test { [[
-vector[10] u8 vec = (1,2,3);
+var[10] u8 vec = (1,2,3);
 escape 1;
 ]],
     --parser = 'line 1 : after `1` : expected `[` or `:` or `.` or `!` or `?` or `is` or `as` or binary operator',
     parser = 'line 1 : after `1` : expected `[` or `:` or `.` or `!` or `?` or `(` or `is` or `as` or binary operator or `)` or `..`',
 }
 Test { [[
-vector[10] u8 vec = (1);
+var[10] u8 vec = (1);
 escape 1;
 ]],
     --env = 'line 1 : types mismatch (`u8[]` <= `int`)',
@@ -29490,7 +29490,7 @@ escape 1;
 }
 Test { [[
 native _int;
-vector[1] _int&& vec = [];
+var[1] _int&& vec = [];
 escape 1;
 ]],
     stmts = 'line 2 : invalid constructor : expected internal type : got "_int&&"',
@@ -29498,7 +29498,7 @@ escape 1;
 
 Test { [[
 native _int;
-vector[1] _int vec = [];
+var[1] _int vec = [];
 escape 1;
 ]],
     stmts = 'line 2 : invalid constructor : expected internal type : got "_int"',
@@ -29506,7 +29506,7 @@ escape 1;
 
 Test { [[
 event void e;
-vector[10] u8 vec = [ e ];
+var[10] u8 vec = [ e ];
 escape 1;
 ]],
     stmts = 'line 2 : invalid expression list : item #1 : unexpected context for event "e"',
@@ -29514,7 +29514,7 @@ escape 1;
 
 Test { [[
 var int x;
-vector[10] u8 vec = [ &&x ];
+var[10] u8 vec = [ &&x ];
 escape 1;
 ]],
     --env = 'line 2 : wrong argument #1 : types mismatch (`u8` <= `int&&`)',
@@ -29522,7 +29522,7 @@ escape 1;
 }
 
 Test { [[
-vector[] int v = [] ..;
+var[] int v = [] ..;
 escape 1;
 ]],
     --parser = 'line 1 : after `..` : expected item',
@@ -29531,8 +29531,8 @@ escape 1;
 }
 
 Test { [[
-vector[] int&& v1;
-vector[] int  v2 = []..v1;
+var[] int&& v1;
+var[] int  v2 = []..v1;
 escape 1;
 ]],
     stmts = 'line 2 : invalid constructor : item #2 : types mismatch : "int" <= "int&&"',
@@ -29540,20 +29540,20 @@ escape 1;
 }
 
 Test { [[
-vector[10] u8 vec = [1,2,3];
+var[10] u8 vec = [1,2,3];
 escape $$vec + $vec + vec[0] + vec[1] + vec[2];
 ]],
     dcls = 'line 2 : invalid operands to `+` : incompatible numeric types : "usize" vs "u8"',
 }
 Test { [[
-vector[10] u8 vec = [1,2,3];
+var[10] u8 vec = [1,2,3];
 escape ((($$vec) as int) + (($vec) as int) + vec[0] + vec[1] + vec[2]) as int;
 ]],
     run = 19,
 }
 
 Test { [[
-vector[10] u8 vec = [1,2,3];
+var[10] u8 vec = [1,2,3];
 vec[0] = 4;
 vec[1] = 5;
 vec[2] = 6;
@@ -29563,7 +29563,7 @@ escape ((($$vec) as int) + (($vec )as int) + vec[0] + vec[1] + vec[2]) as int;
 }
 
 Test { [[
-vector[10] int vec = [1,2,3];
+var[10] int vec = [1,2,3];
 vec[0] = 4;
 vec[1] = 5;
 vec[2] = 6;
@@ -29573,7 +29573,7 @@ escape (($$vec )as int) + (($vec) as int) + vec[0] + vec[1] + vec[2];
 }
 
 Test { [[
-vector[10] u8 vec;
+var[10] u8 vec;
 vec[0] = 1;
 escape 1;
 ]],
@@ -29581,21 +29581,21 @@ escape 1;
 }
 
 Test { [[
-vector[10] u8 vec;
+var[10] u8 vec;
 escape vec[0] as int;
 ]],
     run = '2] runtime error: access out of bounds',
 }
 
 Test { [[
-vector[] int vec = [1];
+var[] int vec = [1];
 escape vec[0];
 ]],
     run = 1,
 }
 
 Test { [[
-vector[] u8 vec = [1,2,3];
+var[] u8 vec = [1,2,3];
 escape ((($$vec) as int) + (($vec) as int) + vec[0] + vec[1] + vec[2]) as int;
 ]],
     run = 12,
@@ -29603,7 +29603,7 @@ escape ((($$vec) as int) + (($vec) as int) + vec[0] + vec[1] + vec[2]) as int;
 }
 
 Test { [[
-vector[10] u8 vec = [1,2,3];
+var[10] u8 vec = [1,2,3];
 $$vec = 0;
 escape vec[0] as int;
 ]],
@@ -29612,7 +29612,7 @@ escape vec[0] as int;
     --env = 'line 2 : invalid attribution',
 }
 Test { [[
-vector[10] u8 vec = [1,2,3];
+var[10] u8 vec = [1,2,3];
 $vec = 0;
 escape vec[0] as int;
 ]],
@@ -29620,7 +29620,7 @@ escape vec[0] as int;
 }
 
 Test { [[
-vector[2] int vec;
+var[2] int vec;
 $vec = 1;
 escape 1;
 ]],
@@ -29628,7 +29628,7 @@ escape 1;
 }
 
 Test { [[
-vector[] byte bs;
+var[] byte bs;
 native/nohold _ceu_vector_setlen;
 _ceu_vector_setlen(&&bs,1,0);
 escape 1 + (($bs) as int);
@@ -29638,7 +29638,7 @@ escape 1 + (($bs) as int);
 
 Test { [[
 native/nohold _ceu_vector_setlen;
-vector[] byte bs;
+var[] byte bs;
 _ceu_vector_setlen(&&bs, 1, 1);
 _ceu_vector_setlen(&&bs, 1, 0);
 escape 1 + (($bs) as int);
@@ -29648,7 +29648,7 @@ escape 1 + (($bs) as int);
 
 Test { [[
 native/nohold _ceu_vector_setlen;
-vector[10] byte bs;
+var[10] byte bs;
 _ceu_vector_setlen(&&bs, 10, 1);
 escape ($bs) as int;
 ]],
@@ -29657,7 +29657,7 @@ escape ($bs) as int;
 
 Test { [[
 native/nohold _ceu_vector_setlen;
-vector[10] byte bs;
+var[10] byte bs;
 _ceu_vector_setlen(&&bs, 11, 1);
 escape 0;
 ]],
@@ -29665,8 +29665,8 @@ escape 0;
 }
 
 Test { [[
-vector[10] u8 v1 = [1,2,3];
-vector[20] u8 v2 = v1;
+var[10] u8 v1 = [1,2,3];
+var[20] u8 v2 = v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
     stmts = 'line 2 : invalid assignment : unexpected context for vector "v2"',
@@ -29674,7 +29674,7 @@ escape v2[0] + v2[1] + v2[2];
 }
 
 Test { [[
-vector[] byte v1; vector[] byte v2; vector[] byte v3;
+var[] byte v1; var[] byte v2; var[] byte v3;
 v1 = v2;
 v1 = v2..v3;
 escape $v1+1;
@@ -29685,7 +29685,7 @@ escape $v1+1;
 }
 
 Test { [[
-vector[10] u8 v1 = [1,2,3];
+var[10] u8 v1 = [1,2,3];
 v1 = v1 .. [4];
 escape v1[3] as int;
 ]],
@@ -29693,7 +29693,7 @@ escape v1[3] as int;
 }
 
 Test { [[
-vector[10] u8 v1 = [1,2,3];
+var[10] u8 v1 = [1,2,3];
 v1 = v1..v1;    // only first can be v1
 escape v1[3];
 ]],
@@ -29701,7 +29701,7 @@ escape v1[3];
 }
 
 Test { [[
-vector[10] u8 v1 = [1,2,3];
+var[10] u8 v1 = [1,2,3];
 v1 = v1;    // not a vector constructor
 escape v1[3];
 ]],
@@ -29709,7 +29709,7 @@ escape v1[3];
 }
 
 Test { [[
-vector[10] u8 v1 = [1,2,3];
+var[10] u8 v1 = [1,2,3];
 v1 = []..v1;    // cant concat itself
 escape v1[3];
 ]],
@@ -29717,43 +29717,43 @@ escape v1[3];
 }
 
 Test { [[
-vector[10] u8 v1 = [1,2,3];
-vector[20] u8 v2 = []..v1;
+var[10] u8 v1 = [1,2,3];
+var[20] u8 v2 = []..v1;
 escape (v2[0] + v2[1] + v2[2]) as int;
 ]],
     run = 6,
 }
 Test { [[
-vector[20] u8 v1 = [1,2,3];
-vector[10] u8 v2 = []..v1;
+var[20] u8 v1 = [1,2,3];
+var[10] u8 v2 = []..v1;
 escape (v2[0] + v2[1] + v2[2]) as int;
 ]],
     run = 6,
 }
 Test { [[
-vector[] u8 v1   = [1,2,3];
-vector[10] u8 v2 = []..v1;
+var[] u8 v1   = [1,2,3];
+var[10] u8 v2 = []..v1;
 escape (v2[0] + v2[1] + v2[2]) as int;
 ]],
     run = 6,
 }
 Test { [[
-vector[10] byte v1 = [1,2,3];
-vector[] byte   v2 = []..v1;
+var[10] byte v1 = [1,2,3];
+var[] byte   v2 = []..v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
     run = 6,
 }
 Test { [[
-vector[3] byte v1 = [1,2,3];
-vector[2] byte v2 = []..v1;
+var[3] byte v1 = [1,2,3];
+var[2] byte v2 = []..v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
     run = '2] runtime error: access out of bounds',
 }
 
 Test { [[
-vector[2] int v ;
+var[2] int v ;
 escape v == &&v[0] ;
 ]],
     --dcls = 'line 2 : invalid operand to `==` : expected the same type',
@@ -29770,7 +29770,7 @@ native/pos do
         v[1]++;
     }
 end
-vector[2] int a = [1,2];
+var[2] int a = [1,2];
 native _int;
 _f((&&a[0]) as _int&&);
 escape a[0] + a[1];
@@ -29779,7 +29779,7 @@ escape a[0] + a[1];
 }
 
 Test { [[
-vector[5] byte foo = [1, 2, 3, 4, 5];
+var[5] byte foo = [1, 2, 3, 4, 5];
 var int tot = 0;
 var int i;
 loop i in [0 -> ($foo) as int[ do
@@ -29791,7 +29791,7 @@ escape tot;
     --tight = 'line 3 : tight loop',
 }
 Test { [[
-vector[5] byte foo = [1, 2, 3, 4, 5];
+var[5] byte foo = [1, 2, 3, 4, 5];
 var int tot = 0;
 var int i;
 loop i in [0 -> ($foo) as int[ do
@@ -29805,7 +29805,7 @@ escape tot;
 }
 
 Test { [[
-vector[5] byte foo = [1, 2, 3, 4, 5];
+var[5] byte foo = [1, 2, 3, 4, 5];
 var int tot = 0;
 var int i;
 loop i in [0 -> ($$foo) as int[ do
@@ -29817,7 +29817,7 @@ escape tot;
 }
 
 Test { [[
-vector[] byte foo = [1, 2, 3, 4, 5];
+var[] byte foo = [1, 2, 3, 4, 5];
 var int tot = 0;
 var int i;
 loop i in [0 -> ($$foo) as int[ do
@@ -29829,7 +29829,7 @@ escape tot+1;
 }
 
 Test { [[
-vector[] byte foo = [1, 2, 3, 4, 5];
+var[] byte foo = [1, 2, 3, 4, 5];
 var int tot = 0;
 var int i;
 loop i in [0 -> ($$foo) as int[ do
@@ -29858,7 +29858,7 @@ escape 1 .. 2;
     parser = 'line 1 : after `1` : expected `[` or `:` or `!` or `?` or `(` or `is` or `as` or binary operator or `;`',
 }
 Test { [[
-vector[] int x = [1]..2;
+var[] int x = [1]..2;
 escape 1;
 ]],
     stmts = 'line 1 : invalid constructor : unexpected context for value "2"',
@@ -29881,8 +29881,8 @@ escape [1]..[&&this];
 }
 
 Test { [[
-vector[] int v1;
-vector[] int v2;
+var[] int v1;
+var[] int v2;
 v1 = [1] .. v2;
 v1 = [] .. v2 .. [1];
 escape v1[0];
@@ -29891,15 +29891,15 @@ escape v1[0];
 }
 
 Test { [[
-vector[] int v1 = [1]..[2]..[3];
+var[] int v1 = [1]..[2]..[3];
 escape v1[0]+v1[1]+v1[2];
 ]],
     run = 6;
 }
 
 Test { [[
-vector[] int v1 = [1,2,3];
-vector[] int v2 = [7,8,9];
+var[] int v1 = [1,2,3];
+var[] int v2 = [7,8,9];
 v1 = v1 .. [4,5,6] .. v2;
 var int ret = 0;
 var int i;
@@ -29912,7 +29912,7 @@ escape ret;
 }
 
 Test { [[
-vector[] int v = [1,2,3];
+var[] int v = [1,2,3];
 v = v .. v;
 escape ($v + v[5]) as int;
 ]],
@@ -29921,7 +29921,7 @@ escape ($v + v[5]) as int;
 }
 
 Test { [[
-vector[] int v = [1,2,3];
+var[] int v = [1,2,3];
 v = [1] .. v;
 escape ($v + v[1]) as int;
 ]],
@@ -29930,8 +29930,8 @@ escape ($v + v[1]) as int;
 }
 
 Test { [[
-vector[] int v = [1,2,3];
-vector[] int v1 = []..v;
+var[] int v = [1,2,3];
+var[] int v1 = []..v;
 v = [1] .. v1;
 escape ($v + v[1]) as int;
 ]],
@@ -29940,7 +29940,7 @@ escape ($v + v[1]) as int;
 }
 
 Test { [[
-vector[] int v;
+var[] int v;
 $v = 0;
 escape ($v + 1) as int;
 ]],
@@ -29948,7 +29948,7 @@ escape ($v + 1) as int;
 }
 
 Test { [[
-vector [] int vec = [1,2,3];
+var [] int vec = [1,2,3];
 var int ret = 0;
 var usize i;
 loop i in [0 -> $vec[ do
@@ -29965,7 +29965,7 @@ escape ret;
 
 Test { [[
 every 1s do
-    vector[] byte xxx = [];
+    var[] byte xxx = [];
 end
 escape 0;
 ]],
@@ -29984,7 +29984,7 @@ native/pos do
     } tp;
     tp Tx = { f };
 end
-vector[] byte str = [] .. "oi";
+var[] byte str = [] .. "oi";
 escape (str[1]=={'i'}) as int;
 ]],
     run = 1,
@@ -30001,7 +30001,7 @@ native/pos do
     tp Tx = { f };
 end
 native _char, _Tx;
-vector[] byte str = [] .. (_Tx.f() as _char&&);
+var[] byte str = [] .. (_Tx.f() as _char&&);
 escape (str[2]=={'a'}) as int;
 ]],
     run = 1,
@@ -30018,13 +30018,13 @@ native/pos do
     tp Tx = { f };
 end
 native _char, _Tx;
-vector[] byte str = [] .. (_Tx.f() as _char&&) .. "oi";
+var[] byte str = [] .. (_Tx.f() as _char&&) .. "oi";
 escape (str[4]=={'i'}) as int;
 ]],
     run = 1,
 }
 
-Test { [[vector[2] u8 v; escape (&&v==&&v) as int;]],
+Test { [[var[2] u8 v; escape (&&v==&&v) as int;]],
     run = 1,
     --dcls = 'line 1 : invalid operand to `&&` : unexpected context for vector "v"',
     --env = 'line 1 : types mismatch (`int` <= `u8[]&&`)',
@@ -30039,7 +30039,7 @@ native/pos do
 end
 native/pure _ID, _strlen;
 native _char;
-vector[] byte str = [] .. "abc"
+var[] byte str = [] .. "abc"
                     .. (_ID("def") as _char&&);
 var byte&& str2 = _ID((&&str[0]));
 escape _strlen((&&str[0]) as _char&&) + _strlen(str2 as _char&&);
@@ -30048,8 +30048,8 @@ escape _strlen((&&str[0]) as _char&&) + _strlen(str2 as _char&&);
 }
 
 Test { [[
-vector[] byte str;
-vector[] byte str;
+var[] byte str;
+var[] byte str;
 escape 1;
 ]],
     wrn = true,
@@ -30057,14 +30057,14 @@ escape 1;
 }
 
 Test { [[
-vector[] int x;
+var[] int x;
 escape (&&x[0] == &&x[0]) as int;
 ]],
     run = 1,
 }
 
 Test { [[
-vector[] byte str1;
+var[] byte str1;
 escape (&&str1[0] == &&str1[0]) as int;
 ]],
     run = 1,
@@ -30072,7 +30072,7 @@ escape (&&str1[0] == &&str1[0]) as int;
 }
 
 Test { [[
-vector[] byte str1 = [].."";
+var[] byte str1 = [].."";
 escape (&&str1[0] == &&str1[0]) as int;
 ]],
     run = 1,
@@ -30081,8 +30081,8 @@ escape (&&str1[0] == &&str1[0]) as int;
 
 Test { [[
 native/pure _strcmp;
-vector[] byte str1 = [].."";    // TODO: still points to NULL as
-vector[] byte str2 = [].."";    //  len=0
+var[] byte str1 = [].."";    // TODO: still points to NULL as
+var[] byte str2 = [].."";    //  len=0
 native _char;
 escape (_strcmp((&&str1[0]) as _char&&,"")==0 and _strcmp((&&str2[0]) as _char&&,"")==0) as int;
 ]],
@@ -30092,8 +30092,8 @@ escape (_strcmp((&&str1[0]) as _char&&,"")==0 and _strcmp((&&str2[0]) as _char&&
 
 Test { [[
 native/pure _strcmp;
-vector[0] byte str1;
-vector[1] byte str2;
+var[0] byte str1;
+var[1] byte str2;
 native _char;
 escape (_strcmp((&&str1[0]) as _char&&,"")==0 and _strcmp((&&str2[0]) as _char&&,"")==0) as int;
 ]],
@@ -30103,8 +30103,8 @@ escape (_strcmp((&&str1[0]) as _char&&,"")==0 and _strcmp((&&str2[0]) as _char&&
 
 Test { [[
 native/pure _strcmp;
-vector[] byte str1 = [0];
-vector[] byte str2 = [0];
+var[] byte str1 = [0];
+var[] byte str2 = [0];
 native _char;
 escape (_strcmp((&&str1[0]) as _char&&,"")==0 and _strcmp((&&str2[0]) as _char&&,"")==0) as int;
 ]],
@@ -30112,14 +30112,14 @@ escape (_strcmp((&&str1[0]) as _char&&,"")==0 and _strcmp((&&str2[0]) as _char&&
 }
 
 Test { [[
-vector[] u8 str = [].."Ola Mundo!";
+var[] u8 str = [].."Ola Mundo!";
 ]],
     --stmts = 'line 1 : invalid constructor : item #2 : types mismatch : "u8" <= "byte"',
     stmts = 'line 1 : invalid constructor : unexpected context for value ""Ola Mundo!""',
 }
 
 Test { [[
-vector[3] u8 bytes;
+var[3] u8 bytes;
 
 bytes = bytes .. [5];
 
@@ -30130,7 +30130,7 @@ escape bytes[0] as int;
 
 Test { [[
 native/nohold _ceu_vector_buf_set;
-vector[] byte v = [1,2,0,4,5];
+var[] byte v = [1,2,0,4,5];
 var byte c = 3;
 _ceu_vector_buf_set(&&v,2, &&c, 1);
 escape v[2] + (($v) as int);
@@ -30139,56 +30139,58 @@ escape v[2] + (($v) as int);
 }
 
 Test { [[
-vector[] int v;
+var[] int v;
 escape v > 0;
 ]],
     dcls = 'line 2 : invalid operand to `>` : unexpected context for vector "v"',
 }
 Test { [[
-vector[] int v;
+var[] int v;
 escape v?;
 ]],
     dcls = 'line 2 : invalid operand to `?` : unexpected context for vector "v"',
 }
 Test { [[
-vector[] int v;
+var[] int v;
 escape v!;
 ]],
     dcls = 'line 2 : invalid operand to `!` : unexpected context for vector "v"',
 }
 Test { [[
-vector[] int v;
+var[] int v;
 escape ~v;
 ]],
     dcls = 'line 2 : invalid operand to `~` : unexpected context for vector "v"',
 }
 
 Test { [[
-vector[] int v;
+var[] int v;
 v[true] = 1;
 ]],
     dcls = 'line 2 : invalid index : expected integer type',
 }
 
 Test { [[
-vector int[1][1] v;
+var int[1][1] v;
 escape 1;
 ]],
     --adj = 'line 1 : not implemented : multiple `[]`',
     --env = 'line 1 : invalid type modifier : `[][]`',
-    parser = 'line 1 : after `vector` : expected `&` or `[`',
+    --parser = 'line 1 : after `var` : expected `&` or `[`',
+    parser = 'line 1 : after `int` : expected type modifier or internal identifier',
 }
 Test { [[
-vector[1][1] int v;
+var[1][1] int v;
 escape 1;
 ]],
     --adj = 'line 1 : not implemented : multiple `[]`',
     --env = 'line 1 : invalid type modifier : `[][]`',
-    parser = 'line 1 : after `]` : expected type',
+    --parser = 'line 1 : after `]` : expected type',
+    parser = 'line 1 : after `]` : expected `/dynamic` or `/nohold` or type',
 }
 
 Test { [[
-vector[2] int v;
+var[2] int v;
 v[0] = 1;
 var int ret=0;
 par/or do
@@ -30206,7 +30208,7 @@ escape ret;
 }
 
 Test { [[
-vector[] int v;
+var[] int v;
 escape 1;
 ]],
     wrn = true,
@@ -30215,7 +30217,7 @@ escape 1;
 
 Test { [[
 native _enqueue;
-vector[255] byte buf;
+var[255] byte buf;
 _enqueue(&&buf[0]);
 escape 1;
 ]],
@@ -30225,7 +30227,7 @@ escape 1;
 
 Test { [[
 native _enqueue;
-vector[255] byte buf;
+var[255] byte buf;
 _enqueue(buf);
 escape 1;
 ]],
@@ -30238,7 +30240,7 @@ native/pure _enqueue;
 native/pos do
     ##define enqueue(x)
 end
-vector[255] byte buf;
+var[255] byte buf;
 _enqueue(&&buf);
 escape 1;
 ]],
@@ -30251,7 +30253,7 @@ Test { [[
 native/pure _strlen;
 
 native _char;
-vector[255] _char str;
+var[255] _char str;
 str = [].."oioioi";
 
 escape _strlen(&&str[0]);
@@ -30272,7 +30274,7 @@ escape b;
 }
 Test { [[
 var int i = do/_
-    vector[5] byte abcd;
+    var[5] byte abcd;
     escape 1;
 end;
 escape i;
@@ -30281,14 +30283,14 @@ escape i;
     run = 1,
 }
 
-Test { [[vector[0] int v; escape 0;]],
+Test { [[var[0] int v; escape 0;]],
     wrn = true,
     run = 0,
     --env='invalid dimension'
 }
 
 Test { [[
-vector[255] u8 vec;
+var[255] u8 vec;
 event void  e;
 escape 1;
 ]],
@@ -30298,7 +30300,7 @@ escape 1;
 }
 
 Test { [[
-vector[] byte str = [] .. (1 as int);
+var[] byte str = [] .. (1 as int);
 escape $str as int;
 ]],
     stmts = 'line 1 : invalid constructor : item #2 : expected "_char&&"',
@@ -30308,7 +30310,7 @@ Test { [[
 code/tight Ff (void) -> _char&& do
     escape "oi";
 end
-vector[] byte str = [] .. (call Ff());
+var[] byte str = [] .. (call Ff());
 escape $str as int;
 ]],
     run = 2,
@@ -30317,7 +30319,7 @@ Test { [[
 code/tight Ff (void) -> bool do
     escape true;
 end
-vector[] byte str = [] .. (call Ff());
+var[] byte str = [] .. (call Ff());
 escape $str as int;
 ]],
     stmts = 'line 4 : invalid constructor : item #2 : expected "_char&&"',
@@ -30329,7 +30331,7 @@ escape $str as int;
 
 Test { [[
 native/nohold _strlen;
-vector[] byte v = [{'a'},{'b'},{'c'},{'\0'}];
+var[] byte v = [{'a'},{'b'},{'c'},{'\0'}];
 native _char;
 escape _strlen((&&v[0]) as _char&&);
 ]],
@@ -30337,7 +30339,7 @@ escape _strlen((&&v[0]) as _char&&);
 }
 Test { [[
 native/nohold _strlen;
-vector[] byte v = [{'a'},{'b'},{'c'},{'\0'}];
+var[] byte v = [{'a'},{'b'},{'c'},{'\0'}];
 native _char;
 escape _strlen((&&v[0]) as _char&&);
 ]],
@@ -30356,8 +30358,8 @@ native/pos do
     }
 end
 
-vector[10] byte v = [0];
-vector[10] byte v_;
+var[10] byte v = [0];
+var[10] byte v_;
 native _char;
 _garbage((&&v[0]));
 v = [{'a'},{'b'},{'c'}];
@@ -30386,7 +30388,7 @@ escape 1;
     --run = 1,
 }
 Test { [[
-vector[] int v;
+var[] int v;
 _f([1]..v);
 escape 1;
 ]],
@@ -30396,7 +30398,7 @@ escape 1;
     --run = 1,
 }
 Test { [[
-vector[] int v;
+var[] int v;
 _f(v..[1]);
 escape 1;
 ]],
@@ -30407,7 +30409,7 @@ escape 1;
 
 Test { [[
 native/nohold _strlen;
-vector[] byte v = [].."abc";
+var[] byte v = [].."abc";
 native _char;
 escape _strlen(v as _char&&);
 ]],
@@ -30417,7 +30419,7 @@ escape _strlen(v as _char&&);
 }
 Test { [[
 native/nohold _strlen;
-vector[] byte v = [].."abc";
+var[] byte v = [].."abc";
 native _char;
 escape _strlen((&&v[0]) as _char&&);
 ]],
@@ -30425,7 +30427,7 @@ escape _strlen((&&v[0]) as _char&&);
 }
 Test { [[
 native/nohold _strlen;
-vector[] byte v = [].."abc";
+var[] byte v = [].."abc";
 v = v .. "def";
 native _char;
 escape _strlen((&&v[0]) as _char&&);
@@ -30435,7 +30437,7 @@ escape _strlen((&&v[0]) as _char&&);
 
 Test { [[
 var int nnn = 10;
-vector[nnn] u8 xxx;
+var[nnn] u8 xxx;
 xxx[0] = 10;
 escape 1;
 ]],
@@ -30444,7 +30446,7 @@ escape 1;
 
 Test { [[
 var int nnn = 10;
-vector[nnn] byte xxx;
+var[nnn] byte xxx;
 native/nohold _ceu_vector_setlen;
 _ceu_vector_setlen(&&xxx,nnn,1);
 xxx[0] = 10;
@@ -30456,7 +30458,7 @@ escape xxx[0]+xxx[9];
 
 Test { [[
 var int nnn = 10;
-vector[nnn] byte xxx;
+var[nnn] byte xxx;
 native/nohold _ceu_vector_setlen;
 _ceu_vector_setlen(&&xxx,nnn+1,1);
 escape 1;
@@ -30466,7 +30468,7 @@ escape 1;
 
 Test { [[
 var int n = 10;
-vector[n] byte us;
+var[n] byte us;
 $us = 20;
 escape 1;
 ]],
@@ -30475,7 +30477,7 @@ escape 1;
 
 Test { [[
 var int n = 10;
-vector[n] byte us;
+var[n] byte us;
 native/nohold _ceu_vector_setlen;
 _ceu_vector_setlen(&&us,n,1);
 escape $us as int;
@@ -30485,7 +30487,7 @@ escape $us as int;
 
 Test { [[
 var int n = 10;
-vector[] byte us;
+var[] byte us;
 $us = n;
 escape 1;
 ]],
@@ -30494,7 +30496,7 @@ escape 1;
 
 Test { [[
 var int n = 10;
-vector[] byte us;
+var[] byte us;
 native/nohold _ceu_vector_setlen;
 _ceu_vector_setlen(&&us,n,1);
 escape $us as int;
@@ -30504,7 +30506,7 @@ escape $us as int;
 
 Test { [[
 var int n = 10;
-vector[n] byte us = [0,1,2,3,4,5,6,7,8,9];
+var[n] byte us = [0,1,2,3,4,5,6,7,8,9];
 us[n] = 10;
 escape us[0]+us[9];
 ]],
@@ -30514,7 +30516,7 @@ escape us[0]+us[9];
 Test { [[
 native _CEU_APP;
 var int n = 10;
-vector[n] byte us = [0,1,2,3,4,5,6,7,8,9];
+var[n] byte us = [0,1,2,3,4,5,6,7,8,9];
 us[n-1] = 1;
 escape _CEU_APP.root.__mem.trails_n;
 ]],
@@ -30523,7 +30525,7 @@ escape _CEU_APP.root.__mem.trails_n;
 Test { [[
 native _CEU_APP;
 var int n = 10;
-vector[10] byte us = [0,1,2,3,4,5,6,7,8,9];
+var[10] byte us = [0,1,2,3,4,5,6,7,8,9];
 us[n-1] = 1;
 escape _CEU_APP.root.__mem.trails_n;
 ]],
@@ -30532,7 +30534,7 @@ escape _CEU_APP.root.__mem.trails_n;
 
 Test { [[
 var int n = 10;
-vector[n] byte us = [0,1,2,3,4,5,6,7,8,9];
+var[n] byte us = [0,1,2,3,4,5,6,7,8,9];
 us[n-1] = 1;
 escape us[0]+us[9];
 ]],
@@ -30541,7 +30543,7 @@ escape us[0]+us[9];
 
 
 Test { [[
-vector[1.5] u8 us = [];
+var[1.5] u8 us = [];
 ]],
     consts = 'line 1 : invalid declaration : vector dimension must be an integer',
     --env = 'line 2 : dimension must be constant',
@@ -30550,7 +30552,7 @@ vector[1.5] u8 us = [];
 Test { [[
 native _u8;
 native/const _U8_MAX;
-vector[_U8_MAX] _u8 us = _;
+var[_U8_MAX] _u8 us = _;
 escape 1;
 ]],
     wrn = true,
@@ -30562,7 +30564,7 @@ Test { [[
 native _u8;
 native/const _U8_MAX;
 var int n = 10;
-vector[_U8_MAX] _u8 us = _;
+var[_U8_MAX] _u8 us = _;
 us[_U8_MAX-1] = 10;
 us[0] = 1;
 escape (us[0]+us[_U8_MAX-1]) as int;
@@ -30575,7 +30577,7 @@ Test { [[
 native _u8;
 native/const _U8_MAX;
 var int n = 10;
-vector[_U8_MAX] u8 us = _;
+var[_U8_MAX] u8 us = _;
 us[_U8_MAX-1] = 10;
 us[0] = 1;
 escape (us[0]+us[_U8_MAX-1]) as int;
@@ -30604,7 +30606,7 @@ native/const _N;
 native/pre do
     int N = 10;
 end
-vector[_N] _u8 xxx = _;
+var[_N] _u8 xxx = _;
 escape 1;
 ]],
     wrn = true,
@@ -30613,7 +30615,7 @@ escape 1;
 
 Test { [[
 #define HASH_BYTES 32
-vector[HASH_BYTES+sizeof(u32)] byte bs;
+var[HASH_BYTES+sizeof(u32)] byte bs;
 escape ($$bs) as int;
 ]],
     opts_pre = true,
@@ -30622,7 +30624,7 @@ escape ($$bs) as int;
 
 Test { [[
 var int n = 32;
-vector[n] byte bs;
+var[n] byte bs;
 escape ($$bs) as int;
 ]],
     run = 32,
@@ -30637,7 +30639,7 @@ escape 1;
 
 Test { [[
 native _char;
-vector[10] _char a;
+var[10] _char a;
 a = [].."oioioi";
 escape 1;
 ]],
@@ -30649,7 +30651,7 @@ escape 1;
 }
 
 Test { [[
-vector[2] int v;
+var[2] int v;
 par/or do
     v[0] = 1;
 with
@@ -30664,7 +30666,7 @@ escape 0;
     },
 }
 Test { [[
-vector[2] int v;
+var[2] int v;
 var int i=0; var int j=0;
 par/or do
     v[j] = 1;
@@ -30681,7 +30683,7 @@ escape 0;
 }
 
 Test { [[
-vector[10] byte v2 = [];
+var[10] byte v2 = [];
 if false then
     escape 1;
 end
@@ -30692,7 +30694,7 @@ escape v2[0][0];
 }
 
 Test { [[
-vector[10] byte v2 = [45];
+var[10] byte v2 = [45];
 
 var int ret = (v2[0] as int);
 
@@ -30705,8 +30707,8 @@ escape ret;
 Test { [[
 native/plain _char;
 native/plain _u8;
-vector[10] _u8 v1 = _;
-vector[10] byte v2 = [];
+var[10] _u8 v1 = _;
+var[10] byte v2 = [];
 
 var int i;
 loop i in [0 -> 10[ do
@@ -30729,7 +30731,7 @@ escape ret;
 
 Test { [[
 var u8 cnt;
-vector[3] u8 v;
+var[3] u8 v;
 
 v = [] .. v .. [17];
 v = [] .. v .. [9];
@@ -30743,7 +30745,7 @@ escape cnt;
 
 Test { [[
 #define _OBJ_N + 2
-vector[_OBJ_N] void&& objs;
+var[_OBJ_N] void&& objs;
 escape 1;
 ]],
     opts_pre = true,
@@ -30754,7 +30756,7 @@ escape 1;
 Test { [[
 #define _OBJ_N + 2 \
                + 1
-vector[_OBJ_N] void&& objs;
+var[_OBJ_N] void&& objs;
 escape 1;
 ]],
     opts_pre = true,
@@ -30766,7 +30768,7 @@ Test { [[
 var int i;
 loop i in [0 -> 10[ do
     await 1s;
-    vector[] byte string = [] .. "Alo mundo!\n";
+    var[] byte string = [] .. "Alo mundo!\n";
 end
 escape 1;
 ]],
@@ -30781,7 +30783,7 @@ native _char_ptr, _char;
 native/pure _strlen;
 var _char_ptr x = "oioi";
 var _char&& y = x;
-vector[] byte str = [] .. (x as _char&&) .. (y as _char&&);
+var[] byte str = [] .. (x as _char&&) .. (y as _char&&);
 escape _strlen(&&str[0] as _char&&);
 ]],
     run = 8,
@@ -30796,7 +30798,7 @@ native/pure _ID, _strlen;
 native _char_ptr, _char;
 var _char_ptr x = "oioi";
 var _char&& y = x;
-vector[] byte str = [] .. (_ID(x) as _char&&) .. (_ID(y) as _char&&);
+var[] byte str = [] .. (_ID(x) as _char&&) .. (_ID(y) as _char&&);
 escape _strlen(&&str[0] as _char&&);
 ]],
     run = 8,
@@ -30805,8 +30807,8 @@ escape _strlen(&&str[0] as _char&&);
 -->> VECTOR / ALIAS
 
 Test { [[
-vector[10] u8 v1 = [1,2,3];
-vector&[10] u8 v2 = &v1;
+var[10] u8 v1 = [1,2,3];
+var&[10] u8 v2 = &v1;
 v1 = v2..[];    // v1=v2 must be the same
 escape 0;
 ]],
@@ -30814,8 +30816,8 @@ escape 0;
 }
 
 Test { [[
-vector[10] u8 v1 = [1,2,3];
-vector&[10] u8 v2 = &v1;
+var[10] u8 v1 = [1,2,3];
+var&[10] u8 v2 = &v1;
 v1 = []..v2;    // v1=v2 same address
 escape 0;
 ]],
@@ -30823,8 +30825,8 @@ escape 0;
 }
 
 Test { [[
-vector[10] byte vec = [1,2,3];
-vector&[] byte  ref = &vec;
+var[10] byte vec = [1,2,3];
+var&[] byte  ref = &vec;
 escape (($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
 ]],
     run = 19,
@@ -30832,31 +30834,31 @@ escape (($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
 
 Test { [[
 var int n = 10;
-vector[n] byte vec = [1,2,3];
-vector&[] byte ref = &vec;
+var[n] byte vec = [1,2,3];
+var&[] byte ref = &vec;
 escape ($ref + $$ref) as int;
 ]],
     run = 13,
 }
 Test { [[
 var int n = 10;
-vector[n] byte vec = [1,2,3];
-vector&[n] byte ref = &vec;
+var[n] byte vec = [1,2,3];
+var&[n] byte ref = &vec;
 ]],
     consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
 }
 
 Test { [[
 var int n = 10;
-vector[] byte vec = [1,2,3];
-vector&[n] byte ref = &vec;
+var[] byte vec = [1,2,3];
+var&[n] byte ref = &vec;
 ]],
     consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
 }
 
 Test { [[
-vector[10] byte  vec = [1,2,3];
-vector&[11] byte ref = &vec;
+var[10] byte  vec = [1,2,3];
+var&[11] byte ref = &vec;
 escape( ($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
 ]],
     run = 1,
@@ -30865,8 +30867,8 @@ escape( ($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
 }
 
 Test { [[
-vector[10] byte vec = [1,2,3];
-vector&[9] byte ref = &vec;
+var[10] byte vec = [1,2,3];
+var&[9] byte ref = &vec;
 escape (($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
 ]],
     stmts = 'line 2 : invalid binding : dimension mismatch',
@@ -30881,8 +30883,8 @@ native/pos do
         v[1]++;
     }
 end
-vector[2] int a  = [1,2];
-vector&[2] int b = &a;
+var[2] int a  = [1,2];
+var&[2] int b = &a;
 native _int;
 _f((&&b[0]) as _int&&);
 escape b[0] + b[1];
@@ -30891,7 +30893,7 @@ escape b[0] + b[1];
 }
 
 Test { [[
-vector[] byte bs = [ 1, 2, 3 ];
+var[] byte bs = [ 1, 2, 3 ];
 var int idx = 1;
 var& int i = &idx;
 escape bs[i];
@@ -30905,8 +30907,8 @@ native/pos do
         return (byte*)"ola";
     }
 end
-vector[] byte  str;
-vector&[] byte ref = &str;
+var[] byte  str;
+var&[] byte ref = &str;
 native _char;
 ref = [] .. ({f}() as _char&&) .. "oi";
 native/pure _strlen;
@@ -30923,8 +30925,8 @@ native/pos do
         v[1]++;
     }
 end
-vector[2] int a  = [1,2];
-vector&[2] int b = &a;
+var[2] int a  = [1,2];
+var&[2] int b = &a;
 _f((&&b[0]));
 escape b[0] + b[1];
 ]],
@@ -30940,8 +30942,8 @@ native/pos do
         v[1]++;
     }
 end
-vector[2] int a  = [1,2];
-vector&[2] int b = &a;
+var[2] int a  = [1,2];
+var&[2] int b = &a;
 _f((&&b[0]) as int&&);
 escape b[0] + b[1];
 ]],
@@ -30954,7 +30956,7 @@ native/const _X;
 native/pos do
     ##define X 1
 end
-vector&[-_X] int iis;
+var&[-_X] int iis;
 escape 1;
 ]],
     wrn = true,
@@ -30967,8 +30969,8 @@ native/const _X;
 native/pre do
     ##define X 1
 end
-vector[-_X] int vvs;
-vector&[-_X] int iis = &vvs;
+var[-_X] int vvs;
+var&[-_X] int iis = &vvs;
 escape 1;
 ]],
     cc = '5:5: error: size of array ‘vvs_',
@@ -30979,8 +30981,8 @@ native/const _X;
 native/pre do
     ##define X -1
 end
-vector[-_X] int vvs;
-vector&[-_X] int iis = &vvs;
+var[-_X] int vvs;
+var&[-_X] int iis = &vvs;
 escape 1;
 ]],
     wrn = true,
@@ -30988,7 +30990,7 @@ escape 1;
 }
 
 Test { [[
-vector&[] int v;
+var&[] int v;
 escape 1;
 ]],
     --inits = 'line 1 : uninitialized vector "v" : reached `escape` (/tmp/tmp.ceu:2)',
@@ -30996,8 +30998,8 @@ escape 1;
     run = 1,
 }
 Test { [[
-vector[] int vv;
-vector&[] int v = &vv;;
+var[] int vv;
+var&[] int v = &vv;;
 escape 1;
 ]],
     wrn = true,
@@ -31005,8 +31007,8 @@ escape 1;
 }
 
 Test { [[
-vector[] byte c = [1];
-vector&[] byte b = &c;
+var[] byte c = [1];
+var&[] byte b = &c;
 escape b[0];
 ]],
     run = 1,
@@ -31018,7 +31020,7 @@ native/const _N;
 native/pre do
     int N = 10;
 end
-vector&[_N] _u8 xxxx = _;
+var&[_N] _u8 xxxx = _;
 escape 1;
 ]],
     inits = 'line 6 : invalid binding : expected operator `&` in the right side',
@@ -31027,7 +31029,7 @@ escape 1;
 }
 
 Test { [[
-vector[] int xs;
+var[] int xs;
 var& int x = &xs[0];
 escape 0;
 ]],
@@ -31038,7 +31040,7 @@ escape 0;
 
 Test { [[
 var int x=1; var int  y=2; var int  z=3;
-vector[10] int&& v = [ &&x, &&y, &&z ];
+var[10] int&& v = [ &&x, &&y, &&z ];
 escape *v[0] + *v[1] + *v[2];
 ]],
     run = 6,
@@ -33057,7 +33059,7 @@ escape 1;
 }
 
 Test { [[
-vector[] int x;
+var[] int x;
 x = nil;
 escape 1;
 ]],
@@ -33555,7 +33557,7 @@ do
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `(` : expected `var` or `vector` or `pool` or `event`',
+    parser = 'line 1 : after `(` : expected `var` or `pool` or `event`',
 }
 
 Test { [[
@@ -34101,9 +34103,9 @@ escape 10;
 }
 
 Test { [[
-vector[] byte str = [0,1,2];
+var[] byte str = [0,1,2];
 
-code/tight Fx (vector&[] byte vec)->int do
+code/tight Fx (var&[] byte vec)->int do
     escape vec[1];
 end
 
@@ -34493,9 +34495,9 @@ escape 1;
 -->> VECTOR / CODE
 
 Test { [[
-vector[] byte str = [0,1,2];
+var[] byte str = [0,1,2];
 
-code/tight Fx (vector[] byte vec)->int do
+code/tight Fx (var[] byte vec)->int do
     escape vec[1];
 end
 
@@ -34505,9 +34507,9 @@ escape call Fx(&str);
     dcls = 'line 3 : invalid declaration : vector inside `code/tight`',
 }
 Test { [[
-vector[] byte str = [0,1,2];
+var[] byte str = [0,1,2];
 
-code/tight Fx (vector&[] byte vec)->int do
+code/tight Fx (var&[] byte vec)->int do
     escape vec[1];
 end
 
@@ -34518,9 +34520,9 @@ escape call Fx(&str);
     run = 1,
 }
 Test { [[
-vector[] byte str = [0,1,2];
+var[] byte str = [0,1,2];
 
-code/tight Fx (vector&[] byte vec)->int do
+code/tight Fx (var&[] byte vec)->int do
     escape vec[1] as int;
 end
 
@@ -34530,9 +34532,9 @@ escape call Fx(&str);
     run = 1,
 }
 Test { [[
-vector[1] byte str = [0,1,2];
+var[1] byte str = [0,1,2];
 
-code/tight Fx (vector&[2] byte&& vec)->int do
+code/tight Fx (var&[2] byte&& vec)->int do
     escape vec[1] as int;
 end
 
@@ -34541,9 +34543,9 @@ escape call Fx(&&str);
     dcls = 'line 7 : invalid call : invalid binding : argument #1 : unexpected context for value "str"',
 }
 Test { [[
-vector[1] byte str = [0,1,2];
+var[1] byte str = [0,1,2];
 
-code/tight Fx (vector&[2] byte vec)->int do
+code/tight Fx (var&[2] byte vec)->int do
     escape vec[1] as int;
 end
 
@@ -34561,8 +34563,8 @@ escape v2;
     --run = 1,
 }
 Test { [[
-vector[]  byte v1 = [0,1,2];
-vector&[] int v2;
+var[]  byte v1 = [0,1,2];
+var&[] int v2;
 v2 = &v1;
 escape v2[1];
 ]],
@@ -34570,9 +34572,9 @@ escape v2[1];
     --run = 1,
 }
 Test { [[
-vector[] byte str = [0,1,2];
+var[] byte str = [0,1,2];
 
-code/tight Fx (vector&[] int vec)->int do
+code/tight Fx (var&[] int vec)->int do
     escape vec[1];
 end
 
@@ -34582,9 +34584,9 @@ escape call Fx(&str);
     --run = 1,
 }
 Test { [[
-vector[] byte str = [0,1,2];
+var[] byte str = [0,1,2];
 
-code/tight Fx (vector&[] byte vec)->bool do
+code/tight Fx (var&[] byte vec)->bool do
     escape vec[1];
 end
 
@@ -34595,9 +34597,9 @@ escape call Fx(&str);
     --env = 'line 7 : wrong argument #1 : types mismatch (`int` <= `byte`)',
 }
 Test { [[
-vector[] byte str = [0,1,2];
+var[] byte str = [0,1,2];
 
-code/tight Fx (vector&[] byte vec)->int do
+code/tight Fx (var&[] byte vec)->int do
     escape vec[1];
 end
 
@@ -34608,13 +34610,13 @@ escape call Fx(str);
     dcls = 'line 7 : invalid call : invalid binding : argument #1 : unexpected context for vector "str"',
 }
 Test { [[
-vector[] byte str = [0,1,2];
+var[] byte str = [0,1,2];
 
 code/tight Fx (void) -> byte[] do
     escape &this.str;
 end
 
-vector&[] byte ref = &call Fx();
+var&[] byte ref = &call Fx();
 
 escape ref[1];
 ]],
@@ -34624,9 +34626,9 @@ escape ref[1];
 
 -- vectors as argument (NO)
 Test { [[
-vector[] byte str = [0,1,2];
+var[] byte str = [0,1,2];
 
-code/tight Fx (var void&& x, vector[] int vec)->int do
+code/tight Fx (var void&& x, var[] int vec)->int do
     escape vec[1];
 end
 
@@ -34639,10 +34641,10 @@ escape call Fx(str);
 }
 
 Test { [[
-code/tight FillBuffer (vector&[] u8 buf)->void do
+code/tight FillBuffer (var&[] u8 buf)->void do
     buf = buf .. [3];
 end
-vector[10] u8 buffer;
+var[10] u8 buffer;
 call FillBuffer(&buffer);
 escape buffer[0] as int;
 ]],
@@ -34650,10 +34652,10 @@ escape buffer[0] as int;
 }
 
 Test { [[
-code/tight FillBuffer (vector&[20] u8 buf)->void do
+code/tight FillBuffer (var&[20] u8 buf)->void do
     buf = buf .. [3];
 end
-vector[10] u8 buffer;
+var[10] u8 buffer;
 call FillBuffer(&buffer);
 escape buffer[0] as int;
 ]],
@@ -34662,10 +34664,10 @@ escape buffer[0] as int;
 }
 
 Test { [[
-code/tight FillBuffer (vector&[3] u8 buf)->void do
+code/tight FillBuffer (var&[3] u8 buf)->void do
     buf = buf .. [2,3,4];
 end
-vector[3] u8 buffer = [1];
+var[3] u8 buffer = [1];
 call FillBuffer(&buffer);
 escape buffer[0] as int;
 ]],
@@ -34674,10 +34676,10 @@ escape buffer[0] as int;
 
 -- TODO: dropped support for pointers to vectors
 Test { [[
-code/tight FillBuffer (vector[]&& u8 buf)->void do
+code/tight FillBuffer (var[]&& u8 buf)->void do
     *buf = *buf .. [3];
 end
-vector[10] u8 buffer;
+var[10] u8 buffer;
 call FillBuffer(&&buffer);
 escape buffer[0] as int;
 ]],
@@ -34686,10 +34688,10 @@ escape buffer[0] as int;
 }
 
 Test { [[
-code/tight FillBuffer (vector[3]&& u8 buf)->void do
+code/tight FillBuffer (var[3]&& u8 buf)->void do
     *buf = *buf .. [2,3,4];
 end
-vector[3] u8 buffer = [1];
+var[3] u8 buffer = [1];
 call FillBuffer(&&buffer);
 escape buffer[0] as int;
 ]],
@@ -34698,7 +34700,7 @@ escape buffer[0] as int;
 }
 
 Test { [[
-code/tight Build (vector[] u8 bytes)->void do
+code/tight Build (var[] u8 bytes)->void do
 end
 escape 1;
 ]],
@@ -34709,13 +34711,13 @@ escape 1;
 }
 
 Test { [[
-vector[] byte str = [0,1,2];
+var[] byte str = [0,1,2];
 
 code/tight Fx (void) -> byte[]& do
     escape &this.str;
 end
 
-vector&[] byte ref = &f();
+var&[] byte ref = &f();
 
 escape ref[1];
 ]],
@@ -34724,13 +34726,13 @@ escape ref[1];
 }
 
 Test { [[
-vector[] byte str = [0,1,2];
+var[] byte str = [0,1,2];
 
 code/tight Fx (void) -> byte[]& do
     escape &this.str;
 end
 
-vector&[] byte ref = &f();
+var&[] byte ref = &f();
 ref = [3, 4, 5];
 
 escape str[1];
@@ -34740,13 +34742,13 @@ escape str[1];
 }
 
 Test { [[
-vector[] byte str = [0,1,2];
+var[] byte str = [0,1,2];
 
 code/tight Fx (void) -> byte[]& do
     escape &this.str;
 end
 
-vector&[] byte ref = &f();
+var&[] byte ref = &f();
 ref = [] .. "ola";
 
 escape str[1] == 'l';
@@ -34756,7 +34758,7 @@ escape str[1] == 'l';
 }
 
 Test { [[
-vector[] byte str = [0,1,2];
+var[] byte str = [0,1,2];
 
 native/pos do
     byte* g () {
@@ -34768,7 +34770,7 @@ code/tight Fx (void) -> byte[]& do
     escape &this.str;
 end
 
-vector&[] byte ref = &f();
+var&[] byte ref = &f();
 native _char;
 ref = [] .. ({g}() as _char&&) .. "ola";
 
@@ -34779,14 +34781,14 @@ escape str[3] == 'o';
 }
 
 Test { [[
-vector[] byte str;
+var[] byte str;
 
 code/tight Fa (void)->byte[]& do
     escape &this.str;
 end
 
 code/tight Fb (void)->void do
-    vector&[] byte ref = &f1();
+    var&[] byte ref = &f1();
     ref = [] .. "ola" .. "mundo";
 end
 
@@ -34804,7 +34806,7 @@ code/tight Strlen (var byte&& str)->int do
     escape _strlen(str as _char&&);
 end
 
-vector[] byte str = [].."Ola Mundo!";
+var[] byte str = [].."Ola Mundo!";
 escape call Strlen(&&str[0]);
 ]],
     --env = 'line 6 : wrong argument #1 : types mismatch (`byte&&` <= `byte[]&&`)',
@@ -34817,7 +34819,7 @@ code/tight Strlen (var byte&& str)->int do
     escape _strlen(str[0]);
 end
 
-vector[] byte str = [].."Ola Mundo!";
+var[] byte str = [].."Ola Mundo!";
 escape call Strlen((&&str[0]) as _char&&);
 ]],
     dcls = 'line 3 : invalid vector : unexpected context for variable "str"',
@@ -34828,7 +34830,7 @@ Test { [[
 code/tight Fx (void)->void do
     var int x = 0;
 
-    vector[10] byte cs;
+    var[10] byte cs;
 end
 escape 1;
 ]],
@@ -34839,10 +34841,10 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (vector&[] byte cs)->void do
+code/tight Fx (var&[] byte cs)->void do
     cs[0] = 10;
 end
-vector[] byte cs = [0];
+var[] byte cs = [0];
 call Fx(&cs);
 escape cs[0];
 ]],
@@ -35557,7 +35559,7 @@ end
 var int i;
 loop i in [0 -> 10[ do
     await 1s;
-    vector[] byte string = [] .. "Alo mundo!\n";
+    var[] byte string = [] .. "Alo mundo!\n";
     await Ff();
 end
 escape 1;
@@ -35717,7 +35719,7 @@ escape 0;
 }
 
 Test { [[
-vector[] int x;
+var[] int x;
 var& int xx = &x;
 escape 0;
 ]],
@@ -35729,7 +35731,7 @@ code/await Ff (var& int x) -> int do
     escape x;
 end
 
-vector[] int x;
+var[] int x;
 spawn Ff(&x);
 
 escape 0;
@@ -36457,7 +36459,7 @@ Test { [[
 code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
-    vector[] byte c = [1,2,3];
+    var[] byte c = [1,2,3];
     await async do end;
 end
 var&? Ff x = spawn Ff();
@@ -36902,7 +36904,7 @@ do
     end
 end
 do
-    vector[10] int x = [];
+    var[10] int x = [];
 end
 
 escape c!.y;
@@ -37382,16 +37384,16 @@ data Int with
     var int x;
 end
 
-code/await Texs (void) -> (vector&[10] Int nums) -> void
+code/await Texs (void) -> (var&[10] Int nums) -> void
 do
-    vector[10] Int nums_ = [ ];
+    var[10] Int nums_ = [ ];
     nums = &nums_;
     await FOREVER;
 end
 
 var&? Texs t = spawn Texs();
 watching t do
-    vector&[10] Int nums_ = &t.nums;   // TODO: deveria poder
+    var&[10] Int nums_ = &t.nums;   // TODO: deveria poder
 end
 
 escape 1;
@@ -37405,9 +37407,9 @@ data Int with
     var int x;
 end
 
-code/await Texs (void) -> (vector&[10] Int nums) -> void
+code/await Texs (void) -> (var&[10] Int nums) -> void
 do
-    vector[10] Int nums_ = [ ];
+    var[10] Int nums_ = [ ];
     nums = &nums_;
     await FOREVER;
 end
@@ -37684,8 +37686,8 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (void) -> (vector&[1] int vec) -> void do
-    vector[1] int vec_ = [10];
+code/await Ff (void) -> (var&[1] int vec) -> void do
+    var[1] int vec_ = [10];
     vec = &vec_;
     await FOREVER;
 end
@@ -37700,7 +37702,7 @@ escape 0;
 }
 
 Test { [[
-code/await Fx (void) -> (var& int a, vector&[10] int b) -> void
+code/await Fx (void) -> (var& int a, var&[10] int b) -> void
 do
     var int x;
     a = &x;
@@ -42046,7 +42048,7 @@ escape 0;
 Test { [[
 code/await Tx (void) -> void do end
 pool[1] Tx ts;
-vector[] int ok1 = spawn Tx() in ts;
+var[] int ok1 = spawn Tx() in ts;
 escape 0;
 ]],
     stmts = 'line 3 : invalid constructor : unexpected context for vector "ok1"',
@@ -42499,7 +42501,7 @@ do
 end
 do
 native _char;
-    vector[1000] _char v = _;
+    var[1000] _char v = _;
     native/nohold _memset;
     _memset(&&v, 0, 1000);
 end
@@ -43035,7 +43037,7 @@ native/nohold _strcmp;
 var byte&& str = "oioioi";
 [[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];
-vector[10] byte cpy = [[ str ]];
+var[10] byte cpy = [[ str ]];
 escape ret and (0 == _strcmp(str,(&&cpy[0]) as _char&&));
 ]=],
     stmts = 'line 6 : invalid Lua assignment : unexpected context for vector "cpy"',
@@ -43049,7 +43051,7 @@ native/nohold _strcmp;
 var _char&& str = "oioioi";
 [[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];
-vector[10] byte cpy = [].. [[ str ]];
+var[10] byte cpy = [].. [[ str ]];
 escape (ret and (0 == _strcmp(str,(&&cpy[0]) as _char&&))) as int;
 ]=],
     run = 1,
@@ -43058,12 +43060,12 @@ escape (ret and (0 == _strcmp(str,(&&cpy[0]) as _char&&))) as int;
 
 Test { [=[
 native/nohold _strcmp, _strcpy;
-vector[10] byte str;
+var[10] byte str;
 _strcpy(&&str[0],"oioioi");
 [[ str = @(&&str[0]) ]]
 var bool ret = [[ str == 'oioioi' ]];
 
-vector[10] byte cpy;
+var[10] byte cpy;
 var byte&& ptr = cpy;
 ptr = [[ str ]];
 escape ret and (0 == _strcmp(&&str[0],&&cpy[0]));
@@ -43074,11 +43076,11 @@ escape ret and (0 == _strcmp(&&str[0],&&cpy[0]));
 
 Test { [=[
 native/nohold _strcmp;
-vector[10] byte str = [] .. "oioioi";
+var[10] byte str = [] .. "oioioi";
 [[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];
-vector[10] byte cpy;
-vector&[10] byte ptr = &cpy;
+var[10] byte cpy;
+var&[10] byte ptr = &cpy;
 ptr = [].. [[ str ]];
 native _char;
 escape (ret and (0 == _strcmp((&&str[0]) as _char&&,(&&cpy[0]) as _char&&))) as int;
@@ -43090,7 +43092,7 @@ escape (ret and (0 == _strcmp((&&str[0]) as _char&&,(&&cpy[0]) as _char&&))) as 
 Test { [=[
 native/nohold _strcmp;
 [[ str = '1234567890' ]]
-vector[2] byte cpy = [].. [[ str ]];
+var[2] byte cpy = [].. [[ str ]];
 native _char;
 escape (_strcmp((&&cpy[0]) as _char&&,"1") == 0) as int;
 ]=],
@@ -43101,9 +43103,9 @@ escape (_strcmp((&&cpy[0]) as _char&&,"1") == 0) as int;
 Test { [=[
 native/nohold _strcmp;
 [[ str = '1234567890' ]]
-vector[2] byte cpy;
-vector[20] byte cpy_;
-vector&[] byte ptr = &cpy;
+var[2] byte cpy;
+var[20] byte cpy_;
+var&[] byte ptr = &cpy;
 ptr = [].. [[ str ]];
 native _char;
 escape (0 == _strcmp((&&cpy[0]) as _char&&,"1234567890")) as int;
@@ -43157,7 +43159,7 @@ var int v_from_ceu = [[v_from_lua]];
 [[
 str_from_lua = 'string from lua'
 ]]
-vector[100] byte str_from_ceu = [].. [[str_from_lua]];
+var[100] byte str_from_ceu = [].. [[str_from_lua]];
 native _ceu_dbg_assert;
 native _char;
 _ceu_dbg_assert(0==_strcmp((&&str_from_ceu[0]) as _char&&, "string from lua"));
@@ -43306,8 +43308,8 @@ escape ok as int;
 }
 
 Test { [=[
-vector[] byte str = [].."12345";
-vector[] byte bts = [1,2,3,4,5];
+var[] byte str = [].."12345";
+var[] byte bts = [1,2,3,4,5];
 var int r1 = [[ string.len(@str) ]];
 var int r2 = [[ string.len(@bts) ]];
 escape r1+r2;
@@ -43443,7 +43445,7 @@ escape v_ceu;
 }
 
 Test { [=[
-vector[] byte vec = [].."123";
+var[] byte vec = [].."123";
 [[
     str = @vec
 ]]
@@ -43455,7 +43457,7 @@ escape len;
 }
 
 Test { [=[
-vector[] byte xxx = [1];
+var[] byte xxx = [1];
 var int ret = [[ @xxx[0] ]];
 escape ret;
 ]=],
@@ -43696,7 +43698,7 @@ Test { [[
 data OptNIL with
 end
 ]],
-    parser = 'line 1 : after `with` : expected `var` or `vector` or `pool` or `event`',
+    parser = 'line 1 : after `with` : expected `var` or `pool` or `event`',
 }
 
 Test { [[
@@ -45269,7 +45271,7 @@ escape v1.v+v2.v+v3.v;
 Test { [[
 native _u8;
 data Test with
-  vector[10] _u8 v;
+  var[10] _u8 v;
 end
 var Test t = val Test();
 escape t.v[0];
@@ -45281,7 +45283,7 @@ escape t.v[0];
 Test { [[
 native _u8;
 data Test with
-  vector[10] _u8 v;
+  var[10] _u8 v;
 end
 var Test t = val Test(_);
 t.v[9] = 10;
@@ -45294,7 +45296,7 @@ Test { [[
 native _u8;
 data Test with
     var int a;
-    vector[10] _u8 v;
+    var[10] _u8 v;
     var int b;
 end
 var Test t = val Test(1, _, 1);
@@ -45308,7 +45310,7 @@ Test { [[
 native _char;
 
 data Tx with
-    vector[255] _char str;
+    var[255] _char str;
     var int x;
 end
 var Tx t = val Tx(_, 1);
@@ -45322,7 +45324,7 @@ Test { [[
 native _char;
 native/pure _strlen;
 data Tx with
-    vector[255] _char xxxx;
+    var[255] _char xxxx;
 end
 var Tx t = val Tx("oioioi");
 escape _strlen(t.xxxx);
@@ -45334,7 +45336,7 @@ Test { [[
 native _char;
 native/pure _strlen;
 data Tx with
-    vector[255] _char xxxx;
+    var[255] _char xxxx;
 end
 var Tx t = val Tx("oioioi");
 escape _strlen(&&t.xxxx[0]);
@@ -45420,7 +45422,7 @@ do
     d1 = d2;
 end
 do
-    vector[10] int x = [];
+    var[10] int x = [];
 end
 
 escape d1.v;
@@ -45440,7 +45442,7 @@ do
     d1 = d2;
 end
 do
-    vector[10] int x = [];
+    var[10] int x = [];
 end
 
 escape *d1.v;
@@ -45461,7 +45463,7 @@ do
     *d1.v = 100;
 end
 do
-    vector[10] int x = [];
+    var[10] int x = [];
 end
 
 escape *d2.v;
@@ -45643,7 +45645,7 @@ escape 1;
 Test { [[
 data Tt with
     var        int x;
-    vector[10] int v;
+    var[10] int v;
     event      int e;
 end
 
@@ -45666,7 +45668,7 @@ escape 1;
 Test { [[
 native _CEU_APP;
 data Vv with
-    vector[] int xxx;
+    var[] int xxx;
 end
 var Vv yyy = val Vv(_);
 escape _CEU_APP.root.__mem.trails_n;
@@ -45676,8 +45678,8 @@ escape _CEU_APP.root.__mem.trails_n;
 Test { [[
 native _CEU_APP;
 data Vv with
-    vector[] int xxx;
-    vector[] int yyy;
+    var[] int xxx;
+    var[] int yyy;
 end
 var Vv zzz = val Vv(_,_);
 escape _CEU_APP.root.__mem.trails_n;
@@ -45687,8 +45689,8 @@ escape _CEU_APP.root.__mem.trails_n;
 Test { [[
 native _CEU_APP;
 data Vv with
-    vector[] int xxx;
-    vector[] int yyy;
+    var[] int xxx;
+    var[] int yyy;
 end
 par/and do
 with
@@ -45700,10 +45702,10 @@ escape _CEU_APP.root.__mem.trails_n;
 }
 Test { [[
 data Vv with
-    vector[] int xxx;
+    var[] int xxx;
 end
 
-vector[] int vvv;
+var[] int vvv;
 
 var Vv yyy = val Vv(_);
 
@@ -45716,14 +45718,14 @@ escape 1;
 }
 Test { [[
 data Kk with
-    vector[] int xxx;
+    var[] int xxx;
 end
 
 data Vv with
     var Kk kkk;
 end
 
-vector[] int vvv;
+var[] int vvv;
 
 var Vv yyy = val Vv(Kk(_));
 
@@ -45736,7 +45738,7 @@ escape 1;
 }
 Test { [[
 data Kk with
-    vector[] int xxx;
+    var[] int xxx;
 end
 
 data Vv with
@@ -45752,7 +45754,7 @@ escape 1;
 }
 Test { [[
 data Kk with
-    vector[] int xxx;
+    var[] int xxx;
 end
 
 data Vv with
@@ -45770,7 +45772,7 @@ escape yyy.kkk.xxx[1];
 }
 Test { [[
 data Vv with
-    vector[] int xxx;
+    var[] int xxx;
 end
 
 var Vv yyy;
@@ -45782,7 +45784,7 @@ escape yyy.xxx[1];
 }
 Test { [[
 data Vv with
-    vector[] int xxx;
+    var[] int xxx;
 end
 
 var Vv yyy;
@@ -45795,7 +45797,7 @@ escape yyy.xxx[1];
 Test { [[
 data Vv with
     var int v;
-    vector[] int xxx;
+    var[] int xxx;
 end
 
 var Vv yyy;
@@ -45807,7 +45809,7 @@ escape yyy.xxx[1] + yyy.v;
 }
 Test { [[
 data Kk with
-    vector[] int xxx;
+    var[] int xxx;
 end
 
 data Vv with
@@ -45824,7 +45826,7 @@ escape yyy.kkk.xxx[1];
 Test { [[
 data Kk with
     var int aaa;
-    vector[] int xxx;
+    var[] int xxx;
 end
 
 data Vv with
@@ -45840,12 +45842,12 @@ escape yyy.kkk.xxx[1];
 }
 Test { [[
 data Kk with
-    vector[] int xxx;
+    var[] int xxx;
 end
 
 data Vv with
     var Kk kkk;
-    vector[] int zzz;
+    var[] int zzz;
 end
 
 var Vv yyy = val Vv(Kk([1,2,3]), [4,5,6]);
@@ -45856,7 +45858,7 @@ escape yyy.kkk.xxx[1] + yyy.zzz[2];
 }
 Test { [[
 data Kk with
-    vector[] byte xxx;
+    var[] byte xxx;
 end
 
 data Vv with
@@ -45873,7 +45875,7 @@ escape _strlen(&&yyy.kkk.xxx[0] as _char&&);
 
 Test { [[
 data Tt with
-    vector[10] int v;
+    var[10] int v;
 end
 
 var Tt t = val Tt(_);
@@ -45886,7 +45888,7 @@ escape 1;
 Test { [[
 data Tt with
     var        int x;
-    vector[10] int v;
+    var[10] int v;
     event      int e;
 end
 
@@ -45911,7 +45913,7 @@ end
 Test { [[
 data Tt with
     var        int x;
-    vector[10] int v;
+    var[10] int v;
     event      int e;
 end
 
@@ -45927,7 +45929,7 @@ escape 1;
 Test { [[
 data Ta with
     var        int x;
-    vector[10] int v;
+    var[10] int v;
     event      int e;
 end
 
@@ -45947,7 +45949,7 @@ escape 1;
 Test { [[
 data Ta with
     var        int x;
-    vector[10] int v;
+    var[10] int v;
     event      int e;
 end
 
@@ -45976,7 +45978,7 @@ end
 Test { [[
 data Ta with
     var        int x;
-    vector[10] int v;
+    var[10] int v;
     event      int e;
 end
 
@@ -46036,7 +46038,7 @@ escape 1;
 Test { [[
 data Dd with
     var int n;
-    vector[n] int vs;
+    var[n] int vs;
 end
 ]],
     wrn = true,
@@ -46047,7 +46049,7 @@ Test { [[
 native/pure _strlen;
 
 data Dd with
-    vector[] byte xxx;
+    var[] byte xxx;
 end
 
 code/tight Ff (var& Dd d) -> int do
@@ -46075,7 +46077,7 @@ escape 1;
 
 Test { [[
 data Aa with
-    vector[] u8 v;
+    var[] u8 v;
 end
 var Aa d = _;
 escape 1;
@@ -46086,7 +46088,7 @@ escape 1;
 
 Test { [[
 data Bb with
-    vector [] byte v;
+    var [] byte v;
 end
 data Aa with
     var Bb b;
@@ -46101,7 +46103,7 @@ escape $d.b.v as int;
 
 Test { [[
 data Data with
-   vector [] byte v;
+   var [] byte v;
 end
 var Data d = _;
 code/tight Ff (void)->int do
@@ -46118,7 +46120,7 @@ Test { [[
 data Dd with
     var int x = 10;
 end
-vector[] Dd ds = [];
+var[] Dd ds = [];
 var Dd d2 = val Dd(_);
 var Dd d1 = val Dd(1);
 ds = ds .. [d2,d1];
@@ -48048,7 +48050,7 @@ escape x;
 
 Test { [[
 native/plain _int;
-vector[10] _int x = _;
+var[10] _int x = _;
 await async/thread (x) do
     x[0] = 2;
 end
@@ -48061,7 +48063,7 @@ escape x[0];
 }
 
 Test { [[
-vector[10] int x = [0];
+var[10] int x = [0];
 await async/thread (x) do
     x[0] = 2;
 end
@@ -48073,7 +48075,7 @@ escape x[0];
 }
 
 Test { [[
-vector[10] int x = [0,1];
+var[10] int x = [0,1];
 par/and do
     await async/thread (x) do
 native _usleep;
@@ -50691,7 +50693,7 @@ escape _V;
 }
 
 Test { PRE_ISR..[[
-vector[10] int v = [1];
+var[10] int v = [1];
 v[0] = 2;
 par/or do
     spawn async/isr [20] do
@@ -50708,7 +50710,7 @@ escape v[0];
 }
 
 Test { [[
-vector[10] int v;
+var[10] int v;
 atomic do
     v[0] = 2;
 end
@@ -50747,7 +50749,7 @@ native/pre do
         return ret;
     }
 end
-vector[10] int v = [];
+var[10] int v = [];
 atomic do
     v = v .. [2];
 end
@@ -51051,7 +51053,7 @@ escape 1;
 }
 
 Test { [[
-vector[10] int v;
+var[10] int v;
 var int&& p;
 atomic do
     p = &&v[0];
@@ -51834,14 +51836,14 @@ escape f.x;
 }
 
 Test { [[
-code/await Ff (vector&[] byte buf) -> FOREVER do
+code/await Ff (var&[] byte buf) -> FOREVER do
     code/tight Reset (void) -> void do
         $outer.buf = 0;
     end
     call Reset();
     await FOREVER;
 end
-vector[] byte buf = [1,2,3];
+var[] byte buf = [1,2,3];
 var&? Ff f = spawn Ff(&buf);
 call f.Reset();
 escape ($buf as int) + 1;
