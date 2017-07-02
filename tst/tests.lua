@@ -37276,6 +37276,108 @@ escape 1;
 }
 
 Test { [[
+data Dd with
+    event void e;
+end
+
+code/await Ff (void) -> (var Dd d) -> void do
+    d = _;
+    await 1s;
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    watching f.d.e do
+        par/and do
+            await f.d.e;
+        with
+            emit f.d.e;
+        end
+    end
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Dd with
+    event void e;
+end
+
+code/await Ff (void) -> (var Dd d) -> void do
+    d = _;
+    await 1s;
+end
+
+var&? Ff f = spawn Ff();
+watching f do
+    par/and do
+        await f.d.e;
+    with
+        emit f.d.e;
+    end
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Dd with
+    event void e;
+end
+
+code/await Ff (void) -> (var Dd d) -> void do
+    d = _;
+    await 1s;
+end
+
+var&? Ff f = spawn Ff();
+watching f!.d.e do
+    par/and do
+        await f!.d.e;
+    with
+        emit f!.d.e;
+    end
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Dd with
+    event void e;
+end
+
+code/await Ff (void) -> (var Dd d) -> FOREVER do
+    d = _;
+    await FOREVER;
+end
+
+var& Ff f = spawn Ff();
+watching f.d.e do
+    par/and do
+        await f.d.e;
+    with
+        emit f.d.e;
+    end
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
 data Int with
     var int x;
 end

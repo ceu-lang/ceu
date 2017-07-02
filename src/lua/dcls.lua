@@ -378,7 +378,6 @@ DCLS.F = {
                 AST.set(set, 2, AST.copy(base))
                 AST.insert(t.stmts, #t.stmts+1, set)
             end
-
         end
 
         return t.stmts

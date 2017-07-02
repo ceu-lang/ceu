@@ -107,14 +107,16 @@ EXPS.F = {
         for watching in AST.iter'Watching' do
             local loc = AST.get(watching,'',1,'Par_Or',1,'Block',1,'Stmts',1,'Await_Int',1,'Loc',1,'')
                     or  AST.get(watching,'',1,'Par_Or',1,'Block',1,'Stmts',1,'Set_Await_many',1,'Await_Int',1,'Loc',1,'')
-            if AST.is_par(loc,me) then
-                break
-            end
-            if loc and loc.info.dcl==me.info.dcl then
-                ASR(me.__par.tag~='Exp_!', me, 'invalid operand to `!` : found enclosing matching `watching`')
-                me.__exps_ok = true
-                return AST.node('Exp_!', me.ln, '!', me)
-                    -- TODO: inneficient: could access directly
+            if loc then
+                if loc.tag=='ID_int' and AST.is_par(loc,me) then
+                    break
+                end
+                if loc.info and loc.info.dcl==me.info.dcl then
+                    ASR(me.__par.tag~='Exp_!', me, 'invalid operand to `!` : found enclosing matching `watching`')
+                    me.__exps_ok = true
+                    return AST.node('Exp_!', me.ln, '!', me)
+                        -- TODO: inneficient: could access directly
+                end
             end
         end
     end,
