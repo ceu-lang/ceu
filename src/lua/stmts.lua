@@ -446,7 +446,7 @@ STMTS.F = {
         ASR(alias=='&?', me, 'invalid `kill` : expected `&?` alias')
         local tp = AST.get(abs,'Code', 3,'Block', 1,'Stmts',
                                        1,'Code_Ret', 1,'', 2,'Type')
-        --ASR(tp, me, 'invalid kill : `code/await` executes forever')
+        ASR(tp, me, 'invalid kill : `code/await` executes forever')
         -- TODO: check e vs tp
     end,
 

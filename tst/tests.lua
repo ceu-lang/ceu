@@ -48454,6 +48454,49 @@ escape {V};
     run = {['~>1s']=10},
 }
 
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+var& Ff f = spawn Ff();
+kill f;
+escape 0;
+]],
+    stmts = 'line 5 : invalid `kill` : expected `&?` alias',
+}
+
+Test { [[
+code/await Ff (void) -> FOREVER do
+    await FOREVER;
+end
+pool[] Ff fs;
+spawn Ff() in fs;
+var&? Ff f;
+loop f in fs do
+    kill f;
+end
+escape 0;
+]],
+    stmts = 'line 8 : invalid kill : `code/await` executes forever',
+}
+
+Test { [[
+code/await Ff (void) -> (var int a) -> FOREVER do
+    a = 1;
+    await FOREVER;
+end
+pool[] Ff fs;
+spawn Ff() in fs;
+var&? Ff f;
+loop f in fs do
+    kill f;
+end
+escape 0;
+]],
+    wrn = true,
+    stmts = 'line 9 : invalid kill : `code/await` executes forever',
+}
+
 --<< KILL
 
 -->> CODE / FINALIZE / EMIT / SPAWN / THREADS
