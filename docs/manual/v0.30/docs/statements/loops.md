@@ -11,7 +11,7 @@ Loop ::=
         end
 
       /* numeric iterator */
-      | loop [`/´Exp] Numeric do
+      | loop [`/´Exp] NumericRange do
             Block
         end
 
@@ -28,7 +28,7 @@ Loop ::=
 Break    ::= break [`/´ID_int]
 Continue ::= continue [`/´ID_int]
 
-Numeric ::= /* (see "Numeric Iterators") */
+NumericRange ::= /* (see "Numeric Iterator") */
 ```
 
 The body of a loop `Block` executes an arbitrary number of times, depending on
@@ -55,7 +55,14 @@ only applies to [numeric iterators](#numeric-iterator).
 
 ### Simple Loop
 
-The simple `loop-do-end` statement executes its body forever.
+The simple `loop-do-end` statement executes its body forever:
+
+```ceu
+SimpleLoop ::= loop [`/´Exp] do
+                   Block
+               end
+```
+
 The only way to terminate a simple loop is with the `break` statement.
 
 Examples:
@@ -89,10 +96,14 @@ The numeric loop executes its body a fixed number of times based on a numeric
 range for a control variable:
 
 ```ceu
-Numeric ::= (`_´|ID_int) in [ (`[´ | `]´)
-                                  ( (     Exp `->´ (`_´|Exp))
-                                  | (`_´|Exp) `<-´ Exp      ) )
-                              (`[´ | `]´) [`,´ Exp] ]
+NumericIterator ::= loop [`/´Exp] NumericRange do
+                        Block
+                    end
+
+NumericRange ::= (`_´|ID_int) in [ (`[´ | `]´)
+                                       ( (     Exp `->´ (`_´|Exp))
+                                       | (`_´|Exp) `<-´ Exp      ) )
+                                   (`[´ | `]´) [`,´ Exp] ]
 ```
 
 The control variable assumes the values specified in the interval, one by one,
@@ -181,7 +192,13 @@ end
 ### Event Iterator
 
 The `every` statement iterates over an event continuously, executing its
-body whenever the event occurs.
+body whenever the event occurs:
+
+```ceu
+EventIterator ::= every [(Loc | `(´ LIST(Loc|`_´) `)´) in] (ID_ext|Loc|WCLOCKK|WCLOCKE) do
+                      Block
+                  end
+```
 
 The event can be an [external or internal event](#event) or a [timer](#timer).
 
@@ -232,14 +249,31 @@ end
 
 ### Pool Iterator
 
-`TODO`
+The [pool](../storage_entities/#pools) iterator visits all alive
+[abstraction](#code) instances residing in a given pool:
 
-<!--
-For iterators in which `Exp` evaluates to a pool of organisms, `ID_var`
-evaluates to pointers to instances in the pool, one at a time, from the oldest 
-to the newest created.
-`ID_var` is automatically declared read-only, with visibility restricted to the 
-loop body.
+```ceu
+PoolIterator ::= loop [`/´Exp] (ID_int|`_´) in Loc do
+                     Block
+                 end
+```
 
-`TODO (example)`
--->
+On each iteration, the optional control variable becomes a
+[reference](#code-references) to an instance, starting from the oldest created
+to the newest.
+
+The control variable must be an alias to the same type of the pool with the
+same rules that apply to [`spawn`](#code-invocation).
+
+Examples:
+
+```
+pool[] My_Code my_codes;
+
+<...>
+
+var&? My_Code my_code;
+loop my_code in mycodes do
+    <...>
+end
+```

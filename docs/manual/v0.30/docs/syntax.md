@@ -114,7 +114,7 @@ Stmt ::= nothing
 
       /* watching */
       // Watching ::=
-      | watching LIST(ID_ext|Loc|WCLOCKK|WCLOCKE|Code_Cons_Init) do
+      | watching LIST(ID_ext|Loc|WCLOCKK|WCLOCKE|Abs_Cons) do
             Block
         end
 

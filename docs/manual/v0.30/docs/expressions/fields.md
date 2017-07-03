@@ -1,7 +1,9 @@
 ## Fields
 
-The operators `.´ and `:´ specify fields of
-[data abstractions](../statements/#data) and
+The operators `.` and `:` access public fields of
+[data abstractions](../statements/#data),
+[code abstractions](../statements/#code),
+and
 [native](../statements/#c-integration) structs:
 
 ```

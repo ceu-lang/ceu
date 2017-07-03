@@ -4,7 +4,8 @@
 
 The `await` statement halts the running trail until the specified event occurs.
 The event can be an [input event](../storage_entities/#external-events), an
-[internal event](../storage_entities/#internal-events), a timer, a
+[internal event](../storage_entities/#internal-events), a terminating
+[code abstraction](#code), a timer, a
 [pausing event](#pausing_1), or forever (i.e., never awakes):
 
 ```ceu
@@ -19,6 +20,9 @@ Examples:
 ```ceu
 await A;                  // awaits the input event "A"
 await a until v==10;      // awaits the internal event "a" until the condition is satisfied
+
+var&? My_Code my = <...>; // acquires a reference to a code abstraction instance
+await my;                 // awaits it terminate
 
 await 1min10s30ms100us;   // awaits the specified time
 await (t)ms;              // awaits the current value of the variable "t" in milliseconds
@@ -61,19 +65,20 @@ var int  v2;
 (v1,v2) = await e;              // awakes on "e" and assigns its values to "v1" and "v2"
 ```
 
-#### Option Alias
+#### Code Abstraction
 
-The `await` statement for [option variable aliases](../storage_entities/#aliases)
-halts the running trail until the specified alias goes out of scope.
+The `await` statement for a [code abstraction](#code) halts the running trail
+until the specified instance terminates.
 
-The `await` evaluates to no value.
+The `await` evaluates to the return value of the abstraction.
+
+`TODO: option return on kill`
 
 Example:
 
 ```ceu
-var&? int x;
-spawn Code() -> (&x);   // "x" is bounded to a variable inside "Code"
-await x;                // awakes when the spawned "Code" terminates
+var&? My_Code my = spawn My_Code();
+var? int ret = await my;
 ```
 
 #### Timer

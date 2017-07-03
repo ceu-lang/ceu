@@ -13,7 +13,7 @@ Spawn ::= spawn [`(´ [LIST(ID_int)] `)´] do
               Block
           end
 
-Watching ::= watching LIST(ID_ext|Loc|WCLOCKK|WCLOCKE|Code_Cons_Init) do
+Watching ::= watching LIST(ID_ext|Loc|WCLOCKK|WCLOCKE|Abs_Cons) do
                  Block
              end
 ```
@@ -138,8 +138,12 @@ end
 
 The `watching` statement accepts a list of events and terminates when any of
 them occur.
+The events are the same supported by the [`await`](#await) statement.
 It evaluates to what the occurring event value(s), which can be captured with
 an optional [assignment](#assignments).
+
+If the event is a [code abstraction](#code), the nested blocked does not
+require the unwrap operator [`!`](../expressions/#option).
 
 Examples:
 

@@ -121,12 +121,12 @@ Mods ::= [`/´dynamic | `/´static] [`/´recursive]
 ```
 
 A `code/tight` is a subprogram that cannot contain
-[synchronous control statements](#synchronous-control-statements) and runs to
-completion in the current [internal reaction](../#internal-reactions).
+[synchronous control statements](#synchronous-control-statements) and its body
+runs to completion in the current [internal reaction](../#internal-reactions).
 
 A `code/await` is a subprogram with no restrictions (e.g., it can manipulate
-events and use parallel compositions) and its execution may outlive multiple
-reactions.
+events and use parallel compositions) and its body execution may outlive
+multiple reactions.
 
 A *prototype declaration* specifies the interface parameters of the
 abstraction which invocations must satisfy.
@@ -134,6 +134,11 @@ A *full declaration* (aka *definition*) also specifies an implementation
 with a block of code.
 An *invocation* specifies the name of the code abstraction and arguments
 matching its declaration.
+
+Declarations can be nested.
+A nested declaration is not visible outside its enclosing declaration.
+The body of a nested declaration may access entities from its enclosing
+declarations with the prefix [`outer`](../expressions/#outer).
 
 To support recursive abstractions, a code invocation can appear before the
 implementation is known, but after the prototype declaration.
@@ -186,10 +191,12 @@ A `void` list specifies that the abstraction has no parameters.
 Code abstractions also specify an output return type.
 A `code/await` may use `FOREVER` as output to indicate that it never returns.
 
-A `code/await` may also specify an optional *public parameter list*, which are
-local storage entities living the outermost scope of the abstraction body.
-These entities are visible to the invoking context which may access them while
-the abstraction executes.
+A `code/await` may also specify an optional *public field list*, which are
+local storage entities living in the outermost scope of the abstraction body.
+These entities are visible to the invoking context, which may
+[access](#code-references) them while the abstraction executes.
+Likewise, nested code declarations in the outermost scope, known as methods,
+are also visible to the invoking context.
 
 <!--
 - The invoker passes a list of unbound aliases to the code.
@@ -233,30 +240,55 @@ to a value of its return type which can be captured with an optional
 
 The `spawn` invocation also suspends and transfers control to the code
 abstraction.
-However, when the abstraction becomes idle (or terminates), the invoking point
-resumes.
-This makes the invocation point and a non-terminating abstraction to execute
-concurrently.
+However, as soon as the abstraction becomes idle (or terminates), the invoking
+point resumes.
+This makes the invocation point and abstraction to execute concurrently.
 
-<!--
-The `spawn` invocation accepts an optional list of aliases matching the
-[initialization list](#code-declaration) from the code abstraction.
-These aliases are bound to local resources in the abstraction and can be
-accessed from the invocation point.
--->
+The `spawn` invocation evaluates to a [reference](#code-references)
+representing the instance and can be captured with an optional
+[assignment](#assignment).
+The alias must be an [option alias variable](../storage_entities/#aliases) of
+the same type of the code abstraction.
+If the abstraction never terminates (i.e., return type is `FOREVER`), the
+variable may be a simple alias.
+If the `spawn` fails (e.g., lack of memory) the option alias variable is unset.
+In the case of a simple alias, the assignment raises a runtime error.
 
 The `spawn` invocation also accepts an optional [pool](#pools) which provides
 storage and scope for invoked abstractions.
-
-If the `spawn` provides the pool, the invocation evaluates to a boolean that
-indicates whether the pool has space to execute the code.
-The result can be captured with an optional [assignment](#assignment).
-If the pool goes out of scope, all invoked abstractions residing in that pool
+When the pool goes out of scope, all invoked abstractions residing in that pool
 are aborted.
-
 If the `spawn` omits the pool, the invocation always succeed and has the same
 scope as the invoking point: when the enclosing block terminates, the invoked
 code is also aborted.
+
+#### Code References
+
+The `spawn` [invocation](#code-invocation) and the control variable of
+[pool iterators](#pool-iterator) evaluate to a reference as an
+[option alias](../storage_entities/#aliases) to an abstraction instance.
+If the instance terminates at any time, the option variable is automatically
+unset.
+
+A reference provides [access](../expressions/#fields) to the public fields and
+methods of the instance.
+
+Examples:
+
+```ceu
+code/await My_Code (var int x) -> (var int y) -> FOREVER do
+    y = x;                              // "y" is a public field
+
+    code/tight Get_X (void) -> int do   // "Get_X" is a public method
+        escape outer.x;
+    end
+
+    await FOREVER;
+end
+
+var& My_Code c = spawn My_Code(10);
+_printf("y=%d, x=%d\n", c.y, c.Get_X());    // prints "y=10, x=10"
+```
 
 #### Dynamic Dispatching
 

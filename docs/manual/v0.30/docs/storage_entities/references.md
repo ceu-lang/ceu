@@ -17,8 +17,8 @@ a job position referring to a person is a pointer.
 
 Céu support aliases to all storage entity classes, except external events and
 pointer types.
-Céu also supports option variable aliases which are aliases that may remain or
-become unassigned.
+Céu also supports option variable aliases which are aliases that may be set or
+not.
 
 An alias is declared by suffixing the entity class with the modifier
 `&` and is acquired by prefixing an entity with the operator `&`.
@@ -44,12 +44,17 @@ An option variable alias, declared as `var&?`, serves two purposes:
   in Céu.
   The alias is acquired by prefixing the associated
   [native call](../statements/#native-call) with the operator `&`.
-  Since the allocation may fail, the alias may remain unassigned.
+  Since the allocation may fail, the alias may remain unset.
+- Hold the result of a [`spawn`](../statements/#code-invocation) invocation.
+  Since the allocation may fail, the alias may remain unset.
+
+<!--
 - Track the lifetime of a variable.
   The alias is acquired by prefixing the associated variable with
   the operator `&`.
   Since the tracked variable may go out of scope, the alias may become
-  unassigned.
+  unset.
+-->
 
 Accesses to option variable aliases must always use
 [option checking or unwrapping](../expressions/#option).
@@ -68,6 +73,16 @@ end
 ```
 
 ```ceu
+var&? My_Code my_code = spawn My_Code();
+if my_code? then
+    <...>   // "spawn" succeeded
+else
+    <...>   // "spawn" failed
+end
+```
+
+<!--
+```ceu
 var&? int x;
 do
     var int y = 10;
@@ -76,6 +91,7 @@ do
 end
 _printf("%d\n", x!);        // error!
 ```
+-->
 
 ### Pointers
 
