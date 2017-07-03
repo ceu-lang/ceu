@@ -28,7 +28,7 @@ Vec_Max ::= `$$´ Loc
 The vector length can also be assigned:
 
 ```ceu
-vector[] int vec = [ 1, 2, 3 ];
+var[] int vec = [ 1, 2, 3 ];
 $vec = 1;
 ```
 
@@ -49,7 +49,7 @@ Vec_Concat ::= `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´)
 Examples:
 
 ```ceu
-vector[3] int v;     // declare an empty vector of length 3     (v = [])
+var[3] int v;        // declare an empty vector of length 3     (v = [])
 v = v .. [8];        // append value '8' to the empty vector    (v = [8])
 v = v .. [1] .. [5]; // append values '1' and '5' to the vector (v = [8, 1, 5])
 ```

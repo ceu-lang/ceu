@@ -36,8 +36,7 @@ Stmt ::= nothing
   /* Storage Entities / Declarations */
 
       // Dcls ::=
-      | var [`&´|`&?´] [`/dynamic´|`/nohold´] Type ID_int [`=´ Sources]
-      | vector [`&´] `[´ [Exp] `]´ Type ID_int [`=´ Sources]
+      | var [`&´|`&?´] `[´ [Exp] `]´ [`/dynamic´|`/nohold´] Type ID_int [`=´ Sources]
       | pool [`&´] `[´ [Exp] `]´ Type ID_int [`=´ Sources]
       | event [`&´] (Type | `(´ LIST(Type) `)´) ID_int [`=´ Sources]
 

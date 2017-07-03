@@ -8,8 +8,7 @@ Céu supports variables, vectors, pools, internal events, and external events:
 
 ```ceu
 
-Var  ::= var [`&´|`&?´] [`/dynamic´|`/nohold´] Type ID_int [`=´ Sources]
-Vec  ::= vector [`&´] `[´ [Exp] `]´ Type ID_int [`=´ Sources]
+Var  ::= var [`&´|`&?´] [ `[´ [Exp] `]´ ] [`/dynamic´|`/nohold´] Type ID_int [`=´ Sources]
 Pool ::= pool [`&´] `[´ [Exp] `]´ Type ID_int [`=´ Sources]
 Int  ::= event [`&´] (Type | `(´ LIST(Type) `)´) ID_int [`=´ Sources]
 
@@ -56,10 +55,10 @@ Examples:
 
 ```ceu
 var int n = 10;
-vector[10] int vs1 = [];    // "vs1" is a static vector of 10 elements max
-vector[n]  int vs2 = [];    // "vs2" is a dynamic vector of 10 elements max
-vector[]   int vs3 = [];    // "vs3" is an unbounded vector
-vector&[]  int vs4 = &vs1;  // "vs4" is an alias to "vs1"
+var[10] int vs1 = [];    // "vs1" is a static vector of 10 elements max
+var[n]  int vs2 = [];    // "vs2" is a dynamic vector of 10 elements max
+var[]   int vs3 = [];    // "vs3" is an unbounded vector
+var&[]  int vs4 = &vs1;  // "vs4" is an alias to "vs1"
 ```
 
 ### Pools

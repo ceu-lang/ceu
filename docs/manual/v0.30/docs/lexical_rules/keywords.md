@@ -28,13 +28,13 @@ variable names):
 
     static          then            thread          tight           traverse
 
-    true            until           val             var             vector
+    true            until           val             var             watching
 
-    watching        with            bool            byte            f32
+    with            bool            byte            f32             f64
 
-    f64             float           int             s16             s32
+    float           int             s16             s32             s64
 
-    s64             s8              ssize           u16             u32
+    s8              ssize           u16             u32             u64
 
-    u64             u8              uint            usize           void
+    u8              uint            usize           void
 ```

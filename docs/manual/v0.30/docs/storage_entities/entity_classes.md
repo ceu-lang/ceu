@@ -33,7 +33,7 @@ escape v;       // read access (yields 2)
 
 ### Vectors
 
-A vector In Céu is a dynamic and contiguous collection of elements of the same
+A vector in Céu is a dynamic and contiguous collection of variables of the same
 type.
 
 A [vector declaration](../statements/#vectors) specifies its type and maximum
@@ -48,9 +48,9 @@ Céu generates an [error](#TODO) for out-of-bounds vector accesses.
 Example:
 
 ```ceu
-vector[9] byte buf = [1,2,3];   // write access
-buf = buf .. [4];               // write access
-escape buf[1];                  // read access (yields 2)
+var[9] byte buf = [1,2,3];  // write access
+buf = buf .. [4];           // write access
+escape buf[1];              // read access (yields 2)
 ```
 
 ### Events
