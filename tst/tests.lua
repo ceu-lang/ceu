@@ -51451,7 +51451,7 @@ end
 call Ff();
 escape x;
 ]],
-    parser = 'line 2 : after `with` : expected `var` or `vector` or `pool` or `event`',
+    parser = 'line 2 : after `with` : expected `var` or `pool` or `event`',
 }
 Test { [[
 var int x = 0;
@@ -51461,7 +51461,7 @@ end
 call Ff();
 escape x;
 ]],
-    parser = 'line 2 : after `with` : expected `var` or `vector` or `pool` or `event`',
+    parser = 'line 2 : after `with` : expected `var` or `pool` or `event`',
 }
 
 Test { [[
