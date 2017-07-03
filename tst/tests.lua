@@ -42888,6 +42888,65 @@ escape 1;
     run = { ['~>1us']=1 },
 }
 
+Test { [[
+code/await Ff (var int x) -> (var int y) -> FOREVER do
+    y = x;
+    await FOREVER;
+end
+
+pool[2] Ff fs;
+
+var int ret = 0;
+var int i;
+loop i in [1->2] do
+    var& Ff f = spawn Ff(i) in fs;
+    ret = ret + f.y;
+end
+
+escape ret;
+]],
+    run = 3,
+}
+Test { [[
+code/await Ff (var int x) -> (var int y) -> FOREVER do
+    y = x;
+    await FOREVER;
+end
+
+pool[1] Ff fs;
+
+var int ret = 0;
+var int i;
+loop i in [1->2] do
+    var& Ff f = spawn Ff(i) in fs;
+    ret = ret + f.y;
+end
+
+escape ret;
+]],
+    run = '11] runtime error: out of memory',
+}
+Test { [[
+code/await Ff (var int x) -> (var int y) -> FOREVER do
+    y = x;
+    await FOREVER;
+end
+
+pool[1] Ff fs;
+
+var int ret = 0;
+var int i;
+loop i in [1->2] do
+    var&? Ff f = spawn Ff(i) in fs;
+    if f? then
+        ret = ret + f!.y;
+    end
+end
+
+escape ret;
+]],
+    run = 1,
+}
 -- TODO: SKIP-04
 
 -->>> LUA
