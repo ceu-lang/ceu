@@ -193,8 +193,7 @@ Stmt ::= nothing
   /* Storage Entities / Declarations */
 
       // Dcls ::=
-      | var [`&amp;´|`&amp;?´] [`/dynamic´|`/nohold´] Type ID_int [`=´ Sources]
-      | vector [`&amp;´] `[´ [Exp] `]´ Type ID_int [`=´ Sources]
+      | var [`&amp;´|`&amp;?´] `[´ [Exp] `]´ [`/dynamic´|`/nohold´] Type ID_int [`=´ Sources]
       | pool [`&amp;´] `[´ [Exp] `]´ Type ID_int [`=´ Sources]
       | event [`&amp;´] (Type | `(´ LIST(Type) `)´) ID_int [`=´ Sources]
 
@@ -272,7 +271,7 @@ Stmt ::= nothing
 
       /* watching */
       // Watching ::=
-      | watching LIST(ID_ext|Loc|WCLOCKK|WCLOCKE|Code_Cons_Init) do
+      | watching LIST(ID_ext|Loc|WCLOCKK|WCLOCKE|Abs_Cons) do
             Block
         end
 

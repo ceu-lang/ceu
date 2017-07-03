@@ -278,8 +278,7 @@ to the enclosing block.
 All declarations are subject to <a href="./../storage_entities/#lexical-scope">lexical scope</a>.</p>
 <p>Céu supports variables, vectors, pools, internal events, and external events:</p>
 <pre><code class="ceu">
-Var  ::= var [`&amp;´|`&amp;?´] [`/dynamic´|`/nohold´] Type ID_int [`=´ Sources]
-Vec  ::= vector [`&amp;´] `[´ [Exp] `]´ Type ID_int [`=´ Sources]
+Var  ::= var [`&amp;´|`&amp;?´] [ `[´ [Exp] `]´ ] [`/dynamic´|`/nohold´] Type ID_int [`=´ Sources]
 Pool ::= pool [`&amp;´] `[´ [Exp] `]´ Type ID_int [`=´ Sources]
 Int  ::= event [`&amp;´] (Type | `(´ LIST(Type) `)´) ID_int [`=´ Sources]
 
@@ -317,10 +316,10 @@ Declarations can also be <a href="./../storage_entities/#aliases">aliases</a>.</
 
 <p>Examples:</p>
 <pre><code class="ceu">var int n = 10;
-vector[10] int vs1 = [];    // &quot;vs1&quot; is a static vector of 10 elements max
-vector[n]  int vs2 = [];    // &quot;vs2&quot; is a dynamic vector of 10 elements max
-vector[]   int vs3 = [];    // &quot;vs3&quot; is an unbounded vector
-vector&amp;[]  int vs4 = &amp;vs1;  // &quot;vs4&quot; is an alias to &quot;vs1&quot;
+var[10] int vs1 = [];    // &quot;vs1&quot; is a static vector of 10 elements max
+var[n]  int vs2 = [];    // &quot;vs2&quot; is a dynamic vector of 10 elements max
+var[]   int vs3 = [];    // &quot;vs3&quot; is an unbounded vector
+var&amp;[]  int vs4 = &amp;vs1;  // &quot;vs4&quot; is an alias to &quot;vs1&quot;
 </code></pre>
 
 <h3 id="pools">Pools<a class="headerlink" href="#pools" title="Permanent link">&para;</a></h3>
@@ -432,7 +431,8 @@ an <a href="./../storage_entities/#aliases">alias</a> to the expression at the r
 <h3 id="await">Await<a class="headerlink" href="#await" title="Permanent link">&para;</a></h3>
 <p>The <code>await</code> statement halts the running trail until the specified event occurs.
 The event can be an <a href="./../storage_entities/#external-events">input event</a>, an
-<a href="./../storage_entities/#internal-events">internal event</a>, a timer, a
+<a href="./../storage_entities/#internal-events">internal event</a>, a terminating
+<a href="#code">code abstraction</a>, a timer, a
 <a href="#pausing_1">pausing event</a>, or forever (i.e., never awakes):</p>
 <pre><code class="ceu">Await ::= await (ID_ext | Loc) [until Exp]      /* events and option aliases */
        |  await (WCLOCKK|WCLOCKE)               /* timers */
@@ -443,6 +443,9 @@ The event can be an <a href="./../storage_entities/#external-events">input event
 <p>Examples:</p>
 <pre><code class="ceu">await A;                  // awaits the input event &quot;A&quot;
 await a until v==10;      // awaits the internal event &quot;a&quot; until the condition is satisfied
+
+var&amp;? My_Code my = &lt;...&gt;; // acquires a reference to a code abstraction instance
+await my;                 // awaits it terminate
 
 await 1min10s30ms100us;   // awaits the specified time
 await (t)ms;              // awaits the current value of the variable &quot;t&quot; in milliseconds
@@ -478,14 +481,14 @@ var int  v2;
 (v1,v2) = await e;              // awakes on &quot;e&quot; and assigns its values to &quot;v1&quot; and &quot;v2&quot;
 </code></pre>
 
-<h4 id="option-alias">Option Alias<a class="headerlink" href="#option-alias" title="Permanent link">&para;</a></h4>
-<p>The <code>await</code> statement for <a href="./../storage_entities/#aliases">option variable aliases</a>
-halts the running trail until the specified alias goes out of scope.</p>
-<p>The <code>await</code> evaluates to no value.</p>
+<h4 id="code-abstraction">Code Abstraction<a class="headerlink" href="#code-abstraction" title="Permanent link">&para;</a></h4>
+<p>The <code>await</code> statement for a <a href="#code">code abstraction</a> halts the running trail
+until the specified instance terminates.</p>
+<p>The <code>await</code> evaluates to the return value of the abstraction.</p>
+<p><code>TODO: option return on kill</code></p>
 <p>Example:</p>
-<pre><code class="ceu">var&amp;? int x;
-spawn Code() -&gt; (&amp;x);   // &quot;x&quot; is bounded to a variable inside &quot;Code&quot;
-await x;                // awakes when the spawned &quot;Code&quot; terminates
+<pre><code class="ceu">var&amp;? My_Code my = spawn My_Code();
+var? int ret = await my;
 </code></pre>
 
 <h4 id="timer">Timer<a class="headerlink" href="#timer" title="Permanent link">&para;</a></h4>
@@ -608,7 +611,7 @@ iterators:</p>
         end
 
       /* numeric iterator */
-      | loop [`/´Exp] Numeric do
+      | loop [`/´Exp] NumericRange do
             Block
         end
 
@@ -625,7 +628,7 @@ iterators:</p>
 Break    ::= break [`/´ID_int]
 Continue ::= continue [`/´ID_int]
 
-Numeric ::= /* (see &quot;Numeric Iterators&quot;) */
+NumericRange ::= /* (see &quot;Numeric Iterator&quot;) */
 </code></pre>
 
 <p>The body of a loop <code>Block</code> executes an arbitrary number of times, depending on
@@ -645,8 +648,13 @@ restarts it in the next iteration.</p>
 <p>The optional modifier <code>&grave;/&acute;ID_int</code> in both statements
 only applies to <a href="#numeric-iterator">numeric iterators</a>.</p>
 <h3 id="simple-loop">Simple Loop<a class="headerlink" href="#simple-loop" title="Permanent link">&para;</a></h3>
-<p>The simple <code>loop-do-end</code> statement executes its body forever.
-The only way to terminate a simple loop is with the <code>break</code> statement.</p>
+<p>The simple <code>loop-do-end</code> statement executes its body forever:</p>
+<pre><code class="ceu">SimpleLoop ::= loop [`/´Exp] do
+                   Block
+               end
+</code></pre>
+
+<p>The only way to terminate a simple loop is with the <code>break</code> statement.</p>
 <p>Examples:</p>
 <pre><code class="ceu">// blinks a LED with a frequency of 1s forever
 loop do
@@ -672,10 +680,14 @@ end
 <h3 id="numeric-iterator">Numeric Iterator<a class="headerlink" href="#numeric-iterator" title="Permanent link">&para;</a></h3>
 <p>The numeric loop executes its body a fixed number of times based on a numeric
 range for a control variable:</p>
-<pre><code class="ceu">Numeric ::= (`_´|ID_int) in [ (`[´ | `]´)
-                                  ( (     Exp `-&gt;´ (`_´|Exp))
-                                  | (`_´|Exp) `&lt;-´ Exp      ) )
-                              (`[´ | `]´) [`,´ Exp] ]
+<pre><code class="ceu">NumericIterator ::= loop [`/´Exp] NumericRange do
+                        Block
+                    end
+
+NumericRange ::= (`_´|ID_int) in [ (`[´ | `]´)
+                                       ( (     Exp `-&gt;´ (`_´|Exp))
+                                       | (`_´|Exp) `&lt;-´ Exp      ) )
+                                   (`[´ | `]´) [`,´ Exp] ]
 </code></pre>
 
 <p>The control variable assumes the values specified in the interval, one by one,
@@ -767,7 +779,12 @@ end
         control variable does not overflow.</em></p>
 <h3 id="event-iterator">Event Iterator<a class="headerlink" href="#event-iterator" title="Permanent link">&para;</a></h3>
 <p>The <code>every</code> statement iterates over an event continuously, executing its
-body whenever the event occurs.</p>
+body whenever the event occurs:</p>
+<pre><code class="ceu">EventIterator ::= every [(Loc | `(´ LIST(Loc|`_´) `)´) in] (ID_ext|Loc|WCLOCKK|WCLOCKE) do
+                      Block
+                  end
+</code></pre>
+
 <p>The event can be an <a href="#event">external or internal event</a> or a <a href="#timer">timer</a>.</p>
 <p>The optional assignment to a variable (or list of variables) stores the
 carrying value(s) of the event.</p>
@@ -806,16 +823,28 @@ end
 </code></pre>
 
 <h3 id="pool-iterator">Pool Iterator<a class="headerlink" href="#pool-iterator" title="Permanent link">&para;</a></h3>
-<p><code>TODO</code></p>
-<!--
-For iterators in which `Exp` evaluates to a pool of organisms, `ID_var`
-evaluates to pointers to instances in the pool, one at a time, from the oldest 
-to the newest created.
-`ID_var` is automatically declared read-only, with visibility restricted to the 
-loop body.
+<p>The <a href="./../storage_entities/#pools">pool</a> iterator visits all alive
+<a href="#code">abstraction</a> instances residing in a given pool:</p>
+<pre><code class="ceu">PoolIterator ::= loop [`/´Exp] (ID_int|`_´) in Loc do
+                     Block
+                 end
+</code></pre>
 
-`TODO (example)`
--->
+<p>On each iteration, the optional control variable becomes a
+<a href="#code-references">reference</a> to an instance, starting from the oldest created
+to the newest.</p>
+<p>The control variable must be an alias to the same type of the pool with the
+same rules that apply to <a href="#code-invocation"><code>spawn</code></a>.</p>
+<p>Examples:</p>
+<pre><code>pool[] My_Code my_codes;
+
+&lt;...&gt;
+
+var&amp;? My_Code my_code;
+loop my_code in mycodes do
+    &lt;...&gt;
+end
+</code></pre>
 
 <h2 id="parallel-compositions">Parallel Compositions<a class="headerlink" href="#parallel-compositions" title="Permanent link">&para;</a></h2>
 <pre><code class="ceu">Pars ::= (par | par/and | par/or) do
@@ -830,7 +859,7 @@ Spawn ::= spawn [`(´ [LIST(ID_int)] `)´] do
               Block
           end
 
-Watching ::= watching LIST(ID_ext|Loc|WCLOCKK|WCLOCKE|Code_Cons_Init) do
+Watching ::= watching LIST(ID_ext|Loc|WCLOCKK|WCLOCKE|Abs_Cons) do
                  Block
              end
 </code></pre>
@@ -929,8 +958,11 @@ end
 
 <p>The <code>watching</code> statement accepts a list of events and terminates when any of
 them occur.
+The events are the same supported by the <a href="#await"><code>await</code></a> statement.
 It evaluates to what the occurring event value(s), which can be captured with
 an optional <a href="#assignments">assignment</a>.</p>
+<p>If the event is a <a href="#code">code abstraction</a>, the nested blocked does not
+require the unwrap operator <a href="./../expressions/#option"><code>!</code></a>.</p>
 <p>Examples:</p>
 <pre><code class="ceu">// reacts continuously to &quot;KEY_PRESSED&quot; during &quot;1s&quot;
 input void KEY_PRESSED;
@@ -1576,17 +1608,21 @@ Mods ::= [`/´dynamic | `/´static] [`/´recursive]
 </code></pre>
 
 <p>A <code>code/tight</code> is a subprogram that cannot contain
-<a href="#synchronous-control-statements">synchronous control statements</a> and runs to
-completion in the current <a href="./../#internal-reactions">internal reaction</a>.</p>
+<a href="#synchronous-control-statements">synchronous control statements</a> and its body
+runs to completion in the current <a href="./../#internal-reactions">internal reaction</a>.</p>
 <p>A <code>code/await</code> is a subprogram with no restrictions (e.g., it can manipulate
-events and use parallel compositions) and its execution may outlive multiple
-reactions.</p>
+events and use parallel compositions) and its body execution may outlive
+multiple reactions.</p>
 <p>A <em>prototype declaration</em> specifies the interface parameters of the
 abstraction which invocations must satisfy.
 A <em>full declaration</em> (aka <em>definition</em>) also specifies an implementation
 with a block of code.
 An <em>invocation</em> specifies the name of the code abstraction and arguments
 matching its declaration.</p>
+<p>Declarations can be nested.
+A nested declaration is not visible outside its enclosing declaration.
+The body of a nested declaration may access entities from its enclosing
+declarations with the prefix <a href="./../expressions/#outer"><code>outer</code></a>.</p>
 <p>To support recursive abstractions, a code invocation can appear before the
 implementation is known, but after the prototype declaration.
 In this case, the declaration must use the modifier <code>/recursive</code>.</p>
@@ -1629,10 +1665,12 @@ with modifiers, a type and an identifier.
 A <code>void</code> list specifies that the abstraction has no parameters.</p>
 <p>Code abstractions also specify an output return type.
 A <code>code/await</code> may use <code>FOREVER</code> as output to indicate that it never returns.</p>
-<p>A <code>code/await</code> may also specify an optional <em>public parameter list</em>, which are
-local storage entities living the outermost scope of the abstraction body.
-These entities are visible to the invoking context which may access them while
-the abstraction executes.</p>
+<p>A <code>code/await</code> may also specify an optional <em>public field list</em>, which are
+local storage entities living in the outermost scope of the abstraction body.
+These entities are visible to the invoking context, which may
+<a href="#code-references">access</a> them while the abstraction executes.
+Likewise, nested code declarations in the outermost scope, known as methods,
+are also visible to the invoking context.</p>
 <!--
 - The invoker passes a list of unbound aliases to the code.
 - The code [binds](#alias-assignment) the aliases to the local resources before
@@ -1641,7 +1679,7 @@ the abstraction executes.</p>
 Examples:
 
 
-wzxhzdk:79
+wzxhzdk:83
 
 -->
 
@@ -1659,27 +1697,48 @@ to a value of its return type which can be captured with an optional
 <a href="#assignment">assignment</a>.</p>
 <p>The <code>spawn</code> invocation also suspends and transfers control to the code
 abstraction.
-However, when the abstraction becomes idle (or terminates), the invoking point
-resumes.
-This makes the invocation point and a non-terminating abstraction to execute
-concurrently.</p>
-<!--
-The `spawn` invocation accepts an optional list of aliases matching the
-[initialization list](#code-declaration) from the code abstraction.
-These aliases are bound to local resources in the abstraction and can be
-accessed from the invocation point.
--->
-
+However, as soon as the abstraction becomes idle (or terminates), the invoking
+point resumes.
+This makes the invocation point and abstraction to execute concurrently.</p>
+<p>The <code>spawn</code> invocation evaluates to a <a href="#code-references">reference</a>
+representing the instance and can be captured with an optional
+<a href="#assignment">assignment</a>.
+The alias must be an <a href="./../storage_entities/#aliases">option alias variable</a> of
+the same type of the code abstraction.
+If the abstraction never terminates (i.e., return type is <code>FOREVER</code>), the
+variable may be a simple alias.
+If the <code>spawn</code> fails (e.g., lack of memory) the option alias variable is unset.
+In the case of a simple alias, the assignment raises a runtime error.</p>
 <p>The <code>spawn</code> invocation also accepts an optional <a href="#pools">pool</a> which provides
-storage and scope for invoked abstractions.</p>
-<p>If the <code>spawn</code> provides the pool, the invocation evaluates to a boolean that
-indicates whether the pool has space to execute the code.
-The result can be captured with an optional <a href="#assignment">assignment</a>.
-If the pool goes out of scope, all invoked abstractions residing in that pool
-are aborted.</p>
-<p>If the <code>spawn</code> omits the pool, the invocation always succeed and has the same
+storage and scope for invoked abstractions.
+When the pool goes out of scope, all invoked abstractions residing in that pool
+are aborted.
+If the <code>spawn</code> omits the pool, the invocation always succeed and has the same
 scope as the invoking point: when the enclosing block terminates, the invoked
 code is also aborted.</p>
+<h4 id="code-references">Code References<a class="headerlink" href="#code-references" title="Permanent link">&para;</a></h4>
+<p>The <code>spawn</code> <a href="#code-invocation">invocation</a> and the control variable of
+<a href="#pool-iterator">pool iterators</a> evaluate to a reference as an
+<a href="./../storage_entities/#aliases">option alias</a> to an abstraction instance.
+If the instance terminates at any time, the option variable is automatically
+unset.</p>
+<p>A reference provides <a href="./../expressions/#fields">access</a> to the public fields and
+methods of the instance.</p>
+<p>Examples:</p>
+<pre><code class="ceu">code/await My_Code (var int x) -&gt; (var int y) -&gt; FOREVER do
+    y = x;                              // &quot;y&quot; is a public field
+
+    code/tight Get_X (void) -&gt; int do   // &quot;Get_X&quot; is a public method
+        escape outer.x;
+    end
+
+    await FOREVER;
+end
+
+var&amp; My_Code c = spawn My_Code(10);
+_printf(&quot;y=%d, x=%d\n&quot;, c.y, c.Get_X());    // prints &quot;y=10, x=10&quot;
+</code></pre>
+
 <h4 id="dynamic-dispatching">Dynamic Dispatching<a class="headerlink" href="#dynamic-dispatching" title="Permanent link">&para;</a></h4>
 <p>Céu supports dynamic code dispatching based on multiple parameters.</p>
 <p>The modifier <code>/dynamic</code> in a declaration specifies that the code is dynamically

@@ -311,15 +311,15 @@ variable names):
 
     static          then            thread          tight           traverse
 
-    true            until           val             var             vector
+    true            until           val             var             watching
 
-    watching        with            bool            byte            f32
+    with            bool            byte            f32             f64
 
-    f64             float           int             s16             s32
+    float           int             s16             s32             s64
 
-    s64             s8              ssize           u16             u32
+    s8              ssize           u16             u32             u64
 
-    u64             u8              uint            usize           void
+    u8              uint            usize           void
 ```
 
 ### Identifiers
@@ -542,11 +542,11 @@ class, a [type](../types/#types), and an [identifier](../lexical_rules/#identifi
 Examples:
 
 ```ceu
-var       int    v;     // "v" is a variable of type "int"
-vector[9] byte   buf;   // "buf" is a vector with at most 9 values of type "byte"
-input     void&& A;     // "A" is an input event that carries values of type "void&&"
-event     bool   e;     // "e" is an internal event that carries values of type "bool"
-pool[]    Anim   anims; // "anims" is a dynamic "pool" for instances of type "Anim"
+var    int    v;     // "v" is a variable of type "int"
+var[9] byte   buf;   // "buf" is a vector with at most 9 values of type "byte"
+input  void&& A;     // "A" is an input event that carries values of type "void&&"
+event  bool   e;     // "e" is an internal event that carries values of type "bool"
+pool[] Anim   anims; // "anims" is a dynamic "pool" for instances of type "Anim"
 ```
 
 A declaration binds the identifier with a memory location that holds values of
@@ -597,7 +597,7 @@ escape v;       // read access (yields 2)
 
 #### Vectors
 
-A vector In Céu is a dynamic and contiguous collection of elements of the same
+A vector in Céu is a dynamic and contiguous collection of variables of the same
 type.
 
 A [vector declaration](../statements/#vectors) specifies its type and maximum
@@ -612,9 +612,9 @@ Céu generates an [error](#TODO) for out-of-bounds vector accesses.
 Example:
 
 ```ceu
-vector[9] byte buf = [1,2,3];   // write access
-buf = buf .. [4];               // write access
-escape buf[1];                  // read access (yields 2)
+var[9] byte buf = [1,2,3];  // write access
+buf = buf .. [4];           // write access
+escape buf[1];              // read access (yields 2)
 ```
 
 #### Events
@@ -786,8 +786,8 @@ a job position referring to a person is a pointer.
 
 Céu support aliases to all storage entity classes, except external events and
 pointer types.
-Céu also supports option variable aliases which are aliases that may remain or
-become unassigned.
+Céu also supports option variable aliases which are aliases that may be set or
+not.
 
 An alias is declared by suffixing the entity class with the modifier
 `&` and is acquired by prefixing an entity with the operator `&`.
@@ -813,12 +813,17 @@ An option variable alias, declared as `var&?`, serves two purposes:
   in Céu.
   The alias is acquired by prefixing the associated
   [native call](../statements/#native-call) with the operator `&`.
-  Since the allocation may fail, the alias may remain unassigned.
+  Since the allocation may fail, the alias may remain unset.
+- Hold the result of a [`spawn`](../statements/#code-invocation) invocation.
+  Since the allocation may fail, the alias may remain unset.
+
+<!--
 - Track the lifetime of a variable.
   The alias is acquired by prefixing the associated variable with
   the operator `&`.
   Since the tracked variable may go out of scope, the alias may become
-  unassigned.
+  unset.
+-->
 
 Accesses to option variable aliases must always use
 [option checking or unwrapping](../expressions/#option).
@@ -837,6 +842,16 @@ end
 ```
 
 ```ceu
+var&? My_Code my_code = spawn My_Code();
+if my_code? then
+    <...>   // "spawn" succeeded
+else
+    <...>   // "spawn" failed
+end
+```
+
+<!--
+```ceu
 var&? int x;
 do
     var int y = 10;
@@ -845,6 +860,7 @@ do
 end
 _printf("%d\n", x!);        // error!
 ```
+-->
 
 #### Pointers
 
@@ -997,8 +1013,7 @@ Céu supports variables, vectors, pools, internal events, and external events:
 
 ```ceu
 
-Var  ::= var [`&´|`&?´] [`/dynamic´|`/nohold´] Type ID_int [`=´ Sources]
-Vec  ::= vector [`&´] `[´ [Exp] `]´ Type ID_int [`=´ Sources]
+Var  ::= var [`&´|`&?´] [ `[´ [Exp] `]´ ] [`/dynamic´|`/nohold´] Type ID_int [`=´ Sources]
 Pool ::= pool [`&´] `[´ [Exp] `]´ Type ID_int [`=´ Sources]
 Int  ::= event [`&´] (Type | `(´ LIST(Type) `)´) ID_int [`=´ Sources]
 
@@ -1045,10 +1060,10 @@ Examples:
 
 ```ceu
 var int n = 10;
-vector[10] int vs1 = [];    // "vs1" is a static vector of 10 elements max
-vector[n]  int vs2 = [];    // "vs2" is a dynamic vector of 10 elements max
-vector[]   int vs3 = [];    // "vs3" is an unbounded vector
-vector&[]  int vs4 = &vs1;  // "vs4" is an alias to "vs1"
+var[10] int vs1 = [];    // "vs1" is a static vector of 10 elements max
+var[n]  int vs2 = [];    // "vs2" is a dynamic vector of 10 elements max
+var[]   int vs3 = [];    // "vs3" is an unbounded vector
+var&[]  int vs4 = &vs1;  // "vs4" is an alias to "vs1"
 ```
 
 #### Pools
@@ -1190,7 +1205,8 @@ The right side of a binding is always prefixed by the operator `&`.
 
 The `await` statement halts the running trail until the specified event occurs.
 The event can be an [input event](../storage_entities/#external-events), an
-[internal event](../storage_entities/#internal-events), a timer, a
+[internal event](../storage_entities/#internal-events), a terminating
+[code abstraction](#code), a timer, a
 [pausing event](#pausing_1), or forever (i.e., never awakes):
 
 ```ceu
@@ -1205,6 +1221,9 @@ Examples:
 ```ceu
 await A;                  // awaits the input event "A"
 await a until v==10;      // awaits the internal event "a" until the condition is satisfied
+
+var&? My_Code my = <...>; // acquires a reference to a code abstraction instance
+await my;                 // awaits it terminate
 
 await 1min10s30ms100us;   // awaits the specified time
 await (t)ms;              // awaits the current value of the variable "t" in milliseconds
@@ -1247,19 +1266,20 @@ var int  v2;
 (v1,v2) = await e;              // awakes on "e" and assigns its values to "v1" and "v2"
 ```
 
-##### Option Alias
+##### Code Abstraction
 
-The `await` statement for [option variable aliases](../storage_entities/#aliases)
-halts the running trail until the specified alias goes out of scope.
+The `await` statement for a [code abstraction](#code) halts the running trail
+until the specified instance terminates.
 
-The `await` evaluates to no value.
+The `await` evaluates to the return value of the abstraction.
+
+`TODO: option return on kill`
 
 Example:
 
 ```ceu
-var&? int x;
-spawn Code() -> (&x);   // "x" is bounded to a variable inside "Code"
-await x;                // awakes when the spawned "Code" terminates
+var&? My_Code my = spawn My_Code();
+var? int ret = await my;
 ```
 
 ##### Timer
@@ -1422,7 +1442,7 @@ Loop ::=
         end
 
       /* numeric iterator */
-      | loop [`/´Exp] Numeric do
+      | loop [`/´Exp] NumericRange do
             Block
         end
 
@@ -1439,7 +1459,7 @@ Loop ::=
 Break    ::= break [`/´ID_int]
 Continue ::= continue [`/´ID_int]
 
-Numeric ::= /* (see "Numeric Iterators") */
+NumericRange ::= /* (see "Numeric Iterator") */
 ```
 
 The body of a loop `Block` executes an arbitrary number of times, depending on
@@ -1466,7 +1486,14 @@ only applies to [numeric iterators](#numeric-iterator).
 
 #### Simple Loop
 
-The simple `loop-do-end` statement executes its body forever.
+The simple `loop-do-end` statement executes its body forever:
+
+```ceu
+SimpleLoop ::= loop [`/´Exp] do
+                   Block
+               end
+```
+
 The only way to terminate a simple loop is with the `break` statement.
 
 Examples:
@@ -1500,10 +1527,14 @@ The numeric loop executes its body a fixed number of times based on a numeric
 range for a control variable:
 
 ```ceu
-Numeric ::= (`_´|ID_int) in [ (`[´ | `]´)
-                                  ( (     Exp `->´ (`_´|Exp))
-                                  | (`_´|Exp) `<-´ Exp      ) )
-                              (`[´ | `]´) [`,´ Exp] ]
+NumericIterator ::= loop [`/´Exp] NumericRange do
+                        Block
+                    end
+
+NumericRange ::= (`_´|ID_int) in [ (`[´ | `]´)
+                                       ( (     Exp `->´ (`_´|Exp))
+                                       | (`_´|Exp) `<-´ Exp      ) )
+                                   (`[´ | `]´) [`,´ Exp] ]
 ```
 
 The control variable assumes the values specified in the interval, one by one,
@@ -1592,7 +1623,13 @@ end
 #### Event Iterator
 
 The `every` statement iterates over an event continuously, executing its
-body whenever the event occurs.
+body whenever the event occurs:
+
+```ceu
+EventIterator ::= every [(Loc | `(´ LIST(Loc|`_´) `)´) in] (ID_ext|Loc|WCLOCKK|WCLOCKE) do
+                      Block
+                  end
+```
 
 The event can be an [external or internal event](#event) or a [timer](#timer).
 
@@ -1643,17 +1680,34 @@ end
 
 #### Pool Iterator
 
-`TODO`
+The [pool](../storage_entities/#pools) iterator visits all alive
+[abstraction](#code) instances residing in a given pool:
 
-<!--
-For iterators in which `Exp` evaluates to a pool of organisms, `ID_var`
-evaluates to pointers to instances in the pool, one at a time, from the oldest 
-to the newest created.
-`ID_var` is automatically declared read-only, with visibility restricted to the 
-loop body.
+```ceu
+PoolIterator ::= loop [`/´Exp] (ID_int|`_´) in Loc do
+                     Block
+                 end
+```
 
-`TODO (example)`
--->
+On each iteration, the optional control variable becomes a
+[reference](#code-references) to an instance, starting from the oldest created
+to the newest.
+
+The control variable must be an alias to the same type of the pool with the
+same rules that apply to [`spawn`](#code-invocation).
+
+Examples:
+
+```
+pool[] My_Code my_codes;
+
+<...>
+
+var&? My_Code my_code;
+loop my_code in mycodes do
+    <...>
+end
+```
 
 ### Parallel Compositions
 
@@ -1670,7 +1724,7 @@ Spawn ::= spawn [`(´ [LIST(ID_int)] `)´] do
               Block
           end
 
-Watching ::= watching LIST(ID_ext|Loc|WCLOCKK|WCLOCKE|Code_Cons_Init) do
+Watching ::= watching LIST(ID_ext|Loc|WCLOCKK|WCLOCKE|Abs_Cons) do
                  Block
              end
 ```
@@ -1795,8 +1849,12 @@ end
 
 The `watching` statement accepts a list of events and terminates when any of
 them occur.
+The events are the same supported by the [`await`](#await) statement.
 It evaluates to what the occurring event value(s), which can be captured with
 an optional [assignment](#assignments).
+
+If the event is a [code abstraction](#code), the nested blocked does not
+require the unwrap operator [`!`](../expressions/#option).
 
 Examples:
 
@@ -2562,12 +2620,12 @@ Mods ::= [`/´dynamic | `/´static] [`/´recursive]
 ```
 
 A `code/tight` is a subprogram that cannot contain
-[synchronous control statements](#synchronous-control-statements) and runs to
-completion in the current [internal reaction](../#internal-reactions).
+[synchronous control statements](#synchronous-control-statements) and its body
+runs to completion in the current [internal reaction](../#internal-reactions).
 
 A `code/await` is a subprogram with no restrictions (e.g., it can manipulate
-events and use parallel compositions) and its execution may outlive multiple
-reactions.
+events and use parallel compositions) and its body execution may outlive
+multiple reactions.
 
 A *prototype declaration* specifies the interface parameters of the
 abstraction which invocations must satisfy.
@@ -2575,6 +2633,11 @@ A *full declaration* (aka *definition*) also specifies an implementation
 with a block of code.
 An *invocation* specifies the name of the code abstraction and arguments
 matching its declaration.
+
+Declarations can be nested.
+A nested declaration is not visible outside its enclosing declaration.
+The body of a nested declaration may access entities from its enclosing
+declarations with the prefix [`outer`](../expressions/#outer).
 
 To support recursive abstractions, a code invocation can appear before the
 implementation is known, but after the prototype declaration.
@@ -2627,10 +2690,12 @@ A `void` list specifies that the abstraction has no parameters.
 Code abstractions also specify an output return type.
 A `code/await` may use `FOREVER` as output to indicate that it never returns.
 
-A `code/await` may also specify an optional *public parameter list*, which are
-local storage entities living the outermost scope of the abstraction body.
-These entities are visible to the invoking context which may access them while
-the abstraction executes.
+A `code/await` may also specify an optional *public field list*, which are
+local storage entities living in the outermost scope of the abstraction body.
+These entities are visible to the invoking context, which may
+[access](#code-references) them while the abstraction executes.
+Likewise, nested code declarations in the outermost scope, known as methods,
+are also visible to the invoking context.
 
 <!--
 - The invoker passes a list of unbound aliases to the code.
@@ -2674,30 +2739,55 @@ to a value of its return type which can be captured with an optional
 
 The `spawn` invocation also suspends and transfers control to the code
 abstraction.
-However, when the abstraction becomes idle (or terminates), the invoking point
-resumes.
-This makes the invocation point and a non-terminating abstraction to execute
-concurrently.
+However, as soon as the abstraction becomes idle (or terminates), the invoking
+point resumes.
+This makes the invocation point and abstraction to execute concurrently.
 
-<!--
-The `spawn` invocation accepts an optional list of aliases matching the
-[initialization list](#code-declaration) from the code abstraction.
-These aliases are bound to local resources in the abstraction and can be
-accessed from the invocation point.
--->
+The `spawn` invocation evaluates to a [reference](#code-references)
+representing the instance and can be captured with an optional
+[assignment](#assignment).
+The alias must be an [option alias variable](../storage_entities/#aliases) of
+the same type of the code abstraction.
+If the abstraction never terminates (i.e., return type is `FOREVER`), the
+variable may be a simple alias.
+If the `spawn` fails (e.g., lack of memory) the option alias variable is unset.
+In the case of a simple alias, the assignment raises a runtime error.
 
 The `spawn` invocation also accepts an optional [pool](#pools) which provides
 storage and scope for invoked abstractions.
-
-If the `spawn` provides the pool, the invocation evaluates to a boolean that
-indicates whether the pool has space to execute the code.
-The result can be captured with an optional [assignment](#assignment).
-If the pool goes out of scope, all invoked abstractions residing in that pool
+When the pool goes out of scope, all invoked abstractions residing in that pool
 are aborted.
-
 If the `spawn` omits the pool, the invocation always succeed and has the same
 scope as the invoking point: when the enclosing block terminates, the invoked
 code is also aborted.
+
+##### Code References
+
+The `spawn` [invocation](#code-invocation) and the control variable of
+[pool iterators](#pool-iterator) evaluate to a reference as an
+[option alias](../storage_entities/#aliases) to an abstraction instance.
+If the instance terminates at any time, the option variable is automatically
+unset.
+
+A reference provides [access](../expressions/#fields) to the public fields and
+methods of the instance.
+
+Examples:
+
+```ceu
+code/await My_Code (var int x) -> (var int y) -> FOREVER do
+    y = x;                              // "y" is a public field
+
+    code/tight Get_X (void) -> int do   // "Get_X" is a public method
+        escape outer.x;
+    end
+
+    await FOREVER;
+end
+
+var& My_Code c = spawn My_Code(10);
+_printf("y=%d, x=%d\n", c.y, c.Get_X());    // prints "y=10, x=10"
+```
 
 ##### Dynamic Dispatching
 
@@ -2827,8 +2917,12 @@ Loc ::= Loc [as (Type | `/´(nohold|plain|pure)) `)´
 
 `TODO`
 
+#### Outer
+
+`TODO`
+
 <!--
-global, this, outer, ID_var, ID_nat, null, NUM, String, true, false, 
+outer, ID_var, ID_nat, null, NUM, String, true, false, 
 call/call/rec/finalize, C, parens`
 -->
 
@@ -3035,7 +3129,7 @@ Vec_Max ::= `$$´ Loc
 The vector length can also be assigned:
 
 ```ceu
-vector[] int vec = [ 1, 2, 3 ];
+var[] int vec = [ 1, 2, 3 ];
 $vec = 1;
 ```
 
@@ -3056,15 +3150,17 @@ Vec_Concat ::= `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´)
 Examples:
 
 ```ceu
-vector[3] int v;     // declare an empty vector of length 3     (v = [])
+var[3] int v;        // declare an empty vector of length 3     (v = [])
 v = v .. [8];        // append value '8' to the empty vector    (v = [8])
 v = v .. [1] .. [5]; // append values '1' and '5' to the vector (v = [8, 1, 5])
 ```
 
 ### Fields
 
-The operators `.´ and `:´ specify fields of
-[data abstractions](../statements/#data) and
+The operators `.` and `:` access public fields of
+[data abstractions](../statements/#data),
+[code abstractions](../statements/#code),
+and
 [native](../statements/#c-integration) structs:
 
 ```
@@ -3533,8 +3629,7 @@ Stmt ::= nothing
   /* Storage Entities / Declarations */
 
       // Dcls ::=
-      | var [`&´|`&?´] [`/dynamic´|`/nohold´] Type ID_int [`=´ Sources]
-      | vector [`&´] `[´ [Exp] `]´ Type ID_int [`=´ Sources]
+      | var [`&´|`&?´] `[´ [Exp] `]´ [`/dynamic´|`/nohold´] Type ID_int [`=´ Sources]
       | pool [`&´] `[´ [Exp] `]´ Type ID_int [`=´ Sources]
       | event [`&´] (Type | `(´ LIST(Type) `)´) ID_int [`=´ Sources]
 
@@ -3612,7 +3707,7 @@ Stmt ::= nothing
 
       /* watching */
       // Watching ::=
-      | watching LIST(ID_ext|Loc|WCLOCKK|WCLOCKE|Code_Cons_Init) do
+      | watching LIST(ID_ext|Loc|WCLOCKK|WCLOCKE|Abs_Cons) do
             Block
         end
 

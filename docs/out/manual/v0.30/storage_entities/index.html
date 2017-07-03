@@ -173,11 +173,11 @@ Céu supports <em>variables</em>, <em>vectors</em>, <em>events</em> (external an
 <p>An <a href="./../statements/#declarations">entity declaration</a> consists of an entity
 class, a <a href="./../types/#types">type</a>, and an <a href="./../lexical_rules/#identifiers">identifier</a>.</p>
 <p>Examples:</p>
-<pre><code class="ceu">var       int    v;     // &quot;v&quot; is a variable of type &quot;int&quot;
-vector[9] byte   buf;   // &quot;buf&quot; is a vector with at most 9 values of type &quot;byte&quot;
-input     void&amp;&amp; A;     // &quot;A&quot; is an input event that carries values of type &quot;void&amp;&amp;&quot;
-event     bool   e;     // &quot;e&quot; is an internal event that carries values of type &quot;bool&quot;
-pool[]    Anim   anims; // &quot;anims&quot; is a dynamic &quot;pool&quot; for instances of type &quot;Anim&quot;
+<pre><code class="ceu">var    int    v;     // &quot;v&quot; is a variable of type &quot;int&quot;
+var[9] byte   buf;   // &quot;buf&quot; is a vector with at most 9 values of type &quot;byte&quot;
+input  void&amp;&amp; A;     // &quot;A&quot; is an input event that carries values of type &quot;void&amp;&amp;&quot;
+event  bool   e;     // &quot;e&quot; is an internal event that carries values of type &quot;bool&quot;
+pool[] Anim   anims; // &quot;anims&quot; is a dynamic &quot;pool&quot; for instances of type &quot;Anim&quot;
 </code></pre>
 
 <p>A declaration binds the identifier with a memory location that holds values of
@@ -218,7 +218,7 @@ escape v;       // read access (yields 2)
 </code></pre>
 
 <h3 id="vectors">Vectors<a class="headerlink" href="#vectors" title="Permanent link">&para;</a></h3>
-<p>A vector In Céu is a dynamic and contiguous collection of elements of the same
+<p>A vector in Céu is a dynamic and contiguous collection of variables of the same
 type.</p>
 <p>A <a href="./../statements/#vectors">vector declaration</a> specifies its type and maximum
 number of elements (possibly unlimited).
@@ -228,9 +228,9 @@ The current length of a vector is dynamic and can be accessed through the
 <a href="./../expressions/#index">index</a> starting from <code>0</code>.
 Céu generates an <a href="#TODO">error</a> for out-of-bounds vector accesses.</p>
 <p>Example:</p>
-<pre><code class="ceu">vector[9] byte buf = [1,2,3];   // write access
-buf = buf .. [4];               // write access
-escape buf[1];                  // read access (yields 2)
+<pre><code class="ceu">var[9] byte buf = [1,2,3];  // write access
+buf = buf .. [4];           // write access
+escape buf[1];              // read access (yields 2)
 </code></pre>
 
 <h3 id="events">Events<a class="headerlink" href="#events" title="Permanent link">&para;</a></h3>
@@ -371,8 +371,8 @@ a job position referring to a person is a pointer.</p>
 <h3 id="aliases">Aliases<a class="headerlink" href="#aliases" title="Permanent link">&para;</a></h3>
 <p>Céu support aliases to all storage entity classes, except external events and
 pointer types.
-Céu also supports option variable aliases which are aliases that may remain or
-become unassigned.</p>
+Céu also supports option variable aliases which are aliases that may be set or
+not.</p>
 <p>An alias is declared by suffixing the entity class with the modifier
 <code>&amp;</code> and is acquired by prefixing an entity with the operator <code>&amp;</code>.</p>
 <p>An alias must have a narrower scope than the entity it refers to.
@@ -393,13 +393,18 @@ _printf(&quot;%d\n&quot;, v);     // prints 1
   in Céu.
   The alias is acquired by prefixing the associated
   <a href="./../statements/#native-call">native call</a> with the operator <code>&amp;</code>.
-  Since the allocation may fail, the alias may remain unassigned.</li>
-<li>Track the lifetime of a variable.
-  The alias is acquired by prefixing the associated variable with
-  the operator <code>&amp;</code>.
-  Since the tracked variable may go out of scope, the alias may become
-  unassigned.</li>
+  Since the allocation may fail, the alias may remain unset.</li>
+<li>Hold the result of a <a href="./../statements/#code-invocation"><code>spawn</code></a> invocation.
+  Since the allocation may fail, the alias may remain unset.</li>
 </ul>
+<!--
+- Track the lifetime of a variable.
+  The alias is acquired by prefixing the associated variable with
+  the operator `&`.
+  Since the tracked variable may go out of scope, the alias may become
+  unset.
+-->
+
 <p>Accesses to option variable aliases must always use
 <a href="./../expressions/#option">option checking or unwrapping</a>.</p>
 <p>Examples:</p>
@@ -413,14 +418,19 @@ else
 end
 </code></pre>
 
-<pre><code class="ceu">var&amp;? int x;
-do
-    var int y = 10;
-    x = &amp;y;
-    _printf(&quot;%d\n&quot;, x!);    // prints 10
+<pre><code class="ceu">var&amp;? My_Code my_code = spawn My_Code();
+if my_code? then
+    &lt;...&gt;   // &quot;spawn&quot; succeeded
+else
+    &lt;...&gt;   // &quot;spawn&quot; failed
 end
-_printf(&quot;%d\n&quot;, x!);        // error!
 </code></pre>
+
+<!--
+
+wzxhzdk:9
+
+-->
 
 <h3 id="pointers">Pointers<a class="headerlink" href="#pointers" title="Permanent link">&para;</a></h3>
 <p>A pointer is declared by suffixing the type with the modifier

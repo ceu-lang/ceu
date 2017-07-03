@@ -236,8 +236,10 @@ Loc ::= Loc [as (Type | `/´(nohold|plain|pure)) `)´
 
 <h2 id="primary">Primary<a class="headerlink" href="#primary" title="Permanent link">&para;</a></h2>
 <p><code>TODO</code></p>
+<h3 id="outer">Outer<a class="headerlink" href="#outer" title="Permanent link">&para;</a></h3>
+<p><code>TODO</code></p>
 <!--
-global, this, outer, ID_var, ID_nat, null, NUM, String, true, false, 
+outer, ID_var, ID_nat, null, NUM, String, true, false, 
 call/call/rec/finalize, C, parens`
 -->
 
@@ -389,7 +391,7 @@ Vec_Max ::= `$$´ Loc
 
 <p><code>TODO: max</code></p>
 <p>The vector length can also be assigned:</p>
-<pre><code class="ceu">vector[] int vec = [ 1, 2, 3 ];
+<pre><code class="ceu">var[] int vec = [ 1, 2, 3 ];
 $vec = 1;
 </code></pre>
 
@@ -404,14 +406,16 @@ Vec_Concat ::= `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´)
 </code></pre>
 
 <p>Examples:</p>
-<pre><code class="ceu">vector[3] int v;     // declare an empty vector of length 3     (v = [])
+<pre><code class="ceu">var[3] int v;        // declare an empty vector of length 3     (v = [])
 v = v .. [8];        // append value '8' to the empty vector    (v = [8])
 v = v .. [1] .. [5]; // append values '1' and '5' to the vector (v = [8, 1, 5])
 </code></pre>
 
 <h2 id="fields">Fields<a class="headerlink" href="#fields" title="Permanent link">&para;</a></h2>
-<p>The operators <code>.´ and</code>:´ specify fields of
-<a href="./../statements/#data">data abstractions</a> and
+<p>The operators <code>.</code> and <code>:</code> access public fields of
+<a href="./../statements/#data">data abstractions</a>,
+<a href="./../statements/#code">code abstractions</a>,
+and
 <a href="./../statements/#c-integration">native</a> structs:</p>
 <pre><code>Dot   ::= Loc `.´ (ID_int|ID_nat)
 Colon ::= Loc `:´ (ID_int|ID_nat)
