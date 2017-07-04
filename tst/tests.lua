@@ -31168,6 +31168,43 @@ escape ret + v2[0] + v2[4];
 ]],
     run = 16,
 }
+
+Test { [[
+var[5*] int vec = [10];
+vec = vec..[11];
+$vec = $vec - 1;
+vec = vec..[12];
+$vec = $vec - 1;
+escape vec[0];
+]],
+    run = 12,
+}
+
+Test { [[
+var[10] int v1 = [1,2,3];
+var[1] int v2 = []..v1;
+escape 0;
+]],
+    run = '2] runtime error: access out of bounds',
+}
+Test { [[
+var[3*] int v1 = [1,2,3];
+$v1 = $v1 - 1;
+var[10] int v2 = []..v1;
+escape v2[0] + v2[1] + ($v2 as int);
+]],
+    run = 7,
+}
+
+Test { [[
+var[3*] int v1 = [1,2,3];
+$v1 = $v1 - 1;
+v1 = v1..[4];
+var[10] int v2 = []..v1;
+escape v2[0] + v2[2] + ($v2 as int);
+]],
+    run = 9,
+}
 --<< VECTOR / RING
 
 --<<< VECTORS / STRINGS

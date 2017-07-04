@@ -1237,10 +1237,7 @@ if (_ceu_occ!=NULL && _ceu_occ->evt.id==CEU_INPUT__CODE_TERMINATED) {
                     LINE_DIRECTIVE(me)
                     LINE(me, [[
     ceu_vector_setlen(&]]..V(to)..', ('..V(to)..'.len + '..V(fr)..[[.len), 1);
-    ceu_vector_buf_set(&]]..V(to)..[[,
-                       __ceu_nxt,
-                       ]]..V(fr)..[[.buf,
-                       ceu_vector_buf_len(&]]..V(fr)..[[));
+    ceu_vector_concat(&]]..V(to)..', __ceu_nxt, &'..V(fr)..[[);
 ]])
                 else
                     -- v1 = v1....

@@ -14,9 +14,9 @@ typedef struct {
 
 #define ceu_vector_idx(vec,idx)            ((vec)->is_ring ? (((vec)->ini + idx) % ((vec)->max+1)) : idx)
                                                                                     /* [STRING] +1 */
-#define ceu_vector_buf_len(vec)            ((vec)->len * (vec)->unit)
 #define ceu_vector_buf_get(vec,idx)        (&(vec)->buf[ceu_vector_idx(vec,idx)*(vec)->unit])
 #define ceu_vector_buf_set(vec,idx,buf,nu) ceu_vector_buf_set_ex(vec,idx,buf,nu,__FILE__,__LINE__)
+#define ceu_vector_concat(dst,idx,src)     ceu_vector_concat_ex(dst,idx,src,__FILE__,__LINE__)
 
 #define ceu_vector_setlen(a,b,c) ceu_vector_setlen_ex(a,b,c,__FILE__,__LINE__)
 #define ceu_vector_geti(a,b)     ceu_vector_geti_ex(a,b,__FILE__,__LINE__)
@@ -30,6 +30,8 @@ void  ceu_vector_setlen_ex    (tceu_vector* vector, usize len, bool grow,
 byte* ceu_vector_geti_ex      (tceu_vector* vector, usize idx,
                                const char* file, u32 line);
 void  ceu_vector_buf_set_ex   (tceu_vector* vector, usize idx, byte* buf, usize nu,
+                               const char* file, u32 line);
+void  ceu_vector_concat_ex    (tceu_vector* dst, usize idx, tceu_vector* src,
                                const char* file, u32 line);
 
 #if 0
@@ -140,7 +142,7 @@ void ceu_vector_setlen_ex (tceu_vector* vector, usize len, bool grow,
     }
 
     if (vector->is_ring && len<vector->len) {
-        vector->ini = ceu_vector_idx(vector, vector->ini+(vector->len-len));
+        vector->ini += (vector->len - len);
     }
 
     /* [STRING] */
@@ -178,12 +180,19 @@ void ceu_vector_buf_set_ex (tceu_vector* vector, usize idx, byte* buf, usize nu,
     //*ceu_vector_buf_get(vector,len) = '\0';
 }
 
-#if 0
-char* ceu_vector_tochar (tceu_vector* vector) {
-    if (vector->buf == NULL) {
-        return "";
+#include <stdio.h>
+void ceu_vector_concat_ex (tceu_vector* dst, usize idx, tceu_vector* src,
+                           const char* file, u32 line)
+{
+    if (src->is_ring && ceu_vector_idx(src,src->len-1)<ceu_vector_idx(src,0)) {
+        usize n = (src->len+1 - src->ini);
+        ceu_vector_buf_set_ex(dst, idx,   ceu_vector_buf_get(src,0), n*src->unit,            file, line);
+        ceu_vector_buf_set_ex(dst, idx+n, ceu_vector_buf_get(src,n), (src->len-n)*src->unit, file, line);
     } else {
-        return (char*)vector->buf;
+        ceu_vector_buf_set_ex(dst, idx, ceu_vector_buf_get(src,0), (src->len*src->unit), file, line);
     }
+
+    /* [STRING] */
+    /* previous setlen will already set it */
+    //*ceu_vector_buf_get(vector,len) = '\0';
 }
-#endif
