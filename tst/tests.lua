@@ -25732,7 +25732,7 @@ var[10] _int x = _;
 escape sizeof(x) as int;
 ]],
     wrn = true,
-    run = 40,
+    run = 44,
 }
 
 Test { [[
@@ -30359,14 +30359,13 @@ native/nohold _garbage;
 native/pos do
     void garbage (byte* v) {
         int i = 0;
-        for (; i<20; i++) {
+        for (; i<11; i++) {
             v[i] = i;
         }
     }
 end
 
 var[10] byte v = [0];
-var[10] byte v_;
 native _char;
 _garbage((&&v[0]));
 v = [{'a'},{'b'},{'c'},{'\0'}];
@@ -30974,7 +30973,7 @@ escape 1;
 Test { [[
 native/const _X;
 native/pre do
-    ##define X 1
+    ##define X 2
 end
 var[-_X] int vvs;
 var&[-_X] int iis = &vvs;
@@ -31282,7 +31281,9 @@ Test { [[
 var[3*] int v1 = [1,2,3];
 $v1 = $v1 - 1;
 v1 = v1..[4];
+//{printf("%d %d %d\n", @v1[0], @v1[1], @v1[2]);}
 var[10] int v2 = []..v1;
+//{printf("%d %d %d\n", @v2[0], @v2[1], @v2[2]);}
 escape v2[0] + v2[2] + ($v2 as int);
 ]],
     run = 9,
