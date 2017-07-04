@@ -31092,6 +31092,35 @@ escape vec[0];
 }
 
 Test { [[
+var int n = 3;
+var[n*] int vec = [];
+vec = vec .. [1];
+vec = vec .. [2];
+vec = vec .. [3];
+escape vec[$vec-1] - vec[0];
+]],
+    run = 2,
+}
+
+Test { [[
+var int n = 3;
+var[n*] int vec = [ 1, 2, 3 ];
+$vec = 1;
+escape vec[0];
+]],
+    run = 3,
+}
+
+Test { [[
+var int n = 3;
+var[n*] int vec = [ 1, 2, 3 ];
+$vec = $vec - 1;
+escape vec[0];
+]],
+    run = 2,
+}
+
+Test { [[
 var[*] int vec = [ 1, 2, 3 ];
 $vec = $vec - 1;
 escape vec[0];
@@ -31105,6 +31134,19 @@ do
 end
 do/_
     var[5*] byte str = [].."12345";
+    escape {strlen(@(&&str[0] as _char&&))};
+end
+]],
+    run = 5,
+}
+
+Test { [[
+do
+    var[10] byte str = [].."1234567890";
+end
+do/_
+    var int n = 5;
+    var[n*] byte str = [].."12345";
     escape {strlen(@(&&str[0] as _char&&))};
 end
 ]],
@@ -31181,6 +31223,46 @@ escape vec[0];
 }
 
 Test { [[
+var int n = 5;
+native/nohold _ceu_vector_buf_set, _ceu_vector_setlen;
+var[n]  byte v1 = [1,2,3,4,5];
+var[n*] byte v2 = [0,0,11,10,0];
+$v2 = $v2 - 3;
+var int ret = v2[0];
+_ceu_vector_setlen(&&v2, 5, 1);
+_ceu_vector_buf_set(&&v2,0, &&v1[0], 5);
+escape ret + v2[0] + v2[4];
+]],
+    run = 16,
+}
+
+Test { [[
+var int n = 5;
+native/nohold _ceu_vector_buf_set, _ceu_vector_setlen;
+var[n]  int v1 = [1,2,3,4,5];
+var[n*] int v2 = [0,0,0,10,0];
+$v2 = $v2 - 3;
+var int ret = v2[0];
+_ceu_vector_setlen(&&v2, 5, 1);
+_ceu_vector_buf_set(&&v2,0, &&v1[0] as byte&&, 5*sizeof(int));
+escape ret + v2[0] + v2[4];
+]],
+    run = 16,
+}
+
+Test { [[
+var int n = 5;
+var[n*] int vec = [10];
+vec = vec..[11];
+$vec = $vec - 1;
+vec = vec..[12];
+$vec = $vec - 1;
+escape vec[0];
+]],
+    run = 12,
+}
+
+Test { [[
 var[10] int v1 = [1,2,3];
 var[1] int v2 = []..v1;
 escape 0;
@@ -31205,6 +31287,27 @@ escape v2[0] + v2[2] + ($v2 as int);
 ]],
     run = 9,
 }
+Test { [[
+var int n = 3;
+var[n*] int v1 = [1,2,3];
+$v1 = $v1 - 1;
+var[10] int v2 = []..v1;
+escape v2[0] + v2[1] + ($v2 as int);
+]],
+    run = 7,
+}
+
+Test { [[
+var int n = 3;
+var[n*] int v1 = [1,2,3];
+$v1 = $v1 - 1;
+v1 = v1..[4];
+var[10] int v2 = []..v1;
+escape v2[0] + v2[2] + ($v2 as int);
+]],
+    run = 9,
+}
+
 --<< VECTOR / RING
 
 --<<< VECTORS / STRINGS

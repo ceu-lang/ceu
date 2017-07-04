@@ -264,15 +264,15 @@ if (]]..V(c)..[[) {
     Vec_Init = function (me)
         local vec = unpack(me)
         local _, tp, _, dim = unpack(vec.info.dcl)
+        local is_ring = (vec.info.dcl.is_ring and '1') or '0'
         if dim.is_const then
-            local is_ring = (vec.info.dcl.is_ring and '1') or '0'
             LINE(me, [[
 ceu_vector_init(&]]..V(vec)..','..V(dim)..', '..is_ring..', 0, sizeof('..TYPES.toc(tp)..[[),
                 (byte*)&]]..V(vec,{id_suf='_buf'})..[[);
 ]])
         else
             LINE(me, [[
-ceu_vector_init(&]]..V(vec)..', 0, 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
+ceu_vector_init(&]]..V(vec)..', 0, '..is_ring..', 1, sizeof('..TYPES.toc(tp)..[[), NULL);
 ]])
             if dim ~= '[]' then
                 LINE(me, [[
