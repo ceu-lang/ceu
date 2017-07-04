@@ -265,13 +265,14 @@ if (]]..V(c)..[[) {
         local vec = unpack(me)
         local _, tp, _, dim = unpack(vec.info.dcl)
         if dim.is_const then
+            local is_ring = (vec.info.dcl.is_ring and '1') or '0'
             LINE(me, [[
-ceu_vector_init(&]]..V(vec)..','..V(dim)..', 0, sizeof('..TYPES.toc(tp)..[[),
+ceu_vector_init(&]]..V(vec)..','..V(dim)..', '..is_ring..', 0, sizeof('..TYPES.toc(tp)..[[),
                 (byte*)&]]..V(vec,{id_suf='_buf'})..[[);
 ]])
         else
             LINE(me, [[
-ceu_vector_init(&]]..V(vec)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
+ceu_vector_init(&]]..V(vec)..', 0, 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
 ]])
             if dim ~= '[]' then
                 LINE(me, [[
@@ -1179,7 +1180,7 @@ if (_ceu_occ!=NULL && _ceu_occ->evt.id==CEU_INPUT__CODE_TERMINATED) {
         ceu_vector_setlen(&]]..V(to)..', ('..V(to)..[[.len + __ceu_len), 1);
         ceu_vector_buf_set(&]]..V(to)..[[,
                            __ceu_nxt,
-                           __ceu_str,
+                           (byte*)__ceu_str,
                            __ceu_len);
         __ceu_nxt += __ceu_len;
     }
@@ -1213,7 +1214,7 @@ if (_ceu_occ!=NULL && _ceu_occ->evt.id==CEU_INPUT__CODE_TERMINATED) {
                              __FILE__, __LINE__-4);
         ceu_vector_buf_set(&]]..V(to)..[[,
                            __ceu_nxt,
-                           __ceu_str,
+                           (byte*)__ceu_str,
                            __ceu_len);
         __ceu_nxt += __ceu_len;
     } else {

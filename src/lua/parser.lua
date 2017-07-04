@@ -527,7 +527,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     , __var_set = V'__ID_int' * OPT(Ct(V'__Sets_one'+V'__Sets_many'))
 
-    , _Var_set  = K'var'    * OPT(V'__ALS') * OPT(V'__Dim')
+    , _Var_set  = K'var'    * OPT(V'__ALS') * OPT(V'__Dim_Ring')
                             * Ct((Cg(K'/dynamic','dynamic') + Cg(K'/nohold','nohold'))^-1)
                                                      * V'Type'             * V'__var_set'
     , _Pool_set = K'pool'   * OPT(CKK'&') * V'__Dim' * V'Type'             * V'__var_set'
@@ -690,7 +690,8 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
 -- MODS
 
-    , __Dim = KK'[' * (V'__Exp'+Cc('[]')) * KK']'
+    , __Dim      = KK'[' * (V'__Exp'+Cc('[]')) * KK']'
+    , __Dim_Ring = KK'[' * (V'__Exp'*OPT(CK'*')+Cc('[]')*Cc(false)) * KK']'
 
 -- LISTS
 

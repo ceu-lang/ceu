@@ -720,12 +720,14 @@ error'TODO: luacov never executes this?'
 
         -- convert from 'Var' to 'Vec'
         if tag == 'Var' then
-            local _,dim,mods = unpack(me)
+            local _,dim,is_ring,mods = unpack(me)
             if dim then
                 --ASR(not mods, me, 'TODO')
+                AST.remove(me, 4)
                 AST.remove(me, 3)
                 me.tag = 'Vec'
                 tag    = 'Vec'
+                me.is_ring = is_ring
             else
                 AST.remove(me, 2)
             end

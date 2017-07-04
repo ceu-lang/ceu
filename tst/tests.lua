@@ -29763,6 +29763,13 @@ escape v == &&v[0] ;
 }
 
 Test { [[
+var[2] int a = [1,2];
+escape a[0];
+]],
+    run = 1,
+}
+
+Test { [[
 native/nohold _f;
 native/pos do
     void f (int* v) {
@@ -30362,7 +30369,7 @@ var[10] byte v = [0];
 var[10] byte v_;
 native _char;
 _garbage((&&v[0]));
-v = [{'a'},{'b'},{'c'}];
+v = [{'a'},{'b'},{'c'},{'\0'}];
 escape _strlen((&&v[0]) as _char&&);
 ]],
     wrn = true,
@@ -31045,6 +31052,123 @@ escape *v[0] + *v[1] + *v[2];
 ]],
     run = 6,
 }
+
+-->> VECTOR / RING
+
+Test { [[
+var[3] int vec = [];
+vec = vec .. [1];
+vec = vec .. [2];
+vec = vec .. [3];
+escape vec[$vec-1] - vec[0];
+]],
+    run = 2,
+}
+
+Test { [[
+var[3*] int vec = [];
+vec = vec .. [1];
+vec = vec .. [2];
+vec = vec .. [3];
+escape vec[$vec-1] - vec[0];
+]],
+    run = 2,
+}
+
+Test { [[
+var[3*] int vec = [ 1, 2, 3 ];
+$vec = 1;
+escape vec[0];
+]],
+    run = 3,
+}
+
+Test { [[
+var[3*] int vec = [ 1, 2, 3 ];
+$vec = $vec - 1;
+escape vec[0];
+]],
+    run = 2,
+}
+
+Test { [[
+var[*] int vec = [ 1, 2, 3 ];
+$vec = $vec - 1;
+escape vec[0];
+]],
+    parser = 'line 1 : after `*` : expected expression',
+}
+
+Test { [[
+do
+    var[10] byte str = [].."1234567890";
+end
+do/_
+    var[5*] byte str = [].."12345";
+    escape {strlen(@(&&str[0] as _char&&))};
+end
+]],
+    run = 5,
+}
+
+Test { [[
+pool[5*] Ff fs;
+]],
+    parser = 'line 1 : after `*` : expected expression',
+}
+
+Test { [[
+lua[5*] do end;
+]],
+    parser = 'line 1 : after `*` : expected expression',
+}
+
+Test { [[
+native/nohold _ceu_vector_buf_set;
+var[] byte v = [1,2,0,4,5];
+var byte c = 3;
+_ceu_vector_buf_set(&&v,2, &&c, 4);
+escape v[2] + (($v) as int);
+]],
+    run = '4] runtime error: access out of bounds',
+}
+
+Test { [[
+native/nohold _ceu_vector_buf_set;
+var[] int v = [1,2,0,4,5];
+var int c = 3;
+_ceu_vector_buf_set(&&v,2, &&c as byte&&, 4*sizeof(int));
+escape v[2] + (($v) as int);
+]],
+    run = '4] runtime error: access out of bounds',
+}
+
+Test { [[
+native/nohold _ceu_vector_buf_set, _ceu_vector_setlen;
+var[5]  byte v1 = [1,2,3,4,5];
+var[5*] byte v2 = [0,0,11,10,0];
+$v2 = $v2 - 3;
+var int ret = v2[0];
+_ceu_vector_setlen(&&v2, 5, 1);
+_ceu_vector_buf_set(&&v2,0, &&v1[0], 5);
+escape ret + v2[0] + v2[4];
+]],
+    run = 16,
+}
+
+Test { [[
+native/nohold _ceu_vector_buf_set, _ceu_vector_setlen;
+var[5]  int v1 = [1,2,3,4,5];
+var[5*] int v2 = [0,0,0,10,0];
+$v2 = $v2 - 3;
+var int ret = v2[0];
+_ceu_vector_setlen(&&v2, 5, 1);
+_ceu_vector_buf_set(&&v2,0, &&v1[0] as byte&&, 5*sizeof(int));
+escape ret + v2[0] + v2[4];
+]],
+    run = 16,
+}
+--<< VECTOR / RING
 
 --<<< VECTORS / STRINGS
 
@@ -40521,7 +40645,7 @@ do/_
     escape (__ceu_mem as _tceu_code_mem_ROOT&&):xxx;
 end
 ]],
-    cc = '5:2: error: ‘tceu_code_mem_ROOT {aka struct tceu_code_mem_ROOT}’ has no member named ‘xxx’',
+    cc = '4:77: error: ‘tceu_code_mem_ROOT {aka struct tceu_code_mem_ROOT}’ has no member named ‘xxx’',
 }
 
 Test { [[
@@ -40570,7 +40694,7 @@ end
 var int v = await Ff();
 escape v;
 ]],
-    cc = '6:2: error: ‘tceu_code_mem_Ff {aka struct tceu_code_mem_Ff}’ has no member named ‘yyy’',
+    cc = '5:81: error: ‘tceu_code_mem_Ff {aka struct tceu_code_mem_Ff}’ has no member named ‘yyy’',
 }
 
 Test { [[
@@ -40585,7 +40709,7 @@ end
 spawn Ff();
 escape 10;
 ]],
-    cc = '6:2: error: ‘tceu_code_mem_Ff {aka struct tceu_code_mem_Ff}’ has no member named ‘yyy’',
+    cc = '5:83: error: ‘tceu_code_mem_Ff {aka struct tceu_code_mem_Ff}’ has no member named ‘yyy’',
 }
 
 Test { [[

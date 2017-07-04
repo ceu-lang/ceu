@@ -549,9 +549,7 @@ ceu_data_as(CEU_DATA_SUPERS_]]..base.id_..[[,
 ))
 ]]
             else
-                ret = [[
-((]]..TYPES.toc(Type)..')('..V(e)..[[))
-]]
+                ret = '(('..TYPES.toc(Type)..')('..V(e)..'))'
             end
         end
         if TYPES.check(Type,'bool') then
