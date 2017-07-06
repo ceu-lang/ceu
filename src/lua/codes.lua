@@ -823,9 +823,15 @@ while (1) {
 
 
         if to.tag ~= 'ID_any' then
+            local op = (dir=='->' and '<' or '>')
             LINE(me, [[
 ]]..CUR('__lim_'..me.n)..' = '..V(to)..' + ('..V(step)..'*'..to.__adj_step_mul..[[*-1);
 ]])
+            if to.__adj_step_mul ~= 0 then
+                LINE(me, [[
+ceu_callback_assert_msg(]]..CUR('__lim_'..me.n)..' '..op..' '..V(to)..[[, "`loop` limit underflow/overflow");
+]])
+            end
         end
 
         local sig = (dir=='->' and '' or '-')

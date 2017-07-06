@@ -4732,6 +4732,27 @@ escape 0;
     run = 10,
 }
 
+Test { [[
+var uint x = 0;
+var uint i;
+loop i in [0 -> x[ do
+    escape 0;
+end
+escape 1;
+]],
+    run = '3] runtime error: `loop` limit underflow/overflow',
+}
+
+Test { [[
+var u8 x = 255;
+var u8 i;
+loop i in ]x <- 2[ do
+    escape 0;
+end
+escape 1;
+]],
+    run = '3] runtime error: `loop` limit underflow/overflow',
+}
 -- LOOP / BOUNDED
 
 Test { [[
