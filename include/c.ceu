@@ -15,6 +15,7 @@ native/plain
 
 native/pure
     _abs,
+    _ceu_vector_ptr,
     _memcmp,
     _PURIFY,
     _strcmp,

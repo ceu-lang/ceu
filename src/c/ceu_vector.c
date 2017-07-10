@@ -19,7 +19,7 @@ typedef struct {
 
 #define ceu_vector_setlen(a,b,c) ceu_vector_setlen_ex(a,b,c,__FILE__,__LINE__)
 #define ceu_vector_geti(a,b)     ceu_vector_geti_ex(a,b,__FILE__,__LINE__)
-#define ceu_vector_getini(vec)   ((vec)->ini)
+#define ceu_vector_ptr(vec)      (vec)
 
 void  ceu_vector_init         (tceu_vector* vector, usize max, bool is_ring,
                                bool is_dyn, usize unit, byte* buf);
@@ -162,8 +162,16 @@ void ceu_vector_buf_set_ex (tceu_vector* vector, usize idx, byte* buf, usize nu,
                             const char* file, u32 line)
 {
     usize n = ((nu % vector->unit) == 0) ? nu/vector->unit : nu/vector->unit+1;
+#if 0
+    if (vector->len < idx+n) {
+        char err[50];
+        snprintf(err,50, "access out of bounds : length=%ld, index=%ld", vector->len, idx+n);
+        ceu_callback_assert_msg_ex(0, err, file, line);
+    }
+#else
     ceu_callback_assert_msg_ex((vector->len >= idx+n),
                                "access out of bounds", file, line);
+#endif
 
     usize k  = (vector->len - ceu_vector_idx(vector,idx));
     usize ku = k * vector->unit;
@@ -176,15 +184,28 @@ void ceu_vector_buf_set_ex (tceu_vector* vector, usize idx, byte* buf, usize nu,
     }
 }
 
-#include <stdio.h>
 void ceu_vector_concat_ex (tceu_vector* dst, usize idx, tceu_vector* src,
                            const char* file, u32 line)
 {
-    if (src->is_ring && ceu_vector_idx(src,src->len-1)<ceu_vector_idx(src,0)) {
-        usize n = (src->len - src->ini);
+    usize dst_len = dst->len;
+    ceu_vector_setlen(dst, dst->len+src->len, 1);
+    if (src->is_ring && ceu_vector_idx(src,src->len)<ceu_vector_idx(src,0)) {
+        usize n = (src->max - src->ini);
         ceu_vector_buf_set_ex(dst, idx,   ceu_vector_buf_get(src,0), n*src->unit,            file, line);
         ceu_vector_buf_set_ex(dst, idx+n, ceu_vector_buf_get(src,n), (src->len-n)*src->unit, file, line);
+        // TODO: dst->is_ring
     } else {
-        ceu_vector_buf_set_ex(dst, idx, ceu_vector_buf_get(src,0), (src->len*src->unit), file, line);
+        if (dst->is_ring) {
+            usize n = (dst->max - ceu_vector_idx(dst,dst_len));
+            if (src->len > n) {
+                ceu_vector_buf_set_ex(dst, idx,   ceu_vector_buf_get(src,0), (n*src->unit), file, line);
+                ceu_vector_buf_set_ex(dst, idx+n, ceu_vector_buf_get(src,n), ((src->len-n)*src->unit), file, line);
+            } else {
+                ceu_vector_buf_set_ex(dst, idx, ceu_vector_buf_get(src,0), (src->len*src->unit), file, line);
+            }
+        } else
+        {
+            ceu_vector_buf_set_ex(dst, idx, ceu_vector_buf_get(src,0), (src->len*src->unit), file, line);
+        }
     }
 }

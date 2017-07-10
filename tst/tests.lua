@@ -31330,6 +31330,75 @@ escape v2[0] + v2[2] + ($v2 as int);
     run = 9,
 }
 
+Test { [[
+var[1024*] int src;
+var int i;
+loop i in [1->1000] do
+    src = src .. [i];
+end
+$src = 0;
+loop i in [1001->1100] do
+    src = src .. [i];
+end
+var[] int dst = []..src;
+escape ((dst[0] + dst[$dst-1]) == 2101) as int;
+]],
+    run = 1,
+}
+Test { [[
+var[1024*] int src;
+var int i;
+loop i in [1->1000] do
+    src = src .. [i];
+end
+$src = 0;
+var[] int dst = []..src;
+escape ($dst as int) + 1;
+]],
+    run = 1,
+}
+Test { [[
+var[1024*] int dst;
+var int i;
+loop i in [1->1000] do
+    dst = dst .. [i];
+end
+$dst = 0;
+
+var[] int src;
+loop i in [1->50] do
+    src = src .. [i];
+end
+
+dst = []..src;
+
+escape dst[0] + dst[$dst-1] + ($dst as int) + 1;
+]],
+    run = 102,
+}
+Test { [[
+var[1024*] int dst;
+var int i;
+loop i in [1->1020] do
+    dst = dst .. [i];
+end
+$dst = 0;
+
+var[50] int src;
+loop i in [1->25] do
+    src = src .. [i];
+end
+$src = 0;
+loop i in [1->50] do
+    src = src .. [i];
+end
+
+dst = []..src;
+
+escape dst[0] + dst[$dst-1] + ($dst as int) + 1;
+]],
+    run = 102,
+}
 --<< VECTOR / RING
 
 --<<< VECTORS / STRINGS
