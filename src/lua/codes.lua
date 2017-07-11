@@ -1048,11 +1048,13 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
         end
     end,
 
-    Set_Nil = function (me)
+    Set_Any = function (me)
         local _, to = unpack(me)
-        LINE(me, [[
+        if TYPES.check(to.info.tp,'?') then
+            LINE(me, [[
 ]]..V(to)..[[.is_set = 0;
 ]])
+        end
     end,
 
     Set_Alias = function (me)

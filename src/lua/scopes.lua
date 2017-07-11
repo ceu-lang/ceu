@@ -116,7 +116,7 @@ F = {
     Set_Alias = function (me)
         local fr, to = unpack(me)
 
-        if fr.tag == 'NIL' then
+        if fr.tag == 'ID_any' then
             return
         end
 

@@ -263,7 +263,7 @@ EXPS.F = {
             end
 
             if var_alias then
-                if not (var_alias=='&?' and val.tag=='NIL') then
+                if not (var_alias=='&?' and val.tag=='ID_any') then
                     INFO.asr_tag(val, {'Alias'},
                         err_str..' : invalid binding : argument #'..i)
                 end
@@ -279,11 +279,7 @@ EXPS.F = {
                     'invalid binding : argument #'..i..' : expected declaration with `&`')
             end
 
-            if val.tag == 'NIL' then
-                -- ok: ignore _
-                assert(var_alias=='&?')
-
-            elseif val.tag == 'ID_any' then
+            if val.tag == 'ID_any' then
                 -- ok: ignore _
 
             elseif val.tag == 'Vec_Cons' then

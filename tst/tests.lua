@@ -293,6 +293,13 @@ escape v1 + v2;
 -- var/dynamic int x;
 -------------------------------------------------------------------------------
 
+Test { [[
+output (int?,int?) O;
+emit O(_,_);
+escape 1;
+]],
+    run = 1,
+}
 do return end -- OK
 --]=====]
 
@@ -20684,16 +20691,17 @@ escape v!;
 }
 
 Test { [[
-var& int v = nil;
+var& int v = _;
 escape 0;
 ]],
     stmts = 'line 1 : invalid binding : expected option alias',
+    --inits = 'line 1 : invalid binding : expected operator `&` in the right side',
 }
 
 Test { [[
 var int x = 10;
 var&? int v = &x;
-v = nil;
+v = _;
 escape (v? as int) + 1;
 ]],
     run = 1,
@@ -20715,21 +20723,6 @@ var int x = 1;
 escape call Ff(_) + call Ff(&x);
 ]],
     wrn = true,
-    dcls = 'line 9 : invalid call : invalid binding : argument #1 : expected location',
-}
-
-Test { [[
-code/tight Ff (var&? int i) -> int do
-    if i? then
-        escape i!;
-    else
-        escape 99;
-    end
-end
-var int x = 1;
-escape call Ff(nil) + call Ff(&x);
-]],
-    wrn = true,
     run = 100,
 }
 
@@ -20745,7 +20738,7 @@ code/tight Ff (var&? int i) -> int do
     escape call Gg(&i);
 end
 var int x = 1;
-escape call Ff(nil) + call Ff(&x);
+escape call Ff(_) + call Ff(&x);
 ]],
     wrn = true,
     run = 100,
@@ -20760,7 +20753,7 @@ code/await Ff (var&? int i) -> int do
     end
 end
 var int x = 1;
-var int v1 = await Ff(nil);
+var int v1 = await Ff(_);
 var int v2 = await Ff(&x);
 escape v1 + v2;
 ]],
@@ -20772,7 +20765,7 @@ Test { [[
 code/await Ff (var& int i) -> int do
     escape 1;
 end
-var int v1 = await Ff(nil);
+var int v1 = await Ff(_);
 escape v1;
 ]],
     wrn = true,
@@ -20792,33 +20785,12 @@ code/await Ff (var&? int i) -> int do
     escape ret;
 end
 var int x = 1;
-var int v1 = await Ff(nil);
+var int v1 = await Ff(_);
 var int v2 = await Ff(&x);
 escape v1 + v2;
 ]],
     --wrn = true,
     run = 100,
-}
-
-Test { [[
-code/await Gg (var&? int i) -> int do
-    if i? then
-        escape i!;
-    else
-        escape 99;
-    end
-end
-code/await Ff (var&? int i) -> int do
-    var int ret = await Gg(&i);
-    escape ret;
-end
-var int x = 1;
-var int v1 = await Ff(_);
-var int v2 = await Ff(&x);
-escape v1 + v2;
-]],
-    wrn = true,
-    dcls = 'line 13 : invalid call : invalid binding : argument #1 : expected location',
 }
 
 --<< OPTION / ALIAS / ID_any
@@ -31050,7 +31022,8 @@ end
 var&[_N] _u8 xxxx = _;
 escape 1;
 ]],
-    inits = 'line 6 : invalid binding : expected operator `&` in the right side',
+    stmts = 'line 6 : invalid binding : expected option alias',
+    --inits = 'line 6 : invalid binding : expected operator `&` in the right side',
     --inits = 'line 6 : invalid binding : unexpected statement in the right side',
     --gcc = '6:26: error: variably modified ‘xxxx’ at file scope',
 }
@@ -33407,23 +33380,25 @@ escape a;
 
 Test { [[
 var int x = 10;
-x = nil;
-escape 1;
+x = _;
+escape x;
 ]],
-    stmts = 'line 2 : invalid assignment : expected option destination',
+    --stmts = 'line 2 : invalid assignment : expected option destination',
+    run = 10,
 }
 
 Test { [[
-var[] int x;
-x = nil;
-escape 1;
+var[] int x = [1,2,3];
+x = _;
+escape x[1];
 ]],
-    stmts = 'line 2 : invalid assignment : unexpected context for vector "x"',
+    --stmts = 'line 2 : invalid assignment : unexpected context for vector "x"',
+    run = 2,
 }
 
 Test { [[
 var int? x = 10;
-x = nil;
+x = _;
 escape (x? as int) + 1;
 ]],
     run = 1,
@@ -47207,17 +47182,6 @@ end
 var Dd d = val Dd(10,_);
 escape d.x;
 ]],
-    dcls = 'line 5 : invalid constructor : invalid binding : argument #2 : expected location',
-}
-
-Test { [[
-data Dd with
-    var int x;
-    var&? Dd d;
-end
-var Dd d = val Dd(10,nil);
-escape d.x;
-]],
     run = 10,
 }
 
@@ -47226,7 +47190,7 @@ data Dd with
     var int x;
     var&? Dd d;
 end
-var Dd d1 = val Dd(10,nil);
+var Dd d1 = val Dd(10,_);
 var Dd d2 = val Dd(20,&d1);
 escape d2.x + d2.d!.x;
 ]],
@@ -47244,7 +47208,7 @@ code/tight/recursive Dd_D(var& Dd d, var& Dd ret) -> void do
     end
     ret.x = ret.x + d.x;
 end
-var Dd d1 = val Dd(10,nil);
+var Dd d1 = val Dd(10,_);
 var Dd d2 = val Dd(20,&d1);
 var Dd d = _;
 call/recursive Dd_D(&d2,&d);
@@ -47265,10 +47229,10 @@ code/tight/recursive Dd_D_(var& Dd d, var& Dd ret) -> void do
     ret.x = ret.x + d.x;
 end
 code/tight/recursive Dd_D(var& Dd d, var& Dd ret) -> void do
-    ret = val Dd(0,nil);
+    ret = val Dd(0,_);
     call/recursive Dd_D_(&d, &ret);
 end
-var Dd d1 = val Dd(10,nil);
+var Dd d1 = val Dd(10,_);
 var Dd d2 = val Dd(20,&d1);
 var Dd d = _;
 call/recursive Dd_D(&d2,&d);

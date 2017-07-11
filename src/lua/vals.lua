@@ -57,7 +57,7 @@ F = {
 
 -- PRIMITIVES
 
-    NIL = function (me)
+    ID_any = function (me)
         return 'NULL'
     end,
 

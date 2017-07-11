@@ -110,18 +110,18 @@ STMTS.F = {
         end
     end,
 
-    Set_Nil = function (me)
+    Set_Any = function (me)
         local _, to = unpack(me)
-        INFO.asr_tag(to, {'Var'}, 'invalid assignment')
-        ASR(TYPES.check(to.info.tp,'?'), me,
-            'invalid assignment : expected option destination')
+        --INFO.asr_tag(to, {'Var'}, 'invalid assignment')
+        --ASR(TYPES.check(to.info.tp,'?'), me,
+            --'invalid assignment : expected option destination')
     end,
 
     Set_Alias = function (me)
         local fr, to = unpack(me)
         local alias = unpack(to.info.dcl)
 
-        if fr.tag == 'NIL' then
+        if fr.tag == 'ID_any' then
             ASR(alias == '&?', me, 'invalid binding : expected option alias')
             return
         end
