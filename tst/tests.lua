@@ -31282,6 +31282,7 @@ escape v2[0] + v2[2] + ($v2 as int);
 ]],
     run = 9,
 }
+
 Test { [[
 var int n = 3;
 var[n*] int v1 = [1,2,3];

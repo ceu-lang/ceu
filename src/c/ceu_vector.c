@@ -188,12 +188,11 @@ void ceu_vector_concat_ex (tceu_vector* dst, usize idx, tceu_vector* src,
                            const char* file, u32 line)
 {
     usize dst_len = dst->len;
-    ceu_vector_setlen(dst, dst->len+src->len, 1);
-    if (src->is_ring && ceu_vector_idx(src,src->len)<ceu_vector_idx(src,0)) {
+    ceu_vector_setlen_ex(dst, dst->len+src->len, 1, file, line);
+    if (src->is_ring && src->len>0 && ceu_vector_idx(src,src->len)<=ceu_vector_idx(src,0)) {
         usize n = (src->max - src->ini);
         ceu_vector_buf_set_ex(dst, idx,   ceu_vector_buf_get(src,0), n*src->unit,            file, line);
         ceu_vector_buf_set_ex(dst, idx+n, ceu_vector_buf_get(src,n), (src->len-n)*src->unit, file, line);
-        // TODO: dst->is_ring
     } else {
         if (dst->is_ring) {
             usize n = (dst->max - ceu_vector_idx(dst,dst_len));
@@ -203,8 +202,7 @@ void ceu_vector_concat_ex (tceu_vector* dst, usize idx, tceu_vector* src,
             } else {
                 ceu_vector_buf_set_ex(dst, idx, ceu_vector_buf_get(src,0), (src->len*src->unit), file, line);
             }
-        } else
-        {
+        } else {
             ceu_vector_buf_set_ex(dst, idx, ceu_vector_buf_get(src,0), (src->len*src->unit), file, line);
         }
     }
