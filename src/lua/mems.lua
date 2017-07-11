@@ -269,13 +269,7 @@ assert(me.hier)
         end
     end,
 
-    Var = function (me)
-        -- new `?` type
-        local alias,tp = unpack(me)
-        if not (alias=='&?' or TYPES.check(tp,'?')) then
-            return
-        end
-
+    __opt = function (alias,tp)
         local str = TYPES.tostring(tp)
         if not MEMS.opts[str] then
             MEMS.opts[str] = true
@@ -310,6 +304,24 @@ static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
 }
 ]]
             end
+        end
+    end,
+
+    Ext = function (me)
+        local _,tps = unpack(me)
+        for _, tp in ipairs(tps) do
+            -- new `?` type
+            if TYPES.check(tp,'?') then
+                F.__opt(false,tp)
+            end
+        end
+    end,
+
+    Var = function (me)
+        -- new `?` type
+        local alias,tp = unpack(me)
+        if (alias=='&?' or TYPES.check(tp,'?')) then
+            F.__opt(alias,tp)
         end
     end,
 

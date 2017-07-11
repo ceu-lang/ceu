@@ -293,13 +293,6 @@ escape v1 + v2;
 -- var/dynamic int x;
 -------------------------------------------------------------------------------
 
-Test { [[
-output (int?,int?) O;
-emit O(_,_);
-escape 1;
-]],
-    run = 1,
-}
 do return end -- OK
 --]=====]
 
@@ -24048,6 +24041,34 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+native _V1, _V2;
+native/pos do
+    int V1, V2;
+    tceu_callback_ret CB_F (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
+        tceu_callback_ret ret;
+        if (cmd != CEU_CALLBACK_OUTPUT) {
+            ret.is_handled = 0;
+        } else {
+            ret.is_handled = 1;
+            if (p1.num == CEU_OUTPUT_O) {
+                tceu_output_O* o = (tceu_output_O*) p2.ptr;
+                V1 = (o->_1.is_set == 0);
+                V2 = (o->_2.is_set == 1) + (o->_2.value);
+            }
+        }
+        return ret;
+    }
+    tceu_callback CB = { &CB_F, NULL };
+end
+{ ceu_callback_register(&CB); }
+
+output (int?,int?) O;
+emit O(_,10);
+escape _V1 + _V2;
+]],
+    run = 12,
+}
 --<<< OUTPUT
 
 Test { [[

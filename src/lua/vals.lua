@@ -59,6 +59,7 @@ F = {
 
     ID_any = function (me)
         return 'NULL'
+        --return '{ .is_set=0 }'
     end,
 
     NULL = function (me)

@@ -260,7 +260,7 @@ do
     end
 
     function TYPES.contains (tp1, tp2, is_alias)
-        if tp1 == true then
+        if tp1==true or tp2==true then
             return true
         end
 

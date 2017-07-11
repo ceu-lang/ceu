@@ -83,9 +83,13 @@ case ]]..T.lbl..[[:;
     end
 end
 
-function SET (me, to, fr, fr_ok, fr_ctx, to_ctx)
+function SET (me, to, fr, to_ok, fr_ok, to_ctx, fr_ctx)
     local fr_val = fr
-    local to_val = V(to,to_ctx)
+    local to_val = to
+
+    if not to_ok then
+        to_val = V(to,to_ctx)
+    end
 
     if not fr_ok then
         -- var Ee.Xx ex = ...;
@@ -630,7 +634,7 @@ if (0) {
 ]])
         if i.tag ~= 'ID_any' then
             local abs = TYPES.abs_dcl(i.info.tp,'Code')
-            SET(me, i, '((tceu_code_mem_'..abs.id_..'*)'..cur..'->mem)', true, nil, {is_bind=true})
+            SET(me, i, '((tceu_code_mem_'..abs.id_..'*)'..cur..'->mem)', nil,true, {is_bind=true},nil)
             LINE(me, [[
             _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].evt.id    = CEU_INPUT__CODE_TERMINATED;
             _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].evt.mem   = ]]..cur..'->mem'..[[;
@@ -1095,7 +1099,7 @@ ceu_callback_assert_msg(]]..V(to,{is_bind=true})..[[!=NULL, "call failed");
         local fr, to = unpack(me)
         CONC_ALL(me)
         assert(fr.tag == 'Await_Wclock')
-        SET(me, to, 'CEU_APP.wclk_late', true)
+        SET(me, to, 'CEU_APP.wclk_late', nil,true)
     end,
     Set_Await_many = function (me)
         local Await, List = unpack(me)
@@ -1115,7 +1119,7 @@ ceu_callback_assert_msg(]]..V(to,{is_bind=true})..[[!=NULL, "call failed");
                 --  to
                 -- _spw = spawn Ff();
                 -- x = await _spw;
-                SET(me, to, CUR('__mem_'..spawn.n)..'._ret', true)
+                SET(me, to, CUR('__mem_'..spawn.n)..'._ret', nil,true)
             else
                 LINE(me, [[
 if (_ceu_occ!=NULL && _ceu_occ->evt.id==CEU_INPUT__CODE_TERMINATED) {
@@ -1139,7 +1143,7 @@ if (_ceu_occ!=NULL && _ceu_occ->evt.id==CEU_INPUT__CODE_TERMINATED) {
             for i, loc in ipairs(List) do
                 if loc.tag ~= 'ID_any' then
                     local ps = '(('..id..'*)(_ceu_occ->params))'
-                    SET(me, loc, ps..'->_'..i, true)
+                    SET(me, loc, ps..'->_'..i, nil,true)
                 end
             end
         end
@@ -1151,7 +1155,7 @@ if (_ceu_occ!=NULL && _ceu_occ->evt.id==CEU_INPUT__CODE_TERMINATED) {
     Set_Abs_Val = function (me)
         local fr, to = unpack(me)
         local _,Abs_Cons = unpack(fr)
-        SET(me, to, Abs_Cons, nil, {to_val=V(to)})
+        SET(me, to, Abs_Cons, nil,nil, nil,{to_val=V(to)})
     end,
 
     Set_Vec = function (me)
@@ -1327,9 +1331,22 @@ do {
 tceu_]]..inout..'_'..ID_ext.dcl.id..[[ __ceu_ps;
 ]])
             for i, exp in ipairs(List_Exp) do
-                LINE(me, [[
+                if TYPES.check(Typelist[i],'?') then
+                    if exp.tag == 'ID_any' then
+                        LINE(me, [[
+__ceu_ps._]]..i..[[.is_set = 0;
+]])
+                    else
+                        LINE(me, [[
+__ceu_ps._]]..i..[[.is_set = 1;
+__ceu_ps._]]..i..'.value = '..V(exp)..[[;
+]])
+                    end
+                else
+                    LINE(me, [[
 __ceu_ps._]]..i..' = '..V(exp)..[[;
 ]])
+                end
             end
             ps = '&__ceu_ps'
         end
@@ -1341,7 +1358,7 @@ ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..'.id, '..ps..[[).value.
 ]]
             if set then
                 local _, to = unpack(set)
-                SET(me, to, cb, true)
+                SET(me, to, cb, nil,true)
             else
                 LINE(me, cb)
             end
@@ -1549,7 +1566,7 @@ ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
         local chk = '(('..v..' != NULL) && ('..v..'->has_started))'
 
         CONC_ALL(me)
-        SET(me, to, chk, true)
+        SET(me, to, chk, nil,true)
     end,
 
     Async_Thread = function (me)

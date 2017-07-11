@@ -829,9 +829,13 @@ error'TODO: luacov never executes this?'
         end
     end,
 
+    _List_Exp_Any = function (me)
+        me.tag = 'List_Exp'
+    end,
+
     _Emit_ps__PRE = function (me)
         local exp = unpack(me)
-        if exp and exp.tag == 'List_Exp' then
+        if exp and (exp.tag=='List_Exp' or exp.tag=='_List_Exp_Any') then
             return exp
         end
         local ret = node('List_Exp', me.ln)

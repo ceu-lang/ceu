@@ -553,7 +553,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , Await_Pause   = K'await' * K'pause'   * V'Y'
     , Await_Resume  = K'await' * K'resume'  * V'Y'
 
-    , _Emit_ps = OPT(V'__Exp' + PARENS(OPT(V'List_Exp')))
+    , _Emit_ps = OPT(V'__Exp' + V'ID_any' + PARENS(OPT(V'_List_Exp_Any')))
     , Emit_Wclock   = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
     , Emit_Ext_emit = K'emit'                     * V'ID_ext' * V'_Emit_ps'
     , Emit_Ext_call = (K'call/recursive'+K'call') * V'ID_ext' * V'_Emit_ps'
@@ -695,6 +695,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 -- TODO: rename List_*
     , List_Loc = LIST(V'Loc' + V'ID_any')
     , List_Exp = LIST(V'__Exp')
+    , _List_Exp_Any = LIST(V'__Exp'+ V'ID_any')
     , List_Var = LIST(V'ID_int' + V'ID_any')
 
  --<<<

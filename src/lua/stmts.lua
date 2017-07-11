@@ -593,43 +593,46 @@ STMTS.F = {
 
 -- VARLIST, EXPLIST
 
-    List_Exp = function (me)
+    __typelist = function (me)
         local Typelist = AST.node('Typelist', me.ln)
         for i, e in ipairs(me) do
-            -- ctx
--- TODO: call/emit, argument
-            if AST.par(me,'Exp_call') then
+            if e.tag == 'ID_any' then
+                Typelist[i] = true
+            else
+                Typelist[i] = AST.copy(e.info.tp)
+            end
+        end
+        return Typelist
+    end,
+
+    List_Exp = function (me)
+        -- ctx
+        for i, e in ipairs(me) do
+            if e.tag == 'ID_any' then
+                -- ok
+            elseif AST.par(me,'Exp_call') then
                 INFO.asr_tag(e, {'Val','Nat','Var'},
                     'invalid expression list : item #'..i)
             else
                 INFO.asr_tag(e, {'Val','Nat','Var','Alias'},
                     'invalid expression list : item #'..i)
             end
-
-            -- info
-            Typelist[i] = AST.copy(e.info.tp)
         end
-        me.tp = Typelist
+
+        -- tp
+        me.tp = STMTS.F.__typelist(me)
     end,
 
     List_Loc = function (me)
         -- ctx
         for _, var in ipairs(me) do
             if var.tag ~= 'ID_any' then
-                INFO.asr_tag(var, {'Nat','Var','Vec'}, 'invalid variable')
+                INFO.asr_tag(var, {'Var','Vec','Nat'}, 'invalid variable')
             end
         end
 
-        -- info
-        local Typelist = AST.node('Typelist', me.ln)
-        for i, var in ipairs(me) do
-            if var.tag == 'ID_any' then
-                Typelist[i] = true
-            else
-                Typelist[i] = AST.copy(var.info.tp)
-            end
-        end
-        me.tp = Typelist
+        -- tp
+        me.tp = STMTS.F.__typelist(me)
     end,
 
     List_Var = function (me)
@@ -640,14 +643,8 @@ STMTS.F = {
             end
         end
 
-        -- info
-        local Typelist = AST.node('Typelist', me.ln)
-        for i, var in ipairs(me) do
-            if var.tag ~= 'ID_any' then
-                Typelist[i] = AST.copy(var.info.tp)
-            end
-        end
-        me.tp = Typelist
+        -- tp
+        me.tp = STMTS.F.__typelist(me)
     end,
 }
 
