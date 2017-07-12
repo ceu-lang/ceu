@@ -203,6 +203,19 @@ escape ret;
     run = 1,
 }
 
+-- BUG #108
+Test { [[
+event int? e;
+par do
+    var int? v = await e;
+    escape v!;
+with
+    emit e(10);
+end
+]],
+    run = 10,
+}
+
 -- BUG #(static calls)
 Test { [[
 data Aa with
