@@ -16,7 +16,7 @@ Data ::= data ID_abs [as (nothing|Exp)] [ with
          end
 
 Data_Cons ::= (val|new) Abs_Cons
-Abs_Cons  ::= [Loc `.´] ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`nil´|`_´) `)´
+Abs_Cons  ::= [Loc `.´] ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
 ```
 
 A declaration may pack fields with

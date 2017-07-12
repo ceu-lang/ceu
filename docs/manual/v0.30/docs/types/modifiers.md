@@ -13,4 +13,4 @@ Types can be suffixed with the pointer modifier `&&` and the option modifier
 
 `TODO (like "Maybe")`
 
-`TODO: nil`
+`TODO: _`

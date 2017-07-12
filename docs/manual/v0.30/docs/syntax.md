@@ -52,10 +52,10 @@ Stmt ::= nothing
       | await (FOREVER | pause | resume)
 
       // Emit_Ext ::=
-      | emit ID_ext [`(´ [LIST(Exp)] `)´]
+      | emit ID_ext [`(´ [LIST(Exp|`_´)] `)´]
       | emit (WCLOCKK|WCLOCKE)
       //
-      | emit Loc [`(´ [LIST(Exp)] `)´]
+      | emit Loc [`(´ [LIST(Exp|`_´)] `)´]
 
       | lock Loc do
             Block
@@ -221,7 +221,7 @@ Stmt ::= nothing
 
         // where
             Mods ::= [`/´dynamic | `/´static] [`/´recursive]
-            Abs_Cons ::= [Loc `.´] ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`nil´|`_´) `)´
+            Abs_Cons ::= [Loc `.´] ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
 
   /* Assignments */
 
@@ -239,7 +239,6 @@ Stmt ::= nothing
                         | Vec_Cons
                         | Data_Cons
                         | Exp
-                        | `nil´
                         | `_´ )
             Vec_Cons  ::= (Loc | Exp) Vec_Concat { Vec_Concat }
                        |  `[´ [LIST(Exp)] `]´ { Vec_Concat }
