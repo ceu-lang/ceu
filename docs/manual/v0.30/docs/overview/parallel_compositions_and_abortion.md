@@ -12,9 +12,9 @@ rejoin and proceed to the statement in sequence:
 
 As mentioned in the introduction and emphasized in the execution model, trails
 in parallel do not execute with real parallelism.
-Therefore, parallel compositions support *awaiting in parallel*, rather than
-*executing in parallel*.
-
+Therefore, it is important to note that parallel compositions provide
+*awaiting in parallel*, rather than *executing in parallel* (see
+[Asynchronous Threads](../statements/#thread) for real parallelism support).
 <!--
 The termination of a trail inside a `par/or` aborts the other trails in 
 parallel which are necessarily idle

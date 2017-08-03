@@ -20,7 +20,7 @@ runtime stack:
 3. The top of stack is popped and the last emitting trail resumes execution
     from its continuation.
 
-Example:
+The program and follow illustrates the behavior of internal reactions in Céu:
 
 ```ceu
 1:  par/and do      // trail 1
@@ -29,15 +29,23 @@ Example:
 4:  with            // trail 2
 5:      await f;
 6:  with            // trail 3
-8:      emit e;
-9:  end
+7:      emit e;
+8:  end
 ```
 
-The `emit e` in *trail-3* (line 7) starts an internal reaction that awakes the 
-`await e` in *trail-1* (line 2).
-Then, the `emit f` (line 3) starts another internal reaction that awakes the 
-`await f` in *trail-2* (line 5).
-*Trail-2* terminates and the `emit f` resumes in *trail-1*.
-*Trail-1* terminates and the `emit e` resumes in *trail-3*.
-*Trail-3* terminates.
-Finally, the `par/and` rejoins and the program terminates.
+The program starts in the boot reaction with an empty stack and forks into the
+three trails.
+Respecting the lexical order, the first two trails `await` and the third trail
+executes:
+
+- The `emit e` in *trail-3* (line 7) starts an internal reaction (`stack=[7]`).
+- The `await e` in *trail-1* awakes (line 2) and then the `emit f` (line 3)
+  starts another internal reaction (`stack=[7,3]`).
+- The `await f` in *trail-2* awakes and terminates the trail (line 5).
+  Since no other trails are awaiting `f`, the current internal reaction
+  terminates, resuming and popping the top of the stack (`stack=[7]`).
+- The `emit f` resumes in *trail-1* and terminates the trail (line 3).
+  The current internal reaction terminates, resuming and popping the top of the
+  stack (`stack=[]`).
+- The `emit e` resumes in *trail-3* and terminates the trail (line 7).
+  Finally, the `par/and` rejoins and the program terminates.

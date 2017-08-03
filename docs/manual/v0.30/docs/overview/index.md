@@ -1,22 +1,32 @@
 # Overview
 
-Céu provides *Structured Synchronous Reactive Programming*, extending classical
-structured programming with two main functionalities:
+Céu provides *Structured Synchronous Reactive Programming* with the following
+general characteristics:
 
+- *Reactive*:    code executes in reactions to events.
+- *Structured*:  code uses structured control-flow mechanisms, such as `spawn`
+                 and `await` (to create and suspend an activity).
+- *Synchronous*: event reactions never overlap and run atomically and to
+                 completion on each activity.
+                 There is no implicit preemption or real parallelism, resulting
+                 in deterministic execution.
+
+<!--
 - Event Handling:
     - An `await` statement to suspend a line of execution and wait for an input
       event from the environment.
     - An `emit` statement to signal an output event back to the environment.
 - Concurrency:
     - A set of parallel constructs to compose concurrent lines of execution.
+-->
 
 The lines of execution in Céu, known as *trails*, react all together to input
 events one after another, in discrete steps.
-An input event is broadcast to all active trails, which share the event as
-their unique and global time reference.
+An input event is broadcast to all active trails, which share the event as an
+unique and global time reference.
 
-The program that follows blinks a LED every second and terminates on a button
-press:
+The example in Céu that follows blinks a LED every second and terminates on a
+button press:
 
 ```ceu
 input  void BUTTON;

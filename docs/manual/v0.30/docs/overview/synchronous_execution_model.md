@@ -32,34 +32,37 @@ This policy is arbitrary, but provides a priority scheme for trails, and also
 ensures deterministic and reproducible execution for programs.
 At any time, at most one trail is executing.
 
-The program and diagram below illustrate the behavior of the scheduler of Céu:
+The program and diagram that follow illustrate the behavior of the scheduler of
+Céu:
 
 ```ceu
- 1:  input void A, B, C;  // A, B, and C are input events
- 2:  par/and do
- 3:      // trail 1
- 4:      <...>            // <...> represents non-awaiting statements
- 5:      await A;
- 6:      <...>
- 7:  with
- 8:      // trail 2
- 9:      <...>
-10:      await B;
+ 1:  input void A;
+ 2:  input void B;
+ 3:  input void C;
+ 4:  par/and do
+ 5:      // trail 1
+ 6:      <...>          // a `<...>` represents non-awaiting statements
+ 7:      await A;       // (e.g., assignments and native calls)
+ 8:      <...>
+ 9:  with
+10:      // trail 2
 11:      <...>
-12:  with
-13:      // trail 3
-14:      <...>
-15:      await A;
+12:      await B;
+13:      <...>
+14:  with
+15:      // trail 3
 16:      <...>
-17:      await B;
-18:      par/and do
-19:          // trail 3
-20:          <...>
-21:      with
-22:          // trail 4
-23:          <...>
-24:      end
-25:  end
+17:      await A;
+18:      <...>
+19:      await B;
+20:      par/and do
+21:          // trail 3
+22:          <...>
+23:      with
+24:          // trail 4
+25:          <...>
+26:      end
+27:  end
 ```
 
 ![](overview/reaction.png)
@@ -68,20 +71,20 @@ The program starts in the boot reaction and forks into three trails.
 Respecting the lexical order of declaration for the trails, they are scheduled
 as follows (*t0* in the diagram):
 
-- *trail-1* executes up to the `await A` (line 5);
-- *trail-2* executes up to the `await B` (line 10);
-- *trail-3* executes up to the `await A` (line 15).
+- *trail-1* executes up to the `await A` (line 7);
+- *trail-2* executes up to the `await B` (line 12);
+- *trail-3* executes up to the `await A` (line 17).
 
 As no other trails are pending, the reaction chain terminates and the scheduler 
-remains idle until the event `A` occurs (*t1* in the diagram):
+remains idle until a new event occurs (*t1=A* in the diagram):
 
-- *trail-1* awakes, executes and terminates (line 6);
+- *trail-1* awakes, executes and terminates (line 8);
 - *trail-2* remains suspended, as it is not awaiting `A`.
-- *trail-3* executes up to `await B` (line 17).
+- *trail-3* executes up to `await B` (line 19).
 
-During the reaction *t1*, new instances of events `A`, `B`, and `C` occur and
-are enqueued to be handled in the reactions in sequence.
-As `A` happened first, it is used in the next reaction.
+Note that during the reaction *t1*, new instances of events `A`, `B`, and `C`
+occur which are all enqueued to be handled in the reactions in sequence.
+As `A` happened first, it becomes the next reaction.
 However, no trails are awaiting it, so an empty reaction chain takes place 
 (*t2* in the diagram).
 The next reaction dequeues the event `B` (*t3* in the diagram):
