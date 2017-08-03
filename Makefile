@@ -15,6 +15,13 @@ compiler:
 install:
 	cp ./src/lua/ceu $(CEU_EXE)
 
+one:
+	ceu --pre --pre-input=$(CEU_SRC) --pre-args=\"-I./include\"                \
+		--ceu --ceu-features-lua=true --ceu-features-thread=true --ceu-err-unused=pass \
+		--env --env-types=env/types.h --env-threads=env/threads.h --env-main=env/main.c --env-output=/tmp/_ceu_app.c \
+		--cc --cc-args="-llua5.3 -lpthread $(CC_ARGS)"                             \
+			 --cc-output=/tmp/$$(basename $(CEU_SRC) .ceu);                    \
+
 samples:
 	for i in samples/*.ceu; do                                              \
 		echo;                                                               \

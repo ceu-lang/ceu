@@ -306,7 +306,7 @@ escape v1 + v2;
 -- var/dynamic int x;
 -------------------------------------------------------------------------------
 
-do return end -- OK
+--do return end -- OK
 --]=====]
 
 ----------------------------------------------------------------------------
@@ -6396,6 +6396,29 @@ end
 escape v;
 ]],
     run = 20,
+}
+
+Test { [[
+native _ceu_dbg_assert;
+
+var u32 t = 0;
+
+loop _ in [1 -> 1000000[ do
+    t = t + 1;
+    var[] u32 ms = [t];
+
+    var u32 v1 = ms[0];
+    ms = ms .. [t];
+    var u32 v2 = ms[0];
+
+    _ceu_dbg_assert(v1 == v2);
+end
+
+escape 1;
+]],
+    wrn = true,
+    opts_pre = true,
+    run = 1,
 }
 
 --<<< LOOP
@@ -25759,7 +25782,7 @@ var[10] _int x = _;
 escape sizeof(x) as int;
 ]],
     wrn = true,
-    run = 44,
+    run = 40,
 }
 
 Test { [[
@@ -30053,6 +30076,25 @@ native/pos do
 end
 native _char, _Tx;
 var[] byte str = [] .. (_Tx.f() as _char&&) .. "oi";
+escape (str[5]=={'i'}) as int;
+]],
+    run = 1,
+}
+
+Test { [[
+native/pos do
+    char* f (void) {
+        return "ola";
+    }
+    typedef struct {
+        char* (*f) (void);
+    } tp;
+    tp Tx = { f };
+end
+native _char, _Tx;
+var[] byte str = [] .. (_Tx.f() as _char&&);
+$str = $str - 1;
+str = str .. "oi";
 escape (str[4]=={'i'}) as int;
 ]],
     run = 1,
@@ -30073,8 +30115,9 @@ native/pos do
 end
 native/pure _ID, _strlen;
 native _char;
-var[] byte str = [] .. "abc"
-                    .. (_ID("def") as _char&&);
+var[] byte str = [] .. "abc";
+$str = $str - 1;
+str = str .. (_ID("def") as _char&&);
 var byte&& str2 = _ID((&&str[0]));
 escape _strlen((&&str[0]) as _char&&) + _strlen(str2 as _char&&);
 ]],
@@ -30115,13 +30158,12 @@ escape (&&str1[0] == &&str1[0]) as int;
 
 Test { [[
 native/pure _strcmp;
-var[] byte str1 = [].."";    // TODO: still points to NULL as
-var[] byte str2 = [].."";    //  len=0
+var[] byte str1 = [].."";
+var[] byte str2 = [].."";
 native _char;
 escape (_strcmp((&&str1[0]) as _char&&,"")==0 and _strcmp((&&str2[0]) as _char&&,"")==0) as int;
 ]],
-    -- TODO:
-    run = 'Segmentation fault',
+    run = 1,
 }
 
 Test { [[
@@ -30347,7 +30389,7 @@ end
 var[] byte str = [] .. (call Ff());
 escape $str as int;
 ]],
-    run = 2,
+    run = 3,
 }
 Test { [[
 code/tight Ff (void) -> bool do
@@ -30461,6 +30503,7 @@ escape _strlen((&&v[0]) as _char&&);
 Test { [[
 native/nohold _strlen;
 var[] byte v = [].."abc";
+$v = $v - 1;
 v = v .. "def";
 native _char;
 escape _strlen((&&v[0]) as _char&&);
@@ -30816,7 +30859,9 @@ native _char_ptr, _char;
 native/pure _strlen;
 var _char_ptr x = "oioi";
 var _char&& y = x;
-var[] byte str = [] .. (x as _char&&) .. (y as _char&&);
+var[] byte str = [] .. (x as _char&&);
+$str = $str - 1;
+str = str .. (y as _char&&);
 escape _strlen(&&str[0] as _char&&);
 ]],
     run = 8,
@@ -30831,7 +30876,9 @@ native/pure _ID, _strlen;
 native _char_ptr, _char;
 var _char_ptr x = "oioi";
 var _char&& y = x;
-var[] byte str = [] .. (_ID(x) as _char&&) .. (_ID(y) as _char&&);
+var[] byte str = [] .. (_ID(x) as _char&&);
+$str = $str - 1;
+str = str .. (_ID(y) as _char&&);
 escape _strlen(&&str[0] as _char&&);
 ]],
     run = 8,
@@ -30943,7 +30990,9 @@ end
 var[] byte  str;
 var&[] byte ref = &str;
 native _char;
-ref = [] .. ({f}() as _char&&) .. "oi";
+ref = [] .. ({f}() as _char&&);
+$ref = $ref - 1;
+ref = ref .. "oi";
 native/pure _strlen;
 escape _strlen((&&str[0]) as _char&&);
 ]],
@@ -31164,15 +31213,64 @@ do/_
     escape {strlen(@(&&str[0] as _char&&))};
 end
 ]],
+    run = '2] runtime error: access out of bounds',
+}
+
+Test { [[
+do
+    var[11] byte str = [].."1234567890";
+end
+do/_
+    var[5*] byte str = [].."12345";
+    escape {strlen(@(&&str[0] as _char&&))};
+end
+]],
+    run = '5] runtime error: access out of bounds',
+}
+
+Test { [[
+do
+    var[11] byte str = [].."1234567890";
+end
+do/_
+    var[6*] byte str = [].."12345";
+    escape {strlen(@(&&str[0] as _char&&))};
+end
+]],
     run = 5,
 }
 
 Test { [[
 do
-    var[10] byte str = [].."1234567890";
+    var[11] byte str = [].."1234567890";
+end
+do/_
+    var[5*] byte str = [].."1234";
+    escape {strlen(@(&&str[0] as _char&&))};
+end
+]],
+    run = 4,
+}
+
+Test { [[
+do
+    var[11] byte str = [].."1234567890";
 end
 do/_
     var int n = 5;
+    var[n*] byte str = [].."12345";
+    escape {strlen(@(&&str[0] as _char&&))};
+end
+]],
+    run = '6] runtime error: access out of bounds',
+}
+
+Test { [[
+do
+    var[11] byte str = [].."1234567890";
+end
+do/_
+    var int n = 6;
     var[n*] byte str = [].."12345";
     escape {strlen(@(&&str[0] as _char&&))};
 end
@@ -43733,7 +43831,7 @@ escape ok as int;
 
 Test { [=[
 var[] byte str = [].."12345";
-var[] byte bts = [1,2,3,4,5];
+var[] byte bts = [1,2,3,4,5,0];
 var int r1 = [[ string.len(@str) ]];
 var int r2 = [[ string.len(@bts) ]];
 escape r1+r2;

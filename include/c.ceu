@@ -2,6 +2,10 @@
 #define _C_CEU
 
 native/const
+    _F_GETFL,
+    _F_SETFL,
+    _O_RDONLY,
+    _O_NONBLOCK,
     _stderr,
     _stdout,
 ;
@@ -31,6 +35,7 @@ native/nohold
     _free,
     _memcpy,
     _printf,
+    _read,
     _snprintf,
     _sprintf,
     _sscanf,
@@ -41,11 +46,14 @@ native/nohold
 native
     _assert,
     _ceu_dbg_assert,
+    _close,
     _cos,
+    _fcntl,
     _htonl,
     _malloc,
     _ntohl,
     _ntohs,
+    _open,
     _pow,
     _rand,
     _sin,

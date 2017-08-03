@@ -354,13 +354,13 @@ static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
             local ptr = (is_alias and '*' or '')
             if TYPES.is_nat(TYPES.get(tp,1)) then
                 return [[
-]]..TYPES.toc(tp)..' ('..ptr..dcl.id_..')['..V(dim)..[[+1]; /* [STRING] +1 */
+]]..TYPES.toc(tp)..' ('..ptr..dcl.id_..')['..V(dim)..[[];
 ]]
             else
                 local ret = ''
                 if dim.is_const and (not is_alias) then
                     ret = ret .. [[
-]]..TYPES.toc(tp)..' '..dcl.id_..'_buf['..V(dim)..[[+1];    /* [STRING] +1 */
+]]..TYPES.toc(tp)..' '..dcl.id_..'_buf['..V(dim)..[[];
 ]]
                 end
                 return ret .. [[

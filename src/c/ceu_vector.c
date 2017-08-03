@@ -9,7 +9,7 @@ typedef struct {
     u8    is_ring:    1;
     u8    is_dyn:     1;
     u8    is_freezed: 1;
-    byte* buf;              /* [STRING] buf must have max+1 bytes */
+    byte* buf;
 } tceu_vector;
 
 #define ceu_vector_idx(vec,idx)            ((vec)->is_ring ? (((vec)->ini + idx) % (vec)->max) : idx)
@@ -48,11 +48,6 @@ void ceu_vector_init (tceu_vector* vector, usize max, bool is_ring,
     vector->is_ring    = is_ring;
     vector->is_freezed = 0;
     vector->buf        = buf;
-
-    /* [STRING] */
-    if (vector->buf != NULL) {
-        vector->buf[vector->max] = '\0';
-    }
 }
 
 byte* ceu_vector_setmax (tceu_vector* vector, usize len, bool freeze) {
@@ -70,7 +65,7 @@ byte* ceu_vector_setmax (tceu_vector* vector, usize len, bool freeze) {
         vector->buf = (byte*) ceu_callback_ptr_size(
                                 CEU_CALLBACK_REALLOC,
                                 vector->buf,
-                                len*vector->unit + 1    /* [STRING] +1 */
+                                len*vector->unit
                               ).value.ptr;
     }
 
@@ -138,10 +133,6 @@ void ceu_vector_setlen_ex (tceu_vector* vector, usize len, bool grow,
                 ceu_callback_assert_msg_ex(len==0, "access out of bounds",
                                            file, line);
             }
-        }
-        /* [STRING] */
-        if (vector->buf != NULL) {
-            vector->buf[vector->max] = '\0';
         }
     }
 

@@ -1188,7 +1188,9 @@ if (_ceu_occ!=NULL && _ceu_occ->evt.id==CEU_INPUT__CODE_TERMINATED) {
                 LINE(me, [[
     {
         const char* __ceu_str = ]]..V(fr)..[[;
-        usize __ceu_len = strlen(__ceu_str);
+        usize __ceu_len = strlen(__ceu_str) + 1;  /* +1 = '\0' */
+]])
+        LINE(me, [[
         ceu_vector_setlen(&]]..V(to)..', ('..V(to)..[[.len + __ceu_len), 1);
         ceu_vector_buf_set(&]]..V(to)..[[,
                            __ceu_nxt,
@@ -1221,7 +1223,7 @@ if (_ceu_occ!=NULL && _ceu_occ->evt.id==CEU_INPUT__CODE_TERMINATED) {
                 LINE(me, [[
     if (lua_isstring(]]..LUA(me)..[[,-1)) {
         const char* __ceu_str = lua_tostring(]]..LUA(me)..[[, -1);
-        usize __ceu_len = lua_rawlen(]]..LUA(me)..[[, -1);
+        usize __ceu_len = lua_rawlen(]]..LUA(me)..[[, -1) + 1;  /* +1 = '\0' */
         ceu_vector_setlen_ex(&]]..V(to)..', ('..V(to)..[[.len + __ceu_len), 1,
                              __FILE__, __LINE__-4);
         ceu_vector_buf_set(&]]..V(to)..[[,
@@ -1842,7 +1844,7 @@ _CEU_LUA_ERR_]]..me.n..[[:;
             if p.info.tag=='Vec' and p.info.dcl and p.info.dcl.tag=='Vec' then
                 if TYPES.check(tp,'byte') then
                     LINE(me, [[
-    lua_pushlstring(]]..LUA(me)..[[,(char*)]]..V(p)..[[.buf,]]..V(p)..[[.len);
+    lua_pushlstring(]]..LUA(me)..[[,(char*)]]..V(p)..[[.buf,]]..V(p)..[[.len-1);
 ]])
                 else
                     error 'not implemented'
