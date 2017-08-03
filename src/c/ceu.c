@@ -734,6 +734,7 @@ ceu_dbg_assert(0);
                                                 };
                             ceu_bcast(&occ2, &_stk, 0);
                         } else {
+                            CEU_APP.wclk_min_set = 0;   /* maybe resuming a timer, let it be the minimum set */
                             tceu_evt_occ occ2 = { {CEU_INPUT__RESUME,{NULL}}, CEU_APP.seq, occ->params,
                                                   {range.mem,
                                                    (tceu_ntrl)(trlK+1), (tceu_ntrl)(trlK+trl->pse_skip)}
@@ -851,6 +852,9 @@ void ceu_input_one (tceu_nevt evt_id, void* evt_params, tceu_stk* stk)
         case CEU_INPUT__ASYNC:
             CEU_APP.async_pending = 0;
             break;
+    }
+    if (evt_id != CEU_INPUT__WCLOCK) {
+        CEU_APP.wclk_late = 0;
     }
 
 /* TODO: remove this extra bcast to reset seqs */
