@@ -36,9 +36,9 @@ The program and diagram that follow illustrate the behavior of the scheduler of
 Céu:
 
 ```ceu
- 1:  input void A;
- 2:  input void B;
- 3:  input void C;
+ 1:  input none A;
+ 2:  input none B;
+ 3:  input none C;
  4:  par/and do
  5:      // trail 1
  6:      <...>          // a `<...>` represents non-awaiting statements

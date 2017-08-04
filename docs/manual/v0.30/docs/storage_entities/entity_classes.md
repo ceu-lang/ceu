@@ -70,12 +70,12 @@ be communicated through `emit` and `await` statements.
 A [declaration](../statements/#events) includes the type of value the occurring
 event carries.
 
-*Note: <tt>void</tt> is a valid type for signal-only events.*
+*Note: <tt>none</tt> is a valid type for signal-only events.*
 
 Example:
 
 ```ceu
-input  void I;           // "I" is an input event that carries no values
+input  none I;           // "I" is an input event that carries no values
 output int  O;           // "O" is an output event that carries values of type "int"
 event  int  e;           // "e" is an internal event that carries values of type "int"
 par/and do
@@ -154,7 +154,7 @@ removed automatically when the code execution terminates.
 Example:
 
 ```ceu
-code/await Anim (void) => void do       // defines the "Anim" code abstraction
+code/await Anim (none) => none do       // defines the "Anim" code abstraction
     <...>                               // body of "Anim"
 end
 pool[] Anim ms;                         // declares an unlimited container for "Anim" instances

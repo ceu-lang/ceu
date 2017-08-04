@@ -15,7 +15,7 @@ ID_field ::= ID             // ID not beginning with digit
 ID_nat   ::= ID             // ID beginning with underscore
 
 ID_type  ::= ( ID_nat | ID_abs
-             | void
+             | none
              | bool  | on/off | yes/no
              | byte
              | r32   | r64    | real

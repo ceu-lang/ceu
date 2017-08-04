@@ -201,7 +201,7 @@ Stmt ::= nothing
       // Code_Await ::=
       | code/await Mods ID_abs `(´ Params `)´ [ `->´ `(´ Params `)´ ] `->´ (Type | NEVER)
         // where
-            Params ::= void | LIST(Dcls)
+            Params ::= none | LIST(Dcls)
 
       /* code implementation */
       | (Code_Tight | Code_Await) do
@@ -255,7 +255,7 @@ ID_abs   ::= ID {`.´ ID}    // IDs beginning with uppercase, containining at le
 ID_field ::= ID             // ID not beginning with digit
 ID_nat   ::= ID             // ID beginning with underscore
 ID_type  ::= ( ID_nat | ID_abs
-             | void
+             | none
              | bool  | on/off | yes/no
              | byte
              | r32   | r64    | real

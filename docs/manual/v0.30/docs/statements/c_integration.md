@@ -121,7 +121,7 @@ var _t x = 10;                  // requires "t" to be already defined
 ```
 
 ```ceu
-input void A;                   // declaration for "A" is placed before "pos" blocks
+input none A;                   // declaration for "A" is placed before "pos" blocks
 native _get_A_id;
 native/pos do
     int get_A_id (void) {

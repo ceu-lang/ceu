@@ -114,7 +114,7 @@ See also [Introduction](#TODO) for a general overview of events.
 Examples:
 
 ```ceu
-input  void A,B;        // "A" and "B" are input events carrying no values
+input  none A,B;        // "A" and "B" are input events carrying no values
 output int  MY_EVT;     // "MY_EVT" is an output event carrying integer values
 input (int,byte&&) BUF; // "BUF" is an input event carrying an "(int,byte&&)" pair
 ```
@@ -130,7 +130,7 @@ Only in this case they can be [initialized](#assignments).
 Examples:
 
 ```ceu
-event  void a,b;        // "a" and "b" are internal events carrying no values
-event& void z = &a;     // "z" is an alias to event "a"
+event  none a;          // "a" is an internal events carrying no values
+event& none z = &a;     // "z" is an alias to event "a"
 event (int,int) c;      // "c" is a internal event carrying an "(int,int)" pair
 ```

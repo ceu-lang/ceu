@@ -4,46 +4,39 @@ Keywords in Céu are reserved names that cannot be used as identifiers (e.g.,
 variable names):
 
 ```ceu
-    and             as              async           atomic          await           
+    and             as              async           atomic          await
 
-    break           call            code            const           continue        
+    bool            break           byte            call            code
 
-    data            deterministic   do              dynamic         else            
+    const           continue        data            deterministic   do
 
-    emit            end             escape          event           every           
+    dynamic         else            emit            end             escape
 
-    false           finalize        FOREVER         hold            if              
+    event           every           false           finalize        FOREVER
 
-    in              input           is              isr             kill            
+    hold            if              in              input           int
 
-    lock            loop            lua             native          NEVER
+    integer         is              isr             kill            lock
 
-    new             nohold          not             nothing         null
+    loop            lua             native          NEVER           new
 
-    or              outer           output          par             pause
+    no              nohold          none            not             nothing
 
-    plain           pool            pos             pre             pure
+    null            off             on              or              outer
 
-    recursive       request         resume          sizeof          spawn
+    output          par             pause           plain           pool
 
-    static          then            thread          tight           traverse
+    pos             pre             pure            r32             r64
 
-    true            until           val             var             watching
+    real            recursive       request         resume          s16
 
-    with            bool            byte
+    s32             s64             s8              sizeof          spawn
 
-    int             s16             s32             s64
+    ssize           static          then            thread          tight
 
-    s8              ssize           u16             u32             u64
+    traverse        true            u16             u32             u64
 
-    u8              uint            usize           void
+    u8              uint            until           usize           val
 
-yes
-no
-on
-off
-r32
-r64
-real
-
+    var             watching        with            yes
 ```

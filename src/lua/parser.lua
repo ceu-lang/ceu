@@ -180,7 +180,7 @@ end
                         if err==true or IGN>0 then return false end
                         return fail(i,err)
                     end) * P(false)
-                           -- (avoids "left recursive" error (explicit fail))
+                           -- (anones "left recursive" error (explicit fail))
 
     if not nox then
         ret = ret * x
@@ -246,7 +246,7 @@ local TYPES = P'bool' + 'yes/no' + 'on/off'
             + 's16' + 's32' + 's64' + 's8'
             + 'ssize'
             + 'u16' + 'u32' + 'u64' + 'u8'
-            + 'uint' + 'usize' + 'void'
+            + 'uint' + 'usize' + 'none'
 --<<<
 
 -- must be in reverse order (to count superstrings as keywords)
@@ -283,6 +283,7 @@ KEYS = P
 'null' +
 'nothing' +
 'not' +
+'none' +
 'nohold' +
 'no' +
 'new' +
@@ -479,8 +480,8 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     -- TYPEPARS
 
-    , Code_Pars  = #KK'(' * PARENS(P'void' + LIST(V'__Dcls'))
-    , _Code_Pars = #KK'(' * PARENS(P'void' + LIST(V'__Dcls'))
+    , Code_Pars  = #KK'(' * PARENS(P'none' + LIST(V'__Dcls'))
+    , _Code_Pars = #KK'(' * PARENS(P'none' + LIST(V'__Dcls'))
     , Code_Ret = (V'Type' + K'NEVER'*Cc'FOREVER')
 
 -- DATA
@@ -791,7 +792,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , Outer   = K'outer'
 
 ---------
-                -- "Ct" as a special case to avoid "too many captures" (HACK_1)
+                -- "Ct" as a special case to anone "too many captures" (HACK_1)
     , _Stmts  = Ct (( V'__Stmt_Block' * (KK';'^0) +
                       V'__Stmt_Simple' * V'__seqs'
                    )^0

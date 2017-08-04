@@ -38,7 +38,7 @@ Examples:
 
 ```ceu
 // reacts continuously to "1s" and "KEY_PRESSED" and never terminates
-input void KEY_PRESSED;
+input none KEY_PRESSED;
 par do
     every 1s do
         <...>           // does something every "1s"
@@ -59,7 +59,7 @@ Examples:
 
 ```ceu
 // reacts once to "1s" and "KEY_PRESSED" and terminates
-input void KEY_PRESSED;
+input none KEY_PRESSED;
 par/and do
     await 1s;
     <...>               // does something after "1s"
@@ -78,7 +78,7 @@ Examples:
 
 ```ceu
 // reacts once to `1s` or `KEY_PRESSED` and terminates
-input void KEY_PRESSED;
+input none KEY_PRESSED;
 par/or do
     await 1s;
     <...>               // does something after "1s"
@@ -149,7 +149,7 @@ Examples:
 
 ```ceu
 // reacts continuously to "KEY_PRESSED" during "1s"
-input void KEY_PRESSED;
+input none KEY_PRESSED;
 watching 1s do
     every KEY_PRESSED do
         <...>           // does something every "KEY_PRESSED"

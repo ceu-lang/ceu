@@ -150,7 +150,7 @@ Emit_Ext ::= emit ID_ext [`(´ [LIST(Exp)] `)´]
 Examples:
 
 ```ceu
-emit A;         // emits the output event `A` of type "void"
+emit A;         // emits the output event `A` of type "none"
 emit a(1);      // emits the internal event `a` of type "int"
 
 emit 1s;        // emits the specified time
@@ -179,7 +179,7 @@ async do
     emit I(10);         // broadcasts "I" to the application itself, passing "10"
 end
 
-output void O;
+output none O;
 var int ret = emit O(); // outputs "O" to the environment and captures the result
 
 event (int,int) e;

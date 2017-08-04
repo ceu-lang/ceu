@@ -71,7 +71,7 @@ F = {
                                 node('_Evt_set', me.ln,
                                     false,
                                     node('Type', me.ln,
-                                        node('ID_prim', me.ln, 'void')),
+                                        node('ID_prim', me.ln, 'none')),
                                     'ok_unlocked',
                                     false))))
         lock.is_predefined = true
@@ -190,7 +190,7 @@ error'TODO: luacov never executes this?'
         local is_void do
             if Type then
                 local ID_prim,mod = unpack(Type)
-                is_void = (ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod))
+                is_void = (ID_prim.tag=='ID_prim' and ID_prim[1]=='none' and (not mod))
             end
         end
 
@@ -862,7 +862,7 @@ error'TODO: luacov never executes this?'
         local Type, snd = unpack(me)
         local ID_prim, mod = unpack(Type)
         if (not snd) and
-           ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod)
+           ID_prim.tag=='ID_prim' and ID_prim[1]=='none' and (not mod)
         then
             AST.remove(me,1)
         end

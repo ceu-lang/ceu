@@ -29,7 +29,7 @@ The example in Céu that follows blinks a LED every second and terminates on a
 button press:
 
 ```ceu
-input  void BUTTON;
+input  none   BUTTON;
 output on/off LED;
 par/or do
     await BUTTON;

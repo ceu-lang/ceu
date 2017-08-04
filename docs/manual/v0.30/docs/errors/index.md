@@ -88,10 +88,10 @@ Instead, annotate the parameter declaration with `@hold`.
 Examples:
 
 <pre><code><b>class</b> T <b>with</b>
-    <b>var void</b>* ptr;
-    <b>function</b> (<b>void</b>* v)=><b>void</b> f;
+    <b>var none</b>* ptr;
+    <b>function</b> (<b>none</b>* v)=><b>none</b> f;
 <b>do</b>
-    <b>function</b> (<b>void</b>* v)=><b>void</b> f <b>do</b>
+    <b>function</b> (<b>none</b>* v)=><b>none</b> f <b>do</b>
         ptr := v;
     <b>end</b>
 <b>end</b>
@@ -101,9 +101,9 @@ Examples:
 /*****************************************************************************/
 
 <b>native do</b>
-    <b>void</b>* V;
+    <b>none</b>* V;
 <b>end</b>
-<b>function</b> (<b>void</b>* v)=><b>void</b> f <b>do</b>
+<b>function</b> (<b>none</b>* v)=><b>none</b> f <b>do</b>
     _V := v;
 <b>end</b>
 
@@ -151,7 +151,7 @@ Instead, move it to before the constructor or to inside the class.
 Examples:
 
 <pre><code><b>class</b> T <b>with</b>
-    <b>var void</b>* ptr;
+    <b>var none</b>* ptr;
 <b>do</b>
     <...>
 <b>end</b>
@@ -169,7 +169,7 @@ Examples:
 /*****************************************************************************/
 
 <b>class</b> T <b>with</b>
-    <b>var void</b>* ptr;
+    <b>var none</b>* ptr;
 <b>do</b>
     <...>
 <b>end</b>

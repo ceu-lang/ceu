@@ -189,7 +189,7 @@ DCLS.F = {
             u8    = { is_num=true,  is_int=true  },
             uint  = { is_num=true,  is_int=true  },
             usize = { is_num=true,  is_int=true  },
-            void  = { is_num=false, is_int=false },
+            none  = { is_num=false, is_int=false },
             null  = { is_num=false, is_int=false },
             _     = { is_num=true,  is_int=true  },
         }
@@ -309,9 +309,9 @@ DCLS.F = {
         end
 
         local ID_prim,mod = unpack(Type)
-        if ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod) then
+        if ID_prim.tag=='ID_prim' and ID_prim[1]=='none' and (not mod) then
             ASR(alias, me,
-                'invalid declaration : variable cannot be of type `void`') 
+                'invalid declaration : variable cannot be of type `none`')
         end
 
         local inits = DCLS.F.Var__POS__POS(me)
@@ -415,11 +415,11 @@ DCLS.F = {
                 'invalid declaration : vector inside `code/tight`')
         end
 
-        -- vector[] void vec;
+        -- vector[] none vec;
         local ID_prim,mod = unpack(Type)
-        if ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod) then
+        if ID_prim.tag=='ID_prim' and ID_prim[1]=='none' and (not mod) then
             ASR(false, me,
-                'invalid declaration : vector cannot be of type `void`') 
+                'invalid declaration : vector cannot be of type `none`')
         end
     end,
 
@@ -717,9 +717,9 @@ error'oi'
         for _, Type in ipairs(me) do
             if Type.tag == 'Type' then
                 local ID_prim,mod = unpack(Type)
-                if ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod) then
+                if ID_prim.tag=='ID_prim' and ID_prim[1]=='none' and (not mod) then
                     ASR(false, me,
-                        'invalid declaration : unexpected type `void`')
+                        'invalid declaration : unexpected type `none`')
                 end
             end
         end

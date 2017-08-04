@@ -3,7 +3,7 @@
 Céu has the following primitive types:
 
 ```ceu
-void               // void type
+none               // void type
 bool               // boolean type
 on/off             // synonym to bool
 yes/no             // synonym to bool

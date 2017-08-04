@@ -105,7 +105,7 @@ be invoked from arbitrary points in programs:
 // prototype declaration
 Code_Tight ::= code/tight Mods ID_abs `(´ Params `)´ `->´ Type
 Code_Await ::= code/await Mods ID_abs `(´ Params `)´ [`->´ `(´ Params `)´] `->´ (Type | NEVER)
-Params ::= void | LIST(Var|Vec|Pool|Int)
+Params ::= none | LIST(Var|Vec|Pool|Int)
 
 // full declaration
 Code_Impl ::= (Code_Tight | Code_Await) do
@@ -158,7 +158,7 @@ var int abs = call Absolute(-10);           // invokes "Absolute" (yields 10)
 ```
 
 ```ceu
-code/await Hello_World (void) -> NEVER do
+code/await Hello_World (none) -> NEVER do
     every 1s do
         _printf("Hello World!\n");  // prints "Hello World!" every second
     end
@@ -186,7 +186,7 @@ Code abstractions specify a list of input parameters in between the symbols
 `(` and `)`.
 Each parameter specifies an [entity class](../storage_entities/#entity-classes)
 with modifiers, a type and an identifier.
-A `void` list specifies that the abstraction has no parameters.
+A `none` list specifies that the abstraction has no parameters.
 
 Code abstractions also specify an output return type.
 A `code/await` may use `NEVER` as output to indicate that it never returns.
@@ -279,7 +279,7 @@ Examples:
 code/await My_Code (var int x) -> (var int y) -> NEVER do
     y = x;                              // "y" is a public field
 
-    code/tight Get_X (void) -> int do   // "Get_X" is a public method
+    code/tight Get_X (none) -> int do   // "Get_X" is a public method
         escape outer.x;
     end
 
@@ -325,16 +325,16 @@ data Media.Audio     with <...> end
 data Media.Video     with <...> end
 data Media.Video.Avi with <...> end
 
-code/await/dynamic Play (dynamic var& Media media) -> void do
+code/await/dynamic Play (dynamic var& Media media) -> none do
     _assert(0);             // never dispatched
 end
-code/await/dynamic Play (dynamic var& Media.Audio media) -> void do
+code/await/dynamic Play (dynamic var& Media.Audio media) -> none do
     <...>                   // plays an audio
 end
-code/await/dynamic Play (dynamic var& Media.Video media) -> void do
+code/await/dynamic Play (dynamic var& Media.Video media) -> none do
     <...>                   // plays a video
 end
-code/await/dynamic Play (dynamic var& Media.Video.Avi media) -> void do
+code/await/dynamic Play (dynamic var& Media.Video.Avi media) -> none do
     <...>                                   // prepare the avi video
     await/dynamic Play(&m as Media.Video);  // dispatches the supertype
 end

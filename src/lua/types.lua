@@ -304,7 +304,7 @@ do
 -- VOID <- _
         -- var& void ptr = &_f()
         -- var& void p = &v;
-        elseif TYPES.check(tp1,'void') and tp2_ID then
+        elseif TYPES.check(tp1,'none') and tp2_ID then
             return true
 
 -- NUMERIC TYPES
@@ -327,8 +327,8 @@ do
             if not tp2_is_nat then
                 tp2 = TYPES.pop(tp2)
             end
-            if TYPES.check(tp1,'void') then
-                -- void&& <- ?&&
+            if TYPES.check(tp1,'none') then
+                -- none&& <- ?&&
                 return true
             elseif TYPES.check(tp2,'null') then
                 -- ?&& <- null
