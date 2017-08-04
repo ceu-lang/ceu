@@ -4,7 +4,7 @@ Céu specifies [locations](../storage_entities/#locations) and expressions as
 follows:
 
 ```ceu
-Exp ::= NUM | STR | null | true | false
+Exp ::= NUM | STR | null | true | false | on | off | yes | no
      |  `(´ Exp `)´
      |  Exp <binop> Exp
      |  <unop> Exp

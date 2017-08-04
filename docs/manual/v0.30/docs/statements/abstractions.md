@@ -104,7 +104,7 @@ be invoked from arbitrary points in programs:
 ```ceu
 // prototype declaration
 Code_Tight ::= code/tight Mods ID_abs `(´ Params `)´ `->´ Type
-Code_Await ::= code/await Mods ID_abs `(´ Params `)´ [`->´ `(´ Params `)´] `->´ (Type | FOREVER)
+Code_Await ::= code/await Mods ID_abs `(´ Params `)´ [`->´ `(´ Params `)´] `->´ (Type | NEVER)
 Params ::= void | LIST(Var|Vec|Pool|Int)
 
 // full declaration
@@ -158,7 +158,7 @@ var int abs = call Absolute(-10);           // invokes "Absolute" (yields 10)
 ```
 
 ```ceu
-code/await Hello_World (void) -> FOREVER do
+code/await Hello_World (void) -> NEVER do
     every 1s do
         _printf("Hello World!\n");  // prints "Hello World!" every second
     end
@@ -189,7 +189,7 @@ with modifiers, a type and an identifier.
 A `void` list specifies that the abstraction has no parameters.
 
 Code abstractions also specify an output return type.
-A `code/await` may use `FOREVER` as output to indicate that it never returns.
+A `code/await` may use `NEVER` as output to indicate that it never returns.
 
 A `code/await` may also specify an optional *public field list*, which are
 local storage entities living in the outermost scope of the abstraction body.
@@ -207,7 +207,7 @@ Examples:
 
 ```ceu
 // "Open" abstracts "_fopen"/"_fclose"
-code/await Open (var _char&& path) -> (var& _FILE res) -> FOREVER do
+code/await Open (var _char&& path) -> (var& _FILE res) -> NEVER do
     var&? _FILE res_ = _fopen(path, <...>)  // allocates resource
                        finalize with
                            _fclose(res_!);  // releases resource
@@ -249,7 +249,7 @@ representing the instance and can be captured with an optional
 [assignment](#assignment).
 The alias must be an [option alias variable](../storage_entities/#aliases) of
 the same type of the code abstraction.
-If the abstraction never terminates (i.e., return type is `FOREVER`), the
+If the abstraction never terminates (i.e., return type is `NEVER`), the
 variable may be a simple alias.
 If the `spawn` fails (e.g., lack of memory) the option alias variable is unset.
 In the case of a simple alias, the assignment raises a runtime error.
@@ -276,7 +276,7 @@ methods of the instance.
 Examples:
 
 ```ceu
-code/await My_Code (var int x) -> (var int y) -> FOREVER do
+code/await My_Code (var int x) -> (var int y) -> NEVER do
     y = x;                              // "y" is a public field
 
     code/tight Get_X (void) -> int do   // "Get_X" is a public method

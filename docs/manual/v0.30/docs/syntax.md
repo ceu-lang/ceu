@@ -199,7 +199,7 @@ Stmt ::= nothing
       | code/tight Mods ID_abs `(´ Params `)´ `->´ Type
 
       // Code_Await ::=
-      | code/await Mods ID_abs `(´ Params `)´ [ `->´ `(´ Params `)´ ] `->´ (Type | FOREVER)
+      | code/await Mods ID_abs `(´ Params `)´ [ `->´ `(´ Params `)´ ] `->´ (Type | NEVER)
         // where
             Params ::= void | LIST(Dcls)
 
@@ -255,11 +255,13 @@ ID_abs   ::= ID {`.´ ID}    // IDs beginning with uppercase, containining at le
 ID_field ::= ID             // ID not beginning with digit
 ID_nat   ::= ID             // ID beginning with underscore
 ID_type  ::= ( ID_nat | ID_abs
-             | void  | bool  | byte
-             | f32   | f64   | float
-             | s8    | s16   | s32   | s64
-             | u8    | u16   | u32   | u64
-             | int   | uint  | ssize | usize )
+             | void
+             | bool  | on/off | yes/no
+             | byte
+             | f32   | f64    | float
+             | s8    | s16    | s32     | s64
+             | u8    | u16    | u32     | u64
+             | int   | uint   | ssize   | usize )
 
 /* Types */
 
@@ -277,7 +279,7 @@ STR ::= " [^\"\n]* "                        // regex
 
 /* Expressions */
 
-Exp ::= NUM | STR | null | true | false
+Exp ::= NUM | STR | null | true | false | on | off | yes | no
      |  `(´ Exp `)´
      |  Exp <binop> Exp
      |  <unop> Exp

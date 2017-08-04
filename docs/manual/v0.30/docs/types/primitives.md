@@ -5,6 +5,8 @@ Céu has the following primitive types:
 ```ceu
 void               // void type
 bool               // boolean type
+on/off             // synonym to bool
+yes/no             // synonym to bool
 byte               // 1-byte type
 int      uint      // platform dependent signed and unsigned integer
 s8       u8        // signed and unsigned  8-bit integers

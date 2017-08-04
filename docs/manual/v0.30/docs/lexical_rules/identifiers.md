@@ -15,11 +15,13 @@ ID_field ::= ID             // ID not beginning with digit
 ID_nat   ::= ID             // ID beginning with underscore
 
 ID_type  ::= ( ID_nat | ID_abs
-             | void  | bool  | byte
-             | f32   | f64   | float
-             | s8    | s16   | s32   | s64
-             | u8    | u16   | u32   | u64
-             | int   | uint  | ssize | usize )
+             | void
+             | bool  | on/off | yes/no
+             | byte
+             | f32   | f64    | float
+             | s8    | s16    | s32     | s64
+             | u8    | u16    | u32     | u64
+             | int   | uint   | ssize   | usize )
 ```
 
 Declarations for [`code` and `data`](../statements/#abstractions) create new

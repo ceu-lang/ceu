@@ -76,24 +76,24 @@ local T = {
     },
 
     {
-        '`do` or `await` or `%[` or location or `{` or `%(` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `call` or `sizeof` or `null` or number or `false` or `true` or `"` or string literal or `emit` or `call/recursive` or `val` or `new` or `spawn` or `_` or `request` or `watching`',
+        '`do` or `await` or `%[` or location or `{` or `%(` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `call` or `sizeof` or `null` or number or `false` or `true` or `off` or `on` or `no` or `yes` or `"` or string literal or `emit` or `call/recursive` or `val` or `new` or `spawn` or `_` or `request` or `watching`',
         'expression'
     },
     {
-        '`not` or `%-` or `%+` or `~` or `%$%$` or `%*` or `%$` or `&&` or `&` or `call` or internal identifier or native identifier or `outer` or `{` or `%(` or `sizeof` or `null` or number or `false` or `true` or `"` or string literal',
+        '`not` or `%-` or `%+` or `~` or `%$%$` or `%*` or `%$` or `&&` or `&` or `call` or internal identifier or native identifier or `outer` or `{` or `%(` or `sizeof` or `null` or number or `false` or `true` or `off` or `on` or `no` or `yes` or `"` or string literal',
         'expression'
     },
 
     {
-        '`code` or `input/output` or `output/input` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `pool` or `event` or `input` or `output` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `"` or string literal or `escape` or `break` or `continue` or `par` or end of file',
+        '`code` or `input/output` or `output/input` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `pool` or `event` or `input` or `output` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `off` or `on` or `no` or `yes` or `"` or string literal or `escape` or `break` or `continue` or `par` or end of file',
         'statement'
     },
     {
-        '`code` or `input/output` or `output/input` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `pool` or `event` or `input` or `output` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `"` or string literal or `escape` or `break` or `continue` or `par` or `with`',
+        '`code` or `input/output` or `output/input` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `pool` or `event` or `input` or `output` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `off` or `on` or `no` or `yes` or `"` or string literal or `escape` or `break` or `continue` or `par` or `with`',
         'statement'
     },
     {
-        '`code` or `input/output` or `output/input` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `pool` or `event` or `input` or `output` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `"` or string literal or `escape` or `break` or `continue` or `par` or `end`',
+        '`code` or `input/output` or `output/input` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `pool` or `event` or `input` or `output` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `off` or `on` or `no` or `yes` or `"` or string literal or `escape` or `break` or `continue` or `par` or `end`',
         'statement'
     },
 }
@@ -239,7 +239,8 @@ local EE = function (msg)
 end
 
 -->>> OK
-local TYPES = P'bool' + 'byte'
+local TYPES = P'bool' + 'yes/no' + 'on/off'
+            + 'byte'
             + 'f32' + 'f64' + 'float'
             + 'int'
             + 's16' + 's32' + 's64' + 's8'
@@ -250,6 +251,7 @@ local TYPES = P'bool' + 'byte'
 
 -- must be in reverse order (to count superstrings as keywords)
 KEYS = P
+'yes' +
 'with' +
 'watching' +
 'var' +
@@ -276,10 +278,13 @@ KEYS = P
 'output' +
 'outer' +
 'or' +
+'on' +
+'off' +
 'null' +
 'nothing' +
 'not' +
 'nohold' +
+'no' +
 'new' +
 'NEVER' +
 'native' +
@@ -776,6 +781,10 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     , BOOL   = K'false' / function() return 0 end
              + K'true'  / function() return 1 end
+             + K'off'   / function() return 0 end
+             + K'on'    / function() return 1 end
+             + K'no'    / function() return 0 end
+             + K'yes'   / function() return 1 end
     , STRING = CKK( CKK'"' * (P(1)-'"'-'\n')^0 * K'"', 'string literal' )
     , NULL   = CK'null'     -- TODO: the idea is to get rid of this
 

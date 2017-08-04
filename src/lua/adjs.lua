@@ -882,6 +882,13 @@ error'TODO: luacov never executes this?'
                 field)
     end,
 
+    ID_prim = function (me)
+        me.tag = 'ID_prim'
+        if me[1]=='on/off' or me[1]=='yes/no' then
+            me[1] = 'bool'
+        end
+    end,
+
     NUMBER = function (me)
         local v = unpack(me)
         me[1] = ASR(tonumber(v), me, 'malformed number')

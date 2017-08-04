@@ -30,15 +30,15 @@ button press:
 
 ```ceu
 input  void BUTTON;
-output bool LED;
+output on/off LED;
 par/or do
     await BUTTON;
 with
     loop do
         await 1s;
-        emit LED(true);
+        emit LED(on);
         await 1s;
-        emit LED(false);
+        emit LED(off);
     end
 end
 ```

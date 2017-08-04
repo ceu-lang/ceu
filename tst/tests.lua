@@ -307,6 +307,7 @@ escape v1 + v2;
 -------------------------------------------------------------------------------
 
 --do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -1008,8 +1009,6 @@ loopdo await250ms;_printf("Hello World!\n");end
     --parser = 'line 2 : after `loopdo` : expected `(` or `[` or `:` or `.` or `?` or `!` or `is` or `as` or binary operator or `=` or `:=` or `;`',
 }
 
--- TYPE / BOOL
-
 Test { [[
 input void A, A;
 ]],
@@ -1027,6 +1026,9 @@ output void A;
 ]],
     dcls = 'line 2 : declaration of "A" hides previous declaration (/tmp/tmp.ceu : line 1)',
 }
+
+-->> TYPE / BOOL
+
 Test { [[
 input void A;
 var bool a? = 1;
@@ -1107,6 +1109,90 @@ end
 ]],
     run = 1,
 }
+
+Test { [[
+input void A;
+var yes/no a? = 1;
+a? = 2;
+escape a?;
+]],
+    parser = 'line 2 : after `a` : expected `=` or `;`',
+    --run = 2,
+}
+
+Test { [[
+input void A;
+var on/off a = 1;
+a = 2;
+escape a;
+]],
+    dcls = 'line 1 : external "A" declared but not used',
+    --run = 2,
+}
+
+Test { [[
+input void A;
+var on/off a;
+a = 2;
+escape a;
+]],
+    wrn = true,
+    stmts = 'line 3 : invalid assignment : types mismatch : "bool" <= "int"',
+}
+
+Test { [[
+input void A;
+var yes/no a = 1;
+escape a;
+]],
+    wrn = true,
+    stmts = 'line 2 : invalid assignment : types mismatch : "bool" <= "int"',
+}
+
+Test { [[
+input void A;
+var yes/no a = (1 as bool);
+a = (2 as on/off);
+escape a as int;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+output void O;
+await O;
+escape 1;
+]],
+    stmts = 'line 2 : invalid `await` : expected `input` external identifier',
+}
+
+Test { [[
+var yes/no v = on;
+v = no;
+if v then
+    escape 1;
+else
+    escape 2;
+end
+]],
+    run = 2,
+}
+
+Test { [[
+var on/off v = off;
+v = yes;
+if v then
+    escape 1;
+else
+    escape 2;
+end
+]],
+    run = 1,
+}
+
+--<< TYPE / BOOL
+
 
 -- TYPE / NATIVE / ANNOTATIONS
 
@@ -32686,7 +32772,6 @@ escape 1;
 ]],
     scopes = 'line 7 : invalid `finalize` : incompatible scopes',
 }
---]=====]
 Test { [[
 native/nohold _S, _F, _f;
 code/await Surface_from_desc (var _S desc) -> FOREVER
