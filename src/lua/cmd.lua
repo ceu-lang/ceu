@@ -25,11 +25,12 @@ Options:
     --ceu                       Céu phase: compiles Céu into C
     --ceu-input=FILE                input file to compile (Céu source)
     --ceu-output=FILE               output source file to generate (C source)
-    --ceu-line-directives=BOOL      insert `#line` directives in the C output
+    --ceu-line-directives=BOOL      insert `#line` directives in the C output (default `true`)
+    --ceu-callbacks-lines=BOOL      pass current filename and line number to callbacks (default `true`)
 
-    --ceu-features-lua=BOOL         enable `lua` support
-    --ceu-features-thread=BOOL      enable `async/thread` support
-    --ceu-features-isr=BOOL         enable `async/isr` support
+    --ceu-features-lua=BOOL         enable `lua` support (default `false`)
+    --ceu-features-thread=BOOL      enable `async/thread` support (default `false`)
+    --ceu-features-isr=BOOL         enable `async/isr` support (default `false`)
 
     --ceu-err-unused=OPT            effect for unused identifier: error|warning|pass
     --ceu-err-unused-native=OPT                unused native identifier
@@ -126,6 +127,7 @@ do
     local T = {
         ceu_output          = { tostring,  '-'     },
         ceu_line_directives = { toboolean, 'true'  },
+        ceu_callbacks_lines = { toboolean, 'true'  },
         ceu_features_lua    = { toboolean, 'false' },
         ceu_features_thread = { toboolean, 'false' },
         ceu_features_isr    = { toboolean, 'false' },

@@ -17,7 +17,7 @@ typedef struct tceu_callback {
 
 static tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line);
 
-#if 1
+#if === CEU_CALLBACKS_LINES ===
 #define ceu_callback_void_void(cmd)                     \
         ceu_callback(cmd, (tceu_callback_arg){},        \
                           (tceu_callback_arg){},        \
