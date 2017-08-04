@@ -21,7 +21,7 @@ Céu also supports option variable aliases which are aliases that may be set or
 not.
 
 An alias is declared by suffixing the entity class with the modifier
-`&` and is acquired by prefixing an entity with the operator `&`.
+`&` and is acquired by prefixing an entity identifier with the operator `&`.
 
 An alias must have a narrower scope than the entity it refers to.
 The [assignment](../statements/#assignments) to the alias is immutable and must
@@ -40,8 +40,7 @@ _printf("%d\n", v);     // prints 1
 
 An option variable alias, declared as `var&?`, serves two purposes:
 
-- Map a [native resource](../statements/#resources-finalization) to a variable
-  in Céu.
+- Map a [native resource](../statements/#resources-finalization) to Céu.
   The alias is acquired by prefixing the associated
   [native call](../statements/#native-call) with the operator `&`.
   Since the allocation may fail, the alias may remain unset.

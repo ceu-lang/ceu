@@ -1,7 +1,8 @@
 # Types
 
-Céu is statically typed, requiring all variables, events, and other entities to
-be declared before they are used in programs.
+Céu is statically typed, requiring all variables, events, and other
+[storage entities](../storage_entities/#storage-entities) to be declared before
+they are used in programs.
 
 A type is composed of a [type identifier](../lexical_rules/#identifiers),
 followed by an optional sequence of [pointer modifiers](#pointer) `&&`,

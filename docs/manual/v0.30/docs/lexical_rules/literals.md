@@ -1,6 +1,6 @@
 ## Literals
 
-Céu supports literals for *booleans*, *integers*, *reals*, *strings*, and
+Céu provides literals for *booleans*, *integers*, *reals*, *strings*, and
 *null pointers*.
 
 <!--
@@ -43,8 +43,8 @@ v = 0x7F;   // hexadecimal
 
 ### Strings
 
-A sequence of characters surrounded by `"` is converted into a *null-terminated 
-string*, just like in C:
+A sequence of characters surrounded by the character `"` is converted into a
+*null-terminated string*, just like in C:
 
 Example:
 

@@ -1,7 +1,7 @@
 ## Keywords
 
-Keywords in Céu are reserved names that cannot be used as identifiers (e.g., 
-variable names):
+Keywords in Céu are reserved names that cannot be used as identifiers (e.g.,
+for variables and events):
 
 ```ceu
     and             as              async           atomic          await

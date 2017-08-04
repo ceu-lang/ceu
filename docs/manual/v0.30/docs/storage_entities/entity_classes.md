@@ -70,7 +70,7 @@ be communicated through `emit` and `await` statements.
 A [declaration](../statements/#events) includes the type of value the occurring
 event carries.
 
-*Note: <tt>none</tt> is a valid type for signal-only events.*
+*Note: <tt>none</tt> is a valid type for signal-only events with no associated values.*
 
 Example:
 
@@ -95,8 +95,8 @@ external and internal events with different behavior.
 External events are used as interfaces between programs and devices from the 
 real world:
 
-* *input events* represent input devices such as sensor, button, mouse, etc.
-* *output events* represent output devices such as LED, motor, screen, etc.
+* *input events* represent input devices such as a sensor, button, mouse, etc.
+* *output events* represent output devices such as a LED, motor, screen, etc.
 
 The availability of external events depends on the
 [environment](../#environments) in use.
@@ -158,13 +158,15 @@ code/await Anim (none) => none do       // defines the "Anim" code abstraction
     <...>                               // body of "Anim"
 end
 pool[] Anim ms;                         // declares an unlimited container for "Anim" instances
-loop i in [0->10[ do
+loop i in [1->10] do
     spawn Anim() in ms;                 // creates 10 instances of "Anim" into "ms"
 end
 ```
 
 When a pool declaration goes out of scope, all running code abstractions are
 automatically aborted.
+
+`TODO: kill`
 
 <!--
 `TODO: data`
