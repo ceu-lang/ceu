@@ -12,7 +12,7 @@ end
 
 -- BUG #89
 Test { [[
-code/await Ff (void) -> (var& int x) -> FOREVER do
+code/await Ff (void) -> (var& int x) -> NEVER do
     code/tight Gg (void) -> void;
     call Gg();
 
@@ -33,7 +33,7 @@ escape 1;
 
 -- BUG #89
 Test { [[
-code/await Ff (void) -> (var& int x) -> FOREVER do
+code/await Ff (void) -> (var& int x) -> NEVER do
     code/tight Gg (void) -> void do
         outer.x = 10;
     end
@@ -114,7 +114,7 @@ escape ret;
 }
 -- BUG #98
 Test { [[
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
     await FOREVER;
 end
 var usize i;
@@ -307,7 +307,6 @@ escape v1 + v2;
 -------------------------------------------------------------------------------
 
 --do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -32687,9 +32686,23 @@ escape 1;
 ]],
     scopes = 'line 7 : invalid `finalize` : incompatible scopes',
 }
+--]=====]
 Test { [[
 native/nohold _S, _F, _f;
 code/await Surface_from_desc (var _S desc) -> FOREVER
+do
+    var&? _F f = &_f(desc) finalize (f) with end;
+    await FOREVER;
+end
+]],
+    wrn = true,
+    parser = 'line 2 : after `->` : expected `(` or type or `NEVER`',
+    --run = 1,
+}
+
+Test { [[
+native/nohold _S, _F, _f;
+code/await Surface_from_desc (var _S desc) -> NEVER
 do
     var&? _F f = &_f(desc) finalize (f) with end;
     await FOREVER;
@@ -36059,7 +36072,7 @@ par/or do
 with
 end
 //await async do end;
-code/await Ff (void)->FOREVER do
+code/await Ff (void)->NEVER do
     await FOREVER;
 end
 spawn Ff();
@@ -36309,7 +36322,7 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
     await FOREVER;
 end
 var& Ff f = spawn Ff();
@@ -36329,7 +36342,7 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
     await FOREVER;
 end
 var&? Ff f1 = spawn Ff();
@@ -36341,7 +36354,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
     await FOREVER;
 end
 pool[1] Ff fs;
@@ -36353,7 +36366,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
     await FOREVER;
 end
 var& Ff f = spawn Ff();
@@ -36364,7 +36377,7 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
     await FOREVER;
 end
 pool[] Ff fs;
@@ -36382,21 +36395,21 @@ escape 0;
 -->> CODE / AWAIT / FOREVER
 
 Test { [[
-code/tight Ff (void) -> FOREVER do
+code/tight Ff (void) -> NEVER do
 end
 ]],
     parser = 'line 1 : after `->` : expected type',
 }
 
 Test { [[
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
     escape 1;
 end
 ]],
     dcls = 'line 2 : invalid `escape` : no matching enclosing `do`',
 }
 Test { [[
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
     escape;
 end
 ]],
@@ -36404,7 +36417,7 @@ end
 }
 
 Test { [[
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
     await FOREVER;
 end
 var int ret = await Ff();
@@ -36414,7 +36427,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
     await FOREVER;
 end
 par/or do
@@ -36427,7 +36440,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
     // err must have non-term stmt
 end
 spawn Ff();
@@ -36439,7 +36452,7 @@ escape 1;
 --<< CODE / AWAIT / FOREVER
 
 Test { [[
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
 end
 var int? x = watching Ff() do
 end;
@@ -36450,7 +36463,7 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
 end
 watching Ff() do
 end
@@ -36701,7 +36714,7 @@ escape x;
 }
 
 Test { [[
-code/await Ff (var int xxx) -> (var& int yyy) -> FOREVER do
+code/await Ff (var int xxx) -> (var& int yyy) -> NEVER do
     yyy = &xxx;
     do
         do finalize with end
@@ -36719,7 +36732,7 @@ escape f!.yyy;
 }
 
 Test { [[
-code/await Ff (var int xxx) -> (var& int yyy) -> FOREVER do
+code/await Ff (var int xxx) -> (var& int yyy) -> NEVER do
     yyy = &xxx;
     do
         do finalize with end
@@ -36736,7 +36749,7 @@ escape f!.yyy;
 }
 
 Test { [[
-code/await Ff (var int xxx) -> (var& int yyy) -> FOREVER do
+code/await Ff (var int xxx) -> (var& int yyy) -> NEVER do
     yyy = &xxx;
     do
         do finalize with end
@@ -36772,7 +36785,7 @@ escape f!.x;
 }
 
 Test { [[
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
     await FOREVER;
 end
 
@@ -36993,7 +37006,7 @@ escape ret!;
     run = { ['~>1s']=1 },
 }
 Test { [[
-code/await Ff (void) -> (var& int x) -> FOREVER do
+code/await Ff (void) -> (var& int x) -> NEVER do
     var int v = 10;
     x = &v;
     await FOREVER;
@@ -37005,7 +37018,7 @@ escape x!.x + 1;
 }
 
 Test { [[
-code/await Ff (void) -> (var& int x) -> FOREVER do
+code/await Ff (void) -> (var& int x) -> NEVER do
     var int v = 10;
     x = &v;
     await FOREVER;
@@ -37822,7 +37835,7 @@ data Dd with
     event void e;
 end
 
-code/await Ff (void) -> (var Dd d) -> FOREVER do
+code/await Ff (void) -> (var Dd d) -> NEVER do
     d = _;
     await FOREVER;
 end
@@ -37974,7 +37987,7 @@ escape f!.x;
     --stmts = 'line 9 : invalid binding : argument #1 : terminating `code` : expected alias `&?` declaration',
 }
 Test { [[
-code/await Ff (void) -> (var& int x) -> FOREVER
+code/await Ff (void) -> (var& int x) -> NEVER
 do
     var int x_ = 10;
     x = &x_;
@@ -37988,7 +38001,7 @@ escape f!.x;
 }
 
 Test { [[
-code/await Ff (void) -> (var& int x) -> FOREVER
+code/await Ff (void) -> (var& int x) -> NEVER
 do
     var int x_ = 10;
     x = &x_;
@@ -38225,7 +38238,7 @@ escape ret;
 }
 
 Test { [[
-code/await Ff (void) -> (var int x) -> FOREVER do
+code/await Ff (void) -> (var int x) -> NEVER do
     x = 10;
     await FOREVER;
 end
@@ -38823,7 +38836,7 @@ end
 }
 
 Test { [[
-code/await Gg (void) -> FOREVER do
+code/await Gg (void) -> NEVER do
     await FOREVER;
 end
 
@@ -39157,7 +39170,7 @@ native _void, _g;
 data Dd with
     var& _void v;
 end
-code/await Ff (var _void&& p) -> (var& Dd d) -> FOREVER do
+code/await Ff (var _void&& p) -> (var& Dd d) -> NEVER do
     var&? _void v_ =
         &_g()
             finalize (v_) with
@@ -39439,12 +39452,12 @@ escape ret!;
 }
 
 Test { [[
-code/await Hh (void) -> (var int x) -> FOREVER do
+code/await Hh (void) -> (var int x) -> NEVER do
     x = 10;
     await FOREVER;
 end
 
-code/await Gg (void) -> FOREVER do
+code/await Gg (void) -> NEVER do
     await FOREVER;
 end
 
@@ -39467,12 +39480,12 @@ escape 1;
 }
 
 Test { [[
-code/await Hh (void) -> (var int x) -> FOREVER do
+code/await Hh (void) -> (var int x) -> NEVER do
     x = 10;
     await FOREVER;
 end
 
-code/await Gg (void) -> FOREVER do
+code/await Gg (void) -> NEVER do
     await FOREVER;
 end
 
@@ -39539,7 +39552,7 @@ escape 0;
     --stmts = 'line 12 : invalid binding : argument #1 : terminating `code` : expected alias `&?` declaration',
 }
 Test { [[
-code/await Ff (var int v) -> (var& int x) -> FOREVER do
+code/await Ff (var int v) -> (var& int x) -> NEVER do
     x = &v;
     await FOREVER;
 end
@@ -39646,7 +39659,7 @@ escape 10;
 }
 
 Test { [[
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
 end
 code/await Gg (var& Ff f) -> (var& int x) -> void do
     var& Ff g = &f;
@@ -39732,8 +39745,8 @@ escape ret;
 }
 
 Test { [[
-code/await Ff (void) -> (var& int x) -> FOREVER do
-    code/await Gg (void) -> (var& int x) -> FOREVER do
+code/await Ff (void) -> (var& int x) -> NEVER do
+    code/await Gg (void) -> (var& int x) -> NEVER do
         var int y = 10;
         x = &y;
         await FOREVER;
@@ -39753,8 +39766,8 @@ escape 1;
     run = 1,
 }
 Test { [[
-code/await Ff (void) -> (var& int x) -> FOREVER do
-    code/await Gg (void) -> (var& int x) -> FOREVER do
+code/await Ff (void) -> (var& int x) -> NEVER do
+    code/await Gg (void) -> (var& int x) -> NEVER do
         var int y = 10;
         x = &y;
         await FOREVER;
@@ -40906,7 +40919,7 @@ escape 0;
 }
 
 Test { [[
-code/await Tx (var&? Tx txs) -> FOREVER;
+code/await Tx (var&? Tx txs) -> NEVER;
 escape 1;
 ]],
     wrn = true,
@@ -40914,7 +40927,7 @@ escape 1;
 }
 
 Test { [[
-code/await Tx (var& Tx txs) -> FOREVER;
+code/await Tx (var& Tx txs) -> NEVER;
 escape 1;
 ]],
     wrn = true,
@@ -41038,7 +41051,7 @@ escape v;
 
 Test { [[
 native __ceu_mem, _tceu_code_mem_Ff;
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
     do/_
         var int yyy = 10;
         var int zzz = (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
@@ -41064,7 +41077,7 @@ escape yyy;
 }
 
 Test { [[
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
     par do
         var int e=_;
     with
@@ -41078,7 +41091,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
     par do
         var int yyy = 10;
     with
@@ -41312,7 +41325,7 @@ escape n+1;
 }
 
 Test { [[
-code/await Ff (void) -> (var& int x) -> FOREVER do
+code/await Ff (void) -> (var& int x) -> NEVER do
     var int xx = 10;
     x = &xx;
     await FOREVER;
@@ -41380,7 +41393,7 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
     await FOREVER;
 end
 
@@ -41618,7 +41631,7 @@ native/pos do
     int V = 0;
 end
 
-code/await Gg (void) -> FOREVER do
+code/await Gg (void) -> NEVER do
     _V = _V + 1;
     await FOREVER;
 end
@@ -41747,7 +41760,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (var int x) -> (var int y) -> FOREVER do
+code/await Ff (var int x) -> (var int y) -> NEVER do
     y = x;
     await FOREVER;
 end
@@ -41926,7 +41939,7 @@ escape ret;
 }
 
 Test { [[
-code/await Ff (var& int ret) -> (var& int x, event& void e) -> FOREVER do
+code/await Ff (var& int ret) -> (var& int x, event& void e) -> NEVER do
     var int x_ = 0;
     x = &x_;
     event void e_;
@@ -42259,7 +42272,7 @@ native/pos do
     int V = 0;
 end
 
-code/await Bird (void) -> (event& void e) -> FOREVER
+code/await Bird (void) -> (event& void e) -> NEVER
 do
     event void e_;
     e = &e_;
@@ -42349,7 +42362,7 @@ end
 
 data Ii;
 
-code/await Cloud (void) -> (var& Ii i) -> FOREVER do
+code/await Cloud (void) -> (var& Ii i) -> NEVER do
     var Ii i_ = val Ii();
     i = &i_;
     await FOREVER;
@@ -42388,7 +42401,7 @@ code/await Ph (void) -> void do
     _ceu_dbg_assert(0);
 end
 
-code/await Drop (void) -> FOREVER do
+code/await Drop (void) -> NEVER do
     spawn Ph();
     await FOREVER;
 end
@@ -42405,7 +42418,7 @@ await FOREVER;
 }
 
 Test { [[
-code/await Gg (void) -> FOREVER do
+code/await Gg (void) -> NEVER do
 end
 
 pool[] Gg gs;
@@ -42420,7 +42433,7 @@ escape 1;
 }
 
 Test { [[
-code/await Gg (var& int x) -> FOREVER do
+code/await Gg (var& int x) -> NEVER do
     await FOREVER;
 end
 pool[] Gg gs;
@@ -42434,7 +42447,7 @@ escape 1;
     scopes = 'line 7 : invalid binding : incompatible scopes',
 }
 Test { [[
-code/await Gg (var& int x) -> FOREVER do
+code/await Gg (var& int x) -> NEVER do
     await FOREVER;
 end
 do
@@ -42448,12 +42461,12 @@ escape 1;
     run = 1,
 }
 Test { [[
-code/await Ff (void) -> (var int x) -> FOREVER do
+code/await Ff (void) -> (var int x) -> NEVER do
     x = 10;
     await FOREVER;
 end
 
-code/await Gg (var&? Ff f, var& int x) -> FOREVER do
+code/await Gg (var&? Ff f, var& int x) -> NEVER do
     await FOREVER;
 end
 
@@ -42468,12 +42481,12 @@ escape 1;
     run = 1,
 }
 Test { [[
-code/await Ff (void) -> (var int x) -> FOREVER do
+code/await Ff (void) -> (var int x) -> NEVER do
     x = 10;
     await FOREVER;
 end
 
-code/await Gg (var&? Ff f, var& int x) -> FOREVER do
+code/await Gg (var&? Ff f, var& int x) -> NEVER do
     await FOREVER;
 end
 
@@ -42664,13 +42677,13 @@ Test { [[
 data Dd;
 data Dd.Aa;
 
-code/await Ff (var& Dd vis) -> FOREVER do
+code/await Ff (var& Dd vis) -> NEVER do
     await FOREVER;
 end
 
 pool[] Ff fs;
 
-code/await Gg (void) -> FOREVER do
+code/await Gg (void) -> NEVER do
     var int x1 = 0;
     var int x2 = 0;
     var int x3 = 0;
@@ -42690,13 +42703,13 @@ native/pre do
     int V = 0;
 end
 
-code/await Gg (void) -> FOREVER do
+code/await Gg (void) -> NEVER do
     every 100ms do
         {V++;}
     end
 end
 
-code/await Ff (void) -> (pool[1] Gg gs) -> FOREVER do
+code/await Ff (void) -> (pool[1] Gg gs) -> NEVER do
     pool[1] Gg gs_;
     spawn Gg() in gs_;
     spawn Gg() in gs;
@@ -42715,13 +42728,13 @@ native/pre do
     int V = 0;
 end
 
-code/await Gg (void) -> FOREVER do
+code/await Gg (void) -> NEVER do
     every 100ms do
         {V++;}
     end
 end
 
-code/await Ff (void) -> (pool[1] Gg gs1, pool[1] Gg gs2) -> FOREVER do
+code/await Ff (void) -> (pool[1] Gg gs1, pool[1] Gg gs2) -> NEVER do
     pool[1] Gg gs_;
     spawn Gg() in gs_;
     spawn Gg() in gs1;
@@ -42792,7 +42805,7 @@ data Dd with
     var int v = 10;
 end
 
-code/await Ff (void) -> (var& Dd d) -> FOREVER do
+code/await Ff (void) -> (var& Dd d) -> NEVER do
     var Dd d_ = val Dd(_);
     d = &d_;
     await FOREVER;
@@ -42823,7 +42836,7 @@ data Dd with
     var int v = 10;
 end
 
-code/await Ff (void) -> (var& Dd d) -> FOREVER do
+code/await Ff (void) -> (var& Dd d) -> NEVER do
     var Dd d_ = val Dd(_);
     d = &d_;
     await FOREVER;
@@ -43042,7 +43055,7 @@ escape 1;
 }
 
 Test { [[
-code/await Tx (void)->(var int e)->FOREVER do
+code/await Tx (void)->(var int e)->NEVER do
     e = 1;
     await FOREVER;
 end
@@ -43058,7 +43071,7 @@ escape 0;
 }
 
 Test { [[
-code/await Tx (void)->(var int e)->FOREVER do
+code/await Tx (void)->(var int e)->NEVER do
     e = 1;
     await FOREVER;
 end
@@ -43076,7 +43089,7 @@ escape 0;
 }
 
 Test { [[
-code/await Tx (void)->(var int e)->FOREVER do
+code/await Tx (void)->(var int e)->NEVER do
     e = 1;
     await FOREVER;
 end
@@ -43096,7 +43109,7 @@ escape 1;
 }
 
 Test { [[
-code/await Tx (void)->(event void e)->FOREVER do
+code/await Tx (void)->(event void e)->NEVER do
     await FOREVER;
 end
 
@@ -43116,7 +43129,7 @@ Test { [[
 code/tight Ff (var& int x) -> int do
     escape x + 1;
 end
-code/await Gg (void) -> (var int x) -> FOREVER do
+code/await Gg (void) -> (var int x) -> NEVER do
     x = 10;
     await FOREVER;
 end
@@ -43135,7 +43148,7 @@ native/pos do
     int V = 0;
 end
 
-code/await Tx (void)->(event& void e)->FOREVER do
+code/await Tx (void)->(event& void e)->NEVER do
     event void e_;
     e = &e_;
     await FOREVER;
@@ -43352,7 +43365,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (var int x) -> (var int y) -> FOREVER do
+code/await Ff (var int x) -> (var int y) -> NEVER do
     y = x;
     await FOREVER;
 end
@@ -43371,7 +43384,7 @@ escape ret;
     run = 3,
 }
 Test { [[
-code/await Ff (var int x) -> (var int y) -> FOREVER do
+code/await Ff (var int x) -> (var int y) -> NEVER do
     y = x;
     await FOREVER;
 end
@@ -43390,7 +43403,7 @@ escape ret;
     run = '11] runtime error: out of memory',
 }
 Test { [[
-code/await Ff (var int x) -> (var int y) -> FOREVER do
+code/await Ff (var int x) -> (var int y) -> NEVER do
     y = x;
     await FOREVER;
 end
@@ -44135,7 +44148,7 @@ Test { [[
 data Dx with
     var int x;
 end
-code/await Cc (void) -> (var Dx d) -> FOREVER do
+code/await Cc (void) -> (var Dx d) -> NEVER do
     d = val Dx(200);
     await FOREVER;
 end
@@ -45303,7 +45316,7 @@ escape d!.v;
 }
 
 Test { [[
-code/await Ff (var int? v_) -> (var int? v) -> FOREVER do
+code/await Ff (var int? v_) -> (var int? v) -> NEVER do
     v = v_;
     await FOREVER;
 end
@@ -45319,7 +45332,7 @@ Test { [[
 data Dd with
     var int v;
 end
-code/await Ff (var Dd? d_) -> (var Dd? d) -> FOREVER do
+code/await Ff (var Dd? d_) -> (var Dd? d) -> NEVER do
     d = d_;
     await FOREVER;
 end
@@ -45632,7 +45645,7 @@ Test { [[
 data Dx with
     var int x;
 end
-code/await Cc (void) -> (var Dx d) -> FOREVER do
+code/await Cc (void) -> (var Dx d) -> NEVER do
     d = val Dx(200);
     await FOREVER;
 end
@@ -46714,7 +46727,7 @@ end
 
 var int ret = 0;
 
-code/await DoObj(var Obj o) -> FOREVER
+code/await DoObj(var Obj o) -> NEVER
 do
     outer.ret = outer.ret + o.x;
     await FOREVER;
@@ -46734,13 +46747,13 @@ end
 
 var int ret = 0;
 
-code/await DoObjRef(var& Obj o) -> FOREVER
+code/await DoObjRef(var& Obj o) -> NEVER
 do
     outer.ret = outer.ret + (o.a as int);
     await FOREVER;
 end
 
-code/await DoObj(var Obj o) -> FOREVER
+code/await DoObj(var Obj o) -> NEVER
 do
     outer.ret = outer.ret + (o.a as int);
     await FOREVER;
@@ -46918,7 +46931,7 @@ Test { [[
 data Object with
   var int c = 101;
 end
-code/await Show(var Object obj) -> (var& int ret) -> FOREVER do
+code/await Show(var Object obj) -> (var& int ret) -> NEVER do
     var int a = obj.c;
     ret = &a;
     await FOREVER;
@@ -46958,7 +46971,7 @@ Test { [[
 data Object with
   var int ccc = 101;
 end
-code/await Show(var Object obj) -> (var& int rrr) -> FOREVER do
+code/await Show(var Object obj) -> (var& int rrr) -> NEVER do
     var int aaa = obj.ccc;
     rrr = &aaa;
     await FOREVER;
@@ -47015,7 +47028,7 @@ Test { [[
 data Object with
   var int c = 101;
 end
-code/await Show(var Object obj) -> (var& int ret) -> FOREVER do
+code/await Show(var Object obj) -> (var& int ret) -> NEVER do
     var int a = obj.c;
     ret = &a;
     await FOREVER;
@@ -47086,7 +47099,7 @@ Test { [[
 data Dd with
     var int x = 111;
 end
-code/await Ff (void) -> (var Dd d) -> FOREVER do
+code/await Ff (void) -> (var Dd d) -> NEVER do
     d = val Dd(_);
     await FOREVER;
 end
@@ -47570,7 +47583,7 @@ escape 1;
 }
 
 Test { [[
-code/await Test(void) -> FOREVER do
+code/await Test(void) -> NEVER do
     do finalize with
         await async/thread do
         end
@@ -48829,7 +48842,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
     await FOREVER;
 end
 var&? Ff f = spawn Ff();
@@ -48952,7 +48965,7 @@ code/await Gg (void) -> void do
     end
 end
 
-code/await Ff (void) -> (pool[1] Gg gs) -> FOREVER do
+code/await Ff (void) -> (pool[1] Gg gs) -> NEVER do
     var&? Gg g1 = spawn Gg() in gs;
     kill g1;
     var&? Gg g2 = spawn Gg() in gs;
@@ -48968,7 +48981,7 @@ escape {V};
 }
 
 Test { [[
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
     await FOREVER;
 end
 var& Ff f = spawn Ff();
@@ -48979,7 +48992,7 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
     await FOREVER;
 end
 pool[] Ff fs;
@@ -48994,7 +49007,7 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (void) -> (var int a) -> FOREVER do
+code/await Ff (void) -> (var int a) -> NEVER do
     a = 1;
     await FOREVER;
 end
@@ -50444,7 +50457,7 @@ Test { [[
 data Dd;
 data Dd.Ee;
 
-code/await Ff (void) -> (var& Dd d) -> FOREVER do
+code/await Ff (void) -> (var& Dd d) -> NEVER do
     var Dd d_ = val Dd.Ee();
     d = &d_;
     await FOREVER;
@@ -50485,9 +50498,9 @@ data Xx;
 data Xx.Yy;
 data Dd;
 
-code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> FOREVER;
+code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> NEVER;
 
-code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> FOREVER do
+code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> NEVER do
     var Dd d_ = val Dd();
     d = &d_;
     await FOREVER;
@@ -50506,7 +50519,7 @@ data Xx;
 data Xx.Yy;
 data Dd;
 
-code/await Ff (var Xx x) -> (var& Dd d) -> FOREVER do
+code/await Ff (var Xx x) -> (var& Dd d) -> NEVER do
     var Dd d_ = val Dd();
     d = &d_;
     await FOREVER;
@@ -50525,9 +50538,9 @@ data Xx;
 data Xx.Yy;
 data Dd;
 
-//code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> FOREVER;
+//code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> NEVER;
 
-code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> FOREVER do
+code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> NEVER do
     var Dd d_ = val Dd();
     d = &d_;
     await FOREVER;
@@ -50553,14 +50566,14 @@ end
 data Dd.Ee;
 
 native _ceu_dbg_assert;
-code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> FOREVER do
+code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> NEVER do
     var Dd d_ = val Dd(x);
     d = &d_;
     _ceu_dbg_assert(0);
     await FOREVER;
 end
 
-code/await/dynamic Ff (var/dynamic Xx.Yy x) -> (var& Dd d) -> FOREVER do
+code/await/dynamic Ff (var/dynamic Xx.Yy x) -> (var& Dd d) -> NEVER do
     var Dd d_ = val Dd.Ee(x);
     d = &d_;
     await FOREVER;
@@ -50585,14 +50598,14 @@ end
 data Dd.Ee;
 
 native _ceu_dbg_assert;
-code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d1) -> FOREVER do
+code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d1) -> NEVER do
     var Dd d_ = val Dd(x);
     d1 = &d_;
     _ceu_dbg_assert(0);
     await FOREVER;
 end
 
-code/await/dynamic Ff (var/dynamic Xx.Yy x) -> (var& Dd d2) -> FOREVER do
+code/await/dynamic Ff (var/dynamic Xx.Yy x) -> (var& Dd d2) -> NEVER do
     var Dd d_ = val Dd.Ee(x);
     d2 = &d_;
     await FOREVER;
@@ -50617,14 +50630,14 @@ end
 data Dd.Ee;
 
 native _ceu_dbg_assert;
-code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> FOREVER do
+code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> NEVER do
     var Dd d_ = val Dd(x);
     d = &d_;
     _ceu_dbg_assert(0);
     await FOREVER;
 end
 
-code/await Gg (var Xx.Yy x) -> (var& Dd d) -> FOREVER do
+code/await Gg (var Xx.Yy x) -> (var& Dd d) -> NEVER do
     var Dd d_ = val Dd.Ee(x);
     d = &d_;
     await FOREVER;
@@ -50650,14 +50663,14 @@ end
 data Dd.Ee;
 
 native _ceu_dbg_assert;
-code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> FOREVER do
+code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> NEVER do
     var Dd d_ = val Dd(x);
     d = &d_;
     _ceu_dbg_assert(0);
     await FOREVER;
 end
 
-code/await/dynamic Ff (var/dynamic Xx.Yy x) -> (var& Dd d) -> FOREVER do
+code/await/dynamic Ff (var/dynamic Xx.Yy x) -> (var& Dd d) -> NEVER do
     var Dd d_ = val Dd.Ee(x);
     d = &d_;
     await FOREVER;
@@ -50679,7 +50692,7 @@ end
 data Aa;
 data Aa.Bb;
 
-code/await/dynamic Ff (var& int ret, var&/dynamic Aa v1) -> (var Dd d) -> FOREVER do
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa v1) -> (var Dd d) -> NEVER do
     d = _;
     await FOREVER;
 end
@@ -50711,7 +50724,7 @@ end
 data Aa;
 data Aa.Bb;
 
-code/await/dynamic Ff (var& int ret, var&/dynamic Aa v1) -> (var& Dd d) -> FOREVER do
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa v1) -> (var& Dd d) -> NEVER do
     var Dd d_ = _;
     d = &d_;
     await FOREVER;
@@ -50776,7 +50789,7 @@ end
 data Aa;
 data Aa.Bb;
 
-code/await/dynamic Ff (var& int ret, var&/dynamic Aa v1) -> (var&? Dd d) -> FOREVER do
+code/await/dynamic Ff (var& int ret, var&/dynamic Aa v1) -> (var&? Dd d) -> NEVER do
     var Dd d_ = _;
     d = &d_;
     await FOREVER;
@@ -50845,7 +50858,7 @@ escape ret+1;
 Test { [[
 data Xx;
 data Xx.Yy;
-code/await Gg (var/dynamic Xx.Yy x) -> (void) -> FOREVER do
+code/await Gg (var/dynamic Xx.Yy x) -> (void) -> NEVER do
     await FOREVER;
 end
 escape 1;
@@ -52237,7 +52250,7 @@ escape x;
 }
 
 Test { [[
-code/await Ff (var int x) -> FOREVER do
+code/await Ff (var int x) -> NEVER do
     code/tight Get_X (void) -> int do
         escape outer.x;
     end
@@ -52262,7 +52275,7 @@ escape ret;
 }
 
 Test { [[
-code/await Ff (var int x) -> FOREVER do
+code/await Ff (var int x) -> NEVER do
     code/await Get_X (void) -> int do
         escape outer.x;
     end
@@ -52336,7 +52349,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) -> (var int x) -> FOREVER do
+code/await Ff (void) -> (var int x) -> NEVER do
     x = 10;
     await FOREVER;
 end
@@ -52347,7 +52360,7 @@ escape f.x;
 }
 
 Test { [[
-code/await Ff (var&[] byte buf) -> FOREVER do
+code/await Ff (var&[] byte buf) -> NEVER do
     code/tight Reset (void) -> void do
         $outer.buf = 0;
     end
@@ -52380,7 +52393,7 @@ var int a = 1;
 par/or do
 with
     var int a = 1;
-    code/await Ff (void) -> FOREVER do
+    code/await Ff (void) -> NEVER do
         code/tight Gg (void) -> void do
             var int b = outer.a;
         end
@@ -52398,7 +52411,7 @@ Test { [[
 code/await Ff (void) -> int do
     event void ok_escape;
 
-    code/await Gg (void) -> FOREVER do
+    code/await Gg (void) -> NEVER do
         emit outer.ok_escape;
         await FOREVER;
     end
@@ -52441,7 +52454,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
     await FOREVER;
 end
 var usize i;
@@ -52494,7 +52507,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) -> FOREVER do
+code/await Ff (void) -> NEVER do
     await FOREVER;
 end
 var usize i;

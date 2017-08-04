@@ -281,6 +281,7 @@ KEYS = P
 'not' +
 'nohold' +
 'new' +
+'NEVER' +
 'native' +
 'lua' +
 'loop' +
@@ -475,7 +476,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     , Code_Pars  = #KK'(' * PARENS(P'void' + LIST(V'__Dcls'))
     , _Code_Pars = #KK'(' * PARENS(P'void' + LIST(V'__Dcls'))
-    , Code_Ret = (V'Type' + CK'FOREVER')
+    , Code_Ret = (V'Type' + K'NEVER'*Cc'FOREVER')
 
 -- DATA
 
