@@ -1,6 +1,6 @@
 #define CEU_FEATURES_LONGJMP
 
-=== FEATURES ===        /* CEU_FEATURES */
+=== CEU_FEATURES ===        /* CEU_FEATURES */
 
 #include <stddef.h>     /* offsetof */
 #include <stdlib.h>     /* NULL */
@@ -40,8 +40,8 @@
 
 typedef u16 tceu_nevt;   /* TODO */
 typedef u16 tceu_nseq;   /* TODO */
-typedef === TCEU_NTRL === tceu_ntrl;
-typedef === TCEU_NLBL === tceu_nlbl;
+typedef === CEU_TCEU_NTRL === tceu_ntrl;
+typedef === CEU_TCEU_NLBL === tceu_nlbl;
 
 #define CEU_API
 CEU_API void ceu_start (tceu_callback* cb, int argc, char* argv[]);
@@ -163,8 +163,8 @@ typedef struct tceu_isr {
 
 /*****************************************************************************/
 
-/* NATIVE_PRE */
-=== NATIVE_PRE ===
+/* CEU_NATIVE_PRE */
+=== CEU_NATIVE_PRE ===
 
 /* EVENTS_ENUM */
 
@@ -185,30 +185,30 @@ CEU_INPUT__SEQ,
     CEU_INPUT__ASYNC,
     CEU_INPUT__THREAD,
     CEU_INPUT__WCLOCK,
-    === EXTS_ENUM_INPUT ===
+    === CEU_EXTS_ENUM_INPUT ===
 
 CEU_EVENT__MIN,
-    === EVTS_ENUM ===
+    === CEU_EVTS_ENUM ===
 };
 
 enum {
     CEU_OUTPUT__NONE = 0,
-    === EXTS_ENUM_OUTPUT ===
+    === CEU_EXTS_ENUM_OUTPUT ===
 };
 
-/* ISRS_DEFINES */
+/* CEU_ISRS_DEFINES */
 
-=== ISRS_DEFINES ===
+=== CEU_ISRS_DEFINES ===
 
 /* EVENTS_DEFINES */
 
-=== EXTS_DEFINES_INPUT_OUTPUT ===
+=== CEU_EXTS_DEFINES_INPUT_OUTPUT ===
 
-/* DATAS_HIERS */
+/* CEU_DATAS_HIERS */
 
 typedef s16 tceu_ndata;  /* TODO */
 
-=== DATAS_HIERS ===
+=== CEU_DATAS_HIERS ===
 
 static int ceu_data_is (tceu_ndata* supers, tceu_ndata me, tceu_ndata cmp) {
     return (me==cmp || (me!=0 && ceu_data_is(supers,supers[me],cmp)));
@@ -221,24 +221,24 @@ static void* ceu_data_as (tceu_ndata* supers, tceu_ndata* me, tceu_ndata cmp,
     return me;
 }
 
-/* DATAS_MEMS */
+/* CEU_DATAS_MEMS */
 
-=== DATAS_MEMS ===
-=== DATAS_MEMS_CASTS ===
+=== CEU_DATAS_MEMS ===
+=== CEU_DATAS_MEMS_CASTS ===
 
 /*****************************************************************************/
 
-=== CODES_MEMS ===
+=== CEU_CODES_MEMS ===
 #if 0
 === CODES_ARGS ===
 #endif
 
-=== EXTS_TYPES ===
-=== EVTS_TYPES ===
+=== CEU_EXTS_TYPES ===
+=== CEU_EVTS_TYPES ===
 
 enum {
     CEU_LABEL_NONE = 0,
-    === LABELS ===
+    === CEU_LABELS ===
 };
 
 typedef struct tceu_stk {
@@ -523,13 +523,13 @@ static void ceu_bcast (tceu_evt_occ* occ, tceu_stk* stk, bool is_prim);
 static void ceu_lbl (tceu_evt_occ* _ceu_occ, tceu_stk* _ceu_stk,
                      tceu_code_mem* _ceu_mem, tceu_ntrl _ceu_trlK, tceu_nlbl _ceu_lbl);
 
-=== NATIVE_POS ===
+=== CEU_NATIVE_POS ===
 
-=== CODES_WRAPPERS ===
+=== CEU_CODES_WRAPPERS ===
 
-=== ISRS ===
+=== CEU_ISRS ===
 
-=== THREADS ===
+=== CEU_THREADS ===
 
 /*****************************************************************************/
 
@@ -594,7 +594,7 @@ _CEU_LBL_:
     switch (_ceu_lbl) {
         CEU_LABEL_NONE:
             break;
-        === CODES ===
+        === CEU_CODES ===
     }
 }
 
