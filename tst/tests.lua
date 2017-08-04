@@ -36304,9 +36304,9 @@ Test { [[
 code/tight Ff (var int x) -> void do
 end
 
-var int off = 0;
-var int a = &off;
-call Ff(&off);
+var int x = 0;
+var int a = &x;
+call Ff(&x);
 escape 0;
 ]],
     dcls = 'line 6 : invalid binding : argument #1 : expected declaration with `&`',
