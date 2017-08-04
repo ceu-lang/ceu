@@ -10,26 +10,37 @@ endif
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-syn match	Macro	"\<_\w*\>"
-syn keyword cType       yesno onoff none integer real text
-syn keyword cStatement  NEVER
-syn keyword	cConstant   null true false _ nil yes no on off
-syn keyword	cOperator   not or and sizeof
-syn keyword cType       bool byte
-syn keyword cType       f32 f64 float
-syn keyword cType       int
+syn match	Macro	    "\<_\w*\>"
+
+syn keyword	cConstant   null true false _ yes no on off
+
+syn keyword	cOperator   not or and sizeof as is
+
+syn keyword cType       bool yes/no on/off
+syn keyword cType       byte
+syn keyword cType       r32 r64 real
+syn keyword cType       integer int
 syn keyword cType       s16 s32 s64 s8
 syn keyword cType       ssize
 syn keyword cType       u16 u32 u64 u8
-syn keyword cType       uint usize void
+syn keyword cType       uint usize
+syn keyword cType       none NEVER
+syn keyword cType       text
+
 syn keyword cType       const nohold recursive plain pure hold
-syn keyword cType       tight dynamic
-syn keyword	cStatement  as async await break native continue data deterministic do else emit end
-syn keyword cStatement  code event every finalize FOREVER outer if input loop nothing lock
-syn keyword cStatement  output pre pos par pause return then until var val with
-syn keyword cStatement  include kill spawn thread lua resume
-syn keyword cStatement  escape call isr atomic request in is
-syn keyword cStatement  watching new pool
+syn keyword cType       pre pos tight dynamic static
+
+syn keyword	cStatement  native data code
+
+syn keyword	cStatement  include define
+syn keyword	cStatement  event input output var pool
+
+syn keyword	cStatement  async await break continue deterministic do else emit end
+syn keyword cStatement  every finalize FOREVER outer if loop nothing lock
+syn keyword cStatement  par pause then until val with
+syn keyword cStatement  kill spawn thread lua resume traverse
+syn keyword cStatement  escape call isr atomic request in
+syn keyword cStatement  watching new
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 " A bunch of useful C keywords
