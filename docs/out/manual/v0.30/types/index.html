@@ -166,8 +166,9 @@
             <div class="section">
               
                 <h1 id="types">Types<a class="headerlink" href="#types" title="Permanent link">&para;</a></h1>
-<p>Céu is statically typed, requiring all variables, events, and other entities to
-be declared before they are used in programs.</p>
+<p>Céu is statically typed, requiring all variables, events, and other
+<a href="./../storage_entities/#storage-entities">storage entities</a> to be declared before
+they are used in programs.</p>
 <p>A type is composed of a <a href="./../lexical_rules/#identifiers">type identifier</a>,
 followed by an optional sequence of <a href="#pointer">pointer modifiers</a> <code>&amp;&amp;</code>,
 followed by an optional <a href="#option">option modifier</a> <code>?</code>:</p>
@@ -184,16 +185,19 @@ input byte&amp;&amp; RECV; // &quot;RECV&quot; is an input event carrying a poin
 
 <h2 id="primitives">Primitives<a class="headerlink" href="#primitives" title="Permanent link">&para;</a></h2>
 <p>Céu has the following primitive types:</p>
-<pre><code class="ceu">void               // void type
+<pre><code class="ceu">none               // void type
 bool               // boolean type
+on/off             // synonym to bool
+yes/no             // synonym to bool
 byte               // 1-byte type
 int      uint      // platform dependent signed and unsigned integer
+integer            // synonym to int
 s8       u8        // signed and unsigned  8-bit integers
 s16      u16       // signed and unsigned 16-bit integers
 s32      u32       // signed and unsigned 32-bit integers
 s64      u64       // signed and unsigned 64-bit integers
-float              // platform dependent float
-f32      f64       // 32-bit and 64-bit floats
+real               // platform dependent real
+r32      r64       // 32-bit and 64-bit reals
 ssize    usize     // signed and unsigned size types
 </code></pre>
 
@@ -227,7 +231,7 @@ additional information to the compiler.</p>
 <p><code>TODO cannot cross yielding statements</code></p>
 <h3 id="option">Option<a class="headerlink" href="#option" title="Permanent link">&para;</a></h3>
 <p><code>TODO (like "Maybe")</code></p>
-<p><code>TODO: nil</code></p>
+<p><code>TODO: _</code></p>
               
             </div>
           </div>

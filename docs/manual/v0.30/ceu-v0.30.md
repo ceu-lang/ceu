@@ -2,35 +2,45 @@
 
 ## Overview
 
-Céu provides *Structured Synchronous Reactive Programming*, extending classical
-structured programming with two main functionalities:
+Céu provides *Structured Synchronous Reactive Programming* with the following
+general characteristics:
 
+- *Reactive*:    code executes in reactions to events.
+- *Structured*:  code uses structured control-flow mechanisms, such as `spawn`
+                 and `await` (to create and suspend an activity).
+- *Synchronous*: event reactions never overlap and run atomically and to
+                 completion on each activity.
+                 There is no implicit preemption or real parallelism, resulting
+                 in deterministic execution.
+
+<!--
 - Event Handling:
     - An `await` statement to suspend a line of execution and wait for an input
       event from the environment.
     - An `emit` statement to signal an output event back to the environment.
 - Concurrency:
     - A set of parallel constructs to compose concurrent lines of execution.
+-->
 
 The lines of execution in Céu, known as *trails*, react all together to input
 events one after another, in discrete steps.
-An input event is broadcast to all active trails, which share the event as
-their unique and global time reference.
+An input event is broadcast to all active trails, which share the event as an
+unique and global time reference.
 
-The program that follows blinks a LED every second and terminates on a button
-press:
+The example in Céu that follows blinks a LED every second and terminates on a
+button press:
 
 ```ceu
-input  void BUTTON;
-output bool LED;
+input  none   BUTTON;
+output on/off LED;
 par/or do
     await BUTTON;
 with
     loop do
         await 1s;
-        emit LED(true);
+        emit LED(on);
         await 1s;
-        emit LED(false);
+        emit LED(off);
     end
 end
 ```
@@ -62,7 +72,7 @@ An environment senses the world and broadcasts `input` events to programs.
 It also intercepts programs signalling `output` events to actuate in the
 world:
 
-![](/data/ceu/ceu/docs/manual/v0.30/site/overview/environment.png)
+![An environment works as a bridge between the program and the real world.](/data/ceu/ceu/docs/manual/v0.30/site/overview/environment.png)
 
 As examples of typical environments, an embedded system may provide button
 input and LED output, and a video game engine may provide keyboard input and
@@ -106,34 +116,37 @@ This policy is arbitrary, but provides a priority scheme for trails, and also
 ensures deterministic and reproducible execution for programs.
 At any time, at most one trail is executing.
 
-The program and diagram below illustrate the behavior of the scheduler of Céu:
+The program and diagram that follow illustrate the behavior of the scheduler of
+Céu:
 
 ```ceu
- 1:  input void A, B, C;  // A, B, and C are input events
- 2:  par/and do
- 3:      // trail 1
- 4:      <...>            // <...> represents non-awaiting statements
- 5:      await A;
- 6:      <...>
- 7:  with
- 8:      // trail 2
- 9:      <...>
-10:      await B;
+ 1:  input none A;
+ 2:  input none B;
+ 3:  input none C;
+ 4:  par/and do
+ 5:      // trail 1
+ 6:      <...>          // a `<...>` represents non-awaiting statements
+ 7:      await A;       // (e.g., assignments and native calls)
+ 8:      <...>
+ 9:  with
+10:      // trail 2
 11:      <...>
-12:  with
-13:      // trail 3
-14:      <...>
-15:      await A;
+12:      await B;
+13:      <...>
+14:  with
+15:      // trail 3
 16:      <...>
-17:      await B;
-18:      par/and do
-19:          // trail 3
-20:          <...>
-21:      with
-22:          // trail 4
-23:          <...>
-24:      end
-25:  end
+17:      await A;
+18:      <...>
+19:      await B;
+20:      par/and do
+21:          // trail 3
+22:          <...>
+23:      with
+24:          // trail 4
+25:          <...>
+26:      end
+27:  end
 ```
 
 ![](/data/ceu/ceu/docs/manual/v0.30/site/overview/reaction.png)
@@ -142,20 +155,20 @@ The program starts in the boot reaction and forks into three trails.
 Respecting the lexical order of declaration for the trails, they are scheduled
 as follows (*t0* in the diagram):
 
-- *trail-1* executes up to the `await A` (line 5);
-- *trail-2* executes up to the `await B` (line 10);
-- *trail-3* executes up to the `await A` (line 15).
+- *trail-1* executes up to the `await A` (line 7);
+- *trail-2* executes up to the `await B` (line 12);
+- *trail-3* executes up to the `await A` (line 17).
 
 As no other trails are pending, the reaction chain terminates and the scheduler 
-remains idle until the event `A` occurs (*t1* in the diagram):
+remains idle until a new event occurs (*t1=A* in the diagram):
 
-- *trail-1* awakes, executes and terminates (line 6);
+- *trail-1* awakes, executes and terminates (line 8);
 - *trail-2* remains suspended, as it is not awaiting `A`.
-- *trail-3* executes up to `await B` (line 17).
+- *trail-3* executes up to `await B` (line 19).
 
-During the reaction *t1*, new instances of events `A`, `B`, and `C` occur and
-are enqueued to be handled in the reactions in sequence.
-As `A` happened first, it is used in the next reaction.
+Note that during the reaction *t1*, new instances of events `A`, `B`, and `C`
+occur which are all enqueued to be handled in the reactions in sequence.
+As `A` happened first, it becomes the next reaction.
 However, no trails are awaiting it, so an empty reaction chain takes place 
 (*t2* in the diagram).
 The next reaction dequeues the event `B` (*t3* in the diagram):
@@ -190,9 +203,9 @@ rejoin and proceed to the statement in sequence:
 
 As mentioned in the introduction and emphasized in the execution model, trails
 in parallel do not execute with real parallelism.
-Therefore, parallel compositions support *awaiting in parallel*, rather than
-*executing in parallel*.
-
+Therefore, it is important to note that parallel compositions provide
+*awaiting in parallel*, rather than *executing in parallel* (see
+[Asynchronous Threads](../statements/#thread) for real parallelism support).
 <!--
 The termination of a trail inside a `par/or` aborts the other trails in 
 parallel which are necessarily idle
@@ -207,10 +220,10 @@ Reaction chains must run in bounded time to guarantee that programs are
 responsive and can handle incoming input events.
 For this reason, Céu requires every path inside the body of a `loop` statement
 to contain at least one `await` or `break` statement.
-This prevents *tight loops*, i.e., unbounded loops that do not await.
+This prevents *tight loops*, which are unbounded loops that do not await.
 
-In the example below, the true branch of the `if` may never execute, resulting
-in a tight loop when the condition is false:
+In the example that follow, if the condition is false, the true branch of the
+`if` never executes, resulting in a tight loop:
 
 ```ceu
 loop do
@@ -221,7 +234,7 @@ end
 ```
 
 Céu warns about tight loops in programs at compile time.
-For time-consuming algorithms that require unrestricted loops (e.g., 
+For computationally-intensive algorithms that require unrestricted loops (e.g.,
 cryptography, image processing), Céu provides
 [Asynchronous Execution](../statements/#asynchronous-execution).
 
@@ -251,7 +264,7 @@ runtime stack:
 3. The top of stack is popped and the last emitting trail resumes execution
     from its continuation.
 
-Example:
+The program and follow illustrates the behavior of internal reactions in Céu:
 
 ```ceu
 1:  par/and do      // trail 1
@@ -260,18 +273,26 @@ Example:
 4:  with            // trail 2
 5:      await f;
 6:  with            // trail 3
-8:      emit e;
-9:  end
+7:      emit e;
+8:  end
 ```
 
-The `emit e` in *trail-3* (line 7) starts an internal reaction that awakes the 
-`await e` in *trail-1* (line 2).
-Then, the `emit f` (line 3) starts another internal reaction that awakes the 
-`await f` in *trail-2* (line 5).
-*Trail-2* terminates and the `emit f` resumes in *trail-1*.
-*Trail-1* terminates and the `emit e` resumes in *trail-3*.
-*Trail-3* terminates.
-Finally, the `par/and` rejoins and the program terminates.
+The program starts in the boot reaction with an empty stack and forks into the
+three trails.
+Respecting the lexical order, the first two trails `await` and the third trail
+executes:
+
+- The `emit e` in *trail-3* (line 7) starts an internal reaction (`stack=[7]`).
+- The `await e` in *trail-1* awakes (line 2) and then the `emit f` (line 3)
+  starts another internal reaction (`stack=[7,3]`).
+- The `await f` in *trail-2* awakes and terminates the trail (line 5).
+  Since no other trails are awaiting `f`, the current internal reaction
+  terminates, resuming and popping the top of the stack (`stack=[7]`).
+- The `emit f` resumes in *trail-1* and terminates the trail (line 3).
+  The current internal reaction terminates, resuming and popping the top of the
+  stack (`stack=[]`).
+- The `emit e` resumes in *trail-3* and terminates the trail (line 7).
+  Finally, the `par/and` rejoins and the program terminates.
 
 # Lexical Rules
 
@@ -283,43 +304,45 @@ Finally, the `par/and` rejoins and the program terminates.
 
 ### Keywords
 
-Keywords in Céu are reserved names that cannot be used as identifiers (e.g., 
-variable names):
+Keywords in Céu are reserved names that cannot be used as identifiers (e.g.,
+for variables and events):
 
 ```ceu
-    and             as              async           atomic          await           
+    and             as              async           atomic          await
 
-    break           call            code            const           continue        
+    bool            break           byte            call            code
 
-    data            deterministic   do              dynamic         else            
+    const           continue        data            deterministic   do
 
-    emit            end             escape          event           every           
+    dynamic         else            emit            end             escape
 
-    false           finalize        FOREVER         hold            if              
+    event           every           false           finalize        FOREVER
 
-    in              input           is              isr             kill            
+    hold            if              in              input           int
 
-    lock            loop            lua             native          new
+    integer         is              isr             kill            lock
 
-    nohold          not             nothing         nil             null
+    loop            lua             native          NEVER           new
 
-    or              outer           output          par             pause
+    no              nohold          none            not             nothing
 
-    plain           pool            pos             pre             pure
+    null            off             on              or              outer
 
-    recursive       request         resume          sizeof          spawn
+    output          par             pause           plain           pool
 
-    static          then            thread          tight           traverse
+    pos             pre             pure            r32             r64
 
-    true            until           val             var             watching
+    real            recursive       request         resume          s16
 
-    with            bool            byte            f32             f64
+    s32             s64             s8              sizeof          spawn
 
-    float           int             s16             s32             s64
+    ssize           static          then            thread          tight
 
-    s8              ssize           u16             u32             u64
+    traverse        true            u16             u32             u64
 
-    u8              uint            usize           void
+    u8              uint            until           usize           val
+
+    var             watching        with            yes
 ```
 
 ### Identifiers
@@ -331,39 +354,48 @@ Céu uses identifiers to refer to *types* (`ID_type`), *variables* (`ID_int`),
 *native symbols* (`ID_nat`), and *block labels* (`ID_int`).
 
 ```ceu
-ID       ::= [a-z, A-Z, 0-9, _]+
-ID_int   ::= ID             // ID beginning with lowercase
-ID_ext   ::= ID             // ID all in uppercase, not beginning with digit
-ID_abs   ::= ID {`.´ ID}    // IDs beginning with uppercase, containining at least one lowercase)
-ID_field ::= ID             // ID not beginning with digit
-ID_nat   ::= ID             // ID beginning with underscore
+ID       ::= [a-z, A-Z, 0-9, _]+ // a sequence of letters, digits, and underscores
+ID_int   ::= ID                  // ID beginning with lowercase
+ID_ext   ::= ID                  // ID all in uppercase, not beginning with digit
+ID_abs   ::= ID {`.´ ID}         // IDs beginning with uppercase, containining at least one lowercase)
+ID_field ::= ID                  // ID not beginning with digit
+ID_nat   ::= ID                  // ID beginning with underscore
 
 ID_type  ::= ( ID_nat | ID_abs
-             | void  | bool  | byte
-             | f32   | f64   | float
-             | s8    | s16   | s32   | s64
-             | u8    | u16   | u32   | u64
-             | int   | uint  | ssize | usize )
+             | none
+             | bool  | on/off | yes/no
+             | byte
+             | r32   | r64    | real
+             | s8    | s16    | s32     | s64
+             | u8    | u16    | u32     | u64
+             | int   | uint   | integer
+             | ssize   | usize )
 ```
 
-Declarations for [`code` and `data`](../statements/#abstractions) create new
-[types](../types/#types) which can be used as type identifiers.
+Declarations for [`code` and `data` abstractions](../statements/#abstractions)
+create new [types](../types/#types) which can be used as type identifiers.
 
 Examples:
 
 ```ceu
 var int a;                    // "a" is a variable, "int" is a type
+
 emit e;                       // "e" is an internal event
-await E;                      // "E" is an external input event
+
+await I;                      // "I" is an external input event
+
 spawn Move();                 // "Move" is a code abstraction and a type
+
 var Rect r;                   // "Rect" is a data abstraction and a type
-return r.width;               // "width" is a field
+
+escape r.width;               // "width" is a field
+
 _printf("hello world!\n");    // "_printf" is a native symbol
 ```
 
 ### Literals
 
-Céu supports literals for *booleans*, *integers*, *floats*, *strings*, and
+Céu provides literals for *booleans*, *integers*, *reals*, *strings*, and
 *null pointers*.
 
 <!--
@@ -374,6 +406,11 @@ A literal is a source code representation of a value.
 #### Booleans
 
 The boolean type has only two possible values: `true` and `false`.
+
+The boolean values `on` and `yes` are synonymous to `true` and can be used
+interchangeably.
+The boolean values `off` and `no` are synonymous to `false and can be used
+interchangeably.
 
 #### Integers
 
@@ -401,8 +438,8 @@ v = 0x7F;   // hexadecimal
 
 #### Strings
 
-A sequence of characters surrounded by `"` is converted into a *null-terminated 
-string*, just like in C:
+A sequence of characters surrounded by the character `"` is converted into a
+*null-terminated string*, just like in C:
 
 Example:
 
@@ -442,8 +479,9 @@ a = 1;
 
 ## Types
 
-Céu is statically typed, requiring all variables, events, and other entities to
-be declared before they are used in programs.
+Céu is statically typed, requiring all variables, events, and other
+[storage entities](../storage_entities/#storage-entities) to be declared before
+they are used in programs.
 
 A type is composed of a [type identifier](../lexical_rules/#identifiers),
 followed by an optional sequence of [pointer modifiers](#pointer) `&&`,
@@ -468,16 +506,19 @@ input byte&& RECV; // "RECV" is an input event carrying a pointer to a "byte"
 Céu has the following primitive types:
 
 ```ceu
-void               // void type
+none               // void type
 bool               // boolean type
+on/off             // synonym to bool
+yes/no             // synonym to bool
 byte               // 1-byte type
 int      uint      // platform dependent signed and unsigned integer
+integer            // synonym to int
 s8       u8        // signed and unsigned  8-bit integers
 s16      u16       // signed and unsigned 16-bit integers
 s32      u32       // signed and unsigned 32-bit integers
 s64      u64       // signed and unsigned 64-bit integers
-float              // platform dependent float
-f32      f64       // 32-bit and 64-bit floats
+real               // platform dependent real
+r32      r64       // 32-bit and 64-bit reals
 ssize    usize     // signed and unsigned size types
 ```
 
@@ -525,7 +566,7 @@ Types can be suffixed with the pointer modifier `&&` and the option modifier
 
 `TODO (like "Maybe")`
 
-`TODO: nil`
+`TODO: _`
 
 # Storage Entities
 
@@ -544,9 +585,9 @@ Examples:
 ```ceu
 var    int    v;     // "v" is a variable of type "int"
 var[9] byte   buf;   // "buf" is a vector with at most 9 values of type "byte"
-input  void&& A;     // "A" is an input event that carries values of type "void&&"
+input  none&& A;     // "A" is an input event that carries values of type "none&&"
 event  bool   e;     // "e" is an internal event that carries values of type "bool"
-pool[] Anim   anims; // "anims" is a dynamic "pool" for instances of type "Anim"
+pool[] Anim   anims; // "anims" is a dynamic "pool" of instances of type "Anim"
 ```
 
 A declaration binds the identifier with a memory location that holds values of
@@ -634,12 +675,12 @@ be communicated through `emit` and `await` statements.
 A [declaration](../statements/#events) includes the type of value the occurring
 event carries.
 
-*Note: <tt>void</tt> is a valid type for signal-only events.*
+*Note: <tt>none</tt> is a valid type for signal-only events with no associated values.*
 
 Example:
 
 ```ceu
-input  void I;           // "I" is an input event that carries no values
+input  none I;           // "I" is an input event that carries no values
 output int  O;           // "O" is an output event that carries values of type "int"
 event  int  e;           // "e" is an internal event that carries values of type "int"
 par/and do
@@ -659,8 +700,8 @@ external and internal events with different behavior.
 External events are used as interfaces between programs and devices from the 
 real world:
 
-* *input events* represent input devices such as sensor, button, mouse, etc.
-* *output events* represent output devices such as LED, motor, screen, etc.
+* *input events* represent input devices such as a sensor, button, mouse, etc.
+* *output events* represent output devices such as a LED, motor, screen, etc.
 
 The availability of external events depends on the
 [environment](../#environments) in use.
@@ -718,11 +759,11 @@ removed automatically when the code execution terminates.
 Example:
 
 ```ceu
-code/await Anim (void) => void do       // defines the "Anim" code abstraction
+code/await Anim (none) => none do       // defines the "Anim" code abstraction
     <...>                               // body of "Anim"
 end
 pool[] Anim ms;                         // declares an unlimited container for "Anim" instances
-loop i in [0->10[ do
+loop i in [1->10] do
     spawn Anim() in ms;                 // creates 10 instances of "Anim" into "ms"
 end
 ```
@@ -730,29 +771,28 @@ end
 When a pool declaration goes out of scope, all running code abstractions are
 automatically aborted.
 
+`TODO: kill`
+
 <!--
 `TODO: data`
 -->
 
 ### Locations
 
-A location (aka *l-value*) is a path to a memory location holding a storage
-entity ([`ID_int`](../lexical_rules/#identifiers)) or a native symbol
-([`ID_nat`](../lexical_rules/#identifiers)).
-
-Locations appear in assignments, event manipulation, iterators, and
-expressions.
+A location (aka *l-value*) is a path to a memory position holding a value.
 
 The list that follows summarizes all valid locations:
 
 - storage entity: variable, vector, internal event (but not external), or pool
 - native expression or symbol
-- data field (which are storage entities)
+- data field
 - vector index
 - vector length `$`
 - pointer dereferencing `*`
 - option unwrapping `!`
 
+Locations appear in assignments, event manipulation, iterators, and
+expressions.
 Locations are detailed in [Locations and Expressions](../expressions/#locations-expressions).
 
 Examples:
@@ -760,7 +800,7 @@ Examples:
 ```ceu
 emit e(1);          // "e" is an internal event
 _UDR = 10;          // "_UDR" is a native symbol
-person.age = 70;    // "age" is a variable in "person"
+person.age = 70;    // "age" is a field of "person"
 vec[0] = $vec;      // "vec[0]" is a vector index
 $vec = 1;           // "$vec" is a vector length
 *ptr = 1;           // "ptr" is a pointer to a variable
@@ -790,7 +830,7 @@ Céu also supports option variable aliases which are aliases that may be set or
 not.
 
 An alias is declared by suffixing the entity class with the modifier
-`&` and is acquired by prefixing an entity with the operator `&`.
+`&` and is acquired by prefixing an entity identifier with the operator `&`.
 
 An alias must have a narrower scope than the entity it refers to.
 The [assignment](../statements/#assignments) to the alias is immutable and must
@@ -809,8 +849,7 @@ _printf("%d\n", v);     // prints 1
 
 An option variable alias, declared as `var&?`, serves two purposes:
 
-- Map a [native resource](../statements/#resources-finalization) to a variable
-  in Céu.
+- Map a [native resource](../statements/#resources-finalization) to Céu.
   The alias is acquired by prefixing the associated
   [native call](../statements/#native-call) with the operator `&`.
   Since the allocation may fail, the alias may remain unset.
@@ -1119,7 +1158,7 @@ See also [Introduction](#TODO) for a general overview of events.
 Examples:
 
 ```ceu
-input  void A,B;        // "A" and "B" are input events carrying no values
+input  none A,B;        // "A" and "B" are input events carrying no values
 output int  MY_EVT;     // "MY_EVT" is an output event carrying integer values
 input (int,byte&&) BUF; // "BUF" is an input event carrying an "(int,byte&&)" pair
 ```
@@ -1135,8 +1174,8 @@ Only in this case they can be [initialized](#assignments).
 Examples:
 
 ```ceu
-event  void a,b;        // "a" and "b" are internal events carrying no values
-event& void z = &a;     // "z" is an alias to event "a"
+event  none a;          // "a" is an internal events carrying no values
+event& none z = &a;     // "z" is an alias to event "a"
 event (int,int) c;      // "c" is a internal event carrying an "(int,int)" pair
 ```
 
@@ -1160,7 +1199,6 @@ Sources ::= ( Do
             | Vec_Cons
             | Data_Cons
             | Exp
-            | `nil´
             | `_´ )
 ```
 
@@ -1178,12 +1216,11 @@ Céu supports the following constructs as assignment sources:
 - vector [length](../expressions/#length) & [constructor](../expressions/#constructor)
 - [data constructor](#data-constructor)
 - [expression](../expressions/#locations-expressions)
-- the [option](../types/#option) `nil` value
-- the anonymous identifier `_`
+- the special identifier `_`
 
-The option `nil` value unsets an [option variable](../types/#option).
-
-The anonymous identifier makes the assignment innocuous.
+The special identifier `_` makes the assignment innocuous.
+In the case of assigning to an [option type](../types/#option), the `_` unsets
+it.
 
 `TODO: required for uninitialized variables`
 
@@ -1351,7 +1388,7 @@ Emit_Ext ::= emit ID_ext [`(´ [LIST(Exp)] `)´]
 Examples:
 
 ```ceu
-emit A;         // emits the output event `A` of type "void"
+emit A;         // emits the output event `A` of type "none"
 emit a(1);      // emits the internal event `a` of type "int"
 
 emit 1s;        // emits the specified time
@@ -1380,7 +1417,7 @@ async do
     emit I(10);         // broadcasts "I" to the application itself, passing "10"
 end
 
-output void O;
+output none O;
 var int ret = emit O(); // outputs "O" to the environment and captures the result
 
 event (int,int) e;
@@ -1749,7 +1786,7 @@ Examples:
 
 ```ceu
 // reacts continuously to "1s" and "KEY_PRESSED" and never terminates
-input void KEY_PRESSED;
+input none KEY_PRESSED;
 par do
     every 1s do
         <...>           // does something every "1s"
@@ -1770,7 +1807,7 @@ Examples:
 
 ```ceu
 // reacts once to "1s" and "KEY_PRESSED" and terminates
-input void KEY_PRESSED;
+input none KEY_PRESSED;
 par/and do
     await 1s;
     <...>               // does something after "1s"
@@ -1789,7 +1826,7 @@ Examples:
 
 ```ceu
 // reacts once to `1s` or `KEY_PRESSED` and terminates
-input void KEY_PRESSED;
+input none KEY_PRESSED;
 par/or do
     await 1s;
     <...>               // does something after "1s"
@@ -1860,7 +1897,7 @@ Examples:
 
 ```ceu
 // reacts continuously to "KEY_PRESSED" during "1s"
-input void KEY_PRESSED;
+input none KEY_PRESSED;
 watching 1s do
     every KEY_PRESSED do
         <...>           // does something every "KEY_PRESSED"
@@ -2229,7 +2266,7 @@ var _t x = 10;                  // requires "t" to be already defined
 ```
 
 ```ceu
-input void A;                   // declaration for "A" is placed before "pos" blocks
+input none A;                   // declaration for "A" is placed before "pos" blocks
 native _get_A_id;
 native/pos do
     int get_A_id (void) {
@@ -2515,7 +2552,7 @@ Data ::= data ID_abs [as (nothing|Exp)] [ with
          end
 
 Data_Cons ::= (val|new) Abs_Cons
-Abs_Cons  ::= [Loc `.´] ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`nil´|`_´) `)´
+Abs_Cons  ::= [Loc `.´] ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
 ```
 
 A declaration may pack fields with
@@ -2603,8 +2640,8 @@ be invoked from arbitrary points in programs:
 ```ceu
 // prototype declaration
 Code_Tight ::= code/tight Mods ID_abs `(´ Params `)´ `->´ Type
-Code_Await ::= code/await Mods ID_abs `(´ Params `)´ [`->´ `(´ Params `)´] `->´ (Type | FOREVER)
-Params ::= void | LIST(Var|Vec|Pool|Int)
+Code_Await ::= code/await Mods ID_abs `(´ Params `)´ [`->´ `(´ Params `)´] `->´ (Type | NEVER)
+Params ::= none | LIST(Var|Vec|Pool|Int)
 
 // full declaration
 Code_Impl ::= (Code_Tight | Code_Await) do
@@ -2657,7 +2694,7 @@ var int abs = call Absolute(-10);           // invokes "Absolute" (yields 10)
 ```
 
 ```ceu
-code/await Hello_World (void) -> FOREVER do
+code/await Hello_World (none) -> NEVER do
     every 1s do
         _printf("Hello World!\n");  // prints "Hello World!" every second
     end
@@ -2685,10 +2722,10 @@ Code abstractions specify a list of input parameters in between the symbols
 `(` and `)`.
 Each parameter specifies an [entity class](../storage_entities/#entity-classes)
 with modifiers, a type and an identifier.
-A `void` list specifies that the abstraction has no parameters.
+A `none` list specifies that the abstraction has no parameters.
 
 Code abstractions also specify an output return type.
-A `code/await` may use `FOREVER` as output to indicate that it never returns.
+A `code/await` may use `NEVER` as output to indicate that it never returns.
 
 A `code/await` may also specify an optional *public field list*, which are
 local storage entities living in the outermost scope of the abstraction body.
@@ -2706,7 +2743,7 @@ Examples:
 
 ```ceu
 // "Open" abstracts "_fopen"/"_fclose"
-code/await Open (var _char&& path) -> (var& _FILE res) -> FOREVER do
+code/await Open (var _char&& path) -> (var& _FILE res) -> NEVER do
     var&? _FILE res_ = _fopen(path, <...>)  // allocates resource
                        finalize with
                            _fclose(res_!);  // releases resource
@@ -2748,7 +2785,7 @@ representing the instance and can be captured with an optional
 [assignment](#assignment).
 The alias must be an [option alias variable](../storage_entities/#aliases) of
 the same type of the code abstraction.
-If the abstraction never terminates (i.e., return type is `FOREVER`), the
+If the abstraction never terminates (i.e., return type is `NEVER`), the
 variable may be a simple alias.
 If the `spawn` fails (e.g., lack of memory) the option alias variable is unset.
 In the case of a simple alias, the assignment raises a runtime error.
@@ -2775,10 +2812,10 @@ methods of the instance.
 Examples:
 
 ```ceu
-code/await My_Code (var int x) -> (var int y) -> FOREVER do
+code/await My_Code (var int x) -> (var int y) -> NEVER do
     y = x;                              // "y" is a public field
 
-    code/tight Get_X (void) -> int do   // "Get_X" is a public method
+    code/tight Get_X (none) -> int do   // "Get_X" is a public method
         escape outer.x;
     end
 
@@ -2824,16 +2861,16 @@ data Media.Audio     with <...> end
 data Media.Video     with <...> end
 data Media.Video.Avi with <...> end
 
-code/await/dynamic Play (dynamic var& Media media) -> void do
+code/await/dynamic Play (dynamic var& Media media) -> none do
     _assert(0);             // never dispatched
 end
-code/await/dynamic Play (dynamic var& Media.Audio media) -> void do
+code/await/dynamic Play (dynamic var& Media.Audio media) -> none do
     <...>                   // plays an audio
 end
-code/await/dynamic Play (dynamic var& Media.Video media) -> void do
+code/await/dynamic Play (dynamic var& Media.Video media) -> none do
     <...>                   // plays a video
 end
-code/await/dynamic Play (dynamic var& Media.Video.Avi media) -> void do
+code/await/dynamic Play (dynamic var& Media.Video.Avi media) -> none do
     <...>                                   // prepare the avi video
     await/dynamic Play(&m as Media.Video);  // dispatches the supertype
 end
@@ -2865,7 +2902,7 @@ Céu specifies [locations](../storage_entities/#locations) and expressions as
 follows:
 
 ```ceu
-Exp ::= NUM | STR | null | true | false
+Exp ::= NUM | STR | null | true | false | on | off | yes | no
      |  `(´ Exp `)´
      |  Exp <binop> Exp
      |  <unop> Exp
@@ -3306,8 +3343,9 @@ typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
 
-typedef float    f32;
-typedef double   f64;
+typedef float    real;
+typedef float    r32;
+typedef double   r64;
 ```
 
 #### Threads
@@ -3645,10 +3683,10 @@ Stmt ::= nothing
       | await (FOREVER | pause | resume)
 
       // Emit_Ext ::=
-      | emit ID_ext [`(´ [LIST(Exp)] `)´]
+      | emit ID_ext [`(´ [LIST(Exp|`_´)] `)´]
       | emit (WCLOCKK|WCLOCKE)
       //
-      | emit Loc [`(´ [LIST(Exp)] `)´]
+      | emit Loc [`(´ [LIST(Exp|`_´)] `)´]
 
       | lock Loc do
             Block
@@ -3792,9 +3830,9 @@ Stmt ::= nothing
       | code/tight Mods ID_abs `(´ Params `)´ `->´ Type
 
       // Code_Await ::=
-      | code/await Mods ID_abs `(´ Params `)´ [ `->´ `(´ Params `)´ ] `->´ (Type | FOREVER)
+      | code/await Mods ID_abs `(´ Params `)´ [ `->´ `(´ Params `)´ ] `->´ (Type | NEVER)
         // where
-            Params ::= void | LIST(Dcls)
+            Params ::= none | LIST(Dcls)
 
       /* code implementation */
       | (Code_Tight | Code_Await) do
@@ -3814,7 +3852,7 @@ Stmt ::= nothing
 
         // where
             Mods ::= [`/´dynamic | `/´static] [`/´recursive]
-            Abs_Cons ::= [Loc `.´] ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`nil´|`_´) `)´
+            Abs_Cons ::= [Loc `.´] ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
 
   /* Assignments */
 
@@ -3832,7 +3870,6 @@ Stmt ::= nothing
                         | Vec_Cons
                         | Data_Cons
                         | Exp
-                        | `nil´
                         | `_´ )
             Vec_Cons  ::= (Loc | Exp) Vec_Concat { Vec_Concat }
                        |  `[´ [LIST(Exp)] `]´ { Vec_Concat }
@@ -3849,11 +3886,14 @@ ID_abs   ::= ID {`.´ ID}    // IDs beginning with uppercase, containining at le
 ID_field ::= ID             // ID not beginning with digit
 ID_nat   ::= ID             // ID beginning with underscore
 ID_type  ::= ( ID_nat | ID_abs
-             | void  | bool  | byte
-             | f32   | f64   | float
-             | s8    | s16   | s32   | s64
-             | u8    | u16   | u32   | u64
-             | int   | uint  | ssize | usize )
+             | none
+             | bool  | on/off | yes/no
+             | byte
+             | r32   | r64    | real
+             | s8    | s16    | s32     | s64
+             | u8    | u16    | u32     | u64
+             | int   | uint   | integer
+             | ssize   | usize )
 
 /* Types */
 
@@ -3871,7 +3911,7 @@ STR ::= " [^\"\n]* "                        // regex
 
 /* Expressions */
 
-Exp ::= NUM | STR | null | true | false
+Exp ::= NUM | STR | null | true | false | on | off | yes | no
      |  `(´ Exp `)´
      |  Exp <binop> Exp
      |  <unop> Exp

@@ -175,9 +175,9 @@ class, a <a href="./../types/#types">type</a>, and an <a href="./../lexical_rule
 <p>Examples:</p>
 <pre><code class="ceu">var    int    v;     // &quot;v&quot; is a variable of type &quot;int&quot;
 var[9] byte   buf;   // &quot;buf&quot; is a vector with at most 9 values of type &quot;byte&quot;
-input  void&amp;&amp; A;     // &quot;A&quot; is an input event that carries values of type &quot;void&amp;&amp;&quot;
+input  none&amp;&amp; A;     // &quot;A&quot; is an input event that carries values of type &quot;none&amp;&amp;&quot;
 event  bool   e;     // &quot;e&quot; is an internal event that carries values of type &quot;bool&quot;
-pool[] Anim   anims; // &quot;anims&quot; is a dynamic &quot;pool&quot; for instances of type &quot;Anim&quot;
+pool[] Anim   anims; // &quot;anims&quot; is a dynamic &quot;pool&quot; of instances of type &quot;Anim&quot;
 </code></pre>
 
 <p>A declaration binds the identifier with a memory location that holds values of
@@ -247,9 +247,9 @@ For this reason, an event identifier is not a variable: values can only
 be communicated through <code>emit</code> and <code>await</code> statements.
 A <a href="./../statements/#events">declaration</a> includes the type of value the occurring
 event carries.</p>
-<p><em>Note: <tt>void</tt> is a valid type for signal-only events.</em></p>
+<p><em>Note: <tt>none</tt> is a valid type for signal-only events with no associated values.</em></p>
 <p>Example:</p>
-<pre><code class="ceu">input  void I;           // &quot;I&quot; is an input event that carries no values
+<pre><code class="ceu">input  none I;           // &quot;I&quot; is an input event that carries no values
 output int  O;           // &quot;O&quot; is an output event that carries values of type &quot;int&quot;
 event  int  e;           // &quot;e&quot; is an internal event that carries values of type &quot;int&quot;
 par/and do
@@ -267,8 +267,8 @@ external and internal events with different behavior.</p>
 <p>External events are used as interfaces between programs and devices from the 
 real world:</p>
 <ul>
-<li><em>input events</em> represent input devices such as sensor, button, mouse, etc.</li>
-<li><em>output events</em> represent output devices such as LED, motor, screen, etc.</li>
+<li><em>input events</em> represent input devices such as a sensor, button, mouse, etc.</li>
+<li><em>output events</em> represent output devices such as a LED, motor, screen, etc.</li>
 </ul>
 <p>The availability of external events depends on the
 <a href="./../#environments">environment</a> in use.</p>
@@ -316,42 +316,41 @@ Individual elements of pools can only be accessed through
 New elements are created with <a href="./../statements/#code-invocation"><code>spawn</code></a> and are
 removed automatically when the code execution terminates.</p>
 <p>Example:</p>
-<pre><code class="ceu">code/await Anim (void) =&gt; void do       // defines the &quot;Anim&quot; code abstraction
+<pre><code class="ceu">code/await Anim (none) =&gt; none do       // defines the &quot;Anim&quot; code abstraction
     &lt;...&gt;                               // body of &quot;Anim&quot;
 end
 pool[] Anim ms;                         // declares an unlimited container for &quot;Anim&quot; instances
-loop i in [0-&gt;10[ do
+loop i in [1-&gt;10] do
     spawn Anim() in ms;                 // creates 10 instances of &quot;Anim&quot; into &quot;ms&quot;
 end
 </code></pre>
 
 <p>When a pool declaration goes out of scope, all running code abstractions are
 automatically aborted.</p>
+<p><code>TODO: kill</code></p>
 <!--
 `TODO: data`
 -->
 
 <h2 id="locations">Locations<a class="headerlink" href="#locations" title="Permanent link">&para;</a></h2>
-<p>A location (aka <em>l-value</em>) is a path to a memory location holding a storage
-entity (<a href="./../lexical_rules/#identifiers"><code>ID_int</code></a>) or a native symbol
-(<a href="./../lexical_rules/#identifiers"><code>ID_nat</code></a>).</p>
-<p>Locations appear in assignments, event manipulation, iterators, and
-expressions.</p>
+<p>A location (aka <em>l-value</em>) is a path to a memory position holding a value.</p>
 <p>The list that follows summarizes all valid locations:</p>
 <ul>
 <li>storage entity: variable, vector, internal event (but not external), or pool</li>
 <li>native expression or symbol</li>
-<li>data field (which are storage entities)</li>
+<li>data field</li>
 <li>vector index</li>
 <li>vector length <code>$</code></li>
 <li>pointer dereferencing <code>*</code></li>
 <li>option unwrapping <code>!</code></li>
 </ul>
-<p>Locations are detailed in <a href="./../expressions/#locations-expressions">Locations and Expressions</a>.</p>
+<p>Locations appear in assignments, event manipulation, iterators, and
+expressions.
+Locations are detailed in <a href="./../expressions/#locations-expressions">Locations and Expressions</a>.</p>
 <p>Examples:</p>
 <pre><code class="ceu">emit e(1);          // &quot;e&quot; is an internal event
 _UDR = 10;          // &quot;_UDR&quot; is a native symbol
-person.age = 70;    // &quot;age&quot; is a variable in &quot;person&quot;
+person.age = 70;    // &quot;age&quot; is a field of &quot;person&quot;
 vec[0] = $vec;      // &quot;vec[0]&quot; is a vector index
 $vec = 1;           // &quot;$vec&quot; is a vector length
 *ptr = 1;           // &quot;ptr&quot; is a pointer to a variable
@@ -374,7 +373,7 @@ pointer types.
 Céu also supports option variable aliases which are aliases that may be set or
 not.</p>
 <p>An alias is declared by suffixing the entity class with the modifier
-<code>&amp;</code> and is acquired by prefixing an entity with the operator <code>&amp;</code>.</p>
+<code>&amp;</code> and is acquired by prefixing an entity identifier with the operator <code>&amp;</code>.</p>
 <p>An alias must have a narrower scope than the entity it refers to.
 The <a href="./../statements/#assignments">assignment</a> to the alias is immutable and must
 occur between its declaration and first access or next
@@ -389,8 +388,7 @@ _printf(&quot;%d\n&quot;, v);     // prints 1
 
 <p>An option variable alias, declared as <code>var&amp;?</code>, serves two purposes:</p>
 <ul>
-<li>Map a <a href="./../statements/#resources-finalization">native resource</a> to a variable
-  in Céu.
+<li>Map a <a href="./../statements/#resources-finalization">native resource</a> to Céu.
   The alias is acquired by prefixing the associated
   <a href="./../statements/#native-call">native call</a> with the operator <code>&amp;</code>.
   Since the allocation may fail, the alias may remain unset.</li>

@@ -363,7 +363,7 @@ See also [Introduction](#TODO) for a general overview of events.
 
 <h4 id="external-events">External Events<a class="headerlink" href="#external-events" title="Permanent link">&para;</a></h4>
 <p>Examples:</p>
-<pre><code class="ceu">input  void A,B;        // &quot;A&quot; and &quot;B&quot; are input events carrying no values
+<pre><code class="ceu">input  none A,B;        // &quot;A&quot; and &quot;B&quot; are input events carrying no values
 output int  MY_EVT;     // &quot;MY_EVT&quot; is an output event carrying integer values
 input (int,byte&amp;&amp;) BUF; // &quot;BUF&quot; is an input event carrying an &quot;(int,byte&amp;&amp;)&quot; pair
 </code></pre>
@@ -374,8 +374,8 @@ input (int,byte&amp;&amp;) BUF; // &quot;BUF&quot; is an input event carrying an
 <a href="./../storage_entities/#aliases">aliases</a>.
 Only in this case they can be <a href="#assignments">initialized</a>.</p>
 <p>Examples:</p>
-<pre><code class="ceu">event  void a,b;        // &quot;a&quot; and &quot;b&quot; are internal events carrying no values
-event&amp; void z = &amp;a;     // &quot;z&quot; is an alias to event &quot;a&quot;
+<pre><code class="ceu">event  none a;          // &quot;a&quot; is an internal events carrying no values
+event&amp; none z = &amp;a;     // &quot;z&quot; is an alias to event &quot;a&quot;
 event (int,int) c;      // &quot;c&quot; is a internal event carrying an &quot;(int,int)&quot; pair
 </code></pre>
 
@@ -396,7 +396,6 @@ Sources ::= ( Do
             | Vec_Cons
             | Data_Cons
             | Exp
-            | `nil´
             | `_´ )
 </code></pre>
 
@@ -414,11 +413,11 @@ Sources ::= ( Do
 <li>vector <a href="./../expressions/#length">length</a> &amp; <a href="./../expressions/#constructor">constructor</a></li>
 <li><a href="#data-constructor">data constructor</a></li>
 <li><a href="./../expressions/#locations-expressions">expression</a></li>
-<li>the <a href="./../types/#option">option</a> <code>nil</code> value</li>
-<li>the anonymous identifier <code>_</code></li>
+<li>the special identifier <code>_</code></li>
 </ul>
-<p>The option <code>nil</code> value unsets an <a href="./../types/#option">option variable</a>.</p>
-<p>The anonymous identifier makes the assignment innocuous.</p>
+<p>The special identifier <code>_</code> makes the assignment innocuous.
+In the case of assigning to an <a href="./../types/#option">option type</a>, the <code>_</code> unsets
+it.</p>
 <p><code>TODO: required for uninitialized variables</code></p>
 <h3 id="copy-assignment">Copy Assignment<a class="headerlink" href="#copy-assignment" title="Permanent link">&para;</a></h3>
 <p>A <em>copy assignment</em> evaluates the statement or expression at the right side and
@@ -542,7 +541,7 @@ Emit_Ext ::= emit ID_ext [`(´ [LIST(Exp)] `)´]
 </code></pre>
 
 <p>Examples:</p>
-<pre><code class="ceu">emit A;         // emits the output event `A` of type &quot;void&quot;
+<pre><code class="ceu">emit A;         // emits the output event `A` of type &quot;none&quot;
 emit a(1);      // emits the internal event `a` of type &quot;int&quot;
 
 emit 1s;        // emits the specified time
@@ -564,7 +563,7 @@ async do
     emit I(10);         // broadcasts &quot;I&quot; to the application itself, passing &quot;10&quot;
 end
 
-output void O;
+output none O;
 var int ret = emit O(); // outputs &quot;O&quot; to the environment and captures the result
 
 event (int,int) e;
@@ -876,7 +875,7 @@ specified events occur.</p>
 <p>The <code>par</code> statement never rejoins.</p>
 <p>Examples:</p>
 <pre><code class="ceu">// reacts continuously to &quot;1s&quot; and &quot;KEY_PRESSED&quot; and never terminates
-input void KEY_PRESSED;
+input none KEY_PRESSED;
 par do
     every 1s do
         &lt;...&gt;           // does something every &quot;1s&quot;
@@ -893,7 +892,7 @@ end
 trails terminate.</p>
 <p>Examples:</p>
 <pre><code class="ceu">// reacts once to &quot;1s&quot; and &quot;KEY_PRESSED&quot; and terminates
-input void KEY_PRESSED;
+input none KEY_PRESSED;
 par/and do
     await 1s;
     &lt;...&gt;               // does something after &quot;1s&quot;
@@ -908,7 +907,7 @@ end
 trails terminate, aborting all other trails.</p>
 <p>Examples:</p>
 <pre><code class="ceu">// reacts once to `1s` or `KEY_PRESSED` and terminates
-input void KEY_PRESSED;
+input none KEY_PRESSED;
 par/or do
     await 1s;
     &lt;...&gt;               // does something after &quot;1s&quot;
@@ -965,7 +964,7 @@ an optional <a href="#assignments">assignment</a>.</p>
 require the unwrap operator <a href="./../expressions/#option"><code>!</code></a>.</p>
 <p>Examples:</p>
 <pre><code class="ceu">// reacts continuously to &quot;KEY_PRESSED&quot; during &quot;1s&quot;
-input void KEY_PRESSED;
+input none KEY_PRESSED;
 watching 1s do
     every KEY_PRESSED do
         &lt;...&gt;           // does something every &quot;KEY_PRESSED&quot;
@@ -1280,7 +1279,7 @@ end
 var _t x = 10;                  // requires &quot;t&quot; to be already defined
 </code></pre>
 
-<pre><code class="ceu">input void A;                   // declaration for &quot;A&quot; is placed before &quot;pos&quot; blocks
+<pre><code class="ceu">input none A;                   // declaration for &quot;A&quot; is placed before &quot;pos&quot; blocks
 native _get_A_id;
 native/pos do
     int get_A_id (void) {
@@ -1516,7 +1515,7 @@ declarations to define new subprograms.</p>
          end
 
 Data_Cons ::= (val|new) Abs_Cons
-Abs_Cons  ::= [Loc `.´] ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`nil´|`_´) `)´
+Abs_Cons  ::= [Loc `.´] ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
 </code></pre>
 
 <p>A declaration may pack fields with
@@ -1591,8 +1590,8 @@ var Object o1 = val Object(Rect(0,0,10,10,_), Dir.Right());
 be invoked from arbitrary points in programs:</p>
 <pre><code class="ceu">// prototype declaration
 Code_Tight ::= code/tight Mods ID_abs `(´ Params `)´ `-&gt;´ Type
-Code_Await ::= code/await Mods ID_abs `(´ Params `)´ [`-&gt;´ `(´ Params `)´] `-&gt;´ (Type | FOREVER)
-Params ::= void | LIST(Var|Vec|Pool|Int)
+Code_Await ::= code/await Mods ID_abs `(´ Params `)´ [`-&gt;´ `(´ Params `)´] `-&gt;´ (Type | NEVER)
+Params ::= none | LIST(Var|Vec|Pool|Int)
 
 // full declaration
 Code_Impl ::= (Code_Tight | Code_Await) do
@@ -1637,7 +1636,7 @@ end
 var int abs = call Absolute(-10);           // invokes &quot;Absolute&quot; (yields 10)
 </code></pre>
 
-<pre><code class="ceu">code/await Hello_World (void) -&gt; FOREVER do
+<pre><code class="ceu">code/await Hello_World (none) -&gt; NEVER do
     every 1s do
         _printf(&quot;Hello World!\n&quot;);  // prints &quot;Hello World!&quot; every second
     end
@@ -1662,9 +1661,9 @@ var int fat = call/recursive Fat(10);           // invokes &quot;Fat&quot; (yiel
 <code>(</code> and <code>)</code>.
 Each parameter specifies an <a href="./../storage_entities/#entity-classes">entity class</a>
 with modifiers, a type and an identifier.
-A <code>void</code> list specifies that the abstraction has no parameters.</p>
+A <code>none</code> list specifies that the abstraction has no parameters.</p>
 <p>Code abstractions also specify an output return type.
-A <code>code/await</code> may use <code>FOREVER</code> as output to indicate that it never returns.</p>
+A <code>code/await</code> may use <code>NEVER</code> as output to indicate that it never returns.</p>
 <p>A <code>code/await</code> may also specify an optional <em>public field list</em>, which are
 local storage entities living in the outermost scope of the abstraction body.
 These entities are visible to the invoking context, which may
@@ -1705,7 +1704,7 @@ representing the instance and can be captured with an optional
 <a href="#assignment">assignment</a>.
 The alias must be an <a href="./../storage_entities/#aliases">option alias variable</a> of
 the same type of the code abstraction.
-If the abstraction never terminates (i.e., return type is <code>FOREVER</code>), the
+If the abstraction never terminates (i.e., return type is <code>NEVER</code>), the
 variable may be a simple alias.
 If the <code>spawn</code> fails (e.g., lack of memory) the option alias variable is unset.
 In the case of a simple alias, the assignment raises a runtime error.</p>
@@ -1725,10 +1724,10 @@ unset.</p>
 <p>A reference provides <a href="./../expressions/#fields">access</a> to the public fields and
 methods of the instance.</p>
 <p>Examples:</p>
-<pre><code class="ceu">code/await My_Code (var int x) -&gt; (var int y) -&gt; FOREVER do
+<pre><code class="ceu">code/await My_Code (var int x) -&gt; (var int y) -&gt; NEVER do
     y = x;                              // &quot;y&quot; is a public field
 
-    code/tight Get_X (void) -&gt; int do   // &quot;Get_X&quot; is a public method
+    code/tight Get_X (none) -&gt; int do   // &quot;Get_X&quot; is a public method
         escape outer.x;
     end
 
@@ -1765,16 +1764,16 @@ data Media.Audio     with &lt;...&gt; end
 data Media.Video     with &lt;...&gt; end
 data Media.Video.Avi with &lt;...&gt; end
 
-code/await/dynamic Play (dynamic var&amp; Media media) -&gt; void do
+code/await/dynamic Play (dynamic var&amp; Media media) -&gt; none do
     _assert(0);             // never dispatched
 end
-code/await/dynamic Play (dynamic var&amp; Media.Audio media) -&gt; void do
+code/await/dynamic Play (dynamic var&amp; Media.Audio media) -&gt; none do
     &lt;...&gt;                   // plays an audio
 end
-code/await/dynamic Play (dynamic var&amp; Media.Video media) -&gt; void do
+code/await/dynamic Play (dynamic var&amp; Media.Video media) -&gt; none do
     &lt;...&gt;                   // plays a video
 end
-code/await/dynamic Play (dynamic var&amp; Media.Video.Avi media) -&gt; void do
+code/await/dynamic Play (dynamic var&amp; Media.Video.Avi media) -&gt; none do
     &lt;...&gt;                                   // prepare the avi video
     await/dynamic Play(&amp;m as Media.Video);  // dispatches the supertype
 end

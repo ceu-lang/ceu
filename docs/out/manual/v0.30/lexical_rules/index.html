@@ -171,41 +171,43 @@
 -->
 
 <h2 id="keywords">Keywords<a class="headerlink" href="#keywords" title="Permanent link">&para;</a></h2>
-<p>Keywords in Céu are reserved names that cannot be used as identifiers (e.g., 
-variable names):</p>
-<pre><code class="ceu">    and             as              async           atomic          await           
+<p>Keywords in Céu are reserved names that cannot be used as identifiers (e.g.,
+for variables and events):</p>
+<pre><code class="ceu">    and             as              async           atomic          await
 
-    break           call            code            const           continue        
+    bool            break           byte            call            code
 
-    data            deterministic   do              dynamic         else            
+    const           continue        data            deterministic   do
 
-    emit            end             escape          event           every           
+    dynamic         else            emit            end             escape
 
-    false           finalize        FOREVER         hold            if              
+    event           every           false           finalize        FOREVER
 
-    in              input           is              isr             kill            
+    hold            if              in              input           int
 
-    lock            loop            lua             native          new
+    integer         is              isr             kill            lock
 
-    nohold          not             nothing         nil             null
+    loop            lua             native          NEVER           new
 
-    or              outer           output          par             pause
+    no              nohold          none            not             nothing
 
-    plain           pool            pos             pre             pure
+    null            off             on              or              outer
 
-    recursive       request         resume          sizeof          spawn
+    output          par             pause           plain           pool
 
-    static          then            thread          tight           traverse
+    pos             pre             pure            r32             r64
 
-    true            until           val             var             watching
+    real            recursive       request         resume          s16
 
-    with            bool            byte            f32             f64
+    s32             s64             s8              sizeof          spawn
 
-    float           int             s16             s32             s64
+    ssize           static          then            thread          tight
 
-    s8              ssize           u16             u32             u64
+    traverse        true            u16             u32             u64
 
-    u8              uint            usize           void
+    u8              uint            until           usize           val
+
+    var             watching        with            yes
 </code></pre>
 
 <h2 id="identifiers">Identifiers<a class="headerlink" href="#identifiers" title="Permanent link">&para;</a></h2>
@@ -214,35 +216,44 @@ variable names):</p>
 <em>external events</em> (<code>ID_ext</code>), <em>code abstractions</em> (<code>ID_abs</code>),
 <em>data abstractions</em> (<code>ID_abs</code>), <em>fields</em> (<code>ID_field</code>),
 <em>native symbols</em> (<code>ID_nat</code>), and <em>block labels</em> (<code>ID_int</code>).</p>
-<pre><code class="ceu">ID       ::= [a-z, A-Z, 0-9, _]+
-ID_int   ::= ID             // ID beginning with lowercase
-ID_ext   ::= ID             // ID all in uppercase, not beginning with digit
-ID_abs   ::= ID {`.´ ID}    // IDs beginning with uppercase, containining at least one lowercase)
-ID_field ::= ID             // ID not beginning with digit
-ID_nat   ::= ID             // ID beginning with underscore
+<pre><code class="ceu">ID       ::= [a-z, A-Z, 0-9, _]+ // a sequence of letters, digits, and underscores
+ID_int   ::= ID                  // ID beginning with lowercase
+ID_ext   ::= ID                  // ID all in uppercase, not beginning with digit
+ID_abs   ::= ID {`.´ ID}         // IDs beginning with uppercase, containining at least one lowercase)
+ID_field ::= ID                  // ID not beginning with digit
+ID_nat   ::= ID                  // ID beginning with underscore
 
 ID_type  ::= ( ID_nat | ID_abs
-             | void  | bool  | byte
-             | f32   | f64   | float
-             | s8    | s16   | s32   | s64
-             | u8    | u16   | u32   | u64
-             | int   | uint  | ssize | usize )
+             | none
+             | bool  | on/off | yes/no
+             | byte
+             | r32   | r64    | real
+             | s8    | s16    | s32     | s64
+             | u8    | u16    | u32     | u64
+             | int   | uint   | integer
+             | ssize   | usize )
 </code></pre>
 
-<p>Declarations for <a href="./../statements/#abstractions"><code>code</code> and <code>data</code></a> create new
-<a href="./../types/#types">types</a> which can be used as type identifiers.</p>
+<p>Declarations for <a href="./../statements/#abstractions"><code>code</code> and <code>data</code> abstractions</a>
+create new <a href="./../types/#types">types</a> which can be used as type identifiers.</p>
 <p>Examples:</p>
 <pre><code class="ceu">var int a;                    // &quot;a&quot; is a variable, &quot;int&quot; is a type
+
 emit e;                       // &quot;e&quot; is an internal event
-await E;                      // &quot;E&quot; is an external input event
+
+await I;                      // &quot;I&quot; is an external input event
+
 spawn Move();                 // &quot;Move&quot; is a code abstraction and a type
+
 var Rect r;                   // &quot;Rect&quot; is a data abstraction and a type
-return r.width;               // &quot;width&quot; is a field
+
+escape r.width;               // &quot;width&quot; is a field
+
 _printf(&quot;hello world!\n&quot;);    // &quot;_printf&quot; is a native symbol
 </code></pre>
 
 <h2 id="literals">Literals<a class="headerlink" href="#literals" title="Permanent link">&para;</a></h2>
-<p>Céu supports literals for <em>booleans</em>, <em>integers</em>, <em>floats</em>, <em>strings</em>, and
+<p>Céu provides literals for <em>booleans</em>, <em>integers</em>, <em>reals</em>, <em>strings</em>, and
 <em>null pointers</em>.</p>
 <!--
 A literal is a primitive and fixed value in source code.
@@ -251,6 +262,10 @@ A literal is a source code representation of a value.
 
 <h3 id="booleans">Booleans<a class="headerlink" href="#booleans" title="Permanent link">&para;</a></h3>
 <p>The boolean type has only two possible values: <code>true</code> and <code>false</code>.</p>
+<p>The boolean values <code>on</code> and <code>yes</code> are synonymous to <code>true</code> and can be used
+interchangeably.
+The boolean values <code>off</code> and <code>no</code> are synonymous to `false and can be used
+interchangeably.</p>
 <h3 id="integers">Integers<a class="headerlink" href="#integers" title="Permanent link">&para;</a></h3>
 <p>Céu supports decimal and hexadecimal integers:</p>
 <ul>
@@ -271,8 +286,8 @@ v = 0x7F;   // hexadecimal
 <h3 id="floats">Floats<a class="headerlink" href="#floats" title="Permanent link">&para;</a></h3>
 <p><code>TODO (like C)</code></p>
 <h3 id="strings">Strings<a class="headerlink" href="#strings" title="Permanent link">&para;</a></h3>
-<p>A sequence of characters surrounded by <code>"</code> is converted into a <em>null-terminated 
-string</em>, just like in C:</p>
+<p>A sequence of characters surrounded by the character <code>"</code> is converted into a
+<em>null-terminated string</em>, just like in C:</p>
 <p>Example:</p>
 <pre><code class="ceu">_printf(&quot;Hello World!\n&quot;);
 </code></pre>
