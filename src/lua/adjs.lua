@@ -886,6 +886,8 @@ error'TODO: luacov never executes this?'
         me.tag = 'ID_prim'
         if me[1]=='on/off' or me[1]=='yes/no' then
             me[1] = 'bool'
+        elseif me[1]=='integer' then
+            me[1] = 'int'
         end
     end,
 

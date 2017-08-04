@@ -242,7 +242,7 @@ end
 local TYPES = P'bool' + 'yes/no' + 'on/off'
             + 'byte'
             + 'r32' + 'r64' + 'real'
-            + 'int'
+            + 'integer' + 'int'
             + 's16' + 's32' + 's64' + 's8'
             + 'ssize'
             + 'u16' + 'u32' + 'u64' + 'u8'

@@ -21,7 +21,7 @@ ID_type  ::= ( ID_nat | ID_abs
              | r32   | r64    | real
              | s8    | s16    | s32     | s64
              | u8    | u16    | u32     | u64
-             | int   | uint
+             | int   | uint   | integer
              | ssize   | usize )
 ```
 

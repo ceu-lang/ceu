@@ -404,12 +404,12 @@ Test { [[escape 1+2*3;]], run=7 }
 Test { [[escape(4/2*3);]], run=6 }
 Test { [[escape 2-1;]], run=1 }
 
-Test { [[escape 1 as int;]],
+Test { [[escape 1 as integer;]],
     run = 1,
 }
 
 Test { [[escape 1==2;]], stmts='line 1 : invalid `escape` : types mismatch : "int" <= "bool"', }
-Test { [[escape (1!=2) as int;]], run=1 }
+Test { [[escape (1!=2) as integer;]], run=1 }
 Test { [[escape 0  or  10;]],
     dcls = 'line 1 : invalid operand to `or` : expected boolean type',
 }
@@ -417,7 +417,7 @@ Test { [[escape (0 as bool)  or  (10 as bool) as int;]],
     parser = 'line 1 : after `)` : expected `[` or `:` or `.` or `!` or `?` or `(` or binary operator or `;`',
     --run = 1,
 }
-Test { [[escape ((0 as bool)  or  (10 as bool)) as int;]],
+Test { [[escape ((0 as bool)  or  (10 as bool)) as integer;]],
     run = 1,
 }
 Test { [[escape ((0 as bool) and (10 as bool)) as int;]], run=0 }
@@ -425,10 +425,10 @@ Test { [[escape (10==true) as int;]],
     dcls = 'line 1 : invalid operands to `==` : incompatible types : "int" vs "bool"',
 }
 Test { [[escape (10!=0) as int;]], run=1 }
-Test { [[escape (true and true) as int;]], run=1 }
+Test { [[escape (true and true) as integer;]], run=1 }
 Test { [[escape (2>1 and 10!=0) as int;]], run=1 }
 Test { [[escape ((1<=2) as int) + 3;]], run=4 }
-Test { [[escape ((1<=2) as int) + ((1<2) as int) + 2/1 - 2%3;]], run=2 }
+Test { [[escape ((1<=2) as integer) + ((1<2) as int) + 2/1 - 2%3;]], run=2 }
 -- TODO: linux gcc only?
 --Test { [[escape (~(~0b1010 & 0XF) | 0b0011 ^ 0B0010) & 0xF;]], run=11 }
 Test { [[nt a;]],
@@ -442,10 +442,10 @@ Test { [[nt sizeof;]],
     --parser = 'line 1 : after `nt` : expected `[` or `:` or `.` or `!` or `as` or `=` or `:=` or `(`',
     --parser = 'line 1 : after `nt` : expected `[` or `:` or `.` or `!` or `=` or `(`',
 }
-Test { [[var int sizeof;]],
-    parser = "line 1 : after `int` : expected type modifier or internal identifier",
+Test { [[var integer sizeof;]],
+    parser = "line 1 : after `integer` : expected type modifier or internal identifier",
 }
-Test { [[escape sizeof(int);]], stmts='line 1 : invalid `escape` : types mismatch : "int" <= "usize"' }
+Test { [[escape sizeof(integer);]], stmts='line 1 : invalid `escape` : types mismatch : "int" <= "usize"' }
 Test { [[escape sizeof(int) as int;]], run=4 }
 Test { [[escape 1<2>3;]],
     dcls = 'line 1 : invalid operand to `>` : expected numeric type',
@@ -478,7 +478,7 @@ escape 1.;
 }
 
 Test { [[
-var int x = 1;
+var integer x = 1;
 escape x;
 ]],
     run = 1,
@@ -500,7 +500,7 @@ escape x + (0.5 as uint);
 
 Test { [[
 var uint x = (1.5 as uint);
-escape (x + (0.5 as uint)) as int;
+escape (x + (0.5 as uint)) as integer;
 ]],
     run = 1,
 }
@@ -524,7 +524,7 @@ var ssize n = 10;
     if n == 0 then
         escape 0;
     else
-        escape n as int;
+        escape n as integer;
     end
 ]],
     run = 10,
@@ -580,7 +580,7 @@ escape &&1;
 }
 
 Test { [[
-var int x = 1;
+var integer x = 1;
 escape &&x == &&x as int ();
 ]],
     parser = 'line 2 : after `x` : expected `[` or `:` or `.` or `!` or `?` or `(` or binary operator or `;`',
@@ -588,7 +588,7 @@ escape &&x == &&x as int ();
 }
 
 Test { [[
-var int x = 1;
+var integer x = 1;
 escape *&&x;
 ]],
     --parser = 'line 2 : after `*` : expected location',
@@ -858,7 +858,7 @@ Test { [[var int a; a = 1; escape a;]],
 Test { [[var int a = 1; escape a;]],
     run = 1,
 }
-Test { [[var int a = 1; escape (a);]],
+Test { [[var integer a = 1; escape (a);]],
     run = 1,
 }
 Test { [[var int a = 1;]],
@@ -869,7 +869,7 @@ Test { [[var int a = 1;]],
         isForever = true,
     }
 }
-Test { [[var int a=1;var int a=0; escape a;]],
+Test { [[var integer a=1;var integer a=0; escape a;]],
     dcls = 'line 1 : declaration of "a" hides previous declaration',
 }
 Test { [[var int a=1;var int a=0; escape a;]],
@@ -1209,12 +1209,12 @@ native/pos do
 end
 native/const __;
 
-var int _ = 1;
-var int _ = 2;
+var integer _ = 1;
+var integer _ = 2;
 
 escape __;
 ]],
-    parser = 'line 6 : after `int` : expected type modifier or internal identifier',
+    parser = 'line 6 : after `integer` : expected type modifier or internal identifier',
     --parser = 'line 6 : after `=` : expected class identifier',
     --env = 'line 6 : invalid access to `_`',
     --dcls = 'line 6 : internal identifier "_" is not declared',
@@ -1610,8 +1610,8 @@ escape a+c;
     run = 4,
 }
 Test { [[
-var int a;
-var int c = 0;
+var integer a;
+var integer c = 0;
 if false then
     c = a;
     a = 1;
@@ -43867,20 +43867,20 @@ escape ret;
 Test { [=[
 do
     var r32 f = 10;
-    [[assert(math.type(@f)=='real')]];
+    [[assert(math.type(@f)=='float')]];
 end
 do
     var r64 f = 0;
-    [[assert(math.type(@f)=='real')]];
+    [[assert(math.type(@f)=='float')]];
 end
 
 var int   i = 0;
 var real f = 0;
 var bool is_int   = [[math.type(@i)=='integer']];
-var bool is_real = [[math.type(@f)=='real']];
+var bool is_real = [[math.type(@f)=='float']];
 
-[[assert(math.type(@(1.1))=='real')]];
-[[assert(math.type(@(1.0))=='real')]];
+[[assert(math.type(@(1.1))=='float')]];
+[[assert(math.type(@(1.0))=='float')]];
 [[assert(math.type(@(1))=='integer')]];
 
 escape (is_int as int)+(is_real as int);

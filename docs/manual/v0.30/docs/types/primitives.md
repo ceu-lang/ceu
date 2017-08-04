@@ -9,6 +9,7 @@ on/off             // synonym to bool
 yes/no             // synonym to bool
 byte               // 1-byte type
 int      uint      // platform dependent signed and unsigned integer
+integer            // synonym to int
 s8       u8        // signed and unsigned  8-bit integers
 s16      u16       // signed and unsigned 16-bit integers
 s32      u32       // signed and unsigned 32-bit integers
