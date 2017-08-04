@@ -356,12 +356,6 @@ if (0)
     _ceu_mem->trails_n = ]]..me.trails_n..[[;
     memset(&_ceu_mem->_trails, 0, ]]..me.trails_n..[[*sizeof(tceu_trl));
 ]])
-            local ret = AST.get(me,'', 4,'Block', 1,'Stmts', 1,'Code_Ret', 1,'', 2,'Type')
-            if ret and (not TYPES.check(ret,'void')) then
-                LINE(me, [[
-    ]]..TYPES.toc(ret)..[[ __ceu_ret_]]..me.n..[[;
-]])
-            end
         end
 
         CONC(me, body)
@@ -1006,33 +1000,7 @@ if (! ]]..CUR('__and_'..me.n..'_'..i)..[[) {
     Set_Exp = function (me)
         local fr, to = unpack(me)
 
-        if false then
---[=[
-        if to.info.dcl.id == '_ret' then
-            local code = AST.par(me, 'Code')
-            if code then
-                local _,mods = unpack(code)
-                if mods.tight then
-                    if code.dyn_base then
-                        code = code.dyn_base
-                    end
-                    LINE(me, [[
-((tceu_code_args_]]..code.id_..[[*) _ceu_occ)->_ret = ]]..V(fr)..[[;
-]])
-                else
-                    LINE(me, [[
-__ceu_ret_]]..code.n..' = '..V(fr)..[[;
-]])
-                end
-            else
-                LINE(me, [[
-{   CEU_APP.end_ok=1; CEU_APP.end_val=]]..V(fr)..[[;
-    ceu_callback_void_void(CEU_CALLBACK_TERMINATING);
-}
-]])
-            end
-]=]
-        elseif AST.get(to,'Loc',1,'Exp_$') then
+        if AST.get(to,'Loc',1,'Exp_$') then
             -- $vec = ...
             local _,vec = unpack(to[1])
             LINE(me, [[
