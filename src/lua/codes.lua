@@ -1855,7 +1855,7 @@ _CEU_LUA_ERR_]]..me.n..[[:;
 ]])
             elseif TYPES.is_num(tp) then
                 local tp_id = unpack(TYPES.ID_plain(tp))
-                if tp_id=='float' or tp_id=='f32' or tp_id=='f64' then
+                if tp_id=='real' or tp_id=='r32' or tp_id=='r64' then
                     LINE(me, [[
     lua_pushnumber(]]..LUA(me)..[[,]]..V(p)..[[);
 ]])

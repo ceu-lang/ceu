@@ -13,8 +13,8 @@ s8       u8        // signed and unsigned  8-bit integers
 s16      u16       // signed and unsigned 16-bit integers
 s32      u32       // signed and unsigned 32-bit integers
 s64      u64       // signed and unsigned 64-bit integers
-float              // platform dependent float
-f32      f64       // 32-bit and 64-bit floats
+real               // platform dependent real
+r32      r64       // 32-bit and 64-bit reals
 ssize    usize     // signed and unsigned size types
 ```
 

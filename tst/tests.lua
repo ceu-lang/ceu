@@ -473,7 +473,7 @@ escape 0x1 + 0X1 + 0a01;
 Test { [[
 escape 1.;
 ]],
-    stmts = 'line 1 : invalid `escape` : types mismatch : "int" <= "float"',
+    stmts = 'line 1 : invalid `escape` : types mismatch : "int" <= "real"',
     --run = 1,
 }
 
@@ -485,7 +485,7 @@ escape x;
 }
 
 Test { [[
-var float x = 1.5;
+var real x = 1.5;
 escape (x + 0.5) as int;
 ]],
     run = 2,
@@ -495,7 +495,7 @@ Test { [[
 var uint x = 1.5;
 escape x + (0.5 as uint);
 ]],
-    stmts = ' line 1 : invalid assignment : types mismatch : "uint" <= "float"',
+    stmts = ' line 1 : invalid assignment : types mismatch : "uint" <= "real"',
 }
 
 Test { [[
@@ -557,7 +557,7 @@ Test { [[
 var uint x = 1.5;
 escape x + 0.5;
 ]],
-    dcls = 'line 2 : invalid operands to `+` : incompatible numeric types : "uint" vs "float"',
+    dcls = 'line 2 : invalid operands to `+` : incompatible numeric types : "uint" vs "real"',
 }
 
 Test { [[
@@ -630,7 +630,7 @@ escape _A | _B;
 }
 
 Test { [[
-var float esp = 2 * 3.1415;
+var real esp = 2 * 3.1415;
 escape esp as int;
 ]],
     run = 6,
@@ -4622,7 +4622,7 @@ escape 1;
 }
 
 Test { [[
-var float i;
+var real i;
 var int ret = 0;
 loop i in [1.1 -> 2], 0.1 do
     ret = ret + 1;
@@ -4633,8 +4633,8 @@ escape ret;
 }
 
 Test { [[
-var float step = 0.9;
-var float i;
+var real step = 0.9;
+var real i;
 loop i in [1.1 -> 10], step do
 end
 escape i as int;
@@ -4643,7 +4643,7 @@ escape i as int;
 }
 
 Test { [[
-var f64 i;
+var r64 i;
 var int ret = 0;
 loop i in [1.3 <- 2], 0.2 do
     ret = ret + 1;
@@ -4654,7 +4654,7 @@ escape ((i<1.3) as int) + ret;
 }
 
 Test { [[
-var float i;
+var real i;
 var int ret = 0;
 loop i in [1.1 <- 2], 0.9 do
     ret = ret + 1;
@@ -4684,41 +4684,41 @@ end
 }
 
 Test { [[
-var float x=1.1;
+var real x=1.1;
 var int ret = 1;
 loop/10 _ in ]x -> 2[ do
     ret = ret + 1;
 end
 escape ret;
 ]],
-    stmts = 'line 3 : invalid control variable : types mismatch : "int" <= "float"',
+    stmts = 'line 3 : invalid control variable : types mismatch : "int" <= "real"',
 }
 
 Test { [[
-var float x=1.1;
+var real x=1.1;
 var int ret = 1;
 loop/10 _ in ]2 -> x[ do
     ret = ret + 1;
 end
 escape ret;
 ]],
-    stmts = 'line 3 : invalid control variable : types mismatch : "int" <= "float"',
+    stmts = 'line 3 : invalid control variable : types mismatch : "int" <= "real"',
 }
 
 Test { [[
-var float x=1.1;
+var real x=1.1;
 var int ret = 1;
 loop/10 _ in ]2 -> 3[, 0.1 do
     ret = ret + 1;
 end
 escape ret;
 ]],
-    stmts = 'line 3 : invalid control variable : types mismatch : "int" <= "float"',
+    stmts = 'line 3 : invalid control variable : types mismatch : "int" <= "real"',
 }
 
 Test { [[
-var float x=1.1;
-var float i;
+var real x=1.1;
+var real i;
 var int ret = 1;
 loop/10 i in ]0 <- x[ do
     ret = ret + 1;
@@ -4729,8 +4729,8 @@ escape ret;
 }
 
 Test { [[
-var float i;
-var float x=1.1;
+var real i;
+var real x=1.1;
 var int ret = 1;
 loop/10 i in ]x -> 10[ do
     ret = ret + 1;
@@ -4742,9 +4742,9 @@ escape ret;
 }
 
 Test { [[
-var float x=5.1;
+var real x=5.1;
 var int ret = 1;
-var float i;
+var real i;
 loop/10 i in ]3 <- x[, 2 do
     ret = ret + 1;
 end
@@ -4754,9 +4754,9 @@ escape ret;
 }
 
 Test { [[
-var float x=2.1;
+var real x=2.1;
 var int ret = 1;
-var float i;
+var real i;
 loop/10 i in ]0 <- x[, 2 do
     ret = ret + 1;
 end
@@ -4817,7 +4817,7 @@ loop _ in [0 -> 1], 0.1 do
 end
 escape 1;
 ]],
-    stmts = 'line 1 : invalid control variable : types mismatch : "int" <= "float"',
+    stmts = 'line 1 : invalid control variable : types mismatch : "int" <= "real"',
 }
 
 Test { [[
@@ -7158,8 +7158,8 @@ escape ret;
 
 Test { [[
 input void OS_START;
-event float x;
-var float ret = 0;
+event real x;
+var real ret = 0;
 par/and do
     ret = await x;
 with
@@ -7172,8 +7172,8 @@ escape (ret>1.0 and ret<1.2) as int;
 }
 
 Test { [[
-input float X;
-var float ret=0;
+input real X;
+var real ret=0;
 par/and do
     ret = await X;
 with
@@ -43866,24 +43866,24 @@ escape ret;
 
 Test { [=[
 do
-    var f32 f = 10;
-    [[assert(math.type(@f)=='float')]];
+    var r32 f = 10;
+    [[assert(math.type(@f)=='real')]];
 end
 do
-    var f64 f = 0;
-    [[assert(math.type(@f)=='float')]];
+    var r64 f = 0;
+    [[assert(math.type(@f)=='real')]];
 end
 
 var int   i = 0;
-var float f = 0;
+var real f = 0;
 var bool is_int   = [[math.type(@i)=='integer']];
-var bool is_float = [[math.type(@f)=='float']];
+var bool is_real = [[math.type(@f)=='real']];
 
-[[assert(math.type(@(1.1))=='float')]];
-[[assert(math.type(@(1.0))=='float')]];
+[[assert(math.type(@(1.1))=='real')]];
+[[assert(math.type(@(1.0))=='real')]];
 [[assert(math.type(@(1))=='integer')]];
 
-escape (is_int as int)+(is_float as int);
+escape (is_int as int)+(is_real as int);
 ]=],
     run = 2,
     _opts = { ceu_features_lua='true' },
@@ -43901,8 +43901,8 @@ escape call Fx();
 }
 
 Test { [=[
-var float v1 = [[ 0.5 ]];
-var float v2 = 0.5;
+var real v1 = [[ 0.5 ]];
+var real v2 = 0.5;
 escape (v1==v2) as int;
 ]=],
     run = 1,
@@ -43910,7 +43910,7 @@ escape (v1==v2) as int;
 }
 
 Test { [=[
-var float f = 3.2;
+var real f = 3.2;
 var bool ok = [[ 3.1<(@f) and 3.3>(@f) ]];
 escape ok as int;
 ]=],
@@ -44371,9 +44371,9 @@ escape ball.x + ball.y + ball.radius;
 
 Test { [[
 data Ball with
-    var float x;
-    var float y;
-    var float radius;
+    var real x;
+    var real y;
+    var real radius;
 end
 
 var Ball ball = val Ball(130,130,8);
@@ -44393,9 +44393,9 @@ escape _add(ball.x, ball.y, ball.radius);
 Test { [[
 do
     data Ball1 with
-        var float x;
-        var float y;
-        var float radius;
+        var real x;
+        var real y;
+        var real radius;
     end
 end
 escape 1;
@@ -44406,7 +44406,7 @@ escape 1;
 
 Test { [[
 data Ball1 with
-    var float x;
+    var real x;
 end
 do
 end
@@ -44427,9 +44427,9 @@ native _add;
 var int sum = 0;
 do
     data Ball1 with
-        var float x;
-        var float y;
-        var float radius;
+        var real x;
+        var real y;
+        var real radius;
     end
     var Ball1 ball = val Ball1(130,130,8);
     sum = sum + _add(ball.x, ball.y, ball.radius);
@@ -44437,9 +44437,9 @@ end
 
 do
     data Ball2 with
-        var float x;
-        var float y;
-        var float radius;
+        var real x;
+        var real y;
+        var real radius;
     end
     var Ball2 ball = val Ball2(130,130,8);
     sum = sum + _add(ball.x, ball.y, ball.radius);
@@ -45741,11 +45741,11 @@ escape c!.d.x;
 }
 
 Test { [[
-code/await Tx (var& float v) -> void do
+code/await Tx (var& real v) -> void do
 end
 
 data Dx with
-    var float v;
+    var real v;
 end
 
 var Dx d;
@@ -45761,11 +45761,11 @@ escape 1;
 }
 
 Test { [[
-code/await Tx (var& float v) -> void do
+code/await Tx (var& real v) -> void do
 end
 
 data Dx with
-    var float v;
+    var real v;
 end
 
 var Dx d;
@@ -45781,9 +45781,9 @@ escape 1;
 }
 
 Test { [[
-code/await Tx (var& float v) -> void do
+code/await Tx (var& real v) -> void do
 end
-var float v;
+var real v;
 spawn Tx(&v);
 v = 1;
 escape 1;
@@ -45796,9 +45796,9 @@ escape 1;
 
 Test { [[
 data Vector3f with
-    var float x;
-    var float y;
-    var float z;
+    var real x;
+    var real y;
+    var real z;
 end
 
 native _t,_u;
@@ -50288,7 +50288,7 @@ data IData;
  end
 
  data IData.Test2 with
-   var f64 f;
+   var r64 f;
  end
 
  code/tight/dynamic

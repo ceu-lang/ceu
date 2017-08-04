@@ -10,7 +10,7 @@ CONSTS = {
 
 F = {
     NUMBER = function (me)
-        me.is_const = (TYPES.is_int(me.info.tp) and 'int') or 'float'
+        me.is_const = (TYPES.is_int(me.info.tp) and 'int') or 'real'
     end,
 
     SIZEOF = function (me)
@@ -30,8 +30,8 @@ F = {
     __Exp_num_num = function (me)
         local _, e1, e2 = unpack(me)
         if e1.is_const and e2.is_const then
-            if e1.is_const=='float' or e2.is_const=='float' then
-                me.is_const = 'float'
+            if e1.is_const=='real' or e2.is_const=='real' then
+                me.is_const = 'real'
             elseif e1.is_const=='int' or e2.is_const=='int' then
                 me.is_const = 'int'
             else

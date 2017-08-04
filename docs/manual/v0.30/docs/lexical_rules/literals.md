@@ -1,6 +1,6 @@
 ## Literals
 
-Céu supports literals for *booleans*, *integers*, *floats*, *strings*, and
+Céu supports literals for *booleans*, *integers*, *reals*, *strings*, and
 *null pointers*.
 
 <!--

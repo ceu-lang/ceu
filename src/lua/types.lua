@@ -228,7 +228,7 @@ end
 do
     local __contains_num = {
         -- TODO: should 'int' be bottom?
-        { 'f64','f32','float','int' },
+        { 'r64','r32','real','int' },
         { 'u64','u32','u16','u8','int' },
         { 'usize','uint','int' },
         { 'ssize','int' },

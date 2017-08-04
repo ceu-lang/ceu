@@ -258,7 +258,7 @@ ID_type  ::= ( ID_nat | ID_abs
              | void
              | bool  | on/off | yes/no
              | byte
-             | f32   | f64    | float
+             | r32   | r64    | real
              | s8    | s16    | s32     | s64
              | u8    | u16    | u32     | u64
              | int   | uint   | ssize   | usize )

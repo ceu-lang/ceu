@@ -174,9 +174,9 @@ DCLS.F = {
         local prims = {
             bool  = { is_num=false, is_int=false },
             byte  = { is_num=true,  is_int=true  },
-            f32   = { is_num=true,  is_int=false },
-            f64   = { is_num=true,  is_int=false },
-            float = { is_num=true,  is_int=false },
+            r32   = { is_num=true,  is_int=false },
+            r64   = { is_num=true,  is_int=false },
+            real  = { is_num=true,  is_int=false },
             int   = { is_num=true,  is_int=true  },
             s16   = { is_num=true,  is_int=true  },
             s32   = { is_num=true,  is_int=true  },

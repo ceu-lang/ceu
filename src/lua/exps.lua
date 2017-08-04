@@ -130,7 +130,7 @@ EXPS.F = {
     NUMBER = function (me)
         local v = unpack(me)
         if math.type(tonumber(v)) == 'float' then
-            me.info = INFO.new(me, 'Val', v, 'float')
+            me.info = INFO.new(me, 'Val', v, 'real')
         else
             me.info = INFO.new(me, 'Val', v, 'int')
         end

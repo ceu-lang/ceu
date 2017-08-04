@@ -16,25 +16,34 @@ variable names):
 
     in              input           is              isr             kill            
 
-    lock            loop            lua             native          new
+    lock            loop            lua             native          NEVER
 
-    nohold          not             nothing         null            or
+    new             nohold          not             nothing         null
 
-    outer           output          par             pause           plain
+    or              outer           output          par             pause
 
-    pool            pos             pre             pure            recursive
+    plain           pool            pos             pre             pure
 
-    request         resume          sizeof          spawn           static
+    recursive       request         resume          sizeof          spawn
 
-    then            thread          tight           traverse        true
+    static          then            thread          tight           traverse
 
-    until           val             var             watching        with
+    true            until           val             var             watching
 
-    bool            byte            f32             f64             float
+    with            bool            byte
 
-    int             s16             s32             s64             s8
+    int             s16             s32             s64
 
-    ssize           u16             u32             u64             u8
+    s8              ssize           u16             u32             u64
 
-    uint            usize           void
+    u8              uint            usize           void
+
+yes
+no
+on
+off
+r32
+r64
+real
+
 ```
