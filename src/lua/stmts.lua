@@ -541,13 +541,13 @@ STMTS.F = {
             if ID_ext.dcl.tag ~= 'Ext' then
                 expects = 'error'
             elseif AST.par(me,'Async') or AST.par(me,'Async_Isr') then
-                expects = 'input'
+                expects = 'ok'
             else
                 expects = 'output'
             end
         end
 
-        ASR(have==expects, me,
+        ASR(have==expects or expects=='ok', me,
             'invalid `emit` : '..
             'unexpected context for '..AST.tag2id[ID_ext.dcl.tag]..' `'..
             have..'` "'..ID_ext.dcl.id..'"')

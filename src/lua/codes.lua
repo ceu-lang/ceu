@@ -37,7 +37,7 @@ local function CONC_ALL (me)
 end
 
 local function CASE (me, lbl)
-    if AST.par(me, 'Async_Thread') then
+    if AST.par(me,'Async_Thread') or AST.par(me,'Async_Isr') then
         LINE(me, lbl.id..':;\n')
     else
         LINE(me, 'case '..lbl.id..':;\n')
@@ -713,7 +713,7 @@ ceu_callback_assert_msg(0, "reached end of `do`");
     Escape = function (me)
         local code = AST.par(me, 'Code')
         local mods = code and code[2]
-        if AST.par(me, 'Async_Thread') then
+        if AST.par(me,'Async_Thread') or AST.par(me,'Async_Isr') then
             LINE(me, [[
 goto ]]..me.outer.lbl_out.id..[[;
 ]])
@@ -875,7 +875,7 @@ while (1) {
     end,
 
     Break = function (me)
-        if AST.par(me, 'Async_Thread') then
+        if AST.par(me,'Async_Thread') or AST.par(me,'Async_Isr') then
             LINE(me, [[
 goto ]]..me.outer.lbl_out.id..[[;
 ]])
@@ -887,7 +887,7 @@ RETURN_CEU_LBL(NULL, _ceu_stk,
         end
     end,
     Continue = function (me)
-        if AST.par(me, 'Async_Thread') then
+        if AST.par(me,'Async_Thread') or AST.par(me,'Async_Isr') then
             LINE(me, [[
 goto ]]..me.outer.lbl_out.id..[[;
 ]])
