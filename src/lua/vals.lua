@@ -501,6 +501,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
     ['Exp_>=']  = 'Exp_2',
     ['Exp_>>']  = 'Exp_2',
     ['Exp_<<']  = 'Exp_2',
+    ['Exp_^']   = 'Exp_2',
     Exp_2 = function (me)
         local op,e1,e2 = unpack(me)
         return '('..V(e1)..ceu2c(op)..V(e2)..')'
