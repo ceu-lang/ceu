@@ -373,6 +373,7 @@ ceu_callback_assert_msg(0, "reached end of `code`");
         -- CODE/DELAYED
         if mods.await then
             LINE(me, [[
+{
     tceu_evt_occ __ceu_occ = {
         { CEU_INPUT__CODE_TERMINATED, {_ceu_mem} },
         (tceu_nseq)(CEU_APP.seq+1),
@@ -390,6 +391,7 @@ ceu_dbg_assert(0);
         return;
     }
 #endif
+}
 
 /* TODO: if return value can be stored with "ceu_bcast", we can "free" first
          and remove this extra stack level */
