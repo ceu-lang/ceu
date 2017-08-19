@@ -221,14 +221,7 @@ static void CEU_CODE_]]..me.id_..[[ (tceu_stk* stk, tceu_ntrl trlK,
             me.mems.wrapper = me.mems.wrapper .. [[
     tceu_stk __ceu_stk = { 1, 0, stk, {(tceu_code_mem*)mem,]]..me.trails[1]..','..me.trails[2]..[[} };
     ceu_lbl(NULL, &__ceu_stk, (tceu_code_mem*)mem, trlK, lbl);
-#ifdef CEU_FEATURES_LONGJMP
     CEU_LONGJMP_JMP_((&__ceu_stk));
-#else
-    if (!__ceu_stk.is_alive) {
-ceu_dbg_assert(0);
-        return;
-    }
-#endif
 ]]
             me.mems.wrapper = me.mems.wrapper .. [[
 }

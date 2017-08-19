@@ -47,6 +47,7 @@ native
     _assert,
     _ceu_dbg_assert,
     _close,
+    _ceil,
     _cos,
     _fcntl,
     _htonl,
