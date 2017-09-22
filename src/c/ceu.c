@@ -579,6 +579,28 @@ void ceu_input_one (tceu_nevt evt_id, void* evt_params, tceu_stk* stk);
 static void ceu_lbl (tceu_evt_occ* _ceu_occ, tceu_stk* _ceu_stk,
                      tceu_code_mem* _ceu_mem, tceu_ntrl _ceu_trlK, tceu_nlbl _ceu_lbl)
 {
+#ifdef CEU_STACK_MAX
+    {
+        static void* base = NULL;
+        if (base == NULL) {
+            base = &_ceu_occ;
+        } else {
+#if 0
+#if 1
+Serial.begin(9600);
+Serial.println((usize)base);
+Serial.println((usize)&_ceu_lbl);
+#else
+printf(">>> %p / %p / %ld\n", base, &_ceu_lbl, ((u64)base)-((u64)&_ceu_lbl));
+printf("%ld %ld %d\n", (usize)(base-CEU_STACK_MAX), (usize)(&_ceu_occ),
+            ((usize)(base-CEU_STACK_MAX) <= (usize)(&_ceu_occ)));
+#endif
+#endif
+            ceu_callback_assert_msg((usize)(base-CEU_STACK_MAX) <= (usize)(&_ceu_occ), "stack overflow");
+        }
+    }
+#endif
+
 _CEU_LBL_:
     switch (_ceu_lbl) {
         CEU_LABEL_NONE:

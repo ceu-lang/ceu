@@ -306,13 +306,13 @@ escape v1 + v2;
 -- var/dynamic int x;
 -------------------------------------------------------------------------------
 
---]=====]
 Test { [[
 escape ((1^1==0) as int) + ((1^0==1) as int)+ ((0^0==0) as int);
 ]],
     run = 3,
 }
-do return end -- OK
+--do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -40976,6 +40976,28 @@ escape _V;
     --wrn = 'line 7 : unbounded recursive spawn',
     run = 101,  -- tests force 100 allocations at most
     --asr = 'runtime error: stack overflow',
+}
+Test { [[
+native _V;
+native/pos do
+    int V = 0;
+end
+
+code/await Tx (pool&[] Tx txs) -> none do
+    _V = _V + 1;
+    spawn Tx(&txs) in txs;
+end
+
+pool[] Tx txs;
+await Tx(&txs);
+
+escape _V;
+]],
+    defines = {
+        CEU_STACK_MAX = 40000,
+    },
+    --wrn = 'line 7 : unbounded recursive spawn',
+    run = 'runtime error: stack overflow',
 }
 Test { [[
 native _V;
