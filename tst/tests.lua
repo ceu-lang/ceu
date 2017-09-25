@@ -306,12 +306,7 @@ escape v1 + v2;
 -- var/dynamic int x;
 -------------------------------------------------------------------------------
 
-Test { [[
-escape ((1^1==0) as int) + ((1^0==1) as int)+ ((0^0==0) as int);
-]],
-    run = 3,
-}
---do return end -- OK
+do return end -- OK
 --]=====]
 
 ----------------------------------------------------------------------------
@@ -434,6 +429,11 @@ Test { [[escape (true and true) as integer;]], run=1 }
 Test { [[escape (2>1 and 10!=0) as int;]], run=1 }
 Test { [[escape ((1<=2) as int) + 3;]], run=4 }
 Test { [[escape ((1<=2) as integer) + ((1<2) as int) + 2/1 - 2%3;]], run=2 }
+Test { [[
+escape ((1^1==0) as int) + ((1^0==1) as int)+ ((0^0==0) as int);
+]],
+    run = 3,
+}
 -- TODO: linux gcc only?
 --Test { [[escape (~(~0b1010 & 0XF) | 0b0011 ^ 0B0010) & 0xF;]], run=11 }
 Test { [[nt a;]],
@@ -43725,7 +43725,7 @@ Test { [=[
 native/nohold _strcmp;
 var[10] byte str = [] .. "oioioi";
 [[ str = @str ]]
-var bool ret = [[ str == 'oioioi' ]];
+var bool ret = [[ str == 'oioioi\0' ]];
 var[10] byte cpy;
 var&[10] byte ptr = &cpy;
 ptr = [].. [[ str ]];
@@ -43762,6 +43762,26 @@ escape (0 == _strcmp((&&cpy[0]) as _char&&,"1234567890")) as int;
     _opts = { ceu_features_lua='true' },
 }
 
+Test { [=[
+var[3] byte str = [] .. [ {'a'},{'b'},{'c'} ];
+var int len1 = [[ @$str ]];
+var int len2 = [[ string.len(@str) ]];
+escape len1 + len2;
+]=],
+    _opts = { ceu_features_lua='true' },
+    run = 6,
+}
+
+Test { [=[
+[[
+    str = 'alo'
+]]
+var[3] byte str = [] .. [[ str ]];
+escape $str as int;
+]=],
+    _opts = { ceu_features_lua='true' },
+    run = 3,
+}
 Test { [=[
 var int a = [[1]];
 var int b = 10;
@@ -43961,7 +43981,7 @@ var int r1 = [[ string.len(@str) ]];
 var int r2 = [[ string.len(@bts) ]];
 escape r1+r2;
 ]=],
-    run = 10,
+    run = 12,
     _opts = { ceu_features_lua='true' },
 }
 
@@ -44100,7 +44120,7 @@ var int len = [[ #str ]];
 escape len;
 ]=],
     _opts = { ceu_features_lua='true' },
-    run = 3,
+    run = 4,
 }
 
 Test { [=[
