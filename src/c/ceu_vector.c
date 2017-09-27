@@ -164,7 +164,7 @@ void ceu_vector_buf_set_ex (tceu_vector* vector, usize idx, byte* buf, usize nu,
                                "access out of bounds", file, line);
 #endif
 
-    usize k  = (vector->len - ceu_vector_idx(vector,idx));
+    usize k  = (vector->max - ceu_vector_idx(vector,idx));
     usize ku = k * vector->unit;
 
     if (vector->is_ring && ku<nu) {

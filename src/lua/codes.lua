@@ -1763,7 +1763,21 @@ _CEU_LUA_ERR_]]..me.n..[[:;
             if p.info.tag=='Vec' and p.info.dcl and p.info.dcl.tag=='Vec' then
                 if TYPES.check(tp,'byte') then
                     LINE(me, [[
-    lua_pushlstring(]]..LUA(me)..[[,(char*)]]..V(p)..[[.buf,]]..V(p)..[[.len);
+    {
+        /* TODO: merge/hide inside ceu_vector.c */
+        tceu_vector* vec = &]]..V(p)..[[;
+        usize k  = (vec->max - ceu_vector_idx(vec,0));
+        usize ku = k * vec->unit;
+
+        if (vec->is_ring && ku<vec->len) {
+            lua_pushlstring(]]..LUA(me)..[[, (char*)ceu_vector_buf_get(vec,0), ku);
+            lua_pushlstring(]]..LUA(me)..[[, (char*)ceu_vector_buf_get(vec,k), vec->len-ku);
+            lua_concat(]]..LUA(me)..[[, 2);
+        } else {
+            lua_pushlstring(]]..LUA(me)..[[, (char*)ceu_vector_buf_get(vec,0), vec->len);
+            //lua_pushlstring(]]..LUA(me)..[[,(char*)]]..V(p)..[[.buf,]]..V(p)..[[.len);
+        }
+    }
 ]])
                 else
                     error 'not implemented'

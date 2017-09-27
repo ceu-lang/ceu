@@ -31595,6 +31595,16 @@ escape dst[0] + dst[$dst-1] + ($dst as int) + 1;
 ]],
     run = 102,
 }
+
+Test { [[
+var[50*] byte xxx = [].."1234567890123456789012345678901234567890";
+$xxx = 0;
+xxx = [].."123456789012345678901234567890123";
+escape xxx[0] - {'0'};
+]],
+    run = 1,
+}
+
 --<< VECTOR / RING
 
 --<<< VECTORS / STRINGS
@@ -44138,6 +44148,18 @@ escape len;
 ]=],
     run = 13,
     _opts = { ceu_features_lua='true' },
+}
+
+Test { [=[
+var[10*] byte xxx = [].."01234";
+xxx = [].."567890";
+[[ xxx = @xxx ]]
+//[[ print(xxx) ]]
+var bool v = [[ xxx=='567890\0' ]];
+escape v as int;
+]=],
+    _opts = { ceu_features_lua='true' },
+    run = 1,
 }
 
 --<<< LUA
