@@ -173,9 +173,19 @@ PROPS_.F = {
 
     --------------------------------------------------------------------------
 
-    Throw = 'Catch',
     Catch = function (me)
         ASR(CEU.opts.ceu_features_exception, me, '`exception` support is disabled')
+    end,
+    Throw = function (me)
+        local v1 = unpack(me)
+        PROPS_.F.Catch(me)
+        for catch in AST.iter'Catch' do
+            local v2 = unpack(catch)
+            if TYPES.contains(v2.info.tp, v1.info.tp) then
+                return
+            end
+        end
+        WRN(false, me, 'uncaught exception')
     end,
 
     Lua_Do = 'Lua',

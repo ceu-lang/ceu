@@ -306,8 +306,8 @@ escape v1 + v2;
 -- var/dynamic int x;
 -------------------------------------------------------------------------------
 
---]=====]
 -->>> EXCEPTIONS / THROW / CATCH
+--]=====]
 
 Test { [[
 var Exception? e;
@@ -348,7 +348,6 @@ escape 1;
 }
 
 Test { [[
-var Exception? e;
 if true then
     throw Exception();
 end
@@ -356,8 +355,18 @@ end
 escape 1;
 ]],
     _opts = { ceu_features_exception='true' },
-    run = '3] runtime error: uncaught exception',
     wrn = true,
+    run = '2] runtime error: uncaught exception',
+}
+Test { [[
+if true then
+    throw Exception();
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    props_ = 'line 2 : uncaught exception',
 }
 
 Test { [[
@@ -407,7 +416,29 @@ end
 escape 1;
 ]],
     _opts = { ceu_features_exception='true' },
+    props_ = 'line 6 : uncaught exception',
+}
+
+Test { [[
+data Exception.Sub;
+
+var Exception.Sub? e;
+catch e do
+    if true then
+        throw Exception();
+    end
+    {ceu_dbg_assert(0);}
+end
+
+if e? then
+    escape 10;
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
     run = '6] runtime error: uncaught exception',
+    wrn = true,
 }
 
 Test { [[
