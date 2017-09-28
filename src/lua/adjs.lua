@@ -601,6 +601,18 @@ error'TODO: luacov never executes this?'
         return node('Stmts', me.ln, set, me)
     end,
 
+    _Catch__PRE = function (me)
+        local loc, block = unpack(me)
+
+        return node('Catch', me.ln,
+                    loc,
+                    node('Par_Or', me.ln,
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('Await_Exception', me.ln))),
+                        block))
+    end,
+
     _Watching__PRE = function (me)
         local watch, block = unpack(me)
 

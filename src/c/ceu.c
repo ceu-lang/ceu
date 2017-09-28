@@ -70,6 +70,8 @@ typedef struct tceu_evt_occ {
     tceu_evt_range range;
 } tceu_evt_occ;
 
+struct tceu_data_Exception;
+
 typedef struct tceu_trl {
     struct {
         tceu_evt evt;
@@ -93,16 +95,28 @@ typedef struct tceu_trl {
     };
 } tceu_trl;
 
+#ifdef CEU_FEATURES_EXCEPTION
+typedef struct tceu_catch {
+    struct tceu_catch*         up;
+    struct tceu_code_mem*      mem;
+    tceu_ntrl                  trl;
+    struct tceu_opt_Exception* exception;
+} tceu_catch;
+#endif
+
 typedef struct tceu_code_mem {
     struct tceu_pool_pak* pak;
     struct tceu_code_mem* up_mem;
-    tceu_ntrl  up_trl;
-    u8         depth;
-#ifdef CEU_FEATURES_LUA
-    lua_State* lua;
+    tceu_ntrl   up_trl;
+    u8          depth;
+#ifdef CEU_FEATURES_EXCEPTION
+    tceu_catch* catches;
 #endif
-    tceu_ntrl  trails_n;
-    tceu_trl   _trails[0];
+#ifdef CEU_FEATURES_LUA
+    lua_State*  lua;
+#endif
+    tceu_ntrl   trails_n;
+    tceu_trl    _trails[0];
 } tceu_code_mem;
 
 typedef struct tceu_code_mem_dyn {
@@ -166,12 +180,13 @@ enum {
     /* non-emitable */
     CEU_INPUT__NONE = 0,
     CEU_INPUT__FINALIZE,
+    CEU_INPUT__THROW,
     CEU_INPUT__PAUSE_BLOCK,
     CEU_INPUT__PROPAGATE_CODE,
     CEU_INPUT__PROPAGATE_POOL,
 
     /* emitable */
-    CEU_INPUT__CLEAR,           /* 5 */
+    CEU_INPUT__CLEAR,           /* 6 */
     CEU_INPUT__PAUSE,
     CEU_INPUT__RESUME,
 CEU_INPUT__SEQ,
@@ -217,8 +232,10 @@ static void* ceu_data_as (tceu_ndata* supers, tceu_ndata* me, tceu_ndata cmp,
 
 /* CEU_DATAS_MEMS */
 
+#pragma pack(push,1)
 === CEU_DATAS_MEMS ===
 === CEU_DATAS_MEMS_CASTS ===
+#pragma pack(pop)
 
 /*****************************************************************************/
 
@@ -521,6 +538,20 @@ static void ceu_lbl (tceu_evt_occ* _ceu_occ, tceu_stk* _ceu_stk,
 === CEU_THREADS ===
 
 /*****************************************************************************/
+
+#ifdef CEU_FEATURES_EXCEPTION
+void ceu_throw_ex (tceu_stk* stk, tceu_catch* catches, tceu_data_Exception* exception, usize len, const char* file, u32 line) {
+    while (catches) {
+        if (ceu_data_is(CEU_DATA_SUPERS_Exception,exception->_enum,catches->exception->value._enum)) {
+            catches->exception->is_set = 1;
+            memcpy(&catches->exception->value, exception, len);
+            return ceu_lbl(NULL, stk, catches->mem, catches->trl, catches->mem->_trails[catches->trl].lbl);
+        }
+        catches = catches->up;
+    }
+    ceu_callback_assert_msg_ex(0, "uncaught exception", file, line);
+}
+#endif
 
 #ifdef CEU_FEATURES_THREAD
 int ceu_threads_gc (int force_join) {

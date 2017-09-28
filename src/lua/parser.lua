@@ -569,6 +569,9 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') * V'Loc' * V'_Emit_ps' * V'Y'
 
+    , Throw  = K'throw' * (V'Abs_Cons' + V'__Exp')
+    , _Catch = K'catch' * V'Loc' * V'__Do'
+
     , __watch = (V'Await_Ext' + V'Await_Int' + V'Await_Wclock' + V'_Abs_Await')
     , _Watching = K'watching'
                     * LIST(V'__watch')
@@ -801,7 +804,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                    )^-1
                  * (V'Nat_Block'+V'_Code_impl')^0 )
 
-    , __Stmt_Last  = V'_Escape' + V'Break' + V'Continue' + V'Await_Forever'
+    , __Stmt_Last  = V'_Escape' + V'Break' + V'Continue' + V'Await_Forever' + V'Throw'
     , __Stmt_Last_Block = V'Y' * V'Par'
     , __Stmt_Simple = V'Nothing'
                     + V'__Dcls'
@@ -828,6 +831,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
               + V'_Spawn_Block'
               + V'_Finalize'
               + V'Y'*V'Par_Or' + V'Y'*V'Par_And' + V'_Watching'
+              + V'_Catch'
               + V'Pause_If'
               + V'Async' + V'Async_Thread' + V'_Async_Isr' + V'Atomic'
               + V'_Dopre'

@@ -305,9 +305,297 @@ escape v1 + v2;
 -- var/nohold int x;
 -- var/dynamic int x;
 -------------------------------------------------------------------------------
+--]=====]
+
+-->>> EXCEPTIONS / THROW / CATCH
+
+Test { [[
+data Exception;
+
+var Exception? e;
+catch e do
+    throw Exception();
+end
+
+escape 1;
+]],
+    props_ = 'line 5 : `exception` support is disabled',
+}
+
+Test { [[
+data Exception;
+data Exception.Sub;
+
+var Exception? e;
+catch e do
+    throw Exception();
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Exception;
+data Exception.Sub;
+
+var Exception? e;
+catch e do
+end
+
+if e? then
+    escape 10;
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Exception;
+data Exception.Sub;
+var Exception? e_;
+
+if true then
+    throw Exception();
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    wrn = true,
+    run = '6] runtime error: uncaught exception',
+}
+
+Test { [[
+data Exception;
+data Exception.Sub;
+
+var Exception? e;
+catch e do
+    if true then
+        throw Exception();
+    end
+    {ceu_dbg_assert(0);}
+end
+
+if e? then
+    escape 10;
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+data Xx;
+data Xx.Yy;
+var Xx.Yy? y;
+var Xx? xxx = y;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+data Exception;
+data Exception.Sub;
+var Exception? e_;
+
+var Exception.Sub? e;
+catch e do
+    if true then
+        throw Exception();
+    end
+    {ceu_dbg_assert(0);}
+end
+
+if e? then
+    escape 10;
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    wrn = true,
+    run = '8] runtime error: uncaught exception',
+}
+
+Test { [[
+data Exception;
+data Exception.Sub;
+var Exception? e_;
+
+var Exception.Sub? e;
+catch e do
+    if true then
+        throw Exception.Sub();
+    end
+    {ceu_dbg_assert(0);}
+end
+
+if e? then
+    escape 10;
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+data Exception;
+data Exception.Sub with
+    var int value = 10;
+end
+var Exception? e_;
+
+var Exception.Sub? eee;
+catch eee do
+    if true then
+        throw Exception.Sub(20);
+    end
+    {ceu_dbg_assert(0);}
+end
+
+escape eee!.value;
+]],
+    _opts = { ceu_features_exception='true' },
+    wrn = true,
+    run = 20,
+}
+
+Test { [[
+data Exception;
+data Exception.Sub;
+
+var Exception? e;
+catch e do
+    if true then
+        throw Exception.Sub();
+    end
+    {ceu_dbg_assert(0);}
+end
+
+if e? then
+    escape 10;
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+data Exception;
+data Exception.Sub;
+var int ret = 0;
+var Exception? e;
+catch e do
+    do finalize with
+        ret = 10;
+    end
+    throw Exception();
+end
+
+escape ret;
+]],
+    _opts = { ceu_features_exception='true' },
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+data Exception;
+data Exception.Sub;
+var Exception? e;
+catch e do
+    throw Exception();
+end
+
+if e? then
+    escape 10;
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+data Exception;
+
+var Exception? e;
+catch e do
+    throw Exception();
+    nothing;
+end
+]],
+    _opts = { ceu_features_exception='true' },
+    parser = 'line 5 : after `;` : expected `end`',
+}
+
+Test { [[
+data Exception;
+data Exception.Uv with
+    var int errno;
+end
+
+var Exception e;
+catch e do
+    ...
+    throw Exception();
+end
+
+code/await Ff (none) -> none
+    throws Exception.Uv, Exception
+do
+    throw Exception();
+end
+
+code/await Gg (none) -> none
+    throws Exception.Uv, Exception
+do
+    await Ff();
+end
+
+]],
+    _opts = { ceu_features_exception='true' },
+    run = 1,
+}
+
+Test { [[
+data Exception;
+
+var Exception? e;
+catch e1,e2,e3 do
+    throw Exception();
+end
+...
+]],
+    _opts = { ceu_features_exception='true' },
+    parser = 'todo',
+}
+
+--<<< EXCEPTIONS / THROW / CATCH
 
 do return end -- OK
---]=====]
+
 
 ----------------------------------------------------------------------------
 -- OK: well tested

@@ -108,6 +108,9 @@ F = {
         local Loc = unpack(me)
         me.lbl_out = new{'Await_'..Loc.info.dcl.id..'__OUT'}
     end,
+    Await_Exception = function (me)
+        me.lbl_out = new{'Await_Exception__OUT'}
+    end,
 
     Emit_Wclock = function (me)
         me.lbl_out = new{'Emit_Wclock__OUT'}

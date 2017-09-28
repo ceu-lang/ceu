@@ -173,6 +173,11 @@ PROPS_.F = {
 
     --------------------------------------------------------------------------
 
+    Throw = 'Catch',
+    Catch = function (me)
+        ASR(CEU.opts.ceu_features_exception, me, '`exception` support is disabled')
+    end,
+
     Lua_Do = 'Lua',
     Lua = function (me)
         ASR(CEU.opts.ceu_features_lua, me, '`lua` support is disabled')

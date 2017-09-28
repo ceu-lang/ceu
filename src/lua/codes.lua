@@ -182,6 +182,9 @@ CODES.F = {
         LINE(me, [[
 _ceu_mem->up_mem   = NULL;
 _ceu_mem->depth    = 0;
+#ifdef CEU_FEATURES_EXCEPTION
+_ceu_mem->catches  = NULL;
+#endif
 #ifdef CEU_FEATURES_LUA
 _ceu_mem->lua      = NULL;
 #endif
@@ -669,6 +672,39 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].pse_skip   = ]]..body.trails_n..[[;
 _ceu_mem->_trails[]]..me.trails[1]..[[].pse_paused = 0;
 ]])
         CONC(me, body)
+    end,
+
+    Catch = function (me)
+        local loc, body = unpack(me)
+        local tp = TYPES.tostring(TYPES.pop(loc.info.tp,'?'))
+        LINE(me, [[
+{
+    ]]..V(loc)..[[.value._enum = CEU_DATA_]]..tp..[[;
+    ]]..CUR('__catch_'..me.n)..[[.up        = _ceu_mem->catches;
+    ]]..CUR('__catch_'..me.n)..[[.mem       = _ceu_mem;
+    ]]..CUR('__catch_'..me.n)..[[.trl       = ]]..me.trails[1]..[[;
+    ]]..CUR('__catch_'..me.n)..[[.exception = (tceu_opt_Exception*) &]]..V(loc)..[[;
+    _ceu_mem->catches = &]]..CUR('__catch_'..me.n)..[[;
+]])
+        CONC(me, body)
+        LINE(me, [[
+}
+]])
+    end,
+
+    Await_Exception = function (me)
+        HALT(me, {
+            { ['evt.id'] = 'CEU_INPUT__THROW' },
+            { lbl        = me.lbl_out.id      },
+            lbl = me.lbl_out.id,
+        })
+    end,
+
+    Throw = function (me)
+        local e = unpack(me)
+        LINE(me, [[
+return ceu_throw_ex(_ceu_stk, _ceu_mem->catches, (tceu_data_Exception*)&]]..V(e)..[[, sizeof(]]..TYPES.toc(e.info.tp)..[[), __FILE__, __LINE__-8);
+]])
     end,
 
     ---------------------------------------------------------------------------

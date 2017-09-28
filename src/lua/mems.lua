@@ -175,6 +175,9 @@ usize params = multis_params
 static ]]..TYPES.toc(assert(Type))..[[ /* space */
 CEU_CODE_]]..me.id_..[[ (tceu_code_mem_]]..me.id_..[[ mem_,
                         tceu_code_mem* up_mem
+#ifdef CEU_FEATURES_EXCEPTION
+                      , tceu_catch* catches
+#endif
 #ifdef CEU_FEATURES_LUA
                       , lua_State* lua
 #endif
@@ -183,6 +186,9 @@ CEU_CODE_]]..me.id_..[[ (tceu_code_mem_]]..me.id_..[[ mem_,
     tceu_code_mem_]]..me.id_..[[* mem = &mem_;
     mem_._mem.up_mem = up_mem;
     mem_._mem.depth  = ]]..me.depth..[[;
+#ifdef CEU_FEATURES_EXCEPTION
+    mem_._mem.catches = catches;
+#endif
 #ifdef CEU_FEATURES_LUA
     mem_._mem.lua = lua;
 #endif
@@ -538,6 +544,10 @@ end
         for i=1, #me do
             CUR().mem = CUR().mem..'u8 __and_'..me.n..'_'..i..': 1;\n'
         end
+    end,
+
+    Catch = function (me)
+        CUR().mem = CUR().mem..'tceu_catch __catch_'..me.n..';\n'
     end,
 
     ---------------------------------------------------------------------------
