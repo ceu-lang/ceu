@@ -305,13 +305,11 @@ escape v1 + v2;
 -- var/nohold int x;
 -- var/dynamic int x;
 -------------------------------------------------------------------------------
---]=====]
 
+--]=====]
 -->>> EXCEPTIONS / THROW / CATCH
 
 Test { [[
-data Exception;
-
 var Exception? e;
 catch e do
     throw Exception();
@@ -319,13 +317,10 @@ end
 
 escape 1;
 ]],
-    props_ = 'line 5 : `exception` support is disabled',
+    props_ = 'line 3 : `exception` support is disabled',
 }
 
 Test { [[
-data Exception;
-data Exception.Sub;
-
 var Exception? e;
 catch e do
     throw Exception();
@@ -334,14 +329,10 @@ end
 escape 1;
 ]],
     _opts = { ceu_features_exception='true' },
-    wrn = true,
     run = 1,
 }
 
 Test { [[
-data Exception;
-data Exception.Sub;
-
 var Exception? e;
 catch e do
 end
@@ -353,15 +344,11 @@ end
 escape 1;
 ]],
     _opts = { ceu_features_exception='true' },
-    wrn = true,
     run = 1,
 }
 
 Test { [[
-data Exception;
-data Exception.Sub;
-var Exception? e_;
-
+var Exception? e;
 if true then
     throw Exception();
 end
@@ -369,14 +356,11 @@ end
 escape 1;
 ]],
     _opts = { ceu_features_exception='true' },
+    run = '3] runtime error: uncaught exception',
     wrn = true,
-    run = '6] runtime error: uncaught exception',
 }
 
 Test { [[
-data Exception;
-data Exception.Sub;
-
 var Exception? e;
 catch e do
     if true then
@@ -392,7 +376,6 @@ end
 escape 1;
 ]],
     _opts = { ceu_features_exception='true' },
-    wrn = true,
     run = 10,
 }
 
@@ -407,9 +390,7 @@ escape 1;
 }
 
 Test { [[
-data Exception;
 data Exception.Sub;
-var Exception? e_;
 
 var Exception.Sub? e;
 catch e do
@@ -426,14 +407,11 @@ end
 escape 1;
 ]],
     _opts = { ceu_features_exception='true' },
-    wrn = true,
-    run = '8] runtime error: uncaught exception',
+    run = '6] runtime error: uncaught exception',
 }
 
 Test { [[
-data Exception;
 data Exception.Sub;
-var Exception? e_;
 
 var Exception.Sub? e;
 catch e do
@@ -450,16 +428,13 @@ end
 escape 1;
 ]],
     _opts = { ceu_features_exception='true' },
-    wrn = true,
     run = 10,
 }
 
 Test { [[
-data Exception;
 data Exception.Sub with
     var int value = 10;
 end
-var Exception? e_;
 
 var Exception.Sub? eee;
 catch eee do
@@ -472,12 +447,10 @@ end
 escape eee!.value;
 ]],
     _opts = { ceu_features_exception='true' },
-    wrn = true,
     run = 20,
 }
 
 Test { [[
-data Exception;
 data Exception.Sub;
 
 var Exception? e;
@@ -495,13 +468,10 @@ end
 escape 1;
 ]],
     _opts = { ceu_features_exception='true' },
-    wrn = true,
     run = 10,
 }
 
 Test { [[
-data Exception;
-data Exception.Sub;
 var int ret = 0;
 var Exception? e;
 catch e do
@@ -514,13 +484,10 @@ end
 escape ret;
 ]],
     _opts = { ceu_features_exception='true' },
-    wrn = true,
     run = 10,
 }
 
 Test { [[
-data Exception;
-data Exception.Sub;
 var Exception? e;
 catch e do
     throw Exception();
@@ -533,13 +500,10 @@ end
 escape 1;
 ]],
     _opts = { ceu_features_exception='true' },
-    wrn = true,
     run = 10,
 }
 
 Test { [[
-data Exception;
-
 var Exception? e;
 catch e do
     throw Exception();
@@ -547,11 +511,10 @@ catch e do
 end
 ]],
     _opts = { ceu_features_exception='true' },
-    parser = 'line 5 : after `;` : expected `end`',
+    parser = 'line 3 : after `;` : expected `end`',
 }
 
 Test { [[
-data Exception;
 data Exception.Uv with
     var int errno;
 end
@@ -580,8 +543,6 @@ end
 }
 
 Test { [[
-data Exception;
-
 var Exception? e;
 catch e1,e2,e3 do
     throw Exception();

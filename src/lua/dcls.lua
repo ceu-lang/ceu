@@ -657,6 +657,10 @@ error'oi'
         me.id = id
         local par = AST.par(me, 'Block')
 
+        if id == 'Exception' then
+            me.hier = { down={} }
+        end
+
         -- check "super" path
         local super,_ = string.match(me.id, '(.*)%.(.*)')
         if super then

@@ -76,6 +76,10 @@ F = {
                                     false))))
         lock.is_predefined = true
 
+        local exception = node('Data', me.ln, 'Exception', false,
+                            node('Block', me.ln, node('Stmts',me.ln)))
+        exception.is_predefined = true
+
         local lua do
             if CEU.opts.ceu_features_lua then
                 lua = node('Stmts', me.ln,
@@ -94,6 +98,7 @@ F = {
                     node('Stmts', me.ln,
                         nats,
                         lock,
+                        exception,
                         ret,
                         node('_Set', me.ln,
                             node('Loc', me.ln,

@@ -237,6 +237,18 @@ static void* ceu_data_as (tceu_ndata* supers, tceu_ndata* me, tceu_ndata cmp,
 === CEU_DATAS_MEMS_CASTS ===
 #pragma pack(pop)
 
+#ifdef CEU_FEATURES_EXCEPTION
+typedef struct tceu_opt_Exception {
+    bool      is_set;
+    tceu_data_Exception value;
+} tceu_opt_Exception;
+
+static tceu_opt_Exception* CEU_OPTION_tceu_opt_Exception (tceu_opt_Exception* opt, char* file, int line) {
+    ceu_callback_assert_msg_ex(opt->is_set, "value is not set", file, line);
+    return opt;
+}
+#endif
+
 /*****************************************************************************/
 
 === CEU_CODES_MEMS ===

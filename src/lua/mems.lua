@@ -32,6 +32,7 @@ MEMS = {
     opts = {
         -- avoids duplications
         --[TYPES.tostring(tp)] = true,
+        ['Exception?'] = true,
     },
 }
 
