@@ -72,7 +72,7 @@ typedef struct tceu_code_mem_ROOT {
         me.mems = { me=me, mem='' }
     end,
     Code__POS = function (me)
-        local mods,_,id = unpack(me)
+        local mods = unpack(me)
 
         if me.is_dyn_base or me.is_impl then
             MEMS.codes[#MEMS.codes+1] = me.mems
@@ -93,7 +93,7 @@ typedef struct tceu_code_mem_]]..me.id_..[[ {
     end,
 
     Code = function (me)
-        local mods, _, body = unpack(me)
+        local mods, _, _, body = unpack(me)
 
         me.mems.wrapper = ''
 
@@ -547,6 +547,8 @@ end
         end
     end,
 
+    Catch__PRE = 'Par__PRE',
+    Catch__POS = 'Par__POS',
     Catch = function (me)
         CUR().mem = CUR().mem..'tceu_catch __catch_'..me.n..';\n'
     end,

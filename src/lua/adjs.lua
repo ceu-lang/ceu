@@ -186,7 +186,7 @@ error'TODO: luacov never executes this?'
 
     _Code_impl__PRE = '_Code_proto__PRE',
     _Code_proto__PRE = function (me)
-        local mods, id, ins, mid, out, blk, eoc = unpack(me)
+        local mods, id, ins, mid, out, throws, blk, eoc = unpack(me)
         me.tag = 'Code'
 
         mid = mid or node('_Code_Pars', me.ln)
@@ -230,7 +230,7 @@ error'TODO: luacov never executes this?'
                                 set_or_do))
         end
 
-        local ret = node('Code', me.ln, mods, id,
+        local ret = node('Code', me.ln, mods, id, throws,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 node('Code_Ret', me.ln,

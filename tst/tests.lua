@@ -546,6 +546,196 @@ end
 }
 
 Test { [[
+code/await Ff (none) -> none do
+    throw Exception();
+end
+await Ff();
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    props_ = 'line 2 : uncaught exception',
+}
+
+Test { [[
+code/await Ff (none) -> none
+    throws Ex
+do
+    throw Exception();
+end
+await Ff();
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    dcls = 'line 2 : abstraction "Ex" is not declared',
+}
+
+Test { [[
+code/await Ff (none) -> none
+    throws Exception
+do
+    throw Exception();
+end
+await Ff();
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    props_ = 'line 6 : uncaught exception',
+}
+
+Test { [[
+code/await Ff (none) -> none
+    throws Exception
+do
+    throw Exception();
+end
+await Ff();
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    wrn = true,
+    run = '4] runtime error: uncaught exception',
+}
+
+Test { [[
+data Dd;
+code/await Ff (none) -> none
+    throws Dd
+do
+    throw Exception();
+end
+await Ff();
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    props_ = 'line 5 : uncaught exception',
+}
+
+Test { [[
+data Dd;
+code/await Ff (none) -> none
+    throws Exception
+do
+    throw Dd();
+end
+await Ff();
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    props_ = 'line 5 : uncaught exception',
+}
+
+Test { [[
+data Exception.Sub;
+code/await Ff (none) -> none
+    throws Exception.Sub
+do
+    throw Exception();
+end
+await Ff();
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    props_ = 'line 5 : uncaught exception',
+}
+
+Test { [[
+data Exception.Sub;
+code/await Ff (none) -> none
+    throws Exception
+do
+    throw Exception.Sub();
+end
+await Ff();
+escape 1;
+]],
+    props_ = 'line 5 : uncaught exception',
+    _opts = { ceu_features_exception='true' },
+}
+
+Test { [[
+var Exception? e;
+catch e do
+    code/await Ff (none) -> none do
+        throw Exception();
+    end
+    await Ff();
+end
+escape 1;
+]],
+    props_ = 'line 4 : uncaught exception',
+    _opts = { ceu_features_exception='true' },
+}
+
+Test { [[
+code/tight Ff (none) -> none do
+    throw Exception();
+end
+call Ff();
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    props_ = 'line 2 : uncaught exception',
+}
+
+Test { [[
+code/tight Ff (none) -> none
+    throws Exception
+do
+    throw Exception();
+end
+call Ff();
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    props_ = 'line 6 : uncaught exception',
+}
+
+Test { [[
+code/await Ff (none) -> none
+    throws Exception
+do
+    throw Exception();
+end
+var Exception? e;
+catch e do
+    await Ff();
+end
+if e? then
+    escape 10;
+end
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    run = 10,
+}
+
+Test { [[
+code/tight Ff (none) -> none
+    throws Exception
+do
+    throw Exception();
+end
+call Ff();
+escape 1;
+]],
+    parser = 'line 1 : after `none` : expected type modifier or `do` or `;`',
+}
+
+Test { [[
+code/tight Ff (none) -> none do
+    var Exception? e;
+    catch e do
+        throw Exception();
+    end
+end
+call Ff();
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    props_ = 'line 4 : invalid `throw` : unexpected enclosing `code`',
+}
+
+Test { [[
 data Exception.Uv with
     var int errno;
 end

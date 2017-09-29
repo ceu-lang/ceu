@@ -123,15 +123,16 @@ F = {
         assert(mem)
 
         mem = '((tceu_code_mem*)'..mem..')'
-        if CEU.opts.ceu_features_lua then
-            return [[
-CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..','..LUA(me)..[[)
-]]
-        else
-            return [[
-CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..[[)
-]]
+        local args = ''
+        if CEU.opts.ceu_features_exception then
+            args = args..','..CATCHES(me)
         end
+        if CEU.opts.ceu_features_lua then
+            args = args..','..LUA(me)
+        end
+        return [[
+CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..args..[[)
+]]
     end,
 
     Abs_Cons = function (me, ctx)

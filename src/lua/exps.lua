@@ -206,7 +206,7 @@ EXPS.F = {
 
         -- info
         me.info = INFO.new(me, 'Val', nil,
-                    AST.copy(AST.asr(ID_abs.dcl,'Code', 3,'Block', 1,'Stmts',
+                    AST.copy(AST.asr(ID_abs.dcl,'Code', 4,'Block', 1,'Stmts',
                                                         1,'Code_Ret',
                                                                     -- TODO: HACK_5
                                                         1,'', 2,'Type')))

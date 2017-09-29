@@ -7,6 +7,7 @@ local sync = {
     Every=true, Finalize=true, Pause_If=true,
     Par=true, Par_And=true, Par_Or=true, Watching=true,
     Async=true, Async_Thread=true,
+    Throw=true, Catch=true,
 }
 
 local NO = {
@@ -137,7 +138,7 @@ PROPS_.F = {
     --------------------------------------------------------------------------
 
     Code = function (me)
-        local mods1,_,body = unpack(me)
+        local mods1,_,_,body = unpack(me)
         if mods1.dynamic and body then
             local Pars_Block = AST.asr(body,'Block', 1,'Stmts', 2,'Do', 3,'Block')
             for i, dcl in ipairs(Pars_Block.dcls) do
@@ -176,16 +177,38 @@ PROPS_.F = {
     Catch = function (me)
         ASR(CEU.opts.ceu_features_exception, me, '`exception` support is disabled')
     end,
-    Throw = function (me)
-        local v1 = unpack(me)
+    Throw = function (me, tp)
+        if not tp then
+            local v1 = unpack(me)
+            tp = v1.info.tp
+        end
         PROPS_.F.Catch(me)
-        for catch in AST.iter'Catch' do
-            local v2 = unpack(catch)
-            if TYPES.contains(v2.info.tp, v1.info.tp) then
-                return
+        for node in AST.iter() do
+            if node.tag == 'Catch' then
+                local v2 = unpack(node)
+                if TYPES.contains(v2.info.tp, tp) then
+                    return
+                end
+            elseif node.tag == 'Code' then
+                local _,_,throws = unpack(node)
+                ASR(throws, me, 'uncaught exception')
+                for _, v2 in ipairs(throws) do
+                    if TYPES.is_equal(TYPES.new(me,v2.dcl.id_), tp) then
+                        return
+                    end
+                end
             end
         end
         WRN(false, me, 'uncaught exception')
+    end,
+    Abs_Cons = function (me)
+        local _,ID_abs = unpack(me)
+        local throws = AST.get(ID_abs.dcl,'', 3,'List_Throws')
+        if throws then
+            for _, throw in ipairs(throws) do
+                PROPS_.F.Throw(me, TYPES.new(me,throw.dcl.id_))
+            end
+        end
     end,
 
     Lua_Do = 'Lua',

@@ -156,6 +156,17 @@ function SET (me, to, fr, to_ok, fr_ok, to_ctx, fr_ctx)
 ]])
 end
 
+function CATCHES (me)
+    assert(CEU.opts.ceu_features_exception, 'bug found')
+    local code = AST.par(me, 'Code')
+    local catch = AST.par(me, 'Catch')
+    if catch and ((not code) or (AST.depth(catch) > AST.depth(code))) then
+        return '(&'..CUR('__catch_'..catch.n)..')'
+    else
+        return '(_ceu_mem->catches)'
+    end
+end
+
 function LUA (me)
     assert(CEU.opts.ceu_features_lua, 'bug found')
     local code = AST.par(me, 'Code')
@@ -340,7 +351,7 @@ ceu_dbg_assert(]]..V(ID_int,ctx)..[[.pool.queue == NULL);
     ---------------------------------------------------------------------------
 
     Code = function (me)
-        local mods,_,body = unpack(me)
+        local mods,_,_,body = unpack(me)
         if not me.is_impl then return end
         if me.is_dyn_base then return end
 
@@ -419,6 +430,11 @@ assert(not obj, 'not implemented')
     ]]..mem..[[->_mem.up_trl  = ]]..((pak=='NULL' and me.trails[1]) or (pak..'->up_trl'))..[[;
     ]]..mem..[[->_mem.depth   = ]]..ID_abs.dcl.depth..[[;
 ]]
+        if CEU.opts.ceu_features_exception then
+            ret = ret .. [[
+    ]]..mem..[[->_mem.catches = ]]..CATCHES(me)..[[;
+]]
+        end
         if CEU.opts.ceu_features_lua then
             ret = ret .. [[
     ]]..mem..[[->_mem.lua    = ]]..LUA(me)..[[;
@@ -680,11 +696,10 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].pse_paused = 0;
         LINE(me, [[
 {
     ]]..V(loc)..[[.value._enum = CEU_DATA_]]..tp..[[;
-    ]]..CUR('__catch_'..me.n)..[[.up        = _ceu_mem->catches;
+    ]]..CUR('__catch_'..me.n)..[[.up        = ]]..CATCHES(me)..[[;
     ]]..CUR('__catch_'..me.n)..[[.mem       = _ceu_mem;
     ]]..CUR('__catch_'..me.n)..[[.trl       = ]]..me.trails[1]..[[;
     ]]..CUR('__catch_'..me.n)..[[.exception = (tceu_opt_Exception*) &]]..V(loc)..[[;
-    _ceu_mem->catches = &]]..CUR('__catch_'..me.n)..[[;
 ]])
         CONC(me, body)
         LINE(me, [[
@@ -703,7 +718,7 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].pse_paused = 0;
     Throw = function (me)
         local e = unpack(me)
         LINE(me, [[
-return ceu_throw_ex(_ceu_stk, _ceu_mem->catches, (tceu_data_Exception*)&]]..V(e)..[[, sizeof(]]..TYPES.toc(e.info.tp)..[[), __FILE__, __LINE__-8);
+return ceu_throw_ex(_ceu_stk, ]]..CATCHES(me)..[[, (tceu_data_Exception*)&]]..V(e)..[[, sizeof(]]..TYPES.toc(e.info.tp)..[[), __FILE__, __LINE__-8);
 ]])
     end,
 

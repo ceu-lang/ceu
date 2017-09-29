@@ -285,7 +285,7 @@ DCLS.F = {
             local ID = unpack(Type)
             if ID.tag=='ID_abs' and ID.dcl.tag=='Code' and ID.dcl[1].await then
                 if alias == '&' then
-                    local tp = AST.get(ID.dcl,'Code', 3,'Block', 1,'Stmts',
+                    local tp = AST.get(ID.dcl,'Code', 4,'Block', 1,'Stmts',
                                                       1,'Code_Ret', 1,'', 2,'Type')
                     ASR(not tp, me, 'invalid declaration : `code/await` must execute forever')
                 end
@@ -563,7 +563,7 @@ error'oi'
     end,
 
     Code = function (me)
-        local mods1,id,body1 = unpack(me)
+        local mods1,id,_,body1 = unpack(me)
 
         --ASR(not AST.par(me,'Code'), me,
             --'invalid `code` declaration : nesting is not allowed')
@@ -766,7 +766,7 @@ error'oi'
                         node('Loc', v.ln,
                             node('ID_int', v.ln, id)))
             elseif v.tag == 'ID_any' then
-                local vars = AST.asr(code.dcl,'Code', 3,'Block', 1,'Stmts', 2,'Do', 3,'Block').dcls
+                local vars = AST.asr(code.dcl,'Code', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block').dcls
                 if vars[i] then
                     local is_alias,tp = unpack(vars[i])
                     if not is_alias then
@@ -856,7 +856,7 @@ error'oi'
             if obj then
                 assert(obj.info.tp)
                 local Code = TYPES.abs_dcl(obj.info.tp, 'Code')
-                blk = AST.asr(Code,'Code', 3,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 2,'Block')
+                blk = AST.asr(Code,'Code', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 2,'Block')
             else
                 blk = AST.par(me,'Block')
             end
@@ -902,7 +902,7 @@ error'oi'
                 if dcl then
                     me.dcl = DCLS.asr(me, dcl, member, false, 'field')
                 else
-                    dcl = AST.asr(abs.dcl,'Code',3,'Block',1,'Stmts',2,'Do',3,'Block',1,'Stmts',2,'Block')
+                    dcl = AST.asr(abs.dcl,'Code',4,'Block',1,'Stmts',2,'Do',3,'Block',1,'Stmts',2,'Block')
                     me.dcl = DCLS.asr(me, dcl, member, false, 'parameter')
                 end
             else

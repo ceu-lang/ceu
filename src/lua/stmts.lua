@@ -162,7 +162,7 @@ STMTS.F = {
             else
                 local ID_abs = AST.asr(fr,'', 2,'Abs_Call', 2,'Abs_Cons',
                                               2,'ID_abs')
-                local tp = AST.asr(ID_abs.dcl,'Code', 3,'Block', 1,'Stmts',
+                local tp = AST.asr(ID_abs.dcl,'Code', 4,'Block', 1,'Stmts',
                                                       1,'Code_Ret', 1,'', 2,'Type')
                 EXPS.check_tp(me, to.info.tp, tp, 'invalid binding', true)
             end
@@ -417,7 +417,7 @@ STMTS.F = {
             local abs = TYPES.abs_dcl(e.info.tp, 'Code')
             ASR(abs, me, 'invalid `await` : expected `code/await` abstraction')
             assert(alias == '&?')
-            local tp = AST.get(abs,'Code', 3,'Block', 1,'Stmts',
+            local tp = AST.get(abs,'Code', 4,'Block', 1,'Stmts',
                                            1,'Code_Ret', 1,'', 2,'Type')
             if tp then
                 local ID = AST.get(me,'', 1,'Loc', 1,'ID_int')
@@ -444,7 +444,7 @@ STMTS.F = {
         local abs = TYPES.abs_dcl(loc.info.tp, 'Code')
         ASR(abs, me, 'invalid `kill` : expected `code/await` abstraction')
         ASR(alias=='&?', me, 'invalid `kill` : expected `&?` alias')
-        local tp = AST.get(abs,'Code', 3,'Block', 1,'Stmts',
+        local tp = AST.get(abs,'Code', 4,'Block', 1,'Stmts',
                                        1,'Code_Ret', 1,'', 2,'Type')
         ASR(tp, me, 'invalid kill : `code/await` executes forever')
         -- TODO: check e vs tp

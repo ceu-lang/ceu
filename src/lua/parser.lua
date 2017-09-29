@@ -260,6 +260,8 @@ KEYS = P
 'true' +
 'traverse' +
 'tight' +
+'throws' +
+'throw' +
 'thread' +
 'then' +
 'static' +
@@ -315,6 +317,7 @@ KEYS = P
 'continue' +
 'const' +
 'code' +
+'catch' +
 'call' +
 'break' +
 'await' +
@@ -446,17 +449,20 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                 (V'__ID_abs'-V'__id_data') *
                     V'Code_Pars' * KK'->' *
                         Cc(false) *
-                            (#V'Type' * V'Code_Ret')
+                            (#V'Type' * V'Code_Ret') *
+                Cc(false)
              + K'code' * Ct( Cg(K'/await'*Cc'await','await') *
                              Cg(K'/dynamic'*Cc'dynamic','dynamic')^-1 *
                              Cg(K'/recursive'*Cc'recursive','recursive')^-1 ) *
                 (V'__ID_abs'-V'__id_data') *
                     V'Code_Pars' * KK'->' *
                         OPT(V'_Code_Pars' * KK'->') *
-                            V'Code_Ret'
+                            V'Code_Ret' *
+                (K'throws'*V'List_Throws' + Cc(false))
 
     , _Code_proto = V'__code' * Cc(false)
     , _Code_impl  = V'__code' * V'__Do' * V'Y'
+    , List_Throws = LIST(V'ID_abs')
 
     , _Spawn_Block = K'spawn' * OPT(PARENS(V'List_Var'+Cc(true))) * V'__Do'
 
