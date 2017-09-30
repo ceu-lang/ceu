@@ -44201,6 +44201,32 @@ escape 0;
     run = 10,
 }
 
+Test { [[
+code/await Gg (none) -> (var int file) -> int do
+    file = 1;
+    escape 0;
+end
+
+code/await Ff (none) -> (var& int file) -> NEVER
+    throws Exception
+do
+    var&? Gg o = spawn Gg();
+    var int? err =
+        watching o do
+            file = &o.file;
+        end;
+    var Exception e = val Exception(_);
+    throw e;
+end
+
+await Ff();
+escape 0;
+]],
+    run = '15] runtime error: uncaught exception: unspecified message',
+    wrn = true,
+    _opts = { ceu_features_exception='true' },
+}
+
 --<<< EXCEPTIONS / THROW / CATCH
 
 -->>> LUA

@@ -38,7 +38,7 @@ local function run_inits (par, i, Dcl, stop, dont_await)
 -- HACK_04: check escape/set_exp (will fix with exceptions)
                     -- check if all statements after myself are code dcls or escape
                     for i=x.__i+1, #x.__par do
-                        if x.__par[i].tag~='Code' and x.__par[i].tag~='Escape' and x.__par[i].tag~='Set_Exp' then
+                        if x.__par[i].tag~='Code' and x.__par[i].tag~='Escape' and x.__par[i].tag~='Set_Exp' and x.__par[i].tag~='Var' and x.__par[i].tag~='Set_Abs_Val' and x.__par[i].tag~='Throw' then
                             is_last_watching = false        -- no: error
                             break
                         elseif x.__par[i].tag ~= 'Code' then
