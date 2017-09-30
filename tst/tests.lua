@@ -43552,18 +43552,20 @@ escape ret;
 Test { [[
 var Exception? e;
 catch e do
-    throw Exception();
+    var Exception e_ = val Exception(_);
+    throw e_;
 end
 
 escape 1;
 ]],
-    props_ = 'line 3 : `exception` support is disabled',
+    props_ = 'line 4 : `exception` support is disabled',
 }
 
 Test { [[
 var Exception? e;
 catch e do
-    throw Exception();
+    var Exception e_ = val Exception(_);
+    throw e_;
 end
 
 escape 1;
@@ -43589,31 +43591,48 @@ escape 1;
 
 Test { [[
 if true then
-    throw Exception();
+    var Exception e = val Exception(_);
+    throw e;
 end
 
 escape 1;
 ]],
     _opts = { ceu_features_exception='true' },
     wrn = true,
-    run = '2] runtime error: uncaught exception',
+    run = '3] runtime error: uncaught exception: unspecified message',
 }
+
 Test { [[
 if true then
-    throw Exception();
+    var Exception e = val Exception("alo-alo");
+    throw e;
 end
 
 escape 1;
 ]],
     _opts = { ceu_features_exception='true' },
-    props_ = 'line 2 : uncaught exception',
+    wrn = true,
+    run = '3] runtime error: uncaught exception: alo-alo',
+}
+
+Test { [[
+if true then
+    var Exception e_ = val Exception(_);
+    throw e_;
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    props_ = 'line 3 : uncaught exception',
 }
 
 Test { [[
 var Exception? e;
 catch e do
     if true then
-        throw Exception();
+        var Exception e_ = val Exception(_);
+        throw e_;
     end
     {ceu_dbg_assert(0);}
 end
@@ -43644,7 +43663,8 @@ data Exception.Sub;
 var Exception.Sub? e;
 catch e do
     if true then
-        throw Exception();
+        var Exception e_ = val Exception(_);
+        throw e_;
     end
     {ceu_dbg_assert(0);}
 end
@@ -43656,7 +43676,7 @@ end
 escape 1;
 ]],
     _opts = { ceu_features_exception='true' },
-    props_ = 'line 6 : uncaught exception',
+    props_ = 'line 7 : uncaught exception',
 }
 
 Test { [[
@@ -43665,7 +43685,8 @@ data Exception.Sub;
 var Exception.Sub? e;
 catch e do
     if true then
-        throw Exception();
+        var Exception e_ = val Exception(_);
+        throw e_;
     end
     {ceu_dbg_assert(0);}
 end
@@ -43677,7 +43698,7 @@ end
 escape 1;
 ]],
     _opts = { ceu_features_exception='true' },
-    run = '6] runtime error: uncaught exception',
+    run = '7] runtime error: uncaught exception',
     wrn = true,
 }
 
@@ -43687,7 +43708,8 @@ data Exception.Sub;
 var Exception.Sub? e;
 catch e do
     if true then
-        throw Exception.Sub();
+        var Exception.Sub e_ = val Exception.Sub(_);
+        throw e_;
     end
     {ceu_dbg_assert(0);}
 end
@@ -43710,7 +43732,8 @@ end
 var Exception.Sub? eee;
 catch eee do
     if true then
-        throw Exception.Sub(20);
+        var Exception.Sub e_ = val Exception.Sub(_,20);
+        throw e_;
     end
     {ceu_dbg_assert(0);}
 end
@@ -43727,7 +43750,8 @@ data Exception.Sub;
 var Exception? e;
 catch e do
     if true then
-        throw Exception.Sub();
+        var Exception.Sub e_ = val Exception.Sub(_);
+        throw e_;
     end
     {ceu_dbg_assert(0);}
 end
@@ -43749,7 +43773,8 @@ catch e do
     do finalize with
         ret = 10;
     end
-    throw Exception();
+    var Exception e_ = val Exception(_);
+    throw e_;
 end
 
 escape ret;
@@ -43761,7 +43786,8 @@ escape ret;
 Test { [[
 var Exception? e;
 catch e do
-    throw Exception();
+    var Exception e_ = val Exception(_);
+    throw e_;
 end
 
 if e? then
@@ -43777,30 +43803,33 @@ escape 1;
 Test { [[
 var Exception? e;
 catch e do
-    throw Exception();
+    var Exception e_ = val Exception(_);
+    throw e_;
     nothing;
 end
 ]],
     _opts = { ceu_features_exception='true' },
-    parser = 'line 3 : after `;` : expected `end`',
+    parser = 'line 4 : after `;` : expected `end`',
 }
 
 Test { [[
 code/await Ff (none) -> none do
-    throw Exception();
+    var Exception e_ = val Exception(_);
+    throw e_;
 end
 await Ff();
 escape 1;
 ]],
     _opts = { ceu_features_exception='true' },
-    props_ = 'line 2 : uncaught exception',
+    props_ = 'line 3 : uncaught exception',
 }
 
 Test { [[
 code/await Ff (none) -> none
     throws Ex
 do
-    throw Exception();
+    var Exception e_ = val Exception(_);
+    throw e_;
 end
 await Ff();
 escape 1;
@@ -43813,7 +43842,38 @@ Test { [[
 code/await Ff (none) -> none
     throws Exception
 do
-    throw Exception();
+    var Exception e_ = val Exception(_);
+    throw e_;
+end
+await Ff();
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    props_ = 'line 7 : uncaught exception',
+}
+
+Test { [[
+code/await Ff (none) -> none
+    throws Exception
+do
+    var Exception e_ = val Exception(_);
+    throw e_;
+end
+await Ff();
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    wrn = true,
+    run = '5] runtime error: uncaught exception',
+}
+
+Test { [[
+data Dd;
+code/await Ff (none) -> none
+    throws Dd
+do
+    var Exception e_ = val Exception(_);
+    throw e_;
 end
 await Ff();
 escape 1;
@@ -43823,45 +43883,18 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (none) -> none
-    throws Exception
-do
-    throw Exception();
-end
-await Ff();
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    wrn = true,
-    run = '4] runtime error: uncaught exception',
-}
-
-Test { [[
-data Dd;
-code/await Ff (none) -> none
-    throws Dd
-do
-    throw Exception();
-end
-await Ff();
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    props_ = 'line 5 : uncaught exception',
-}
-
-Test { [[
 data Dd;
 code/await Ff (none) -> none
     throws Exception
 do
-    throw Dd();
+    var Dd e_ = val Dd();
+    throw e_;
 end
 await Ff();
 escape 1;
 ]],
     _opts = { ceu_features_exception='true' },
-    props_ = 'line 5 : uncaught exception',
+    props_ = 'line 6 : uncaught exception',
 }
 
 Test { [[
@@ -43869,13 +43902,14 @@ data Exception.Sub;
 code/await Ff (none) -> none
     throws Exception.Sub
 do
-    throw Exception();
+    var Exception e_ = val Exception(_);
+    throw e_;
 end
 await Ff();
 escape 1;
 ]],
     _opts = { ceu_features_exception='true' },
-    props_ = 'line 5 : uncaught exception',
+    props_ = 'line 6 : uncaught exception',
 }
 
 Test { [[
@@ -43883,12 +43917,13 @@ data Exception.Sub;
 code/await Ff (none) -> none
     throws Exception
 do
-    throw Exception.Sub();
+    var Exception.Sub e_ = val Exception.Sub(_);
+    throw e_;
 end
 await Ff();
 escape 1;
 ]],
-    props_ = 'line 5 : uncaught exception',
+    props_ = 'line 6 : uncaught exception',
     _opts = { ceu_features_exception='true' },
 }
 
@@ -43896,13 +43931,14 @@ Test { [[
 var Exception? e;
 catch e do
     code/await Ff (none) -> none do
-        throw Exception();
+        var Exception e_ = val Exception(_);
+        throw e_;
     end
     await Ff();
 end
 escape 1;
 ]],
-    props_ = 'line 4 : uncaught exception',
+    props_ = 'line 5 : uncaught exception',
     _opts = { ceu_features_exception='true' },
 }
 
@@ -43910,7 +43946,8 @@ Test { [[
 code/await Ff (none) -> none
     throws Exception
 do
-    throw Exception();
+    var Exception e_ = val Exception(_);
+    throw e_;
 end
 var Exception? e;
 catch e do
@@ -43929,7 +43966,8 @@ Test { [[
 code/tight Ff (none) -> none
     throws Exception
 do
-    throw Exception();
+    var Exception e_ = val Exception(_);
+    throw e_;
 end
 call Ff();
 escape 1;
@@ -43941,14 +43979,15 @@ Test { [[
 code/tight Ff (none) -> none do
     var Exception? e;
     catch e do
-        throw Exception();
+        var Exception e_ = val Exception(_);
+        throw e_;
     end
 end
 call Ff();
 escape 1;
 ]],
     _opts = { ceu_features_exception='true' },
-    props_ = 'line 4 : invalid `throw` : unexpected enclosing `code`',
+    props_ = 'line 5 : invalid `throw` : unexpected enclosing `code`',
 }
 
 Test { [[
@@ -43957,7 +43996,8 @@ code/await Ff (none) -> int
 do
     var Exception? e;
     catch e do
-        throw Exception();
+        var Exception e_ = val Exception(_);
+        throw e_;
     end
     if e? then
         escape 10;
@@ -43986,7 +44026,8 @@ code/await Ff (none) -> int
 do
     var Exception.Sub? e;
     catch e do
-        throw Exception();
+        var Exception e_ = val Exception(_);
+        throw e_;
     end
     if e? then
         escape 10;
@@ -44016,7 +44057,8 @@ do
     par do
         var Exception.Sub? e;
         catch e do
-            throw Exception();
+            var Exception e_ = val Exception(_);
+            throw e_;
         end
         if e? then
             escape 10;
@@ -44026,7 +44068,8 @@ do
     with
         var Exception.Sub? e;
         catch e do
-            throw Exception();
+            var Exception e_ = val Exception(_);
+            throw e_;
         end
         if e? then
             escape 10;
@@ -44056,7 +44099,8 @@ do
     par/and do
         var Exception? e;
         catch e do
-            throw Exception();
+            var Exception e_ = val Exception(_);
+            throw e_;
         end
         if not e? then
             escape 0;
@@ -44064,7 +44108,8 @@ do
     with
         var Exception? e;
         catch e do
-            throw Exception();
+            var Exception e_ = val Exception(_);
+            throw e_;
         end
         if not e? then
             escape 0;
@@ -44090,7 +44135,8 @@ Test { [[
 code/await Ff (none) -> none
     throws Exception
 do
-    throw Exception();
+    var Exception e_ = val Exception(_);
+    throw e_;
 end
 
 code/await Gg (none) -> none
@@ -44119,7 +44165,8 @@ var Exception? e1;
 var Exception.Sub? e2;
 var Exception.Sub.Sub? e3;
 catch e1,e2,e3 do
-    throw Exception.Sub.Sub();
+    var Exception.Sub.Sub e_ = val Exception.Sub.Sub(_);
+    throw e_;
 end
 if e1? then
     escape 10;
@@ -44138,7 +44185,8 @@ var Exception? e1;
 var Exception.Sub? e2;
 var Exception.Sub.Sub? e3;
 catch e3,e2,e1 do
-    throw Exception.Sub.Sub();
+    var Exception.Sub.Sub e_ = val Exception.Sub.Sub(_);
+    throw e_;
 end
 if e1? then
     escape 0;

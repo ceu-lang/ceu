@@ -53,9 +53,7 @@ F = {
                         '_ret')
         ret.is_implicit = true
 
-        local lock = node('Data', me.ln,
-                        'Lock',
-                        false,
+        local lock = node('Data', me.ln, 'Lock', false,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 node('_Var_set', me.ln,
@@ -77,7 +75,19 @@ F = {
         lock.is_predefined = true
 
         local exception = node('Data', me.ln, 'Exception', false,
-                            node('Block', me.ln, node('Stmts',me.ln)))
+                            node('Block', me.ln,
+                                node('Stmts', me.ln,
+                                    node('_Var_set', me.ln,
+                                        false,
+                                        false,
+                                        {},
+                                        node('Type', me.ln,
+                                            node('ID_nat', me.ln, '_char'),
+                                            '&&'),
+                                        'message',
+                                        {node('_Set_Exp',me.ln,
+                                            node('STRING',me.ln,'"unspecified message"'))}
+                                        ))))
         exception.is_predefined = true
 
         local lua do

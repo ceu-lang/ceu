@@ -718,7 +718,7 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].pse_paused = 0;
     Throw = function (me)
         local e = unpack(me)
         LINE(me, [[
-return ceu_throw_ex(_ceu_stk, ]]..CATCHES(me)..[[, (tceu_data_Exception*)&]]..V(e)..[[, sizeof(]]..TYPES.toc(e.info.tp)..[[), __FILE__, __LINE__-8);
+return ceu_throw(_ceu_stk, ]]..CATCHES(me)..[[, (tceu_data_Exception*)&]]..V(e)..[[, sizeof(]]..TYPES.toc(e.info.tp)..[[));
 ]])
     end,
 

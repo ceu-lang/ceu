@@ -561,8 +561,19 @@ void ceu_throw_ex (tceu_stk* stk, tceu_catch* catches, tceu_data_Exception* exce
         }
         catches = catches->up;
     }
-    ceu_callback_assert_msg_ex(0, "uncaught exception", file, line);
+
+    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"[");
+    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(file));
+    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)":");
+    ceu_callback_num_num(CEU_CALLBACK_LOG, 2, line);
+    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"] ");
+    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"runtime error: ");
+    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)("uncaught exception: "));
+    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(exception->message));
+    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n");
+    ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL);
 }
+#define ceu_throw(a,b,c,d) ceu_throw_ex(a,b,c,d,__FILE__,__LINE__)
 #endif
 
 #ifdef CEU_FEATURES_THREAD

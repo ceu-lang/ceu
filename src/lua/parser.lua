@@ -575,7 +575,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') * V'Loc' * V'_Emit_ps' * V'Y'
 
-    , Throw  = K'throw' * (V'Abs_Cons' + V'__Exp')
+    , Throw = K'throw' * V'__Exp' --(V'Abs_Cons' + V'__Exp')
     , _Catch = K'catch' * LIST(V'Loc') * V'__Do'
 
     , __watch = (V'Await_Ext' + V'Await_Int' + V'Await_Wclock' + V'_Abs_Await')
