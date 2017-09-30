@@ -193,7 +193,7 @@ PROPS_.F = {
                 local _,_,throws = unpack(node)
                 ASR(throws, me, 'uncaught exception')
                 for _, v2 in ipairs(throws) do
-                    if TYPES.is_equal(TYPES.new(me,v2.dcl.id_), tp) then
+                    if TYPES.is_equal(TYPES.new(me,v2.dcl.id), tp) then
                         return
                     end
                 end
@@ -206,7 +206,7 @@ PROPS_.F = {
         local throws = AST.get(ID_abs.dcl,'', 3,'List_Throws')
         if throws then
             for _, throw in ipairs(throws) do
-                PROPS_.F.Throw(me, TYPES.new(me,throw.dcl.id_))
+                PROPS_.F.Throw(me, TYPES.new(me,throw.dcl.id))
             end
         end
     end,
