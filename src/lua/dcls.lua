@@ -547,7 +547,7 @@ error'oi'
             return
         end
 
-        local proto_body = AST.asr(me,'', 3,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block',1,'Stmts')
+        local proto_body = AST.asr(me,'', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block',1,'Stmts')
         local orig = proto_body[2]
         AST.set(proto_body, 2, node('Stmts', me.ln))
         local new = AST.copy(me)
@@ -609,7 +609,7 @@ error'oi'
 
         if old then
             ASR(old.tag == 'Code', me, 'invalid `code` declaration')
-            local mods2,_,body2 = unpack(old)
+            local mods2,_,_,body2 = unpack(old)
             if me.is_impl then
                 ASR(not (old.is_impl or old.__impl), me,
                     'invalid `code` declaration : body for "'..id..'" already exists')

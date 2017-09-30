@@ -385,7 +385,7 @@ STMTS.F = {
         ASR(AST.par(me,'Code') ~= me.__code, me,
             'invalid `'..AST.tag2id[me.tag]..'` : unexpected recursive invocation')
 
-        local ret = AST.get(me.__code,'', 3,'Block', 1,'Stmts',
+        local ret = AST.get(me.__code,'', 4,'Block', 1,'Stmts',
                                           1,'Code_Ret', 1,'', 2,'Type')
         me.tp = ret and AST.copy(ret)
 
