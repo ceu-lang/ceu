@@ -37,7 +37,7 @@ syn keyword	cStatement  event input output var pool
 
 syn keyword	cStatement  async await break continue deterministic do else emit end
 syn keyword cStatement  every finalize FOREVER outer if loop nothing lock
-syn keyword cStatement  par pause then until val with
+syn keyword cStatement  par pause then until val with throw throws catch
 syn keyword cStatement  kill spawn thread lua resume traverse
 syn keyword cStatement  escape call isr atomic request in
 syn keyword cStatement  watching new

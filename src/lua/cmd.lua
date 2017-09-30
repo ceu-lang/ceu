@@ -28,6 +28,7 @@ Options:
     --ceu-line-directives=BOOL      insert `#line` directives in the C output (default `true`)
     --ceu-callbacks-lines=BOOL      pass current filename and line number to callbacks (default `true`)
 
+    --ceu-features-exception=BOOL   enable exceptions support (default `false`)
     --ceu-features-lua=BOOL         enable `lua` support (default `false`)
     --ceu-features-thread=BOOL      enable `async/thread` support (default `false`)
     --ceu-features-isr=BOOL         enable `async/isr` support (default `false`)
