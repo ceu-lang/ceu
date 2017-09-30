@@ -306,477 +306,8 @@ escape v1 + v2;
 -- var/dynamic int x;
 -------------------------------------------------------------------------------
 
--->>> EXCEPTIONS / THROW / CATCH
---]=====]
-
-Test { [[
-var Exception? e;
-catch e do
-    throw Exception();
-end
-
-escape 1;
-]],
-    props_ = 'line 3 : `exception` support is disabled',
-}
-
-Test { [[
-var Exception? e;
-catch e do
-    throw Exception();
-end
-
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    run = 1,
-}
-
-Test { [[
-var Exception? e;
-catch e do
-end
-
-if e? then
-    escape 10;
-end
-
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    run = 1,
-}
-
-Test { [[
-if true then
-    throw Exception();
-end
-
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    wrn = true,
-    run = '2] runtime error: uncaught exception',
-}
-Test { [[
-if true then
-    throw Exception();
-end
-
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    props_ = 'line 2 : uncaught exception',
-}
-
-Test { [[
-var Exception? e;
-catch e do
-    if true then
-        throw Exception();
-    end
-    {ceu_dbg_assert(0);}
-end
-
-if e? then
-    escape 10;
-end
-
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    run = 10,
-}
-
-Test { [[
-data Xx;
-data Xx.Yy;
-var Xx.Yy? y;
-var Xx? xxx = y;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-data Exception.Sub;
-
-var Exception.Sub? e;
-catch e do
-    if true then
-        throw Exception();
-    end
-    {ceu_dbg_assert(0);}
-end
-
-if e? then
-    escape 10;
-end
-
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    props_ = 'line 6 : uncaught exception',
-}
-
-Test { [[
-data Exception.Sub;
-
-var Exception.Sub? e;
-catch e do
-    if true then
-        throw Exception();
-    end
-    {ceu_dbg_assert(0);}
-end
-
-if e? then
-    escape 10;
-end
-
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    run = '6] runtime error: uncaught exception',
-    wrn = true,
-}
-
-Test { [[
-data Exception.Sub;
-
-var Exception.Sub? e;
-catch e do
-    if true then
-        throw Exception.Sub();
-    end
-    {ceu_dbg_assert(0);}
-end
-
-if e? then
-    escape 10;
-end
-
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    run = 10,
-}
-
-Test { [[
-data Exception.Sub with
-    var int value = 10;
-end
-
-var Exception.Sub? eee;
-catch eee do
-    if true then
-        throw Exception.Sub(20);
-    end
-    {ceu_dbg_assert(0);}
-end
-
-escape eee!.value;
-]],
-    _opts = { ceu_features_exception='true' },
-    run = 20,
-}
-
-Test { [[
-data Exception.Sub;
-
-var Exception? e;
-catch e do
-    if true then
-        throw Exception.Sub();
-    end
-    {ceu_dbg_assert(0);}
-end
-
-if e? then
-    escape 10;
-end
-
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    run = 10,
-}
-
-Test { [[
-var int ret = 0;
-var Exception? e;
-catch e do
-    do finalize with
-        ret = 10;
-    end
-    throw Exception();
-end
-
-escape ret;
-]],
-    _opts = { ceu_features_exception='true' },
-    run = 10,
-}
-
-Test { [[
-var Exception? e;
-catch e do
-    throw Exception();
-end
-
-if e? then
-    escape 10;
-end
-
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    run = 10,
-}
-
-Test { [[
-var Exception? e;
-catch e do
-    throw Exception();
-    nothing;
-end
-]],
-    _opts = { ceu_features_exception='true' },
-    parser = 'line 3 : after `;` : expected `end`',
-}
-
-Test { [[
-code/await Ff (none) -> none do
-    throw Exception();
-end
-await Ff();
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    props_ = 'line 2 : uncaught exception',
-}
-
-Test { [[
-code/await Ff (none) -> none
-    throws Ex
-do
-    throw Exception();
-end
-await Ff();
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    dcls = 'line 2 : abstraction "Ex" is not declared',
-}
-
-Test { [[
-code/await Ff (none) -> none
-    throws Exception
-do
-    throw Exception();
-end
-await Ff();
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    props_ = 'line 6 : uncaught exception',
-}
-
-Test { [[
-code/await Ff (none) -> none
-    throws Exception
-do
-    throw Exception();
-end
-await Ff();
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    wrn = true,
-    run = '4] runtime error: uncaught exception',
-}
-
-Test { [[
-data Dd;
-code/await Ff (none) -> none
-    throws Dd
-do
-    throw Exception();
-end
-await Ff();
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    props_ = 'line 5 : uncaught exception',
-}
-
-Test { [[
-data Dd;
-code/await Ff (none) -> none
-    throws Exception
-do
-    throw Dd();
-end
-await Ff();
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    props_ = 'line 5 : uncaught exception',
-}
-
-Test { [[
-data Exception.Sub;
-code/await Ff (none) -> none
-    throws Exception.Sub
-do
-    throw Exception();
-end
-await Ff();
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    props_ = 'line 5 : uncaught exception',
-}
-
-Test { [[
-data Exception.Sub;
-code/await Ff (none) -> none
-    throws Exception
-do
-    throw Exception.Sub();
-end
-await Ff();
-escape 1;
-]],
-    props_ = 'line 5 : uncaught exception',
-    _opts = { ceu_features_exception='true' },
-}
-
-Test { [[
-var Exception? e;
-catch e do
-    code/await Ff (none) -> none do
-        throw Exception();
-    end
-    await Ff();
-end
-escape 1;
-]],
-    props_ = 'line 4 : uncaught exception',
-    _opts = { ceu_features_exception='true' },
-}
-
-Test { [[
-code/tight Ff (none) -> none do
-    throw Exception();
-end
-call Ff();
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    props_ = 'line 2 : uncaught exception',
-}
-
-Test { [[
-code/tight Ff (none) -> none
-    throws Exception
-do
-    throw Exception();
-end
-call Ff();
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    props_ = 'line 6 : uncaught exception',
-}
-
-Test { [[
-code/await Ff (none) -> none
-    throws Exception
-do
-    throw Exception();
-end
-var Exception? e;
-catch e do
-    await Ff();
-end
-if e? then
-    escape 10;
-end
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    run = 10,
-}
-
-Test { [[
-code/tight Ff (none) -> none
-    throws Exception
-do
-    throw Exception();
-end
-call Ff();
-escape 1;
-]],
-    parser = 'line 1 : after `none` : expected type modifier or `do` or `;`',
-}
-
-Test { [[
-code/tight Ff (none) -> none do
-    var Exception? e;
-    catch e do
-        throw Exception();
-    end
-end
-call Ff();
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    props_ = 'line 4 : invalid `throw` : unexpected enclosing `code`',
-}
-
-Test { [[
-data Exception.Uv with
-    var int errno;
-end
-
-var Exception e;
-catch e do
-    ...
-    throw Exception();
-end
-
-code/await Ff (none) -> none
-    throws Exception.Uv, Exception
-do
-    throw Exception();
-end
-
-code/await Gg (none) -> none
-    throws Exception.Uv, Exception
-do
-    await Ff();
-end
-
-]],
-    _opts = { ceu_features_exception='true' },
-    run = 1,
-}
-
-Test { [[
-var Exception? e;
-catch e1,e2,e3 do
-    throw Exception();
-end
-...
-]],
-    _opts = { ceu_features_exception='true' },
-    parser = 'todo',
-}
-
---<<< EXCEPTIONS / THROW / CATCH
-
 do return end -- OK
+--]=====]
 
 
 ----------------------------------------------------------------------------
@@ -44016,6 +43547,614 @@ escape ret;
     run = 1,
 }
 -- TODO: SKIP-04
+
+-->>> EXCEPTIONS / THROW / CATCH
+
+Test { [[
+var Exception? e;
+catch e do
+    throw Exception();
+end
+
+escape 1;
+]],
+    props_ = 'line 3 : `exception` support is disabled',
+}
+
+Test { [[
+var Exception? e;
+catch e do
+    throw Exception();
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    run = 1,
+}
+
+Test { [[
+var Exception? e;
+catch e do
+end
+
+if e? then
+    escape 10;
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    run = 1,
+}
+
+Test { [[
+if true then
+    throw Exception();
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    wrn = true,
+    run = '2] runtime error: uncaught exception',
+}
+Test { [[
+if true then
+    throw Exception();
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    props_ = 'line 2 : uncaught exception',
+}
+
+Test { [[
+var Exception? e;
+catch e do
+    if true then
+        throw Exception();
+    end
+    {ceu_dbg_assert(0);}
+end
+
+if e? then
+    escape 10;
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    run = 10,
+}
+
+Test { [[
+data Xx;
+data Xx.Yy;
+var Xx.Yy? y;
+var Xx? xxx = y;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+data Exception.Sub;
+
+var Exception.Sub? e;
+catch e do
+    if true then
+        throw Exception();
+    end
+    {ceu_dbg_assert(0);}
+end
+
+if e? then
+    escape 10;
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    props_ = 'line 6 : uncaught exception',
+}
+
+Test { [[
+data Exception.Sub;
+
+var Exception.Sub? e;
+catch e do
+    if true then
+        throw Exception();
+    end
+    {ceu_dbg_assert(0);}
+end
+
+if e? then
+    escape 10;
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    run = '6] runtime error: uncaught exception',
+    wrn = true,
+}
+
+Test { [[
+data Exception.Sub;
+
+var Exception.Sub? e;
+catch e do
+    if true then
+        throw Exception.Sub();
+    end
+    {ceu_dbg_assert(0);}
+end
+
+if e? then
+    escape 10;
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    run = 10,
+}
+
+Test { [[
+data Exception.Sub with
+    var int value = 10;
+end
+
+var Exception.Sub? eee;
+catch eee do
+    if true then
+        throw Exception.Sub(20);
+    end
+    {ceu_dbg_assert(0);}
+end
+
+escape eee!.value;
+]],
+    _opts = { ceu_features_exception='true' },
+    run = 20,
+}
+
+Test { [[
+data Exception.Sub;
+
+var Exception? e;
+catch e do
+    if true then
+        throw Exception.Sub();
+    end
+    {ceu_dbg_assert(0);}
+end
+
+if e? then
+    escape 10;
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    run = 10,
+}
+
+Test { [[
+var int ret = 0;
+var Exception? e;
+catch e do
+    do finalize with
+        ret = 10;
+    end
+    throw Exception();
+end
+
+escape ret;
+]],
+    _opts = { ceu_features_exception='true' },
+    run = 10,
+}
+
+Test { [[
+var Exception? e;
+catch e do
+    throw Exception();
+end
+
+if e? then
+    escape 10;
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    run = 10,
+}
+
+Test { [[
+var Exception? e;
+catch e do
+    throw Exception();
+    nothing;
+end
+]],
+    _opts = { ceu_features_exception='true' },
+    parser = 'line 3 : after `;` : expected `end`',
+}
+
+Test { [[
+code/await Ff (none) -> none do
+    throw Exception();
+end
+await Ff();
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    props_ = 'line 2 : uncaught exception',
+}
+
+Test { [[
+code/await Ff (none) -> none
+    throws Ex
+do
+    throw Exception();
+end
+await Ff();
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    dcls = 'line 2 : abstraction "Ex" is not declared',
+}
+
+Test { [[
+code/await Ff (none) -> none
+    throws Exception
+do
+    throw Exception();
+end
+await Ff();
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    props_ = 'line 6 : uncaught exception',
+}
+
+Test { [[
+code/await Ff (none) -> none
+    throws Exception
+do
+    throw Exception();
+end
+await Ff();
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    wrn = true,
+    run = '4] runtime error: uncaught exception',
+}
+
+Test { [[
+data Dd;
+code/await Ff (none) -> none
+    throws Dd
+do
+    throw Exception();
+end
+await Ff();
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    props_ = 'line 5 : uncaught exception',
+}
+
+Test { [[
+data Dd;
+code/await Ff (none) -> none
+    throws Exception
+do
+    throw Dd();
+end
+await Ff();
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    props_ = 'line 5 : uncaught exception',
+}
+
+Test { [[
+data Exception.Sub;
+code/await Ff (none) -> none
+    throws Exception.Sub
+do
+    throw Exception();
+end
+await Ff();
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    props_ = 'line 5 : uncaught exception',
+}
+
+Test { [[
+data Exception.Sub;
+code/await Ff (none) -> none
+    throws Exception
+do
+    throw Exception.Sub();
+end
+await Ff();
+escape 1;
+]],
+    props_ = 'line 5 : uncaught exception',
+    _opts = { ceu_features_exception='true' },
+}
+
+Test { [[
+var Exception? e;
+catch e do
+    code/await Ff (none) -> none do
+        throw Exception();
+    end
+    await Ff();
+end
+escape 1;
+]],
+    props_ = 'line 4 : uncaught exception',
+    _opts = { ceu_features_exception='true' },
+}
+
+Test { [[
+code/await Ff (none) -> none
+    throws Exception
+do
+    throw Exception();
+end
+var Exception? e;
+catch e do
+    await Ff();
+end
+if e? then
+    escape 10;
+end
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    run = 10,
+}
+
+Test { [[
+code/tight Ff (none) -> none
+    throws Exception
+do
+    throw Exception();
+end
+call Ff();
+escape 1;
+]],
+    parser = 'line 1 : after `none` : expected type modifier or `do` or `;`',
+}
+
+Test { [[
+code/tight Ff (none) -> none do
+    var Exception? e;
+    catch e do
+        throw Exception();
+    end
+end
+call Ff();
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    props_ = 'line 4 : invalid `throw` : unexpected enclosing `code`',
+}
+
+Test { [[
+code/await Ff (none) -> int
+    throws Exception
+do
+    var Exception? e;
+    catch e do
+        throw Exception();
+    end
+    if e? then
+        escape 10;
+    else
+        escape 0;
+    end
+end
+var int ret = 0;
+var Exception? e;
+catch e do
+    ret = await Ff();
+end
+if e? then
+    escape 0;
+end
+escape ret;
+]],
+    _opts = { ceu_features_exception='true' },
+    run = 10,
+}
+
+Test { [[
+data Exception.Sub;
+code/await Ff (none) -> int
+    throws Exception
+do
+    var Exception.Sub? e;
+    catch e do
+        throw Exception();
+    end
+    if e? then
+        escape 10;
+    else
+        escape 0;
+    end
+end
+var int ret = 0;
+var Exception? e;
+catch e do
+    ret = await Ff();
+end
+if e? then
+    escape 90;
+end
+escape ret;
+]],
+    _opts = { ceu_features_exception='true' },
+    run = 90,
+}
+
+Test { [[
+data Exception.Sub;
+code/await Ff (none) -> int
+    throws Exception
+do
+    par do
+        var Exception.Sub? e;
+        catch e do
+            throw Exception();
+        end
+        if e? then
+            escape 10;
+        else
+            escape 0;
+        end
+    with
+        var Exception.Sub? e;
+        catch e do
+            throw Exception();
+        end
+        if e? then
+            escape 10;
+        else
+            escape 0;
+        end
+    end
+end
+var int ret = 0;
+var Exception? e;
+catch e do
+    ret = await Ff();
+end
+if e? then
+    escape 90;
+end
+escape ret;
+]],
+    _opts = { ceu_features_exception='true' },
+    run = 90,
+}
+
+Test { [[
+code/await Ff (none) -> int
+    throws Exception
+do
+    par/and do
+        var Exception? e;
+        catch e do
+            throw Exception();
+        end
+        if not e? then
+            escape 0;
+        end
+    with
+        var Exception? e;
+        catch e do
+            throw Exception();
+        end
+        if not e? then
+            escape 0;
+        end
+    end
+    escape 50;
+end
+var int ret = 0;
+var Exception? e;
+catch e do
+    ret = await Ff();
+end
+if e? then
+    escape 90;
+end
+escape ret;
+]],
+    _opts = { ceu_features_exception='true' },
+    run = 50,
+}
+
+Test { [[
+code/await Ff (none) -> none
+    throws Exception
+do
+    throw Exception();
+end
+
+code/await Gg (none) -> none
+    throws Exception
+do
+    await Ff();
+end
+
+var Exception? e;
+catch e do
+    await Gg();
+end
+if e? then
+    escape 10;
+end
+escape 0;
+]],
+    _opts = { ceu_features_exception='true' },
+    run = 10,
+}
+
+Test { [[
+data Exception.Sub;
+data Exception.Sub.Sub;
+var Exception? e1;
+var Exception.Sub? e2;
+var Exception.Sub.Sub? e3;
+catch e1,e2,e3 do
+    throw Exception.Sub.Sub();
+end
+if e1? then
+    escape 10;
+end
+escape 0;
+]],
+    _opts = { ceu_features_exception='true' },
+    run = 10,
+    wrn = true,
+}
+
+Test { [[
+data Exception.Sub;
+data Exception.Sub.Sub;
+var Exception? e1;
+var Exception.Sub? e2;
+var Exception.Sub.Sub? e3;
+catch e3,e2,e1 do
+    throw Exception.Sub.Sub();
+end
+if e1? then
+    escape 0;
+else/if e2? then
+    escape 0;
+else/if e3? then
+    escape 10;
+end
+escape 0;
+]],
+    _opts = { ceu_features_exception='true' },
+    run = 10,
+}
+
+--<<< EXCEPTIONS / THROW / CATCH
 
 -->>> LUA
 

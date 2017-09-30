@@ -609,6 +609,16 @@ error'TODO: luacov never executes this?'
     _Catch__PRE = function (me)
         local loc, block = unpack(me)
 
+        if block.tag ~= 'Block' then
+            local ret = node('_Catch', me.ln, unpack(me, 2))
+            ret[#ret] = node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('_Catch', me.ln,
+                                    loc,
+                                    me[#me])))
+            return ret
+        end
+
         return node('Catch', me.ln,
                     loc,
                     node('Par_Or', me.ln,
