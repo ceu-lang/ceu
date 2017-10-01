@@ -1,3 +1,5 @@
+=== CEU_FEATURES ===        /* CEU_FEATURES */
+
 typedef union tceu_callback_arg {
     void* ptr;
     s32   num;
@@ -97,7 +99,11 @@ static tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callb
     }
 #endif
 
+#ifdef CEU_FEATURES_TRACE
 #define ceu_assert(v,msg) ceu_assert_ex((v),(msg),&_ceu_mem->trace,__FILE__,__LINE__)
+#else
+#define ceu_assert(v,msg) ceu_assert_ex((v),(msg),BLANK,__FILE__,__LINE__)
+#endif
 
 #define ceu_dbg_log(msg)  { ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg)); \
                             ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n"); }
@@ -127,14 +133,13 @@ enum {
     CEU_CALLBACK_REALLOC,
 };
 
-//#ifdef CEU_FEATURES_TRACE
-#if 1
 typedef struct tceu_trace {
     struct tceu_trace* up;
     const char* file;
     u32 line;
 } tceu_trace;
 
+#ifdef CEU_FEATURES_TRACE
 #include <stdio.h>
 static void ceu_trace (tceu_trace* trace) {
     static bool IS_FIRST = 1;

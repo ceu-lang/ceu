@@ -1,5 +1,3 @@
-=== CEU_FEATURES ===        /* CEU_FEATURES */
-
 #include <stddef.h>     /* offsetof */
 #include <stdlib.h>     /* NULL */
 #include <string.h>     /* memset, strlen */
