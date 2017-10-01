@@ -273,15 +273,15 @@ assert(me.hier)
                 if TYPES.abs_dcl(tp) then
                     MEMS.datas.mems = MEMS.datas.mems..[[
 struct ]]..cc..[[;
-static struct ]]..cc..'* CEU_OPTION_'..cc..[[ (struct ]]..cc..[[* alias, tceu_trace* trace, char* file, int line) {
+static struct ]]..cc..'* CEU_OPTION_'..cc..[[ (struct ]]..cc..[[* alias, tceu_trace trace) {
 ]]
                 else
                     MEMS.datas.mems = MEMS.datas.mems..[[
-static ]]..cc..'* CEU_OPTION_'..cc..[[ (]]..cc..[[* alias, char* file, int line) {
+static ]]..cc..'* CEU_OPTION_'..cc..[[ (]]..cc..[[* alias, tceu_trace trace) {
 ]]
                 end
                 MEMS.datas.mems = MEMS.datas.mems..[[
-    ceu_assert_ex(alias != NULL, "value is not set", trace, file, line);
+    ceu_assert_ex(alias != NULL, "value is not set", trace);
     return alias;
 }
 ]]
@@ -292,8 +292,8 @@ typedef struct ]]..cc..[[ {
     ]]..c..[[ value;
 } ]]..cc..[[;
 
-static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, tceu_trace* trace, char* file, int line) {
-    ceu_assert_ex(opt->is_set, "value is not set", trace, file, line);
+static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, tceu_trace trace) {
+    ceu_assert_ex(opt->is_set, "value is not set", trace);
     return opt;
 }
 ]]

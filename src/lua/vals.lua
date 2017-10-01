@@ -461,14 +461,14 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..args..[[)
         local alias, tp = unpack(e.info.dcl)
         if alias == '&?' then
             if e.info.dcl.tag == 'Var' then
-                return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e)..', __FILE__, __LINE__))'
+                return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e)..', ((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__})))'
             elseif e.info.dcl.tag == 'Evt' then
                 return '(*CEU_OPTION_EVT('..V(e)..'.alias, __FILE__, __LINE__))'
             else
                 error 'not implemented'
             end
         else
-            return '(CEU_OPTION_'..TYPES.toc(e.info.tp)..'(&'..V(e)..', __FILE__, __LINE__)->value)'
+            return '(CEU_OPTION_'..TYPES.toc(e.info.tp)..'(&'..V(e)..', ((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__}))->value)'
         end
     end,
 

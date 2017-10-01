@@ -434,10 +434,10 @@ assert(not obj, 'not implemented')
     ]]..mem..[[->_mem.depth   = ]]..ID_abs.dcl.depth..[[;
 ]]
         if CEU.opts.ceu_features_trace then
-            ret = ret .. [[
+            ret = ret .. LINE_DIRECTIVE(me) .. [[
     ]]..mem..[[->_mem.trace.up   = &_ceu_mem->trace;
-    ]]..mem..[[->_mem.trace.file = "]]..me.ln[1]..[[";
-    ]]..mem..[[->_mem.trace.line = ]]..me.ln[2]..[[;
+    ]]..mem..[[->_mem.trace.file = __FILE__;
+    ]]..mem..[[->_mem.trace.line = __LINE__-2;
 ]]
         end
         if CEU.opts.ceu_features_exception then
@@ -882,7 +882,7 @@ ceu_assert(]]..sig..V(step)..[[> 0, "invalid `loop` step : expected positive num
 ]]..CUR('__fr_'..me.n)..' = '..V(fr)..[[;
 ]]..V(i)..' = '..V(fr)..' + '..V(step)..' * '..fr.__adj_step_mul..[[;
 ceu_assert_ex(]]..V(i)..(op..'=')..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n)..[[,
-    "control variable overflow", &_ceu_mem->trace, __FILE__, __LINE__-3);
+    "control variable overflow", ((tceu_trace){&_ceu_mem->trace, __FILE__, __LINE__-3}));
 while (1) {
 ]])
         if to.tag ~= 'ID_any' then
@@ -903,7 +903,7 @@ while (1) {
         LINE(me, [[
     ]]..V(i)..' = '..V(i)..' + '..V(step)..[[;
     ceu_assert_ex(]]..V(i)..op..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n)..[[,
-        "control variable overflow", &_ceu_mem->trace, __FILE__, __LINE__-2);
+        "control variable overflow", ((tceu_trace){&_ceu_mem->trace, __FILE__, __LINE__-2}));
     ]]..max.inc..[[
 }
 ]])

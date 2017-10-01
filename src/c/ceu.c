@@ -109,6 +109,8 @@ typedef struct tceu_code_mem {
     u8          depth;
 #ifdef CEU_FEATURES_TRACE
     tceu_trace  trace;
+#else
+    int         trace[0];
 #endif
 #ifdef CEU_FEATURES_EXCEPTION
     tceu_catch* catches;
@@ -136,7 +138,8 @@ typedef struct tceu_pool_pak {
 } tceu_pool_pak;
 
 static tceu_evt* CEU_OPTION_EVT (tceu_evt* alias, tceu_trace* trace, const char* file, u32 line) {
-    ceu_assert_ex(alias != NULL, "value is not set", trace, file, line);
+    ceu_assert_ex(alias != NULL, "value is not set",
+                  ((tceu_trace){trace, file, line}));
     return alias;
 }
 
@@ -226,8 +229,8 @@ static int ceu_data_is (tceu_ndata* supers, tceu_ndata me, tceu_ndata cmp) {
 
 static void* ceu_data_as (tceu_ndata* supers, tceu_ndata* me, tceu_ndata cmp,
                           tceu_trace* trace, const char* file, u32 line) {
-    ceu_assert_ex(ceu_data_is(supers, *me, cmp),
-                               "invalid cast `as`", trace, file, line);
+    ceu_assert_ex(ceu_data_is(supers, *me, cmp), "invalid cast `as`",
+                  ((tceu_trace){trace, file, line}));
     return me;
 }
 
@@ -245,7 +248,8 @@ typedef struct tceu_opt_Exception {
 } tceu_opt_Exception;
 
 static tceu_opt_Exception* CEU_OPTION_tceu_opt_Exception (tceu_opt_Exception* opt, tceu_trace* trace, char* file, int line) {
-    ceu_assert_ex(opt->is_set, "value is not set", trace, file, line);
+    ceu_assert_ex(opt->is_set, "value is not set",
+                  ((tceu_trace){trace, file, line}));
     return opt;
 }
 #endif

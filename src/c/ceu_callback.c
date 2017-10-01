@@ -81,28 +81,19 @@ static tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callb
 
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 
-#ifndef ceu_assert_ex
-#define ceu_assert_ex(v,msg,trace,file,line)                        \
-    if (!(v)) {                                                                  \
-        ceu_trace(trace); \
-        if ((msg)!=NULL) {                                                       \
-            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"[");               \
-            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(file));            \
-            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)":");               \
-            ceu_callback_num_num(CEU_CALLBACK_LOG, 2, line);                     \
-            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"] ");              \
-            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"runtime error: "); \
-            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg));             \
-            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n");              \
-        }                                                                        \
-        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL);                       \
-    }
-#endif
-
 #ifdef CEU_FEATURES_TRACE
-#define ceu_assert(v,msg) ceu_assert_ex((v),(msg),&_ceu_mem->trace,__FILE__,__LINE__)
+#define ceu_assert_ex(v,msg,trace)                          \
+    if (!(v)) {                                             \
+        ceu_trace(trace, msg);                              \
+        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL);  \
+    }
+#define ceu_assert(v,msg) ceu_assert_ex((v),(msg), ((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__}))
 #else
-#define ceu_assert(v,msg) ceu_assert_ex((v),(msg),BLANK,__FILE__,__LINE__)
+#define ceu_assert_ex(v,msg,trace)                          \
+    if (!(v)) {                                             \
+        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL);  \
+    }
+#define ceu_assert(v,msg) ceu_assert_ex((v),(msg),NONE)
 #endif
 
 #define ceu_dbg_log(msg)  { ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg)); \
@@ -133,38 +124,49 @@ enum {
     CEU_CALLBACK_REALLOC,
 };
 
+#ifdef CEU_FEATURES_TRACE
 typedef struct tceu_trace {
     struct tceu_trace* up;
     const char* file;
     u32 line;
 } tceu_trace;
 
-#ifdef CEU_FEATURES_TRACE
-#include <stdio.h>
-static void ceu_trace (tceu_trace* trace) {
+static void ceu_trace (tceu_trace trace, const char* msg) {
     static bool IS_FIRST = 1;
     bool is_first = IS_FIRST;
 
-    if (trace->up == NULL) {
+    if (trace.up == NULL) {
         return;
     }
 
     IS_FIRST = 0;
 
-    ceu_trace(trace->up);
-    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"[");
-    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(trace->file));
-    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)":");
-    ceu_callback_num_num(CEU_CALLBACK_LOG, 2, trace->line);
-    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"]");
-    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)" -> ");
-    trace = trace->up;
+    ceu_trace(*trace.up, msg);
 
     if (is_first) {
         IS_FIRST = 1;
         ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n");
     }
+
+    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"[");
+    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(trace.file));
+    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)":");
+    ceu_callback_num_num(CEU_CALLBACK_LOG, 2, trace.line);
+    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"]");
+    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)" -> ");
+
+    if (is_first) {
+        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"runtime error: ");
+        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg));
+        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n");
+    }
 }
 #else
-#define ceu_trace(a)
+typedef struct tceu_trace {
+    int (*up)[0];
+    const char* file;
+    u32 line;
+} tceu_trace;
+
+#define ceu_trace(a,b)
 #endif

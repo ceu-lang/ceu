@@ -306,7 +306,6 @@ escape v1 + v2;
 -- var/dynamic int x;
 -------------------------------------------------------------------------------
 
---]=====]
 Test { [[
 code/await Ff (none) -> none do
     {ceu_assert(0, "hello");}
@@ -314,7 +313,7 @@ end
 await Ff();
 escape 0;
 ]],
-    run = '4] -> \n[/tmp/tmp.ceu:2] runtime error: hello',
+    run = '[/tmp/tmp.ceu:4] -> \n[/tmp/tmp.ceu:2] -> runtime error: hello',
     _opts = { ceu_features_trace='true' },
 }
 
@@ -328,7 +327,7 @@ end
 await Gg();
 escape 0;
 ]],
-    run = '[/tmp/tmp.ceu:7] -> [/tmp/tmp.ceu:5] -> \n[/tmp/tmp.ceu:2] runtime error: hello',
+    run = '[/tmp/tmp.ceu:7] -> [/tmp/tmp.ceu:5] -> \n[/tmp/tmp.ceu:2] -> runtime error: hello',
     _opts = { ceu_features_trace='true' },
 }
 
@@ -338,7 +337,11 @@ escape 0;
 -- OK: well tested
 ----------------------------------------------------------------------------
 
-Test { [[]], run='1] runtime error: reached end of `do`' }
+Test { [[]], run='Aborted' }
+Test { [[]],
+    run = '1] -> runtime error: reached end of `do`',
+    _opts = { ceu_features_trace='true' },
+}
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
 
@@ -1548,10 +1551,11 @@ else
     escape 0;
 end;
 ]],
-    run = '1] runtime error: reached end of `do`',
+    run = '1] -> runtime error: reached end of `do`',
     _ana = {
         reachs = 1,
     },
+    _opts = { ceu_features_trace='true' },
     --run = '1] runtime error: missing `escape` statement',
 }
 
@@ -2206,7 +2210,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    run = '19] runtime error: too many internal reactions',
+    run = 'system error: too many internal reactions',
 }
 
     -- WALL-CLOCK TIME / WCLOCK
@@ -3000,7 +3004,8 @@ end;
 escape a;
 ]],
     --inits = 'line 1 : uninitialized variable "a" : reached end of `do` (/tmp/tmp.ceu:1)',
-    run = '1] runtime error: reached end of `do`',
+    run = '1] -> runtime error: reached end of `do`',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -3133,7 +3138,8 @@ a = do/a end;
 Test { [[
 var int a = do/a end;
 ]],
-    run = '1] runtime error: reached end of `do`',
+    run = '1] -> runtime error: reached end of `do`',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -4037,7 +4043,7 @@ loop i in [1->4], -2 do
 end
 escape ret;
 ]],
-    --run = '2] runtime error: invalid `loop` step : expected positive number',
+    --run = '2] -> runtime error: invalid `loop` step : expected positive number',
     codes = 'line 3 : invalid `loop` step : expected positive number : got "-2"',
 }
 
@@ -4050,7 +4056,8 @@ loop i in [1->4], step do
 end
 escape ret;
 ]],
-    run = '4] runtime error: invalid `loop` step : expected positive number',
+    run = '4] -> runtime error: invalid `loop` step : expected positive number',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -4157,7 +4164,7 @@ loop i in [1 <- 4], -1 do
 end
 escape ret;
 ]],
-    --run = '2] runtime error: invalid `loop` step : expected positive number',
+    --run = '2] -> runtime error: invalid `loop` step : expected positive number',
     codes = 'line 3 : invalid `loop` step : expected positive number : got "-1"',
 }
 
@@ -4814,7 +4821,8 @@ end
 escape ret;
 ]],
     wrn = true,
-    run = '3] runtime error: control variable overflow',
+    run = '3] -> runtime error: control variable overflow',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -4826,7 +4834,8 @@ end
 escape ret;
 ]],
     wrn = true,
-    run = '3] runtime error: control variable overflow',
+    run = '3] -> runtime error: control variable overflow',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -4839,7 +4848,8 @@ end
 escape ret;
 ]],
     wrn = true,
-    run = '4] runtime error: control variable overflow',
+    run = '4] -> runtime error: control variable overflow',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -4868,7 +4878,8 @@ loop i in [0 -> x[ do
 end
 escape 1;
 ]],
-    run = '3] runtime error: `loop` limit underflow/overflow',
+    run = '3] -> runtime error: `loop` limit underflow/overflow',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -4879,7 +4890,8 @@ loop i in ]x <- 2[ do
 end
 escape 1;
 ]],
-    run = '3] runtime error: `loop` limit underflow/overflow',
+    run = '3] -> runtime error: `loop` limit underflow/overflow',
+    _opts = { ceu_features_trace='true' },
 }
 -- LOOP / BOUNDED
 
@@ -4912,6 +4924,7 @@ end
 escape 1;
 ]],
     run = 'runtime error: `loop` overflow',
+    _opts = { ceu_features_trace='true' },
     --run = 1,
 }
 
@@ -4931,6 +4944,7 @@ end
 escape ret;
 ]],
     run = 'runtime error: `loop` overflow',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -4957,7 +4971,8 @@ loop/10 i do
 end
 escape 1;
 ]],
-    run = '2] runtime error: `loop` overflow',
+    run = '2] -> runtime error: `loop` overflow',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -4996,7 +5011,8 @@ loop/1 i in [0->k[ do
 end
 escape 1;
 ]],
-    run = '3] runtime error: `loop` overflow',
+    run = '3] -> runtime error: `loop` overflow',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -6514,7 +6530,7 @@ escape v;
 }
 
 Test { [[
-native _ceu_dbg_assert;
+native _ceu_assert;
 
 var u32 t = 0;
 
@@ -6526,7 +6542,7 @@ loop _ in [1 -> 1000000[ do
     ms = ms .. [t];
     var u32 v2 = ms[0];
 
-    _ceu_dbg_assert(v1 == v2);
+    _ceu_assert(v1 == v2, "bug found");
 end
 
 escape 1;
@@ -20153,15 +20169,15 @@ native/pre do
         return (void**)&P;
     }
     void dealloc (void* x) {
-        ceu_dbg_assert(x == &V);
+        ceu_assert(x == &V, "bug found");
         V*=2;
     }
     void hold (void* x) {
-        ceu_dbg_assert(x == &V);
+        ceu_assert(x == &V, "bug found");
         V*=2;
     }
     void unhold (void* x) {
-        ceu_dbg_assert(x == &V);
+        ceu_assert(x == &V, "bug found");
         V++;
     }
 end
@@ -20269,7 +20285,8 @@ var& _void tcp = &_alloc()
         end;
 escape 0;
 ]],
-    run = '8] runtime error: call failed',
+    run = '8] -> runtime error: call failed',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -20320,21 +20337,21 @@ var int ret =
         with
             await l1.ok_unlocked;
         with
-            native _ceu_dbg_assert;
-            _ceu_dbg_assert(l1.is_locked);
+            native _ceu_assert;
+            _ceu_assert(l1.is_locked, "bug found");
             lock l1 do
                 escape v;
             end
         end
     end;
-_ceu_dbg_assert(not l1.is_locked);
+_ceu_assert(not l1.is_locked, "bug found");
 escape ret;
 ]],
     run = { ['~>10s']=4 },
 }
 
 Test { [[
-native _ceu_dbg_assert;
+native _ceu_assert;
 var Lock l1 = _;
 var int ret =
     do
@@ -20350,7 +20367,7 @@ var int ret =
         with
             await l1.ok_unlocked;
         with
-            _ceu_dbg_assert(l1.is_locked);
+            _ceu_assert(l1.is_locked, "bug found");
             lock l1 do
                 watching 5s do
                     every 1s do
@@ -20359,13 +20376,13 @@ var int ret =
                 end
             end
         with
-            _ceu_dbg_assert(l1.is_locked);
+            _ceu_assert(l1.is_locked, "bug found");
             lock l1 do
                 escape v;
             end
         end
     end;
-_ceu_dbg_assert(not l1.is_locked);
+_ceu_assert(not l1.is_locked, "bug found");
 escape ret;
 ]],
     run = { ['~>10s']=8 },
@@ -20644,6 +20661,7 @@ escape 0;
 
 -->> ALIAS / ESCAPE / DO
 
+--]=====]
 Test { [[
 var int? x = do
     escape 1;
@@ -29742,14 +29760,16 @@ var[10] u8 vec;
 vec[0] = 1;
 escape 1;
 ]],
-    run = '2] runtime error: access out of bounds',
+    run = '2] -> runtime error: access out of bounds',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
 var[10] u8 vec;
 escape vec[0] as int;
 ]],
-    run = '2] runtime error: access out of bounds',
+    run = '2] -> runtime error: access out of bounds',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -29781,7 +29801,8 @@ var[10] u8 vec = [1,2,3];
 $vec = 0;
 escape vec[0] as int;
 ]],
-    run = '3] runtime error: access out of bounds',
+    run = '3] -> runtime error: access out of bounds',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -29789,7 +29810,8 @@ var[2] int vec;
 $vec = 1;
 escape 1;
 ]],
-    run = '2] runtime error: access out of bounds',
+    run = '2] -> runtime error: access out of bounds',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -29798,7 +29820,8 @@ native/nohold _ceu_vector_setlen;
 _ceu_vector_setlen(&&bs,1,0);
 escape 1 + (($bs) as int);
 ]],
-    run = '3] runtime error: access out of bounds',
+    run = '3] -> runtime error: access out of bounds',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -29826,7 +29849,8 @@ var[10] byte bs;
 _ceu_vector_setlen(&&bs, 11, 1);
 escape 0;
 ]],
-    run = '3] runtime error: access out of bounds',
+    run = '3] -> runtime error: access out of bounds',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -29914,7 +29938,8 @@ var[3] byte v1 = [1,2,3];
 var[2] byte v2 = []..v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
-    run = '2] runtime error: access out of bounds',
+    run = '2] -> runtime error: access out of bounds',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -30260,7 +30285,7 @@ var[] byte str1;
 escape (&&str1[0] == &&str1[0]) as int;
 ]],
     run = 1,
-    --run = '2] runtime error: access out of bounds',
+    --run = '2] -> runtime error: access out of bounds',
 }
 
 Test { [[
@@ -30268,7 +30293,7 @@ var[] byte str1 = [].."";
 escape (&&str1[0] == &&str1[0]) as int;
 ]],
     run = 1,
-    --run = '2] runtime error: access out of bounds',
+    --run = '2] -> runtime error: access out of bounds',
 }
 
 Test { [[
@@ -30289,7 +30314,7 @@ native _char;
 escape (_strcmp((&&str1[0]) as _char&&,"")==0 and _strcmp((&&str2[0]) as _char&&,"")==0) as int;
 ]],
     run = 1,
-    --run = '5] runtime error: access out of bounds',
+    --run = '5] -> runtime error: access out of bounds',
 }
 
 Test { [[
@@ -30632,7 +30657,8 @@ var[nnn] u8 xxx;
 xxx[0] = 10;
 escape 1;
 ]],
-    run = ':3] runtime error: access out of bounds',
+    run = ':3] -> runtime error: access out of bounds',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -30654,7 +30680,8 @@ native/nohold _ceu_vector_setlen;
 _ceu_vector_setlen(&&xxx,nnn+1,1);
 escape 1;
 ]],
-    run = '4] runtime error: access out of bounds',
+    run = '4] -> runtime error: access out of bounds',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -30663,7 +30690,8 @@ var[n] byte us;
 $us = 20;
 escape 1;
 ]],
-    run = ':3] runtime error: access out of bounds',
+    run = ':3] -> runtime error: access out of bounds',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -30682,7 +30710,8 @@ var[] byte us;
 $us = n;
 escape 1;
 ]],
-    run = ':3] runtime error: access out of bounds',
+    run = ':3] -> runtime error: access out of bounds',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -30701,7 +30730,8 @@ var[n] byte us = [0,1,2,3,4,5,6,7,8,9];
 us[n] = 10;
 escape us[0]+us[9];
 ]],
-    run = ':3] runtime error: access out of bounds',
+    run = ':3] -> runtime error: access out of bounds',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -30774,7 +30804,8 @@ us[0] = 1;
 escape (us[0]+us[_U8_MAX-1]) as int;
 ]],
     wrn = true,
-    run = '5] runtime error: access out of bounds',
+    run = '5] -> runtime error: access out of bounds',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -31016,7 +31047,8 @@ var&[10] u8 v2 = &v1;
 v1 = []..v2;    // v1=v2 same address
 escape 0;
 ]],
-    run = '3] runtime error: source is the same as destination',
+    run = '3] -> runtime error: source is the same as destination',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -31328,7 +31360,8 @@ do/_
     escape {strlen(@(&&str[0] as _char&&))};
 end
 ]],
-    run = '2] runtime error: access out of bounds',
+    run = '2] -> runtime error: access out of bounds',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -31340,7 +31373,8 @@ do/_
     escape {strlen(@(&&str[0] as _char&&))};
 end
 ]],
-    run = '5] runtime error: access out of bounds',
+    run = '5] -> runtime error: access out of bounds',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -31377,7 +31411,8 @@ do/_
     escape {strlen(@(&&str[0] as _char&&))};
 end
 ]],
-    run = '6] runtime error: access out of bounds',
+    run = '6] -> runtime error: access out of bounds',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -31412,7 +31447,8 @@ var byte c = 3;
 _ceu_vector_buf_set(&&v,2, &&c, 4);
 escape v[2] + (($v) as int);
 ]],
-    run = '4] runtime error: access out of bounds',
+    run = '4] -> runtime error: access out of bounds',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -31422,7 +31458,8 @@ var int c = 3;
 _ceu_vector_buf_set(&&v,2, &&c as byte&&, 4*sizeof(int));
 escape v[2] + (($v) as int);
 ]],
-    run = '4] runtime error: access out of bounds',
+    run = '4] -> runtime error: access out of bounds',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -31507,7 +31544,8 @@ var[10] int v1 = [1,2,3];
 var[1] int v2 = []..v1;
 escape 0;
 ]],
-    run = '2] runtime error: access out of bounds',
+    run = '2] -> runtime error: access out of bounds',
+    _opts = { ceu_features_trace='true' },
 }
 Test { [[
 var[3*] int v1 = [1,2,3];
@@ -31881,7 +31919,8 @@ Test { [[
 var int? x;
 escape x!;
 ]],
-    run = '2] runtime error: value is not set',
+    run = '2] -> runtime error: value is not set',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -32151,7 +32190,8 @@ end
 
 escape 1;
 ]],
-    run = '15] runtime error: value is not set',
+    run = '15] -> runtime error: value is not set',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -32474,7 +32514,8 @@ var& _void vv = &v!;
 
 escape 1;
 ]],
-    run = '20] runtime error: value is not set',
+    run = '20] -> runtime error: value is not set',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -32924,7 +32965,8 @@ end
 
 escape 1;
 ]],
-    run = '17] runtime error: value is not set',
+    run = '17] -> runtime error: value is not set',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -32996,7 +33038,7 @@ escape _V;
     stmts = 'line 20 : invalid expression list : item #1 : unexpected context for alias "tex"',
     --stmts = 'line 19 : invalid call : unexpected context for operator `&`',
     --env = 'line 19 : wrong argument #1 : cannot pass aliases to native calls',
-    --run = '19] runtime error: invalid tag',
+    --run = '19] -> runtime error: invalid tag',
 }
 
 Test { [[
@@ -33026,7 +33068,8 @@ end
 escape _V;
 ]],
     --env = 'line 19 : wrong argument #1 : cannot pass option type',
-    run = '20] runtime error: value is not set',
+    run = '20] -> runtime error: value is not set',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -33133,7 +33176,8 @@ end
 
 escape (&&ptr! == &&ptr!) as int;  // ptr.SOME fails
 ]],
-    run = '16] runtime error: value is not set',
+    run = '16] -> runtime error: value is not set',
+    _opts = { ceu_features_trace='true' },
     --stmts = 'line 10 : invalid binding : types mismatch : "none" <= "_"',
 }
 
@@ -33155,7 +33199,8 @@ end
 
 escape (&&ptr! == &&ptr!) as int;  // ptr.SOME fails
 ]],
-    run = '16] runtime error: value is not set',
+    run = '16] -> runtime error: value is not set',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -33200,7 +33245,8 @@ end
 
 escape (not ptr? )as int;
 ]],
-    run = '16] runtime error: value is not set',
+    run = '16] -> runtime error: value is not set',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -33742,7 +33788,8 @@ var int? n =
     end;
 escape n!/10;
 ]],
-    run = '4] runtime error: value is not set',
+    run = '4] -> runtime error: value is not set',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -35272,7 +35319,8 @@ var[3] u8 buffer = [1];
 call FillBuffer(&buffer);
 escape buffer[0] as int;
 ]],
-    run = '2] runtime error: access out of bounds',
+    run = '2] -> runtime error: access out of bounds',
+    _opts = { ceu_features_trace='true' },
 }
 
 -- TODO: dropped support for pointers to vectors
@@ -35296,7 +35344,8 @@ var[3] u8 buffer = [1];
 call FillBuffer(&&buffer);
 escape buffer[0] as int;
 ]],
-    run = '2] runtime error: access out of bounds',
+    run = '2] -> runtime error: access out of bounds',
+    _opts = { ceu_features_trace='true' },
     todo = 'no pointers to vectors',
 }
 
@@ -36487,7 +36536,8 @@ var& Ff f1 = spawn Ff() in fs;
 var& Ff f2 = spawn Ff() in fs;
 escape 1;
 ]],
-    run = '6] runtime error: out of memory',
+    run = '6] -> runtime error: out of memory',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -36571,7 +36621,8 @@ end
 spawn Ff();
 escape 1;
 ]],
-    run = '1] runtime error: reached end of `code`',
+    run = '1] -> runtime error: reached end of `code`',
+    _opts = { ceu_features_trace='true' },
 }
 
 --<< CODE / AWAIT / FOREVER
@@ -36834,7 +36885,8 @@ var int x = f!.x;
 
 escape x;
 ]],
-    run = '6] runtime error: value is not set',
+    run = '6] -> runtime error: value is not set',
+    _opts = { ceu_features_trace='true' },
     --run = 10;
 }
 
@@ -36906,7 +36958,8 @@ var&? Ff f = spawn Ff();
 escape f!.x;
 ]],
     --stmts = 'line 6 : invalid binding : argument #1 : terminating `code` : expected alias `&?` declaration',
-    run = '6] runtime error: value is not set',
+    run = '6] -> runtime error: value is not set',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -37220,7 +37273,8 @@ ret = ret + (x? as int) + 1;
 
 escape x!.x;
 ]],
-    run = {['~>1s']='16] runtime error: value is not set'};
+    run = {['~>1s']='16] -> runtime error: value is not set'};
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -37510,7 +37564,8 @@ end
 
 escape c!.y;
 ]],
-    run = '16] runtime error: value is not set',
+    run = '16] -> runtime error: value is not set',
+    _opts = { ceu_features_trace='true' },
     --props_ = 'line 15 : invalid access to internal identifier "y" : crossed `watching` (/tmp/tmp.ceu:8)',
     --props_ = 'line 15 : invalid access to internal identifier "y" : crossed yielding statement (/tmp/tmp.ceu:8)',
 }
@@ -37722,7 +37777,8 @@ end
 var&? Fx f = spawn Fx();
 escape f!.vv;
 ]],
-    run = '20] runtime error: value is not set',
+    run = '20] -> runtime error: value is not set',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -38168,7 +38224,8 @@ var&? Ff f = spawn Ff();
 await 1s;
 escape f!.x;
 ]],
-    run = { ['~>1s']='9] runtime error: value is not set' },
+    run = { ['~>1s']='9] -> runtime error: value is not set' },
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -39749,7 +39806,8 @@ var&? Ff fff = spawn Ff();
 var int? ret = await fff;
 escape ret!;
 ]],
-    run = '10] runtime error: value is not set',
+    run = '10] -> runtime error: value is not set',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -39766,7 +39824,8 @@ var int? ret =
     end;
 escape ret!;
 ]],
-    run = '12] runtime error: value is not set',
+    run = '12] -> runtime error: value is not set',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -40838,7 +40897,8 @@ var&? Ff f2 = &f1;
 await 1s;
 escape f2!.x;
 ]],
-    run = { ['~>1s']='10] runtime error: value is not set' },
+    run = { ['~>1s']='10] -> runtime error: value is not set' },
+    _opts = { ceu_features_trace='true' },
 }
 
 --<< CODE / AWAIT / ALIAS
@@ -41033,6 +41093,7 @@ escape _V;
     },
     --wrn = 'line 7 : unbounded recursive spawn',
     run = 'runtime error: stack overflow',
+    _opts = { ceu_features_trace='true' },
 }
 Test { [[
 native _V;
@@ -42561,7 +42622,8 @@ do end
 
 await FOREVER;
 ]],
-    run = { ['~>A;~>B'] = '6] runtime error: bug found' },
+    run = { ['~>A;~>B'] = '6] -> runtime error: bug found' },
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -42929,7 +42991,8 @@ v = spawn Tx(10);;
 escape v!.v2;
 ]],
     --asr = '7] runtime error: invalid tag',
-    run = '8] runtime error: value is not set',
+    run = '8] -> runtime error: value is not set',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -42944,7 +43007,8 @@ await async do end
 escape v!.v2;
 ]],
     --asr = '7] runtime error: invalid tag',
-    run = '9] runtime error: value is not set',
+    _opts = { ceu_features_trace='true' },
+    run = '9] -> runtime error: value is not set',
 }
 
 Test { [[
@@ -43091,7 +43155,8 @@ await t!.e;
 escape 1;
 ]],
     wrn = true,
-    run = '8] runtime error: value is not set',
+    run = '8] -> runtime error: value is not set',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -43547,7 +43612,8 @@ end
 
 escape ret;
 ]],
-    run = '11] runtime error: out of memory',
+    run = '11] -> runtime error: out of memory',
+    _opts = { ceu_features_trace='true' },
 }
 Test { [[
 code/await Ff (var int x) -> (var int y) -> NEVER do
@@ -43624,7 +43690,8 @@ escape 1;
 ]],
     _opts = { ceu_features_exception='true' },
     wrn = true,
-    run = '3] runtime error: uncaught exception: unspecified message',
+    run = '3] -> runtime error: uncaught exception: unspecified message',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -43637,7 +43704,8 @@ escape 1;
 ]],
     _opts = { ceu_features_exception='true' },
     wrn = true,
-    run = '3] runtime error: uncaught exception: alo-alo',
+    run = '3] -> runtime error: uncaught exception: alo-alo',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -43723,7 +43791,8 @@ end
 escape 1;
 ]],
     _opts = { ceu_features_exception='true' },
-    run = '7] runtime error: uncaught exception',
+    run = '7] -> runtime error: uncaught exception',
+    _opts = { ceu_features_trace='true' },
     wrn = true,
 }
 
@@ -43889,7 +43958,8 @@ escape 1;
 ]],
     _opts = { ceu_features_exception='true' },
     wrn = true,
-    run = '5] runtime error: uncaught exception',
+    run = '5] -> runtime error: uncaught exception',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -44247,9 +44317,9 @@ end
 await Ff();
 escape 0;
 ]],
-    run = '15] runtime error: uncaught exception: unspecified message',
+    run = '15] -> runtime error: uncaught exception: unspecified message',
     wrn = true,
-    _opts = { ceu_features_exception='true' },
+    _opts = { ceu_features_exception='true', ceu_features_trace=true },
 }
 
 --<<< EXCEPTIONS / THROW / CATCH
@@ -44460,8 +44530,8 @@ var[2] byte cpy = [].. [[ str ]];
 native _char;
 escape (_strcmp((&&cpy[0]) as _char&&,"1") == 0) as int;
 ]=],
-    run = '3] runtime error: access out of bounds',
-    _opts = { ceu_features_lua='true' },
+    run = '3] -> runtime error: access out of bounds',
+    _opts = { ceu_features_lua='true', ceu_features_trace=true },
 }
 
 Test { [=[
@@ -44475,8 +44545,8 @@ native _char;
 escape (0 == _strcmp((&&cpy[0]) as _char&&,"1234567890")) as int;
 ]=],
     wrn = true,
-    run = '6] runtime error: access out of bounds',
-    _opts = { ceu_features_lua='true' },
+    run = '6] -> runtime error: access out of bounds',
+    _opts = { ceu_features_lua='true', ceu_features_trace=true },
 }
 
 Test { [=[
@@ -45462,7 +45532,8 @@ var Ee&& e = &&ex;
 escape (e as Ee.Xx&&):x;
 ]],
     wrn = true,
-    run = '7] runtime error: invalid cast `as`',
+    run = '7] -> runtime error: invalid cast `as`',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -45583,7 +45654,8 @@ var& Ee e = &e1;
 escape (e as Ee.Xx).d.x;
 ]],
     wrn = true,
-    run = '12] runtime error: invalid cast `as`',
+    run = '12] -> runtime error: invalid cast `as`',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -45596,7 +45668,8 @@ var Ee e1 = val Ee();
 var& Ee e = &e1;
 escape (e as Ee.Xx).x;
 ]],
-    run = '8] runtime error: invalid cast `as`',
+    run = '8] -> runtime error: invalid cast `as`',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -45693,7 +45766,8 @@ var Ee&& e = &&ex;
 escape (e as Ee.Xx&&):x;
 ]],
     wrn = true,
-    run = '7] runtime error: invalid cast `as`',
+    run = '7] -> runtime error: invalid cast `as`',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -45908,7 +45982,8 @@ var int x = call LeafHandler(&leaf);
 escape x;
 ]],
     wrn = true,
-    run = '12] runtime error: invalid cast `as`',
+    run = '12] -> runtime error: invalid cast `as`',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -51713,7 +51788,8 @@ escape ret+1;
 ]],
     wrn = true,
     --run = 23,
-    run = '29] runtime error: value is not set',
+    run = '29] -> runtime error: value is not set',
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
