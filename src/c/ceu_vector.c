@@ -57,7 +57,7 @@ void ceu_vector_init (tceu_vector* vector, usize max, bool is_ring,
 byte* ceu_vector_setmax_ex (tceu_vector* vector, usize len, bool freeze,
                             tceu_trace* trace, const char* file, u32 line)
 {
-    ceu_callback_assert_msg_ex(vector->is_dyn, "static vector",
+    ceu_assert_ex(vector->is_dyn, "static vector",
                                trace, file, line);
 
     if (len == 0) {
@@ -121,13 +121,13 @@ void ceu_vector_setlen_ex (tceu_vector* vector, usize len, bool grow,
 {
     /* must fit w/o growing */
     if (!grow) {
-        ceu_callback_assert_msg_ex(len <= vector->len, "access out of bounds",
+        ceu_assert_ex(len <= vector->len, "access out of bounds",
                                    trace, file, line);
     }
 
     /* fixed size */
     if (!vector->is_dyn || vector->is_freezed) {
-        ceu_callback_assert_msg_ex(len <= vector->max, "access out of bounds",
+        ceu_assert_ex(len <= vector->max, "access out of bounds",
                                    trace, file, line);
 
     /* variable size */
@@ -138,7 +138,7 @@ void ceu_vector_setlen_ex (tceu_vector* vector, usize len, bool grow,
         } else {
             /* grow vector */
             if (ceu_vector_setmax_ex(vector,len,0,trace,file,line) == NULL) {
-                ceu_callback_assert_msg_ex(len==0, "access out of bounds",
+                ceu_assert_ex(len==0, "access out of bounds",
                                            trace, file, line);
             }
         }
@@ -152,7 +152,7 @@ void ceu_vector_setlen_ex (tceu_vector* vector, usize len, bool grow,
 }
 
 byte* ceu_vector_geti_ex (tceu_vector* vector, usize idx, tceu_trace* trace, const char* file, u32 line) {
-    ceu_callback_assert_msg_ex(idx < vector->len,
+    ceu_assert_ex(idx < vector->len,
                                "access out of bounds", trace, file, line);
     return ceu_vector_buf_get(vector, idx);
 }
@@ -165,10 +165,10 @@ void ceu_vector_buf_set_ex (tceu_vector* vector, usize idx, byte* buf, usize nu,
     if (vector->len < idx+n) {
         char err[50];
         snprintf(err,50, "access out of bounds : length=%ld, index=%ld", vector->len, idx+n);
-        ceu_callback_assert_msg_ex(0, err, file, line);
+        ceu_assert_ex(0, err, file, line);
     }
 #else
-    ceu_callback_assert_msg_ex((vector->len >= idx+n),
+    ceu_assert_ex((vector->len >= idx+n),
                                "access out of bounds", trace, file, line);
 #endif
 

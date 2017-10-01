@@ -138,7 +138,7 @@ typedef struct tceu_pool_pak {
 } tceu_pool_pak;
 
 static tceu_evt* CEU_OPTION_EVT (tceu_evt* alias, tceu_trace* trace, const char* file, u32 line) {
-    ceu_callback_assert_msg_ex(alias != NULL, "value is not set", trace, file, line);
+    ceu_assert_ex(alias != NULL, "value is not set", trace, file, line);
     return alias;
 }
 
@@ -228,7 +228,7 @@ static int ceu_data_is (tceu_ndata* supers, tceu_ndata me, tceu_ndata cmp) {
 
 static void* ceu_data_as (tceu_ndata* supers, tceu_ndata* me, tceu_ndata cmp,
                           tceu_trace* trace, const char* file, u32 line) {
-    ceu_callback_assert_msg_ex(ceu_data_is(supers, *me, cmp),
+    ceu_assert_ex(ceu_data_is(supers, *me, cmp),
                                "invalid cast `as`", trace, file, line);
     return me;
 }
@@ -247,7 +247,7 @@ typedef struct tceu_opt_Exception {
 } tceu_opt_Exception;
 
 static tceu_opt_Exception* CEU_OPTION_tceu_opt_Exception (tceu_opt_Exception* opt, tceu_trace* trace, char* file, int line) {
-    ceu_callback_assert_msg_ex(opt->is_set, "value is not set", trace, file, line);
+    ceu_assert_ex(opt->is_set, "value is not set", trace, file, line);
     return opt;
 }
 #endif
@@ -500,7 +500,7 @@ void ceu_code_mem_dyn_gc (tceu_pool_pak* pak) {
 int ceu_lua_atpanic (lua_State* lua) {
     const char* msg = lua_tostring(lua,-1);
     ceu_sys_assert(msg != NULL, "bug found");
-    ceu_callback_assert_msg(0, msg);
+    ceu_assert(0, msg);
     return 0;
 }
 
@@ -653,7 +653,7 @@ printf("%ld %ld %d\n", (usize)(base-CEU_STACK_MAX), (usize)(&_ceu_occ),
             ((usize)(base-CEU_STACK_MAX) <= (usize)(&_ceu_occ)));
 #endif
 #endif
-            ceu_callback_assert_msg((usize)(base-CEU_STACK_MAX) <= (usize)(&_ceu_occ), "stack overflow");
+            ceu_assert((usize)(base-CEU_STACK_MAX) <= (usize)(&_ceu_occ), "stack overflow");
         }
     }
 #endif

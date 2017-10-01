@@ -281,7 +281,7 @@ static ]]..cc..'* CEU_OPTION_'..cc..[[ (]]..cc..[[* alias, char* file, int line)
 ]]
                 end
                 MEMS.datas.mems = MEMS.datas.mems..[[
-    ceu_callback_assert_msg_ex(alias != NULL, "value is not set", trace, file, line);
+    ceu_assert_ex(alias != NULL, "value is not set", trace, file, line);
     return alias;
 }
 ]]
@@ -293,7 +293,7 @@ typedef struct ]]..cc..[[ {
 } ]]..cc..[[;
 
 static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, tceu_trace* trace, char* file, int line) {
-    ceu_callback_assert_msg_ex(opt->is_set, "value is not set", trace, file, line);
+    ceu_assert_ex(opt->is_set, "value is not set", trace, file, line);
     return opt;
 }
 ]]

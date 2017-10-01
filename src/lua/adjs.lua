@@ -43,7 +43,7 @@ F = {
                             'nohold',
                             node('Type', me.ln,
                                 node('ID_prim', me.ln, '_')),
-                            '_ceu_callback_assert_msg'))
+                            '_ceu_assert'))
         nats[3].is_predefined = true
 
         local ret = node('Var', me.ln,
@@ -276,7 +276,7 @@ error'TODO: luacov never executes this?'
                             'call',
                             node('Loc', me.ln,
                                 node('ID_nat', me.ln,
-                                    '_ceu_callback_assert_msg')),
+                                    '_ceu_assert')),
                             node('List_Exp', me.ln,
                                 node('Exp_<', me.ln, '<',
                                     node('Loc', me.ln,

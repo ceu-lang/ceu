@@ -381,7 +381,7 @@ if (0)
         local Type = AST.get(body,'Block', 1,'Stmts', 1,'Code_Ret', 1,'', 2,'Type')
         if not Type then
             LINE(me, [[
-ceu_callback_assert_msg(0, "reached end of `code`");
+ceu_assert(0, "reached end of `code`");
 ]])
         end
 
@@ -546,7 +546,7 @@ assert(not obj, 'not implemented')
 ]])
         if set and to.dcl[1]=='&' then
             LINE(me, [[
-        ceu_callback_assert_msg(0, "out of memory");
+        ceu_assert(0, "out of memory");
 ]])
         end
         LINE(me, [[
@@ -740,7 +740,7 @@ return ceu_throw(_ceu_stk, ]]..CATCHES(me)..[[, (tceu_data_Exception*)&]]..V(e).
         local _,_,blk,set = unpack(me)
         if set and set.info.dcl[1]~='&?' and (not TYPES.check(set.info.tp,'?')) then
             LINE(me, [[
-ceu_callback_assert_msg(0, "reached end of `do`");
+ceu_assert(0, "reached end of `do`");
 ]])
         end
         CASE(me, me.lbl_out)
@@ -777,7 +777,7 @@ RETURN_CEU_LBL(NULL, _ceu_stk,
 ]]..CUR('__max_'..me.n)..[[ = 0;
 ]],
                 chk = [[
-ceu_callback_assert_msg(]]..CUR('__max_'..me.n)..' < '..V(max)..[[, "`loop` overflow");
+ceu_assert(]]..CUR('__max_'..me.n)..' < '..V(max)..[[, "`loop` overflow");
 ]],
                 inc = [[
 ]]..CUR('__max_'..me.n)..[[++;
@@ -867,7 +867,7 @@ while (1) {
 ]])
             if to.__adj_step_mul ~= 0 then
                 LINE(me, [[
-ceu_callback_assert_msg(]]..CUR('__lim_'..me.n)..' '..op..' '..V(to)..[[, "`loop` limit underflow/overflow");
+ceu_assert(]]..CUR('__lim_'..me.n)..' '..op..' '..V(to)..[[, "`loop` limit underflow/overflow");
 ]])
             end
         end
@@ -875,13 +875,13 @@ ceu_callback_assert_msg(]]..CUR('__lim_'..me.n)..' '..op..' '..V(to)..[[, "`loop
         local sig = (dir=='->' and '' or '-')
         LINE(me, [[
 ]]..max.ini..[[
-ceu_callback_assert_msg(]]..sig..V(step)..[[> 0, "invalid `loop` step : expected positive number");
+ceu_assert(]]..sig..V(step)..[[> 0, "invalid `loop` step : expected positive number");
 ]])
         local op = (dir=='->' and '>' or '<')
         LINE(me, [[
 ]]..CUR('__fr_'..me.n)..' = '..V(fr)..[[;
 ]]..V(i)..' = '..V(fr)..' + '..V(step)..' * '..fr.__adj_step_mul..[[;
-ceu_callback_assert_msg_ex(]]..V(i)..(op..'=')..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n)..[[,
+ceu_assert_ex(]]..V(i)..(op..'=')..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n)..[[,
     "control variable overflow", &_ceu_mem->trace, __FILE__, __LINE__-3);
 while (1) {
 ]])
@@ -902,7 +902,7 @@ while (1) {
         CODES.F.__loop_async(me)
         LINE(me, [[
     ]]..V(i)..' = '..V(i)..' + '..V(step)..[[;
-    ceu_callback_assert_msg_ex(]]..V(i)..op..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n)..[[,
+    ceu_assert_ex(]]..V(i)..op..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n)..[[,
         "control variable overflow", &_ceu_mem->trace, __FILE__, __LINE__-2);
     ]]..max.inc..[[
 }
@@ -1088,7 +1088,7 @@ _ceu_mem->_trails[]]..(to.dcl.trails[1])..[[].evt.mem = ]]..V(fr)..[[;
                 if (call.tag=='Exp_call' or call.tag=='Abs_Call') then
                     if to.info.dcl[1] == '&' then
                         LINE(me, [[
-ceu_callback_assert_msg(]]..V(to,{is_bind=true})..[[!=NULL, "call failed");
+ceu_assert(]]..V(to,{is_bind=true})..[[!=NULL, "call failed");
 ]])
                     end
                 end
@@ -1247,7 +1247,7 @@ if (_ceu_occ!=NULL && _ceu_occ->evt.id==CEU_INPUT__CODE_TERMINATED) {
                     -- vector&[] v2 = &v1;
                     -- v1 = []..v2;
                     LINE(me, [[
-    ceu_callback_assert_msg(&]]..V(fr)..' != &'..V(to)..[[, "source is the same as destination");
+    ceu_assert(&]]..V(fr)..' != &'..V(to)..[[, "source is the same as destination");
 ]])
                     LINE_DIRECTIVE(me)
                     LINE(me, [[

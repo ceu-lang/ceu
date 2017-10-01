@@ -79,9 +79,10 @@ static tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callb
 
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 
-#ifndef ceu_callback_assert_msg_ex
-#define ceu_callback_assert_msg_ex(v,msg,trace,file,line)                        \
+#ifndef ceu_assert_ex
+#define ceu_assert_ex(v,msg,trace,file,line)                        \
     if (!(v)) {                                                                  \
+        ceu_trace(trace); \
         if ((msg)!=NULL) {                                                       \
             ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"[");               \
             ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(file));            \
@@ -92,12 +93,11 @@ static tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callb
             ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg));             \
             ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n");              \
         }                                                                        \
-        ceu_trace(trace); \
         ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL);                       \
     }
 #endif
 
-#define ceu_callback_assert_msg(v,msg) ceu_callback_assert_msg_ex((v),(msg),&_ceu_mem->trace,__FILE__,__LINE__)
+#define ceu_assert(v,msg) ceu_assert_ex((v),(msg),&_ceu_mem->trace,__FILE__,__LINE__)
 
 #define ceu_dbg_log(msg)  { ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg)); \
                             ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n"); }
@@ -152,13 +152,12 @@ static void ceu_trace (tceu_trace* trace) {
     ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)":");
     ceu_callback_num_num(CEU_CALLBACK_LOG, 2, trace->line);
     ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"]");
+    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)" -> ");
     trace = trace->up;
 
     if (is_first) {
         IS_FIRST = 1;
         ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n");
-    } else {
-        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)" -> ");
     }
 }
 #else

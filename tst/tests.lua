@@ -309,16 +309,30 @@ escape v1 + v2;
 --]=====]
 Test { [[
 code/await Ff (none) -> none do
-    {ceu_callback_assert_msg(0, "hello");}
+    {ceu_assert(0, "hello");}
 end
 await Ff();
 escape 0;
 ]],
-    run = 1,
+    run = '4] -> \n[/tmp/tmp.ceu:2] runtime error: hello',
     _opts = { ceu_features_trace='true' },
 }
 
-do return end -- OK
+Test { [[
+code/await Ff (none) -> none do
+    {ceu_assert(0, "hello");}
+end
+code/await Gg (none) -> none do
+    await Ff();
+end
+await Gg();
+escape 0;
+]],
+    run = '[/tmp/tmp.ceu:7] -> [/tmp/tmp.ceu:5] -> \n[/tmp/tmp.ceu:2] runtime error: hello',
+    _opts = { ceu_features_trace='true' },
+}
+
+--do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -7874,7 +7888,7 @@ loop do
         with
             await OS_START;
             emit a;
-            _ceu_callback_assert_msg(0, "err");
+            _ceu_assert(0, "err");
         end
     else
         await OS_START;
