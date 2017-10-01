@@ -14,25 +14,29 @@ typedef struct {
 
 #define ceu_vector_idx(vec,idx)            ((vec)->is_ring ? (((vec)->ini + idx) % (vec)->max) : idx)
 #define ceu_vector_buf_get(vec,idx)        (&(vec)->buf[ceu_vector_idx(vec,idx)*(vec)->unit])
-#define ceu_vector_buf_set(vec,idx,buf,nu) ceu_vector_buf_set_ex(vec,idx,buf,nu,__FILE__,__LINE__)
-#define ceu_vector_concat(dst,idx,src)     ceu_vector_concat_ex(dst,idx,src,__FILE__,__LINE__)
+#define ceu_vector_buf_set(vec,idx,buf,nu) ceu_vector_buf_set_ex(vec,idx,buf,nu,&_ceu_mem->trace,__FILE__,__LINE__)
+#define ceu_vector_concat(dst,idx,src)     ceu_vector_concat_ex(dst,idx,src,&_ceu_mem->trace,__FILE__,__LINE__)
 
-#define ceu_vector_setlen(a,b,c) ceu_vector_setlen_ex(a,b,c,__FILE__,__LINE__)
-#define ceu_vector_geti(a,b)     ceu_vector_geti_ex(a,b,__FILE__,__LINE__)
+#define ceu_vector_setmax(vec,len,freeze)  ceu_vector_setmax_ex(vec,len,freeze,&_ceu_mem->trace,__FILE__,__LINE__)
+#define ceu_vector_setlen_could(vec,len,grow) ceu_vector_setlen_could_ex(vec,len,grow,&_ceu_mem->trace,__FILE__,__LINE__)
+#define ceu_vector_setlen(a,b,c) ceu_vector_setlen_ex(a,b,c,&_ceu_mem->trace,__FILE__,__LINE__)
+#define ceu_vector_geti(a,b)     ceu_vector_geti_ex(a,b,&_ceu_mem->trace,__FILE__,__LINE__)
 #define ceu_vector_ptr(vec)      (vec)
 
 void  ceu_vector_init         (tceu_vector* vector, usize max, bool is_ring,
                                bool is_dyn, usize unit, byte* buf);
-byte* ceu_vector_setmax       (tceu_vector* vector, usize len, bool freeze);
-int   ceu_vector_setlen_could (tceu_vector* vector, usize len, bool grow);
+byte* ceu_vector_setmax_ex    (tceu_vector* vector, usize len, bool freeze,
+                               tceu_trace* trace, const char* file, u32 line);
+int   ceu_vector_setlen_could_ex (tceu_vector* vector, usize len, bool grow,
+                                 tceu_trace* trace, const char* file, u32 line);
 void  ceu_vector_setlen_ex    (tceu_vector* vector, usize len, bool grow,
-                               const char* file, u32 line);
+                               tceu_trace* trace, const char* file, u32 line);
 byte* ceu_vector_geti_ex      (tceu_vector* vector, usize idx,
-                               const char* file, u32 line);
+                               tceu_trace* trace, const char* file, u32 line);
 void  ceu_vector_buf_set_ex   (tceu_vector* vector, usize idx, byte* buf, usize nu,
-                               const char* file, u32 line);
+                               tceu_trace* trace, const char* file, u32 line);
 void  ceu_vector_concat_ex    (tceu_vector* dst, usize idx, tceu_vector* src,
-                               const char* file, u32 line);
+                               tceu_trace* trace, const char* file, u32 line);
 
 #if 0
 char* ceu_vector_tochar (tceu_vector* vector);
@@ -50,8 +54,11 @@ void ceu_vector_init (tceu_vector* vector, usize max, bool is_ring,
     vector->buf        = buf;
 }
 
-byte* ceu_vector_setmax (tceu_vector* vector, usize len, bool freeze) {
-    ceu_dbg_assert(vector->is_dyn);
+byte* ceu_vector_setmax_ex (tceu_vector* vector, usize len, bool freeze,
+                            tceu_trace* trace, const char* file, u32 line)
+{
+    ceu_callback_assert_msg_ex(vector->is_dyn, "static vector",
+                               trace, file, line);
 
     if (len == 0) {
         /* free */
@@ -76,7 +83,8 @@ byte* ceu_vector_setmax (tceu_vector* vector, usize len, bool freeze) {
     return vector->buf;
 }
 
-int ceu_vector_setlen_could (tceu_vector* vector, usize len, bool grow)
+int ceu_vector_setlen_could_ex (tceu_vector* vector, usize len, bool grow,
+                                tceu_trace* trace, const char* file, u32 line)
 {
     /* must fit w/o growing */
     if (!grow) {
@@ -97,7 +105,7 @@ int ceu_vector_setlen_could (tceu_vector* vector, usize len, bool grow)
             /* ok */    /* len already within limits */
         } else {
             /* grow vector */
-            if (ceu_vector_setmax(vector,len,0) == NULL) {
+            if (ceu_vector_setmax_ex(vector,len,0,trace,file,line) == NULL) {
                 if (len != 0) {
                     return 0;
                 }
@@ -109,18 +117,18 @@ int ceu_vector_setlen_could (tceu_vector* vector, usize len, bool grow)
 }
 
 void ceu_vector_setlen_ex (tceu_vector* vector, usize len, bool grow,
-                           const char* file, u32 line)
+                           tceu_trace* trace, const char* file, u32 line)
 {
     /* must fit w/o growing */
     if (!grow) {
         ceu_callback_assert_msg_ex(len <= vector->len, "access out of bounds",
-                                   file, line);
+                                   trace, file, line);
     }
 
     /* fixed size */
     if (!vector->is_dyn || vector->is_freezed) {
         ceu_callback_assert_msg_ex(len <= vector->max, "access out of bounds",
-                                   file, line);
+                                   trace, file, line);
 
     /* variable size */
     } else {
@@ -129,9 +137,9 @@ void ceu_vector_setlen_ex (tceu_vector* vector, usize len, bool grow,
 /* TODO: shrink memory */
         } else {
             /* grow vector */
-            if (ceu_vector_setmax(vector,len,0) == NULL) {
+            if (ceu_vector_setmax_ex(vector,len,0,trace,file,line) == NULL) {
                 ceu_callback_assert_msg_ex(len==0, "access out of bounds",
-                                           file, line);
+                                           trace, file, line);
             }
         }
     }
@@ -143,14 +151,14 @@ void ceu_vector_setlen_ex (tceu_vector* vector, usize len, bool grow,
     vector->len = len;
 }
 
-byte* ceu_vector_geti_ex (tceu_vector* vector, usize idx, const char* file, u32 line) {
+byte* ceu_vector_geti_ex (tceu_vector* vector, usize idx, tceu_trace* trace, const char* file, u32 line) {
     ceu_callback_assert_msg_ex(idx < vector->len,
-                               "access out of bounds", file, line);
+                               "access out of bounds", trace, file, line);
     return ceu_vector_buf_get(vector, idx);
 }
 
 void ceu_vector_buf_set_ex (tceu_vector* vector, usize idx, byte* buf, usize nu,
-                            const char* file, u32 line)
+                            tceu_trace* trace, const char* file, u32 line)
 {
     usize n = ((nu % vector->unit) == 0) ? nu/vector->unit : nu/vector->unit+1;
 #if 0
@@ -161,7 +169,7 @@ void ceu_vector_buf_set_ex (tceu_vector* vector, usize idx, byte* buf, usize nu,
     }
 #else
     ceu_callback_assert_msg_ex((vector->len >= idx+n),
-                               "access out of bounds", file, line);
+                               "access out of bounds", trace, file, line);
 #endif
 
     usize k  = (vector->max - ceu_vector_idx(vector,idx));
@@ -176,25 +184,25 @@ void ceu_vector_buf_set_ex (tceu_vector* vector, usize idx, byte* buf, usize nu,
 }
 
 void ceu_vector_concat_ex (tceu_vector* dst, usize idx, tceu_vector* src,
-                           const char* file, u32 line)
+                           tceu_trace* trace, const char* file, u32 line)
 {
     usize dst_len = dst->len;
-    ceu_vector_setlen_ex(dst, dst->len+src->len, 1, file, line);
+    ceu_vector_setlen_ex(dst, dst->len+src->len, 1, trace, file, line);
     if (src->is_ring && src->len>0 && ceu_vector_idx(src,src->len)<=ceu_vector_idx(src,0)) {
         usize n = (src->max - src->ini);
-        ceu_vector_buf_set_ex(dst, idx,   ceu_vector_buf_get(src,0), n*src->unit,            file, line);
-        ceu_vector_buf_set_ex(dst, idx+n, ceu_vector_buf_get(src,n), (src->len-n)*src->unit, file, line);
+        ceu_vector_buf_set_ex(dst, idx,   ceu_vector_buf_get(src,0), n*src->unit,            trace, file, line);
+        ceu_vector_buf_set_ex(dst, idx+n, ceu_vector_buf_get(src,n), (src->len-n)*src->unit, trace, file, line);
     } else {
         if (dst->is_ring) {
             usize n = (dst->max - ceu_vector_idx(dst,dst_len));
             if (src->len > n) {
-                ceu_vector_buf_set_ex(dst, idx,   ceu_vector_buf_get(src,0), (n*src->unit), file, line);
-                ceu_vector_buf_set_ex(dst, idx+n, ceu_vector_buf_get(src,n), ((src->len-n)*src->unit), file, line);
+                ceu_vector_buf_set_ex(dst, idx,   ceu_vector_buf_get(src,0), (n*src->unit), trace, file, line);
+                ceu_vector_buf_set_ex(dst, idx+n, ceu_vector_buf_get(src,n), ((src->len-n)*src->unit), trace, file, line);
             } else {
-                ceu_vector_buf_set_ex(dst, idx, ceu_vector_buf_get(src,0), (src->len*src->unit), file, line);
+                ceu_vector_buf_set_ex(dst, idx, ceu_vector_buf_get(src,0), (src->len*src->unit), trace, file, line);
             }
         } else {
-            ceu_vector_buf_set_ex(dst, idx, ceu_vector_buf_get(src,0), (src->len*src->unit), file, line);
+            ceu_vector_buf_set_ex(dst, idx, ceu_vector_buf_get(src,0), (src->len*src->unit), trace, file, line);
         }
     }
 }

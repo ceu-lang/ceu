@@ -193,6 +193,9 @@ CODES.F = {
         LINE(me, [[
 _ceu_mem->up_mem   = NULL;
 _ceu_mem->depth    = 0;
+#ifdef CEU_FEATURES_TRACE
+_ceu_mem->trace.up = NULL;
+#endif
 #ifdef CEU_FEATURES_EXCEPTION
 _ceu_mem->catches  = NULL;
 #endif
@@ -336,7 +339,7 @@ _ceu_mem->_trails[]]..ID_int.dcl.trails[1]..[[].evt.pak = &]]..V(ID_int)..[[;
     Pool_Finalize = function (me)
         local ID_int = unpack(me)
         LINE(me, [[
-ceu_dbg_assert(]]..V(ID_int,ctx)..[[.pool.queue == NULL);
+ceu_sys_assert(]]..V(ID_int,ctx)..[[.pool.queue == NULL, "bug found");
 {
     tceu_code_mem_dyn* __ceu_cur = ]]..V(ID_int,ctx)..[[.first.nxt;
     while (__ceu_cur != &]]..V(ID_int,ctx)..[[.first) {
@@ -430,6 +433,13 @@ assert(not obj, 'not implemented')
     ]]..mem..[[->_mem.up_trl  = ]]..((pak=='NULL' and me.trails[1]) or (pak..'->up_trl'))..[[;
     ]]..mem..[[->_mem.depth   = ]]..ID_abs.dcl.depth..[[;
 ]]
+        if CEU.opts.ceu_features_trace then
+            ret = ret .. [[
+    ]]..mem..[[->_mem.trace.up   = &_ceu_mem->trace;
+    ]]..mem..[[->_mem.trace.file = "]]..me.ln[1]..[[";
+    ]]..mem..[[->_mem.trace.line = ]]..me.ln[2]..[[;
+]]
+        end
         if CEU.opts.ceu_features_exception then
             ret = ret .. [[
     ]]..mem..[[->_mem.catches = ]]..CATCHES(me)..[[;
@@ -602,7 +612,7 @@ assert(not obj, 'not implemented')
         local cur = CUR('__cur_'..me.n)
 
         LINE(me, [[
-ceu_dbg_assert(]]..V(pool)..[[.n_traversing < 255);
+ceu_sys_assert(]]..V(pool)..[[.n_traversing < 255, "bug found");
 ]]..V(pool)..[[.n_traversing++;
 _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__FINALIZE;
 _ceu_mem->_trails[]]..me.trails[1]..[[].evt.mem   = _ceu_mem;
@@ -872,7 +882,7 @@ ceu_callback_assert_msg(]]..sig..V(step)..[[> 0, "invalid `loop` step : expected
 ]]..CUR('__fr_'..me.n)..' = '..V(fr)..[[;
 ]]..V(i)..' = '..V(fr)..' + '..V(step)..' * '..fr.__adj_step_mul..[[;
 ceu_callback_assert_msg_ex(]]..V(i)..(op..'=')..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n)..[[,
-    "control variable overflow", __FILE__, __LINE__-3);
+    "control variable overflow", &_ceu_mem->trace, __FILE__, __LINE__-3);
 while (1) {
 ]])
         if to.tag ~= 'ID_any' then
@@ -893,7 +903,7 @@ while (1) {
         LINE(me, [[
     ]]..V(i)..' = '..V(i)..' + '..V(step)..[[;
     ceu_callback_assert_msg_ex(]]..V(i)..op..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n)..[[,
-        "control variable overflow", __FILE__, __LINE__-2);
+        "control variable overflow", &_ceu_mem->trace, __FILE__, __LINE__-2);
     ]]..max.inc..[[
 }
 ]])
@@ -1759,7 +1769,7 @@ if (lua_isnumber(]]..LUA(me)..[[,-1)) {
         local n = unpack(me)
         LINE(me, [[
 ]]..CUR('__lua_'..n)..[[ = luaL_newstate();
-ceu_dbg_assert(]]..CUR('__lua_'..n)..[[ != NULL);
+ceu_sys_assert(]]..CUR('__lua_'..n)..[[ != NULL, "bug found");
 luaL_openlibs(]]..CUR('__lua_'..n)..[[);
 lua_atpanic(]]..CUR('__lua_'..n)..[[, ceu_lua_atpanic);
 ceu_lua_createargtable(]]..CUR('__lua_'..n)..[[, CEU_APP.argv, CEU_APP.argc, CEU_APP.argc);

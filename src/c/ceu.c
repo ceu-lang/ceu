@@ -109,6 +109,9 @@ typedef struct tceu_code_mem {
     struct tceu_code_mem* up_mem;
     tceu_ntrl   up_trl;
     u8          depth;
+#ifdef CEU_FEATURES_TRACE
+    tceu_trace  trace;
+#endif
 #ifdef CEU_FEATURES_EXCEPTION
     tceu_catch* catches;
 #endif
@@ -134,8 +137,8 @@ typedef struct tceu_pool_pak {
     u8                n_traversing;
 } tceu_pool_pak;
 
-static tceu_evt* CEU_OPTION_EVT (tceu_evt* alias, const char* file, u32 line) {
-    ceu_callback_assert_msg_ex(alias != NULL, "value is not set", file, line);
+static tceu_evt* CEU_OPTION_EVT (tceu_evt* alias, tceu_trace* trace, const char* file, u32 line) {
+    ceu_callback_assert_msg_ex(alias != NULL, "value is not set", trace, file, line);
     return alias;
 }
 
@@ -224,9 +227,9 @@ static int ceu_data_is (tceu_ndata* supers, tceu_ndata me, tceu_ndata cmp) {
 }
 
 static void* ceu_data_as (tceu_ndata* supers, tceu_ndata* me, tceu_ndata cmp,
-                          const char* file, u32 line) {
+                          tceu_trace* trace, const char* file, u32 line) {
     ceu_callback_assert_msg_ex(ceu_data_is(supers, *me, cmp),
-                               "invalid cast `as`", file, line);
+                               "invalid cast `as`", trace, file, line);
     return me;
 }
 
@@ -243,8 +246,8 @@ typedef struct tceu_opt_Exception {
     tceu_data_Exception value;
 } tceu_opt_Exception;
 
-static tceu_opt_Exception* CEU_OPTION_tceu_opt_Exception (tceu_opt_Exception* opt, char* file, int line) {
-    ceu_callback_assert_msg_ex(opt->is_set, "value is not set", file, line);
+static tceu_opt_Exception* CEU_OPTION_tceu_opt_Exception (tceu_opt_Exception* opt, tceu_trace* trace, char* file, int line) {
+    ceu_callback_assert_msg_ex(opt->is_set, "value is not set", trace, file, line);
     return opt;
 }
 #endif
@@ -318,7 +321,7 @@ CEU_API static tceu_app CEU_APP;
         /*fprintf(stderr, "set?\n");*/                      \
     if (!(me)->is_alive) {                                  \
         /*fprintf(stderr, "set %d\n", __LINE__);*/          \
-        ceu_dbg_assert(CEU_APP.jmp.lbl==CEU_LABEL_NONE);    \
+        ceu_sys_assert(CEU_APP.jmp.lbl==CEU_LABEL_NONE, "bug found"); \
         CEU_APP.jmp.lbl = _lbl;                             \
         CEU_APP.jmp.mem = _ceu_mem;                         \
         CEU_APP.jmp.trl = _ceu_trlK;                        \
@@ -496,7 +499,7 @@ void ceu_code_mem_dyn_gc (tceu_pool_pak* pak) {
 #ifdef CEU_FEATURES_LUA
 int ceu_lua_atpanic (lua_State* lua) {
     const char* msg = lua_tostring(lua,-1);
-    ceu_dbg_assert(msg != NULL);
+    ceu_sys_assert(msg != NULL, "bug found");
     ceu_callback_assert_msg(0, msg);
     return 0;
 }
@@ -553,7 +556,7 @@ static void ceu_lbl (tceu_evt_occ* _ceu_occ, tceu_stk* _ceu_stk,
 
 #ifdef CEU_FEATURES_EXCEPTION
 void ceu_throw_ex (tceu_stk* stk, tceu_catch* catches, tceu_data_Exception* exception, usize len, const char* file, u32 line) {
-    while (catches) {
+    while (catches != NULL) {
         if (ceu_data_is(CEU_DATA_SUPERS_Exception,exception->_enum,catches->exception->value._enum)) {
             catches->exception->is_set = 1;
             memcpy(&catches->exception->value, exception, len);
@@ -675,8 +678,8 @@ static void ceu_bcast (tceu_evt_occ* occ, tceu_stk* stk, bool is_prim)
     tceu_evt_range range = occ->range;
 
     if (is_prim && occ->evt.id>CEU_INPUT__SEQ) {
-        ceu_callback_assert_msg(((tceu_nseq)(CEU_APP.seq+1)) != CEU_APP.seq_base,
-                                "too many internal reactions");
+        ceu_sys_assert(((tceu_nseq)(CEU_APP.seq+1)) != CEU_APP.seq_base,
+                       "too many internal reactions");
         CEU_APP.seq++;
     }
 
@@ -745,7 +748,7 @@ fprintf(stderr, "??? trlK=%d, evt=%d, seq=%d\n", trlK, trl->evt.id, trl->seq);
                 break;
             }
             case CEU_INPUT__PROPAGATE_POOL: {
-                ceu_dbg_assert(trl->evt.pak->n_traversing < 255);
+                ceu_sys_assert(trl->evt.pak->n_traversing < 255, "bug found");
                 trl->evt.pak->n_traversing++;
                 tceu_code_mem_dyn* cur = trl->evt.pak->first.nxt;
 #if 0
@@ -792,7 +795,7 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                                                 };
                             ceu_bcast(&occ2, &_stk, 0);
                         }
-                        ceu_dbg_assert(_stk.is_alive);
+                        ceu_sys_assert(_stk.is_alive, "bug found");
                     }
                 }
                 /* don't skip if pausing now */
@@ -975,7 +978,7 @@ CEU_API void ceu_start (tceu_callback* cb, int argc, char* argv[]) {
 CEU_API void ceu_stop (void) {
 #ifdef CEU_FEATURES_THREAD
     CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
-    ceu_dbg_assert(ceu_threads_gc(1) == 0); /* wait all terminate/free */
+    ceu_sys_assert(ceu_threads_gc(1) == 0, "bug found"); /* wait all terminate/free */
 #endif
     ceu_callback_void_void(CEU_CALLBACK_STOP);
 }

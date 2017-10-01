@@ -124,6 +124,19 @@ F = {
 
         mem = '((tceu_code_mem*)'..mem..')'
         local args = ''
+        if CEU.opts.ceu_features_trace then
+            local v = '__ceu_'..me.n
+            args = args .. [[,
+
+#if defined(__GNUC__) && defined(__cplusplus)
+({tceu_catch ]]..v..';'..v..'.up=&_ceu_mem->trace;'..v..'.file="'..me.ln[1]..'";'..v..'.line='..me.ln[2]..'; __ceu_'..me.n..[[;})
+
+#else
+(tceu_catch) { &_ceu_mem->trace, "]]..me.ln[1]..'",'..me.ln[2]..[[ }
+
+#endif
+]]
+        end
         if CEU.opts.ceu_features_exception then
             args = args..','..CATCHES(me)
         end

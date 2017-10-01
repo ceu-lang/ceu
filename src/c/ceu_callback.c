@@ -80,7 +80,7 @@ static tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callb
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 
 #ifndef ceu_callback_assert_msg_ex
-#define ceu_callback_assert_msg_ex(v,msg,file,line)                              \
+#define ceu_callback_assert_msg_ex(v,msg,trace,file,line)                        \
     if (!(v)) {                                                                  \
         if ((msg)!=NULL) {                                                       \
             ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"[");               \
@@ -92,15 +92,21 @@ static tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callb
             ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg));             \
             ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n");              \
         }                                                                        \
+        ceu_trace(trace); \
         ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL);                       \
     }
 #endif
 
-#define ceu_callback_assert_msg(v,msg) ceu_callback_assert_msg_ex((v),(msg),__FILE__,__LINE__)
+#define ceu_callback_assert_msg(v,msg) ceu_callback_assert_msg_ex((v),(msg),&_ceu_mem->trace,__FILE__,__LINE__)
 
-#define ceu_dbg_assert(v) ceu_callback_assert_msg(v,"bug found")
 #define ceu_dbg_log(msg)  { ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg)); \
                             ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n"); }
+#define ceu_sys_assert(v,msg)                                                   \
+    if (!(v)) {                                                                 \
+            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"system error: "); \
+            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg));            \
+            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n");             \
+    }
 
 enum {
     CEU_CALLBACK_START,
@@ -120,3 +126,41 @@ enum {
     CEU_CALLBACK_OUTPUT,
     CEU_CALLBACK_REALLOC,
 };
+
+//#ifdef CEU_FEATURES_TRACE
+#if 1
+typedef struct tceu_trace {
+    struct tceu_trace* up;
+    const char* file;
+    u32 line;
+} tceu_trace;
+
+#include <stdio.h>
+static void ceu_trace (tceu_trace* trace) {
+    static bool IS_FIRST = 1;
+    bool is_first = IS_FIRST;
+
+    if (trace->up == NULL) {
+        return;
+    }
+
+    IS_FIRST = 0;
+
+    ceu_trace(trace->up);
+    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"[");
+    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(trace->file));
+    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)":");
+    ceu_callback_num_num(CEU_CALLBACK_LOG, 2, trace->line);
+    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"]");
+    trace = trace->up;
+
+    if (is_first) {
+        IS_FIRST = 1;
+        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n");
+    } else {
+        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)" -> ");
+    }
+}
+#else
+#define ceu_trace(a)
+#endif

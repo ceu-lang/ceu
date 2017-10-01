@@ -176,9 +176,6 @@ usize params = multis_params
 static ]]..TYPES.toc(assert(Type))..[[ /* space */
 CEU_CODE_]]..me.id_..[[ (tceu_code_mem_]]..me.id_..[[ mem_,
                         tceu_code_mem* up_mem
-#ifdef CEU_FEATURES_EXCEPTION
-                      , tceu_catch* catches
-#endif
 #ifdef CEU_FEATURES_LUA
                       , lua_State* lua
 #endif
@@ -187,9 +184,6 @@ CEU_CODE_]]..me.id_..[[ (tceu_code_mem_]]..me.id_..[[ mem_,
     tceu_code_mem_]]..me.id_..[[* mem = &mem_;
     mem_._mem.up_mem = up_mem;
     mem_._mem.depth  = ]]..me.depth..[[;
-#ifdef CEU_FEATURES_EXCEPTION
-    mem_._mem.catches = catches;
-#endif
 #ifdef CEU_FEATURES_LUA
     mem_._mem.lua = lua;
 #endif
@@ -279,7 +273,7 @@ assert(me.hier)
                 if TYPES.abs_dcl(tp) then
                     MEMS.datas.mems = MEMS.datas.mems..[[
 struct ]]..cc..[[;
-static struct ]]..cc..'* CEU_OPTION_'..cc..[[ (struct ]]..cc..[[* alias, char* file, int line) {
+static struct ]]..cc..'* CEU_OPTION_'..cc..[[ (struct ]]..cc..[[* alias, tceu_trace* trace, char* file, int line) {
 ]]
                 else
                     MEMS.datas.mems = MEMS.datas.mems..[[
@@ -287,7 +281,7 @@ static ]]..cc..'* CEU_OPTION_'..cc..[[ (]]..cc..[[* alias, char* file, int line)
 ]]
                 end
                 MEMS.datas.mems = MEMS.datas.mems..[[
-    ceu_callback_assert_msg_ex(alias != NULL, "value is not set", file, line);
+    ceu_callback_assert_msg_ex(alias != NULL, "value is not set", trace, file, line);
     return alias;
 }
 ]]
@@ -298,8 +292,8 @@ typedef struct ]]..cc..[[ {
     ]]..c..[[ value;
 } ]]..cc..[[;
 
-static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
-    ceu_callback_assert_msg_ex(opt->is_set, "value is not set", file, line);
+static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, tceu_trace* trace, char* file, int line) {
+    ceu_callback_assert_msg_ex(opt->is_set, "value is not set", trace, file, line);
     return opt;
 }
 ]]

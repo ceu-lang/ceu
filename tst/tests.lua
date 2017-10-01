@@ -306,8 +306,19 @@ escape v1 + v2;
 -- var/dynamic int x;
 -------------------------------------------------------------------------------
 
-do return end -- OK
 --]=====]
+Test { [[
+code/await Ff (none) -> none do
+    {ceu_callback_assert_msg(0, "hello");}
+end
+await Ff();
+escape 0;
+]],
+    run = 1,
+    _opts = { ceu_features_trace='true' },
+}
+
+do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested
