@@ -45,7 +45,7 @@ native/nohold
 
 native
     _assert,
-    _ceu_dbg_assert,
+    _ceu_sys_assert,
     _close,
     _ceil,
     _cos,

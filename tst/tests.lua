@@ -46150,6 +46150,21 @@ escape (call Ff(&&b));
     run = 10,
 }
 
+Test { [[
+data Dd with
+    var int vvv = 10;
+end
+data Dd.Ee with
+    var int vvv = 100;
+    var int kkk;
+end
+var Dd    d = val Dd(_);
+var Dd.Ee e = val Dd.Ee(_,50);
+escape d.vvv + e.vvv + e.kkk;
+]],
+    run = 160;
+}
+
 -->> OPTION / DATA
 
 Test { [[

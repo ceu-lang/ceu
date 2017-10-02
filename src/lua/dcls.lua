@@ -671,12 +671,25 @@ error'oi'
             dcl.hier.down[#dcl.hier.down+1] = me
             me.hier = { up=dcl, down={} }
 
+            local mines = AST.asr(me,'',3,'Block',1,'Stmts')
+
             -- copy all super vars to myself
             -- (avoid inserting empty additional Stmts to break "empty-data-dcl" detection)
             local vars = AST.asr(dcl,'', 3,'Block', 1,'Stmts')
             if #vars > 0 then
-                AST.insert(AST.asr(me,'',3,'Block',1,'Stmts'), 1,
-                           AST.copy(vars))
+                local hiss = AST.copy(vars)
+                AST.insert(mines, 1, hiss)
+
+                -- remove from the copied vars all redefined fields
+                for i=2, #mines do
+                    local mine = AST.asr(mines,'Stmts', i,'Stmts', 1,'Var')
+                    for j=1, #hiss do
+                        local his = AST.get(hiss,'Stmts', j,'Stmts', 1,'Var')
+                        if his and mine[3]==his[3] then
+                            hiss[j] = node('Nothing', me.ln)
+                        end
+                    end
+                end
             end
         end
 
