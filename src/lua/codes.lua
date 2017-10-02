@@ -1797,7 +1797,7 @@ _CEU_LUA_ERR_]]..me.n..[[:;
 ]]
         if CEU.opts.ceu_features_exception then
             me.code_after = me.code_after .. [[
-        tceu_data_Exception__dot__Lua __ceu_e = { lua_tostring(]]..LUA(me)..[[,-1) };
+        tceu_data_Exception__dot__Lua __ceu_e = { CEU_DATA_Exception__dot__Lua, (char*)lua_tostring(]]..LUA(me)..[[,-1) };
 ]]..LINE_DIRECTIVE(me)..[[
         ceu_throw(]]..CATCHES(me)..[[, (tceu_data_Exception*)&__ceu_e, sizeof(tceu_data_Exception__dot__Lua));
 ]]

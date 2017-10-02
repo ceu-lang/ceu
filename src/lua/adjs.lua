@@ -95,19 +95,7 @@ F = {
                 local lua do
                     if CEU.opts.ceu_features_lua then
                         lua = node('Data', me.ln, 'Exception.Lua', false,
-                                node('Block', me.ln,
-                                    node('Stmts', me.ln,
-                                        node('_Var_set', me.ln,
-                                            false,
-                                            false,
-                                            {},
-                                            node('Type', me.ln,
-                                                node('ID_nat', me.ln, '_char'),
-                                                '&&'),
-                                            'message',
-                                            {node('_Set_Exp',me.ln,
-                                                node('STRING',me.ln,'"lua error"'))}
-                                            ))))
+                                node('Block', me.ln, node('Stmts', me.ln)))
                         lua.is_predefined = true
                     else
                         lua = node('Nothing', me.ln)

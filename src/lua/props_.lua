@@ -214,6 +214,9 @@ PROPS_.F = {
     Lua_Do = 'Lua',
     Lua = function (me)
         ASR(CEU.opts.ceu_features_lua, me, '`lua` support is disabled')
+        if CEU.opts.ceu_features_exception then
+            PROPS_.F.Throw(me, TYPES.new(me,'Exception.Lua'))
+        end
     end,
 
     Async_Thread = function (me)

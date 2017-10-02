@@ -307,6 +307,7 @@ escape v1 + v2;
 -------------------------------------------------------------------------------
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -44321,7 +44322,17 @@ escape 0;
     _opts = { ceu_features_exception='true', ceu_features_trace='true' },
 }
 
---]=====]
+Test { [==[
+[[
+    aa $ aa
+]]
+escape 1;
+]==],
+    --run = '1] -> runtime error: [string "..."]:2: syntax error near \'$\'',
+    --run = '2: \'=\' expected near \'$\'',
+    _opts = { ceu_features_exception='true', ceu_features_trace='true', ceu_features_lua='true' },
+    props_ = 'line 1 : uncaught exception',
+}
 
 Test { [==[
 [[
@@ -44332,6 +44343,7 @@ escape 1;
     run = '1] -> runtime error: [string "..."]:2: syntax error near \'$\'',
     --run = '2: \'=\' expected near \'$\'',
     _opts = { ceu_features_exception='true', ceu_features_trace='true', ceu_features_lua='true' },
+    wrn = true,
 }
 
 Test { [==[
@@ -44346,12 +44358,11 @@ if e? then
 end
 escape 1;
 ]==],
-    run = '1] -> runtime error: [string "..."]:2: syntax error near \'$\'',
+    run = '8] -> runtime error: [string "..."]:2: syntax error near \'$\'',
     --run = '2: \'=\' expected near \'$\'',
     _opts = { ceu_features_exception='true', ceu_features_trace='true', ceu_features_lua='true' },
+    wrn = true,
 }
-
-do return end
 
 --<<< EXCEPTIONS / THROW / CATCH
 
