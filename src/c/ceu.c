@@ -548,7 +548,7 @@ static void ceu_lbl (tceu_evt_occ* _ceu_occ, tceu_stk* _ceu_stk,
 /*****************************************************************************/
 
 #ifdef CEU_FEATURES_EXCEPTION
-void ceu_throw_ex (tceu_stk* stk, tceu_catch* catches, tceu_data_Exception* exception, usize len, tceu_trace trace) {
+void ceu_throw_ex (tceu_catch* catches, tceu_data_Exception* exception, usize len, tceu_stk* stk, tceu_trace trace) {
     while (catches != NULL) {
         if (ceu_data_is(CEU_DATA_SUPERS_Exception,exception->_enum,catches->exception->value._enum)) {
             catches->exception->is_set = 1;
@@ -559,7 +559,7 @@ void ceu_throw_ex (tceu_stk* stk, tceu_catch* catches, tceu_data_Exception* exce
     }
     ceu_assert_ex(0, exception->message, trace);
 }
-#define ceu_throw(a,b,c,d) ceu_throw_ex(a,b,c,d,((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__}))
+#define ceu_throw(a,b,c) ceu_throw_ex(a,b,c,_ceu_stk,((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__}))
 #endif
 
 #ifdef CEU_FEATURES_THREAD

@@ -728,7 +728,7 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].pse_paused = 0;
     Throw = function (me)
         local e = unpack(me)
         LINE(me, [[
-return ceu_throw(_ceu_stk, ]]..CATCHES(me)..[[, (tceu_data_Exception*)&]]..V(e)..[[, sizeof(]]..TYPES.toc(e.info.tp)..[[));
+return ceu_throw(]]..CATCHES(me)..[[, (tceu_data_Exception*)&]]..V(e)..[[, sizeof(]]..TYPES.toc(e.info.tp)..[[));
 ]])
     end,
 
@@ -1794,7 +1794,20 @@ lua_close(]]..CUR('__lua_'..n)..[[);
     if (0) {
 /* ERROR */
 _CEU_LUA_ERR_]]..me.n..[[:;
-        ceu_assert_ex(0, lua_tostring(]]..LUA(me)..[[,-1), ((tceu_trace){&_ceu_mem->trace,"]]..me.ln[1]..'",'..me.ln[2]..[[}));
+]]
+        if CEU.opts.ceu_features_exception then
+            me.code_after = me.code_after .. [[
+        tceu_data_Exception__dot__Lua __ceu_e = { lua_tostring(]]..LUA(me)..[[,-1) };
+]]..LINE_DIRECTIVE(me)..[[
+        ceu_throw(]]..CATCHES(me)..[[, (tceu_data_Exception*)&__ceu_e, sizeof(tceu_data_Exception__dot__Lua));
+]]
+        else
+            me.code_after = me.code_after .. [[
+]]..LINE_DIRECTIVE(me)..[[
+        ceu_assert(0, lua_tostring(]]..LUA(me)..[[,-1));
+]]
+        end
+        me.code_after = me.code_after .. [[
     }
 /* OK */
     lua_pop(]]..LUA(me)..[[, ]]..(is_set and 1 or 0)..[[);
