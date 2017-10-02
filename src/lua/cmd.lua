@@ -126,14 +126,16 @@ do
     end
 
     local T = {
-        ceu_output          = { tostring,  '-'     },
-        ceu_line_directives = { toboolean, 'true'  },
-        ceu_callbacks_lines = { toboolean, 'true'  },
-        ceu_features_lua    = { toboolean, 'false' },
-        ceu_features_thread = { toboolean, 'false' },
-        ceu_features_isr    = { toboolean, 'false' },
+        ceu_output             = { tostring,  '-'     },
+        ceu_line_directives    = { toboolean, 'true'  },
+        ceu_callbacks_lines    = { toboolean, 'true'  },
+        ceu_features_trace     = { toboolean, 'false' },
+        ceu_features_exception = { toboolean, 'false' },
+        ceu_features_lua       = { toboolean, 'false' },
+        ceu_features_thread    = { toboolean, 'false' },
+        ceu_features_isr       = { toboolean, 'false' },
 
-        env_output          = { tostring,  '-'     },
+        env_output             = { tostring,  '-'     },
     }
 
     for k, t in pairs(T) do
@@ -160,6 +162,10 @@ if CEU.opts.ceu then
         end
     end
     ASR(CEU.opts.ceu_input, 'expected option `ceu-input`')
+
+    if CEU.opts.exception then
+        ASR(CEU.opts.ceu_trace, 'expected option `ceu-features-trace`')
+    end
 else
     check_no('ceu')
 end

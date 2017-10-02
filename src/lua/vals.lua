@@ -129,10 +129,10 @@ F = {
             args = args .. [[,
 
 #if defined(__GNUC__) && defined(__cplusplus)
-({tceu_catch ]]..v..';'..v..'.up=&_ceu_mem->trace;'..v..'.file="'..me.ln[1]..'";'..v..'.line='..me.ln[2]..'; __ceu_'..me.n..[[;})
+({tceu_trace ]]..v..';'..v..'.up=&_ceu_mem->trace;'..v..'.file="'..me.ln[1]..'";'..v..'.line='..me.ln[2]..'; __ceu_'..me.n..[[;})
 
 #else
-(tceu_catch) { &_ceu_mem->trace, "]]..me.ln[1]..'",'..me.ln[2]..[[ }
+(tceu_trace) { &_ceu_mem->trace, "]]..me.ln[1]..'",'..me.ln[2]..[[ }
 
 #endif
 ]]
@@ -561,7 +561,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..args..[[)
 (]]..TYPES.toc(Type)..ptr2..[[)
 ceu_data_as(CEU_DATA_SUPERS_]]..base.id_..[[,
             (tceu_ndata*)]]..ptr3..V(e)..', CEU_DATA_'..Type[1].dcl.id_..[[,
-            __FILE__, (__LINE__-4))
+            ((tceu_trace){&_ceu_mem->trace, __FILE__, (__LINE__-4)}))
 ))
 ]]
             else

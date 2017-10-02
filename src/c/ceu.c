@@ -227,10 +227,8 @@ static int ceu_data_is (tceu_ndata* supers, tceu_ndata me, tceu_ndata cmp) {
     return (me==cmp || (me!=0 && ceu_data_is(supers,supers[me],cmp)));
 }
 
-static void* ceu_data_as (tceu_ndata* supers, tceu_ndata* me, tceu_ndata cmp,
-                          tceu_trace* trace, const char* file, u32 line) {
-    ceu_assert_ex(ceu_data_is(supers, *me, cmp), "invalid cast `as`",
-                  ((tceu_trace){trace, file, line}));
+static void* ceu_data_as (tceu_ndata* supers, tceu_ndata* me, tceu_ndata cmp, tceu_trace trace) {
+    ceu_assert_ex(ceu_data_is(supers, *me, cmp), "invalid cast `as`", trace);
     return me;
 }
 
@@ -557,7 +555,7 @@ static void ceu_lbl (tceu_evt_occ* _ceu_occ, tceu_stk* _ceu_stk,
 /*****************************************************************************/
 
 #ifdef CEU_FEATURES_EXCEPTION
-void ceu_throw_ex (tceu_stk* stk, tceu_catch* catches, tceu_data_Exception* exception, usize len, const char* file, u32 line) {
+void ceu_throw_ex (tceu_stk* stk, tceu_catch* catches, tceu_data_Exception* exception, usize len, tceu_trace trace) {
     while (catches != NULL) {
         if (ceu_data_is(CEU_DATA_SUPERS_Exception,exception->_enum,catches->exception->value._enum)) {
             catches->exception->is_set = 1;
@@ -566,19 +564,9 @@ void ceu_throw_ex (tceu_stk* stk, tceu_catch* catches, tceu_data_Exception* exce
         }
         catches = catches->up;
     }
-
-    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"[");
-    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(file));
-    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)":");
-    ceu_callback_num_num(CEU_CALLBACK_LOG, 2, line);
-    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"] ");
-    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"runtime error: ");
-    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)("uncaught exception: "));
-    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(exception->message));
-    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n");
-    ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL);
+    ceu_assert_ex(0, exception->message, trace);
 }
-#define ceu_throw(a,b,c,d) ceu_throw_ex(a,b,c,d,__FILE__,__LINE__)
+#define ceu_throw(a,b,c,d) ceu_throw_ex(a,b,c,d,((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__}))
 #endif
 
 #ifdef CEU_FEATURES_THREAD

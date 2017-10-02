@@ -306,32 +306,8 @@ escape v1 + v2;
 -- var/dynamic int x;
 -------------------------------------------------------------------------------
 
-Test { [[
-code/await Ff (none) -> none do
-    {ceu_assert(0, "hello");}
-end
-await Ff();
-escape 0;
-]],
-    run = '[/tmp/tmp.ceu:4] -> \n[/tmp/tmp.ceu:2] -> runtime error: hello',
-    _opts = { ceu_features_trace='true' },
-}
-
-Test { [[
-code/await Ff (none) -> none do
-    {ceu_assert(0, "hello");}
-end
-code/await Gg (none) -> none do
-    await Ff();
-end
-await Gg();
-escape 0;
-]],
-    run = '[/tmp/tmp.ceu:7] -> [/tmp/tmp.ceu:5] -> \n[/tmp/tmp.ceu:2] -> runtime error: hello',
-    _opts = { ceu_features_trace='true' },
-}
-
---do return end -- OK
+do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -20661,7 +20637,6 @@ escape 0;
 
 -->> ALIAS / ESCAPE / DO
 
---]=====]
 Test { [[
 var int? x = do
     escape 1;
@@ -40653,8 +40628,8 @@ end
 
 watching e do
     spawn Ff(&e);
-    native _ceu_dbg_assert;
-    _ceu_dbg_assert(0);
+    native _ceu_assert;
+    _ceu_assert(0,"bug found");
 end
 
 escape 1;
@@ -40672,8 +40647,8 @@ pool[] Ff ffs;
 
 watching e do
     spawn Ff(&e) in ffs;
-    native _ceu_dbg_assert;
-    _ceu_dbg_assert(0);
+    native _ceu_assert;
+    _ceu_assert(0,"bug found");
 end
 
 escape 1;
@@ -40690,8 +40665,8 @@ end
 
 watching e do
     spawn Ff();
-    native _ceu_dbg_assert;
-    _ceu_dbg_assert(0);
+    native _ceu_assert;
+    _ceu_assert(0,"bug found");
 end
 
 escape 1;
@@ -42251,7 +42226,7 @@ escape 1;
 Test { [[
 input none A;
 
-native _V, _ceu_dbg_assert;
+native _V, _ceu_assert;
 native/pos do
     int V = 0;
 end
@@ -42260,7 +42235,7 @@ code/await Ff (none) -> (event& none e) -> none do
     event none e_;
     e = &e_;
     await e_;
-    _ceu_dbg_assert(_V == 0);
+    _ceu_assert(_V == 0, "bug found");
     _V = _V + 1;
 end
 
@@ -42562,7 +42537,7 @@ escape _V;
 Test { [[
 native _V;
 native/pure _f;
-native/nohold _ceu_dbg_assert;
+native/nohold _ceu_assert;
 native/pos do
     ##define f(x) x
     none* V;
@@ -42589,7 +42564,7 @@ code/await Collisions (none) -> none do
         loop cloud2 in outer.clouds do
             _V = _f(&&cloud1!.i);
             spawn Collides();
-            _ceu_dbg_assert(_V == &&cloud1!.i);
+            _ceu_assert(_V == &&cloud1!.i, "bug found");
         end
     end
 end
@@ -42601,12 +42576,12 @@ escape 1;
 }
 
 Test { [[
-native _ceu_dbg_assert;
+native _ceu_assert;
 input none A; input none  B;
 
 code/await Ph (none) -> none do
     await B;
-    _ceu_dbg_assert(0);
+    _ceu_assert(0, "bug found");
 end
 
 code/await Drop (none) -> NEVER do
@@ -43638,6 +43613,35 @@ escape ret;
 }
 -- TODO: SKIP-04
 
+-->>> STACK TRACE
+
+Test { [[
+code/await Ff (none) -> none do
+    {ceu_assert(0, "hello");}
+end
+await Ff();
+escape 0;
+]],
+    run = '[/tmp/tmp.ceu:4] -> \n[/tmp/tmp.ceu:2] -> runtime error: hello',
+    _opts = { ceu_features_trace='true' },
+}
+
+Test { [[
+code/await Ff (none) -> none do
+    {ceu_assert(0, "hello");}
+end
+code/await Gg (none) -> none do
+    await Ff();
+end
+await Gg();
+escape 0;
+]],
+    run = '[/tmp/tmp.ceu:7] -> [/tmp/tmp.ceu:5] -> \n[/tmp/tmp.ceu:2] -> runtime error: hello',
+    _opts = { ceu_features_trace='true' },
+}
+
+--<<< STACK TRACE
+
 -->>> EXCEPTIONS / THROW / CATCH
 
 Test { [[
@@ -43688,10 +43692,9 @@ end
 
 escape 1;
 ]],
-    _opts = { ceu_features_exception='true' },
+    _opts = { ceu_features_trace='true', ceu_features_exception='true' },
     wrn = true,
-    run = '3] -> runtime error: uncaught exception: unspecified message',
-    _opts = { ceu_features_trace='true' },
+    run = '3] -> runtime error: unspecified message',
 }
 
 Test { [[
@@ -43702,10 +43705,9 @@ end
 
 escape 1;
 ]],
-    _opts = { ceu_features_exception='true' },
+    _opts = { ceu_features_trace='true', ceu_features_exception='true' },
     wrn = true,
-    run = '3] -> runtime error: uncaught exception: alo-alo',
-    _opts = { ceu_features_trace='true' },
+    run = '3] -> runtime error: alo-alo',
 }
 
 Test { [[
@@ -43719,7 +43721,6 @@ escape 1;
     _opts = { ceu_features_exception='true' },
     props_ = 'line 3 : uncaught exception',
 }
-
 Test { [[
 var Exception? e;
 catch e do
@@ -43727,7 +43728,7 @@ catch e do
         var Exception e_ = val Exception(_);
         throw e_;
     end
-    {ceu_dbg_assert(0);}
+    {ceu_assert(0,"bug found");}
 end
 
 if e? then
@@ -43759,7 +43760,7 @@ catch e do
         var Exception e_ = val Exception(_);
         throw e_;
     end
-    {ceu_dbg_assert(0);}
+    {ceu_assert(0,"bug found");}
 end
 
 if e? then
@@ -43772,6 +43773,7 @@ escape 1;
     props_ = 'line 7 : uncaught exception',
 }
 
+
 Test { [[
 data Exception.Sub;
 
@@ -43781,7 +43783,7 @@ catch e do
         var Exception e_ = val Exception(_);
         throw e_;
     end
-    {ceu_dbg_assert(0);}
+    {ceu_assert(0,"bug found");}
 end
 
 if e? then
@@ -43790,9 +43792,8 @@ end
 
 escape 1;
 ]],
-    _opts = { ceu_features_exception='true' },
-    run = '7] -> runtime error: uncaught exception',
-    _opts = { ceu_features_trace='true' },
+    _opts = { ceu_features_trace='true', ceu_features_exception='true' },
+    run = '7] -> runtime error: unspecified message',
     wrn = true,
 }
 
@@ -43805,7 +43806,7 @@ catch e do
         var Exception.Sub e_ = val Exception.Sub(_);
         throw e_;
     end
-    {ceu_dbg_assert(0);}
+    {ceu_assert(0,"bug found");}
 end
 
 if e? then
@@ -43829,7 +43830,7 @@ catch eee do
         var Exception.Sub e_ = val Exception.Sub(_,20);
         throw e_;
     end
-    {ceu_dbg_assert(0);}
+    {ceu_assert(0,"bug found");}
 end
 
 escape eee!.value;
@@ -43847,7 +43848,7 @@ catch e do
         var Exception.Sub e_ = val Exception.Sub(_);
         throw e_;
     end
-    {ceu_dbg_assert(0);}
+    {ceu_assert(0,"bug found");}
 end
 
 if e? then
@@ -43956,10 +43957,9 @@ end
 await Ff();
 escape 1;
 ]],
-    _opts = { ceu_features_exception='true' },
+    _opts = { ceu_features_trace='true', ceu_features_exception='true' },
     wrn = true,
-    run = '5] -> runtime error: uncaught exception',
-    _opts = { ceu_features_trace='true' },
+    run = '5] -> runtime error: unspecified message',
 }
 
 Test { [[
@@ -44317,9 +44317,9 @@ end
 await Ff();
 escape 0;
 ]],
-    run = '15] -> runtime error: uncaught exception: unspecified message',
+    run = '15] -> runtime error: unspecified message',
     wrn = true,
-    _opts = { ceu_features_exception='true', ceu_features_trace=true },
+    _opts = { ceu_features_exception='true', ceu_features_trace='true' },
 }
 
 --<<< EXCEPTIONS / THROW / CATCH
@@ -44531,7 +44531,7 @@ native _char;
 escape (_strcmp((&&cpy[0]) as _char&&,"1") == 0) as int;
 ]=],
     run = '3] -> runtime error: access out of bounds',
-    _opts = { ceu_features_lua='true', ceu_features_trace=true },
+    _opts = { ceu_features_lua='true', ceu_features_trace='true' },
 }
 
 Test { [=[
@@ -44546,7 +44546,7 @@ escape (0 == _strcmp((&&cpy[0]) as _char&&,"1234567890")) as int;
 ]=],
     wrn = true,
     run = '6] -> runtime error: access out of bounds',
-    _opts = { ceu_features_lua='true', ceu_features_trace=true },
+    _opts = { ceu_features_lua='true', ceu_features_trace='true' },
 }
 
 Test { [=[
@@ -44614,9 +44614,9 @@ var int v_from_ceu = [[v_from_lua]];
 str_from_lua = 'string from lua'
 ]]
 var[100] byte str_from_ceu = [].. [[str_from_lua]];
-native _ceu_dbg_assert;
+native _ceu_assert;
 native _char;
-_ceu_dbg_assert(0==_strcmp((&&str_from_ceu[0]) as _char&&, "string from lua"));
+_ceu_assert(0==_strcmp((&&str_from_ceu[0]) as _char&&, "string from lua"));
 
 [[
 --print(@v_from_ceu)
@@ -49802,7 +49802,7 @@ par/or do
     await f;
 with
     kill f;
-    {ceu_dbg_assert(0);}
+    {ceu_assert(0,"bug found");}
 end
 
 escape 1;
@@ -49822,7 +49822,7 @@ watching e do
         emit e;
     with
         kill f;
-        {ceu_dbg_assert(0);}
+        {ceu_assert(0,"bug found");}
     end
 end
 
@@ -51214,7 +51214,7 @@ end
 }
 Test { [[
 do/_
-    native _ceu_dbg_assert, _printf;
+    native _ceu_assert, _printf;
     data Media as nothing;
 
     data Media.Audio with
@@ -51227,7 +51227,7 @@ do/_
 
 
     code/await/dynamic Play (var&/dynamic Media media) -> int do
-        _ceu_dbg_assert(0);               // never dispatched
+        _ceu_assert(0, "bug found");               // never dispatched
     end
 
     code/await/dynamic Play (var&/dynamic Media.Audio media) -> int do
@@ -51250,7 +51250,7 @@ end
     run = 1,
 }
 Test { [[
-native _ceu_dbg_assert, _printf;
+native _ceu_assert, _printf;
 data Media as nothing;
 
 data Media.Audio with
@@ -51263,7 +51263,7 @@ end
 
 
 code/await/dynamic Play (var&/dynamic Media media) -> int do
-    _ceu_dbg_assert(0);               // never dispatched
+    _ceu_assert(0, "bug found");               // never dispatched
 end
 
 code/await/dynamic Play (var&/dynamic Media.Audio media) -> int do
@@ -51501,11 +51501,11 @@ data Dd with
 end
 data Dd.Ee;
 
-native _ceu_dbg_assert;
+native _ceu_assert;
 code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> NEVER do
     var Dd d_ = val Dd(x);
     d = &d_;
-    _ceu_dbg_assert(0);
+    _ceu_assert(0, "bug found");
     await FOREVER;
 end
 
@@ -51533,11 +51533,11 @@ data Dd with
 end
 data Dd.Ee;
 
-native _ceu_dbg_assert;
+native _ceu_assert;
 code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d1) -> NEVER do
     var Dd d_ = val Dd(x);
     d1 = &d_;
-    _ceu_dbg_assert(0);
+    _ceu_assert(0, "bug found");
     await FOREVER;
 end
 
@@ -51565,11 +51565,11 @@ data Dd with
 end
 data Dd.Ee;
 
-native _ceu_dbg_assert;
+native _ceu_assert;
 code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> NEVER do
     var Dd d_ = val Dd(x);
     d = &d_;
-    _ceu_dbg_assert(0);
+    _ceu_assert(0, "bug found");
     await FOREVER;
 end
 
@@ -51598,11 +51598,11 @@ data Dd with
 end
 data Dd.Ee;
 
-native _ceu_dbg_assert;
+native _ceu_assert;
 code/await/dynamic Ff (var/dynamic Xx x) -> (var& Dd d) -> NEVER do
     var Dd d_ = val Dd(x);
     d = &d_;
-    _ceu_dbg_assert(0);
+    _ceu_assert(0, "bug found");
     await FOREVER;
 end
 
@@ -52619,19 +52619,19 @@ native/pre do
     tceu_callback CB_ = { &CB, NULL };
 end
 { ceu_callback_register(&CB_); }
-native _ceu_dbg_assert;
+native _ceu_assert;
 native _V;
 par/or do
-    _ceu_dbg_assert(_V==0);
+    _ceu_assert(_V==0, "bug found");
     spawn async/isr [1] do
     end
     await FOREVER;
 with
-    _ceu_dbg_assert(_V==1);
+    _ceu_assert(_V==1, "bug found");
     await 1s;
-    _ceu_dbg_assert(_V==1);
+    _ceu_assert(_V==1, "bug found");
 end             // TODO: forcing finalize out_isr(null)
-_ceu_dbg_assert(_V==0);
+_ceu_assert(_V==0, "bug found");
 escape _V+1;
 ]],
     run = { ['~>1s']=1 },
