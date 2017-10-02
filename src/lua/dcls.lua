@@ -677,11 +677,11 @@ error'oi'
             -- copy all super vars to myself
             local I = 1
             for i=1, #hiss do
-                local his = AST.get(hiss,'Stmts', i,'Stmts', 1,'') or AST.get(hiss,'Stmts', i,'')
+                local his = AST.get(hiss,'Stmts', i,'Stmts', 1,'')
 
                 local skip = false
                 for j=I, #mines do
-                    local mine = AST.get(mines,'Stmts', j,'Var') or AST.asr(mines,'Stmts', j,'Stmts', 1,'Var')
+                    local mine = AST.asr(mines,'Stmts', j,'Stmts', 1,'Var')
                     if mine[3] == his[3] then
                         skip = true
                         break
@@ -689,7 +689,7 @@ error'oi'
                 end
 
                 if not skip then
-                    AST.insert(mines, I, AST.copy(his))
+                    AST.insert(mines, I, AST.copy(AST.asr(his,1,'Stmts')))
                     I = I + 1
                 end
             end

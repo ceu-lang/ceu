@@ -46646,6 +46646,17 @@ escape 1;
     stmts = 'line 4 : invalid constructor : cannot instantiate `data` "Direction"',
 }
 
+Test { [[
+data Dd;
+data Dd.Ee;
+var Dd.Ee e;
+escape {CEU_DATA_Dd__dot__Ee};
+]],
+    run = 1,
+    wrn = true,
+    _opts = { ceu_features_lua='true' },
+}
+
 --<< DATA / HIER / ENUM
 
 --<<< DATA / HIERARCHY / SUB-DATA / SUB-TYPES / INHERITANCE
@@ -50705,6 +50716,21 @@ escape v1;
 ]],
     tight_ = 'line 5 : invalid `code` declaration : expected `/recursive` : `call` to unknown body (/tmp/tmp.ceu:7)',
 }
+
+Test { [[
+data Bb with
+    var int x=10;
+end
+data Bb.Cc with
+    var int y=20;
+end
+
+var Bb.Cc c = val Bb.Cc(_,_);
+escape c.x;
+]],
+    run = 10,
+}
+
 Test { [[
 data Bb with
     var int x=10;
