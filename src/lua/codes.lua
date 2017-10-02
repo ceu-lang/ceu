@@ -1226,7 +1226,7 @@ if (_ceu_occ!=NULL && _ceu_occ->evt.id==CEU_INPUT__CODE_TERMINATED) {
         const char* __ceu_str = lua_tostring(]]..LUA(me)..[[, -1);
         usize __ceu_len = lua_rawlen(]]..LUA(me)..[[, -1);
         ceu_vector_setlen_ex(&]]..V(to)..', ('..V(to)..[[.len + __ceu_len), 1,
-                             __FILE__, __LINE__-4);
+                             ((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__-4}));
         ceu_vector_buf_set(&]]..V(to)..[[,
                            __ceu_nxt,
                            (byte*)__ceu_str,
@@ -1771,7 +1771,6 @@ if (lua_isnumber(]]..LUA(me)..[[,-1)) {
 ]]..CUR('__lua_'..n)..[[ = luaL_newstate();
 ceu_sys_assert(]]..CUR('__lua_'..n)..[[ != NULL, "bug found");
 luaL_openlibs(]]..CUR('__lua_'..n)..[[);
-lua_atpanic(]]..CUR('__lua_'..n)..[[, ceu_lua_atpanic);
 ceu_lua_createargtable(]]..CUR('__lua_'..n)..[[, CEU_APP.argv, CEU_APP.argc, CEU_APP.argc);
 ]])
     end,
@@ -1795,23 +1794,15 @@ lua_close(]]..CUR('__lua_'..n)..[[);
     if (0) {
 /* ERROR */
 _CEU_LUA_ERR_]]..me.n..[[:;
-        lua_concat(]]..LUA(me)..[[, 6);
-        lua_error(]]..LUA(me)..[[); /* TODO */
+        ceu_assert_ex(0, lua_tostring(]]..LUA(me)..[[,-1), ((tceu_trace){&_ceu_mem->trace,"]]..me.ln[1]..'",'..me.ln[2]..[[}));
     }
 /* OK */
-    lua_pop(]]..LUA(me)..[[, ]]..(is_set and 6 or 5)..[[);
+    lua_pop(]]..LUA(me)..[[, ]]..(is_set and 1 or 0)..[[);
 }
 ]]
 
         LINE(me, [[
 {
-    int err_line = __LINE__ - 1;
-    lua_pushstring(]]..LUA(me)..[[, "[");
-    lua_pushstring(]]..LUA(me)..[[, __FILE__);
-    lua_pushstring(]]..LUA(me)..[[, ":");
-    lua_pushinteger(]]..LUA(me)..[[, err_line);
-    lua_pushstring(]]..LUA(me)..[[, "] lua error : ");
-
     int err = luaL_loadstring(]]..LUA(me)..[[, ]]..lua..[[);
     if (err) {
         goto _CEU_LUA_ERR_]]..me.n..[[;

@@ -74,21 +74,50 @@ F = {
                                     false))))
         lock.is_predefined = true
 
-        local exception = node('Data', me.ln, 'Exception', false,
-                            node('Block', me.ln,
-                                node('Stmts', me.ln,
-                                    node('_Var_set', me.ln,
-                                        false,
-                                        false,
-                                        {},
-                                        node('Type', me.ln,
-                                            node('ID_nat', me.ln, '_char'),
-                                            '&&'),
-                                        'message',
-                                        {node('_Set_Exp',me.ln,
-                                            node('STRING',me.ln,'"unspecified message"'))}
-                                        ))))
-        exception.is_predefined = true
+        local exception do
+            if CEU.opts.ceu_features_exception then
+                local base = node('Data', me.ln, 'Exception', false,
+                                node('Block', me.ln,
+                                    node('Stmts', me.ln,
+                                        node('_Var_set', me.ln,
+                                            false,
+                                            false,
+                                            {},
+                                            node('Type', me.ln,
+                                                node('ID_nat', me.ln, '_char'),
+                                                '&&'),
+                                            'message',
+                                            {node('_Set_Exp',me.ln,
+                                                node('STRING',me.ln,'"unspecified message"'))}
+                                            ))))
+                base.is_predefined = true
+
+                local lua do
+                    if CEU.opts.ceu_features_lua then
+                        lua = node('Data', me.ln, 'Exception.Lua', false,
+                                node('Block', me.ln,
+                                    node('Stmts', me.ln,
+                                        node('_Var_set', me.ln,
+                                            false,
+                                            false,
+                                            {},
+                                            node('Type', me.ln,
+                                                node('ID_nat', me.ln, '_char'),
+                                                '&&'),
+                                            'message',
+                                            {node('_Set_Exp',me.ln,
+                                                node('STRING',me.ln,'"lua error"'))}
+                                            ))))
+                        lua.is_predefined = true
+                    else
+                        lua = node('Nothing', me.ln)
+                    end
+                end
+                exception = node('Stmts', me.ln, base, lua)
+            else
+                exception = node('Nothing', me.ln)
+            end
+        end
 
         local lua do
             if CEU.opts.ceu_features_lua then

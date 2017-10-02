@@ -44403,9 +44403,9 @@ Test { [==[
 ]]
 escape 1;
 ]==],
-    run = '1] lua error : [string "..."]:2: syntax error near \'$\'',
+    run = '1] -> runtime error: [string "..."]:2: syntax error near \'$\'',
     --run = '2: \'=\' expected near \'$\'',
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_trace='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -44438,16 +44438,16 @@ Test { [=[
 [[ error'oi' ]];
 escape 1;
 ]=],
-    run = '2] lua error : [string " error\'oi\' "]:1: oi',
-    _opts = { ceu_features_lua='true' },
+    run = '2] -> runtime error: [string " error\'oi\' "]:1: oi',
+    _opts = { ceu_features_trace='true', ceu_features_lua='true' },
 }
 
 Test { [=[
 var int ret = [[ true ]];
 escape ret;
 ]=],
-    run = '1] lua error : number expected',
-    _opts = { ceu_features_lua='true' },
+    run = '1] -> runtime error: number expected',
+    _opts = { ceu_features_trace='true', ceu_features_lua='true' },
 }
 Test { [=[
 var bool ret = [[ nil ]];
@@ -44461,8 +44461,8 @@ Test { [=[
 var int ret = [[ nil ]];
 escape ret;
 ]=],
-    run = '2] lua error : number expected',
-    _opts = { ceu_features_lua='true' },
+    run = '2] -> runtime error: number expected',
+    _opts = { ceu_features_trace='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -44616,7 +44616,7 @@ str_from_lua = 'string from lua'
 var[100] byte str_from_ceu = [].. [[str_from_lua]];
 native _ceu_assert;
 native _char;
-_ceu_assert(0==_strcmp((&&str_from_ceu[0]) as _char&&, "string from lua"));
+_ceu_assert(0==_strcmp((&&str_from_ceu[0]) as _char&&, "string from lua"), "bug found");
 
 [[
 --print(@v_from_ceu)
@@ -44655,8 +44655,8 @@ var bool b1_ = [[b1]];
 var bool b2_ = [[b2]];
 escape ret + (b1_ as int) + (b2_ as int);
 ]=],
-    run = '3] lua error : number expected',
-    _opts = { ceu_features_lua='true' },
+    run = '3] -> runtime error: number expected',
+    _opts = { ceu_features_trace='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -44683,7 +44683,7 @@ Test { [=[
 escape 1;
 ]=],
     run = '2: attempt to call a number value',
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_trace='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -44695,7 +44695,7 @@ escape ret;
 ]=],
     --run = 1,
     run = '2: attempt to call a number value',
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_trace='true', ceu_features_lua='true' },
 }
 
 Test { [=[

@@ -497,13 +497,6 @@ void ceu_code_mem_dyn_gc (tceu_pool_pak* pak) {
 /*****************************************************************************/
 
 #ifdef CEU_FEATURES_LUA
-int ceu_lua_atpanic (lua_State* lua) {
-    const char* msg = lua_tostring(lua,-1);
-    ceu_sys_assert(msg != NULL, "bug found");
-    ceu_assert(0, msg);
-    return 0;
-}
-
 static void ceu_lua_createargtable (lua_State* lua, char** argv, int argc, int script) {
     int i, narg;
     if (script == argc) script = 0;  /* no script name? */
