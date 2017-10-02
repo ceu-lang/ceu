@@ -75,7 +75,8 @@ F = {
         lock.is_predefined = true
 
         local exception do
-            if CEU.opts.ceu_features_exception then
+            -- always define "Exception" to generate "support is disabled" message
+            --if CEU.opts.ceu_features_exception then
                 local base = node('Data', me.ln, 'Exception', false,
                                 node('Block', me.ln,
                                     node('Stmts', me.ln,
@@ -102,9 +103,9 @@ F = {
                     end
                 end
                 exception = node('Stmts', me.ln, base, lua)
-            else
-                exception = node('Nothing', me.ln)
-            end
+            --else
+                --exception = node('Nothing', me.ln)
+            --end
         end
 
         local lua do
