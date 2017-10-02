@@ -677,7 +677,7 @@ error'oi'
             -- copy all super vars to myself
             local I = 1
             for i=1, #hiss do
-                local his = AST.get(hiss,'Stmts', i,'Var') or AST.asr(hiss,'Stmts', i,'Stmts', 1,'Var')
+                local his = AST.get(hiss,'Stmts', i,'Stmts', 1,'') or AST.get(hiss,'Stmts', i,'')
 
                 local skip = false
                 for j=I, #mines do
@@ -699,9 +699,8 @@ error'oi'
         dcls_new(par, me)
 
         me.id_ = me.id
-        local blk1 = AST.par(me, 'Block')
-        local blk2 = AST.par(blk1,'Block') or blk1
-        if blk2.__par.tag ~= 'ROOT' then
+        local stmts = AST.par(me, 'Stmts')
+        if (stmts ~= ADJS.stmts) and (AST.is_par(ADJS.stmts,me)) then
             me.id_ = me.id..'_'..me.n
         end
     end,

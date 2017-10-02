@@ -137,9 +137,8 @@ typedef struct tceu_pool_pak {
     u8                n_traversing;
 } tceu_pool_pak;
 
-static tceu_evt* CEU_OPTION_EVT (tceu_evt* alias, tceu_trace* trace, const char* file, u32 line) {
-    ceu_assert_ex(alias != NULL, "value is not set",
-                  ((tceu_trace){trace, file, line}));
+static tceu_evt* CEU_OPTION_EVT (tceu_evt* alias, tceu_trace trace) {
+    ceu_assert_ex(alias != NULL, "value is not set", trace);
     return alias;
 }
 
@@ -245,9 +244,8 @@ typedef struct tceu_opt_Exception {
     tceu_data_Exception value;
 } tceu_opt_Exception;
 
-static tceu_opt_Exception* CEU_OPTION_tceu_opt_Exception (tceu_opt_Exception* opt, tceu_trace* trace, char* file, int line) {
-    ceu_assert_ex(opt->is_set, "value is not set",
-                  ((tceu_trace){trace, file, line}));
+static tceu_opt_Exception* CEU_OPTION_tceu_opt_Exception (tceu_opt_Exception* opt, tceu_trace trace) {
+    ceu_assert_ex(opt->is_set, "value is not set", trace);
     return opt;
 }
 #endif

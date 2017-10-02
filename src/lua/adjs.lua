@@ -1,4 +1,5 @@
 ADJS = {
+    stmts = nil,
 }
 
 local node = AST.node
@@ -9,6 +10,7 @@ F = {
     ['1__PRE'] = function (me)
         local stmts, eof = unpack(me)
         AST.asr(stmts, 'Stmts')
+        ADJS.stmts = stmts
 
         --  Stmts
         --      to
