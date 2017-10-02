@@ -703,8 +703,7 @@ for i, code in ipairs(MEMS.codes) do
     end
 end
 
-local function ids_supers_enums (dcl, num_nxt)
-    num_nxt = num_nxt or 0
+local function ids_supers_enums (dcl)
     local _, num = unpack(dcl)
     local t = {
         ids    = '',
@@ -729,14 +728,14 @@ local function ids_supers_enums (dcl, num_nxt)
     end
 
     if num ~= 'nothing' then
-        local n = num or AST.node('NUMBER',dcl.ln,num_nxt)
+        local v = num and V(num) or 'CEU_DATA_'..dcl.id_
         t.nums = t.nums .. [[
-    ]]..V(n)..[[,
+    ]]..v..[[,
 ]]
     end
 
     for _, sub in ipairs(dcl.hier.down) do
-        local tt = ids_supers_enums(sub, num_nxt+1)
+        local tt = ids_supers_enums(sub)
         t.ids    = t.ids    .. tt.ids
         t.supers = t.supers .. tt.supers
         t.nums   = t.nums   .. tt.nums

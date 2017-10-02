@@ -46663,7 +46663,7 @@ data Aa.Bb;
 var Aa.Bb b = val Aa.Bb();
 escape b as int;
 ]],
-    run = 2,
+    run = 1,
     wrn = true,
 }
 
