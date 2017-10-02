@@ -175,7 +175,13 @@ usize params = multis_params
             me.mems.wrapper = me.mems.wrapper .. [[
 static ]]..TYPES.toc(assert(Type))..[[ /* space */
 CEU_CODE_]]..me.id_..[[ (tceu_code_mem_]]..me.id_..[[ mem_,
-                        tceu_code_mem* up_mem
+                         tceu_code_mem* up_mem
+#ifdef CEU_FEATURES_TRACE
+                      , tceu_trace trace
+#endif
+#ifdef CEU_FEATURES_EXCEPTION
+                      , tceu_catches* catches
+#endif
 #ifdef CEU_FEATURES_LUA
                       , lua_State* lua
 #endif
@@ -184,6 +190,12 @@ CEU_CODE_]]..me.id_..[[ (tceu_code_mem_]]..me.id_..[[ mem_,
     tceu_code_mem_]]..me.id_..[[* mem = &mem_;
     mem_._mem.up_mem = up_mem;
     mem_._mem.depth  = ]]..me.depth..[[;
+#ifdef CEU_FEATURES_TRACE
+    mem_._mem.trace = trace;
+#endif
+#ifdef CEU_FEATURES_EXCEPTION
+    mem_._mem.catches = catches;
+#endif
 #ifdef CEU_FEATURES_LUA
     mem_._mem.lua = lua;
 #endif
