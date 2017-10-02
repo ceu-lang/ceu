@@ -46657,6 +46657,16 @@ escape {CEU_DATA_Dd__dot__Ee};
     _opts = { ceu_features_lua='true' },
 }
 
+Test { [[
+data Aa;
+data Aa.Bb;
+var Aa.Bb b = val Aa.Bb();
+escape b as int;
+]],
+    run = 2,
+    wrn = true,
+}
+
 --<< DATA / HIER / ENUM
 
 --<<< DATA / HIERARCHY / SUB-DATA / SUB-TYPES / INHERITANCE
