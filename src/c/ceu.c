@@ -318,7 +318,7 @@ CEU_API static tceu_app CEU_APP;
 #define CEU_LONGJMP_SET(me,_lbl)                            \
         /*fprintf(stderr, "set?\n");*/                      \
     if (!(me)->is_alive) {                                  \
-        /*fprintf(stderr, "set %d\n", __LINE__);*/          \
+        /*fprintf(stderr, "set %d %d\n", __LINE__,_lbl);*/          \
         ceu_sys_assert(CEU_APP.jmp.lbl==CEU_LABEL_NONE, "bug found"); \
         CEU_APP.jmp.lbl = _lbl;                             \
         CEU_APP.jmp.mem = _ceu_mem;                         \
@@ -547,13 +547,26 @@ static void ceu_lbl (tceu_evt_occ* _ceu_occ, tceu_stk* _ceu_stk,
 
 #ifdef CEU_FEATURES_EXCEPTION
 void ceu_throw_ex (tceu_catch* catches, tceu_data_Exception* exception, usize len, tceu_stk* stk, tceu_trace trace) {
-    while (catches != NULL) {
-        if (ceu_data_is(CEU_DATA_SUPERS_Exception,exception->_enum,catches->exception->value._enum)) {
-            catches->exception->is_set = 1;
-            memcpy(&catches->exception->value, exception, len);
-            return ceu_lbl(NULL, stk, catches->mem, catches->trl, catches->mem->_trails[catches->trl].lbl);
+    tceu_catch* cur = catches;
+    while (cur != NULL) {
+        if (ceu_data_is(CEU_DATA_SUPERS_Exception,exception->_enum,cur->exception->value._enum)) {
+            //ceu_sys_assert(!cur->exception->is_set, "double catch");
+            ceu_assert_ex(!cur->exception->is_set, "double catch", trace);
+            cur->exception->is_set = 1;
+            memcpy(&cur->exception->value, exception, len);
+
+#if 0
+            /* do not allow nested catches (and itself) to awake */
+            cur->exception = NULL;
+            while (catches != cur) {
+                catches->exception = NULL;
+                catches = catches->up;
+            }
+#endif
+
+            return ceu_lbl(NULL, stk, cur->mem, cur->trl, cur->mem->_trails[cur->trl].lbl);
         }
-        catches = catches->up;
+        cur = cur->up;
     }
     ceu_assert_ex(0, exception->message, trace);
 }
@@ -640,6 +653,9 @@ printf("%ld %ld %d\n", (usize)(base-CEU_STACK_MAX), (usize)(&_ceu_occ),
 #endif
 
 _CEU_LBL_:
+#if 0
+    printf("-=-=- %d -=-=-\n", _ceu_lbl);
+#endif
     switch (_ceu_lbl) {
         CEU_LABEL_NONE:
             break;

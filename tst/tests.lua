@@ -306,8 +306,140 @@ escape v1 + v2;
 -- var/dynamic int x;
 -------------------------------------------------------------------------------
 
-do return end -- OK
+Test { [[
+event none f;
+watching f do
+    event none e;
+    watching e do
+        do finalize with
+            emit e;
+        end
+        emit f;
+    end
+end
+await 1s;
+escape 10;
+]],
+    run = {['~>1s']=10},
+    _opts = { ceu_features_exception='true' },
+}
+do return end
 --]=====]
+Test { [[
+event none f;
+watching f do
+    event none e;
+    watching e do
+        do finalize with
+            emit f;
+        end
+        emit e;
+    end
+    {ceu_sys_assert(0,"bug found-a");}
+end
+await 1s;
+escape 10;
+]],
+    run = {['~>1s']=10},
+    _opts = { ceu_features_exception='true' },
+}
+
+Test { [[
+par/or do
+    var Exception? e;
+    catch e do
+        do finalize with
+            var Exception e_ = val Exception(_);
+            throw e_;
+        end
+        var Exception e_ = val Exception(_);
+        throw e_;
+    end
+with
+end
+escape 10;
+]],
+    run = '6] -> runtime error: double catch',
+    _opts = { ceu_features_trace='true', ceu_features_exception='true' },
+}
+
+Test { [[
+data Exception.Sub;
+var Exception? f;
+catch f do
+    var Exception.Sub? e;
+    catch e do
+        do finalize with
+            var Exception f_ = val Exception(_);
+            throw f_;
+        end
+        var Exception.Sub e_ = val Exception.Sub(_);
+        throw e_;
+    end
+    //{printf("out\n");}
+end
+//{printf("OUT\n");}
+await 1s;
+escape 10;
+]],
+    run = {['~>1s']=10},
+    _opts = { ceu_features_exception='true' },
+}
+
+Test { [[
+data Exception.Sub;
+var Exception? f;
+catch f do
+    var Exception.Sub? e;
+    catch e do
+        do finalize with
+            var Exception.Sub e_ = val Exception.Sub(_);
+            throw e_;
+        end
+        var Exception e_ = val Exception(_);
+        throw e_;
+    end
+end
+await 1s;
+escape 10;
+]],
+    run = {['~>1s']=10},
+    _opts = { ceu_features_exception='true' },
+}
+
+Test { [[
+var int ret = 0;
+
+code/await Gg (none) -> none
+    throws Exception
+do
+    var Exception e_ = val Exception(_);
+    throw e_;
+end
+
+code/await Ff (var bool go) -> none do
+    var Exception? e;
+    catch e do
+        if go then
+            await Gg();
+        else
+            await FOREVER;
+        end
+    end
+    outer.ret = outer.ret + 1;
+end
+
+spawn Ff(false);
+spawn Ff(true);
+
+escape ret;
+
+]],
+    run = 1,
+    _opts = { ceu_features_exception='true' },
+}
+
+--do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -34311,7 +34443,20 @@ end
 escape 1;
 ]],
     wrn = true,
-    props_ = 'line 4 : invalid `await` : unexpected enclosing `code`',
+    props_ = 'line 3 : invalid `emit` : unexpected enclosing `code`',
+    --props = 'line 3 : not permitted inside `function`',
+}
+
+Test { [[
+code/tight Fx (none) -> none do
+    event none i;
+    await i;
+    emit i;
+end
+escape 1;
+]],
+    wrn = true,
+    props_ = 'line 3 : invalid `await` : unexpected enclosing `code`',
     --props = 'line 3 : not permitted inside `function`',
 }
 
