@@ -98,11 +98,12 @@ static tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callb
 
 #define ceu_dbg_log(msg)  { ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg)); \
                             ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n"); }
-#define ceu_sys_assert(v,msg)                                                   \
-    if (!(v)) {                                                                 \
-            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"system error: "); \
-            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg));            \
-            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n");             \
+#define ceu_sys_assert(v,msg)                                               \
+    if (!(v)) {                                                             \
+        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"system error: "); \
+        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg));            \
+        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n");             \
+        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL);                  \
     }
 
 enum {

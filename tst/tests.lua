@@ -53491,7 +53491,7 @@ escape 1;
 
 Test { [[
 var int i;
-loop i in [0->10000[ do      // 6000 already fails
+loop i in [0->50000[ do      // 35000 already fails
     par/or do with end
 end
 escape 1;
@@ -53504,7 +53504,7 @@ code/await Ff (none) -> NEVER do
     await FOREVER;
 end
 var usize i;
-loop i in [0->10000[ do      // 5000 already fails
+loop i in [0->100000[ do      // never fails [was (5000 already fails)]
     spawn Ff();
 end
 escape 1;
@@ -53546,19 +53546,6 @@ Test { [[
 var int i;
 loop i in [0->100000[ do
     par/or do with end
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-code/await Ff (none) -> NEVER do
-    await FOREVER;
-end
-var usize i;
-loop i in [0->100000[ do
-    spawn Ff();
 end
 escape 1;
 ]],
