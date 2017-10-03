@@ -3,7 +3,7 @@ PROPS_ = {}
 local sync = {
     Await_Forever=true, Await_Ext=true, Await_Int=true, Await_Wclock=true,
     Abs_Spawn=true,
-    Emit_Int=true,
+    Emit_Evt=true,
     Every=true, Finalize=true, Pause_If=true,
     Par=true, Par_And=true, Par_Or=true, Watching=true,
     Async=true, Async_Thread=true,
@@ -49,6 +49,8 @@ PROPS_.F = {
                                 return -- ok: vector[] inside every
                             end
                         end
+                    elseif me.tag=='Emit_Evt' or me.tag=='Throw' then
+                        return -- ok
                     end
                 elseif par.tag == 'Code' then
                     local mods = unpack(par)
@@ -57,8 +59,12 @@ PROPS_.F = {
                     elseif me.tag == 'Finalize' then
                         return -- ok (this an empty finalizer for sure)
                     end
-                elseif par.tag=='Finalize' and AST.get(par,'Finalize',3,'Par')==me then
-                    return -- ok: finalize par fin/pse/res
+                elseif par.tag=='Finalize' then
+                    if AST.get(par,'Finalize',3,'Par')==me then
+                        return -- ok: finalize par fin/pse/res
+                    elseif me.tag=='Emit_Evt' or me.tag=='Throw' then
+                        return -- ok
+                    end
                 end
 
                 ASR(false, me,
