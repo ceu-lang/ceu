@@ -302,10 +302,7 @@ escape v1 + v2;
     run = 72,
 }
 
--- var/nohold int x;
--- var/dynamic int x;
--------------------------------------------------------------------------------
-
+-- BUG: #(awake dying trails)
 Test { [[
 event none f;
 watching f do
@@ -316,69 +313,8 @@ watching f do
         end
         emit f;
     end
+    {ceu_sys_assert(0,"bug found");}
 end
-await 1s;
-escape 10;
-]],
-    run = {['~>1s']=10},
-    _opts = { ceu_features_exception='true' },
-}
-do return end
---]=====]
-Test { [[
-event none f;
-watching f do
-    event none e;
-    watching e do
-        do finalize with
-            emit f;
-        end
-        emit e;
-    end
-    {ceu_sys_assert(0,"bug found-a");}
-end
-await 1s;
-escape 10;
-]],
-    run = {['~>1s']=10},
-    _opts = { ceu_features_exception='true' },
-}
-
-Test { [[
-par/or do
-    var Exception? e;
-    catch e do
-        do finalize with
-            var Exception e_ = val Exception(_);
-            throw e_;
-        end
-        var Exception e_ = val Exception(_);
-        throw e_;
-    end
-with
-end
-escape 10;
-]],
-    run = '6] -> runtime error: double catch',
-    _opts = { ceu_features_trace='true', ceu_features_exception='true' },
-}
-
-Test { [[
-data Exception.Sub;
-var Exception? f;
-catch f do
-    var Exception.Sub? e;
-    catch e do
-        do finalize with
-            var Exception f_ = val Exception(_);
-            throw f_;
-        end
-        var Exception.Sub e_ = val Exception.Sub(_);
-        throw e_;
-    end
-    //{printf("out\n");}
-end
-//{printf("OUT\n");}
 await 1s;
 escape 10;
 ]],
@@ -399,6 +335,7 @@ catch f do
         var Exception e_ = val Exception(_);
         throw e_;
     end
+    {ceu_sys_assert(0,"bug found");}
 end
 await 1s;
 escape 10;
@@ -407,39 +344,12 @@ escape 10;
     _opts = { ceu_features_exception='true' },
 }
 
-Test { [[
-var int ret = 0;
+-- var/nohold int x;
+-- var/dynamic int x;
+-------------------------------------------------------------------------------
 
-code/await Gg (none) -> none
-    throws Exception
-do
-    var Exception e_ = val Exception(_);
-    throw e_;
-end
-
-code/await Ff (var bool go) -> none do
-    var Exception? e;
-    catch e do
-        if go then
-            await Gg();
-        else
-            await FOREVER;
-        end
-    end
-    outer.ret = outer.ret + 1;
-end
-
-spawn Ff(false);
-spawn Ff(true);
-
-escape ret;
-
-]],
-    run = 1,
-    _opts = { ceu_features_exception='true' },
-}
-
---do return end -- OK
+do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -44507,6 +44417,114 @@ escape 1;
     --run = '2: \'=\' expected near \'$\'',
     _opts = { ceu_features_exception='true', ceu_features_trace='true', ceu_features_lua='true' },
     wrn = true,
+}
+
+Test { [=[
+var Exception.Lua? e;
+catch e do
+    [[ error'1' ]]
+    {ceu_sys_assert(0, "bug");}
+    [[ error'2' ]]
+end
+escape 1;
+]=],
+    _opts = { ceu_features_lua='true', ceu_features_trace='true', ceu_features_exception='true' },
+    run = 1,
+    wrn = true,
+}
+
+Test { [[
+event none f;
+watching f do
+    event none e;
+    watching e do
+        do finalize with
+            emit f;
+        end
+        emit e;
+    end
+    {ceu_sys_assert(0,"bug found-a");}
+end
+await 1s;
+escape 10;
+]],
+    run = {['~>1s']=10},
+    _opts = { ceu_features_exception='true' },
+}
+
+Test { [[
+par/or do
+    var Exception? e;
+    catch e do
+        do finalize with
+            var Exception e_ = val Exception(_);
+            throw e_;
+        end
+        var Exception e_ = val Exception(_);
+        throw e_;
+    end
+with
+end
+escape 10;
+]],
+    run = '6] -> runtime error: double catch',
+    _opts = { ceu_features_trace='true', ceu_features_exception='true' },
+}
+
+Test { [[
+data Exception.Sub;
+var Exception? f;
+catch f do
+    var Exception.Sub? e;
+    catch e do
+        do finalize with
+            var Exception f_ = val Exception(_);
+            throw f_;
+        end
+        var Exception.Sub e_ = val Exception.Sub(_);
+        throw e_;
+    end
+    {ceu_sys_assert(0,"bug found-a");}
+    //{printf("out\n");}
+end
+//{printf("OUT\n");}
+await 1s;
+escape 10;
+]],
+    run = {['~>1s']=10},
+    _opts = { ceu_features_exception='true' },
+}
+
+Test { [[
+var int ret = 0;
+
+code/await Gg (none) -> none
+    throws Exception
+do
+    var Exception e_ = val Exception(_);
+    throw e_;
+end
+
+code/await Ff (var bool go) -> none do
+    var Exception? e;
+    catch e do
+        if go then
+            await Gg();
+        else
+            await FOREVER;
+        end
+    end
+    outer.ret = outer.ret + 1;
+end
+
+spawn Ff(false);
+spawn Ff(true);
+
+escape ret;
+
+]],
+    run = 1,
+    _opts = { ceu_features_exception='true' },
 }
 
 --<<< EXCEPTIONS / THROW / CATCH

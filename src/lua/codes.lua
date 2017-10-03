@@ -1802,7 +1802,7 @@ _CEU_LUA_ERR_]]..me.n..[[:;
             me.code_after = me.code_after .. [[
         tceu_data_Exception__dot__Lua __ceu_e = { CEU_DATA_Exception__dot__Lua, (char*)lua_tostring(]]..LUA(me)..[[,-1) };
 ]]..LINE_DIRECTIVE(me)..[[
-        ceu_throw(]]..CATCHES(me)..[[, (tceu_data_Exception*)&__ceu_e, sizeof(tceu_data_Exception__dot__Lua));
+        return ceu_throw(]]..CATCHES(me)..[[, (tceu_data_Exception*)&__ceu_e, sizeof(tceu_data_Exception__dot__Lua));
 ]]
         else
             me.code_after = me.code_after .. [[
