@@ -730,9 +730,16 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].pse_paused = 0;
 
     Throw = function (me)
         local e = unpack(me)
-        LINE(me, [[
+        if AST.par(me,'Async_Thread') then
+            WRN(false, me, 'exception inside `async/thread`')
+            LINE(me, [[
+ceu_assert(0, ]]..V(e)..[[.message);
+]])
+        else
+            LINE(me, [[
 return ceu_throw(]]..CATCHES(me)..[[, (tceu_data_Exception*)&]]..V(e)..[[, sizeof(]]..TYPES.toc(e.info.tp)..[[));
 ]])
+        end
     end,
 
     ---------------------------------------------------------------------------
@@ -1798,7 +1805,13 @@ lua_close(]]..CUR('__lua_'..n)..[[);
 /* ERROR */
 _CEU_LUA_ERR_]]..me.n..[[:;
 ]]
-        if CEU.opts.ceu_features_exception then
+
+        local in_thread = AST.par(me,'Async_Thread')
+        if in_thread then
+            WRN(false, me, 'exception inside `async/thread`')
+        end
+
+        if CEU.opts.ceu_features_exception and (not in_thread) then
             me.code_after = me.code_after .. [[
         tceu_data_Exception__dot__Lua __ceu_e = { CEU_DATA_Exception__dot__Lua, (char*)lua_tostring(]]..LUA(me)..[[,-1) };
 ]]..LINE_DIRECTIVE(me)..[[
