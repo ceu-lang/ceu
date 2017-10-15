@@ -116,3 +116,13 @@ function ASR_WRN_PASS (v)
         return pass
     end
 end
+
+function ASR_WRN_PASS_MIN (f1, f2)
+    if f1==pass or f2==pass then
+        return pass
+    elseif f1==WRN or f2==WRN then
+        return WRN
+    else
+        return ASR
+    end
+end

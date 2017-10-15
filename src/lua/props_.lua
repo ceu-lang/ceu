@@ -197,15 +197,37 @@ PROPS_.F = {
                 end
             elseif node.tag == 'Code' then
                 local _,_,throws = unpack(node)
-                ASR(throws, me, 'uncaught exception')
-                for _, v2 in ipairs(throws) do
-                    if TYPES.is_equal(TYPES.new(me,v2.dcl.id), tp) then
-                        return
+                local f = ASR
+                if CEU.opts.ceu_err_uncaught_exception then
+                    f = ASR_WRN_PASS(CEU.opts.ceu_err_uncaught_exception)
+                end
+                if TYPES.check(tp,'Exception.Lua') and CEU.opts.ceu_err_uncaught_exception_lua then
+                    local f_ = ASR_WRN_PASS(CEU.opts.ceu_err_uncaught_exception_lua)
+                    f = ASR_WRN_PASS_MIN(f, f_)
+                end
+                f(throws, me, 'uncaught exception')
+                if throws then
+                    for _, v2 in ipairs(throws) do
+                        if TYPES.is_equal(TYPES.new(me,v2.dcl.id), tp) then
+                            return
+                        end
                     end
                 end
             end
         end
-        WRN(false, me, 'uncaught exception')
+
+        local f = WRN
+        if CEU.opts.ceu_err_uncaught_exception_main then
+            f = ASR_WRN_PASS(CEU.opts.ceu_err_uncaught_exception_main)
+        end
+        if CEU.opts.ceu_err_uncaught_exception then
+            f = ASR_WRN_PASS(CEU.opts.ceu_err_uncaught_exception)
+        end
+        if TYPES.check(tp,'Exception.Lua') and CEU.opts.ceu_err_uncaught_exception_lua then
+            local f_ = ASR_WRN_PASS(CEU.opts.ceu_err_uncaught_exception_lua)
+            f = ASR_WRN_PASS_MIN(f, f_)
+        end
+        f(false, me, 'uncaught exception')
     end,
     Abs_Cons = function (me)
         local _,ID_abs = unpack(me)

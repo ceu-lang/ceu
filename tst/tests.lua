@@ -44574,6 +44574,97 @@ escape ret;
     _opts = { ceu_features_exception='true' },
 }
 
+Test { [[
+var Exception e = val Exception(_);
+throw e;
+]],
+    run = 'Aborted',
+    _opts = { ceu_features_exception='true', ceu_err_uncaught_exception_main='warning' },
+    wrn = true,
+}
+Test { [[
+var Exception e = val Exception(_);
+throw e;
+]],
+    run = 'Aborted',
+    _opts = { ceu_features_exception='true', ceu_err_uncaught_exception_main='pass' },
+}
+Test { [[
+var Exception e = val Exception(_);
+throw e;
+]],
+    run = 'Aborted',
+    _opts = { ceu_features_exception='true', ceu_err_uncaught_exception_main='error' },
+    props_ = 'line 2 : uncaught exception',
+    wrn = true,
+}
+
+Test { [[
+code/await Ff (none) -> none do
+    var Exception e = val Exception(_);
+    throw e;
+end
+await Ff();
+escape 0;
+]],
+    run = 1,
+    _opts = { ceu_features_exception='true', ceu_err_uncaught_exception_main='pass' },
+    props_ = 'line 3 : uncaught exception',
+}
+Test { [[
+code/await Ff (none) -> none do
+    var Exception e = val Exception(_);
+    throw e;
+end
+await Ff();
+escape 0;
+]],
+    run = 'Aborted',
+    _opts = { ceu_features_exception='true', ceu_err_uncaught_exception='pass' },
+}
+Test { [[
+code/await Ff (none) -> none do
+    var Exception e = val Exception(_);
+    throw e;
+end
+await Ff();
+escape 0;
+]],
+    run = '3] -> runtime error: unspecified message',
+    _opts = { ceu_features_trace='true', ceu_features_exception='true', ceu_err_uncaught_exception='pass' },
+}
+
+Test { [[
+code/await Ff (none) -> none do
+    var Exception.Lua e = val Exception.Lua(_);
+    throw e;
+end
+await Ff();
+escape 0;
+]],
+    run = 1,
+    props_ = 'line 3 : uncaught exception',
+    _opts = { ceu_features_trace='true', ceu_features_exception='true', ceu_features_lua='true' },
+}
+Test { [[
+code/await Ff (none) -> none do
+    var Exception.Lua e = val Exception.Lua("lua");
+    throw e;
+end
+await Ff();
+escape 0;
+]],
+    run = '3] -> runtime error: lua',
+    _opts = { ceu_features_trace='true', ceu_features_exception='true', ceu_features_lua='true', ceu_err_uncaught_exception_lua='pass' },
+}
+Test { [[
+var Exception.Lua e = val Exception.Lua("lua");
+throw e;
+]],
+    run = '2] -> runtime error: lua',
+    _opts = { ceu_features_trace='true', ceu_features_exception='true', ceu_features_lua='true', ceu_err_uncaught_exception_lua='pass' },
+}
+
 --<<< EXCEPTIONS / THROW / CATCH
 
 -->>> LUA
