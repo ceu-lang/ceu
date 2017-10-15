@@ -348,6 +348,53 @@ escape 10;
 -- var/dynamic int x;
 -------------------------------------------------------------------------------
 
+--[==[
+flag para dar erro c/ Lua Exception
+
+-- reuse Exception that failed and was once set, now it continues set
+[[ THIS.publication.payload = 'oi' ]]
+var Exception.Freechains.Malformed? e;
+catch e do
+    await Publication_Check();
+end
+_ceu_assert(e?, "bug found");
+
+[[ THIS.publication.payload = '' ]]
+//var Exception.Freechains.Malformed? f;
+catch e do
+    await Publication_Check();
+end
+_ceu_assert(not e?, "bug found");
+
+Test { [[
+escape sizeof(32);
+]],
+    run = 1,
+}
+
+Test { [=[
+await async/thread do
+    var Exception e = val Exception(_);
+    throw e;
+end
+escape 1;
+]=],
+    _opts = { ceu_features_exception='true', ceu_features_thread='true', ceu_features_trace='true', },
+    wrn = true,
+    run = '3] -> runtime error: unspecified message',
+}
+Test { [=[
+await async/thread do
+    [[ error 'oi' ]]
+end
+escape 1;
+]=],
+    _opts = { ceu_features_exception='true', ceu_features_thread='true', ceu_features_trace='true', ceu_features_lua='true' },
+    wrn = true,
+    run = '2] -> runtime error: [string " error \'oi\' "]:1: oi',
+}
+]==]
+
 do return end -- OK
 --]=====]
 
