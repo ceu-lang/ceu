@@ -30159,6 +30159,22 @@ escape v1[0]+v1[1]+v1[2];
 }
 
 Test { [[
+var[9] int v1 = [1,2,3];
+var[9] int v2 = [7,8,9];
+v1 = v1 .. [4,5,6] .. v2;
+var int ret = 0;
+var int i;
+loop i in [0 -> 9[ do
+    ret = ret + v1[i];
+    //{printf("%d = %d\n", @i, @v1[i]);}
+end
+escape ret;
+]],
+    run = 45;
+    _opts = { ceu_features_trace='true' },
+}
+
+Test { [[
 var[] int v1 = [1,2,3];
 var[] int v2 = [7,8,9];
 v1 = v1 .. [4,5,6] .. v2;

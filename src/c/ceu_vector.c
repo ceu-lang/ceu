@@ -12,10 +12,13 @@ typedef struct {
     byte* buf;
 } tceu_vector;
 
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
+
 #define ceu_vector_idx(vec,idx)            ((vec)->is_ring ? (((vec)->ini + idx) % (vec)->max) : idx)
 #define ceu_vector_buf_get(vec,idx)        (&(vec)->buf[ceu_vector_idx(vec,idx)*(vec)->unit])
 #define ceu_vector_buf_set(vec,idx,buf,nu) ceu_vector_buf_set_ex(vec,idx,buf,nu,((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__}))
-#define ceu_vector_concat(dst,idx,src)     ceu_vector_concat_ex(dst,idx,src,((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__}))
+#define ceu_vector_copy(dst,dst_i,src,src_i,n) ceu_vector_copy_ex(dst,dst_i,src,src_i,n,((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__}))
 
 #define ceu_vector_setmax(vec,len,freeze)  ceu_vector_setmax_ex(vec,len,freeze,((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__}))
 #define ceu_vector_setlen_could(vec,len,grow) ceu_vector_setlen_could_ex(vec,len,grow,((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__}))
@@ -29,7 +32,7 @@ int   ceu_vector_setlen_could_ex (tceu_vector* vector, usize len, bool grow, tce
 void  ceu_vector_setlen_ex       (tceu_vector* vector, usize len, bool grow, tceu_trace trace);
 byte* ceu_vector_geti_ex         (tceu_vector* vector, usize idx, tceu_trace trace);
 void  ceu_vector_buf_set_ex      (tceu_vector* vector, usize idx, byte* buf, usize nu, tceu_trace trace);
-void  ceu_vector_concat_ex       (tceu_vector* dst, usize idx, tceu_vector* src, tceu_trace trace);
+void  ceu_vector_copy_ex         (tceu_vector* dst, usize dst_i, tceu_vector* src, usize src_i, usize n, tceu_trace trace);
 
 #if 0
 char* ceu_vector_tochar (tceu_vector* vector);
@@ -166,25 +169,45 @@ void ceu_vector_buf_set_ex (tceu_vector* vector, usize idx, byte* buf, usize nu,
     }
 }
 
-void ceu_vector_concat_ex (tceu_vector* dst, usize idx, tceu_vector* src, tceu_trace trace)
+void ceu_vector_copy_ex (tceu_vector* dst, usize dst_i, tceu_vector* src, usize src_i, usize n, tceu_trace trace)
 {
-    usize dst_len = dst->len;
-    ceu_vector_setlen_ex(dst, dst->len+src->len, 1, trace);
-    if (src->is_ring && src->len>0 && ceu_vector_idx(src,src->len)<=ceu_vector_idx(src,0)) {
-        usize n = (src->max - src->ini);
-        ceu_vector_buf_set_ex(dst, idx,   ceu_vector_buf_get(src,0), n*src->unit,            trace);
-        ceu_vector_buf_set_ex(dst, idx+n, ceu_vector_buf_get(src,n), (src->len-n)*src->unit, trace);
-    } else {
-        if (dst->is_ring) {
-            usize n = (dst->max - ceu_vector_idx(dst,dst_len));
-            if (src->len > n) {
-                ceu_vector_buf_set_ex(dst, idx,   ceu_vector_buf_get(src,0), (n*src->unit), trace);
-                ceu_vector_buf_set_ex(dst, idx+n, ceu_vector_buf_get(src,n), ((src->len-n)*src->unit), trace);
-            } else {
-                ceu_vector_buf_set_ex(dst, idx, ceu_vector_buf_get(src,0), (src->len*src->unit), trace);
-            }
-        } else {
-            ceu_vector_buf_set_ex(dst, idx, ceu_vector_buf_get(src,0), (src->len*src->unit), trace);
-        }
+    usize unit = dst->unit;
+    ceu_assert_ex((src->unit == dst->unit), "incompatible vectors", trace);
+
+    ceu_assert_ex((src->len >= src_i+n), "access out of bounds", trace);
+    ceu_vector_setlen_ex(dst, MAX(dst->len,dst_i+n), 1, trace);
+
+    usize dif_src = MIN(n, (src->max - ceu_vector_idx(src,src_i)));
+    usize dif_dst = MIN(n, (dst->max - ceu_vector_idx(dst,dst_i)));
+    usize dif = MIN(dif_src, dif_dst);
+
+    memcpy(ceu_vector_buf_get(dst,dst_i), ceu_vector_buf_get(src,src_i), dif*unit);
+
+    dst_i += dif;
+    src_i += dif;
+    n -= dif;
+
+    if (n == 0) {
+        return;
     }
+
+    if (dif_src > dif_dst) {
+        dif = MIN(n, (src->max - ceu_vector_idx(src,src_i)));
+        memcpy(ceu_vector_buf_get(dst,dst_i), ceu_vector_buf_get(src,src_i), dif*unit);
+        dst_i += dif;
+        src_i += dif;
+        n -= dif;
+    } else if (dif_dst > dif_src) {
+        dif = MIN(n, (dst->max - ceu_vector_idx(dst,src_i)));
+        memcpy(ceu_vector_buf_get(dst,dst_i), ceu_vector_buf_get(src,src_i), dif*unit);
+        dst_i += dif;
+        src_i += dif;
+        n -= dif;
+    }
+
+    if (n == 0) {
+        return;
+    }
+
+    memcpy(ceu_vector_buf_get(dst,dst_i), ceu_vector_buf_get(src,src_i), n);
 }

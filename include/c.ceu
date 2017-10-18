@@ -29,6 +29,7 @@ native/pure
 
 native/nohold
     _ceu_vector_buf_set,
+    _ceu_vector_copy,
     _ceu_vector_setlen,
     _fflush,
     _fprintf,
