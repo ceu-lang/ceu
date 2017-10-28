@@ -196,7 +196,10 @@ PROPS_.F = {
                     return
                 end
             elseif node.tag == 'Code' then
-                local _,_,throws = unpack(node)
+                local mods,_,throws = unpack(node)
+                if mods.tight then
+                    return  -- error anyways: "invalid `throw` : unexpected enclosing `code`"
+                end
                 local f = ASR
                 if CEU.opts.ceu_err_uncaught_exception then
                     f = ASR_WRN_PASS(CEU.opts.ceu_err_uncaught_exception)

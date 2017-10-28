@@ -137,9 +137,6 @@ F = {
 #endif
 ]]
         end
-        if CEU.opts.ceu_features_exception then
-            args = args..','..CATCHES(me)
-        end
         if CEU.opts.ceu_features_lua then
             args = args..','..LUA(me)
         end

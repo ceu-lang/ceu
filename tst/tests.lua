@@ -44681,6 +44681,41 @@ throw e;
     _opts = { ceu_features_trace='true', ceu_features_exception='true', ceu_features_lua='true', ceu_err_uncaught_exception_lua='pass' },
 }
 
+Test { [[
+code/tight Ff (none) -> none do
+end
+call Ff();
+escape 1;
+]],
+    run = 1,
+    _opts = { ceu_features_exception='true' },
+}
+
+Test { [[
+code/tight Ff (none) -> none
+    throws Exception
+do
+end
+call Ff();
+escape 0;
+]],
+    parser = 'line 1 : after `none` : expected type modifier or `do` or `;`',
+    _opts = { ceu_features_exception='true' },
+}
+
+Test { [[
+code/tight Ff (none) -> none
+do
+    var Exception e = _;
+    throw e;
+end
+call Ff();
+escape 0;
+]],
+    props_ = 'line 4 : invalid `throw` : unexpected enclosing `code`',
+    _opts = { ceu_features_exception='true' },
+}
+
 --<<< EXCEPTIONS / THROW / CATCH
 
 -->>> LUA
