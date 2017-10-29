@@ -8,7 +8,7 @@
   
   
   
-  <title>Céu v0.20 - Reference Manual</title>
+  <title>Céu v0.30 - Reference Manual</title>
   
 
   <link rel="shortcut icon" href="./img/favicon.ico">
@@ -44,7 +44,7 @@
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
       <div class="wy-side-nav-search">
-        <a href="." class="icon icon-home"> Céu v0.20 - Reference Manual</a>
+        <a href="." class="icon icon-home"> Céu v0.30 - Reference Manual</a>
         <div role="search">
   <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -147,7 +147,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href=".">Céu v0.20 - Reference Manual</a>
+        <a href=".">Céu v0.30 - Reference Manual</a>
       </nav>
 
       
@@ -170,36 +170,42 @@
             <div class="section">
               
                 <h1 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h1>
-<p>Céu provides <em>Structured Synchronous Reactive Programming</em>, extending classical
-structured programming with two main functionalities:</p>
+<p>Céu provides <em>Structured Synchronous Reactive Programming</em> with the following
+general characteristics:</p>
 <ul>
-<li>Event Handling:<ul>
-<li>An <code>await</code> statement to suspend a line of execution and wait for an input
-  event from the environment.</li>
-<li>An <code>emit</code> statement to signal an output event back to the environment.</li>
+<li><em>Reactive</em>:    code executes in reactions to events.</li>
+<li><em>Structured</em>:  code uses structured control-flow mechanisms, such as <code>spawn</code>
+                 and <code>await</code> (to create and suspend an activity).</li>
+<li><em>Synchronous</em>: event reactions never overlap and run atomically and to
+                 completion on each activity.
+                 There is no implicit preemption or real parallelism, resulting
+                 in deterministic execution.</li>
 </ul>
-</li>
-<li>Concurrency:<ul>
-<li>A set of parallel constructs to compose concurrent lines of execution.</li>
-</ul>
-</li>
-</ul>
+<!--
+- Event Handling:
+    - An `await` statement to suspend a line of execution and wait for an input
+      event from the environment.
+    - An `emit` statement to signal an output event back to the environment.
+- Concurrency:
+    - A set of parallel constructs to compose concurrent lines of execution.
+-->
+
 <p>The lines of execution in Céu, known as <em>trails</em>, react all together to input
 events one after another, in discrete steps.
-An input event is broadcast to all active trails, which share the event as
-their unique and global time reference.</p>
-<p>The program that follows blinks a LED every second and terminates on a button
-press:</p>
-<pre><code class="ceu">input  void BUTTON;
-output bool LED;
+An input event is broadcast to all active trails, which share the event as an
+unique and global time reference.</p>
+<p>The example in Céu that follows blinks a LED every second and terminates on a
+button press:</p>
+<pre><code class="ceu">input  none   BUTTON;
+output on/off LED;
 par/or do
     await BUTTON;
 with
     loop do
         await 1s;
-        emit LED(true);
+        emit LED(on);
         await 1s;
-        emit LED(false);
+        emit LED(off);
     end
 end
 </code></pre>
@@ -217,14 +223,14 @@ require a garbage collector.</p>
 (e.g., file handles).
 Programs can make native calls seamlessly while avoiding common pitfalls such
 as memory leaks and dangling pointers.</p>
-<p>Céu is <a href="./../license/#license">free software</a>.</p>
+<p>Céu is <a href="./license/#license">free software</a>.</p>
 <h2 id="environments">Environments<a class="headerlink" href="#environments" title="Permanent link">&para;</a></h2>
 <p>As a reactive language, Céu depends on an external host platform, known as an
 <em>environment</em>, which exposes <code>input</code> and <code>output</code> events programs can use.</p>
 <p>An environment senses the world and broadcasts <code>input</code> events to programs.
 It also intercepts programs signalling <code>output</code> events to actuate in the
 world:</p>
-<p><img alt="" src="./overview/environment.png" /></p>
+<p><img alt="An environment works as a bridge between the program and the real world." src="./overview/environment.png" /></p>
 <p>As examples of typical environments, an embedded system may provide button
 input and LED output, and a video game engine may provide keyboard input and
 video output.</p>
@@ -263,32 +269,35 @@ event), Céu schedules them in the order they appear in the program text.
 This policy is arbitrary, but provides a priority scheme for trails, and also
 ensures deterministic and reproducible execution for programs.
 At any time, at most one trail is executing.</p>
-<p>The program and diagram below illustrate the behavior of the scheduler of Céu:</p>
-<pre><code class="ceu"> 1:  input void A, B, C;  // A, B, and C are input events
- 2:  par/and do
- 3:      // trail 1
- 4:      &lt;...&gt;            // &lt;...&gt; represents non-awaiting statements
- 5:      await A;
- 6:      &lt;...&gt;
- 7:  with
- 8:      // trail 2
- 9:      &lt;...&gt;
-10:      await B;
+<p>The program and diagram that follow illustrate the behavior of the scheduler of
+Céu:</p>
+<pre><code class="ceu"> 1:  input none A;
+ 2:  input none B;
+ 3:  input none C;
+ 4:  par/and do
+ 5:      // trail 1
+ 6:      &lt;...&gt;          // a `&lt;...&gt;` represents non-awaiting statements
+ 7:      await A;       // (e.g., assignments and native calls)
+ 8:      &lt;...&gt;
+ 9:  with
+10:      // trail 2
 11:      &lt;...&gt;
-12:  with
-13:      // trail 3
-14:      &lt;...&gt;
-15:      await A;
+12:      await B;
+13:      &lt;...&gt;
+14:  with
+15:      // trail 3
 16:      &lt;...&gt;
-17:      await B;
-18:      par/and do
-19:          // trail 3
-20:          &lt;...&gt;
-21:      with
-22:          // trail 4
-23:          &lt;...&gt;
-24:      end
-25:  end
+17:      await A;
+18:      &lt;...&gt;
+19:      await B;
+20:      par/and do
+21:          // trail 3
+22:          &lt;...&gt;
+23:      with
+24:          // trail 4
+25:          &lt;...&gt;
+26:      end
+27:  end
 </code></pre>
 
 <p><img alt="" src="./overview/reaction.png" /></p>
@@ -296,20 +305,20 @@ At any time, at most one trail is executing.</p>
 Respecting the lexical order of declaration for the trails, they are scheduled
 as follows (<em>t0</em> in the diagram):</p>
 <ul>
-<li><em>trail-1</em> executes up to the <code>await A</code> (line 5);</li>
-<li><em>trail-2</em> executes up to the <code>await B</code> (line 10);</li>
-<li><em>trail-3</em> executes up to the <code>await A</code> (line 15).</li>
+<li><em>trail-1</em> executes up to the <code>await A</code> (line 7);</li>
+<li><em>trail-2</em> executes up to the <code>await B</code> (line 12);</li>
+<li><em>trail-3</em> executes up to the <code>await A</code> (line 17).</li>
 </ul>
 <p>As no other trails are pending, the reaction chain terminates and the scheduler 
-remains idle until the event <code>A</code> occurs (<em>t1</em> in the diagram):</p>
+remains idle until a new event occurs (<em>t1=A</em> in the diagram):</p>
 <ul>
-<li><em>trail-1</em> awakes, executes and terminates (line 6);</li>
+<li><em>trail-1</em> awakes, executes and terminates (line 8);</li>
 <li><em>trail-2</em> remains suspended, as it is not awaiting <code>A</code>.</li>
-<li><em>trail-3</em> executes up to <code>await B</code> (line 17).</li>
+<li><em>trail-3</em> executes up to <code>await B</code> (line 19).</li>
 </ul>
-<p>During the reaction <em>t1</em>, new instances of events <code>A</code>, <code>B</code>, and <code>C</code> occur and
-are enqueued to be handled in the reactions in sequence.
-As <code>A</code> happened first, it is used in the next reaction.
+<p>Note that during the reaction <em>t1</em>, new instances of events <code>A</code>, <code>B</code>, and <code>C</code>
+occur which are all enqueued to be handled in the reactions in sequence.
+As <code>A</code> happened first, it becomes the next reaction.
 However, no trails are awaiting it, so an empty reaction chain takes place 
 (<em>t2</em> in the diagram).
 The next reaction dequeues the event <code>B</code> (<em>t3</em> in the diagram):</p>
@@ -341,24 +350,24 @@ rejoin and proceed to the statement in sequence:</p>
 </ol>
 <p>As mentioned in the introduction and emphasized in the execution model, trails
 in parallel do not execute with real parallelism.
-Therefore, parallel compositions support <em>awaiting in parallel</em>, rather than
-<em>executing in parallel</em>.</p>
+Therefore, it is important to note that parallel compositions provide
+<em>awaiting in parallel</em>, rather than <em>executing in parallel</em> (see
+<a href="./statements/#thread">Asynchronous Threads</a> for real parallelism support).
 <!--
-The termination of a trail inside a `par/or` aborts the other trails in 
+The termination of a trail inside a <code>par/or</code> aborts the other trails in 
 parallel which are necessarily idle
-(see [`rule 2` for external reactions](#synchronous-execution-model)).
+(see <a href="#synchronous-execution-model">klzzwxh:0034 for external reactions</a>).
 Before being aborted, a trail has a last opportunity to execute active 
-[finalization statements](#TODO).
--->
-
+<a href="#TODO">finalization statements</a>.
+--></p>
 <h2 id="bounded-execution">Bounded Execution<a class="headerlink" href="#bounded-execution" title="Permanent link">&para;</a></h2>
 <p>Reaction chains must run in bounded time to guarantee that programs are 
 responsive and can handle incoming input events.
 For this reason, Céu requires every path inside the body of a <code>loop</code> statement
 to contain at least one <code>await</code> or <code>break</code> statement.
-This prevents <em>tight loops</em>, i.e., unbounded loops that do not await.</p>
-<p>In the example below, the true branch of the <code>if</code> may never execute, resulting
-in a tight loop when the condition is false:</p>
+This prevents <em>tight loops</em>, which are unbounded loops that do not await.</p>
+<p>In the example that follow, if the condition is false, the true branch of the
+<code>if</code> never executes, resulting in a tight loop:</p>
 <pre><code class="ceu">loop do
     if &lt;cond&gt; then
         break;
@@ -367,9 +376,9 @@ end
 </code></pre>
 
 <p>Céu warns about tight loops in programs at compile time.
-For time-consuming algorithms that require unrestricted loops (e.g., 
+For computationally-intensive algorithms that require unrestricted loops (e.g.,
 cryptography, image processing), Céu provides
-<a href="./../statements/#asynchronous-execution">Asynchronous Execution</a>.</p>
+<a href="./statements/#asynchronous-execution">Asynchronous Execution</a>.</p>
 <h2 id="deterministic-execution">Deterministic Execution<a class="headerlink" href="#deterministic-execution" title="Permanent link">&para;</a></h2>
 <p><code>TODO (shared memory + deterministic scheduler + optional static analysis)</code></p>
 <h2 id="internal-reactions">Internal Reactions<a class="headerlink" href="#internal-reactions" title="Permanent link">&para;</a></h2>
@@ -392,25 +401,34 @@ runtime stack:</p>
 <li>The top of stack is popped and the last emitting trail resumes execution
     from its continuation.</li>
 </ol>
-<p>Example:</p>
+<p>The program and follow illustrates the behavior of internal reactions in Céu:</p>
 <pre><code class="ceu">1:  par/and do      // trail 1
 2:      await e;
 3:      emit f;
 4:  with            // trail 2
 5:      await f;
 6:  with            // trail 3
-8:      emit e;
-9:  end
+7:      emit e;
+8:  end
 </code></pre>
 
-<p>The <code>emit e</code> in <em>trail-3</em> (line 7) starts an internal reaction that awakes the 
-<code>await e</code> in <em>trail-1</em> (line 2).
-Then, the <code>emit f</code> (line 3) starts another internal reaction that awakes the 
-<code>await f</code> in <em>trail-2</em> (line 5).
-<em>Trail-2</em> terminates and the <code>emit f</code> resumes in <em>trail-1</em>.
-<em>Trail-1</em> terminates and the <code>emit e</code> resumes in <em>trail-3</em>.
-<em>Trail-3</em> terminates.
-Finally, the <code>par/and</code> rejoins and the program terminates.</p>
+<p>The program starts in the boot reaction with an empty stack and forks into the
+three trails.
+Respecting the lexical order, the first two trails <code>await</code> and the third trail
+executes:</p>
+<ul>
+<li>The <code>emit e</code> in <em>trail-3</em> (line 7) starts an internal reaction (<code>stack=[7]</code>).</li>
+<li>The <code>await e</code> in <em>trail-1</em> awakes (line 2) and then the <code>emit f</code> (line 3)
+  starts another internal reaction (<code>stack=[7,3]</code>).</li>
+<li>The <code>await f</code> in <em>trail-2</em> awakes and terminates the trail (line 5).
+  Since no other trails are awaiting <code>f</code>, the current internal reaction
+  terminates, resuming and popping the top of the stack (<code>stack=[7]</code>).</li>
+<li>The <code>emit f</code> resumes in <em>trail-1</em> and terminates the trail (line 3).
+  The current internal reaction terminates, resuming and popping the top of the
+  stack (<code>stack=[]</code>).</li>
+<li>The <code>emit e</code> resumes in <em>trail-3</em> and terminates the trail (line 7).
+  Finally, the <code>par/and</code> rejoins and the program terminates.</li>
+</ul>
               
             </div>
           </div>
@@ -456,5 +474,5 @@ Finally, the <code>par/and</code> rejoins and the program terminates.</p>
 
 <!--
 MkDocs version : 0.15.3
-Build Date UTC : 2017-08-04 10:10:35.224627
+Build Date UTC : 2017-10-29 11:27:32
 -->

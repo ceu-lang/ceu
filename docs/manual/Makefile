@@ -1,3 +1,9 @@
+# requires `mkdocs`, `markdown-include` extension, `mkdocs-pandoc`, and `pdflatex`:
+# $ sudo apt install mkdocs
+# $ pip3 install markdown-include
+# $ pip3 install mkdocs-pandoc
+# $ sudo apt install texlive-latex-base texlive-fonts-recommended texlive-latex-recommended texlive-latex-extra
+
 all:
 	rm -Rf out/
 	mkdir -p out/v0.8/

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  
+  <title>Lexical Rules - Céu v0.20 - Reference Manual</title>
+  
+
+  <link rel="shortcut icon" href="../img/favicon.ico">
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../css/highlight.css">
+  <link href="../extra.css" rel="stylesheet">
+
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Lexical Rules";
+    var mkdocs_page_input_path = "lexical_rules/index.md";
+    var mkdocs_page_url = "/lexical_rules/";
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js"></script>
+  <script src="../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../js/highlight.pack.js"></script>
+  <script src="../js/theme.js"></script> 
+
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Céu v0.20 - Reference Manual</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        <ul class="current">
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="..">Overview</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Lexical Rules</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#lexical-rules">Lexical Rules</a></li>
+                
+                    <li><a class="toctree-l4" href="#keywords">Keywords</a></li>
+                
+                    <li><a class="toctree-l4" href="#identifiers">Identifiers</a></li>
+                
+                    <li><a class="toctree-l4" href="#literals">Literals</a></li>
+                
+                    <li><a class="toctree-l4" href="#comments">Comments</a></li>
+                
+            
+            </ul>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../types/">Types</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../storage_entities/">Storage Entities</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../statements/">Statements</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../expressions/">Locations & Expressions</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../compilation/">Compilation</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../syntax/">Syntax</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../license/">License</a>
+        
+    </li>
+<li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Céu v0.20 - Reference Manual</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Lexical Rules</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="lexical-rules">Lexical Rules<a class="headerlink" href="#lexical-rules" title="Permanent link">&para;</a></h1>
+<!--
+`TODO`
+-->
+
+<h2 id="keywords">Keywords<a class="headerlink" href="#keywords" title="Permanent link">&para;</a></h2>
+<p>Keywords in Céu are reserved names that cannot be used as identifiers (e.g., 
+variable names):</p>
+<pre><code class="ceu">    and             as              async           atomic          await           
+
+    break           call            code            const           continue        
+
+    data            deterministic   do              dynamic         else            
+
+    emit            end             escape          event           every           
+
+    false           finalize        FOREVER         hold            if              
+
+    in              input           is              isr             kill            
+
+    lock            loop            lua             native          new
+
+    nohold          not             nothing         null            or
+
+    outer           output          par             pause           plain
+
+    pool            pos             pre             pure            recursive
+
+    request         resume          sizeof          spawn           static
+
+    then            thread          tight           traverse        true
+
+    until           val             var             vector          watching
+
+    with            bool            byte            f32             f64
+
+    float           int             s16             s32             s64
+
+    s8              ssize           u16             u32             u64
+
+    u8              uint            usize           void
+</code></pre>
+
+<h2 id="identifiers">Identifiers<a class="headerlink" href="#identifiers" title="Permanent link">&para;</a></h2>
+<p>Céu uses identifiers to refer to <em>types</em> (<code>ID_type</code>), <em>variables</em> (<code>ID_int</code>),
+<em>vectors</em> (<code>ID_int</code>), <em>pools</em> (<code>ID_int</code>), <em>internal events</em> (<code>ID_int</code>),
+<em>external events</em> (<code>ID_ext</code>), <em>code abstractions</em> (<code>ID_abs</code>),
+<em>data abstractions</em> (<code>ID_abs</code>), <em>fields</em> (<code>ID_field</code>),
+<em>native symbols</em> (<code>ID_nat</code>), and <em>block labels</em> (<code>ID_int</code>).</p>
+<pre><code class="ceu">ID       ::= [a-z, A-Z, 0-9, _]+
+ID_int   ::= ID             // ID beginning with lowercase
+ID_ext   ::= ID             // ID all in uppercase, not beginning with digit
+ID_abs   ::= ID {`.´ ID}    // IDs beginning with uppercase, containining at least one lowercase)
+ID_field ::= ID             // ID not beginning with digit
+ID_nat   ::= ID             // ID beginning with underscore
+
+ID_type  ::= ( ID_nat | ID_abs
+             | void  | bool  | byte
+             | f32   | f64   | float
+             | s8    | s16   | s32   | s64
+             | u8    | u16   | u32   | u64
+             | int   | uint  | ssize | usize )
+</code></pre>
+
+<p>Declarations for <a href="./../statements/#abstractions"><code>code</code> and <code>data</code></a> create new
+<a href="./../types/#types">types</a> which can be used as type identifiers.</p>
+<p>Examples:</p>
+<pre><code class="ceu">var int a;                    // &quot;a&quot; is a variable, &quot;int&quot; is a type
+emit e;                       // &quot;e&quot; is an internal event
+await E;                      // &quot;E&quot; is an external input event
+spawn Move();                 // &quot;Move&quot; is a code abstraction and a type
+var Rect r;                   // &quot;Rect&quot; is a data abstraction and a type
+return r.width;               // &quot;width&quot; is a field
+_printf(&quot;hello world!\n&quot;);    // &quot;_printf&quot; is a native symbol
+</code></pre>
+
+<h2 id="literals">Literals<a class="headerlink" href="#literals" title="Permanent link">&para;</a></h2>
+<p>Céu supports literals for <em>booleans</em>, <em>integers</em>, <em>floats</em>, <em>strings</em>, and
+<em>null pointers</em>.</p>
+<!--
+A literal is a primitive and fixed value in source code.
+A literal is a source code representation of a value. 
+-->
+
+<h3 id="booleans">Booleans<a class="headerlink" href="#booleans" title="Permanent link">&para;</a></h3>
+<p>The boolean type has only two possible values: <code>true</code> and <code>false</code>.</p>
+<h3 id="integers">Integers<a class="headerlink" href="#integers" title="Permanent link">&para;</a></h3>
+<p>Céu supports decimal and hexadecimal integers:</p>
+<ul>
+<li>Decimals: a sequence of digits (i.e., <code>[0-9]+</code>).</li>
+<li>Hexadecimals: a sequence of hexadecimal digits (i.e., <code>[0-9, a-f, A-F]+</code>)
+                prefixed by <tt>0x</tt>.</li>
+</ul>
+<!--
+* `TODO: "0b---", "0o---"`
+-->
+
+<p>Examples:</p>
+<pre><code class="ceu">// both are equal to the decimal 127
+v = 127;    // decimal
+v = 0x7F;   // hexadecimal
+</code></pre>
+
+<h3 id="floats">Floats<a class="headerlink" href="#floats" title="Permanent link">&para;</a></h3>
+<p><code>TODO (like C)</code></p>
+<h3 id="strings">Strings<a class="headerlink" href="#strings" title="Permanent link">&para;</a></h3>
+<p>A sequence of characters surrounded by <code>"</code> is converted into a <em>null-terminated 
+string</em>, just like in C:</p>
+<p>Example:</p>
+<pre><code class="ceu">_printf(&quot;Hello World!\n&quot;);
+</code></pre>
+
+<h3 id="null-pointer">Null pointer<a class="headerlink" href="#null-pointer" title="Permanent link">&para;</a></h3>
+<p><code>TODO (like C)</code></p>
+<h2 id="comments">Comments<a class="headerlink" href="#comments" title="Permanent link">&para;</a></h2>
+<p>Céu provides C-style comments:</p>
+<ul>
+<li>Single-line comments begin with <code>//</code> and run to end of the line.</li>
+<li>Multi-line comments use <code>/*</code> and <code>*/</code> as delimiters.
+  Multi-line comments can be nested by using a different number of <code>*</code> as
+  delimiters.</li>
+</ul>
+<p>Examples:</p>
+<pre><code class="ceu">var int a;    // this is a single-line comment
+
+/** comments a block that contains comments
+
+var int a;
+/* this is a nested multi-line comment
+a = 1;
+*/
+
+**/
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../types/" class="btn btn-neutral float-right" title="Types">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href=".." class="btn btn-neutral" title="Overview"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+<div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href=".." style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../types/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+
+</body>
+</html>
