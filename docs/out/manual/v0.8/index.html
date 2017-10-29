@@ -1508,7 +1508,7 @@ ps:v = 1;
 <h2 id="the-c-api">The C API</h2>
 <p>The final output of the compiler of Céu is a program in C that follows a standard application programming interface. The interface specifies some types, macros, and functions, which the environment has to manipulate in order to guide the execution of the original program in Céu.</p>
 <p>The example below illustrates a possible <code>main</code> for a host platform:</p>
-<div class="sourceCode"><pre class="sourceCode c"><code class="sourceCode c"><span class="ot">#include &quot;_ceu_app.c&quot;</span>
+<div class="sourceCode"><pre class="sourceCode c"><code class="sourceCode c"><span class="pp">#include </span><span class="im">&quot;_ceu_app.c&quot;</span>
 
 <span class="dt">int</span> main (<span class="dt">void</span>)
 {
@@ -1517,18 +1517,18 @@ ps:v = 1;
         app.data = &amp;mem;
     ceu_app_init(&amp;app);
 
-    <span class="kw">while</span>(app-&gt;isAlive) {
+    <span class="cf">while</span>(app-&gt;isAlive) {
         ceu_sys_go(app, CEU_IN__ASYNC,  CEU_EVTP((<span class="dt">void</span>*)NULL));
         ceu_sys_go(app, CEU_IN__WCLOCK, CEU_EVTP(&lt;how-much-time-since-previous-iteration&gt;));
-        <span class="kw">if</span> (occuring(CEU_IN_EVT1)) {
+        <span class="cf">if</span> (occuring(CEU_IN_EVT1)) {
             ceu_sys_go(app, CEU_IN__EVT1, param1);
         }
         ...
-        <span class="kw">if</span> (occuring(CEU_IN_EVTn)) {
+        <span class="cf">if</span> (occuring(CEU_IN_EVTn)) {
             ceu_sys_go(app, CEU_IN__EVTn, paramN);
         }
     }
-    <span class="kw">return</span> app-&gt;ret;
+    <span class="cf">return</span> app-&gt;ret;
 }
 
 <span class="dt">int</span> occurring (<span class="dt">int</span> evt_id) {

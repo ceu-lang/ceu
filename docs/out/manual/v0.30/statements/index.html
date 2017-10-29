@@ -200,18 +200,16 @@ terminating semicolon.</em></p>
 </code></pre>
 
 <h2 id="blocks">Blocks<a class="headerlink" href="#blocks" title="Permanent link">&para;</a></h2>
-<p>A <code>Block</code> creates a new lexical scope for
+<p>A <code>Block</code> delimits a lexical scope for
 <a href="./../storage_entities/#entity-classes">storage entities</a>
 and
 <a href="#abstractions">abstractions</a>,
-which are visible only for statements inside the block.</p>
+which are only visible to statements inside the block.</p>
 <p>Compound statements (e.g. <em>do-end</em>, <em>if-then-else</em>, <em>loops</em>, etc.) create new
 blocks and can be nested to an arbitrary level.</p>
 <h3 id="do-end-and-escape"><code>do-end</code> and <code>escape</code><a class="headerlink" href="#do-end-and-escape" title="Permanent link">&para;</a></h3>
-<p>The <code>do-end</code> statement creates an explicit block with an optional identifier
-following the symbol <code>/</code>.
-The <code>escape</code> statement aborts the deepest enclosing <code>do-end</code> matching its
-identifier:</p>
+<p>The <code>do-end</code> statement creates an explicit block.
+The <code>escape</code> statement terminates the deepest matching enclosing <code>do-end</code>:</p>
 <pre><code class="ceu">Do ::= do [`/´(ID_int|`_´)] [`(´ [LIST(ID_int)] `)´]
            Block
        end
@@ -219,8 +217,10 @@ identifier:</p>
 Escape ::= escape [`/´ID_int] [Exp]
 </code></pre>
 
-<p>The neutral identifier <code>_</code> which is guaranteed not to match any <code>escape</code>
-statement.</p>
+<p>A <code>do-end</code> and <code>escape</code> accept an optional identifier following the symbol <code>/</code>.
+A <code>escape</code> only matches a <code>do-end</code> with the same identifier.
+The neutral identifier <code>_</code> in a <code>do-end</code> is guaranteed not to match any
+<code>escape</code> statement.</p>
 <p>A <code>do-end</code> also supports an optional list of identifiers in parenthesis which
 restricts the visible variables inside the block to those matching the list.</p>
 <p>A <code>do-end</code> can be <a href="#assignments">assigned</a> to a variable whose type must be
