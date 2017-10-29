@@ -20,4 +20,4 @@ end
 Céu warns about tight loops in programs at compile time.
 For computationally-intensive algorithms that require unrestricted loops (e.g.,
 cryptography, image processing), Céu provides
-[Asynchronous Execution](../statements/#asynchronous-execution).
+[Asynchronous Execution](statements/#asynchronous-execution).

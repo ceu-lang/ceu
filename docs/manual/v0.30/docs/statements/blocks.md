@@ -1,20 +1,18 @@
 ## Blocks
 
-A `Block` creates a new lexical scope for
+A `Block` delimits a lexical scope for
 [storage entities](../storage_entities/#entity-classes)
 and
 [abstractions](#abstractions),
-which are visible only for statements inside the block.
+which are only visible to statements inside the block.
 
 Compound statements (e.g. *do-end*, *if-then-else*, *loops*, etc.) create new
 blocks and can be nested to an arbitrary level.
 
 ### `do-end` and `escape`
 
-The `do-end` statement creates an explicit block with an optional identifier
-following the symbol `/`.
-The `escape` statement aborts the deepest enclosing `do-end` matching its
-identifier:
+The `do-end` statement creates an explicit block.
+The `escape` statement terminates the deepest matching enclosing `do-end`:
 
 ```ceu
 Do ::= do [`/´(ID_int|`_´)] [`(´ [LIST(ID_int)] `)´]
@@ -24,8 +22,10 @@ Do ::= do [`/´(ID_int|`_´)] [`(´ [LIST(ID_int)] `)´]
 Escape ::= escape [`/´ID_int] [Exp]
 ```
 
-The neutral identifier `_` which is guaranteed not to match any `escape`
-statement.
+A `do-end` and `escape` accept an optional identifier following the symbol `/`.
+A `escape` only matches a `do-end` with the same identifier.
+The neutral identifier `_` in a `do-end` is guaranteed not to match any
+`escape` statement.
 
 A `do-end` also supports an optional list of identifiers in parenthesis which
 restricts the visible variables inside the block to those matching the list.

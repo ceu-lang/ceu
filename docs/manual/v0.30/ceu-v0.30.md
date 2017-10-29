@@ -61,7 +61,7 @@ Céu integrates safely with C, particularly when manipulating external resources
 Programs can make native calls seamlessly while avoiding common pitfalls such
 as memory leaks and dangling pointers.
 
-Céu is [free software](../license/#license).
+Céu is [free software](license/#license).
 
 ### Environments
 
@@ -205,7 +205,7 @@ As mentioned in the introduction and emphasized in the execution model, trails
 in parallel do not execute with real parallelism.
 Therefore, it is important to note that parallel compositions provide
 *awaiting in parallel*, rather than *executing in parallel* (see
-[Asynchronous Threads](../statements/#thread) for real parallelism support).
+[Asynchronous Threads](statements/#thread) for real parallelism support).
 <!--
 The termination of a trail inside a `par/or` aborts the other trails in 
 parallel which are necessarily idle
@@ -236,7 +236,7 @@ end
 Céu warns about tight loops in programs at compile time.
 For computationally-intensive algorithms that require unrestricted loops (e.g.,
 cryptography, image processing), Céu provides
-[Asynchronous Execution](../statements/#asynchronous-execution).
+[Asynchronous Execution](statements/#asynchronous-execution).
 
 ### Deterministic Execution
 
@@ -953,21 +953,19 @@ Nothing ::= nothing
 
 ### Blocks
 
-A `Block` creates a new lexical scope for
+A `Block` delimits a lexical scope for
 [storage entities](../storage_entities/#entity-classes)
 and
 [abstractions](#abstractions),
-which are visible only for statements inside the block.
+which are only visible to statements inside the block.
 
 Compound statements (e.g. *do-end*, *if-then-else*, *loops*, etc.) create new
 blocks and can be nested to an arbitrary level.
 
 #### `do-end` and `escape`
 
-The `do-end` statement creates an explicit block with an optional identifier
-following the symbol `/`.
-The `escape` statement aborts the deepest enclosing `do-end` matching its
-identifier:
+The `do-end` statement creates an explicit block.
+The `escape` statement terminates the deepest matching enclosing `do-end`:
 
 ```ceu
 Do ::= do [`/´(ID_int|`_´)] [`(´ [LIST(ID_int)] `)´]
@@ -977,8 +975,10 @@ Do ::= do [`/´(ID_int|`_´)] [`(´ [LIST(ID_int)] `)´]
 Escape ::= escape [`/´ID_int] [Exp]
 ```
 
-The neutral identifier `_` which is guaranteed not to match any `escape`
-statement.
+A `do-end` and `escape` accept an optional identifier following the symbol `/`.
+A `escape` only matches a `do-end` with the same identifier.
+The neutral identifier `_` in a `do-end` is guaranteed not to match any
+`escape` statement.
 
 A `do-end` also supports an optional list of identifiers in parenthesis which
 restricts the visible variables inside the block to those matching the list.
