@@ -236,6 +236,7 @@ end
                             -- TODO: remove all "-Wno-*"
                             ..' -Wno-unused'
                             ..' -Wno-missing-field-initializers'
+                            ..' -Wno-implicit-fallthrough'
                             ..' -llua5.3 -lpthread '..defines
                          ,
 

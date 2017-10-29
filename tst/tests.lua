@@ -25963,6 +25963,7 @@ Test { [[var[2] int v; escape v;]],
     --env = 'types mismatch'
 }
 Test { [[native _u8; var[2] _u8 v=_; escape (&&v==&&v) as int;]],
+    _opts = { cc_args='-DCEU_TESTS' },
     wrn = true,
     run = 1,
     --dcls = 'line 1 : invalid operand to `&&` : unexpected context for vector "v"',
@@ -30321,6 +30322,7 @@ escape (str[4]=={'i'}) as int;
 }
 
 Test { [[var[2] u8 v; escape (&&v==&&v) as int;]],
+    _opts = { cc_args='-DCEU_TESTS' },
     run = 1,
     --dcls = 'line 1 : invalid operand to `&&` : unexpected context for vector "v"',
     --env = 'line 1 : types mismatch (`int` <= `u8[]&&`)',
@@ -41298,7 +41300,7 @@ do/_
     escape (__ceu_mem as _tceu_code_mem_ROOT&&):xxx;
 end
 ]],
-    cc = '4:77: error: ‘tceu_code_mem_ROOT {aka struct tceu_code_mem_ROOT}’ has no member named ‘xxx’',
+    cc = '4:64: error: ‘tceu_code_mem_ROOT {aka struct tceu_code_mem_ROOT}’ has no member named ‘xxx’',
 }
 
 Test { [[
@@ -41347,7 +41349,7 @@ end
 var int v = await Ff();
 escape v;
 ]],
-    cc = '5:81: error: ‘tceu_code_mem_Ff {aka struct tceu_code_mem_Ff}’ has no member named ‘yyy’',
+    cc = '5:82: error: ‘tceu_code_mem_Ff {aka struct tceu_code_mem_Ff}’ has no member named ‘yyy’',
 }
 
 Test { [[
@@ -41362,7 +41364,7 @@ end
 spawn Ff();
 escape 10;
 ]],
-    cc = '5:83: error: ‘tceu_code_mem_Ff {aka struct tceu_code_mem_Ff}’ has no member named ‘yyy’',
+    cc = '5:84: error: ‘tceu_code_mem_Ff {aka struct tceu_code_mem_Ff}’ has no member named ‘yyy’',
 }
 
 Test { [[
