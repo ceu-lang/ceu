@@ -50192,6 +50192,139 @@ escape v;
     _opts = { ceu_features_thread='true' },
 }
 
+Test { [[
+var int i;
+loop i in [1->10] do
+    par/and do
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    with
+        await async/thread do end;
+    end
+end
+escape 1;
+]],
+    _opts = { ceu_features_thread='true' },
+    run = 1,
+}
+
+--<<< ASYNCS / THREADS
+
 -->> KILL
 
 Test { [[
@@ -52383,8 +52516,6 @@ escape v1 + v2;
 }
 
 --<< CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
-
---<<< ASYNCS / THREADS
 
 -->>> ASYNCS / ISR / ATOMIC
 

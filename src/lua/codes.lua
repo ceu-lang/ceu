@@ -1655,10 +1655,10 @@ static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
 ]]..me.lbl_abt.id..[[:
 
     /* terminate thread */
-    ceu_callback_void_void(CEU_CALLBACK_THREAD_TERMINATING);
     CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
     _ceu_p.thread->has_terminated = 1;
     _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__NONE;
+    ceu_callback_void_void(CEU_CALLBACK_THREAD_TERMINATING);
     CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
     CEU_THREADS_RETURN(NULL);
 }
