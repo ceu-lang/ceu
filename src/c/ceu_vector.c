@@ -54,6 +54,10 @@ byte* ceu_vector_setmax_ex (tceu_vector* vector, usize len, bool freeze, tceu_tr
 {
     ceu_assert_ex(vector->is_dyn, "static vector", trace);
 
+    if (vector->max == len) {
+        goto END;
+    }
+
     if (len == 0) {
         /* free */
         if (vector->buf != NULL) {
@@ -92,6 +96,7 @@ byte* ceu_vector_setmax_ex (tceu_vector* vector, usize len, bool freeze, tceu_tr
         vector->is_freezed = 1;
     }
 
+END:
     return vector->buf;
 }
 
