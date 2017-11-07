@@ -704,7 +704,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 -- MODS
 
     , __Dim      = KK'[' * (V'__Exp'+Cc('[]')) * KK']'
-    , __Dim_Ring = KK'[' * (V'__Exp'*OPT(CK'*')+Cc('[]')*Cc(false)) * KK']'
+    , __Dim_Ring = KK'[' * (V'__Exp'+Cc('[]')) * (OPT(CK'*')+Cc(false)) * KK']'
 
 -- LISTS
 

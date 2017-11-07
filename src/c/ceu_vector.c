@@ -15,7 +15,7 @@ typedef struct {
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 
-#define ceu_vector_idx(vec,idx)            ((vec)->is_ring ? (((vec)->ini + idx) % (vec)->max) : idx)
+#define ceu_vector_idx(vec,idx)            ((vec)->is_ring ? (((vec)->ini + (idx)) % (vec)->max) : (idx))
 #define ceu_vector_buf_get(vec,idx)        (&(vec)->buf[ceu_vector_idx(vec,idx)*(vec)->unit])
 #define ceu_vector_buf_set(vec,idx,buf,nu) ceu_vector_buf_set_ex(vec,idx,buf,nu,((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__}))
 #define ceu_vector_copy(dst,dst_i,src,src_i,n) ceu_vector_copy_ex(dst,dst_i,src,src_i,n,((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__}))
@@ -62,12 +62,30 @@ byte* ceu_vector_setmax_ex (tceu_vector* vector, usize len, bool freeze, tceu_tr
             vector->buf = NULL;
         }
     } else {
-        vector->max = len;
+        ceu_sys_assert(len > vector->max, "not implemented: shrinking vectors");
         vector->buf = (byte*) ceu_callback_ptr_size(
                                 CEU_CALLBACK_REALLOC,
                                 vector->buf,
                                 len*vector->unit
                               ).value.ptr;
+
+        if (vector->is_ring && vector->ini>0) {
+            /*
+             * [X,Y,Z,I,J,K,###,A,B,C]       -> (grow) ->
+             * [X,Y,Z,I,J,K,###,A,B,C,-,-,-] -> (1st memcpy) ->
+             * [?,?,?,I,J,K,###,A,B,C,X,Y,Z] -> (2nd memmove) ->
+             * [I,J,K,###,-,-,-,A,B,C,X,Y,Z]
+             */
+            usize dif = (len - vector->max) * vector->unit;
+            memcpy (&vector->buf[vector->max],          // -,-,-
+                    &vector->buf[0],                    // X,Y,Z
+                    dif * vector->unit);                // 3
+            memmove(&vector->buf[0],                    // X,Y,Z
+                    &vector->buf[dif * vector->unit],   // I,J,K
+                    vector->ini * vector->unit);        // 3
+        }
+
+        vector->max = len;
     }
 
     if (freeze) {

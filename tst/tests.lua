@@ -31430,7 +31430,8 @@ var[*] int vec = [ 1, 2, 3 ];
 $vec = $vec - 1;
 escape vec[0];
 ]],
-    parser = 'line 1 : after `*` : expected expression',
+    run = 2,
+    --parser = 'line 1 : after `*` : expected expression',
 }
 
 Test { [[
@@ -31748,6 +31749,95 @@ xxx = [].."123456789012345678901234567890123";
 escape xxx[0] - {'0'};
 ]],
     run = 1,
+}
+
+Test { [[
+var[*] byte xxx = [1,2,3];
+escape $xxx as int;
+]],
+    run = 3,
+}
+
+Test { [[
+var[0*] byte xxx = [1,2,3];
+escape $xxx as int;
+]],
+    run = '1] -> runtime error: access out of bounds',
+    _opts = { ceu_features_trace='true' },
+}
+
+Test { [[
+var[*] byte xxx = [1,2,3];
+xxx = xxx..[1,2,3,4,5,6,7,8,9,0];
+$xxx = 3;
+escape xxx[0]+xxx[1]+xxx[2];
+]],
+    run = 17,
+}
+
+Test { [[
+var[*] byte xxx = [1,2,3];
+var int i;
+loop i in [1->1000] do
+    xxx = xxx..[1,2,3,4,5,6,7,8,9,0];
+end
+$xxx = 3;
+escape xxx[0]+xxx[1]+xxx[2];
+]],
+    run = 17,
+}
+
+Test { [[
+var[*] byte xxx;
+var int i;
+loop i in [1->1000] do
+    $xxx = 0;
+    xxx = xxx..[1,2,3,4,5,6,7,8];
+    xxx = xxx..[9,0,1,2,3];
+end
+$xxx = 3;
+escape xxx[0]+xxx[1]+xxx[2];
+]],
+    run = 6,
+}
+
+Test { [[
+var[*] byte xxx = [0,1,2,3,4,5,6,7,8,9];
+$xxx = $xxx-5;
+xxx = xxx..[0];
+
+var int ret = xxx[0];       // 5
+
+xxx = xxx .. [0,1,2,3,4,5,6,7,8,9]; // [5,6,7,8,9,0,1,2,3,...]
+var int i;
+loop i in [1->10000] do
+    xxx = xxx .. [0,1,2,3,4,5,6,7,8,9];
+end
+
+ret = ret + xxx[0];         // +5 = 10
+ret = ret + xxx[$xxx-1];    // +9 = 19
+
+escape ret;
+]],
+    run = 19,
+}
+
+Test { [[
+var[*] byte xxx = [0,1,2,3,4,5,6,7,8,9];
+$xxx = $xxx-5;
+xxx = xxx..[10,11,12,13,14];
+xxx = xxx..[15];
+
+/*
+var int i;
+loop i in [0 -> 11[ do
+    {printf(">>> %d\n", CEU_APP.root.xxx_16.buf[@i]);}
+end
+*/
+
+escape xxx[$xxx-1] + xxx[$xxx-2];
+]],
+    run = 29,
 }
 
 --<< VECTOR / RING
