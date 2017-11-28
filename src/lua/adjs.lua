@@ -548,11 +548,11 @@ error'TODO: luacov never executes this?'
             local awt = unpack(set)
             if awt.tag == '_Abs_Await' then
                 awt = F._Abs_Await__PRE(awt)
-                AST.set(awt, 3,
+                AST.set(awt[1], 3,
                     node('_Set', me.ln,
                         to,
                         node('_Set_Await_many', me.ln,
-                            awt[3])))
+                            awt[1][3])))
                 return awt
             end
         end
@@ -597,27 +597,30 @@ error'TODO: luacov never executes this?'
     _Abs_Await__PRE = function (me)
         -- await Ff(...)
         --  to
-        -- var&? Ff f;
-        -- f = spawn Ff(...)
-        -- await f;
+        -- do
+        --   var&? Ff f;
+        --   f = spawn Ff(...)
+        --   await f;
+        -- end
         local _,abs = unpack(me)
-        return node('Stmts', me.ln,
-                node('Var', me.ln,
-                    '&?',
-                    node('Type', me.ln,
-                        AST.copy(AST.asr(abs,'Abs_Cons',2,'ID_abs'))),
-                    '_spw_'..me.n),
-                node('_Set', me.ln,
-                    node('Loc', me.ln,
-                        node('ID_int', me.ln,
-                            '_spw_'..me.n)),
-                    node('_Set_Abs_Spawn', me.ln,
-                        node('Abs_Spawn', me.ln,
-                            unpack(me)))),
-                node('Await_Int', me.ln,
-                    node('Loc', me.ln,
-                        node('ID_int', me.ln,
-                            '_spw_'..me.n))))
+        return node('Block', me.ln,
+                node('Stmts', me.ln,
+                    node('Var', me.ln,
+                        '&?',
+                        node('Type', me.ln,
+                            AST.copy(AST.asr(abs,'Abs_Cons',2,'ID_abs'))),
+                        '_spw_'..me.n),
+                    node('_Set', me.ln,
+                        node('Loc', me.ln,
+                            node('ID_int', me.ln,
+                                '_spw_'..me.n)),
+                        node('_Set_Abs_Spawn', me.ln,
+                            node('Abs_Spawn', me.ln,
+                                unpack(me)))),
+                    node('Await_Int', me.ln,
+                        node('Loc', me.ln,
+                            node('ID_int', me.ln,
+                                '_spw_'..me.n)))))
     end,
 
     _Escape__PRE = function (me)
