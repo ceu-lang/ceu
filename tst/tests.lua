@@ -52750,7 +52750,7 @@ native/pre do
     int CB (int cmd, tceu_callback_val p1, tceu_callback_val p2, const char* file, u32 line) {
         int is_handled;
         is_handled = 0;
-        return ret;
+        return is_handled;
     }
 end
 par/or do
@@ -52781,7 +52781,7 @@ native/pre do
             default:
                 is_handled = 0;
         }
-        return ret;
+        return is_handled;
     }
     tceu_callback CB = { &CB_F, NULL };
 end
@@ -52817,7 +52817,7 @@ native/pre do
             default:
                 is_handled = 0;
         }
-        return ret;
+        return is_handled;
     }
     tceu_callback CB = { &CB_F, NULL };
 end
@@ -52891,7 +52891,7 @@ native/pre do
             default:
                 is_handled = 0;
         }
-        return ret;
+        return is_handled;
     }
 end
 var[10] int v = [];
@@ -52965,7 +52965,7 @@ native/pre do
             default:
                 is_handled = 0;
         }
-        return ret;
+        return is_handled;
     }
 end
 
@@ -53298,7 +53298,7 @@ native/pre do
             default:
                 is_handled = 0;
         }
-        return ret;
+        return is_handled;
     }
     tceu_callback CB_ = { &CB, NULL };
 end
