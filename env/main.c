@@ -1,20 +1,20 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-tceu_callback_ret ceu_callback_ceu (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
-    tceu_callback_ret ret;
+int ceu_callback_ceu (int cmd, tceu_callback_val p1, tceu_callback_val p2, const char* file, u32 line) {
+    int is_handled;
 
     switch (cmd) {
         case CEU_CALLBACK_WCLOCK_DT:
-            ret.is_handled = 1;
-            ret.value.num  = CEU_WCLOCK_INACTIVE;
+            is_handled = 1;
+            ceu_callback_ret.num = CEU_WCLOCK_INACTIVE;
             break;
         case CEU_CALLBACK_ABORT:
-            ret.is_handled = 1;
+            is_handled = 1;
             abort();
             break;
         case CEU_CALLBACK_LOG: {
-            ret.is_handled = 1;
+            is_handled = 1;
             switch (p1.num) {
                 case 0:
                     printf("%s", (char*)p2.ptr);
@@ -36,21 +36,21 @@ tceu_callback_ret ceu_callback_ceu (int cmd, tceu_callback_arg p1, tceu_callback
                 _ceu_tests_realloc_--;
             } else {
                 if (_ceu_tests_realloc_ >= CEU_TESTS_REALLOC) {
-                    ret.is_handled = 1;
-                    ret.value.ptr = NULL;
-                    return ret;
+                    is_handled = 1;
+                    ceu_callback_ret.ptr = NULL;
+                    return is_handled;
                 }
                 _ceu_tests_realloc_++;
             }
         }
 #endif
-            ret.is_handled = 1;
-            ret.value.ptr = realloc(p1.ptr, p2.size);
+            is_handled = 1;
+            ceu_callback_ret.ptr = realloc(p1.ptr, p2.size);
             break;
         default:
-            ret.is_handled = 0;
+            is_handled = 0;
     }
-    return ret;
+    return is_handled;
 }
 
 int main (int argc, char* argv[])

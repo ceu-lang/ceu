@@ -516,28 +516,27 @@ CEU_API void ceu_callback_register (tceu_callback* cb) {
     CEU_APP.cbs = cb;
 }
 
-static tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2
+static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
 #if === CEU_CALLBACKS_LINES ===
-                                      , const char* file, u32 line
+                         , const char* file, u32 line
 #else
 #endif
-                                      ) {
+                         )
+{
     tceu_callback* cur = CEU_APP.cbs;
     while (cur) {
-        tceu_callback_ret ret = cur->f(cmd,p1,p2
+        int is_handled = cur->f(cmd,p1,p2
 #if === CEU_CALLBACKS_LINES ===
-                                      ,file,line
+              ,file,line
 #else
-                                      ,NULL,0
+              ,NULL,0
 #endif
-                                      );
-        if (ret.is_handled) {
-            return ret;
+              );
+        if (is_handled) {
+            return;
         }
         cur = cur->nxt;
     }
-    tceu_callback_ret ret = { .is_handled=0 };
-    return ret;
 }
 
 /*****************************************************************************/
@@ -941,7 +940,8 @@ void ceu_input_one (tceu_nevt evt_id, void* evt_params, tceu_stk* stk)
 
 CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params)
 {
-    s32 dt = ceu_callback_void_void(CEU_CALLBACK_WCLOCK_DT).value.num;
+    ceu_callback_void_void(CEU_CALLBACK_WCLOCK_DT);
+    s32 dt = ceu_callback_ret.num;
     if (dt != CEU_WCLOCK_INACTIVE) {
         ceu_input_one(CEU_INPUT__WCLOCK, &dt, NULL);
     }

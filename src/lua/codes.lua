@@ -500,22 +500,22 @@ assert(not obj, 'not implemented')
         if alias then
             LINE(me, [[
     if (]]..V(pool)..[[.pool.queue == NULL) {
-        __ceu_new = (tceu_code_mem_dyn*) ceu_callback_ptr_num(
-                                            CEU_CALLBACK_REALLOC,
-                                            NULL,
-                                            sizeof(tceu_code_mem_dyn) + sizeof(tceu_code_mem_]]..ID_abs.dcl.id_..[[)
-                                         ).value.ptr;
+        ceu_callback_ptr_num(CEU_CALLBACK_REALLOC,
+                             NULL,
+                             sizeof(tceu_code_mem_dyn) + sizeof(tceu_code_mem_]]..ID_abs.dcl.id_..[[)
+                            );
+        __ceu_new = (tceu_code_mem_dyn*) ceu_callback_ret.ptr;
     } else {
         __ceu_new = (tceu_code_mem_dyn*) ceu_pool_alloc(&]]..V(pool)..[[.pool);
     }
 ]])
         elseif dim == '[]' then
             LINE(me, [[
-    __ceu_new = (tceu_code_mem_dyn*) ceu_callback_ptr_num(
-                                        CEU_CALLBACK_REALLOC,
-                                        NULL,
-                                        sizeof(tceu_code_mem_dyn) + sizeof(tceu_code_mem_]]..ID_abs.dcl.id_..[[)
-                                     ).value.ptr;
+    ceu_callback_ptr_num(CEU_CALLBACK_REALLOC,
+                         NULL,
+                         sizeof(tceu_code_mem_dyn) + sizeof(tceu_code_mem_]]..ID_abs.dcl.id_..[[)
+                        );
+    __ceu_new = (tceu_code_mem_dyn*) ceu_callback_ret.ptr;
 ]])
         else
             LINE(me, [[
@@ -1369,7 +1369,7 @@ __ceu_ps._]]..i..' = '..V(exp)..[[;
         if inout == 'output' then
             local set = AST.par(me,'Set_Emit_Ext_emit')
             local cb = [[
-ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..'.id, '..ps..[[).value.num;
+(ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..'.id, '..ps..[[), ceu_callback_ret.num);
 ]]
             if set then
                 local _, to = unpack(set)
@@ -1592,11 +1592,11 @@ if (0) {
 
         -- spawn
         LINE(me, [[
-]]..v..[[ = (tceu_threads_data*) ceu_callback_ptr_num(
-                                    CEU_CALLBACK_REALLOC,
-                                    NULL,
-                                    sizeof(tceu_threads_data)
-                                 ).value.ptr;
+ceu_callback_ptr_num(CEU_CALLBACK_REALLOC,
+                     NULL,
+                     sizeof(tceu_threads_data)
+                    );
+]]..v..[[ = (tceu_threads_data*) ceu_callback_ret.ptr;
 if (]]..v..[[ != NULL)
 {
     ]]..v..[[->nxt = CEU_APP.threads_head;
