@@ -50,6 +50,8 @@ local function CLEAR (me, lbl)
     ceu_stack_clear(_ceu_stk, _ceu_mem,
                     ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
     CEU_LONGJMP_SET(_ceu_stk,]]..(lbl and lbl.id or me.lbl_clr.id)..[[)
+}
+{
     tceu_evt_range __ceu_range = { _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[ };
     tceu_evt_occ __ceu_occ = { {CEU_INPUT__CLEAR,{NULL}}, (tceu_nseq)(CEU_APP.seq+1),
                                NULL, __ceu_range };

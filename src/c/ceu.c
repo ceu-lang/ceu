@@ -324,10 +324,10 @@ CEU_API static tceu_app CEU_APP;
         CEU_APP.jmp.mem = _ceu_mem;                         \
         CEU_APP.jmp.trl = _ceu_trlK;                        \
         return;                                             \
+    }                                                       \
 case _lbl:;                                                 \
         /*fprintf(stderr, "cnt\n");*/                       \
-        /* continue from here */                            \
-    }
+        /* continue from here */
 
 #define CEU_LONGJMP_JMP(me)                                 \
         /*fprintf(stderr, "jmp? %d\n", __LINE__);*/         \
@@ -516,10 +516,21 @@ CEU_API void ceu_callback_register (tceu_callback* cb) {
     CEU_APP.cbs = cb;
 }
 
-static tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* file, u32 line) {
+static tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2
+#if === CEU_CALLBACKS_LINES ===
+                                      , const char* file, u32 line
+#else
+#endif
+                                      ) {
     tceu_callback* cur = CEU_APP.cbs;
     while (cur) {
-        tceu_callback_ret ret = cur->f(cmd,p1,p2,file,line);
+        tceu_callback_ret ret = cur->f(cmd,p1,p2
+#if === CEU_CALLBACKS_LINES ===
+                                      ,file,line
+#else
+                                      ,NULL,0
+#endif
+                                      );
         if (ret.is_handled) {
             return ret;
         }
@@ -637,17 +648,23 @@ static void ceu_lbl (tceu_evt_occ* _ceu_occ, tceu_stk* _ceu_stk,
             base = &_ceu_occ;
         } else {
 #if 0
-#if 1
-Serial.begin(9600);
+#if 0
+//Serial.begin(9600);
 Serial.println((usize)base);
 Serial.println((usize)&_ceu_lbl);
+Serial.print(" lbl "); Serial.println(_ceu_lbl);
+//Serial.flush();
+    if((usize)(((byte*)base)-CEU_STACK_MAX) <= (usize)(&_ceu_occ)) {
+    } else {
+        delay(1000);
+    }
 #else
 printf(">>> %p / %p / %ld\n", base, &_ceu_lbl, ((u64)base)-((u64)&_ceu_lbl));
 printf("%ld %ld %d\n", (usize)(base-CEU_STACK_MAX), (usize)(&_ceu_occ),
             ((usize)(base-CEU_STACK_MAX) <= (usize)(&_ceu_occ)));
 #endif
 #endif
-            ceu_assert((usize)(base-CEU_STACK_MAX) <= (usize)(&_ceu_occ), "stack overflow");
+            ceu_assert((usize)(((byte*)base)-CEU_STACK_MAX) <= (usize)(&_ceu_occ), "stack overflow");
         }
     }
 #endif
