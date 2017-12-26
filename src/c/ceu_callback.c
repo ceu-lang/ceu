@@ -1,5 +1,7 @@
 === CEU_FEATURES ===        /* CEU_FEATURES */
 
+#define CEU_TRACE(n) ((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__+(n)})
+
 typedef union tceu_callback_val {
     void* ptr;
     s32   num;
@@ -15,13 +17,12 @@ typedef struct tceu_callback {
 } tceu_callback;
 
 static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
-#if === CEU_CALLBACKS_LINES ===
+#ifdef CEU_FEATURES_TRACE
                          , const char* file, u32 line
-#else
 #endif
                          );
 
-#if === CEU_CALLBACKS_LINES ===
+#ifdef CEU_FEATURES_TRACE
 #define ceu_callback_void_void(cmd)                     \
         ceu_callback(cmd, (tceu_callback_val){},        \
                           (tceu_callback_val){},        \
@@ -82,7 +83,7 @@ static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
         ceu_trace(trace, msg);                              \
         ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL);  \
     }
-#define ceu_assert(v,msg) ceu_assert_ex((v),(msg), ((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__}))
+#define ceu_assert(v,msg) ceu_assert_ex((v),(msg), CEU_TRACE(0))
 #else
 #define ceu_assert_ex(v,msg,trace)                          \
     if (!(v)) {                                             \

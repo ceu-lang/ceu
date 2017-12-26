@@ -473,14 +473,14 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..args..[[)
         local alias, tp = unpack(e.info.dcl)
         if alias == '&?' then
             if e.info.dcl.tag == 'Var' then
-                return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e)..', ((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__})))'
+                return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e)..', CEU_TRACE(0)))'
             elseif e.info.dcl.tag == 'Evt' then
                 return '(*CEU_OPTION_EVT('..V(e)..'.alias, __FILE__, __LINE__))'
             else
                 error 'not implemented'
             end
         else
-            return '(CEU_OPTION_'..TYPES.toc(e.info.tp)..'(&'..V(e)..', ((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__}))->value)'
+            return '(CEU_OPTION_'..TYPES.toc(e.info.tp)..'(&'..V(e)..', CEU_TRACE(0))->value)'
         end
     end,
 
@@ -573,7 +573,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..args..[[)
 (]]..TYPES.toc(Type)..ptr2..[[)
 ceu_data_as(CEU_DATA_SUPERS_]]..base.id_..[[,
             (tceu_ndata*)]]..ptr3..V(e)..', CEU_DATA_'..Type[1].dcl.id_..[[,
-            ((tceu_trace){&_ceu_mem->trace, __FILE__, (__LINE__-4)}))
+            CEU_TRACE(-4))
 ))
 ]]
             else

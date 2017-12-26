@@ -132,7 +132,6 @@ do
     local T = {
         ceu_output             = { tostring,  '-'     },
         ceu_line_directives    = { toboolean, 'true'  },
-        ceu_callbacks_lines    = { toboolean, 'true'  },
         ceu_features_trace     = { toboolean, 'false' },
         ceu_features_exception = { toboolean, 'false' },
         ceu_features_lua       = { toboolean, 'false' },

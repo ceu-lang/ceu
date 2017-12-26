@@ -907,7 +907,7 @@ ceu_assert(]]..sig..V(step)..[[> 0, "invalid `loop` step : expected positive num
 ]]..CUR('__fr_'..me.n)..' = '..V(fr)..[[;
 ]]..V(i)..' = '..V(fr)..' + '..V(step)..' * '..fr.__adj_step_mul..[[;
 ceu_assert_ex(]]..V(i)..(op..'=')..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n)..[[,
-    "control variable overflow", ((tceu_trace){&_ceu_mem->trace, __FILE__, __LINE__-3}));
+    "control variable overflow", CEU_TRACE(-3));
 while (1) {
 ]])
         if to.tag ~= 'ID_any' then
@@ -928,7 +928,7 @@ while (1) {
         LINE(me, [[
     ]]..V(i)..' = '..V(i)..' + '..V(step)..[[;
     ceu_assert_ex(]]..V(i)..op..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n)..[[,
-        "control variable overflow", ((tceu_trace){&_ceu_mem->trace, __FILE__, __LINE__-2}));
+        "control variable overflow", CEU_TRACE(-2));
     ]]..max.inc..[[
 }
 ]])
@@ -1251,7 +1251,7 @@ if (_ceu_occ!=NULL && _ceu_occ->evt.id==CEU_INPUT__CODE_TERMINATED) {
         const char* __ceu_str = lua_tostring(]]..LUA(me)..[[, -1);
         usize __ceu_len = lua_rawlen(]]..LUA(me)..[[, -1);
         ceu_vector_setlen_ex(&]]..V(to)..', ('..V(to)..[[.len + __ceu_len), 1,
-                             ((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__-4}));
+                             CEU_TRACE(-4));
         ceu_vector_buf_set(&]]..V(to)..[[,
                            __ceu_nxt,
                            (byte*)__ceu_str,
@@ -1954,7 +1954,6 @@ end
 
 -- CEU.C
 local c = PAK.files.ceu_c
-local c = SUB(c, '=== CEU_CALLBACKS_LINES ===', (CEU.opts.ceu_callbacks_lines and '1' or '0'))
 local c = SUB(c, '=== CEU_FEATURES ===',         features)
 local c = SUB(c, '=== CEU_NATIVE_PRE ===',       CODES.native.pre)
 local c = SUB(c, '=== CEU_EXTS_ENUM_INPUT ===',  MEMS.exts.enum_input)

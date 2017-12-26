@@ -396,7 +396,6 @@ escape 1;
 ]==]
 
 -- TODO-OUTPUT-MOVE
---]=====]
 Test { [[
 output (none) O;
 output (int) O;
@@ -488,6 +487,7 @@ escape i;
 ]],
     run = 10,
 }
+
 Test { [[
 output (&int p) O do
     if true then
@@ -514,6 +514,36 @@ escape i;
 ]],
     run = 10,
 }
+
+Test { [[
+output (int? v, &int ret) O do
+    if v? then
+        ret = v!;
+    else
+        ret = 99;
+    end
+end
+var int ret = 1;
+emit O(100, &ret);
+escape ret;
+]],
+    run = 100,
+}
+Test { [[
+output (int? v, &int ret) O do
+    if v? then
+        ret = v!;
+    else
+        ret = 99;
+    end
+end
+var int ret = 1;
+emit O(_, &ret);
+escape ret;
+]],
+    run = 99,
+}
+
 Test { [[
 var int x = 1;
 output (&int p, int v) O do
@@ -577,6 +607,7 @@ escape xxx;
 }
 
 --do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested

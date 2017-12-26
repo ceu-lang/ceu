@@ -517,7 +517,7 @@ CEU_API void ceu_callback_register (tceu_callback* cb) {
 }
 
 static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
-#if === CEU_CALLBACKS_LINES ===
+#ifdef CEU_FEATURES_TRACE
                          , const char* file, u32 line
 #else
 #endif
@@ -526,7 +526,7 @@ static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
     tceu_callback* cur = CEU_APP.cbs;
     while (cur) {
         int is_handled = cur->f(cmd,p1,p2
-#if === CEU_CALLBACKS_LINES ===
+#ifdef CEU_FEATURES_TRACE
               ,file,line
 #else
               ,NULL,0
@@ -586,7 +586,7 @@ void ceu_throw_ex (tceu_catch* catches, tceu_data_Exception* exception, usize le
     }
     ceu_assert_ex(0, exception->message, trace);
 }
-#define ceu_throw(a,b,c) ceu_throw_ex(a,b,c,_ceu_stk,((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__}))
+#define ceu_throw(a,b,c) ceu_throw_ex(a,b,c,_ceu_stk,CEU_TRACE(0))
 #endif
 
 #ifdef CEU_FEATURES_THREAD

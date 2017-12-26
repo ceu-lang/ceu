@@ -17,13 +17,13 @@ typedef struct {
 
 #define ceu_vector_idx(vec,idx)            ((vec)->is_ring ? (((vec)->ini + (idx)) % (vec)->max) : (idx))
 #define ceu_vector_buf_get(vec,idx)        (&(vec)->buf[ceu_vector_idx(vec,idx)*(vec)->unit])
-#define ceu_vector_buf_set(vec,idx,buf,nu) ceu_vector_buf_set_ex(vec,idx,buf,nu,((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__}))
-#define ceu_vector_copy(dst,dst_i,src,src_i,n) ceu_vector_copy_ex(dst,dst_i,src,src_i,n,((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__}))
+#define ceu_vector_buf_set(vec,idx,buf,nu) ceu_vector_buf_set_ex(vec,idx,buf,nu,CEU_TRACE(0))
+#define ceu_vector_copy(dst,dst_i,src,src_i,n) ceu_vector_copy_ex(dst,dst_i,src,src_i,n,CEU_TRACE(0))
 
-#define ceu_vector_setmax(vec,len,freeze)  ceu_vector_setmax_ex(vec,len,freeze,((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__}))
-#define ceu_vector_setlen_could(vec,len,grow) ceu_vector_setlen_could_ex(vec,len,grow,((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__}))
-#define ceu_vector_setlen(a,b,c) ceu_vector_setlen_ex(a,b,c,((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__}))
-#define ceu_vector_geti(a,b)     ceu_vector_geti_ex(a,b,((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__}))
+#define ceu_vector_setmax(vec,len,freeze)  ceu_vector_setmax_ex(vec,len,freeze,CEU_TRACE(0))
+#define ceu_vector_setlen_could(vec,len,grow) ceu_vector_setlen_could_ex(vec,len,grow,CEU_TRACE(0))
+#define ceu_vector_setlen(a,b,c) ceu_vector_setlen_ex(a,b,c,CEU_TRACE(0))
+#define ceu_vector_geti(a,b)     ceu_vector_geti_ex(a,b,CEU_TRACE(0))
 #define ceu_vector_ptr(vec)      (vec)
 
 void  ceu_vector_init            (tceu_vector* vector, usize max, bool is_ring, bool is_dyn, usize unit, byte* buf);
