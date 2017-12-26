@@ -7,8 +7,9 @@ local F
 
 function CUR (field, ctx)
     ctx = ctx or {}
-    local Code = AST.iter'Code'()
     local Isr  = AST.iter'Async_Isr'()
+    local Code = AST.iter'Code'()
+    local Ext  = AST.iter'Ext_impl'()
     local data do
         if ctx.outer then
             if Isr and Code then
@@ -25,6 +26,14 @@ function CUR (field, ctx)
             data = '_ceu_loc'
         elseif Code then
             data = '(*((tceu_code_mem_'..Code.id_..'*)_ceu_mem))'
+        elseif Ext then
+            if ctx.is_local then
+                data = '_ceu_loc'
+            else
+                local ext = unpack(Ext)
+                data = '(*((tceu_output_'..ext.id..'*)p2.ptr))'
+                field = '_'..Ext.__dcls_vars[field]
+            end
         else
             data = 'CEU_APP.root'
         end
@@ -352,7 +361,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..args..[[)
     Pool = 'Var',
     Vec = 'Var',
     Var = function (me, ctx)
-        local id_suf = (ctx and ctx.id_suf) or ''
+        local id_suf = ctx.id_suf or ''
         local alias, tp = unpack(me)
         local ptr = ''
         if alias=='&' and (not ctx.is_bind) then
@@ -360,6 +369,12 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..args..[[)
             --  var& _t_ptr xx = &x!;   ... xx
             ptr = '*'
         end
+
+        local Ext = AST.par(me, 'Ext_impl')
+        if Ext and (not Ext.__dcls_vars[me.id]) then
+            ctx.is_local = true
+        end
+
         return '('..ptr..CUR(me.id_..id_suf,ctx)..')'
     end,
 

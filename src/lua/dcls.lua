@@ -36,8 +36,8 @@ local function iter_boundary (cur, id, can_cross)
                 if not can_cross2 then
                     return nil
                 end
-            elseif c.tag=='Data' or c.tag=='Code' or
-                   c.tag=='Ext_Code' or c.tag=='Ext_Req'
+            elseif c.tag=='Data' or c.tag=='Code'
+                    -- or c.tag=='Ext_Code' or c.tag=='Ext_Req'
             then
                 return nil
             end
@@ -53,7 +53,8 @@ function DCLS.outer (me)
     local async = AST.par(me,'_Async_Isr') or AST.par(me,'Async_Isr')
     local do_   = AST.iter(__do)()
     local code  = AST.par(me,'Code')
-    ASR(async or do_ or code, me, 'invalid `outer`')
+    local ext   = AST.par(me,'Ext_impl')
+    ASR(async or do_ or code or ext, me, 'invalid `outer`')
 
     local ret = async
     if do_ and ((not ret) or AST.depth(do_)>AST.depth(ret)) then
@@ -61,6 +62,9 @@ function DCLS.outer (me)
     end
     if code and ((not ret) or AST.depth(code)>AST.depth(ret)) then
         ret = code
+    end
+    if ext and ((not ret) or AST.depth(ext)>AST.depth(ret)) then
+        ret = ext
     end
     return ret
 end
@@ -105,6 +109,8 @@ function DCLS.asr (me, blk_or_data, id, can_cross, err)
     end
 end
 
+local PSS = function () end
+
 local function dcls_new (blk, me, can_cross, opts)
 assert(can_cross==nil)
     AST.asr(blk, 'Block')
@@ -116,28 +122,47 @@ assert(can_cross==nil)
     local id = (opts and opts.id) or me.id
 
     local old = DCLS.get(blk, id, can_cross, true)
-    local implicit = (me.is_implicit and 'implicit ') or ''
-    if old and (not old.is_predefined) then
-        local F do
-            if me.tag=='Nat'      or me.tag=='Ext' or
-               me.tag=='Ext_Code' or me.tag=='Ext_Req'
-            then
-                F = ASR
-            else
-                F = WRN
-            end
-        end
-        me.__dcls_dup = true
-        F(false, me, old and
-            implicit..'declaration of "'..id..'" hides previous declaration'..
-                ' ('..old.ln[1]..' : line '..old.ln[2]..')')
+
+    if old and old.tag=='Ext' then
+        EXPS.check_tp(me, me[2], old[2], 'invalid declaration')
+        old.__dcls_old = true
     end
 
+    local implicit = (me.is_implicit and 'implicit ') or ''
+    if not old then
+        F = PSS
+    elseif old.is_predefined then
+        F = PSS
+    elseif me.__adjs_is_impl and (not old.__adjs_is_impl) or
+           old.__adjs_is_impl and (not me.__adjs_is_impl) then
+        -- make is_impl the main
+        if old.__adjs_is_impl then
+            old.__dcls_old = nil
+            me.__dcls_old = true
+        end
+        F = PSS
+    else
+        if me.tag=='Nat' or me.tag=='Ext' then
+            -- or me.tag=='Ext_Code' or me.tag=='Ext_Req'
+            F = ASR
+        else
+            F = WRN
+        end
+        me.__dcls_dup = true
+    end
+
+    F(false, me, old and
+        implicit..'declaration of "'..id..'" hides previous declaration'..
+            ' ('..old.ln[1]..' : line '..old.ln[2]..')')
+
     blk.dcls[#blk.dcls+1] = me
+if (not blk.dcls[id]) or (not blk.dcls[id].__adjs_is_impl) then
     blk.dcls[id] = me
+end
     if me.n then
         blk.dcls[me.n..'_'] = true
     end
+
     me.blk = blk
     return me
 end
@@ -231,7 +256,7 @@ DCLS.F = {
                 elseif dcl.tag=='Code' and CEU.opts.ceu_err_unused_code then
                     f = ASR_WRN_PASS(CEU.opts.ceu_err_unused_code)
                 end
-                if not (dcl.is_used or dcl.is_predefined) then
+                if not (dcl.is_used or dcl.is_predefined or dcl.__dcls_unused or dcl.__dcls_old) then
                     dcl.__dcls_unused = true
                     f(false, dcl,
                       AST.tag2id[dcl.tag]..' "'..dcl.id..'" declared but not used')
@@ -479,7 +504,22 @@ DCLS.F = {
         dcls_new(blk, me)
     end,
 
-    Ext_Code = 'Code',
+    Ext_impl = function (me)
+        local _, block = unpack(me)
+        me.__dcls_vars = {}
+        local stmts = AST.asr(block,'Block',1,'Stmts')
+        for i,var in ipairs(stmts) do
+            if var.tag == 'Var' then
+                me.__dcls_vars[var.id] = i
+            else
+                -- HACK_7: prevents mixing parameters with locals
+                AST.asr(stmts,'Stmts', i,'Nothing')
+                break
+            end
+        end
+    end,
+
+    --Ext_Code = 'Code',
 
     -- CODE / DATA
 
@@ -976,9 +1016,8 @@ error'oi'
             local id_int1 = (esc[1]==true) or esc[1][1]
             local do_ = nil
             for n in AST.iter() do
-                if string.sub(n.tag,1,5)=='Async' or
-                   n.tag=='Data'  or n.tag=='Code' or
-                   n.tag=='Ext_Code_impl' or n.tag=='Ext_Req_impl'
+                if string.sub(n.tag,1,5)=='Async' or n.tag=='Data' or n.tag=='Code'
+                    -- or n.tag=='Ext_Code_impl' or n.tag=='Ext_Req_impl'
                 then
                     break
                 end

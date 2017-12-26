@@ -2,6 +2,7 @@ CODES = {
     native  = { pre='', pos='' },
     threads = '',
     isrs    = '',
+    exts    = {},
 }
 
 local function LINE_DIRECTIVE (me)
@@ -357,6 +358,18 @@ ceu_sys_assert(]]..V(ID_int,ctx)..[[.pool.queue == NULL, "bug found");
     end,
 
     ---------------------------------------------------------------------------
+
+    Ext_impl__POS = function (me)
+        local ext, body = unpack(me)
+        local inout = unpack(ext)
+        CODES.exts[#CODES.exts+1] = [[
+case ]]..ext.id_..[[: {
+    tceu_]]..inout..[[_mem_]]..ext.id..[[ _ceu_loc;
+]]..body.code..[[
+    break;
+}
+]]
+    end,
 
     Code = function (me)
         local mods,_,_,body = unpack(me)
@@ -1952,6 +1965,7 @@ local c = SUB(c, '=== CEU_DATAS_HIERS ===',      MEMS.datas.hiers)
 local c = SUB(c, '=== CEU_DATAS_MEMS ===',       MEMS.datas.mems)
 local c = SUB(c, '=== CEU_DATAS_MEMS_CASTS ===', table.concat(MEMS.datas.casts,'\n'))
 local c = SUB(c, '=== CEU_EXTS_ENUM_OUTPUT ===', MEMS.exts.enum_output)
+local c = SUB(c, '=== CEU_CALLBACKS_OUTPUTS ===', table.concat(CODES.exts,'\n'))
 local c = SUB(c, '=== CEU_TCEU_NTRL ===',        TYPES.n2uint(AST.root.trails_n))
 local c = SUB(c, '=== CEU_TCEU_NLBL ===',        TYPES.n2uint(#LABELS.list))
 local c = SUB(c, '=== CEU_CODES_MEMS ===',       MEMS.codes.mems)

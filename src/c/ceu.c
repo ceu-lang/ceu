@@ -537,6 +537,12 @@ static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
         }
         cur = cur->nxt;
     }
+
+    if (cmd == CEU_CALLBACK_OUTPUT) {
+        switch (p1.num) {
+            === CEU_CALLBACKS_OUTPUTS ===
+        }
+    }
 }
 
 /*****************************************************************************/

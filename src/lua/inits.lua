@@ -227,6 +227,7 @@ F = {
 
         -- RUN_INITS
         if me.is_implicit                   or      -- compiler defined
+           AST.get(me.blk,1,'Ext_impl')     or      -- "output" parameter
            AST.get(me.blk,4,'Code')         or      -- "code" parameter
            AST.par(me,'Data')               or      -- "data" member
            code and code.is_dyn_base        or      -- base dynamic class

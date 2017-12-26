@@ -42,6 +42,7 @@ local function CUR ()
     for n in AST.iter() do
         if n.tag == 'Async_Isr' or
            n.tag == 'Code'      or
+           n.tag == 'Ext_impl'  or
            n.tag == 'Data'
         then
             return n.mems
@@ -419,6 +420,8 @@ if dcl.tag ~= 'Prim' then
                         --ok = true
                     elseif blk2.__par.tag == 'ROOT' then
                         --ok = true
+                    elseif blk1.__par.tag == 'Ext_impl' then
+                        --ok=true
                     else
                         local blk3 = AST.par(blk2,'Block') or blk2
                         if blk3.__par.tag == 'Code' then
@@ -489,7 +492,9 @@ if dcl.tag ~= 'Prim' then
             -- EXT
             elseif dcl.tag == 'Ext' then
                 local inout, _, id = unpack(dcl)
-                MEMS.exts[#MEMS.exts+1] = dcl
+                if not dcl.__dcls_old then
+                    MEMS.exts[#MEMS.exts+1] = dcl
+                end
                 dcl.id_ = string.upper('CEU_'..inout..'_'..id)
             end
 end
@@ -588,6 +593,8 @@ end
 
     ---------------------------------------------------------------------------
 
+    Ext_impl__PRE = 'Async_Isr__PRE',
+
     Async_Isr__PRE = function (me)
         me.mems = { mem='' }
     end,
@@ -623,6 +630,7 @@ end
 AST.visit(F)
 
 for _, dcl in ipairs(MEMS.exts) do
+if not dcl.__dcls_old then
     local inout, Typelist = unpack(dcl)
 
     -- enum
@@ -642,7 +650,18 @@ for _, dcl in ipairs(MEMS.exts) do
     end
     mem = mem..'} tceu_'..inout..'_'..dcl.id..';\n'
 
+    -- mem
+    local impl = AST.par(dcl,'Ext_impl')
+    if impl then
+        mem = mem..[[
+typedef struct tceu_]]..inout..[[_mem_]]..dcl.id..[[ {
+    ]]..AST.par(dcl,'Ext_impl').mems.mem..[[
+} tceu_]]..inout..[[_mem_]]..dcl.id..[[;
+]]
+    end
+
     MEMS.exts.types = MEMS.exts.types..mem
+end
 end
 
 for _, dcl in ipairs(MEMS.evts) do

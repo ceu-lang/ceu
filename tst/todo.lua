@@ -31617,7 +31617,157 @@ escape ret;
 }
 --]=]
 
--- TIMEMACHINE
+
+-->>> TIMEMACHINE
+
+Test { [[
+native/pos do
+    int CEU_TIMEMACHINE_ON = 0;
+end
+
+code/await TM_App (void) -> (var int v) -> FOREVER do
+do
+    v = 0;
+    every 1s do
+        v = v + 1;
+    end
+end
+
+var& TM_App tm_app = spawn TM_App();
+
+input int DT;
+
+#define TM_QUEUE
+
+#define TM_INPUT_DT     DT
+#define TM_QUEUE_N      1000000
+#if defined(TM_QUEUE) || defined(TM_DIFF)
+#define TM_SNAP_MS      2000
+#endif
+#define TM_SNAP_N       1000
+#define TM_DIFF_N       1000000
+
+native/pre do
+    ##define CEU_FPS 20
+end
+
+#include "tm/backend.ceu"
+
+#if 0
+#ifdef TM_QUEUE
+class IOTimeMachine with
+    interface IIOTimeMachine;
+do
+end
+var IOTimeMachine io;
+#endif
+#endif
+
+var& TimeMachine tm = spawn TimeMachine(&tm_app
+#if 0
+#ifdef TM_QUEUE
+                                        , &io
+#endif
+#endif
+                                       );
+
+par/or do
+    await 3s/_;
+    emit tm.go_on;
+    await 1s/_;
+
+    ///////////////////////////////
+
+    emit tm.go_seek(tm.time_total);
+    TM_AWAIT_SEEK(tm);
+    _assert(tm_app.v == 3);
+
+    emit tm.go_seek(0);
+    TM_AWAIT_SEEK(tm);
+    _assert(tm_app.v == 0);
+
+    emit tm.go_seek(500);
+    TM_AWAIT_SEEK(tm);
+    _assert(tm_app.v == 0);
+
+    emit tm.go_seek(1000);
+    TM_AWAIT_SEEK(tm);
+    _assert(tm_app.v == 1);
+
+    emit tm.go_seek(1500);
+    TM_AWAIT_SEEK(tm);
+    _assert(tm_app.v == 1);
+
+    emit tm.go_seek(2000);
+    TM_AWAIT_SEEK(tm);
+    _assert(tm_app.v == 2);
+
+    emit tm.go_seek(2500);
+    TM_AWAIT_SEEK(tm);
+    _assert(tm_app.v == 2);
+
+    emit tm.go_seek(3000);
+    TM_AWAIT_SEEK(tm);
+    _assert(tm_app.v == 3);
+
+    emit tm.go_seek(2500);
+    TM_AWAIT_SEEK(tm);
+    _assert(tm_app.v == 2);
+
+    emit tm.go_seek(2000);
+    TM_AWAIT_SEEK(tm);
+    _assert(tm_app.v == 2);
+
+    emit tm.go_seek(1500);
+    TM_AWAIT_SEEK(tm);
+    _assert(tm_app.v == 1);
+
+    emit tm.go_seek(1000);
+    TM_AWAIT_SEEK(tm);
+    _assert(tm_app.v == 1);
+
+    emit tm.go_seek(500);
+    TM_AWAIT_SEEK(tm);
+    _assert(tm_app.v == 0);
+
+    emit tm.go_seek(0);
+    TM_AWAIT_SEEK(tm);
+    _assert(tm_app.v == 0);
+
+    escape 1;
+
+with
+    input int DT;
+    async (tm) do
+        loop do
+            if not _CEU_TIMEMACHINE_ON then
+                emit 50ms;
+                emit DT(50);
+            end
+
+            // TODO: forces this async to be slower
+            input void SLOW;
+            loop do
+                if not tm.locked then
+                    break;
+                end
+                emit SLOW;
+            end
+            emit 50ms/_;
+        end
+    end
+end
+
+escape tm_app.v;
+]],
+    opts_pre = true,
+    timemachine = true,
+    _ana = {
+        acc = true,
+    },
+    run = 1,
+}
+
 local t = {
     [1] = [[
 #define TM_QUEUE
@@ -31658,14 +31808,15 @@ native/pos do
     int CEU_TIMEMACHINE_ON = 0;
 end
 
-class TM_App with
-    var int v = 0;
+code/await TM_App (void) -> (var int v) -> FOREVER do
 do
+    v = 0;
     every 1s do
-        this.v = this.v + 1;
+        v = v + 1;
     end
 end
-var TM_App tm_app;
+
+var& TM_App tm_app = spawn TM_App();
 
 input int DT;
 
@@ -31685,6 +31836,7 @@ end
 
 #include "tm/backend.ceu"
 
+#if 0
 #ifdef TM_QUEUE
 class IOTimeMachine with
     interface IIOTimeMachine;
@@ -31692,13 +31844,15 @@ do
 end
 var IOTimeMachine io;
 #endif
-
-var TimeMachine tm with
-    this.app = &tm_app;
-#ifdef TM_QUEUE
-    this.io  = &io;
 #endif
-end;
+
+var& TimeMachine tm = spawn TimeMachine(&tm_app
+#if 0
+#ifdef TM_QUEUE
+                                        , &io
+#endif
+#endif
+                                       );
 
 par/or do
     await 3s/_;
@@ -32484,6 +32638,7 @@ escape tm_app.v;
 
 end
 
+--<<< TIMEMACHINE
 do return end
 
 -------------------------------------------------------------------------------

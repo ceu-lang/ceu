@@ -53,15 +53,15 @@ local T = {
     },
 
     {
-        '`native` or `code` or end of file',
+        '`native` or `code` or `input` or `output` or end of file',
         'end of file'
     },
     {
-        '`;` or `native` or `code` or `with`',
+        '`;` or `native` or `code` or `input` or `output` or `with`',
         '`with`'
     },
     {
-        '`native` or `code` or `end`',
+        '`native` or `code` or `input` or `output` or `end`',
         '`end`'
     },
 
@@ -85,15 +85,15 @@ local T = {
     },
 
     {
-        '`code` or `input/output` or `output/input` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `catch` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `pool` or `event` or `input` or `output` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `off` or `on` or `no` or `yes` or `"` or string literal or `escape` or `break` or `continue` or `throw` or `par` or end of file',
+        '`code` or `input` or `output` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `catch` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `pool` or `event` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `off` or `on` or `no` or `yes` or `"` or string literal or `escape` or `break` or `continue` or `throw` or `par` or end of file',
         'statement'
     },
     {
-        '`code` or `input/output` or `output/input` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `catch` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `pool` or `event` or `input` or `output` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `off` or `on` or `no` or `yes` or `"` or string literal or `escape` or `break` or `continue` or `throw` or `par` or `with`',
+        '`code` or `input` or `output` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `catch` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `pool` or `event` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `off` or `on` or `no` or `yes` or `"` or string literal or `escape` or `break` or `continue` or `throw` or `par` or `with`',
         'statement'
     },
     {
-        '`code` or `input/output` or `output/input` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `catch` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `pool` or `event` or `input` or `output` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `off` or `on` or `no` or `yes` or `"` or string literal or `escape` or `break` or `continue` or `throw` or `par` or `end`',
+        '`code` or `input` or `output` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `catch` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `pool` or `event` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `off` or `on` or `no` or `yes` or `"` or string literal or `escape` or `break` or `continue` or `throw` or `par` or `end`',
         'statement'
     },
 }
@@ -469,6 +469,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     -- EXTS
 
     -- call
+--[[
     , __extcode = (CK'input/output' + CK'output/input') * K'/tight'
                     * OPT(CK'/recursive')
                     * V'__ID_ext' * V'Code_Pars' * KK'->' * V'Type'
@@ -483,6 +484,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 * EE'TODO-PARSER: request'
     , _Ext_Req_proto = V'__extreq'
     , _Ext_Req_impl  = V'__extreq' * V'__Do'
+]]
 
     -- TYPEPARS
 
@@ -548,7 +550,9 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , Ext = CK'input'  * (PARENS(V'_Typelist')     + V'Type')             * V'__ID_ext'
           + CK'output' * (PARENS(V'_Typelist_amp') + OPT(CKK'&')*V'Type') * V'__ID_ext'
     , _Typelist     = LIST(V'Type')
-    , _Typelist_amp = LIST(OPT(CKK'&') * V'Type')
+    , _Typelist_amp = LIST(OPT(CKK'&') * V'Type' * (V'__ID_int' + Cc(false)))
+
+    , Ext_impl = V'Ext' * V'__Do' * V'Y'
 
     , __Dcls    = V'_Var_set' + V'_Pool_set' + V'_Evt_set'
 -- AWAIT, EMIT
@@ -808,7 +812,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                  * ( V'__Stmt_Last' * V'__seqs' +
                      V'__Stmt_Last_Block' * (KK';'^0)
                    )^-1
-                 * (V'Nat_Block'+V'_Code_impl')^0 )
+                 * (V'Nat_Block'+V'_Code_impl'+V'Ext_impl')^0 )
 
     , __Stmt_Last  = V'_Escape' + V'Break' + V'Continue' + V'Await_Forever' + V'Throw'
     , __Stmt_Last_Block = V'Y' * V'Par'
@@ -816,7 +820,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                     + V'__Dcls'
                     + V'Ext'
                     + V'_Data_simple'
-                    + V'_Code_proto' + V'_Ext_Code_proto' + V'_Ext_Req_proto'
+                    + V'_Code_proto' --+ V'_Ext_Code_proto' + V'_Ext_Req_proto'
                     + V'_Nats'  + V'Nat_End'
                     + V'Deterministic'
                     + V'_Set'
@@ -828,7 +832,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
                     + V'Abs_Spawn' + V'Abs_Spawn_Pool' + V'Kill'
                     + V'Stmt_Call'
 
-    , __Stmt_Block = V'_Code_impl' + V'_Ext_Code_impl' + V'_Ext_Req_impl'
+    , __Stmt_Block = V'_Code_impl' + V'Ext_impl' --+ V'_Ext_Code_impl' + V'_Ext_Req_impl'
               + V'_Data_block'
               + V'Nat_Block'
               + V'_Do'    + V'_If'

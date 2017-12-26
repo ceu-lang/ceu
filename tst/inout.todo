@@ -1,0 +1,382 @@
+Test { [[
+output/input/tight Z  (var int)->int;
+escape call Z(1);
+]],
+    parser = 'line 1 : after `int` : expected type modifier or internal identifier',
+    --parser = 'line 2 : after `call` : expected location',
+    --parser = 'line 2 : after `call` : expected expression',
+    --parser = 'line 2 : after `Z` : expected `;`',
+    --parser = 'line 2 : after `Z` : expected `(`',
+}
+
+Test { [[
+output/input/tight Z  (var int a)->int;
+escape call Z(1);
+]],
+    parser = 'line 2 : after `call` : expected location',
+    --parser = 'line 2 : after `call` : expected expression',
+    --parser = 'line 2 : after `Z` : expected `;`',
+    --parser = 'line 2 : after `Z` : expected `(`',
+}
+
+Test { [[
+output/input/tight Z  (var int a)->int;
+call Z(1);
+escape 1;
+]],
+    cc = 'error: #error ceu_out_call_* is not defined',
+}
+
+Test { [[
+output/input/tight Z  (var int a)->int;
+emit Z(1);
+escape 1;
+]],
+    stmts = 'line 2 : invalid `emit` : unexpected context for external code',
+    --run = 1,
+}
+
+Test { [[
+native/pos do
+    ##define ceu_out_emit_F(a) Z(a)
+    int Z (int v) {
+        escape v+1;
+    }
+end
+output/input/tight Z  (var int a)->int;
+call Z(1);
+escape 1;
+]],
+    cc = 'error: #error ceu_out_call_* is not defined',
+    --run = 1,
+}
+
+Test { [[
+native/pos do
+    ##define ceu_out_call_F(a) Z((int*)a)
+    int Z (int* v) {
+        escape *v+1;
+    }
+end
+output/input/tight Z  (var int a)->int;
+call Z(1);
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native/pos do
+    ##define ceu_out_call(a,b,c) Z((int*)c)
+    int Z (int* v) {
+        escape *v+1;
+    }
+end
+output/input/tight Z  (var int a)->int;
+var int ret = call Z(1);
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
+native/pos do
+    ##define ceu_out_call_F(a) Z(a)
+    int Z (int v) {
+        escape v+1;
+    }
+end
+output/input/tight Z  (var int a)->int;
+var int ret = call Z(1,2);
+escape ret;
+]],
+    stmts = 'line 8 : invalid call : types mismatch : "(int)" <= "(int,int)"',
+    --env = 'line 8 : arity mismatch',
+    --env = 'line 8 : invalid attribution (none vs int)',
+    --env = 'line 8 : invalid type',
+}
+
+Test { [[
+native/pos do
+    ##define ceu_out_call_F(a) Z(a)
+    int Z (tceu__int__int* p) {
+        escape p->_1 + p->_2;
+    }
+end
+output/input/tight Z  (var int a, var int b)->int;
+var int ret = call Z(1,2);
+escape ret;
+]],
+    run = 3,
+}
+
+Test { [[
+native/pos do
+    ##define ceu_out_call(a,b,c) Z(a,b,c)
+    int Z (tceu_app* app, tceu_nevt evt, int* p) {
+        escape (evt == CEU_OUTPUT_Z) + *p;
+    }
+end
+output/input/tight Z  (var int b)->int;
+var int ret = (call Z(2));
+escape ret;
+]],
+    run = 3,
+}
+
+Test { [[
+native/pos do
+    ##define ceu_out_call(a,b,c) Z(a,b,c)
+    int Z (tceu_app* app, tceu_nevt evt, int* p) {
+        return (evt == CEU_OUTPUT_Z) + *p;
+    }
+end
+output/input/tight Z  (var int b)->int;
+par/and do
+    call Z(1);
+with
+    call Z(1);
+end
+escape 1;
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = 1,
+}
+
+Test { [[
+input/output/tight Z,W  (var int a)->int do
+    escape a + 1;
+end
+]],
+    parser = 'line 1 : after `Z` : expected `(`',
+    --adj = 'line 1 : same body for multiple declarations',
+}
+
+Test { [[
+input/output/tight Z  (var int a)->int do
+    escape a + 1;
+end
+input/output/tight W  (var int a)->int;
+var int ret = call Z(1);
+escape ret;
+]],
+    dcls = 'line 4 : external code "W" declared but not used',
+}
+
+Test { [[
+input/output/tight Z  (var int a)->int do
+    escape a + 1;
+end
+input/output/tight W  (var int a)->int;
+var int ret = call Z(1);
+escape ret;
+]],
+    wrn = true,
+    code = 'line 4 : missing function body',
+    --run = 2,
+}
+
+Test { [[
+input/output/tight Z  (var int a)->none do
+    v = a;
+end
+var int v = 0;
+call Z(1);
+escape v;
+]],
+    todo = 'globals',
+    dcls = 'line 2 : internal identifier "v" is not declared',
+}
+
+Test { [[
+native/nohold _fprintf, _stderr;
+var int v = 0;
+input/output/tight Z  (var int a)->none do
+    this.v = a;
+    _fprintf(_stderr,"a=%d v=%d\n", a, v);
+end
+_fprintf(_stderr,"v=%d\n", v);
+call Z(1);
+_fprintf(_stderr,"v=%d\n", v);
+escape this.v;
+]],
+    todo = 'globals',
+    run = 1,
+}
+
+Test { [[
+var int v = 0;
+input/output/tight W  (var int a)->int do
+    escape a + 1;
+end
+input/output/tight Z  (var int a)->none do
+    this.v = call W(a);
+end
+call Z(1);
+escape this.v;
+]],
+    todo = 'globals',
+    run = 2,
+}
+
+Test { [[
+input/output/tight A  (none)->none do
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+input/output/tight A  (var u8 a, var  int a)->none do
+    v = 1;
+end
+call A(());
+escape 1;
+]],
+    dcls = 'line 1 : declaration of "a" hides previous declaration (/tmp/tmp.ceu : line 1)',
+}
+
+Test { [[
+input/output/tight A  (var none a, var  int v)->none do
+    v = 1;
+end
+escape 1;
+]],
+    wrn = true,
+    dcls = 'line 1 : invalid declaration : variable cannot be of type `none`',
+}
+
+Test { [[
+input none OS_START;
+var int v = 0;
+input/output/tight A  (none)->none do
+    v = 1;
+end
+call A;
+escape v;
+]],
+    todo = 'global',
+    run = 1,
+}
+
+Test { [[
+input/output/tight WRITE  (var int c)->int do
+    escape c + 1;
+end
+var byte b = 1;
+var int ret = call WRITE(b);
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
+native ___ceu_nothing;
+input/output/tight IB  (var int c)->none do
+    ___ceu_nothing(&&c);
+end
+call IB(0);
+escape 0;
+]],
+    scopes = 'line 3 : invalid `call` : expected `finalize` for variable "c"',
+}
+Test { [[
+native/pure ___ceu_nothing;
+input/output/tight IA  (var int c)->int do
+    escape c + 1;
+end
+input/output/tight IB  (var int c)->none do
+    ___ceu_nothing(&&c);
+end
+call IB(0);
+var int ret = call IA(1);
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
+input/output/tight OPEN  (var byte&& path, var byte mode)->none do
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+native/pre do
+    typedef struct {
+        int a,b,c;
+    } Fx;
+end
+native _Fx, _fff;
+native/pos do
+    Fx* fff;
+end
+
+native/pure ___ceu_nothing;
+input/output/tight OPEN  (var byte&& path, var  byte&& mode)->_Fx&& do
+    ___ceu_nothing(path);
+    ___ceu_nothing(mode);
+    escape _fff;
+end
+
+input/output/tight CLOSE  (var _Fx&& f)->int do
+    ___ceu_nothing(f);
+    escape 1;
+end
+
+input/output/tight SIZE  (var _Fx&& f)->int do
+    ___ceu_nothing(f);
+    escape 1;
+end
+
+input/output/tight READ  (var none&& ptr, var int size, var int nmemb, var  _Fx&& f)->int do
+    ___ceu_nothing(ptr);
+    ___ceu_nothing(&&size);
+    ___ceu_nothing(&&nmemb);
+    ___ceu_nothing(f);
+    escape 1;
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+native/pre do
+    typedef struct {
+        byte* str;
+        u32   length;
+        u32   x;
+        u32   y;
+    } draw_string_t;
+end
+
+native/pure ___ceu_nothing;
+native/plain _draw_string_t;
+input/output/tight DRAW_STRING  (var _draw_string_t&& ptr)->none do
+    ___ceu_nothing(ptr);
+end
+
+var _draw_string_t v = _draw_string_t(
+    "Welcome to Ceu/OS!\n",
+    20,
+    100,
+    100);
+call DRAW_STRING(&&v);
+
+escape 1;
+]],
+    run = 1,
+}
+
+

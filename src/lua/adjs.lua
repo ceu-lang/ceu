@@ -867,11 +867,12 @@ error'TODO: luacov never executes this?'
         if class == 'output' then
             me.are_aliases = {}
             if Type and Type.tag=='_Typelist_amp' then
-                for i=#Type, 1, -2 do
-                    local is_alias,tp = Type[i-1], Type[i]
+                for i=#Type, 1, -3 do
+                    local is_alias,tp,id = Type[i-2], Type[i-1], Type[i]
                     ASR(is_alias==false or is_alias=='&')
                     ASR(tp.tag == 'Type')
-                    table.remove(Type,i-1)
+                    table.remove(Type,i)
+                    table.remove(Type,i-2)
                     table.insert(me.are_aliases, 1, is_alias)
                 end
                 Type.tag = '_Typelist'
@@ -887,6 +888,22 @@ error'TODO: luacov never executes this?'
         if Type.tag == 'Type' then
             AST.set(me, 2, node('_Typelist', me.ln, Type))
         end
+    end,
+
+    Ext_impl__PRE = function (me)
+        local ext, body = unpack(me)
+        ext.__adjs_is_impl = true
+        local _, list = unpack(ext)
+        local j = 0
+        for i=1, #list, 3 do
+            local amp,tp,id = list[i], list[i+1], list[i+2]
+            local var = node('Var', me.ln, amp, AST.copy(tp), id)
+            j = j + 1
+            AST.insert(AST.asr(body,'Block', 1,'Stmts'), j, var)
+        end
+
+        -- HACK_7: prevents mixing parameters with locals
+        AST.insert(AST.asr(body,'Block', 1,'Stmts'), j+1, node('Nothing',me.ln))
     end,
 
     _List_Exp_Any = function (me)
