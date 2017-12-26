@@ -512,9 +512,7 @@ DCLS.F = {
             if var.tag == 'Var' then
                 me.__dcls_vars[var.id] = i
             else
-                -- HACK_7: prevents mixing parameters with locals
-                AST.asr(stmts,'Stmts', i,'Nothing')
-                break
+                AST.asr(var, 'Do')
             end
         end
     end,

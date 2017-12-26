@@ -894,16 +894,19 @@ error'TODO: luacov never executes this?'
         local ext, body = unpack(me)
         ext.__adjs_is_impl = true
         local _, list = unpack(ext)
-        local j = 0
+
+        local stmts = node('Stmts', me.ln)
         for i=1, #(list or {}), 3 do
             local amp,tp,id = list[i], list[i+1], list[i+2]
             local var = node('Var', me.ln, amp, AST.copy(tp), id)
-            j = j + 1
-            AST.insert(AST.asr(body,'Block', 1,'Stmts'), j, var)
+            AST.set(stmts, #stmts+1, var)
         end
 
-        -- HACK_7: prevents mixing parameters with locals
-        AST.insert(AST.asr(body,'Block', 1,'Stmts'), j+1, node('Nothing',me.ln))
+        local do_ = node('Do', me.ln, true, false)
+        AST.set(do_, #do_+1, body)
+
+        AST.set(stmts, #stmts+1, do_)
+        AST.set(me, 2, node('Block', me.ln, stmts))
     end,
 
     _List_Exp_Any = function (me)

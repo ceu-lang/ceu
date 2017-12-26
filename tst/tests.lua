@@ -395,8 +395,8 @@ escape 1;
 }
 ]==]
 
---]=====]
 -- TODO-OUTPUT-MOVE
+--]=====]
 Test { [[
 output (none) O;
 output (int) O;
@@ -468,10 +468,46 @@ escape 1;
     run = 1,
 }
 Test { [[
+output none O do
+    escape;
+end
+output (none) O;
+emit O();
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
 output (&int p) O do
     p = 10;
 end
 output (&int) O;
+var int i = 1;
+emit O(&i);
+escape i;
+]],
+    run = 10,
+}
+Test { [[
+output (&int p) O do
+    if true then
+        escape;
+    end
+    p = 10;
+end
+var int i = 1;
+emit O(&i);
+escape i;
+]],
+    run = 1,
+}
+Test { [[
+output (&int p) O do
+    if false then
+        escape;
+    end
+    p = 10;
+end
 var int i = 1;
 emit O(&i);
 escape i;

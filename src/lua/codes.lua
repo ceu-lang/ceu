@@ -38,7 +38,7 @@ local function CONC_ALL (me)
 end
 
 local function CASE (me, lbl)
-    if AST.par(me,'Async_Thread') or AST.par(me,'Async_Isr') then
+    if AST.par(me,'Async_Thread') or AST.par(me,'Async_Isr') or AST.par(me,'Ext_impl') then
         LINE(me, lbl.id..':;\n')
     else
         LINE(me, 'case '..lbl.id..':;\n')
@@ -778,7 +778,7 @@ ceu_assert(0, "reached end of `do`");
     Escape = function (me)
         local code = AST.par(me, 'Code')
         local mods = code and code[2]
-        if AST.par(me,'Async_Thread') or AST.par(me,'Async_Isr') then
+        if AST.par(me,'Async_Thread') or AST.par(me,'Async_Isr') or AST.par(me,'Ext_impl') then
             LINE(me, [[
 goto ]]..me.outer.lbl_out.id..[[;
 ]])
