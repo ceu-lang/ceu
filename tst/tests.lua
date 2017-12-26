@@ -459,6 +459,15 @@ escape 1;
 }
 
 Test { [[
+output none O do
+end
+output (none) O;
+emit O();
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
 output (&int p) O do
     p = 10;
 end

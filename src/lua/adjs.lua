@@ -895,7 +895,7 @@ error'TODO: luacov never executes this?'
         ext.__adjs_is_impl = true
         local _, list = unpack(ext)
         local j = 0
-        for i=1, #list, 3 do
+        for i=1, #(list or {}), 3 do
             local amp,tp,id = list[i], list[i+1], list[i+2]
             local var = node('Var', me.ln, amp, AST.copy(tp), id)
             j = j + 1
