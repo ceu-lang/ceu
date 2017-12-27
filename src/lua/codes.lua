@@ -360,7 +360,9 @@ ceu_assert(]]..V(ID_int,ctx)..[[.pool.queue == NULL, "bug found");
     ---------------------------------------------------------------------------
 
     Ext_impl__POS = function (me)
-        local ext, body = unpack(me)
+        local ext, block = unpack(me)
+        local stmts = AST.asr(block,'Block', 1,'Stmts')
+        local body = AST.asr(stmts[#stmts], 'Do')
         local inout = unpack(ext)
         CODES.exts[#CODES.exts+1] = [[
 case ]]..ext.id_..[[: {

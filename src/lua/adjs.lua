@@ -888,7 +888,8 @@ error'TODO: luacov never executes this?'
             else
                 ASR(Type==false or Type=='&')
                 ASR(x.tag=='Type')
-                local is_alias, Type = Type, x
+                local is_alias
+                is_alias, Type = Type, x
 
                 do  -- reject none with id/alias
                     local ID_prim,mod = unpack(Type)

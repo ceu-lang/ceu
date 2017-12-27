@@ -395,23 +395,8 @@ escape 1;
 }
 ]==]
 
--- TODO-MOVE-1
---]=====]
-Test { [[
-output (int? v, &int ret) O do
-    if v? then
-        ret = v!;
-    else
-        ret = 99;
-    end
-end
-var int ret = 1;
-emit O(100, &ret);
-escape ret;
-]],
-    run = 100,
-}
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -24352,7 +24337,20 @@ escape i;
     run = 10,
 }
 
--- TODO-MOVE-1
+Test { [[
+output (int? v, &int ret) O do
+    if v? then
+        ret = v!;
+    else
+        ret = 99;
+    end
+end
+var int ret = 1;
+emit O(100, &ret);
+escape ret;
+]],
+    run = 100,
+}
 
 Test { [[
 output &none O do
