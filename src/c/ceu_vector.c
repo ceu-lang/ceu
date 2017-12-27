@@ -15,24 +15,75 @@ typedef struct {
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 
-#define ceu_vector_idx(vec,idx)            ((vec)->is_ring ? (((vec)->ini + (idx)) % (vec)->max) : (idx))
-#define ceu_vector_buf_get(vec,idx)        (&(vec)->buf[ceu_vector_idx(vec,idx)*(vec)->unit])
-#define ceu_vector_buf_set(vec,idx,buf,nu) ceu_vector_buf_set_ex(vec,idx,buf,nu,CEU_TRACE(0))
-#define ceu_vector_copy(dst,dst_i,src,src_i,n) ceu_vector_copy_ex(dst,dst_i,src,src_i,n,CEU_TRACE(0))
+#define ceu_vector_idx(vec,idx)     ((vec)->is_ring ? (((vec)->ini + (idx)) % (vec)->max) : (idx))
+#define ceu_vector_buf_get(vec,idx) (&(vec)->buf[ceu_vector_idx(vec,idx)*(vec)->unit])
+#define ceu_vector_ptr(vec)         (vec)
 
-#define ceu_vector_setmax(vec,len,freeze)  ceu_vector_setmax_ex(vec,len,freeze,CEU_TRACE(0))
-#define ceu_vector_setlen_could(vec,len,grow) ceu_vector_setlen_could_ex(vec,len,grow,CEU_TRACE(0))
-#define ceu_vector_setlen(a,b,c) ceu_vector_setlen_ex(a,b,c,CEU_TRACE(0))
-#define ceu_vector_geti(a,b)     ceu_vector_geti_ex(a,b,CEU_TRACE(0))
-#define ceu_vector_ptr(vec)      (vec)
+#ifdef CEU_FEATURES_TRACE
+#define ceu_vector_buf_set(vec,idx,buf,nu)      ceu_vector_buf_set_ex(vec,idx,buf,nu,CEU_TRACE_mem(0))
+#define ceu_vector_copy(dst,dst_i,src,src_i,n)  ceu_vector_copy_ex(dst,dst_i,src,src_i,n,CEU_TRACE_mem(0))
+#define ceu_vector_setmax(vec,len,freeze)       ceu_vector_setmax_ex(vec,len,freeze,CEU_TRACE_mem(0))
+#define ceu_vector_setlen_could(vec,len,grow)   ceu_vector_setlen_could_ex(vec,len,grow,CEU_TRACE_mem(0))
+#define ceu_vector_setlen(a,b,c)                ceu_vector_setlen_ex(a,b,c,CEU_TRACE_mem(0))
+#define ceu_vector_geti(a,b)                    ceu_vector_geti_ex(a,b,CEU_TRACE_mem(0))
+#else
+#define ceu_vector_buf_set(vec,idx,buf,nu)      ceu_vector_buf_set_ex(vec,idx,buf,nu)
+#define ceu_vector_copy(dst,dst_i,src,src_i,n)  ceu_vector_copy_ex(dst,dst_i,src,src_i,n)
+#define ceu_vector_setmax(vec,len,freeze)       ceu_vector_setmax_ex(vec,len,freeze,_)
+#define ceu_vector_setlen_could(vec,len,grow)   ceu_vector_setlen_could_ex(vec,len,grow)
+#define ceu_vector_setlen(a,b,c)                ceu_vector_setlen_ex(a,b,c,_)
+#define ceu_vector_geti(a,b)                    ceu_vector_geti_ex(a,b)
+#endif
 
 void  ceu_vector_init            (tceu_vector* vector, usize max, bool is_ring, bool is_dyn, usize unit, byte* buf);
-byte* ceu_vector_setmax_ex       (tceu_vector* vector, usize len, bool freeze, tceu_trace trace);
-int   ceu_vector_setlen_could_ex (tceu_vector* vector, usize len, bool grow, tceu_trace trace);
-void  ceu_vector_setlen_ex       (tceu_vector* vector, usize len, bool grow, tceu_trace trace);
-byte* ceu_vector_geti_ex         (tceu_vector* vector, usize idx, tceu_trace trace);
-void  ceu_vector_buf_set_ex      (tceu_vector* vector, usize idx, byte* buf, usize nu, tceu_trace trace);
-void  ceu_vector_copy_ex         (tceu_vector* dst, usize dst_i, tceu_vector* src, usize src_i, usize n, tceu_trace trace);
+
+#ifdef CEU_FEATURES_TRACE
+#define ceu_vector_setmax_ex(a,b,c,d) ceu_vector_setmax_ex_(a,b,c,d)
+#else
+#define ceu_vector_setmax_ex(a,b,c,d) ceu_vector_setmax_ex_(a,b,c)
+#endif
+
+byte* ceu_vector_setmax_ex_      (tceu_vector* vector, usize len, bool freeze
+#ifdef CEU_FEATURES_TRACE
+                                 , tceu_trace trace
+#endif
+                                 );
+
+int   ceu_vector_setlen_could_ex (tceu_vector* vector, usize len, bool grow
+#ifdef CEU_FEATURES_TRACE
+                                 , tceu_trace trace
+#endif
+                                 );
+
+#ifdef CEU_FEATURES_TRACE
+#define ceu_vector_setlen_ex(a,b,c,d) ceu_vector_setlen_ex_(a,b,c,d)
+#else
+#define ceu_vector_setlen_ex(a,b,c,d) ceu_vector_setlen_ex_(a,b,c)
+#endif
+
+void  ceu_vector_setlen_ex_      (tceu_vector* vector, usize len, bool grow
+#ifdef CEU_FEATURES_TRACE
+                                 , tceu_trace trace
+#endif
+                                 );
+
+byte* ceu_vector_geti_ex         (tceu_vector* vector, usize idx
+#ifdef CEU_FEATURES_TRACE
+                                 , tceu_trace trace
+#endif
+                                 );
+
+void  ceu_vector_buf_set_ex      (tceu_vector* vector, usize idx, byte* buf, usize nu
+#ifdef CEU_FEATURES_TRACE
+                                 , tceu_trace trace
+#endif
+                                 );
+
+void  ceu_vector_copy_ex         (tceu_vector* dst, usize dst_i, tceu_vector* src, usize src_i, usize n
+#ifdef CEU_FEATURES_TRACE
+                                 , tceu_trace trace
+#endif
+                                 );
 
 #if 0
 char* ceu_vector_tochar (tceu_vector* vector);
@@ -50,7 +101,11 @@ void ceu_vector_init (tceu_vector* vector, usize max, bool is_ring,
     vector->buf        = buf;
 }
 
-byte* ceu_vector_setmax_ex (tceu_vector* vector, usize len, bool freeze, tceu_trace trace)
+byte* ceu_vector_setmax_ex_      (tceu_vector* vector, usize len, bool freeze
+#ifdef CEU_FEATURES_TRACE
+                                 , tceu_trace trace
+#endif
+                                 )
 {
     ceu_assert_ex(vector->is_dyn, "static vector", trace);
 
@@ -62,14 +117,15 @@ byte* ceu_vector_setmax_ex (tceu_vector* vector, usize len, bool freeze, tceu_tr
         /* free */
         if (vector->buf != NULL) {
             vector->max = 0;
-            ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, vector->buf, 0);
+            ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, vector->buf, 0, trace);
             vector->buf = NULL;
         }
     } else {
         ceu_sys_assert(len > vector->max, "not implemented: shrinking vectors");
         ceu_callback_ptr_size(CEU_CALLBACK_REALLOC,
                               vector->buf,
-                              len*vector->unit
+                              len*vector->unit,
+                              trace
                              );
         vector->buf = (byte*) ceu_callback_ret.ptr;
 
@@ -100,7 +156,11 @@ END:
     return vector->buf;
 }
 
-int ceu_vector_setlen_could_ex (tceu_vector* vector, usize len, bool grow, tceu_trace trace)
+int   ceu_vector_setlen_could_ex (tceu_vector* vector, usize len, bool grow
+#ifdef CEU_FEATURES_TRACE
+                                 , tceu_trace trace
+#endif
+                                 )
 {
     /* must fit w/o growing */
     if (!grow) {
@@ -132,7 +192,11 @@ int ceu_vector_setlen_could_ex (tceu_vector* vector, usize len, bool grow, tceu_
     return 1;
 }
 
-void ceu_vector_setlen_ex (tceu_vector* vector, usize len, bool grow, tceu_trace trace)
+void  ceu_vector_setlen_ex_      (tceu_vector* vector, usize len, bool grow
+#ifdef CEU_FEATURES_TRACE
+                                 , tceu_trace trace
+#endif
+                                 )
 {
     /* must fit w/o growing */
     if (!grow) {
@@ -163,12 +227,21 @@ void ceu_vector_setlen_ex (tceu_vector* vector, usize len, bool grow, tceu_trace
     vector->len = len;
 }
 
-byte* ceu_vector_geti_ex (tceu_vector* vector, usize idx, tceu_trace trace) {
+byte* ceu_vector_geti_ex         (tceu_vector* vector, usize idx
+#ifdef CEU_FEATURES_TRACE
+                                 , tceu_trace trace
+#endif
+                                 )
+{
     ceu_assert_ex(idx < vector->len, "access out of bounds", trace);
     return ceu_vector_buf_get(vector, idx);
 }
 
-void ceu_vector_buf_set_ex (tceu_vector* vector, usize idx, byte* buf, usize nu, tceu_trace trace)
+void  ceu_vector_buf_set_ex      (tceu_vector* vector, usize idx, byte* buf, usize nu
+#ifdef CEU_FEATURES_TRACE
+                                 , tceu_trace trace
+#endif
+                                 )
 {
     usize n = ((nu % vector->unit) == 0) ? nu/vector->unit : nu/vector->unit+1;
 #if 0
@@ -192,7 +265,11 @@ void ceu_vector_buf_set_ex (tceu_vector* vector, usize idx, byte* buf, usize nu,
     }
 }
 
-void ceu_vector_copy_ex (tceu_vector* dst, usize dst_i, tceu_vector* src, usize src_i, usize n, tceu_trace trace)
+void  ceu_vector_copy_ex         (tceu_vector* dst, usize dst_i, tceu_vector* src, usize src_i, usize n
+#ifdef CEU_FEATURES_TRACE
+                                 , tceu_trace trace
+#endif
+                                 )
 {
     usize unit = dst->unit;
     ceu_assert_ex((src->unit == dst->unit), "incompatible vectors", trace);

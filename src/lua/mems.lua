@@ -276,15 +276,32 @@ assert(me.hier)
             MEMS.opts[str] = true
             local cc = TYPES.toc(tp)
             local c = TYPES.toc(TYPES.pop(tp,'?'))
+
+            MEMS.datas.mems = MEMS.datas.mems..[[
+#ifdef CEU_FEATURES_TRACE
+#define CEU_OPTION_]]..cc..[[(a,b) CEU_OPTION_]]..cc..[[_(a,b)
+#else
+#define CEU_OPTION_]]..cc..[[(a,b) CEU_OPTION_]]..cc..[[_(a)
+#endif
+]]
+
             if alias == '&?' then
                 if TYPES.abs_dcl(tp) then
                     MEMS.datas.mems = MEMS.datas.mems..[[
 struct ]]..cc..[[;
-static struct ]]..cc..'* CEU_OPTION_'..cc..[[ (struct ]]..cc..[[* alias, tceu_trace trace) {
+static struct ]]..cc..'* CEU_OPTION_'..cc..[[_ (struct ]]..cc..[[* alias
+#ifdef CEU_FEATURES_TRACE
+                                              , tceu_trace trace
+#endif
+                                              ) {
 ]]
                 else
                     MEMS.datas.mems = MEMS.datas.mems..[[
-static ]]..cc..'* CEU_OPTION_'..cc..[[ (]]..cc..[[* alias, tceu_trace trace) {
+static ]]..cc..'* CEU_OPTION_'..cc..[[_ (]]..cc..[[* alias
+#ifdef CEU_FEATURES_TRACE
+                                       , tceu_trace trace
+#endif
+                                       ) {
 ]]
                 end
                 MEMS.datas.mems = MEMS.datas.mems..[[
@@ -299,7 +316,11 @@ typedef struct ]]..cc..[[ {
     ]]..c..[[ value;
 } ]]..cc..[[;
 
-static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, tceu_trace trace) {
+static ]]..cc..'* CEU_OPTION_'..cc..'_ ('..cc..[[* opt
+#ifdef CEU_FEATURES_TRACE
+                                              , tceu_trace trace
+#endif
+                                              ) {
     ceu_assert_ex(opt->is_set, "value is not set", trace);
     return opt;
 }

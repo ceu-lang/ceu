@@ -350,7 +350,7 @@ ceu_sys_assert(]]..V(ID_int,ctx)..[[.pool.queue == NULL, "bug found");
     tceu_code_mem_dyn* __ceu_cur = ]]..V(ID_int,ctx)..[[.first.nxt;
     while (__ceu_cur != &]]..V(ID_int,ctx)..[[.first) {
         tceu_code_mem_dyn* __ceu_nxt = __ceu_cur->nxt;
-        ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, __ceu_cur, 0);
+        ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, __ceu_cur, 0, CEU_TRACE_mem(0));
         __ceu_cur = __ceu_nxt;
     }
 }
@@ -515,7 +515,8 @@ assert(not obj, 'not implemented')
     if (]]..V(pool)..[[.pool.queue == NULL) {
         ceu_callback_ptr_num(CEU_CALLBACK_REALLOC,
                              NULL,
-                             sizeof(tceu_code_mem_dyn) + sizeof(tceu_code_mem_]]..ID_abs.dcl.id_..[[)
+                             sizeof(tceu_code_mem_dyn) + sizeof(tceu_code_mem_]]..ID_abs.dcl.id_..[[),
+                             CEU_TRACE_mem(0)
                             );
         __ceu_new = (tceu_code_mem_dyn*) ceu_callback_ret.ptr;
     } else {
@@ -526,7 +527,8 @@ assert(not obj, 'not implemented')
             LINE(me, [[
     ceu_callback_ptr_num(CEU_CALLBACK_REALLOC,
                          NULL,
-                         sizeof(tceu_code_mem_dyn) + sizeof(tceu_code_mem_]]..ID_abs.dcl.id_..[[)
+                         sizeof(tceu_code_mem_dyn) + sizeof(tceu_code_mem_]]..ID_abs.dcl.id_..[[),
+                         CEU_TRACE_mem(0)
                         );
     __ceu_new = (tceu_code_mem_dyn*) ceu_callback_ret.ptr;
 ]])
@@ -822,7 +824,7 @@ ceu_assert(]]..CUR('__max_'..me.n)..' < '..V(max)..[[, "`loop` overflow");
         if async then
             LINE(me, [[
 CEU_APP.async_pending = 1;
-ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
+ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL, CEU_TRACE_mem(0));
 ]])
             HALT(me, {
                 { ['evt.id'] = 'CEU_INPUT__ASYNC' },
@@ -907,7 +909,7 @@ ceu_assert(]]..sig..V(step)..[[> 0, "invalid `loop` step : expected positive num
 ]]..CUR('__fr_'..me.n)..' = '..V(fr)..[[;
 ]]..V(i)..' = '..V(fr)..' + '..V(step)..' * '..fr.__adj_step_mul..[[;
 ceu_assert_ex(]]..V(i)..(op..'=')..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n)..[[,
-    "control variable overflow", CEU_TRACE(-3));
+    "control variable overflow", CEU_TRACE_mem(-3));
 while (1) {
 ]])
         if to.tag ~= 'ID_any' then
@@ -928,7 +930,7 @@ while (1) {
         LINE(me, [[
     ]]..V(i)..' = '..V(i)..' + '..V(step)..[[;
     ceu_assert_ex(]]..V(i)..op..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n)..[[,
-        "control variable overflow", CEU_TRACE(-2));
+        "control variable overflow", CEU_TRACE_mem(-2));
     ]]..max.inc..[[
 }
 ]])
@@ -1071,7 +1073,7 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
             if to.info.dcl.id=='_ret' and (not AST.par(me,'Code')) then
                 LINE(me, [[
 {   CEU_APP.end_ok=1; CEU_APP.end_val=]]..V(fr)..[[;
-    ceu_callback_void_void(CEU_CALLBACK_TERMINATING);
+    ceu_callback_void_void(CEU_CALLBACK_TERMINATING, CEU_TRACE_mem(0));
 }
 ]])
             end
@@ -1251,7 +1253,7 @@ if (_ceu_occ!=NULL && _ceu_occ->evt.id==CEU_INPUT__CODE_TERMINATED) {
         const char* __ceu_str = lua_tostring(]]..LUA(me)..[[, -1);
         usize __ceu_len = lua_rawlen(]]..LUA(me)..[[, -1);
         ceu_vector_setlen_ex(&]]..V(to)..', ('..V(to)..[[.len + __ceu_len), 1,
-                             CEU_TRACE(-4));
+                             CEU_TRACE_mem(-4));
         ceu_vector_buf_set(&]]..V(to)..[[,
                            __ceu_nxt,
                            (byte*)__ceu_str,
@@ -1382,7 +1384,7 @@ __ceu_ps._]]..i..' = '..V(exp)..[[;
         if inout == 'output' then
             local set = AST.par(me,'Set_Emit_Ext_emit')
             local cb = [[
-(ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..'.id, '..ps..[[), ceu_callback_ret.num);
+(ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..'.id, '..ps..[[, CEU_TRACE_mem(0)), ceu_callback_ret.num);
 ]]
             if set then
                 local _, to = unpack(set)
@@ -1394,7 +1396,7 @@ __ceu_ps._]]..i..' = '..V(exp)..[[;
             if AST.par(me, 'Async') then
                 LINE(me, [[
 CEU_APP.async_pending = 1;
-ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
+ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL, CEU_TRACE_mem(0));
 _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__ASYNC;
 _ceu_mem->_trails[]]..me.trails[1]..[[].seq    = (tceu_nseq)(CEU_APP.seq+1);
 _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
@@ -1410,7 +1412,7 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
                 LINE(me, [[
 {
     tceu_evt_id_params __ceu_evt = { ]]..V(ID_ext)..'.id, '..ps..[[ };
-    ceu_callback_num_ptr(CEU_CALLBACK_ISR_EMIT, ]]..V(exps[1])..[[, (void*)&__ceu_evt);
+    ceu_callback_num_ptr(CEU_CALLBACK_ISR_EMIT, ]]..V(exps[1])..[[, (void*)&__ceu_evt, CEU_TRACE_mem(0));
 }
 ]])
             end
@@ -1490,7 +1492,7 @@ if (]]..V(Loc)..[[ != NULL) {
         local wclk = CUR('__wclk_'..me.n)
 
         LINE(me, [[
-ceu_wclock(]]..V(e)..', &'..wclk..[[, NULL);
+ceu_wclock(]]..V(e)..', &'..wclk..[[, NULL, CEU_TRACE_mem(0));
 
 _CEU_HALT_]]..me.n..[[_:
 ]])
@@ -1504,7 +1506,7 @@ _CEU_HALT_]]..me.n..[[_:
 /* subtract time and check if I have to awake */
 {
     s32* dt = (s32*)_ceu_occ->params;
-    if (!ceu_wclock(*dt, NULL, &]]..wclk..[[) ) {
+    if (!ceu_wclock(*dt, NULL, &]]..wclk..[[, CEU_TRACE_mem(0)) ) {
         goto _CEU_HALT_]]..me.n..[[_;
     }
 }
@@ -1516,7 +1518,7 @@ _CEU_HALT_]]..me.n..[[_:
         if AST.par(me,'Async') then
             LINE(me, [[
 CEU_APP.async_pending = 1;
-ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
+ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL, CEU_TRACE_mem(0));
 {
     s32 __ceu_dt = ]]..V(e)..[[;
     do {
@@ -1541,7 +1543,7 @@ ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
     static s32 __ceu_dt;
     __ceu_dt = ]]..V(e)..[[;
     tceu_evt_id_params __ceu_evt = { CEU_INPUT__WCLOCK, &__ceu_dt };
-    ceu_callback_num_ptr(CEU_CALLBACK_ISR_EMIT, ]]..V(exps[1])..[[, (void*)&__ceu_evt);
+    ceu_callback_num_ptr(CEU_CALLBACK_ISR_EMIT, ]]..V(exps[1])..[[, (void*)&__ceu_evt, CEU_TRACE_mem(0));
 }
 ]])
         end
@@ -1553,7 +1555,7 @@ ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
         local _,_,blk = unpack(me)
         LINE(me, [[
 CEU_APP.async_pending = 1;
-ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
+ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL, CEU_TRACE_mem(0));
 ]])
         HALT(me, {
             { ['evt.id'] = 'CEU_INPUT__ASYNC' },
@@ -1607,7 +1609,8 @@ if (0) {
         LINE(me, [[
 ceu_callback_ptr_num(CEU_CALLBACK_REALLOC,
                      NULL,
-                     sizeof(tceu_threads_data)
+                     sizeof(tceu_threads_data),
+                     CEU_TRACE_mem(0)
                     );
 ]]..v..[[ = (tceu_threads_data*) ceu_callback_ret.ptr;
 if (]]..v..[[ != NULL)
@@ -1673,7 +1676,7 @@ static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
     CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
     _ceu_p.thread->has_terminated = 1;
     _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__NONE;
-    ceu_callback_void_void(CEU_CALLBACK_THREAD_TERMINATING);
+    ceu_callback_void_void(CEU_CALLBACK_THREAD_TERMINATING, CEU_TRACE_null);
     CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
     CEU_THREADS_RETURN(NULL);
 }
@@ -1692,7 +1695,7 @@ static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
 {
     tceu_isr __ceu_isr = { CEU_ISR_]]..me.n..','..[[ _ceu_mem };
     int __ceu_args[] = { ]]..me.args..[[ };
-    ceu_callback_ptr_ptr(CEU_CALLBACK_ISR_ATTACH, (void*)&__ceu_isr, &__ceu_args);
+    ceu_callback_ptr_ptr(CEU_CALLBACK_ISR_ATTACH, (void*)&__ceu_isr, &__ceu_args, CEU_TRACE_mem(0));
 }
 ]])
 
@@ -1715,7 +1718,7 @@ void CEU_ISR_]]..me.n..[[ (tceu_code_mem* _ceu_mem) {
         LINE(me, [[{
     tceu_isr __ceu_isr = { CEU_ISR_]]..isr.n..','..[[ _ceu_mem };
     int __ceu_args[] = { ]]..isr.args..[[ };
-    ceu_callback_ptr_ptr(CEU_CALLBACK_ISR_DETACH, &__ceu_isr, &__ceu_args);
+    ceu_callback_ptr_ptr(CEU_CALLBACK_ISR_DETACH, &__ceu_isr, &__ceu_args, CEU_TRACE_mem(0));
 }]])
     end,
 
@@ -1735,9 +1738,9 @@ if (_ceu_p.thread->has_aborted) {
 }
 ]])
         else
-            LINE(me, 'ceu_callback_num_void(CEU_CALLBACK_ISR_ENABLE, 0);')
+            LINE(me, 'ceu_callback_num_void(CEU_CALLBACK_ISR_ENABLE, 0, CEU_TRACE_mem(0));')
             CONC_ALL(me)
-            LINE(me, 'ceu_callback_num_void(CEU_CALLBACK_ISR_ENABLE, 1);')
+            LINE(me, 'ceu_callback_num_void(CEU_CALLBACK_ISR_ENABLE, 1, CEU_TRACE_mem(0));')
         end
     end,
 

@@ -1,6 +1,15 @@
 === CEU_FEATURES ===        /* CEU_FEATURES */
 
-#define CEU_TRACE(n) ((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__+(n)})
+#ifdef CEU_FEATURES_TRACE
+#define CEU_TRACE_mem(n) ((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__+(n)})
+#define CEU_TRACE_null   ((tceu_trace){NULL,NULL,0})
+
+typedef struct tceu_trace {
+    struct tceu_trace* up;
+    const char* file;
+    u32 line;
+} tceu_trace;
+#endif
 
 typedef union tceu_callback_val {
     void* ptr;
@@ -10,7 +19,12 @@ typedef union tceu_callback_val {
 
 static tceu_callback_val ceu_callback_ret;
 
-typedef int (*tceu_callback_f) (int, tceu_callback_val, tceu_callback_val, const char*, u32);
+typedef int (*tceu_callback_f) (int, tceu_callback_val, tceu_callback_val
+#ifdef CEU_FEATURES_TRACE
+                               , tceu_trace
+#endif
+                               );
+
 typedef struct tceu_callback {
     tceu_callback_f       f;
     struct tceu_callback* nxt;
@@ -18,59 +32,59 @@ typedef struct tceu_callback {
 
 static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
 #ifdef CEU_FEATURES_TRACE
-                         , const char* file, u32 line
+                         , tceu_trace trace
 #endif
                          );
 
 #ifdef CEU_FEATURES_TRACE
-#define ceu_callback_void_void(cmd)                     \
+#define ceu_callback_void_void(cmd,trace)               \
         ceu_callback(cmd, (tceu_callback_val){},        \
                           (tceu_callback_val){},        \
-                          __FILE__, __LINE__)
-#define ceu_callback_num_void(cmd,p1)                   \
+                          trace)
+#define ceu_callback_num_void(cmd,p1,trace)             \
         ceu_callback(cmd, (tceu_callback_val){.num=p1}, \
                           (tceu_callback_val){},        \
-                          __FILE__, __LINE__)
-#define ceu_callback_num_ptr(cmd,p1,p2)                 \
+                          trace)
+#define ceu_callback_num_ptr(cmd,p1,p2,trace)           \
         ceu_callback(cmd, (tceu_callback_val){.num=p1}, \
                           (tceu_callback_val){.ptr=p2}, \
-                          __FILE__, __LINE__)
-#define ceu_callback_num_num(cmd,p1,p2)                 \
+                          trace)
+#define ceu_callback_num_num(cmd,p1,p2,trace)           \
         ceu_callback(cmd, (tceu_callback_val){.num=p1}, \
                           (tceu_callback_val){.num=p2}, \
-                          __FILE__, __LINE__)
-#define ceu_callback_ptr_num(cmd,p1,p2)                 \
+                          trace)
+#define ceu_callback_ptr_num(cmd,p1,p2,trace)           \
         ceu_callback(cmd, (tceu_callback_val){.ptr=p1}, \
                           (tceu_callback_val){.num=p2}, \
-                          __FILE__, __LINE__)
-#define ceu_callback_ptr_ptr(cmd,p1,p2)                 \
+                          trace)
+#define ceu_callback_ptr_ptr(cmd,p1,p2,trace)           \
         ceu_callback(cmd, (tceu_callback_val){.ptr=p1}, \
                           (tceu_callback_val){.ptr=p2}, \
-                          __FILE__, __LINE__)
-#define ceu_callback_ptr_size(cmd,p1,p2)                \
+                          trace)
+#define ceu_callback_ptr_size(cmd,p1,p2,trace)          \
         ceu_callback(cmd, (tceu_callback_val){.ptr=p1}, \
                           (tceu_callback_val){.size=p2},\
-                          __FILE__, __LINE__)
+                          trace)
 #else
-#define ceu_callback_void_void(cmd)                     \
+#define ceu_callback_void_void(cmd,trace)               \
         ceu_callback(cmd, (tceu_callback_val){},        \
                           (tceu_callback_val){})
-#define ceu_callback_num_void(cmd,p1)                   \
+#define ceu_callback_num_void(cmd,p1,trace)             \
         ceu_callback(cmd, (tceu_callback_val){.num=p1}, \
                           (tceu_callback_val){})
-#define ceu_callback_num_ptr(cmd,p1,p2)                 \
+#define ceu_callback_num_ptr(cmd,p1,p2,trace)           \
         ceu_callback(cmd, (tceu_callback_val){.num=p1}, \
                           (tceu_callback_val){.ptr=p2})
-#define ceu_callback_num_num(cmd,p1,p2)                 \
+#define ceu_callback_num_num(cmd,p1,p2,trace)           \
         ceu_callback(cmd, (tceu_callback_val){.num=p1}, \
                           (tceu_callback_val){.num=p2})
-#define ceu_callback_ptr_num(cmd,p1,p2)                 \
+#define ceu_callback_ptr_num(cmd,p1,p2,trace)           \
         ceu_callback(cmd, (tceu_callback_val){.ptr=p1}, \
                           (tceu_callback_val){.num=p2})
-#define ceu_callback_ptr_ptr(cmd,p1,p2)                 \
+#define ceu_callback_ptr_ptr(cmd,p1,p2,trace)           \
         ceu_callback(cmd, (tceu_callback_val){.ptr=p1}, \
                           (tceu_callback_val){.ptr=p2})
-#define ceu_callback_ptr_size(cmd,p1,p2)                \
+#define ceu_callback_ptr_size(cmd,p1,p2,trace)          \
         ceu_callback(cmd, (tceu_callback_val){.ptr=p1}, \
                           (tceu_callback_val){.size=p2})
 #endif
@@ -78,29 +92,30 @@ static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 
 #ifdef CEU_FEATURES_TRACE
-#define ceu_assert_ex(v,msg,trace)                          \
-    if (!(v)) {                                             \
-        ceu_trace(trace, msg);                              \
-        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL);  \
+#define ceu_assert_ex(v,msg,trace)                                  \
+    if (!(v)) {                                                     \
+        ceu_trace(trace, msg);                                      \
+        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL, trace);   \
     }
-#define ceu_assert(v,msg) ceu_assert_ex((v),(msg), CEU_TRACE(0))
+#define ceu_assert(v,msg) ceu_assert_ex((v),(msg), CEU_TRACE_mem(0))
 #else
-#define ceu_assert_ex(v,msg,trace)                          \
-    if (!(v)) {                                             \
-        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL);  \
+#define ceu_assert_ex(v,msg,trace)                                  \
+    if (!(v)) {                                                     \
+        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL, trace);   \
     }
 #define ceu_assert(v,msg) ceu_assert_ex((v),(msg),NONE)
 #endif
 
-#define ceu_dbg_log(msg)  { ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg)); \
-                            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n"); }
+#define ceu_dbg_log(msg)  { ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg), CEU_TRACE_mem(0)); \
+                            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n",  CEU_TRACE_mem(0)); }
+
 #ifndef ceu_sys_assert
-#define ceu_sys_assert(v,msg)                                               \
-    if (!(v)) {                                                             \
-        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"system error: "); \
-        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg));            \
-        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n");             \
-        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL);                  \
+#define ceu_sys_assert(v,msg)                                                               \
+    if (!(v)) {                                                                             \
+        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"system error: ", CEU_TRACE_null); \
+        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg), CEU_TRACE_null);            \
+        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n", CEU_TRACE_null);             \
+        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL, CEU_TRACE_null);                  \
     }
 #endif
 
@@ -124,12 +139,6 @@ enum {
 };
 
 #ifdef CEU_FEATURES_TRACE
-typedef struct tceu_trace {
-    struct tceu_trace* up;
-    const char* file;
-    u32 line;
-} tceu_trace;
-
 static void ceu_trace (tceu_trace trace, const char* msg) {
     static bool IS_FIRST = 1;
     bool is_first = IS_FIRST;
@@ -144,28 +153,22 @@ static void ceu_trace (tceu_trace trace, const char* msg) {
 
     if (is_first) {
         IS_FIRST = 1;
-        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n");
+        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n", CEU_TRACE_null);
     }
 
-    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"[");
-    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(trace.file));
-    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)":");
-    ceu_callback_num_num(CEU_CALLBACK_LOG, 2, trace.line);
-    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"]");
-    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)" -> ");
+    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"[",          CEU_TRACE_null);
+    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(trace.file), CEU_TRACE_null);
+    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)":",          CEU_TRACE_null);
+    ceu_callback_num_num(CEU_CALLBACK_LOG, 2, trace.line,          CEU_TRACE_null);
+    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"]",          CEU_TRACE_null);
+    ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)" -> ",       CEU_TRACE_null);
 
     if (is_first) {
-        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"runtime error: ");
-        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg));
-        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n");
+        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"runtime error: ", CEU_TRACE_null);
+        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg),             CEU_TRACE_null);
+        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n",              CEU_TRACE_null);
     }
 }
 #else
-typedef struct tceu_trace {
-    int (*up)[0];
-    const char* file;
-    u32 line;
-} tceu_trace;
-
 #define ceu_trace(a,b)
 #endif

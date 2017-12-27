@@ -395,126 +395,7 @@ escape 1;
 }
 ]==]
 
--- TODO-OUTPUT-MOVE
-Test { [[
-output (none) O;
-output (int) O;
-emit O();
-escape 1;
-]],
-    dcls = 'line 2 : invalid declaration : types mismatch : "(int)" <= "()"',
-}
-Test { [[
-output (none) O;
-output (int p) O do
-    p = 10;
-end
-emit O(1);
-escape 1;
-]],
-    dcls = 'line 2 : invalid declaration : types mismatch : "(int)" <= "()"',
-}
-Test { [[
-output (int) O;
-output (int p) O do
-    p = 10;
-end
-emit O(1);
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-output (int p) O do
-    p = 10;
-end
-output (int) O;
-emit O(1);
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-output (int) O;
-output (int p) O do
-    p = 10;
-end
-output (int) O;
-emit O(1);
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-output (int p) O do
-    p = 10;
-end
-output (int p) O do
-    p = 10;
-end
-escape 1;
-]],
-    dcls = 'line 4 : declaration of "O" hides previous declaration (/tmp/tmp.ceu : line 1)',
-}
-
-Test { [[
-output none O do
-end
-output (none) O;
-emit O();
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-output none O do
-    escape;
-end
-output (none) O;
-emit O();
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-output (&int p) O do
-    p = 10;
-end
-output (&int) O;
-var int i = 1;
-emit O(&i);
-escape i;
-]],
-    run = 10,
-}
-
-Test { [[
-output (&int p) O do
-    if true then
-        escape;
-    end
-    p = 10;
-end
-var int i = 1;
-emit O(&i);
-escape i;
-]],
-    run = 1,
-}
-Test { [[
-output (&int p) O do
-    if false then
-        escape;
-    end
-    p = 10;
-end
-var int i = 1;
-emit O(&i);
-escape i;
-]],
-    run = 10,
-}
-
+-- TODO-MOVE-1
 Test { [[
 output (int? v, &int ret) O do
     if v? then
@@ -529,84 +410,7 @@ escape ret;
 ]],
     run = 100,
 }
-Test { [[
-output (int? v, &int ret) O do
-    if v? then
-        ret = v!;
-    else
-        ret = 99;
-    end
-end
-var int ret = 1;
-emit O(_, &ret);
-escape ret;
-]],
-    run = 99,
-}
-
-Test { [[
-var int x = 1;
-output (&int p, int v) O do
-    p = 10 + v + outer.x;
-end
-output (&int,int) O;
-var int i = 1;
-emit O(&i,100);
-escape i;
-]],
-    run = 111,
-}
-Test { [[
-var int x = 1;
-output (&int p, int v) O do
-    var int i = 1;
-    p = 10 + v + outer.x + i;
-end
-var int i = 1;
-emit O(&i,100);
-escape i;
-]],
-    run = 112,
-}
-Test { [[
-var int x = 1;
-output (&int p, int v) O do
-    var int i = 1;
-    p = 10 + v + outer.x + i;
-end
-output (&int,int) O;
-var int i = 1;
-emit O(&i,100);
-escape i;
-]],
-    run = 112,
-}
-Test { [[
-var int x = 1;
-output (&int p, int v) O do
-    p = 10 + (v - outer.x);
-end
-output (&int,int) O;
-var int i = 1;
-emit O(&i,100);
-escape i;
-]],
-    run = 109,
-}
-Test { [[
-output (&int p) O do
-    p = 10;
-end
-
-output (&int) O;
-var int xxx = _;
-emit O(&xxx);
-escape xxx;
-]],
-    run = 10,
-}
-
---do return end -- OK
+do return end -- OK
 --]=====]
 
 ----------------------------------------------------------------------------
@@ -24402,7 +24206,7 @@ escape 1;
 
 Test { [[
 native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2, const char* file, u32 line) {
+    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
         int is_handled;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             is_handled = 0;
@@ -24428,7 +24232,203 @@ escape xxx;
     run = 10,
 }
 
--- TODO-OUTPUT-MOVE
+Test { [[
+output (none) O;
+output (int) O;
+emit O();
+escape 1;
+]],
+    dcls = 'line 2 : invalid declaration : types mismatch : "(int)" <= "()"',
+}
+Test { [[
+output (none) O;
+output (int p) O do
+    p = 10;
+end
+emit O(1);
+escape 1;
+]],
+    dcls = 'line 2 : invalid declaration : types mismatch : "(int)" <= "()"',
+}
+Test { [[
+output (int) O;
+output (int p) O do
+    p = 10;
+end
+emit O(1);
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+output (int p) O do
+    p = 10;
+end
+output (int) O;
+emit O(1);
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+output (int) O;
+output (int p) O do
+    p = 10;
+end
+output (int) O;
+emit O(1);
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+output (int p) O do
+    p = 10;
+end
+output (int p) O do
+    p = 10;
+end
+escape 1;
+]],
+    dcls = 'line 4 : declaration of "O" hides previous declaration (/tmp/tmp.ceu : line 1)',
+}
+
+Test { [[
+output none O do
+end
+output (none) O;
+emit O();
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+output none O do
+    escape;
+end
+output (none) O;
+emit O();
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+output (&int p) O do
+    p = 10;
+end
+output (&int) O;
+var int i = 1;
+emit O(&i);
+escape i;
+]],
+    run = 10,
+}
+
+Test { [[
+output (&int p) O do
+    if true then
+        escape;
+    end
+    p = 10;
+end
+var int i = 1;
+emit O(&i);
+escape i;
+]],
+    run = 1,
+}
+Test { [[
+output (&int p) O do
+    if false then
+        escape;
+    end
+    p = 10;
+end
+var int i = 1;
+emit O(&i);
+escape i;
+]],
+    run = 10,
+}
+
+-- TODO-MOVE-1
+Test { [[
+output (int? v, &int ret) O do
+    if v? then
+        ret = v!;
+    else
+        ret = 99;
+    end
+end
+var int ret = 1;
+emit O(_, &ret);
+escape ret;
+]],
+    run = 99,
+}
+
+Test { [[
+var int x = 1;
+output (&int p, int v) O do
+    p = 10 + v + outer.x;
+end
+output (&int,int) O;
+var int i = 1;
+emit O(&i,100);
+escape i;
+]],
+    run = 111,
+}
+Test { [[
+var int x = 1;
+output (&int p, int v) O do
+    var int i = 1;
+    p = 10 + v + outer.x + i;
+end
+var int i = 1;
+emit O(&i,100);
+escape i;
+]],
+    run = 112,
+}
+Test { [[
+var int x = 1;
+output (&int p, int v) O do
+    var int i = 1;
+    p = 10 + v + outer.x + i;
+end
+output (&int,int) O;
+var int i = 1;
+emit O(&i,100);
+escape i;
+]],
+    run = 112,
+}
+Test { [[
+var int x = 1;
+output (&int p, int v) O do
+    p = 10 + (v - outer.x);
+end
+output (&int,int) O;
+var int i = 1;
+emit O(&i,100);
+escape i;
+]],
+    run = 109,
+}
+Test { [[
+output (&int p) O do
+    p = 10;
+end
+
+output (&int) O;
+var int xxx = _;
+emit O(&xxx);
+escape xxx;
+]],
+    run = 10,
+}
+
 Test { [[
 native/pos do
     static tceu_data_Dd DD = { 1 };
@@ -24446,7 +24446,7 @@ escape 1;
 
 Test { [[
 native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2, const char* file, u32 line) {
+    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
         int is_handled;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             is_handled = 0;
@@ -24491,7 +24491,7 @@ Test { [[
 native _V1, _V2;
 native/pos do
     int V1, V2;
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2, const char* file, u32 line) {
+    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
         int is_handled;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             is_handled = 0;
@@ -24607,7 +24607,7 @@ native/pre do
     } t;
 end
 native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2, const char* file, u32 line) {
+    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
         int is_handled;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             is_handled = 0;
@@ -24649,7 +24649,7 @@ native/pre do
     } t;
 end
 native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2, const char* file, u32 line) {
+    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
         int is_handled;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             is_handled = 0;
@@ -24691,7 +24691,7 @@ native/pre do
     } t;
 end
 native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2, const char* file, u32 line) {
+    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
         int is_handled;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             is_handled = 0;
@@ -24829,7 +24829,7 @@ escape 1;
 
 Test { [[
 native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2, const char* file, u32 line) {
+    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
         int is_handled;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             is_handled = 0;
@@ -24858,7 +24858,7 @@ escape a + b;
 
 Test { [[
 native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2, const char* file, u32 line) {
+    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
         int is_handled;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             is_handled = 0;
@@ -25083,7 +25083,7 @@ var int ret = (call Z(2));
 
 Test { [[
 native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2, const char* file, u32 line) {
+    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
         int is_handled;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             is_handled = 0;
@@ -25106,7 +25106,7 @@ escape ret;
 
 Test { [[
 native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2, const char* file, u32 line) {
+    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
         int is_handled;
         if (cmd != CEU_CALLBACK_OUTPUT) {
             is_handled = 0;
@@ -52579,7 +52579,7 @@ escape 1;
 Test { [[
 native/pre do
     ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
-    int CB (int cmd, tceu_callback_val p1, tceu_callback_val p2, const char* file, u32 line) {
+    int CB (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
         int is_handled;
         is_handled = 0;
         return is_handled;
@@ -52600,7 +52600,7 @@ escape 1;
 Test { [[
 native/pre do
     int V = 1;
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2, const char* file, u32 line) {
+    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
         int is_handled = 1;
         int* args = (int*) p2.ptr;
         switch (cmd) {
@@ -52636,7 +52636,7 @@ escape _V;
 Test { [[
 native/pre do
     int V = 1;
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2, const char* file, u32 line) {
+    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
         int is_handled = 1;
         int* args = (int*) p2.ptr;
         switch (cmd) {
@@ -52710,7 +52710,7 @@ Test { [[
 native/pre do
     int V = 1;
     ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
-    int CB (int cmd, tceu_callback_val p1, tceu_callback_val p2, const char* file, u32 line) {
+    int CB (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
         int is_handled = 1;
         int* args = (int*) p2.ptr;
         switch (cmd) {
@@ -52784,7 +52784,7 @@ Test { [[
 native/pre do
     int V = 1;
     ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
-    int CB (int cmd, tceu_callback_val p1, tceu_callback_val p2, const char* file, u32 line) {
+    int CB (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
         int is_handled = 1;
         int* args = (int*) p2.ptr;
         switch (cmd) {
@@ -53117,7 +53117,7 @@ escape 1;
 Test { [[
 native/pre do
     int V = 0;
-    int CB (int cmd, tceu_callback_val p1, tceu_callback_val p2, const char* file, u32 line) {
+    int CB (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
         int is_handled = 1;
         int* args = (int*) p2.ptr;
         switch (cmd) {

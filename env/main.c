@@ -1,7 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-int ceu_callback_ceu (int cmd, tceu_callback_val p1, tceu_callback_val p2, const char* file, u32 line) {
+int ceu_callback_ceu (int cmd, tceu_callback_val p1, tceu_callback_val p2
+#ifdef CEU_FEATURES_TRACE
+                     , tceu_trace trace
+#endif
+                     )
+{
     int is_handled;
 
     switch (cmd) {

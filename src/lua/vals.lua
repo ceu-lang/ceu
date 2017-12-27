@@ -42,6 +42,17 @@ function CUR (field, ctx)
     return '('..data..'.'..base..field..')'
 end
 
+function TRACE (n)
+    local Isr  = AST.iter'Async_Isr'()
+    local Code = AST.iter'Code'()
+    local Ext  = AST.iter'Ext_impl'()
+    if Isr or Code or Ext then
+        return 'trace'
+    else
+        return 'CEU_TRACE_mem('..n..')'
+    end
+end
+
 function V (me, ctx)
     ctx = ctx or {}
     local f = assert(F[me.tag], 'bug found : V('..me.tag..')')
@@ -473,14 +484,14 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..args..[[)
         local alias, tp = unpack(e.info.dcl)
         if alias == '&?' then
             if e.info.dcl.tag == 'Var' then
-                return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e)..', CEU_TRACE(0)))'
+                return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e)..', '..TRACE(0)..'))'
             elseif e.info.dcl.tag == 'Evt' then
-                return '(*CEU_OPTION_EVT('..V(e)..'.alias, __FILE__, __LINE__))'
+                return '(*CEU_OPTION_EVT('..V(e)..'.alias, '..TRACE(0)..'))'
             else
                 error 'not implemented'
             end
         else
-            return '(CEU_OPTION_'..TYPES.toc(e.info.tp)..'(&'..V(e)..', CEU_TRACE(0))->value)'
+            return '(CEU_OPTION_'..TYPES.toc(e.info.tp)..'(&'..V(e)..', '..TRACE(0)..')->value)'
         end
     end,
 
@@ -573,7 +584,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..args..[[)
 (]]..TYPES.toc(Type)..ptr2..[[)
 ceu_data_as(CEU_DATA_SUPERS_]]..base.id_..[[,
             (tceu_ndata*)]]..ptr3..V(e)..', CEU_DATA_'..Type[1].dcl.id_..[[,
-            CEU_TRACE(-4))
+            ]]..TRACE(-4)..[[)
 ))
 ]]
             else
