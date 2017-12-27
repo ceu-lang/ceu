@@ -577,11 +577,13 @@ static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
         cur = cur->nxt;
     }
 
+#define CEU_TRACE(n) trace
     if (cmd == CEU_CALLBACK_OUTPUT) {
         switch (p1.num) {
             === CEU_CALLBACKS_OUTPUTS ===
         }
     }
+#undef CEU_TRACE
 }
 
 /*****************************************************************************/
@@ -631,7 +633,7 @@ void ceu_throw_ex (tceu_catch* catches, tceu_data_Exception* exception, usize le
     ceu_assert_ex(0, exception->message, trace);
 }
 #ifdef CEU_FEATURES_TRACE
-#define ceu_throw(a,b,c) ceu_throw_ex(a,b,c,_ceu_stk,CEU_TRACE_mem(0))
+#define ceu_throw(a,b,c) ceu_throw_ex(a,b,c,_ceu_stk,CEU_TRACE(0))
 #else
 #define ceu_throw(a,b,c) ceu_throw_ex(a,b,c,_ceu_stk)
 #endif
@@ -727,10 +729,12 @@ _CEU_LBL_:
     printf("-=-=- %d -=-=-\n", _ceu_lbl);
 #endif
     switch (_ceu_lbl) {
+#define CEU_TRACE(n) ((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__+(n)})
         CEU_LABEL_NONE:
             break;
         === CEU_CODES ===
     }
+#undef CEU_TRACE
 }
 
 #if defined(_CEU_DEBUG)

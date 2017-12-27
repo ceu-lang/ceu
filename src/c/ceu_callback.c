@@ -1,7 +1,6 @@
 === CEU_FEATURES ===        /* CEU_FEATURES */
 
 #ifdef CEU_FEATURES_TRACE
-#define CEU_TRACE_mem(n) ((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__+(n)})
 #define CEU_TRACE_null   ((tceu_trace){NULL,NULL,0})
 
 typedef struct tceu_trace {
@@ -97,7 +96,7 @@ static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
         ceu_trace(trace, msg);                                      \
         ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL, trace);   \
     }
-#define ceu_assert(v,msg) ceu_assert_ex((v),(msg), CEU_TRACE_mem(0))
+#define ceu_assert(v,msg) ceu_assert_ex((v),(msg), CEU_TRACE(0))
 #else
 #define ceu_assert_ex(v,msg,trace)                                  \
     if (!(v)) {                                                     \
@@ -106,8 +105,8 @@ static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
 #define ceu_assert(v,msg) ceu_assert_ex((v),(msg),NONE)
 #endif
 
-#define ceu_dbg_log(msg)  { ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg), CEU_TRACE_mem(0)); \
-                            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n",  CEU_TRACE_mem(0)); }
+#define ceu_dbg_log(msg)  { ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg), CEU_TRACE(0)); \
+                            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n",  CEU_TRACE(0)); }
 
 enum {
     CEU_CALLBACK_START,

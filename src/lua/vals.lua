@@ -48,7 +48,7 @@ function TRACE (n)
     if Isr or Ext then
         return 'trace'
     else
-        return 'CEU_TRACE_mem('..n..')'
+        return 'CEU_TRACE('..n..')'
     end
 end
 

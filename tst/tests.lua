@@ -411,12 +411,21 @@ escape ret;
     run = 100,
 }
 Test { [[
-output (int? v, &int ret) O do
-    ceu_assert(0, "oioioi");
+output none O do
+    {ceu_assert(0, "oioioi");}
 end
-var int ret = 1;
-emit O(100, &ret);
-escape ret;
+emit O();
+escape 99;
+]],
+    run = '4] -> runtime error: oioioi',
+    _opts = { ceu_features_trace='true' },
+}
+Test { [[
+output (none) O do
+    {ceu_assert(0, "oioioi");}
+end
+emit O();
+escape 99;
 ]],
     run = 100,
 }
