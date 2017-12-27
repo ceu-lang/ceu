@@ -109,16 +109,6 @@ static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
 #define ceu_dbg_log(msg)  { ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg), CEU_TRACE_mem(0)); \
                             ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n",  CEU_TRACE_mem(0)); }
 
-#ifndef ceu_sys_assert
-#define ceu_sys_assert(v,msg)                                                               \
-    if (!(v)) {                                                                             \
-        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"system error: ", CEU_TRACE_null); \
-        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg), CEU_TRACE_null);            \
-        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n", CEU_TRACE_null);             \
-        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL, CEU_TRACE_null);                  \
-    }
-#endif
-
 enum {
     CEU_CALLBACK_START,
     CEU_CALLBACK_STOP,
@@ -143,13 +133,11 @@ static void ceu_trace (tceu_trace trace, const char* msg) {
     static bool IS_FIRST = 1;
     bool is_first = IS_FIRST;
 
-    if (trace.up == NULL) {
-        return;
-    }
-
     IS_FIRST = 0;
 
-    ceu_trace(*trace.up, msg);
+    if (trace.up != NULL) {
+        ceu_trace(*trace.up, msg);
+    }
 
     if (is_first) {
         IS_FIRST = 1;

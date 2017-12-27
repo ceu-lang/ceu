@@ -121,7 +121,7 @@ byte* ceu_vector_setmax_ex_      (tceu_vector* vector, usize len, bool freeze
             vector->buf = NULL;
         }
     } else {
-        ceu_sys_assert(len > vector->max, "not implemented: shrinking vectors");
+        ceu_assert_ex(len > vector->max, "not implemented: shrinking vectors", trace);
         ceu_callback_ptr_size(CEU_CALLBACK_REALLOC,
                               vector->buf,
                               len*vector->unit,

@@ -264,7 +264,18 @@ typedef struct tceu_opt_Exception {
     tceu_data_Exception value;
 } tceu_opt_Exception;
 
-static tceu_opt_Exception* CEU_OPTION_tceu_opt_Exception (tceu_opt_Exception* opt, tceu_trace trace) {
+#ifdef CEU_FEATURES_TRACE
+#define CEU_OPTION_tceu_opt_Exception(a,b) CEU_OPTION_tceu_opt_Exception(a,b)
+#else
+#define CEU_OPTION_tceu_opt_Exception(a,b) CEU_OPTION_tceu_opt_Exception(a)
+#endif
+
+static tceu_opt_Exception* CEU_OPTION_tceu_opt_Exception_ (tceu_opt_Exception* opt
+#ifdef CEU_FEATURES_TRACE
+                                                          , tceu_trace trace
+#endif
+                                                          )
+{
     ceu_assert_ex(opt->is_set, "value is not set", trace);
     return opt;
 }
@@ -339,7 +350,7 @@ CEU_API static tceu_app CEU_APP;
         /*fprintf(stderr, "set?\n");*/                      \
     if (!(me)->is_alive) {                                  \
         /*fprintf(stderr, "set %d %d\n", __LINE__,_lbl);*/          \
-        ceu_sys_assert(CEU_APP.jmp.lbl==CEU_LABEL_NONE, "bug found"); \
+        ceu_assert(CEU_APP.jmp.lbl==CEU_LABEL_NONE, "bug found"); \
         CEU_APP.jmp.lbl = _lbl;                             \
         CEU_APP.jmp.mem = _ceu_mem;                         \
         CEU_APP.jmp.trl = _ceu_trlK;                        \
@@ -590,7 +601,12 @@ static void ceu_lbl (tceu_evt_occ* _ceu_occ, tceu_stk* _ceu_stk,
 /*****************************************************************************/
 
 #ifdef CEU_FEATURES_EXCEPTION
-void ceu_throw_ex (tceu_catch* catches, tceu_data_Exception* exception, usize len, tceu_stk* stk, tceu_trace trace) {
+void ceu_throw_ex (tceu_catch* catches, tceu_data_Exception* exception, usize len, tceu_stk* stk
+#ifdef CEU_FEATURES_TRACE
+                  , tceu_trace trace
+#endif
+                  )
+{
     tceu_catch* cur = catches;
     while (cur != NULL) {
         if (ceu_data_is(CEU_DATA_SUPERS_Exception,exception->_enum,cur->exception->value._enum)) {
@@ -614,7 +630,11 @@ void ceu_throw_ex (tceu_catch* catches, tceu_data_Exception* exception, usize le
     }
     ceu_assert_ex(0, exception->message, trace);
 }
+#ifdef CEU_FEATURES_TRACE
 #define ceu_throw(a,b,c) ceu_throw_ex(a,b,c,_ceu_stk,CEU_TRACE_mem(0))
+#else
+#define ceu_throw(a,b,c) ceu_throw_ex(a,b,c,_ceu_stk)
+#endif
 #endif
 
 #ifdef CEU_FEATURES_THREAD
@@ -725,8 +745,8 @@ static void ceu_bcast (tceu_evt_occ* occ, tceu_stk* stk, bool is_prim)
     tceu_evt_range range = occ->range;
 
     if (is_prim && occ->evt.id>CEU_INPUT__SEQ) {
-        ceu_sys_assert(((tceu_nseq)(CEU_APP.seq+1)) != CEU_APP.seq_base,
-                       "too many internal reactions");
+        ceu_assert_ex(((tceu_nseq)(CEU_APP.seq+1)) != CEU_APP.seq_base,
+                      "too many internal reactions", CEU_TRACE_null);
         CEU_APP.seq++;
     }
 
@@ -795,7 +815,7 @@ fprintf(stderr, "??? trlK=%d, evt=%d, seq=%d\n", trlK, trl->evt.id, trl->seq);
                 break;
             }
             case CEU_INPUT__PROPAGATE_POOL: {
-                ceu_sys_assert(trl->evt.pak->n_traversing < 255, "bug found");
+                ceu_assert_ex(trl->evt.pak->n_traversing < 255, "bug found", CEU_TRACE_null);
                 trl->evt.pak->n_traversing++;
                 tceu_code_mem_dyn* cur = trl->evt.pak->first.nxt;
 #if 0
@@ -842,7 +862,7 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                                                 };
                             ceu_bcast(&occ2, &_stk, 0);
                         }
-                        ceu_sys_assert(_stk.is_alive, "bug found");
+                        ceu_assert_ex(_stk.is_alive, "bug found", CEU_TRACE_null);
                     }
                 }
                 /* don't skip if pausing now */
@@ -1026,7 +1046,7 @@ CEU_API void ceu_start (tceu_callback* cb, int argc, char* argv[]) {
 CEU_API void ceu_stop (void) {
 #ifdef CEU_FEATURES_THREAD
     CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
-    ceu_sys_assert(ceu_threads_gc(1) == 0, "bug found"); /* wait all terminate/free */
+    ceu_assert_ex(ceu_threads_gc(1) == 0, "bug found", CEU_TRACE_null); /* wait all terminate/free */
 #endif
     ceu_callback_void_void(CEU_CALLBACK_STOP, CEU_TRACE_null);
 }

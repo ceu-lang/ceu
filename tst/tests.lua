@@ -313,7 +313,7 @@ watching f do
         end
         emit f;
     end
-    {ceu_sys_assert(0,"bug found");}
+    {ceu_assert(0,"bug found");}
 end
 await 1s;
 escape 10;
@@ -335,7 +335,7 @@ catch f do
         var Exception e_ = val Exception(_);
         throw e_;
     end
-    {ceu_sys_assert(0,"bug found");}
+    {ceu_assert(0,"bug found");}
 end
 await 1s;
 escape 10;
@@ -403,6 +403,16 @@ output (int? v, &int ret) O do
     else
         ret = 99;
     end
+end
+var int ret = 1;
+emit O(100, &ret);
+escape ret;
+]],
+    run = 100,
+}
+Test { [[
+output (int? v, &int ret) O do
+    ceu_assert(0, "oioioi");
 end
 var int ret = 1;
 emit O(100, &ret);
@@ -2289,8 +2299,9 @@ loop i in [0->_CEU_SEQ_MAX+1[ do
 end
 escape 1;
 ]],
+    _opts = { ceu_features_trace='true' },
     wrn = true,
-    run = 'system error: too many internal reactions',
+    run = 'too many internal reactions',
 }
 
     -- WALL-CLOCK TIME / WCLOCK
@@ -44410,7 +44421,7 @@ Test { [=[
 var Exception.Lua? e;
 catch e do
     [[ error'1' ]]
-    {ceu_sys_assert(0, "bug");}
+    {ceu_assert(0, "bug");}
     [[ error'2' ]]
 end
 escape 1;
@@ -44430,7 +44441,7 @@ watching f do
         end
         emit e;
     end
-    {ceu_sys_assert(0,"bug found-a");}
+    {ceu_assert(0,"bug found-a");}
 end
 await 1s;
 escape 10;
@@ -44471,7 +44482,7 @@ catch f do
         var Exception.Sub e_ = val Exception.Sub(_);
         throw e_;
     end
-    {ceu_sys_assert(0,"bug found-a");}
+    {ceu_assert(0,"bug found-a");}
     //{printf("out\n");}
 end
 //{printf("OUT\n");}

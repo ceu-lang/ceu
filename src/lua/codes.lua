@@ -345,7 +345,7 @@ _ceu_mem->_trails[]]..ID_int.dcl.trails[1]..[[].evt.pak = &]]..V(ID_int)..[[;
     Pool_Finalize = function (me)
         local ID_int = unpack(me)
         LINE(me, [[
-ceu_sys_assert(]]..V(ID_int,ctx)..[[.pool.queue == NULL, "bug found");
+ceu_assert(]]..V(ID_int,ctx)..[[.pool.queue == NULL, "bug found");
 {
     tceu_code_mem_dyn* __ceu_cur = ]]..V(ID_int,ctx)..[[.first.nxt;
     while (__ceu_cur != &]]..V(ID_int,ctx)..[[.first) {
@@ -632,7 +632,7 @@ assert(not obj, 'not implemented')
         local cur = CUR('__cur_'..me.n)
 
         LINE(me, [[
-ceu_sys_assert(]]..V(pool)..[[.n_traversing < 255, "bug found");
+ceu_assert(]]..V(pool)..[[.n_traversing < 255, "bug found");
 ]]..V(pool)..[[.n_traversing++;
 _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__FINALIZE;
 _ceu_mem->_trails[]]..me.trails[1]..[[].evt.mem   = _ceu_mem;
@@ -1797,7 +1797,7 @@ if (lua_isnumber(]]..LUA(me)..[[,-1)) {
         local n = unpack(me)
         LINE(me, [[
 ]]..CUR('__lua_'..n)..[[ = luaL_newstate();
-ceu_sys_assert(]]..CUR('__lua_'..n)..[[ != NULL, "bug found");
+ceu_assert(]]..CUR('__lua_'..n)..[[ != NULL, "bug found");
 luaL_openlibs(]]..CUR('__lua_'..n)..[[);
 ceu_lua_createargtable(]]..CUR('__lua_'..n)..[[, CEU_APP.argv, CEU_APP.argc, CEU_APP.argc);
 ]])

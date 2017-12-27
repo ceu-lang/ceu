@@ -44,9 +44,8 @@ end
 
 function TRACE (n)
     local Isr  = AST.iter'Async_Isr'()
-    local Code = AST.iter'Code'()
     local Ext  = AST.iter'Ext_impl'()
-    if Isr or Code or Ext then
+    if Isr or Ext then
         return 'trace'
     else
         return 'CEU_TRACE_mem('..n..')'
