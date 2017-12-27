@@ -396,6 +396,7 @@ escape 1;
 ]==]
 
 -- TODO-MOVE-1
+--]=====]
 Test { [[
 output (int? v, &int ret) O do
     if v? then
@@ -410,16 +411,7 @@ escape ret;
 ]],
     run = 100,
 }
-Test { [[
-output &none O do
-end
-emit O();
-escape 1;
-]],
-    run = 1,
-}
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -24361,6 +24353,16 @@ escape i;
 }
 
 -- TODO-MOVE-1
+
+Test { [[
+output &none O do
+end
+emit O();
+escape 1;
+]],
+    adjs = 'line 1 : invalid type',
+}
+
 Test { [[
 output none O do
     {ceu_assert(0, "oioioi");}
@@ -24574,6 +24576,7 @@ escape _V1 + _V2;
 ]],
     run = 12,
 }
+do return end
 --<<< OUTPUT
 
 Test { [[

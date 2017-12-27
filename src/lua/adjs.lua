@@ -873,14 +873,32 @@ error'TODO: luacov never executes this?'
                     ASR(tp.tag == 'Type')
                     AST.set(Type, i, tp)
                     me.are_aliases[i] = is_alias
+                    do  -- reject none with id/alias
+                        local ID_prim,mod = unpack(tp)
+                        local is_none = (ID_prim.tag=='ID_prim' and ID_prim[1]=='none' and (not mod))
+                        if is_none then
+                            ASR(not (id or is_alias), me, 'invalid type')
+                        end
+                    end
+                    if AST.par(me, 'Ext_impl') then
+                        tp.__adjs_var = { is_alias,id }
+                    end
                 end
                 Type.tag = '_Typelist'
             else
                 ASR(Type==false or Type=='&')
                 ASR(x.tag=='Type')
-                me.are_aliases[1] = Type
+                local is_alias, Type = Type, x
+
+                do  -- reject none with id/alias
+                    local ID_prim,mod = unpack(Type)
+                    local is_none = (ID_prim.tag=='ID_prim' and ID_prim[1]=='none' and (not mod))
+                    if is_none then
+                        ASR(not is_alias, me, 'invalid type')
+                    end
+                end
+                me.are_aliases[1] = is_alias
                 table.remove(me, 2)
-                Type = x
             end
         end
 
@@ -889,24 +907,16 @@ error'TODO: luacov never executes this?'
         end
     end,
 
-    Ext_impl__PRE = function (me)
+    Ext_impl__POS = function (me)
         local ext, body = unpack(me)
         ext.__adjs_is_impl = true
         local _, list = unpack(ext)
 
         local stmts = node('Stmts', me.ln)
-        for _, T in ipairs(list or {}) do
-            local amp,tp,id = unpack(T)
-            local is_none do
-                local ID_prim, mod = unpack(tp)
-                is_none = (ID_prim.tag=='ID_prim' and ID_prim[1]=='none' and (not mod))
-            end
-            if is_none then
-                ASR(not (id or amp), me, 'invalid type')
-            else
-                local var = node('Var', me.ln, amp, AST.copy(tp), id)
-                AST.set(stmts, #stmts+1, var)
-            end
+        for _, tp in ipairs(list) do
+            local is_alias, id = unpack(assert(tp.__adjs_var))
+            local var = node('Var', me.ln, is_alias, AST.copy(tp), id)
+            AST.set(stmts, #stmts+1, var)
         end
 
         local do_ = node('Do', me.ln, true, false)
