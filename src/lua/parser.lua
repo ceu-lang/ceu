@@ -550,7 +550,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , Ext = CK'input'  * (PARENS(V'_Typelist')     + V'Type')             * V'__ID_ext'
           + CK'output' * (PARENS(V'_Typelist_amp') + OPT(CKK'&')*V'Type') * V'__ID_ext'
     , _Typelist     = LIST(V'Type')
-    , _Typelist_amp = LIST(OPT(CKK'&') * V'Type' * (V'__ID_int' + Cc(false)))
+    , _Typelist_amp = LIST(Ct(OPT(CKK'&') * V'Type' * (V'__ID_int' + Cc(false))))
 
     , Ext_impl = V'Ext' * V'__Do' * V'Y'
 

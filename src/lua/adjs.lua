@@ -867,13 +867,12 @@ error'TODO: luacov never executes this?'
         if class == 'output' then
             me.are_aliases = {}
             if Type and Type.tag=='_Typelist_amp' then
-                for i=#Type, 1, -3 do
-                    local is_alias,tp,id = Type[i-2], Type[i-1], Type[i]
+                for i,T in ipairs(Type) do
+                    local is_alias,tp,id = unpack(T)
                     ASR(is_alias==false or is_alias=='&')
                     ASR(tp.tag == 'Type')
-                    table.remove(Type,i)
-                    table.remove(Type,i-2)
-                    table.insert(me.are_aliases, 1, is_alias)
+                    AST.set(Type, i, tp)
+                    me.are_aliases[i] = is_alias
                 end
                 Type.tag = '_Typelist'
             else
@@ -896,10 +895,18 @@ error'TODO: luacov never executes this?'
         local _, list = unpack(ext)
 
         local stmts = node('Stmts', me.ln)
-        for i=1, #(list or {}), 3 do
-            local amp,tp,id = list[i], list[i+1], list[i+2]
-            local var = node('Var', me.ln, amp, AST.copy(tp), id)
-            AST.set(stmts, #stmts+1, var)
+        for _, T in ipairs(list or {}) do
+            local amp,tp,id = unpack(T)
+            local is_none do
+                local ID_prim, mod = unpack(tp)
+                is_none = (ID_prim.tag=='ID_prim' and ID_prim[1]=='none' and (not mod))
+            end
+            if is_none then
+                ASR(not (id or amp), me, 'invalid type')
+            else
+                local var = node('Var', me.ln, amp, AST.copy(tp), id)
+                AST.set(stmts, #stmts+1, var)
+            end
         end
 
         local do_ = node('Do', me.ln, true, false)

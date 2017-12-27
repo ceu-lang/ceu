@@ -411,23 +411,12 @@ escape ret;
     run = 100,
 }
 Test { [[
-output none O do
-    {ceu_assert(0, "oioioi");}
+output &none O do
 end
 emit O();
-escape 99;
+escape 1;
 ]],
-    run = '4] -> runtime error: oioioi',
-    _opts = { ceu_features_trace='true' },
-}
-Test { [[
-output (none) O do
-    {ceu_assert(0, "oioioi");}
-end
-emit O();
-escape 99;
-]],
-    run = 100,
+    run = 1,
 }
 do return end -- OK
 --]=====]
@@ -24372,6 +24361,56 @@ escape i;
 }
 
 -- TODO-MOVE-1
+Test { [[
+output none O do
+    {ceu_assert(0, "oioioi");}
+end
+emit O();
+escape 99;
+]],
+    run = '4] -> runtime error: oioioi',
+    _opts = { ceu_features_trace='true' },
+}
+Test { [[
+output () O do
+end
+emit O();
+escape 1;
+]],
+    parser = 'line 1 : after `(` : expected `&` or type',
+}
+Test { [[
+output (none) O do
+end
+emit O();
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+output (&none) O do
+end
+emit O();
+escape 1;
+]],
+    adjs = 'line 1 : invalid type',
+}
+Test { [[
+output (none x) O do
+end
+emit O();
+escape 1;
+]],
+    adjs = 'line 1 : invalid type',
+}
+Test { [[
+output (&none x) O do
+end
+emit O();
+escape 1;
+]],
+    adjs = 'line 1 : invalid type',
+}
 Test { [[
 output (int? v, &int ret) O do
     if v? then
@@ -50263,6 +50302,7 @@ escape 1;
 ]],
     _opts = { ceu_features_thread='true' },
     run = 1,
+    valgrind = false,
 }
 
 --<<< ASYNCS / THREADS
