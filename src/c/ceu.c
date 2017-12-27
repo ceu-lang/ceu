@@ -696,6 +696,7 @@ void ceu_input_one (tceu_nevt evt_id, void* evt_params, tceu_stk* stk);
 static void ceu_lbl (tceu_evt_occ* _ceu_occ, tceu_stk* _ceu_stk,
                      tceu_code_mem* _ceu_mem, tceu_ntrl _ceu_trlK, tceu_nlbl _ceu_lbl)
 {
+#define CEU_TRACE(n) ((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__+(n)})
 #ifdef CEU_STACK_MAX
     {
         static void* base = NULL;
@@ -729,7 +730,6 @@ _CEU_LBL_:
     printf("-=-=- %d -=-=-\n", _ceu_lbl);
 #endif
     switch (_ceu_lbl) {
-#define CEU_TRACE(n) ((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__+(n)})
         CEU_LABEL_NONE:
             break;
         === CEU_CODES ===
