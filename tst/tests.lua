@@ -24584,6 +24584,46 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+var bool spi_is_busy;
+spawn async/isr [20] do
+    spi_is_busy = false;
+end
+escape 1;
+]],
+    dcls = 'is not declared',
+    _opts = { ceu_features_isr='true' },
+}
+
+Test { [[
+var bool spi_is_busy;
+
+output none SPI_TRANSACTION_END do
+    spi_is_busy = false;
+    {
+        SREG = SPI_interruptSave;
+    }
+end
+]],
+    dcls = 'is not declared',
+    run = 1,
+}
+
+Test { [[
+var bool spi_is_busy = false;
+
+output none SPI_TRANSACTION_END do
+    outer.spi_is_busy = false;
+    {
+        SREG = SPI_interruptSave;
+    }
+end
+]],
+    wrn = true,
+    cc = 'undeclared',
+}
+
+
 --<<< OUTPUT
 
 Test { [[

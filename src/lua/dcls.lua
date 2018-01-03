@@ -12,7 +12,7 @@ local function iter_boundary (cur, id, can_cross)
                 return c
             elseif can_cross then
                 -- continue
-            elseif string.match(c.tag,'^.?Async') or (do_ and do_[2]) then
+            elseif string.match(c.tag,'^.?Async') or (do_ and do_[2]) or c.tag=='Ext_impl' then
                 -- see if varlist matches id to can_cross the boundary
                 -- async (a,b,c) do ... end
                 local can_cross2 = false
