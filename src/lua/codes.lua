@@ -1369,10 +1369,16 @@ tceu_]]..inout..'_'..ID_ext.dcl.id..[[ __ceu_ps;
 __ceu_ps._]]..i..[[.is_set = 0;
 ]])
                     else
-                        LINE(me, [[
+                        if TYPES.check(exp.info.tp,'?') then
+                            LINE(me, [[
+__ceu_ps._]]..i..' = '..V(exp)..[[;
+]])
+                        else
+                            LINE(me, [[
 __ceu_ps._]]..i..[[.is_set = 1;
 __ceu_ps._]]..i..'.value = '..V(exp)..[[;
 ]])
+                        end
                     end
                 else
                     LINE(me, [[

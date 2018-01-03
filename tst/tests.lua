@@ -24574,7 +24574,16 @@ escape _V1 + _V2;
 ]],
     run = 12,
 }
-do return end
+
+Test { [[
+output u8? O;
+var u8? v;
+emit O(v);
+escape 1;
+]],
+    run = 1,
+}
+
 --<<< OUTPUT
 
 Test { [[
