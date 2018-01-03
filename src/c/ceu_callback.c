@@ -36,10 +36,17 @@ static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
                          );
 
 #ifdef CEU_FEATURES_TRACE
+#ifdef __cplusplus
+#define ceu_callback_void_void(cmd,trace)               \
+        ceu_callback(cmd, {},                           \
+                          {},                           \
+                          trace)
+#else
 #define ceu_callback_void_void(cmd,trace)               \
         ceu_callback(cmd, (tceu_callback_val){},        \
                           (tceu_callback_val){},        \
                           trace)
+#endif
 #define ceu_callback_num_void(cmd,p1,trace)             \
         ceu_callback(cmd, (tceu_callback_val){.num=p1}, \
                           (tceu_callback_val){},        \
@@ -65,9 +72,15 @@ static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
                           (tceu_callback_val){.size=p2},\
                           trace)
 #else
+#ifdef __cplusplus
+#define ceu_callback_void_void(cmd,trace)               \
+        ceu_callback(cmd, {},                           \
+                          {})
+#else
 #define ceu_callback_void_void(cmd,trace)               \
         ceu_callback(cmd, (tceu_callback_val){},        \
                           (tceu_callback_val){})
+#endif
 #define ceu_callback_num_void(cmd,p1,trace)             \
         ceu_callback(cmd, (tceu_callback_val){.num=p1}, \
                           (tceu_callback_val){})
