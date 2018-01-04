@@ -89,6 +89,10 @@ local T = {
         'statement'
     },
     {
+        '`code` or `input` or `output` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `catch` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `pool` or `event` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `off` or `on` or `no` or `yes` or `"` or string literal or `escape` or `break` or `continue` or `throw` or `par` or `with`',
+        'statement'
+    },
+    {
         '`code` or `input` or `output` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `catch` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `pool` or `event` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `off` or `on` or `no` or `yes` or `"` or string literal or `escape` or `break` or `continue` or `throw` or `par` or `end`',
         'statement'
     },
