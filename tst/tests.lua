@@ -896,6 +896,38 @@ escape 1 + ({1.1 == 1} as int);
 ]],
     run = 1,
 }
+
+Test { [[
+native/pre do
+##if 1
+    int X = 10;
+##else
+##error oi
+##endif
+end
+
+{
+    ##if 1
+        X++;
+    ##else
+        ##error oi
+    ##endif
+}
+
+native _X;
+_X = _X + {
+##if 1
+    1
+##else
+    0
+##endif
+};
+
+escape _X;
+]],
+    run = 12,
+}
+
 --<<< NATIVE
 
 Test { [[var int a;]],

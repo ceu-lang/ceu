@@ -352,6 +352,11 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..args..[[)
                 end
                 ret = ret .. str
             end
+
+            -- unescape `##` => `#`
+            ret = string.gsub(ret, '\n%s*##', '\n#')
+            ret = string.gsub(ret, '^%s*##',  '#')
+
             return ret
         else
             -- _nat

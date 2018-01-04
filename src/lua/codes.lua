@@ -218,8 +218,8 @@ memset(&_ceu_mem->_trails, 0, ]]..AST.root.trails_n..[[*sizeof(tceu_trl));
         pre_pos = string.sub(pre_pos,2)
 
         -- unescape `##` => `#`
-        code = string.gsub(code, '^%s*##',  '#')
         code = string.gsub(code, '\n%s*##', '\n#')
+        code = string.gsub(code, '^%s*##',  '#')
 
         CODES.native[pre_pos] = CODES.native[pre_pos]..code..'\n'
     end,
@@ -232,6 +232,11 @@ memset(&_ceu_mem->_trails, 0, ]]..AST.root.trails_n..[[*sizeof(tceu_trl));
             end
             ret = ret .. str
         end
+
+        -- unescape `##` => `#`
+        ret = string.gsub(ret, '\n%s*##', '\n#')
+        ret = string.gsub(ret, '^%s*##',  '#')
+
         LINE(me, ret)
     end,
 
