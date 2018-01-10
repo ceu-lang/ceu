@@ -1669,6 +1669,7 @@ if (]]..v..[[ != NULL)
         CODES.threads = CODES.threads .. [[
 static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
 {
+#define CEU_TRACE(n) ((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__+(n)})
     /* start thread */
 
     /* copy param */
@@ -1692,6 +1693,7 @@ static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
     ceu_callback_void_void(CEU_CALLBACK_THREAD_TERMINATING, CEU_TRACE_null);
     CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
     CEU_THREADS_RETURN(NULL);
+#undef CEU_TRACE
 }
 ]]
     end,

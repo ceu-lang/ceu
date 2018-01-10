@@ -49529,6 +49529,21 @@ escape _V;
     _opts = { ceu_features_thread='true' },
 }
 
+Test { [[
+    await async/thread do
+        var int i;
+        loop i in [0->5[ do
+        end
+    end
+    escape 1;
+]],
+    run = 1,
+    _opts = {
+        ceu_features_thread = 'true',
+        ceu_features_trace  ='true',
+    },
+}
+
 -- THREADS / EMITS
 
 Test { [[
