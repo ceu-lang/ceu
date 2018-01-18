@@ -7632,18 +7632,18 @@ escape ret;
 }
 
 Test { [[
-event (none) e;                                                                 
-var int i = 0;                                                                  
+event (none) e;
+var int i = 0;
 var int j;
-loop j in [1->1] do                                                                         
-   par/and do                                                                   
-        await e;                                                                
-        i = i + 1;                                                              
-   with                                                                         
-        emit e;                                                                 
-   end                                                                          
-end                                                                             
-escape 1;                                                                       
+loop j in [1->1] do
+   par/and do
+        await e;
+        i = i + 1;
+   with
+        emit e;
+   end
+end
+escape 1;
 ]],
     run = 1,
 }
@@ -44779,6 +44779,42 @@ escape 0;
 ]],
     props_ = 'line 4 : invalid `throw` : unexpected enclosing `code`',
     _opts = { ceu_features_exception='true' },
+}
+
+Test { [=[
+ ##include <stdio.h>
+
+ native/plain
+   _stderr
+ ;
+
+ native/nohold
+   _fprintf
+ ;
+
+ var Exception? e;
+ catch e do
+   [[
+     //print ('teste')
+   ]]
+ end
+ if e? then
+   _fprintf (_stderr, "%s\n", e!.message);
+ end
+ escape 1;
+]=],
+    wrn = true,
+    _opts = { ceu_features_exception='true', ceu_features_lua='true', },
+    run = "2: unexpected symbol near '//'",
+}
+
+Test { [=[
+var Exception? e;
+escape e!.message as int;
+]=],
+    wrn = true,
+    _opts = { ceu_features_exception='true' },
+    cc = 'error: cast from pointer to integer of different size',
 }
 
 --<<< EXCEPTIONS / THROW / CATCH
