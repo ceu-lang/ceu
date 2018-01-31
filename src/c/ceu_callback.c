@@ -103,6 +103,9 @@ static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
 
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 
+#ifdef ceu_assert_ex
+#define ceu_assert(a,b) ceu_assert_ex(a,b,NONE)
+#else
 #ifdef CEU_FEATURES_TRACE
 #define ceu_assert_ex(v,msg,trace)                                  \
     if (!(v)) {                                                     \
@@ -116,6 +119,7 @@ static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
         ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL, trace);   \
     }
 #define ceu_assert(v,msg) ceu_assert_ex((v),(msg),NONE)
+#endif
 #endif
 
 #define ceu_dbg_log(msg)  { ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg), CEU_TRACE(0)); \
