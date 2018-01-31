@@ -395,8 +395,51 @@ escape 1;
 }
 ]==]
 
-do return end -- OK
 --]=====]
+
+Test { [[
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    cmd = 'expected option `ceu-features-trace`',
+}
+Test { [[
+escape 1;
+]],
+    _opts = { ceu_features_lua='true' },
+    cmd = 'expected option `ceu-features-dynamic`',
+}
+Test { [[
+code/await Ff (none) -> none do
+end
+pool[] Ff fs;
+spawn Ff() in fs;
+escape 1;
+]],
+    dcls = 'line 3 : dynamic allocation support is disabled',
+}
+
+Test { [[
+code/await Ff (none) -> none do
+end
+pool[] Ff fs;
+spawn Ff() in fs;
+escape 1;
+]],
+    run = 1,
+    _opts = { ceu_features_dynamic='true' },
+}
+do return end
+
+Test { [[
+code/await Ff (none) -> none do
+end
+await Ff();
+escape 1;
+]],
+    run = 1,
+}
+do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested

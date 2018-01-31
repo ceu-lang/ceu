@@ -411,6 +411,11 @@ DCLS.F = {
     Pool__PRE = 'Vec__PRE',
     Vec__PRE = function (me)
         local is_alias,tp,id,dim = unpack(me)
+
+        if dim == '[]' then
+            ASR(CEU.opts.ceu_features_dynamic, me, 'dynamic allocation support is disabled')
+        end
+
         if AST.par(me,'Data') or is_alias or TYPES.is_nat(TYPES.get(tp,1)) then
             return
         end

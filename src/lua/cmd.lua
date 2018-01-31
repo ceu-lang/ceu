@@ -30,6 +30,7 @@ Options:
 
     --ceu-features-trace=BOOL           enable trace support (default `false`)
     --ceu-features-exception=BOOL       enable exceptions support (default `false`)
+    --ceu-features-dynamic=BOOL         enable dynamic allocation support (default `false`)
     --ceu-features-lua=BOOL             enable `lua` support (default `false`)
     --ceu-features-thread=BOOL          enable `async/thread` support (default `false`)
     --ceu-features-isr=BOOL             enable `async/isr` support (default `false`)
@@ -134,6 +135,7 @@ do
         ceu_line_directives    = { toboolean, 'true'  },
         ceu_features_trace     = { toboolean, 'false' },
         ceu_features_exception = { toboolean, 'false' },
+        ceu_features_dynamic   = { toboolean, 'false' },
         ceu_features_lua       = { toboolean, 'false' },
         ceu_features_thread    = { toboolean, 'false' },
         ceu_features_isr       = { toboolean, 'false' },
@@ -166,8 +168,11 @@ if CEU.opts.ceu then
     end
     ASR(CEU.opts.ceu_input, 'expected option `ceu-input`')
 
-    if CEU.opts.exception then
-        ASR(CEU.opts.ceu_trace, 'expected option `ceu-features-trace`')
+    if CEU.opts.ceu_features_exception then
+        ASR(CEU.opts.ceu_features_trace, 'expected option `ceu-features-trace`')
+    end
+    if CEU.opts.ceu_features_lua then
+        ASR(CEU.opts.ceu_features_dynamic, 'expected option `ceu-features-dynamic`')
     end
 else
     check_no('ceu')
