@@ -395,7 +395,6 @@ escape 1;
 }
 ]==]
 
---]=====]
 Test { [[
 code/await Ff (none) -> none do
 end
@@ -6656,6 +6655,7 @@ escape 1;
     wrn = true,
     opts_pre = true,
     run = 1,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 --<<< LOOP
@@ -29672,6 +29672,7 @@ Test { [[
 var[] u8 vec;
 escape ($$vec + $vec + 1) as int;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 1,
 }
 
@@ -29764,6 +29765,7 @@ var[] int&& v1;
 var[] int  v2 = []..v1;
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     stmts = 'line 2 : invalid constructor : item #2 : types mismatch : "int" <= "int&&"',
     --env = 'line 2 : wrong argument #2 : types mismatch (`int` <= `int&&`)',
 }
@@ -29822,6 +29824,7 @@ Test { [[
 var[] int vec = [1];
 escape vec[0];
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 1,
 }
 
@@ -29829,6 +29832,7 @@ Test { [[
 var[] u8 vec = [1,2,3];
 escape ((($$vec) as int) + (($vec) as int) + vec[0] + vec[1] + vec[2]) as int;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 12,
     --run = 6,
 }
@@ -29866,8 +29870,8 @@ native/nohold _ceu_vector_setlen;
 _ceu_vector_setlen(&&bs,1,0);
 escape 1 + (($bs) as int);
 ]],
+    _opts = { ceu_features_trace='true', ceu_features_dynamic='true' },
     run = '3] -> runtime error: access out of bounds',
-    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -29877,6 +29881,7 @@ _ceu_vector_setlen(&&bs, 1, 1);
 _ceu_vector_setlen(&&bs, 1, 0);
 escape 1 + (($bs) as int);
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 2,
 }
 
@@ -29914,6 +29919,7 @@ v1 = v2;
 v1 = v2..v3;
 escape $v1+1;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     stmts = 'line 2 : invalid assignment : unexpected context for vector "v1"',
     --parser = 'line 3 : after `v2` : expected `[` or `:` or `!` or `(` or `?` or `is` or `as` or binary operator or `;`',
     --parser = 'line 3 : after `v2` : expected `[` or `:` or `!` or `(` or `?` or binary operator or `is` or `as` or `;`',
@@ -29970,6 +29976,7 @@ var[] u8 v1   = [1,2,3];
 var[10] u8 v2 = []..v1;
 escape (v2[0] + v2[1] + v2[2]) as int;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 6,
 }
 Test { [[
@@ -29977,6 +29984,7 @@ var[10] byte v1 = [1,2,3];
 var[] byte   v2 = []..v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 6,
 }
 Test { [[
@@ -30068,6 +30076,7 @@ loop i in [0 -> ($$foo) as int[ do
 end
 escape tot+1;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     tight_ = 'line 4 : invalid tight `loop` : unbounded number of non-awaiting iterations',
 }
 
@@ -30080,6 +30089,7 @@ loop i in [0 -> ($$foo) as int[ do
 end
 escape tot+1;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     wrn = true,
     --run = 1,
     run = 16,
@@ -30104,6 +30114,7 @@ Test { [[
 var[] int x = [1]..2;
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     stmts = 'line 1 : invalid constructor : unexpected context for value "2"',
     --stmts = 'line 1 : invalid constructor : expected location',
     --env = 'line 1 : wrong argument #2 : source is not a vector',
@@ -30130,6 +30141,7 @@ v1 = [1] .. v2;
 v1 = [] .. v2 .. [1];
 escape v1[0];
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 1;
 }
 
@@ -30137,6 +30149,7 @@ Test { [[
 var[] int v1 = [1]..[2]..[3];
 escape v1[0]+v1[1]+v1[2];
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 6;
 }
 
@@ -30167,6 +30180,7 @@ loop i in [0 -> 9[ do
 end
 escape ret;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 45;
 }
 
@@ -30175,6 +30189,7 @@ var[] int v = [1,2,3];
 v = v .. v;
 escape ($v + v[5]) as int;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     stmts = 'line 2 : invalid constructor : item #2 : unexpected destination as source',
     --run = 9,
 }
@@ -30184,6 +30199,7 @@ var[] int v = [1,2,3];
 v = [1] .. v;
 escape ($v + v[1]) as int;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     stmts = 'line 2 : invalid constructor : item #2 : unexpected destination as source',
     --run = 3,
 }
@@ -30194,6 +30210,7 @@ var[] int v1 = []..v;
 v = [1] .. v1;
 escape ($v + v[1]) as int;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 5,
     --run = 3,
 }
@@ -30203,6 +30220,7 @@ var[] int v;
 $v = 0;
 escape ($v + 1) as int;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 1,
 }
 
@@ -30218,6 +30236,7 @@ loop i in [0 -> $vec[ do
 end
 escape ret;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     wrn = true,
     run = 3,
 }
@@ -30228,6 +30247,7 @@ every 1s do
 end
 escape 0;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = false,
 }
 
@@ -30246,6 +30266,7 @@ end
 var[] byte str = [] .. "oi";
 escape (str[1]=={'i'}) as int;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 1,
 }
 
@@ -30263,6 +30284,7 @@ native _char, _Tx;
 var[] byte str = [] .. (_Tx.f() as _char&&);
 escape (str[2]=={'a'}) as int;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 1,
 }
 
@@ -30280,6 +30302,7 @@ native _char, _Tx;
 var[] byte str = [] .. (_Tx.f() as _char&&) .. "oi";
 escape (str[5]=={'i'}) as int;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 1,
 }
 
@@ -30299,6 +30322,7 @@ $str = $str - 1;
 str = str .. "oi";
 escape (str[4]=={'i'}) as int;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 1,
 }
 
@@ -30324,6 +30348,7 @@ str = str .. (_ID("def") as _char&&);
 var byte&& str2 = _ID((&&str[0]));
 escape _strlen((&&str[0]) as _char&&) + _strlen(str2 as _char&&);
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 12,
 }
 
@@ -30332,6 +30357,7 @@ var[] byte str;
 var[] byte str;
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     wrn = true,
     run = 1,
 }
@@ -30340,6 +30366,7 @@ Test { [[
 var[] int x;
 escape (&&x[0] == &&x[0]) as int;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 1,
 }
 
@@ -30347,6 +30374,7 @@ Test { [[
 var[] byte str1;
 escape (&&str1[0] == &&str1[0]) as int;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 1,
     --run = '2] -> runtime error: access out of bounds',
 }
@@ -30355,6 +30383,7 @@ Test { [[
 var[] byte str1 = [].."";
 escape (&&str1[0] == &&str1[0]) as int;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 1,
     --run = '2] -> runtime error: access out of bounds',
 }
@@ -30366,6 +30395,7 @@ var[] byte str2 = [].."";
 native _char;
 escape (_strcmp((&&str1[0]) as _char&&,"")==0 and _strcmp((&&str2[0]) as _char&&,"")==0) as int;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 1,
 }
 
@@ -30387,12 +30417,14 @@ var[] byte str2 = [0];
 native _char;
 escape (_strcmp((&&str1[0]) as _char&&,"")==0 and _strcmp((&&str2[0]) as _char&&,"")==0) as int;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 1,
 }
 
 Test { [[
 var[] u8 str = [].."Ola Mundo!";
 ]],
+    _opts = { ceu_features_dynamic='true' },
     --stmts = 'line 1 : invalid constructor : item #2 : types mismatch : "u8" <= "byte"',
     stmts = 'line 1 : invalid constructor : unexpected context for value ""Ola Mundo!""',
 }
@@ -30414,6 +30446,7 @@ var byte c = 3;
 _ceu_vector_buf_set(&&v,2, &&c, 1);
 escape v[2] + (($v) as int);
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 8,
 }
 
@@ -30421,24 +30454,28 @@ Test { [[
 var[] int v;
 escape v > 0;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     dcls = 'line 2 : invalid operand to `>` : unexpected context for vector "v"',
 }
 Test { [[
 var[] int v;
 escape v?;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     dcls = 'line 2 : invalid operand to `?` : unexpected context for vector "v"',
 }
 Test { [[
 var[] int v;
 escape v!;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     dcls = 'line 2 : invalid operand to `!` : unexpected context for vector "v"',
 }
 Test { [[
 var[] int v;
 escape ~v;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     dcls = 'line 2 : invalid operand to `~` : unexpected context for vector "v"',
 }
 
@@ -30446,6 +30483,7 @@ Test { [[
 var[] int v;
 v[true] = 1;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     dcls = 'line 2 : invalid index : expected integer type',
 }
 
@@ -30490,6 +30528,7 @@ Test { [[
 var[] int v;
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     wrn = true,
     run = 1,
 }
@@ -30537,6 +30576,7 @@ str = [].."oioioi";
 
 escape _strlen(&&str[0]);
 ]],
+    _opts = { ceu_features_dynamic='true' },
     stmts = 'line 5 : invalid constructor : unexpected context for value ""oioioi""',
     --stmts = 'line 5 : invalid constructor : expected internal type : got "_char"',
     --dcls = 'line 5 : invalid use of `vector` "str"',
@@ -30582,6 +30622,7 @@ Test { [[
 var[] byte str = [] .. (1 as int);
 escape $str as int;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     stmts = 'line 1 : invalid constructor : item #2 : expected "_char&&"',
 }
 
@@ -30592,6 +30633,7 @@ end
 var[] byte str = [] .. (call Ff());
 escape $str as int;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 3,
 }
 Test { [[
@@ -30601,6 +30643,7 @@ end
 var[] byte str = [] .. (call Ff());
 escape $str as int;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     stmts = 'line 4 : invalid constructor : item #2 : expected "_char&&"',
 }
 
@@ -30614,6 +30657,7 @@ var[] byte v = [{'a'},{'b'},{'c'},{'\0'}];
 native _char;
 escape _strlen((&&v[0]) as _char&&);
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 3,
 }
 Test { [[
@@ -30622,6 +30666,7 @@ var[] byte v = [{'a'},{'b'},{'c'},{'\0'}];
 native _char;
 escape _strlen((&&v[0]) as _char&&);
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 3,
 }
 
@@ -30691,6 +30736,7 @@ var[] byte v = [].."abc";
 native _char;
 escape _strlen(v as _char&&);
 ]],
+    _opts = { ceu_features_dynamic='true' },
     dcls = 'line 4 : invalid operand to `as` : unexpected context for vector "v"',
     --env = 'line 2 : types mismatch (`byte[]` <= `_char&&`)',
     --run = 3,
@@ -30701,6 +30747,7 @@ var[] byte v = [].."abc";
 native _char;
 escape _strlen((&&v[0]) as _char&&);
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 3,
 }
 Test { [[
@@ -30711,6 +30758,7 @@ v = v .. "def";
 native _char;
 escape _strlen((&&v[0]) as _char&&);
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 6,
 }
 
@@ -30773,8 +30821,8 @@ var[] byte us;
 $us = n;
 escape 1;
 ]],
+    _opts = { ceu_features_trace='true', ceu_features_dynamic='true' },
     run = ':3] -> runtime error: access out of bounds',
-    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -30784,6 +30832,7 @@ native/nohold _ceu_vector_setlen;
 _ceu_vector_setlen(&&us,n,1);
 escape $us as int;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 10,
 }
 
@@ -31057,6 +31106,7 @@ loop i in [0 -> 10[ do
 end
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = { ['~>20s']=1 },
 }
 
@@ -31073,6 +31123,7 @@ $str = $str - 1;
 str = str .. (y as _char&&);
 escape _strlen(&&str[0] as _char&&);
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 8,
 }
 
@@ -31090,6 +31141,7 @@ $str = $str - 1;
 str = str .. (_ID(y) as _char&&);
 escape _strlen(&&str[0] as _char&&);
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 8,
 }
 
@@ -31143,6 +31195,7 @@ var int n = 10;
 var[] byte vec = [1,2,3];
 var&[n] byte ref = &vec;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
 }
 
@@ -31188,6 +31241,7 @@ var int idx = 1;
 var& int i = &idx;
 escape bs[i];
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 2,
 }
 
@@ -31206,6 +31260,7 @@ ref = ref .. "oi";
 native/pure _strlen;
 escape _strlen((&&str[0]) as _char&&);
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 5,
 }
 
@@ -31294,6 +31349,7 @@ var[] int vv;
 var&[] int v = &vv;;
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     wrn = true,
     run = 1,
 }
@@ -31303,6 +31359,7 @@ var[] byte c = [1];
 var&[] byte b = &c;
 escape b[0];
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 1,
 }
 
@@ -31326,6 +31383,7 @@ var[] int xs;
 var& int x = &xs[0];
 escape 0;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     stmts = 'line 2 : invalid binding : types mismatch : "Var" <= "Vec"',
 }
 
@@ -31411,6 +31469,7 @@ var[*] int vec = [ 1, 2, 3 ];
 $vec = $vec - 1;
 escape vec[0];
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 2,
     --parser = 'line 1 : after `*` : expected expression',
 }
@@ -31511,8 +31570,8 @@ var byte c = 3;
 _ceu_vector_buf_set(&&v,2, &&c, 4);
 escape v[2] + (($v) as int);
 ]],
+    _opts = { ceu_features_trace='true', ceu_features_dynamic='true' },
     run = '4] -> runtime error: access out of bounds',
-    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -31522,8 +31581,8 @@ var int c = 3;
 _ceu_vector_buf_set(&&v,2, &&c as byte&&, 4*sizeof(int));
 escape v[2] + (($v) as int);
 ]],
+    _opts = { ceu_features_trace='true', ceu_features_dynamic='true' },
     run = '4] -> runtime error: access out of bounds',
-    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -31666,6 +31725,7 @@ end
 var[] int dst = []..src;
 escape ((dst[0] + dst[$dst-1]) == 2101) as int;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 1,
 }
 Test { [[
@@ -31678,6 +31738,7 @@ $src = 0;
 var[] int dst = []..src;
 escape ($dst as int) + 1;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 1,
 }
 Test { [[
@@ -31697,6 +31758,7 @@ dst = []..src;
 
 escape dst[0] + dst[$dst-1] + ($dst as int) + 1;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 102,
 }
 Test { [[
@@ -31736,6 +31798,7 @@ Test { [[
 var[*] byte xxx = [1,2,3];
 escape $xxx as int;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 3,
 }
 
@@ -31753,6 +31816,7 @@ xxx = xxx..[1,2,3,4,5,6,7,8,9,0];
 $xxx = 3;
 escape xxx[0]+xxx[1]+xxx[2];
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 17,
 }
 
@@ -31765,6 +31829,7 @@ end
 $xxx = 3;
 escape xxx[0]+xxx[1]+xxx[2];
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 17,
 }
 
@@ -31779,6 +31844,7 @@ end
 $xxx = 3;
 escape xxx[0]+xxx[1]+xxx[2];
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 6,
 }
 
@@ -31800,6 +31866,7 @@ ret = ret + xxx[$xxx-1];    // +9 = 19
 
 escape ret;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 19,
 }
 
@@ -31818,6 +31885,7 @@ end
 
 escape xxx[$xxx-1] + xxx[$xxx-2];
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 29,
 }
 
@@ -33862,6 +33930,7 @@ var[] int x = [1,2,3];
 x = _;
 escape x[1];
 ]],
+    _opts = { ceu_features_dynamic='true' },
     --stmts = 'line 2 : invalid assignment : unexpected context for vector "x"',
     run = 2,
 }
@@ -35317,6 +35386,7 @@ end
 
 escape call Fx(&str);
 ]],
+    _opts = { ceu_features_dynamic='true' },
     --parser = 'line 3 : after `vector` : expected `&`',
     dcls = 'line 3 : invalid declaration : vector inside `code/tight`',
 }
@@ -35329,6 +35399,7 @@ end
 
 escape call Fx(&str);
 ]],
+    _opts = { ceu_features_dynamic='true' },
     wrn = true,
     --stmts = 'line 4 : invalid assignment : types mismatch : "int" <= "byte"',
     run = 1,
@@ -35342,6 +35413,7 @@ end
 
 escape call Fx(&str);
 ]],
+    _opts = { ceu_features_dynamic='true' },
     wrn = true,
     run = 1,
 }
@@ -35382,6 +35454,7 @@ var&[] int v2;
 v2 = &v1;
 escape v2[1];
 ]],
+    _opts = { ceu_features_dynamic='true' },
     stmts = 'line 3 : invalid binding : types mismatch : "int" <= "byte"',
     --run = 1,
 }
@@ -35394,6 +35467,7 @@ end
 
 escape call Fx(&str);
 ]],
+    _opts = { ceu_features_dynamic='true' },
     dcls = 'line 7 : invalid call : argument #1 : types mismatch : "int" <= "byte"',
     --run = 1,
 }
@@ -35406,6 +35480,7 @@ end
 
 escape call Fx(&str);
 ]],
+    _opts = { ceu_features_dynamic='true' },
     wrn = true,
     stmts = 'line 4 : invalid `escape` : types mismatch : "bool" <= "byte"',
     --env = 'line 7 : wrong argument #1 : types mismatch (`int` <= `byte`)',
@@ -35419,6 +35494,7 @@ end
 
 escape call Fx(str);
 ]],
+    _opts = { ceu_features_dynamic='true' },
     wrn = true,
     --ref = 'line 7 : invalid attribution : missing alias operator `&`',
     dcls = 'line 7 : invalid call : invalid binding : argument #1 : unexpected context for vector "str"',
@@ -35448,6 +35524,7 @@ end
 
 escape call Fx(str);
 ]],
+    _opts = { ceu_features_dynamic='true' },
     dcls = 'line 3 : invalid declaration : vector inside `code/tight`',
     --parser = 'line 3 : after `vector` : expected `&`',
     --env = 'line 3 : wrong argument #2 : vectors are not supported',
@@ -35520,6 +35597,7 @@ code/tight Build (var[] u8 bytes)->none do
 end
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     dcls = 'line 1 : invalid declaration : vector inside `code/tight`',
     --wrn = true,
     --parser = 'line 1 : after `vector` : expected `&`',
@@ -35625,6 +35703,7 @@ end
 var[] byte str = [].."Ola Mundo!";
 escape call Strlen(&&str[0]);
 ]],
+    _opts = { ceu_features_dynamic='true' },
     --env = 'line 6 : wrong argument #1 : types mismatch (`byte&&` <= `byte[]&&`)',
     run = 10,
 }
@@ -35638,6 +35717,7 @@ end
 var[] byte str = [].."Ola Mundo!";
 escape call Strlen((&&str[0]) as _char&&);
 ]],
+    _opts = { ceu_features_dynamic='true' },
     dcls = 'line 3 : invalid vector : unexpected context for variable "str"',
     --run = 10,
 }
@@ -35664,6 +35744,7 @@ var[] byte cs = [0];
 call Fx(&cs);
 escape cs[0];
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 10,
 }
 
@@ -36380,6 +36461,7 @@ loop i in [0 -> 10[ do
 end
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = { ['~>20s']=1 },
 }
 
@@ -36539,6 +36621,7 @@ var[] int x;
 var& int xx = &x;
 escape 0;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     stmts = 'line 2 : invalid binding : types mismatch : "Var" <= "Vec"',
 }
 
@@ -36552,6 +36635,7 @@ spawn Ff(&x);
 
 escape 0;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     dcls = 'line 6 : invalid binding : types mismatch : "Var" <= "Vec"',
 }
 
@@ -36703,7 +36787,7 @@ var& Ff f2 = spawn Ff() in fs;
 escape 1;
 ]],
     run = '6] -> runtime error: out of memory',
-    _opts = { ceu_features_trace='true' },
+    _opts = { ceu_features_trace='true', ceu_features_pool='true' },
 }
 
 Test { [[
@@ -36729,6 +36813,7 @@ every 1s do
 end
 escape 0;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = false,
 }
 --<< CODE / AWAIT / OPTION
@@ -36793,6 +36878,7 @@ escape 1;
 
 --<< CODE / AWAIT / FOREVER
 
+--]=====]
 Test { [[
 code/await Ff (none) -> NEVER do
 end
@@ -36800,18 +36886,20 @@ var int? x = watching Ff() do
 end;
 escape 0;
 ]],
-    stmts = 'line 3 : invalid `watching` : `code` executes forever',
-    --stmts = 'line 3 : invalid assignment : `code` executes forever',
+    --stmts = 'line 3 : invalid `watching` : `code` executes forever',
+    stmts = 'line 3 : invalid assignment : `code` executes forever',
 }
 
 Test { [[
 code/await Ff (none) -> NEVER do
+    await FOREVER;
 end
 watching Ff() do
 end
-escape 0;
+escape 1;
 ]],
-    stmts = 'line 3 : invalid `watching` : `code` executes forever',
+    --stmts = 'line 3 : invalid `watching` : `code` executes forever',
+    run = 1,
 }
 
 -->>> REACTIVE / VAR / OPT / ALIAS
