@@ -412,7 +412,7 @@ DCLS.F = {
     Vec__PRE = function (me)
         local is_alias,tp,id,dim = unpack(me)
 
-        if dim == '[]' then
+        if (dim == '[]') and (not is_alias) then
             ASR(CEU.opts.ceu_features_dynamic, me, 'dynamic allocation support is disabled')
         end
 

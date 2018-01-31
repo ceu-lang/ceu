@@ -500,10 +500,13 @@ void ceu_code_mem_dyn_free (tceu_pool* pool, tceu_code_mem_dyn* cur) {
     cur->nxt->prv = cur->prv;
     cur->prv->nxt = cur->nxt;
 
+#ifdef CEU_FEATURES_DYNAMIC
     if (pool->queue == NULL) {
         /* dynamic pool */
         ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, cur, 0, CEU_TRACE_null);
-    } else {
+    } else
+#endif
+    {
         /* static pool */
         ceu_pool_free(pool, (byte*)cur);
     }

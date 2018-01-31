@@ -410,6 +410,12 @@ escape 1;
     cmd = 'expected option `ceu-features-dynamic`',
 }
 Test { [[
+escape 1;
+]],
+    _opts = { ceu_features_thread='true' },
+    cmd = 'expected option `ceu-features-dynamic`',
+}
+Test { [[
 code/await Ff (none) -> none do
 end
 pool[] Ff fs;
@@ -429,7 +435,14 @@ escape 1;
     run = 1,
     _opts = { ceu_features_dynamic='true' },
 }
-do return end
+
+Test { [[
+var&[] byte vec;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
 
 Test { [[
 code/await Ff (none) -> none do

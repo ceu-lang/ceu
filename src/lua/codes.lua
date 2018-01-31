@@ -519,6 +519,7 @@ assert(not obj, 'not implemented')
 ]])
         if alias then
             LINE(me, [[
+#ifdef CEU_FEATURES_DYNAMIC
     if (]]..V(pool)..[[.pool.queue == NULL) {
         ceu_callback_ptr_num(CEU_CALLBACK_REALLOC,
                              NULL,
@@ -526,7 +527,9 @@ assert(not obj, 'not implemented')
                              CEU_TRACE(0)
                             );
         __ceu_new = (tceu_code_mem_dyn*) ceu_callback_ret.ptr;
-    } else {
+    } else
+#endif
+    {
         __ceu_new = (tceu_code_mem_dyn*) ceu_pool_alloc(&]]..V(pool)..[[.pool);
     }
 ]])
