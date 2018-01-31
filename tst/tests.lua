@@ -134,7 +134,7 @@ var int xxx = 0;
 ]]
 escape xxx;
 ]=],
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
     run = 3,
 }
 
@@ -379,7 +379,7 @@ await async/thread do
 end
 escape 1;
 ]=],
-    _opts = { ceu_features_exception='true', ceu_features_thread='true', ceu_features_trace='true', },
+    _opts = { ceu_features_exception='true', ceu_features_dynamic='true', ceu_features_thread='true', ceu_features_trace='true', },
     wrn = true,
     run = '3] -> runtime error: unspecified message',
 }
@@ -389,7 +389,7 @@ await async/thread do
 end
 escape 1;
 ]=],
-    _opts = { ceu_features_exception='true', ceu_features_thread='true', ceu_features_trace='true', ceu_features_lua='true' },
+    _opts = { ceu_features_exception='true', ceu_features_dynamic='true', ceu_features_thread='true', ceu_features_trace='true', ceu_features_dynamic='true', ceu_features_lua='true' },
     wrn = true,
     run = '2] -> runtime error: [string " error \'oi\' "]:1: oi',
 }
@@ -404,6 +404,7 @@ escape 1;
     run = 1,
 }
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -36878,7 +36879,6 @@ escape 1;
 
 --<< CODE / AWAIT / FOREVER
 
---]=====]
 Test { [[
 code/await Ff (none) -> NEVER do
 end
@@ -37240,6 +37240,7 @@ end
 
 escape ret;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 3,
 }
 Test { [[
@@ -37247,6 +37248,7 @@ code/await Ff (none) -> none do
 end
 pool[] Ff ffs;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     dcls = 'line 3 : pool "ffs" declared but not used',
 }
 
@@ -37301,6 +37303,7 @@ pool[] Ff ffs;
 var&? Ff fff = spawn Ff() in ffs;
 escape (fff? as int) + 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
 }
 
@@ -37323,6 +37326,7 @@ await async do end
 await async do end
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
 }
 Test { [[
@@ -37335,6 +37339,7 @@ pool[n] Ff ffs;
 var&? Ff f = spawn Ff() in ffs;
 escape (f? as int) + 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     consts = 'line 6 : not implemented : dynamic limit for pools',
 }
 
@@ -37374,6 +37379,7 @@ var&? Ff x = spawn Ff();
 await x;
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
 }
 
@@ -37403,6 +37409,7 @@ pool[] Ff ffs;
 spawn Ff() in ffs;
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
 }
 
@@ -37421,6 +37428,7 @@ await x_;
 
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
 }
 
@@ -37435,6 +37443,7 @@ var&? Ff f = spawn Ff() in fs;
 var int? ret = await f;
 escape ret!;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = { ['~>1s']=1 },
 }
 Test { [[
@@ -37459,6 +37468,7 @@ pool[] Ff ffs;
 var&? Ff x = spawn Ff() in ffs;
 escape x!.x + 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 11,
 }
 
@@ -37472,6 +37482,7 @@ pool[] Ff ffs;
 var&? Ff x = spawn Ff() in ffs;
 escape x!.x + 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 11,
 }
 
@@ -37491,6 +37502,7 @@ do
 end
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = { ['~>1s']=1 },
 }
 Test { [[
@@ -37506,6 +37518,7 @@ with
 end
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
 }
 
@@ -37666,6 +37679,7 @@ ret = ret + (x? as int) + 1;
 
 escape ret;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = { ['~>1s'] = 11 },
 }
 
@@ -40120,6 +40134,7 @@ code/await Gg (none) -> (var& int x) -> none do
 end
 escape 10;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     wrn = true,
     run = 10,
 }
@@ -40149,6 +40164,7 @@ var int ret = await Gg();
 
 escape ret;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 10,
     --inits = 'line 8 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:12)',
 }
@@ -40178,6 +40194,7 @@ var int ret = await Gg();
 
 escape ret;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     inits = 'line 9 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:18)',
     --run = 10,
 }
@@ -40243,6 +40260,7 @@ do
 end
 escape 5;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = 5,
 }
 Test { [[
@@ -40254,6 +40272,7 @@ do
 end
 escape 5;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 5,
 }
 
@@ -40272,6 +40291,7 @@ end
 
 escape a;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = 5,
 }
 
@@ -40300,6 +40320,7 @@ pool[1] Tx ts;
 spawn Tx() in ts;
 escape _V;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = 100,
 }
 
@@ -40314,6 +40335,7 @@ pool[1] Tx ts;
 spawn Tx(&a) in ts;
 escape a;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = 5,
 }
 
@@ -40322,6 +40344,7 @@ code/await Tx (none)->none do end
 pool[1] Tx ts;
 escape 1;
 ]],
+    _opts = { ceu_features_pool='true' },
     wrn = true,
     run = 1,
 }
@@ -40337,6 +40360,7 @@ spawn Tx(&a) in ts;
 await 1s;
 escape a;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = { ['~>1s']=5 },
 }
 
@@ -40353,6 +40377,7 @@ spawn Tx(&a) in ts;
 await 2s;
 escape a;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = { ['~>2s']=10 },
 }
 Test { [[
@@ -40370,6 +40395,7 @@ spawn Tx(&a) in ts;
 await 2s;
 escape a;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = { ['~>2s']=20 },
 }
 
@@ -40387,6 +40413,7 @@ spawn Tx(&a) in ts;
 await 2s;
 escape a;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = { ['~>2s']=20 },
 }
 
@@ -40406,6 +40433,7 @@ spawn Tx(&a) in ts;
 await 2s;
 escape a;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = { ['~>2s']=20 },
 }
 
@@ -40421,6 +40449,7 @@ spawn Tx(&a) in ts;
 spawn Tx(&a) in ts;
 escape a;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = 20,
 }
 
@@ -40439,6 +40468,7 @@ spawn Tx(&a) in ts;
 await 2s;
 escape a;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = { ['~>3s']=20 },
 }
 
@@ -40468,6 +40498,7 @@ spawn Tx() in ts;
 _V = _V*3;
 escape _V;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = 345;
 }
 
@@ -40500,6 +40531,7 @@ _V = _V*3;
 await OS_START;
 escape _V;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = 345;
 }
 
@@ -40521,6 +40553,7 @@ do
 end
 escape _V;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = 10,
 }
 
@@ -40541,6 +40574,7 @@ do
 end
 escape _V;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = 1,
 }
 
@@ -40568,6 +40602,7 @@ end
 
 escape _V;
 ]],
+    _opts = { ceu_features_pool='true' },
     wrn = true,
     run = { ['~>1s'] = 1 },
 }
@@ -40587,6 +40622,7 @@ end
 
 escape a;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 5,
 }
 
@@ -40602,6 +40638,7 @@ pool[] Tx ts;
 spawn Tx() in ts;
 escape _V;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 100,
 }
 
@@ -40616,6 +40653,7 @@ pool[] Tx ts;
 spawn Tx(&a) in ts;
 escape a;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 5,
 }
 
@@ -40628,6 +40666,7 @@ spawn Tx() in ts;
 await async do end
 escape 5;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = { ['~>1s']=5 },
 }
 
@@ -40642,6 +40681,7 @@ spawn Tx(&a) in ts;
 await 1s;
 escape a;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = { ['~>1s']=5 },
 }
 
@@ -40660,6 +40700,7 @@ spawn Tx(&zzz) in ts;
 await 2s;
 escape zzz;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = { ['~>2s']=20 },
 }
 
@@ -40679,6 +40720,7 @@ spawn Tx(&a) in ts2;
 await 2s;
 escape a;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = { ['~>2s']=20 },
 }
 
@@ -40696,6 +40738,7 @@ spawn Tx(&a) in ts;
 await 2s;
 escape a;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = { ['~>2s']=20 },
 }
 
@@ -40715,6 +40758,7 @@ spawn Tx(&a) in ts;
 await 2s;
 escape a;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     defines = {
         CEU_TESTS_REALLOC = 2,
     },
@@ -40733,6 +40777,7 @@ spawn Tx(&a) in ts;
 spawn Tx(&a) in ts;
 escape a;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     defines = {
         CEU_TESTS_REALLOC = 1,
     },
@@ -40754,6 +40799,7 @@ spawn Tx(&a) in ts;
 await 2s;
 escape a;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     defines = {
         CEU_TESTS_REALLOC = 2,
     },
@@ -40786,6 +40832,7 @@ spawn Tx() in ts;
 _V = _V*3;
 escape _V;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     defines = {
         CEU_TESTS_REALLOC = 3,
     },
@@ -40821,6 +40868,7 @@ _V = _V*3;
 await OS_START;
 escape _V;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     defines = {
         CEU_TESTS_REALLOC = 3,
     },
@@ -40845,6 +40893,7 @@ do
 end
 escape _V;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 10,
 }
 
@@ -40865,6 +40914,7 @@ do
 end
 escape _VVV;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
 }
 
@@ -40892,6 +40942,7 @@ end
 
 escape _V;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     wrn = true,
     run = { ['~>1s'] = 1 },
 }
@@ -40932,6 +40983,7 @@ end
 
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
 }
 
@@ -40968,6 +41020,7 @@ await async do end;
 await async do end;
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
 }
 
@@ -40991,6 +41044,7 @@ end
 await async do end;
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
 }
 
@@ -41015,6 +41069,7 @@ end
 await async do end;
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
 }
 
@@ -41076,6 +41131,7 @@ await 1s;
 
 escape ret;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = { ['~>1s']=6 },
 }
 
@@ -41319,6 +41375,7 @@ await Tx(&txs);
 
 escape _V;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     defines = {
         CEU_TESTS_REALLOC = 100,
     },
@@ -41342,12 +41399,12 @@ await Tx(&txs);
 
 escape _V;
 ]],
+    _opts = { ceu_features_trace='true', ceu_features_dynamic='true', ceu_features_pool='true' },
     defines = {
         CEU_STACK_MAX = 40000,
     },
     --wrn = 'line 7 : unbounded recursive spawn',
     run = 'runtime error: stack overflow',
-    _opts = { ceu_features_trace='true' },
 }
 Test { [[
 native _V;
@@ -41365,6 +41422,7 @@ await Tx();
 
 escape _V;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     defines = {
         CEU_TESTS_REALLOC = 100,
     },
@@ -41415,6 +41473,7 @@ f = spawn Ff(&fs) in fs;
 var int? y = await f;
 escape y!;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 10,
 }
 
@@ -41438,6 +41497,7 @@ spawn Ff(&fs) in fs;
 var int x = await Ff(&fs);
 escape x;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 10,
 }
 
@@ -41661,6 +41721,7 @@ end
 
 escape n+1;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = 1,
 }
 
@@ -41675,6 +41736,7 @@ loop player1 in player do
 end
 escape 1;
 ]],
+    _opts = { ceu_features_pool='true' },
     wrn = true,
     run = 1,
 }
@@ -41698,6 +41760,7 @@ end
 
 escape n;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = 5,
 }
 
@@ -41722,6 +41785,7 @@ end
 
 escape n;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = 4,
 }
 
@@ -41752,6 +41816,7 @@ end
 
 escape 1;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = 1,
     --dcls = 'line 6 : variable "f" declared but not used',
     --stmts = 'line 7 : invalid `loop` : expected 0 argument(s)',
@@ -41781,6 +41846,7 @@ end
 
 escape n+1;
 ]],
+    _opts = { ceu_features_pool='true' },
     dcls = 'line 9 : invalid declaration : `code/await` must execute forever',
     --dcls = 'line 9 : invalid declaration : unexpected context for `code` "Ff"',
     --stmts = 'line 10 : invalid binding : argument #1 : expected alias `&` declaration',
@@ -41801,6 +41867,7 @@ end
 
 escape 1;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = 1,
     --dcls = 'line 9 : invalid declaration : unexpected context for `code` "Ff"',
     --stmts = 'line 10 : invalid binding : argument #1 : expected alias `&` declaration',
@@ -41821,6 +41888,7 @@ end
 
 escape n;
 ]],
+    _opts = { ceu_features_pool='true' },
     stmts = 'line 13 : invalid `escape` : expected operator `!`',
     --props_ = 'line 13 : invalid access to internal identifier "n" : crossed `loop` (/tmp/tmp.ceu:10)',
     --props_ = 'line 13 : invalid access to internal identifier "n" : crossed yielding statement (/tmp/tmp.ceu:10)',
@@ -41849,6 +41917,7 @@ end
 
 escape 0;
 ]],
+    _opts = { ceu_features_pool='true' },
     wrn = true,
     --stmts = 'line 17 : invalid binding : argument #1 : types mismatch : "int" <= "bool"',
     stmts = 'line 18 : invalid control variable : types mismatch : "Gg" <= "Ff"',
@@ -41869,6 +41938,7 @@ loop _ in fs do
 end
 escape ret;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = 2,
 }
 
@@ -41888,6 +41958,7 @@ loop fff in fs do
 end
 escape ret;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = 2,
 }
 
@@ -41914,6 +41985,7 @@ end
 
 escape ret;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = 16,
 }
 
@@ -41948,6 +42020,7 @@ end
 
 escape ret;
 ]],
+    _opts = { ceu_features_pool='true' },
     wrn = true,
     run = 3,
 }
@@ -41988,6 +42061,7 @@ end
 
 escape ret;
 ]],
+    _opts = { ceu_features_pool='true' },
     wrn = true,
     run = 8,
 }
@@ -42012,6 +42086,7 @@ end
 await 10s;
 escape _V;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = { ['~>10s'] = 10 },
 }
 
@@ -42031,6 +42106,7 @@ end
 
 escape nn;
 ]],
+    _opts = { ceu_features_pool='true' },
     inits = 'line 11 : invalid binding : crossing `loop` (/tmp/tmp.ceu:10)',
     --inits = 'line 8 : uninitialized variable "nn" : reached `loop`',
     --props_ = 'line 14 : invalid access to internal identifier "nn" : crossed `loop` (/tmp/tmp.ceu:10)',
@@ -42049,6 +42125,7 @@ end
 
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
 }
 
@@ -42069,6 +42146,7 @@ end
 escape 1;
 ]],
     --props_ = 'line 11 : invalid `await` : unexpected enclosing `loop`',
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = {['~>1s']=1},
 }
 
@@ -42084,6 +42162,7 @@ spawn Ff(&e) in ffs;
 await e;
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
 }
 
@@ -42108,6 +42187,7 @@ await Ff(&ggs);
 
 escape _V;
 ]],
+    _opts = { ceu_features_pool='true' },
     run = 1,
 }
 
@@ -42132,6 +42212,7 @@ end;
 
 escape (x? as int) + 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     --dcls = 'line 10 : invalid declaration : option alias : expected native or `code/await` type',
     --stmts = 'line 13 : invalid binding : unmatching alias `&` declaration',
     scopes = 'line 13 : invalid binding : unexpected source with `&?` : destination may outlive source',
@@ -42155,6 +42236,7 @@ end;
 
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     --dcls = 'line 10 : invalid declaration : option alias : expected native or `code/await` type',
     --stmts = 'line 13 : invalid binding : unmatching alias `&` declaration',
     scopes = 'line 13 : invalid binding : unexpected source with `&?` : destination may outlive source',
@@ -42177,6 +42259,7 @@ end;
 
 escape (f1? as int) + 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
     --stmts = 'line 12 : invalid binding : argument #1 : unmatching alias `&` declaration',
 }
@@ -42201,6 +42284,7 @@ var int ret = (f1? as int);
 await 1s;
 escape ret + (f1? as int);
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = { ['~>1s']=1 },
     --stmts = 'line 12 : invalid binding : argument #1 : unmatching alias `&` declaration',
 }
@@ -42218,6 +42302,7 @@ var&? Ff ff = do
 end;
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = false,
 }
 
@@ -42245,6 +42330,7 @@ end;
 
 escape ff!.y;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = {['~>1s']=20},
 }
 
@@ -42264,6 +42350,7 @@ end
 
 escape (f? as int) + 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
 }
 Test { [[
@@ -42283,6 +42370,7 @@ end
 
 escape f!.x;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 10,
 }
 
@@ -42303,6 +42391,7 @@ spawn Ff() in ffs;
 
 escape f!.yyy;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 10,
 }
 Test { [[
@@ -42324,6 +42413,7 @@ end;
 
 escape f1!.x;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 10,
 }
 Test { [[
@@ -42343,6 +42433,7 @@ end
 
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
 }
 
@@ -42369,6 +42460,7 @@ end
 
 escape ret;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = { ['~>1s']=19 },
 }
 
@@ -42397,6 +42489,7 @@ end
 
 escape ret;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = { ['~>1s']=19 },
 }
 
@@ -42425,6 +42518,7 @@ end
 
 escape ret;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 20,
 }
 
@@ -42447,6 +42541,7 @@ end
 
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
     --props_ = 'line 14 : invalid declaration : expected `&?` modifier : yielding `loop`',
 }
@@ -42470,6 +42565,7 @@ end
 
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
     --run = 99,
 }
@@ -42497,6 +42593,7 @@ end
 
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     --run = { ['~>A']=99 },
     run = { ['~>A']=1 },
 }
@@ -42538,6 +42635,7 @@ end
 
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = { ['~>A']=1 },
 }
 
@@ -42567,6 +42665,7 @@ end
 
 escape ret;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 10,
 }
 Test { [[
@@ -42609,6 +42708,7 @@ var bool b4 = fd?;
 
 escape ret + (b1 as int) + (b2 as int) + (b3 as int) + (b4 as int);
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 15,
 }
 
@@ -42675,6 +42775,7 @@ end
 
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = { ['~>A']=1 },
 }
 
@@ -42708,6 +42809,7 @@ end
 
 escape ret;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 30,
 }
 
@@ -42724,6 +42826,7 @@ pool[] Ff ffs;
 var&? Ff f = spawn Ff() in ffs;
 escape f!.x;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 10,
 }
 
@@ -42763,6 +42866,7 @@ end
 
 escape _V;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     wrn = true,
     run = 4,
 }
@@ -42809,6 +42913,7 @@ end
 //_printf(">>> %d\n", _V);
 escape _V;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     wrn = true,
     run = 2,
 }
@@ -42850,6 +42955,7 @@ end
 await Collisions();
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
     --props_ = 'line 29 : invalid `spawn` : unexpected enclosing `loop`',
 }
@@ -42876,8 +42982,8 @@ do end
 
 await FOREVER;
 ]],
+    _opts = { ceu_features_trace='true', ceu_features_dynamic='true', ceu_features_pool='true' },
     run = { ['~>A;~>B'] = '6] -> runtime error: bug found' },
-    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[
@@ -42891,6 +42997,7 @@ loop g in gs do
 end
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     wrn = true,
     run = {['~>1s']=1},
 }
@@ -42906,6 +43013,7 @@ do
 end
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     wrn = true,
     scopes = 'line 7 : invalid binding : incompatible scopes',
 }
@@ -42920,6 +43028,7 @@ do
 end
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     wrn = true,
     run = 1,
 }
@@ -42940,6 +43049,7 @@ watching f do
 end
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     wrn = true,
     run = 1,
 }
@@ -42961,6 +43071,7 @@ end
 
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     wrn = true,
     scopes = 'line 13 : invalid binding : incompatible scopes',
 }
@@ -42982,6 +43093,7 @@ pool[1] Tx ts;
 var Tx&&?  ok1 = spawn Tx() in ts;
 escape 0;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     dcls = 'line 3 : invalid declaration : unexpected context for `code` "Tx"',
 }
 Test { [[
@@ -42990,6 +43102,7 @@ pool[1] Tx ts;
 var[] int ok1 = spawn Tx() in ts;
 escape 0;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     stmts = 'line 3 : invalid constructor : unexpected context for vector "ok1"',
 }
 Test { [[
@@ -42998,6 +43111,7 @@ pool[1] Tx ts;
 var int ok1 = spawn Tx() in ts;
 escape 0;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     --stmts = 'line 3 : invalid constructor : expected `bool` destination',
     stmts = 'line 3 : invalid constructor : types mismatch : "int" <= "Tx"',
 }
@@ -43013,6 +43127,7 @@ loop _ in ts do
 end
 escape ret;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 10,
     --props = 'line 6 : pool iterator cannot contain yielding statements (`await`, `emit`, `spawn`, `kill`)',
 }
@@ -43024,6 +43139,7 @@ spawn Tx() in t;
 spawn Tx();
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
 }
 
@@ -43048,6 +43164,7 @@ loop v in ts do
 end
 escape ret + _V;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 40,
 }
 
@@ -43072,6 +43189,7 @@ loop v in ts do
 end
 escape ret + _V;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 50,
 }
 
@@ -43088,6 +43206,7 @@ input none OS_START;
 await OS_START;
 escape 60;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 60,
 }
 Test { [[
@@ -43097,6 +43216,7 @@ spawn Tx() in ts;
 spawn Tx() in ts;
 escape 60;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 60,
 }
 
@@ -43109,6 +43229,7 @@ input none OS_START;
 await OS_START;
 escape 60;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 60,
 }
 
@@ -43133,6 +43254,7 @@ loop v in ts do
 end
 escape ret + _V;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 60,
 }
 
@@ -43157,6 +43279,7 @@ end
 spawn Gg() in fs;
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     wrn = true,
     run = 1,
 }
@@ -43183,6 +43306,7 @@ spawn Ff();
 await 1s;
 escape {V};
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     wrn = true,
     run = {['~>1s']=20},
 }
@@ -43209,6 +43333,7 @@ spawn Ff();
 await 1s;
 escape {V};
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     wrn = true,
     run = {['~>1s']=30},
 }
@@ -43228,6 +43353,7 @@ spawn Light(&lights,_,_,_) in lights;
 
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     wrn = true,
     run = 1,
 }
@@ -43292,6 +43418,7 @@ end
 
 escape ret;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     wrn = true,
     dcls = 'line 20 : invalid operand to `.` : unexpected option alias',
 }
@@ -43323,6 +43450,7 @@ end
 
 escape ret;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     wrn = true,
     run = {['~>10s']=90},
 }
@@ -43343,6 +43471,7 @@ pool[] Tx ts;
     spawn Tx() in ts;
 escape 10;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 10;
 }
 
@@ -43364,6 +43493,7 @@ do
 end
 escape 10;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 10;
 }
 
@@ -43827,6 +43957,7 @@ end
 
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = { ['~>1us']=1 },
 }
 
@@ -43847,6 +43978,7 @@ end
 
 escape ret;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 3,
 }
 Test { [[
@@ -43866,8 +43998,8 @@ end
 
 escape ret;
 ]],
+    _opts = { ceu_features_trace='true', ceu_features_dynamic='true', ceu_features_pool='true' },
     run = '11] -> runtime error: out of memory',
-    _opts = { ceu_features_trace='true' },
 }
 Test { [[
 code/await Ff (var int x) -> (var int y) -> NEVER do
@@ -43888,6 +44020,7 @@ end
 
 escape ret;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
 }
 -- TODO: SKIP-04
@@ -43944,7 +44077,7 @@ end
 
 escape 1;
 ]],
-    _opts = { ceu_features_exception='true' },
+    _opts = { ceu_features_trace='true', ceu_features_exception='true' },
     run = 1,
 }
 
@@ -43959,7 +44092,7 @@ end
 
 escape 1;
 ]],
-    _opts = { ceu_features_exception='true' },
+    _opts = { ceu_features_trace='true', ceu_features_exception='true' },
     run = 1,
 }
 
@@ -43997,7 +44130,7 @@ end
 
 escape 1;
 ]],
-    _opts = { ceu_features_exception='true' },
+    _opts = { ceu_features_trace='true', ceu_features_exception='true' },
     props_ = 'line 3 : uncaught exception',
 }
 Test { [[
@@ -44016,7 +44149,7 @@ end
 
 escape 1;
 ]],
-    _opts = { ceu_features_exception='true' },
+    _opts = { ceu_features_trace='true', ceu_features_exception='true' },
     run = 10,
 }
 
@@ -44048,11 +44181,23 @@ end
 
 escape 1;
 ]],
-    _opts = { ceu_features_exception='true' },
+    _opts = { ceu_features_trace='true', ceu_features_exception='true' },
     props_ = 'line 7 : uncaught exception',
 }
 
 
+Test { [[
+if true then
+    var Exception e = val Exception("alo-alo");
+    throw e;
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    wrn = true,
+    run = 'Aborted (core dumped)',
+}
 Test { [[
 data Exception.Sub;
 
@@ -44094,7 +44239,7 @@ end
 
 escape 1;
 ]],
-    _opts = { ceu_features_exception='true' },
+    _opts = { ceu_features_trace='true', ceu_features_exception='true' },
     run = 10,
 }
 
@@ -44114,7 +44259,7 @@ end
 
 escape eee!.value;
 ]],
-    _opts = { ceu_features_exception='true' },
+    _opts = { ceu_features_trace='true', ceu_features_exception='true' },
     run = 20,
 }
 
@@ -44136,7 +44281,7 @@ end
 
 escape 1;
 ]],
-    _opts = { ceu_features_exception='true' },
+    _opts = { ceu_features_trace='true', ceu_features_exception='true' },
     run = 10,
 }
 
@@ -44153,7 +44298,7 @@ end
 
 escape ret;
 ]],
-    _opts = { ceu_features_exception='true' },
+    _opts = { ceu_features_trace='true', ceu_features_exception='true' },
     run = 10,
 }
 
@@ -44170,7 +44315,7 @@ end
 
 escape 1;
 ]],
-    _opts = { ceu_features_exception='true' },
+    _opts = { ceu_features_trace='true', ceu_features_exception='true' },
     run = 10,
 }
 
@@ -44182,7 +44327,7 @@ catch e do
     nothing;
 end
 ]],
-    _opts = { ceu_features_exception='true' },
+    _opts = { ceu_features_trace='true', ceu_features_exception='true' },
     parser = 'line 4 : after `;` : expected `end`',
 }
 
@@ -44194,7 +44339,7 @@ end
 await Ff();
 escape 1;
 ]],
-    _opts = { ceu_features_exception='true' },
+    _opts = { ceu_features_trace='true', ceu_features_exception='true' },
     props_ = 'line 3 : uncaught exception',
 }
 
@@ -44609,7 +44754,7 @@ escape 1;
 ]==],
     --run = '1] -> runtime error: [string "..."]:2: syntax error near \'$\'',
     --run = '2: \'=\' expected near \'$\'',
-    _opts = { ceu_features_exception='true', ceu_features_trace='true', ceu_features_lua='true' },
+    _opts = { ceu_features_exception='true', ceu_features_trace='true', ceu_features_dynamic='true', ceu_features_lua='true' },
     props_ = 'line 1 : uncaught exception',
 }
 
@@ -44621,7 +44766,7 @@ escape 1;
 ]==],
     run = '1] -> runtime error: [string "..."]:2: syntax error near \'$\'',
     --run = '2: \'=\' expected near \'$\'',
-    _opts = { ceu_features_exception='true', ceu_features_trace='true', ceu_features_lua='true' },
+    _opts = { ceu_features_exception='true', ceu_features_trace='true', ceu_features_dynamic='true', ceu_features_lua='true' },
     wrn = true,
 }
 
@@ -44639,7 +44784,7 @@ escape 1;
 ]==],
     run = '8] -> runtime error: [string "..."]:2: syntax error near \'$\'',
     --run = '2: \'=\' expected near \'$\'',
-    _opts = { ceu_features_exception='true', ceu_features_trace='true', ceu_features_lua='true' },
+    _opts = { ceu_features_exception='true', ceu_features_trace='true', ceu_features_dynamic='true', ceu_features_lua='true' },
     wrn = true,
 }
 
@@ -44652,7 +44797,7 @@ catch e do
 end
 escape 1;
 ]=],
-    _opts = { ceu_features_lua='true', ceu_features_trace='true', ceu_features_exception='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true', ceu_features_trace='true', ceu_features_exception='true' },
     run = 1,
     wrn = true,
 }
@@ -44821,7 +44966,7 @@ escape 0;
 ]],
     run = 1,
     props_ = 'line 3 : uncaught exception',
-    _opts = { ceu_features_trace='true', ceu_features_exception='true', ceu_features_lua='true' },
+    _opts = { ceu_features_trace='true', ceu_features_exception='true', ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 Test { [[
 code/await Ff (none) -> none do
@@ -44832,14 +44977,14 @@ await Ff();
 escape 0;
 ]],
     run = '3] -> runtime error: lua',
-    _opts = { ceu_features_trace='true', ceu_features_exception='true', ceu_features_lua='true', ceu_err_uncaught_exception_lua='pass' },
+    _opts = { ceu_features_trace='true', ceu_features_exception='true', ceu_features_dynamic='true', ceu_features_lua='true', ceu_err_uncaught_exception_lua='pass' },
 }
 Test { [[
 var Exception.Lua e = val Exception.Lua("lua");
 throw e;
 ]],
     run = '2] -> runtime error: lua',
-    _opts = { ceu_features_trace='true', ceu_features_exception='true', ceu_features_lua='true', ceu_err_uncaught_exception_lua='pass' },
+    _opts = { ceu_features_trace='true', ceu_features_exception='true', ceu_features_dynamic='true', ceu_features_lua='true', ceu_err_uncaught_exception_lua='pass' },
 }
 
 Test { [[
@@ -44900,7 +45045,7 @@ Test { [=[
  escape 1;
 ]=],
     wrn = true,
-    _opts = { ceu_features_exception='true', ceu_features_lua='true', },
+    _opts = { ceu_features_exception='true', ceu_features_dynamic='true', ceu_features_lua='true', },
     run = "2: unexpected symbol near '//'",
 }
 
@@ -44924,7 +45069,7 @@ Test { [==[
 var int bbb = [[aaa]];
 escape bbb;
 ]==],
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
     run = 1,
 }
 
@@ -44936,7 +45081,7 @@ Test { [==[
 var int a = [[a]];
 escape a;
 ]==],
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
     parser = 'line 3 : after `1` : expected `[` or `:` or `.` or `!` or `?` or `(` or `is` or `as` or binary operator or `..` or `;`',
 }
 
@@ -44949,7 +45094,7 @@ var int a = [[a]];
 escape a;
 ]==],
     run = 1,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -44957,7 +45102,7 @@ var bool v = [["ok" == 'ok']];
 escape v as int;
 ]=],
     run = 1,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -44965,7 +45110,7 @@ var bool v = [[true]];
 escape v as int;
 ]=],
     run = 1,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -44973,7 +45118,7 @@ var bool v = [[false]];
 escape v as int;
 ]=],
     run = 0,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [==[
@@ -44985,7 +45130,7 @@ escape v;
 ]==],
     todo = 'END for tests is not used anymore',
     run = 10,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [==[
@@ -44996,7 +45141,7 @@ escape 1;
 ]==],
     run = '1] -> runtime error: [string "..."]:2: syntax error near \'$\'',
     --run = '2: \'=\' expected near \'$\'',
-    _opts = { ceu_features_trace='true', ceu_features_lua='true' },
+    _opts = { ceu_features_trace='true', ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45008,7 +45153,7 @@ var int ret = [[a]];
 escape ret;
 ]=],
     run = 2,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45021,7 +45166,7 @@ var int ret = [[a]];
 escape ret;
 ]=],
     run = 11,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45030,7 +45175,7 @@ Test { [=[
 escape 1;
 ]=],
     run = '2] -> runtime error: [string " error\'oi\' "]:1: oi',
-    _opts = { ceu_features_trace='true', ceu_features_lua='true' },
+    _opts = { ceu_features_trace='true', ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45038,14 +45183,14 @@ var int ret = [[ true ]];
 escape ret;
 ]=],
     run = '1] -> runtime error: number expected',
-    _opts = { ceu_features_trace='true', ceu_features_lua='true' },
+    _opts = { ceu_features_trace='true', ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 Test { [=[
 var bool ret = [[ nil ]];
 escape (ret==false) as int;
 ]=],
     run = 1,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 Test { [=[
 
@@ -45053,7 +45198,7 @@ var int ret = [[ nil ]];
 escape ret;
 ]=],
     run = '2] -> runtime error: number expected',
-    _opts = { ceu_features_trace='true', ceu_features_lua='true' },
+    _opts = { ceu_features_trace='true', ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45067,7 +45212,7 @@ escape ret and (0 == _strcmp(str,(&&cpy[0]) as _char&&));
 ]=],
     stmts = 'line 6 : invalid Lua assignment : unexpected context for vector "cpy"',
     --run = 1,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45080,7 +45225,7 @@ var[10] byte cpy = [].. [[ str ]];
 escape (ret and (0 == _strcmp(str,(&&cpy[0]) as _char&&))) as int;
 ]=],
     run = 1,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45096,7 +45241,7 @@ ptr = [[ str ]];
 escape ret and (0 == _strcmp(&&str[0],&&cpy[0]));
 ]=],
     stmts = 'line 8 : invalid assignment : unexpected context for vector "cpy"',
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45111,7 +45256,7 @@ native _char;
 escape (ret and (0 == _strcmp((&&str[0]) as _char&&,(&&cpy[0]) as _char&&))) as int;
 ]=],
     run = 1,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45122,7 +45267,7 @@ native _char;
 escape (_strcmp((&&cpy[0]) as _char&&,"1") == 0) as int;
 ]=],
     run = '3] -> runtime error: access out of bounds',
-    _opts = { ceu_features_lua='true', ceu_features_trace='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true', ceu_features_trace='true' },
 }
 
 Test { [=[
@@ -45137,7 +45282,7 @@ escape (0 == _strcmp((&&cpy[0]) as _char&&,"1234567890")) as int;
 ]=],
     wrn = true,
     run = '6] -> runtime error: access out of bounds',
-    _opts = { ceu_features_lua='true', ceu_features_trace='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true', ceu_features_trace='true' },
 }
 
 Test { [=[
@@ -45146,7 +45291,7 @@ var int len1 = [[ @$str ]];
 var int len2 = [[ string.len(@str) ]];
 escape len1 + len2;
 ]=],
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
     run = 6,
 }
 
@@ -45157,7 +45302,7 @@ Test { [=[
 var[3] byte str = [] .. [[ str ]];
 escape $str as int;
 ]=],
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
     run = 3,
 }
 Test { [=[
@@ -45172,7 +45317,7 @@ escape ret;
 ]=],
     todo = 'error: assign to @a',
     run = 11,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45180,7 +45325,7 @@ Test { [=[
 escape 1;
 ]=],
     run = 1,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 Test { [=[
 [[ ]]
@@ -45189,7 +45334,7 @@ Test { [=[
 escape 1;
 ]=],
     run = 1,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 Test { [=[
 native/nohold _strcmp;
@@ -45220,7 +45365,7 @@ var int ret = [[v_from_lua]];
 escape ret;
 ]=],
     run = 200,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45231,7 +45376,7 @@ var none&& ptr2 = [[ ptr ]];
 escape (ptr2==&&a) as int;
 ]=],
     run = 1,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45247,7 +45392,7 @@ var bool b2_ = [[b2]];
 escape ret + (b1_ as int) + (b2_ as int);
 ]=],
     run = '3] -> runtime error: number expected',
-    _opts = { ceu_features_trace='true', ceu_features_lua='true' },
+    _opts = { ceu_features_trace='true', ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45263,7 +45408,7 @@ var bool b2_ = [[b2]];
 escape (ret as int) + (b1_ as int) + (b2_ as int);
 ]=],
     run = 2,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45274,7 +45419,7 @@ Test { [=[
 escape 1;
 ]=],
     run = '2: attempt to call a number value',
-    _opts = { ceu_features_trace='true', ceu_features_lua='true' },
+    _opts = { ceu_features_trace='true', ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45286,7 +45431,7 @@ escape ret;
 ]=],
     --run = 1,
     run = '2: attempt to call a number value',
-    _opts = { ceu_features_trace='true', ceu_features_lua='true' },
+    _opts = { ceu_features_trace='true', ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45311,7 +45456,7 @@ var bool is_real = [[math.type(@f)=='float']];
 escape (is_int as int)+(is_real as int);
 ]=],
     run = 2,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45322,7 +45467,7 @@ end
 escape call Fx();
 ]=],
     run = 1,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45331,7 +45476,7 @@ var real v2 = 0.5;
 escape (v1==v2) as int;
 ]=],
     run = 1,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45340,7 +45485,7 @@ var bool ok = [[ 3.1<(@f) and 3.3>(@f) ]];
 escape ok as int;
 ]=],
     run = 1,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45349,7 +45494,7 @@ var bool ok = [[ 3.0==@f ]];
 escape ok as int;
 ]=],
     run = 1,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45360,7 +45505,7 @@ var int r2 = [[ string.len(@bts) ]];
 escape r1+r2;
 ]=],
     run = 12,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [[
@@ -45369,7 +45514,7 @@ lua do
 end
 ]],
     parser = 'line 1 : after `lua` : expected `[`',
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [[
@@ -45378,7 +45523,7 @@ lua[] do
 end
 ]],
     run = 1,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45388,7 +45533,7 @@ lua[] do
 end
 ]=],
     run = 1,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [[
@@ -45399,9 +45544,8 @@ watching 1s do
 end
 escape 1;
 ]],
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
     run = { ['~>1s']=1 },
-    _opts = { ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45412,7 +45556,7 @@ lua[] do
 end
 ]=],
     run = 10,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45426,7 +45570,7 @@ lua[] do
 end
 ]=],
     run = 11,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45443,7 +45587,7 @@ lua[] do
 end
 ]=],
     run = 2,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45460,7 +45604,7 @@ lua[] do
 end
 ]=],
     run = 2,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45484,7 +45628,7 @@ escape v_ceu;
 ]=],
     _opts = {
         ceu = true,
-        ceu_features_lua = 'true',
+        ceu_features_dynamic='true', ceu_features_lua = 'true',
     },
     run = 90,
 }
@@ -45497,7 +45641,7 @@ var[] byte vec = [].."123";
 var int len = [[ #str ]];
 escape len;
 ]=],
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
     run = 4,
 }
 
@@ -45506,7 +45650,7 @@ var[] byte xxx = [1];
 var int ret = [[ @xxx[0] ]];
 escape ret;
 ]=],
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
     run = 1,
 }
 
@@ -45515,7 +45659,7 @@ var int len = [[ string.len('@@ceu-lang.org') ]];
 escape len;
 ]=],
     run = 13,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [=[
@@ -45526,7 +45670,7 @@ xxx = [].."567890";
 var bool v = [[ xxx=='567890\0' ]];
 escape v as int;
 ]=],
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
     run = 1,
 }
 
@@ -47203,7 +47347,7 @@ escape {CEU_DATA_Dd__dot__Ee};
 ]],
     run = 1,
     wrn = true,
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
 }
 
 Test { [[
@@ -47787,6 +47931,7 @@ end
 var Vv yyy = val Vv(_);
 escape _CEU_APP.root.__mem.trails_n;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 2,
 }
 Test { [[
@@ -47798,6 +47943,7 @@ end
 var Vv zzz = val Vv(_,_);
 escape _CEU_APP.root.__mem.trails_n;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 3,
 }
 Test { [[
@@ -47812,6 +47958,7 @@ with
 end
 escape _CEU_APP.root.__mem.trails_n;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 4,
 }
 Test { [[
@@ -47828,6 +47975,7 @@ yyy.xxx = [1,2,3];
 
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 1,
 }
 Test { [[
@@ -47848,6 +47996,7 @@ yyy.kkk.xxx = [1,2,3];
 
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 1,
 }
 Test { [[
@@ -47864,6 +48013,7 @@ yyy.kkk.xxx = [1,2,3];
 
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 1,
 }
 Test { [[
@@ -47882,6 +48032,7 @@ yyy.kkk.xxx[1] = yyy.kkk.xxx[0]+yyy.kkk.xxx[1]+yyy.kkk.xxx[2];
 
 escape yyy.kkk.xxx[1];
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 6,
 }
 Test { [[
@@ -47894,6 +48045,7 @@ yyy = val Vv([1,2,true]);
 
 escape yyy.xxx[1];
 ]],
+    _opts = { ceu_features_dynamic='true' },
     stmts = 'line 6 : invalid constructor : item #1 : invalid expression list : item #3 : types mismatch : "int" <= "bool"',
 }
 Test { [[
@@ -47906,6 +48058,7 @@ yyy = val Vv([1,2]);
 
 escape yyy.xxx[1];
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 2,
 }
 Test { [[
@@ -47919,6 +48072,7 @@ yyy = val Vv(10,[1,2]);
 
 escape yyy.xxx[1] + yyy.v;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 12,
 }
 Test { [[
@@ -47935,6 +48089,7 @@ yyy = val Vv(Kk([1,2,true]));
 
 escape yyy.kkk.xxx[1];
 ]],
+    _opts = { ceu_features_dynamic='true' },
     stmts = 'line 10 : invalid constructor : item #1 : invalid expression list : item #3 : types mismatch : "int" <= "bool"',
 }
 Test { [[
@@ -47952,6 +48107,7 @@ var Vv yyy = val Vv(_,Kk(_,[1,2,3]));
 
 escape yyy.kkk.xxx[1];
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 2,
 }
 Test { [[
@@ -47968,6 +48124,7 @@ var Vv yyy = val Vv(Kk([1,2,3]), [4,5,6]);
 
 escape yyy.kkk.xxx[1] + yyy.zzz[2];
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 8,
 }
 Test { [[
@@ -47984,6 +48141,7 @@ var Vv yyy = val Vv(Kk([].."oi"));
 native/pure _strlen;
 escape _strlen(&&yyy.kkk.xxx[0] as _char&&);
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 2,
 }
 
@@ -48123,6 +48281,7 @@ data Ts;
 pool[] Ts ts;
 escape ts + 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     dcls = 'line 3 : invalid operand to `+` : unexpected context for pool "ts"',
 }
 Test { [[
@@ -48130,6 +48289,7 @@ data Dd;
 pool[] Dd dds;
 escape dds?;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     dcls = 'line 3 : invalid operand to `?` : unexpected context for pool "dds"',
 }
 Test { [[
@@ -48137,6 +48297,7 @@ data Dd;
 pool[] Dd dds;
 escape dds!;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     dcls = 'line 3 : invalid operand to `!` : unexpected context for pool "dds"',
 }
 
@@ -48146,6 +48307,7 @@ pool[5] Ff a;
 pool[5] Ff b = a;
 escape 1;
 ]],
+    _opts = { ceu_features_pool='true' },
     stmts = 'line 3 : invalid assignment : unexpected context for pool "a"',
 }
 
@@ -48174,6 +48336,7 @@ var Dd d = val Dd([].."oioi");
 
 escape call Ff(&d);
 ]],
+    _opts = { ceu_features_dynamic='true' },
     wrn = true,
     run = 4,
 }
@@ -48196,6 +48359,7 @@ end
 var Aa d = _;
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     --wrn = true,
     run = 1,
 }
@@ -48211,6 +48375,7 @@ var Aa d = _;
 d.b = val Bb([1,2,3]);
 escape $d.b.v as int;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     --wrn = true,
     run = 3,
 }
@@ -48226,6 +48391,7 @@ code/tight Ff (none)->int do
 end
 escape (call Ff ());
 ]],
+    _opts = { ceu_features_dynamic='true' },
     --wrn = true,
     run = 3,
 }
@@ -48240,6 +48406,7 @@ var Dd d1 = val Dd(1);
 ds = ds .. [d2,d1];
 escape ds[0].x + ds[1].x;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     run = 11,
 }
 
@@ -48752,7 +48919,7 @@ end
 call Ff();
 escape 1;
 ]],
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
     run = 1,
 }
 
@@ -48763,7 +48930,7 @@ end
 await Ff();
 escape 1;
 ]],
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
     run = 1,
 }
 
@@ -48776,7 +48943,7 @@ do/_
     escape 1;
 end
 ]],
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
     run = 1,
 }
 
@@ -48980,7 +49147,7 @@ end
 escape a + b + p;
 ]],
     run = 20,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -48990,7 +49157,7 @@ var bool ret =
 escape ret as int;
 ]],
     run = 1,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -49000,7 +49167,7 @@ event& none ret =
 escape 0;
 ]],
     stmts = 'line 1 : invalid `async/thread` assignment : unexpected context for event "ret"',
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -49010,7 +49177,7 @@ var int ret =
 escape (ret == 1) as int;
 ]],
     stmts = 'line 2 : invalid `async/thread` assignment : expected `bool` destination',
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -49021,7 +49188,7 @@ end
 escape ret;
 ]],
     run = 11,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -49032,7 +49199,7 @@ end
 escape 1;
 ]],
     run = 1,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 Test { [[
 await async/thread do
@@ -49043,7 +49210,7 @@ end
 escape 1;
 ]],
     run = 1,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 Test { [[
 await async/thread do
@@ -49058,7 +49225,7 @@ end
 escape 1;
 ]],
     run = 1,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 Test { [[
 par/and do
@@ -49073,7 +49240,7 @@ end
 escape 1;
 ]],
     run = 1,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 Test { [[
 par/and do
@@ -49100,7 +49267,7 @@ end
 escape 1;
 ]],
     run = 1,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 Test { [[
 par/or do
@@ -49127,7 +49294,7 @@ end
 escape 1;
 ]],
     run = 1,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 Test { [[
 native _usleep;
@@ -49158,7 +49325,7 @@ end
 escape 1;
 ]],
     run = 1,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -49178,7 +49345,7 @@ end
 
 escape 0;
 ]],
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
     props_ = 'line 3 : invalid `async/thread` : unexpected enclosing `finalize`',
 }
 Test { [[
@@ -49193,7 +49360,7 @@ end
 escape a + b + p;
 ]],
     run = 45,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -49209,7 +49376,7 @@ var bool ret =
 escape (ret as int) + a + b + p;
 ]],
     run = 46,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -49218,7 +49385,7 @@ atomic do
 end
 ]],
     props = 'line 2 : not permitted inside `atomic`',
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -49235,7 +49402,7 @@ escape 1;
 ]],
     --props = 'line 2 : not permitted outside `thread`',
     run = 1,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -49255,7 +49422,7 @@ escape x;
         acc = 4,
     },
     run = 2,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -49277,7 +49444,7 @@ escape x;
         acc = 4,
     },
     run = 2,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -49290,7 +49457,7 @@ end
 escape a + b + p;
 ]],
     run = 45,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -49304,7 +49471,7 @@ escape 1;
     --inits = 'line 3 : invalid pointer access : crossed `async/thread` (/tmp/tmp.ceu:3)',
     ptrs = 'line 3 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:3)',
     --fin = 'line 3 : unsafe access to pointer "p" across `async/thread`',
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -49326,7 +49493,7 @@ escape a + b + p;
         acc = true,
     },
     run = 36,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -49341,7 +49508,7 @@ end
 escape a + b + p;
 ]],
     run = 45,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 for i=1, 50 do
@@ -49365,7 +49532,7 @@ escape ret;
 ]],
         usleep = true,
         run = 1,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
     }
 end
 
@@ -49394,7 +49561,7 @@ escape rrr;
         usleep = true,
         run = 1,
         _ana = { acc=1 },
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
     }
 end
 
@@ -49419,7 +49586,7 @@ end
 escape v1+v2;
 ]],
     run = 30,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -49462,7 +49629,7 @@ _assert(v1 == v2);
 escape v1;
 ]],
     run = 900,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -49505,7 +49672,7 @@ _assert(v1 == v2);
 escape v1;
 ]],
     run = 900,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -49549,7 +49716,7 @@ escape v1;
 ]],
     --run = false,
     run = 1066784512,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -49599,7 +49766,7 @@ escape v1;
 --./a.out  16.80s user 0.02s system 176% cpu 9.525 total
 -- me (isTmp=false)
 --./a.out  30.36s user 0.04s system 173% cpu 17.476 total
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -49627,7 +49794,7 @@ end
 escape _V;
 ]],
     dcls = 'line 17 : native identifier "_V" is not declared',
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -49658,7 +49825,7 @@ escape _V;
     _ana = {acc=1},
     usleep = true,
     run = 2,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -49671,7 +49838,7 @@ Test { [[
 ]],
     run = 1,
     _opts = {
-        ceu_features_thread = 'true',
+        ceu_features_dynamic='true', ceu_features_thread = 'true',
         ceu_features_trace  ='true',
     },
 }
@@ -49696,7 +49863,7 @@ escape 10;
     stmts = 'line 6 : invalid `emit` : unexpected context for external `input` "A"',
     --props = 'not permitted inside `thread`',
     --props = 'line 6 : invalid `emit`',
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 Test { [[
 input int A;
@@ -49726,7 +49893,7 @@ escape a + 1;
 ]],
     --run = 11,
     props_ = 'line 4 : invalid `emit` : expected enclosing `async` or `async/isr`',
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 Test { [[
 var int a=1;
@@ -49766,7 +49933,7 @@ end
     --run = 3,
     --todo = 'nd excpt',
     props_ = 'line 13 : invalid `emit` : expected enclosing `async` or `async/isr`',
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 Test { [[
 par do
@@ -49805,7 +49972,7 @@ with
 end
 ]],
     run = { ['1~>A']=1 },
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -49866,7 +50033,7 @@ escape ret;
 ]],
     --run = 72000,
     stmts = 'line 27 : invalid `emit` : unexpected context for external `input` "A"',
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 Test { [[
 native/pos do ##include <assert.h> end
@@ -49926,7 +50093,7 @@ end
 escape ret;
 ]],
     run = 72000,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -49960,7 +50127,7 @@ end;
 ]],
     --run = 0,
     stmts = 'line 17 : invalid `emit` : unexpected context for external `input` "P2"',
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 Test { [[
 input int P2;
@@ -50020,7 +50187,7 @@ end
 escape ret;
 ]],
     run = { ['~>A;~>1s'] = 4 },
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 -- ASYNC/NONDET
@@ -50043,7 +50210,7 @@ end
 escape x;
 ]],
     dcls = 'line 3 : internal identifier "x" is not declared',
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -50059,7 +50226,7 @@ escape x;
 ]],
     _ana = { acc=1 },
     run = 2,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -50075,7 +50242,7 @@ escape x;
 ]],
     _ana = { acc=1 },
     run = 2,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -50093,7 +50260,7 @@ escape x;
         acc = 1,
     },
     run = 2,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -50117,7 +50284,7 @@ escape x;
     _ana = {
         acc = true,
     },
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -50142,7 +50309,7 @@ escape x;
     _ana = {
         acc = 3,
     },
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -50163,7 +50330,7 @@ escape x;
         acc = 3,
     },
     run = 3,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -50177,7 +50344,7 @@ escape x[0];
     wrn = true,
     run = 2,
     --gcc = 'error: lvalue required as left operand of assignment',
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -50189,7 +50356,7 @@ escape x[0];
 ]],
     run = 2,
     --gcc = 'error: lvalue required as left operand of assignment',
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -50210,7 +50377,7 @@ escape x[0];
         acc = 2,
     },
     --gcc = 'error: lvalue required as left operand of assignment',
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -50223,7 +50390,7 @@ end;
 escape v;
 ]],
     props_ = 'line 3 : invalid `finalize` : unexpected enclosing `async`',
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 Test { [[
 var int v = 1;
@@ -50235,7 +50402,7 @@ end;
 escape v;
 ]],
     props = 'line 3 : not permitted inside `thread`',
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -50252,7 +50419,7 @@ end
 escape a;
 ]],
     run = 11,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -50263,7 +50430,7 @@ end
 escape ret;
 ]],
     run = 1,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 Test { [[
 var int ret = 0;
@@ -50273,7 +50440,7 @@ end
 escape ret;
 ]],
     run = 1,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [=[
@@ -50283,7 +50450,7 @@ await 1s;
 escape 1;
 ]=],
     run = {['~>1s; ~>1s']=1},
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [=[
@@ -50296,7 +50463,7 @@ var int i;
     escape 1;
 ]=],
     run = {['~>100s;~>100s']=1},
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 --<<< THREADS / EMITS
@@ -50345,7 +50512,7 @@ end
 escape _V;
 ]],
     run = { ['~>1s']=14 },
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -50364,7 +50531,7 @@ end
 ]],
     _opts = {
         ceu = true,
-        ceu_features_thread = 'true',
+        ceu_features_dynamic='true', ceu_features_thread = 'true',
     },
     todo = 'no escape',
 }
@@ -50378,7 +50545,7 @@ escape ret;
 ]],
     _opts = {
         ceu = true,
-        ceu_features_thread = 'true',
+        ceu_features_dynamic='true', ceu_features_thread = 'true',
     },
     run = 1,
 }
@@ -50399,7 +50566,7 @@ escape v;
     --isr = 'line 7 : call breaks the static check for `atomic` sections',
     --dcls = 'line 6 : abstraction inside `async` : not implemented',
     run = 4,
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
 Test { [[
@@ -50529,7 +50696,7 @@ loop i in [1->10] do
 end
 escape 1;
 ]],
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
     run = 1,
     valgrind = false,
 }
@@ -50620,6 +50787,7 @@ end
 
 escape 1;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
 }
 
@@ -50704,6 +50872,7 @@ spawn Ff();
 await 1s;
 escape {V};
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     wrn = true,
     run = {['~>1s']=10},
 }
@@ -50731,6 +50900,7 @@ loop f in fs do
 end
 escape 0;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     stmts = 'line 8 : invalid kill : `code/await` executes forever',
 }
 
@@ -50747,6 +50917,7 @@ loop f in fs do
 end
 escape 0;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     wrn = true,
     stmts = 'line 9 : invalid kill : `code/await` executes forever',
 }
@@ -50832,6 +51003,7 @@ await 1s;
 
 escape ret;
 ]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = {['~>1s']=1},
 }
 
@@ -50862,7 +51034,7 @@ end
 
 escape ret;
 ]],
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_pool='true', ceu_features_dynamic='true', ceu_features_thread='true' },
     run = {['~>5s']=3},
 }
 
@@ -50898,7 +51070,7 @@ end
 
 escape ret;
 ]],
-    _opts = { ceu_features_thread='true' },
+    _opts = { ceu_features_pool='true', ceu_features_dynamic='true', ceu_features_thread='true' },
     run = {['~>5s']=3},
 }
 
@@ -51674,6 +51846,7 @@ spawn/dynamic Ff(&ret,&aaa) in ffs;
 
 escape ret;
 ]],
+    _opts = { ceu_features_pool='true' },
     wrn = true,
     run = 15,
 }
@@ -51687,6 +51860,7 @@ pool[10] Ff ffs;
 spawn/dynamic Ff(&a) in ffs;
 escape 1;
 ]],
+    _opts = { ceu_features_pool='true' },
     mems = 'line 3 : missing implementation',
     wrn = true,
     run = 15,
@@ -51724,7 +51898,7 @@ code/tight/dynamic Play (var&/dynamic Media m) -> none do end
 code/tight/dynamic Play (var&/dynamic Media.Text m) -> none do end
 escape 1;
 ]],
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
     wrn = true,
     run = 1,
 }
@@ -51739,6 +51913,7 @@ code/await/dynamic Ff (var&/dynamic Aa v1) -> none do end;
 spawn/dynamic Ff(&a) in ffs;
 escape 1;
 ]],
+    _opts = { ceu_features_pool='true' },
     wrn = true,
     run = 1,
 }
@@ -51779,6 +51954,7 @@ spawn/dynamic Ff(&ret,&b,&c,&b) in ffs;
 
 escape ret;
 ]],
+    _opts = { ceu_features_pool='true' },
     wrn = true,
     run = 15,
 }
@@ -52117,7 +52293,7 @@ do/_
     escape 1;
 end
 ]],
-    _opts = { ceu_features_lua='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
     wrn = true,
     run = 1,
 }
@@ -52455,6 +52631,7 @@ end
 
 escape ret;
 ]],
+    _opts = { ceu_features_pool='true' },
     wrn = true,
     run = 20,
 }
@@ -52488,6 +52665,7 @@ end
 
 escape ret;
 ]],
+    _opts = { ceu_features_pool='true' },
     wrn = true,
     run = 20,
 }
@@ -52520,6 +52698,7 @@ end
 
 escape ret+1;
 ]],
+    _opts = { ceu_features_pool='true' },
     wrn = true,
     run = 1,
 }
@@ -52555,6 +52734,7 @@ end
 
 escape ret+1;
 ]],
+    _opts = { ceu_features_pool='true' },
     wrn = true,
     run = 21,
 }
@@ -52596,7 +52776,7 @@ escape ret+1;
     wrn = true,
     --run = 23,
     run = '29] -> runtime error: value is not set',
-    _opts = { ceu_features_trace='true' },
+    _opts = { ceu_features_pool='true', ceu_features_trace='true' },
 }
 
 Test { [[
@@ -54012,6 +54192,7 @@ end
 
 escape ret;
 ]],
+    _opts = { ceu_features_pool='true', ceu_features_dynamic='true' },
     wrn = true,     -- TODO
     run = 3,
 }
@@ -54038,6 +54219,7 @@ end
 
 escape ret;
 ]],
+    _opts = { ceu_features_pool='true', ceu_features_dynamic='true' },
     todo = 'dot for spawn/await',
     wrn = true,     -- TODO
     run = 3,
@@ -54085,6 +54267,7 @@ loop f in fs do
 end
 escape 1;
 ]],
+    _opts = { ceu_features_pool='true', ceu_features_dynamic='true' },
     wrn = true,
     --dcls = 'line 7 : invalid `call`',
     run = 1,
@@ -54114,6 +54297,7 @@ var&? Ff f = spawn Ff(&buf);
 call f.Reset();
 escape ($buf as int) + 1;
 ]],
+    _opts = { ceu_features_dynamic='true' },
     dcls = 'line 10 : invalid operand to `.` : unexpected option alias',
 }
 
@@ -54299,7 +54483,7 @@ await async/thread do end
 escape 1;
 ]],
     _opts = {
-        ceu_features_thread = 'false',
+        ceu_features_dynamic='true', ceu_features_thread = 'false',
     },
     props_ = 'line 1 : `async/thread` support is disabled',
 }
@@ -54325,16 +54509,10 @@ with
 end
 escape ret;
 ]=],
-    _opts = { ceu_features_lua='true' , ceu_features_thread='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_lua='true' , ceu_features_thread='true' },
     run = 222,
 }
 
-Test { [[
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    cmd = 'expected option `ceu-features-trace`',
-}
 Test { [[
 escape 1;
 ]],
@@ -54355,6 +54533,7 @@ pool[] Ff fs;
 spawn Ff() in fs;
 escape 1;
 ]],
+    _opts = { ceu_features_pool='true', },
     dcls = 'line 3 : dynamic allocation support is disabled',
 }
 
@@ -54365,8 +54544,8 @@ pool[] Ff fs;
 spawn Ff() in fs;
 escape 1;
 ]],
+    _opts = { ceu_features_pool='true', ceu_features_dynamic='true' },
     run = 1,
-    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
