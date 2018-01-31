@@ -395,6 +395,7 @@ escape 1;
 }
 ]==]
 
+--]=====]
 Test { [[
 code/await Ff (none) -> none do
 end
@@ -404,7 +405,6 @@ escape 1;
     run = 1,
 }
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -44818,7 +44818,7 @@ await 1s;
 escape 10;
 ]],
     run = {['~>1s']=10},
-    _opts = { ceu_features_exception='true' },
+    _opts = { ceu_features_trace='true' },
 }
 
 Test { [[

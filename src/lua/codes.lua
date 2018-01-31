@@ -48,6 +48,10 @@ end
 local function CLEAR (me, lbl)
     LINE(me, [[
 {
+    /*
+     * clears pending stack frames that I am killing
+     * returns and makes them "longjmp" back to here
+     */
     ceu_stack_clear(_ceu_stk, _ceu_mem,
                     ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
     CEU_LONGJMP_SET(_ceu_stk,]]..(lbl and lbl.id or me.lbl_clr.id)..[[)

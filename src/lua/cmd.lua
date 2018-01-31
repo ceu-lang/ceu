@@ -171,7 +171,7 @@ if CEU.opts.ceu then
     ASR(CEU.opts.ceu_input, 'expected option `ceu-input`')
 
     if CEU.opts.ceu_features_exception then
-        ASR(CEU.opts.ceu_features_trace, 'expected option `ceu-features-trace`')
+        --ASR(CEU.opts.ceu_features_trace, 'expected option `ceu-features-trace`')
     end
     if CEU.opts.ceu_features_lua or CEU.opts.ceu_features_thread then
         ASR(CEU.opts.ceu_features_dynamic, 'expected option `ceu-features-dynamic`')
