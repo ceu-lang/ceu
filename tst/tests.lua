@@ -396,54 +396,6 @@ escape 1;
 ]==]
 
 --]=====]
-
-Test { [[
-escape 1;
-]],
-    _opts = { ceu_features_exception='true' },
-    cmd = 'expected option `ceu-features-trace`',
-}
-Test { [[
-escape 1;
-]],
-    _opts = { ceu_features_lua='true' },
-    cmd = 'expected option `ceu-features-dynamic`',
-}
-Test { [[
-escape 1;
-]],
-    _opts = { ceu_features_thread='true' },
-    cmd = 'expected option `ceu-features-dynamic`',
-}
-Test { [[
-code/await Ff (none) -> none do
-end
-pool[] Ff fs;
-spawn Ff() in fs;
-escape 1;
-]],
-    dcls = 'line 3 : dynamic allocation support is disabled',
-}
-
-Test { [[
-code/await Ff (none) -> none do
-end
-pool[] Ff fs;
-spawn Ff() in fs;
-escape 1;
-]],
-    run = 1,
-    _opts = { ceu_features_dynamic='true' },
-}
-
-Test { [[
-var&[] byte vec;
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
 Test { [[
 code/await Ff (none) -> none do
 end
@@ -54288,4 +54240,53 @@ escape ret;
     _opts = { ceu_features_lua='true' , ceu_features_thread='true' },
     run = 222,
 }
+
+Test { [[
+escape 1;
+]],
+    _opts = { ceu_features_exception='true' },
+    cmd = 'expected option `ceu-features-trace`',
+}
+Test { [[
+escape 1;
+]],
+    _opts = { ceu_features_lua='true' },
+    cmd = 'expected option `ceu-features-dynamic`',
+}
+Test { [[
+escape 1;
+]],
+    _opts = { ceu_features_thread='true' },
+    cmd = 'expected option `ceu-features-dynamic`',
+}
+
+Test { [[
+code/await Ff (none) -> none do
+end
+pool[] Ff fs;
+spawn Ff() in fs;
+escape 1;
+]],
+    dcls = 'line 3 : dynamic allocation support is disabled',
+}
+
+Test { [[
+code/await Ff (none) -> none do
+end
+pool[] Ff fs;
+spawn Ff() in fs;
+escape 1;
+]],
+    run = 1,
+    _opts = { ceu_features_dynamic='true' },
+}
+
+Test { [[
+var&[] byte vec;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
 --<<< CEU_FEATURES_*
