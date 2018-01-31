@@ -31,6 +31,7 @@ Options:
     --ceu-features-trace=BOOL           enable trace support (default `false`)
     --ceu-features-exception=BOOL       enable exceptions support (default `false`)
     --ceu-features-dynamic=BOOL         enable dynamic allocation support (default `false`)
+    --ceu-features-pool=BOOL            enable pool support (default `false`)
     --ceu-features-lua=BOOL             enable `lua` support (default `false`)
     --ceu-features-thread=BOOL          enable `async/thread` support (default `false`)
     --ceu-features-isr=BOOL             enable `async/isr` support (default `false`)
@@ -136,6 +137,7 @@ do
         ceu_features_trace     = { toboolean, 'false' },
         ceu_features_exception = { toboolean, 'false' },
         ceu_features_dynamic   = { toboolean, 'false' },
+        ceu_features_pool      = { toboolean, 'false' },
         ceu_features_lua       = { toboolean, 'false' },
         ceu_features_thread    = { toboolean, 'false' },
         ceu_features_isr       = { toboolean, 'false' },

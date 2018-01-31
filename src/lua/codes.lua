@@ -429,12 +429,15 @@ ceu_assert(0, "reached end of `code`");
 /* TODO: if return value can be stored with "ceu_bcast", we can "free" first
          and remove this extra stack level */
 
+#ifdef CEU_FEATURES_POOL
     /* free */
+    /* TODO: classes w/o pools don't need this code */
     if (_ceu_mem->pak != NULL) {
         tceu_code_mem_dyn* __ceu_dyn =
             (tceu_code_mem_dyn*)(((byte*)(_ceu_mem)) - sizeof(tceu_code_mem_dyn));
         ceu_code_mem_dyn_remove(&_ceu_mem->pak->pool, __ceu_dyn);
     }
+#endif
 ]])
         end
         LINE(me, [[
@@ -453,7 +456,9 @@ assert(not obj, 'not implemented')
         local ret = [[
 {
     *((tceu_code_mem_]]..ID_abs.dcl.id_..'*)'..mem..') = '..V(Abs_Cons)..[[;
+#ifdef CEU_FEATURES_POOL
     ]]..mem..[[->_mem.pak     = ]]..pak..[[;
+#endif
     ]]..mem..[[->_mem.up_mem  = ]]..((pak=='NULL' and '_ceu_mem')   or (pak..'->up_mem'))..[[;
     ]]..mem..[[->_mem.up_trl  = ]]..((pak=='NULL' and me.trails[1]) or (pak..'->up_trl'))..[[;
     ]]..mem..[[->_mem.depth   = ]]..ID_abs.dcl.depth..[[;
@@ -615,16 +620,19 @@ assert(not obj, 'not implemented')
         };
         tceu_stk __ceu_stk2 = { 1, 0, &__ceu_stk1, {__ceu_mem,]]..abs.trails[1]..','..abs.trails[2]..[[} };
         ceu_bcast(&__ceu_occ, &__ceu_stk2, 1);
+#ifdef CEU_FEATURES_POOL
         if (__ceu_stk2.is_alive) {
 /* TODO: if return value can be stored with "ceu_bcast", we can "free" first
          and remove this extra stack level */
             /* free */
+            /* TODO: classes w/o pools don't need this code */
             if (__ceu_mem->pak != NULL) {
                 tceu_code_mem_dyn* __ceu_dyn =
                     (tceu_code_mem_dyn*)(((byte*)(__ceu_mem)) - sizeof(tceu_code_mem_dyn));
                 ceu_code_mem_dyn_remove(&__ceu_mem->pak->pool, __ceu_dyn);
             }
         }
+#endif
 
         CEU_LONGJMP_JMP((&__ceu_stk1));
     }

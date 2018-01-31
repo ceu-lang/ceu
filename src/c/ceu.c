@@ -51,7 +51,9 @@ typedef struct tceu_evt {
     tceu_nevt id;
     union {
         void* mem;                   /* CEU_INPUT__PROPAGATE_CODE, CEU_EVENT__MIN */
+#ifdef CEU_FEATURES_POOL
         struct tceu_pool_pak* pak;   /* CEU_INPUT__PROPAGATE_POOL */
+#endif
     };
 } tceu_evt;
 
@@ -103,7 +105,9 @@ typedef struct tceu_catch {
 #endif
 
 typedef struct tceu_code_mem {
+#ifdef CEU_FEATURES_POOL
     struct tceu_pool_pak* pak;
+#endif
     struct tceu_code_mem* up_mem;
     tceu_ntrl   up_trl;
     u8          depth;
@@ -120,6 +124,7 @@ typedef struct tceu_code_mem {
     tceu_trl    _trails[0];
 } tceu_code_mem;
 
+#ifdef CEU_FEATURES_POOL
 typedef struct tceu_code_mem_dyn {
     struct tceu_code_mem_dyn* prv;
     struct tceu_code_mem_dyn* nxt;
@@ -134,6 +139,7 @@ typedef struct tceu_pool_pak {
     tceu_ntrl         up_trl;
     u8                n_traversing;
 } tceu_pool_pak;
+#endif
 
 #ifdef CEU_FEATURES_TRACE
 #define CEU_OPTION_EVT(a,b) CEU_OPTION_EVT_(a,b)
@@ -496,6 +502,7 @@ static int ceu_wclock_ (s32 dt, s32* set, s32* sub
 
 /*****************************************************************************/
 
+#ifdef CEU_FEATURES_POOL
 void ceu_code_mem_dyn_free (tceu_pool* pool, tceu_code_mem_dyn* cur) {
     cur->nxt->prv = cur->prv;
     cur->prv->nxt = cur->nxt;
@@ -535,6 +542,7 @@ void ceu_code_mem_dyn_gc (tceu_pool_pak* pak) {
         }
     }
 }
+#endif
 
 /*****************************************************************************/
 
@@ -821,6 +829,7 @@ fprintf(stderr, "??? trlK=%d, evt=%d, seq=%d\n", trlK, trl->evt.id, trl->seq);
                 }
                 break;
             }
+#ifdef CEU_FEATURES_POOL
             case CEU_INPUT__PROPAGATE_POOL: {
                 ceu_assert_ex(trl->evt.pak->n_traversing < 255, "bug found", CEU_TRACE_null);
                 trl->evt.pak->n_traversing++;
@@ -845,6 +854,7 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                 ceu_code_mem_dyn_gc(trl->evt.pak);
                 break;
             }
+#endif
 
             /* skip "paused" blocks || set "paused" block */
             case CEU_INPUT__PAUSE_BLOCK: {

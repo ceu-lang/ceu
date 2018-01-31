@@ -54289,4 +54289,13 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+code/await Ff (none) -> none do end
+pool[1] Ff fs;
+spawn Ff() in fs;
+escape 1;
+]],
+    dcls = 'line 2 : pool support is disabled',
+}
+
 --<<< CEU_FEATURES_*
