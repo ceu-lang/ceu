@@ -397,7 +397,7 @@ STMTS.F = {
                                           1,'Stmts',  1,'Set_Abs_Spawn',
                                           1,'Abs_Spawn')
             if me1 == me then
-                ASR(ret, watch, 'invalid `watching` : `code` executes forever')
+                --ASR(ret, watch, 'invalid `watching` : `code` executes forever')
             end
         end
      end,
