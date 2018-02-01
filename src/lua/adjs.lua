@@ -603,24 +603,28 @@ error'TODO: luacov never executes this?'
         --   await f;
         -- end
         local _,abs = unpack(me)
-        return node('Block', me.ln,
-                node('Stmts', me.ln,
-                    node('Var', me.ln,
-                        '&?',
-                        node('Type', me.ln,
-                            AST.copy(AST.asr(abs,'Abs_Cons',2,'ID_abs'))),
-                        '_spw_'..me.n),
-                    node('_Set', me.ln,
-                        node('Loc', me.ln,
-                            node('ID_int', me.ln,
-                                '_spw_'..me.n)),
-                        node('_Set_Abs_Spawn', me.ln,
-                            node('Abs_Spawn', me.ln,
-                                unpack(me)))),
-                    node('Await_Int', me.ln,
-                        node('Loc', me.ln,
-                            node('ID_int', me.ln,
-                                '_spw_'..me.n)))))
+        local ret = node('Block', me.ln,
+                        node('Stmts', me.ln,
+                            node('Var', me.ln,
+                                '&?',
+                                node('Type', me.ln,
+                                    AST.copy(AST.asr(abs,'Abs_Cons',2,'ID_abs'))),
+                                '_spw_'..me.n),
+                            node('_Set', me.ln,
+                                node('Loc', me.ln,
+                                    node('ID_int', me.ln,
+                                        '_spw_'..me.n)),
+                                node('_Set_Abs_Spawn', me.ln,
+                                    node('Abs_Spawn', me.ln,
+                                        unpack(me)))),
+                            node('Await_Int', me.ln,
+                                node('Loc', me.ln,
+                                    node('ID_int', me.ln,
+                                        '_spw_'..me.n)))))
+        AST.asr(ret,'Block').__adjs_is_abs_await = true
+        AST.asr(ret,'Block', 1,'Stmts', 1,'Var').__adjs_is_abs_await = true
+        AST.asr(ret,'Block', 1,'Stmts', 3,'Await_Int').__adjs_is_abs_await = true
+        return ret
     end,
 
     _Escape__PRE = function (me)

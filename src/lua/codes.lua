@@ -276,22 +276,24 @@ if (]]..V(c)..[[) {
 ]])
         end
 
-        if me.__dcls_code_alias then
+        if me.__dcls_code_alias == '&?' then
             LINE(me, [[
 ]]..V(me,{is_bind=true})..[[ = NULL;
 ]])
-            HALT(me, {
-                { ['evt.id']  = 'CEU_INPUT__CODE_TERMINATED' },
-                { ['evt.mem'] = 'NULL' },   -- will be set on Set_Alias/Spawn
-                { seq = '(tceu_nseq)(CEU_APP.seq+1)' },
-                { lbl = me.lbl.id },
-                lbl = me.lbl.id,
-                exec = code,
-            })
-            LINE(me, [[
+            if (not me.__adjs_is_abs_await) then
+                HALT(me, {
+                    { ['evt.id']  = 'CEU_INPUT__CODE_TERMINATED' },
+                    { ['evt.mem'] = 'NULL' },   -- will be set on Set_Alias/Spawn
+                    { seq = '(tceu_nseq)(CEU_APP.seq+1)' },
+                    { lbl = me.lbl.id },
+                    lbl = me.lbl.id,
+                    exec = code,
+                })
+                LINE(me, [[
 ]]..V(me,{is_bind=true})..[[ = NULL;
 ]])
-            HALT(me)
+                HALT(me)
+            end
         end
     end,
 
@@ -502,8 +504,12 @@ assert(not obj, 'not implemented')
             local _, to = unpack(set)
             LINE(me, [[
 ]]..V(to,{is_bind=true})..' = &'..CUR('__mem_'..me.n)..[[;
+]])
+            if not to.dcl.is_anon then
+                LINE(me, [[
 _ceu_mem->_trails[]]..(to.dcl.trails[1])..[[].evt.mem =  &]]..CUR('__mem_'..me.n)..[[;
 ]])
+            end
         end
 
         HALT(me, {
@@ -1114,7 +1120,7 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
     Set_Alias = function (me)
         local fr, to = unpack(me)
 
-        if to.info.dcl.__dcls_code_alias then
+        if (to.info.dcl.__dcls_code_alias == '&?') and (not to.info.dcl.__adjs_is_abs_await) then
             LINE(me, [[
 ]]..V(to,{is_bind=true})..' = '..V(fr)..[[;
 _ceu_mem->_trails[]]..(to.dcl.trails[1])..[[].evt.mem = ]]..V(fr)..[[;
@@ -1462,9 +1468,12 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
         local alias, tp = unpack(Loc.info.dcl)
         if Loc.info.tag == 'Var' then
             assert(alias == '&?')
-            LINE(me, [[
-if (]]..V(Loc)..[[ != NULL) {
+            if not me.__adjs_is_abs_await then
+                LINE(me, [[
+if (]]..V(Loc)..[[ != NULL)
 ]])
+            end
+            LINE(me, '{')
             HALT(me, {
                 { ['evt.id']  = 'CEU_INPUT__CODE_TERMINATED' },
                 { ['evt.mem'] = '(tceu_code_mem*)'..V(Loc) },
@@ -1472,9 +1481,7 @@ if (]]..V(Loc)..[[ != NULL) {
                 { lbl = me.lbl_out.id },
                 lbl = me.lbl_out.id,
             })
-            LINE(me, [[
-}
-]])
+            LINE(me, '}')
         else
             HALT(me, {
                 { evt = V(Loc) },

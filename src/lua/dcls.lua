@@ -314,7 +314,7 @@ DCLS.F = {
                                                       1,'Code_Ret', 1,'', 2,'Type')
                     ASR(not tp, me, 'invalid declaration : `code/await` must execute forever')
                 end
-                me.__dcls_code_alias = true
+                me.__dcls_code_alias = alias
                 -- ok
             end
             if alias == '&?' then

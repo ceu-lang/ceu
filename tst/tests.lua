@@ -397,12 +397,54 @@ escape 1;
 
 --]=====]
 Test { [[
+input none A;
+var int ret = 0;
+code/await Ff (none) -> none do
+    await A;
+    outer.ret = 10;
+end
+await Ff();
+escape ret+1;
+]],
+    run = {['~>A']=11},
+}
+Test { [[
 code/await Ff (none) -> none do
 end
 await Ff();
 escape 1;
 ]],
     run = 1,
+}
+Test { [[
+code/await Ff (none) -> NEVER do
+    await FOREVER;
+end
+var& Ff f = spawn Ff();
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+code/await Ff (none) -> NEVER do
+    await FOREVER;
+end
+var& Ff f = spawn Ff();
+kill f;     // error
+escape 1;
+]],
+    stmts = 'line 5 : invalid `kill` : expected `&?` alias',
+}
+Test { [[
+input none A;
+code/await Ff (none) -> int do
+    await A;
+    escape 10;
+end
+var int v = await Ff();
+escape v+1;
+]],
+    run = {['~>A']=11},
 }
 do return end -- OK
 

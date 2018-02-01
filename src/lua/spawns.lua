@@ -52,7 +52,14 @@ SPAWNS.G = {
             me.__spawns_ok = true
         end
         if AST.get(me,'', 1,'Abs_Spawn') then
-            return SPAWNS.G._SPAWN(me.__par, me.__i, me)
+            local block = AST.par(me,'Block')
+            local ret = SPAWNS.G._SPAWN(me.__par, me.__i, me)
+            if block.__adjs_is_abs_await then
+                local awt = ret[2]
+                AST.set(ret, 2, ret[1])
+                AST.set(ret, 1, awt)
+            end
+            return ret
         end
     end,
     Abs_Spawn__PRE = function (me)
@@ -77,7 +84,7 @@ SPAWNS.G = {
         else
             me.__spawns_ok = true
         end
-        if me.__dcls_code_alias then
+        if (me.__dcls_code_alias == '&?') and (not me.__adjs_is_abs_await) then
             return SPAWNS.G._SPAWN(me.__par, me.__i, me)
         end
     end,

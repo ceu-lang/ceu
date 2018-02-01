@@ -39,7 +39,7 @@ F = {
     end,
 
     Var = function (me)
-        if me.__dcls_code_alias then
+        if (me.__dcls_code_alias == '&?') and (not me.__adjs_is_abs_await) then
             me.lbl = new{'Alias__CLR'}
         end
     end,
