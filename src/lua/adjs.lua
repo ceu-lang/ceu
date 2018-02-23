@@ -407,7 +407,7 @@ error'TODO: luacov never executes this?'
             if awt.tag=='Await_Ext' or awt.tag=='Await_Int' then
                 set_awt = node('Set_Await_many', me.ln, awt, to)
             else
-                set_awt = node('Set_Await_one', me.ln, awt, to)
+                set_awt = node('Set_Await_Wclock', me.ln, awt, to)
             end
         else
             set_awt = awt
@@ -545,18 +545,7 @@ error'TODO: luacov never executes this?'
             end
 
         elseif set.tag == '_Set_Await_one' then
-            local awt = unpack(set)
---[[
-            if awt.tag == '_Abs_Await' then
-                awt = F._Abs_Await__PRE(awt)
-                AST.set(awt[1], 3,
-                    node('_Set', me.ln,
-                        to,
-                        node('_Set_Await_many', me.ln,
-                            awt[1][3])))
-                return awt
-            end
-]]
+            set.tag = '_Set_'..set[1].tag
         end
 
         -----------------------------------------------------------------------

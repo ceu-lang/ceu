@@ -284,21 +284,20 @@ STMTS.F = {
             'invalid assignment : `input`')
     end,
 
-    Set_Await_one = function (me)
+    Set_Await_Wclock = function (me)
         local fr, to = unpack(me)
-        assert(fr.tag=='Await_Wclock' or fr.tag=='Abs_Spawn' or fr.tag=='Await_Int' or fr.tag=='Abs_Await')
-
-        if fr.tag == 'Abs_Await' then
-            ASR(fr.tp, me, 'invalid assignment : `code` executes forever')
-        end
-
         EXPS.check_tp(me, to.info.tp, fr.tp or fr.info.tp, 'invalid assignment')
-
         if me.__adjs_is_watching then
             -- var int? us = watching 1s do ... end
             ASR(TYPES.check(to.info.tp,'?'), me,
                 'invalid `watching` assignment : expected option type `?` : got "'..TYPES.tostring(to.info.tp)..'"')
         end
+    end,
+
+    Set_Abs_Await = function (me)
+        local fr, to = unpack(me)
+        ASR(fr.tp, me, 'invalid assignment : `code` executes forever')
+        STMTS.F.Set_Await_Wclock(me)
     end,
 
     Set_Await_many = function (me)

@@ -1148,17 +1148,20 @@ ceu_assert(]]..V(to,{is_bind=true})..[[!=NULL, "call failed");
         end
     end,
 
-    Set_Await_one = function (me)
+    Set_Await_Wclock = function (me)
         local fr, to = unpack(me)
         CONC_ALL(me)
-if fr.tag == 'Await_Wclock' then
         assert(fr.tag == 'Await_Wclock')
         SET(me, to, 'CEU_APP.wclk_late', nil,true)
-else
+    end,
+
+    Set_Abs_Await = function (me)
+        local fr, to = unpack(me)
+        CONC_ALL(me)
         assert(fr.tag == 'Abs_Await')
         SET(me, to, CUR('__mem_'..fr.n)..'._ret', nil,true)
-end
     end,
+
     Set_Await_many = function (me)
         local Await, List = unpack(me)
         CONC(me, Await)
@@ -1208,7 +1211,6 @@ if (_ceu_occ!=NULL && _ceu_occ->evt.id==CEU_INPUT__CODE_TERMINATED) {
     end,
 
     Set_Emit_Ext_emit = CONC_ALL,   -- see Emit_Ext_emit
-    Set_Abs_Await     = CONC_ALL,   -- see Abs_Await
 
     Set_Abs_Val = function (me)
         local fr, to = unpack(me)
