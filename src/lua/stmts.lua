@@ -286,7 +286,11 @@ STMTS.F = {
 
     Set_Await_one = function (me)
         local fr, to = unpack(me)
-        assert(fr.tag=='Await_Wclock' or fr.tag=='Abs_Spawn' or fr.tag=='Await_Int')
+        assert(fr.tag=='Await_Wclock' or fr.tag=='Abs_Spawn' or fr.tag=='Await_Int' or fr.tag=='Abs_Await')
+
+        if fr.tag == 'Abs_Await' then
+            ASR(fr.tp, me, 'invalid assignment : `code` executes forever')
+        end
 
         EXPS.check_tp(me, to.info.tp, fr.tp or fr.info.tp, 'invalid assignment')
 
@@ -309,8 +313,7 @@ STMTS.F = {
 
         -- tp
         if fr.tag == 'Await_Int' then
-            ASR(fr.tp, me,
-                'invalid assignment : `code` executes forever')
+            ASR(fr.tp, me, 'invalid assignment : `code` executes forever')
         end
 
         EXPS.check_tp(me, to.tp, fr.tp, 'invalid assignment')
@@ -363,6 +366,7 @@ STMTS.F = {
         me.tp = TYPES.new(me, 'int')
     end,
 
+    Abs_Await = 'Abs_Spawn',
     Abs_Spawn = function (me)
         local mods_call,Abs_Cons = unpack(me)
         local ID_abs = AST.asr(Abs_Cons,'Abs_Cons', 2,'ID_abs')

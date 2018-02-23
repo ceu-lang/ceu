@@ -408,6 +408,7 @@ escape ret+1;
 ]],
     run = {['~>A']=11},
 }
+--do return end
 Test { [[
 code/await Ff (none) -> none do
 end
@@ -446,7 +447,7 @@ escape v+1;
 ]],
     run = {['~>A']=11},
 }
-do return end -- OK
+--do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -35802,7 +35803,8 @@ await Rect();
 escape 0;
 ]],
     --dcls = 'line 4 : invalid declaration : option alias : expected native or `code/await` type',
-    stmts = 'line 4 : invalid `spawn` : expected `code/await` declaration (/tmp/tmp.ceu:1)',
+    --stmts = 'line 4 : invalid `spawn` : expected `code/await` declaration (/tmp/tmp.ceu:1)',
+    stmts = 'line 4 : invalid `await` : expected `code/await` declaration (/tmp/tmp.ceu:1)',
 }
 
 -->> CODE / ALIAS / FINALIZE
@@ -36325,7 +36327,8 @@ end
 escape 0;
 ]],
     wrn = true,
-    stmts = 'line 2 : invalid `spawn` : unexpected recursive invocation',
+    stmts = 'line 2 : invalid `await` : unexpected recursive invocation',
+    --stmts = 'line 2 : invalid `spawn` : unexpected recursive invocation',
     --dcls = 'line 2 : abstraction "Tx" is not declared',
 }
 Test { [[
@@ -37780,7 +37783,8 @@ var int&& a =
 escape 0;
 ]],
     wrn = true,
-    stmts = 'line 4 : invalid assignment : types mismatch : "(int&&)" <= "(int)"',
+    --stmts = 'line 4 : invalid assignment : types mismatch : "(int&&)" <= "(int)"',
+    stmts = 'line 4 : invalid assignment : types mismatch : "int&&" <= "int"',
 }
 
 Test { [[
@@ -41398,7 +41402,7 @@ end
 escape 0;
 ]],
     wrn = true,
-    stmts = 'line 2 : invalid `spawn` : unexpected recursive invocation',
+    stmts = 'line 2 : invalid `await` : unexpected recursive invocation',
 }
 
 Test { [[
@@ -51195,7 +51199,7 @@ await Ui_go(&ui);
 
 escape 1;
 ]],
-    stmts = 'line 9 : invalid `spawn` : expected `/dynamic` or `/static` modifier',
+    stmts = 'line 9 : invalid `await` : expected `/dynamic` or `/static` modifier',
     wrn = true,
     run = 1,
 }
@@ -51405,8 +51409,7 @@ var Aa a = val Aa(1);
 await Ff(&a,22);
 escape 0;
 ]],
-    stmts = 'line 20 : invalid `spawn` : expected `/dynamic` or `/static` modifier',
-    --stmts = 'line 20 : invalid `await` : expected `/dynamic` or `/static` modifier',
+    stmts = 'line 20 : invalid `await` : expected `/dynamic` or `/static` modifier',
 }
 
 Test { [[

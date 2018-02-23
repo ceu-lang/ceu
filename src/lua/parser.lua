@@ -557,13 +557,13 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , __Dcls    = V'_Var_set' + V'_Pool_set' + V'_Evt_set'
 -- AWAIT, EMIT
 
-    , __Awaits_one  = K'await' * (V'Await_Wclock' + V'_Abs_Await')
+    , __Awaits_one  = K'await' * (V'Await_Wclock' + V'Abs_Await')
     , __Awaits_many = K'await' * V'Await_Until'
 
     , Await_Until  = (V'Await_Ext' + V'Await_Int') * OPT(K'until'*V'__Exp')
 
-    , Await_Ext    = V'ID_ext'   * V'Y' -I(V'_Abs_Await')            -- TODO: rem
-    , Await_Int    = V'Loc' * V'Y' -I(V'Await_Wclock'+V'_Abs_Await') -- TODO: rem
+    , Await_Ext    = V'ID_ext'   * V'Y' -I(V'Abs_Await')            -- TODO: rem
+    , Await_Int    = V'Loc' * V'Y' -I(V'Await_Wclock'+V'Abs_Await') -- TODO: rem
     , Await_Wclock = (V'WCLOCKK' + V'WCLOCKE') * V'Y'
 
     , Await_Forever = K'await' * K'FOREVER' * V'Y'
@@ -582,7 +582,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , Throw = K'throw' * V'__Exp' --(V'Abs_Cons' + V'__Exp')
     , _Catch = K'catch' * LIST(V'Loc') * V'__Do'
 
-    , __watch = (V'Await_Ext' + V'Await_Int' + V'Await_Wclock' + V'_Abs_Await')
+    , __watch = (V'Await_Ext' + V'Await_Int' + V'Await_Wclock' + V'Abs_Await')
     , _Watching = K'watching'
                     * LIST(V'__watch')
                 * V'__Do'
@@ -611,10 +611,10 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , __abs_mods = Ct ( (Cg(K'/dynamic'*Cc'dynamic','dynamic') +
                          Cg(K'/static' *Cc'static', 'static'))^-1 *
                          Cg(K'/recursive'*Cc'recursive','recursive')^-1 )
-    , Abs_Call   = K'call' * V'__abs_mods' * (V'Abs_Cons' -I(V'__id_data'))
-    , Abs_Val    = CK'val' * V'Abs_Cons'
-    , Abs_New    = CK'new' * V'Abs_Cons'
-    , _Abs_Await = V'__Abs_Cons_Code' * V'Y'
+    , Abs_Call  = K'call' * V'__abs_mods' * (V'Abs_Cons' -I(V'__id_data'))
+    , Abs_Val   = CK'val' * V'Abs_Cons'
+    , Abs_New   = CK'new' * V'Abs_Cons'
+    , Abs_Await = V'__Abs_Cons_Code' * V'Y'
 
     , Abs_Spawn      = K'spawn' * V'__Abs_Cons_Code' * -(KK'in' * V'Loc')
     , Abs_Spawn_Pool = K'spawn' * V'__Abs_Cons_Code' * KK'in' * V'Loc'

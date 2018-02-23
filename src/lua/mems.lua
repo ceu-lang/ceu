@@ -553,6 +553,7 @@ end
         local _,Abs_Cons = unpack(me)
         CUR().mem = CUR().mem..'tceu_code_mem_'..Abs_Cons.id_..' __mem_'..me.n..';\n'
     end,
+    Abs_Await = 'Abs_Spawn',
 
     ---------------------------------------------------------------------------
 

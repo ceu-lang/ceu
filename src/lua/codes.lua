@@ -497,21 +497,18 @@ assert(not obj, 'not implemented')
 
     Set_Abs_Spawn = CONC_ALL,
     Abs_Spawn = function (me)
-        local _,_,pool = unpack(me)
-
         local set = AST.par(me,'Set_Abs_Spawn')
         if set then
             local _, to = unpack(set)
             LINE(me, [[
 ]]..V(to,{is_bind=true})..' = &'..CUR('__mem_'..me.n)..[[;
-]])
-            if not to.dcl.is_anon then
-                LINE(me, [[
 _ceu_mem->_trails[]]..(to.dcl.trails[1])..[[].evt.mem =  &]]..CUR('__mem_'..me.n)..[[;
 ]])
-            end
         end
+        CODES.F.Abs_Await(me)
+    end,
 
+    Abs_Await = function (me)
         HALT(me, {
             { ['evt.id']  = 'CEU_INPUT__PROPAGATE_CODE' },
             { ['evt.mem'] = '(tceu_code_mem*) &'..CUR('__mem_'..me.n) },
@@ -1154,8 +1151,13 @@ ceu_assert(]]..V(to,{is_bind=true})..[[!=NULL, "call failed");
     Set_Await_one = function (me)
         local fr, to = unpack(me)
         CONC_ALL(me)
+if fr.tag == 'Await_Wclock' then
         assert(fr.tag == 'Await_Wclock')
         SET(me, to, 'CEU_APP.wclk_late', nil,true)
+else
+        assert(fr.tag == 'Abs_Await')
+        SET(me, to, CUR('__mem_'..fr.n)..'._ret', nil,true)
+end
     end,
     Set_Await_many = function (me)
         local Await, List = unpack(me)

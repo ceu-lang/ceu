@@ -546,6 +546,7 @@ error'TODO: luacov never executes this?'
 
         elseif set.tag == '_Set_Await_one' then
             local awt = unpack(set)
+--[[
             if awt.tag == '_Abs_Await' then
                 awt = F._Abs_Await__PRE(awt)
                 AST.set(awt[1], 3,
@@ -555,6 +556,7 @@ error'TODO: luacov never executes this?'
                             awt[1][3])))
                 return awt
             end
+]]
         end
 
         -----------------------------------------------------------------------
@@ -594,6 +596,7 @@ error'TODO: luacov never executes this?'
         end
     end,
 
+--[[
     _Abs_Await__PRE = function (me)
         -- await Ff(...)
         --  to
@@ -626,6 +629,7 @@ error'TODO: luacov never executes this?'
         AST.asr(ret,'Block', 1,'Stmts', 3,'Await_Int').__adjs_is_abs_await = true
         return ret
     end,
+]]
 
     _Escape__PRE = function (me)
         local _, fr = unpack(me)
