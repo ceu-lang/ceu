@@ -106,7 +106,7 @@ EXPS.F = {
 
         for watching in AST.iter'Watching' do
             local loc = AST.get(watching,'',1,'Par_Or',1,'Block',1,'Stmts',1,'Await_Int',1,'Loc',1,'')
-                    or  AST.get(watching,'',1,'Par_Or',1,'Block',1,'Stmts',1,'Set_Await_many',1,'Await_Int',1,'Loc',1,'')
+                    or  AST.get(watching,'',1,'Par_Or',1,'Block',1,'Stmts',1,'Set_Await_Int',1,'Await_Int',1,'Loc',1,'')
             if loc then
                 if loc.tag=='ID_int' and AST.is_par(loc,me) then
                     break
@@ -484,7 +484,7 @@ error'TODO: remove below'
 
         for watching in AST.iter'Watching' do
             local loc = AST.get(watching,'',1,'Par_Or',1,'Block',1,'Stmts',1,'Await_Int',1,'Loc',1,'')
-                    or  AST.get(watching,'',1,'Par_Or',1,'Block',1,'Stmts',1,'Set_Await_many',1,'Await_Int',1,'Loc',1,'')
+                    or  AST.get(watching,'',1,'Par_Or',1,'Block',1,'Stmts',1,'Set_Await_Int',1,'Await_Int',1,'Loc',1,'')
             if AST.is_par(loc,me) then
                 break
             end

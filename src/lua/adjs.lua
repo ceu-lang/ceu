@@ -405,7 +405,7 @@ error'TODO: luacov never executes this?'
         local set_awt
         if to then
             if awt.tag=='Await_Ext' or awt.tag=='Await_Int' then
-                set_awt = node('Set_Await_many', me.ln, awt, to)
+                set_awt = node('Set_'..awt.tag, me.ln, awt, to)
             else
                 set_awt = node('Set_Await_Wclock', me.ln, awt, to)
             end
@@ -503,7 +503,7 @@ error'TODO: luacov never executes this?'
             --  _Watching
             --      _Set
             --          to
-            --          _Set_Await_many
+            --          _Set_Await_*
             --              Await_*
             --      Block
             local watching = AST.asr(unpack(set),'_Watching')
@@ -543,6 +543,7 @@ error'TODO: luacov never executes this?'
                         awt))
                 return stmts
             end
+            set.tag = '_Set_'..set[1].tag
 
         elseif set.tag == '_Set_Await_one' then
             set.tag = '_Set_'..set[1].tag
@@ -578,7 +579,8 @@ error'TODO: luacov never executes this?'
         end
     end,
 
-    Set_Await_many__PRE = function (me)
+    Set_Await_Ext__PRE = 'Set_Await_Int__PRE',
+    Set_Await_Int__PRE = function (me)
         local _,var,_ = unpack(me)
         if var.tag == 'Loc' then
             AST.set(me, 2, node('List_Loc', var.ln, var))

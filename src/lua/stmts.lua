@@ -300,7 +300,7 @@ STMTS.F = {
         STMTS.F.Set_Await_Wclock(me)
     end,
 
-    Set_Await_many = function (me)
+    Set_Await_Ext = function (me)
         local fr, to = unpack(me)
 
         -- ctx
@@ -308,11 +308,6 @@ STMTS.F = {
             if Loc.tag ~= 'ID_any' then
                 INFO.asr_tag(Loc, {'Nat','Var'}, 'invalid assignment')
             end
-        end
-
-        -- tp
-        if fr.tag == 'Await_Int' then
-            ASR(fr.tp, me, 'invalid assignment : `code` executes forever')
         end
 
         EXPS.check_tp(me, to.tp, fr.tp, 'invalid assignment')
@@ -324,6 +319,12 @@ STMTS.F = {
                     'invalid `watching` assignment : expected option type `?` : got "'..TYPES.tostring(e.info.tp)..'"')
             end
         end
+    end,
+
+    Set_Await_Int = function (me)
+        local fr, _ = unpack(me)
+        ASR(fr.tp, me, 'invalid assignment : `code` executes forever')
+        STMTS.F.Set_Await_Ext(me)
     end,
 
 -- AWAITS
@@ -430,7 +431,7 @@ STMTS.F = {
                 end
                 me.tp = AST.node('Typelist', me.ln, AST.copy(tp))
             else
-                -- will fail in Set_Await_many
+                -- will fail in Set_Await_Int
             end
         else
             me.tp = e.info.tp

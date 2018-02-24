@@ -187,7 +187,7 @@ F = {
             local ok = false
             while watch do
                 local awt = watch and AST.get(watch,'', 1,'Par_Or', 1,'Block', 1,'Stmts', 1,'Await_Int', 1,'')
-                                   or AST.get(watch,'', 1,'Par_Or', 1,'Block', 1,'Stmts', 1,'Set_Await_many',1,'Await_Int', 1,'')
+                                   or AST.get(watch,'', 1,'Par_Or', 1,'Block', 1,'Stmts', 1,'Set_Await_Int',1,'Await_Int', 1,'')
                 if awt and awt.info.dcl==me.info.dcl_obj.orig then
                     if to then
                         -- watching.depth < to.dcl.blk.depth

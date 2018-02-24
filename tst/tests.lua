@@ -395,7 +395,6 @@ escape 1;
 }
 ]==]
 
---]=====]
 Test { [[
 input none A;
 var int ret = 0;
@@ -41701,6 +41700,7 @@ escape ret;
     run = 20;
 }
 
+--]=====]
 -- BUG #100
 Test { [=[
 native/pre do

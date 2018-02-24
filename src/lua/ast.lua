@@ -54,7 +54,6 @@ AST.tag2id = {
     Catch            = 'catch',
     Pool             = 'pool',
     Prim             = 'primitive',
-    Set_Await_many   = 'await',
     Val              = 'value',
     Var              = 'variable',
     Vec              = 'vector',

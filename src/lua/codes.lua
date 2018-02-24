@@ -1162,12 +1162,26 @@ ceu_assert(]]..V(to,{is_bind=true})..[[!=NULL, "call failed");
         SET(me, to, CUR('__mem_'..fr.n)..'._ret', nil,true)
     end,
 
-    Set_Await_many = function (me)
+    Set_Await_Ext = function (me)
         local Await, List = unpack(me)
         CONC(me, Await)
 
-        local loc = AST.get(Await,'Await_Int',1,'Loc')
-        local abs = loc and TYPES.abs_dcl(loc.info.tp,'Code')
+        local ID_ext = AST.asr(Await,'Await_Ext', 1,'ID_ext')
+        local id = 'tceu_input_'..ID_ext.dcl.id
+        for i, loc in ipairs(List) do
+            if loc.tag ~= 'ID_any' then
+                local ps = '(('..id..'*)(_ceu_occ->params))'
+                SET(me, loc, ps..'->_'..i, nil,true)
+            end
+        end
+    end,
+
+    Set_Await_Int = function (me)
+        local Await, List = unpack(me)
+        CONC(me, Await)
+
+        local loc = AST.asr(Await,'Await_Int',1,'Loc')
+        local abs = TYPES.abs_dcl(loc.info.tp,'Code')
         if abs then
             assert(not (loc.info.dcl.tag=='Var' and TYPES.is_nat(loc.info.tp)), 'bug found')
             assert(#List == 1)
@@ -1192,15 +1206,8 @@ if (_ceu_occ!=NULL && _ceu_occ->evt.id==CEU_INPUT__CODE_TERMINATED) {
 ]])
             end
         else
-            local id do
-                local ID_ext = AST.get(Await,'Await_Ext', 1,'ID_ext')
-                if ID_ext then
-                    id = 'tceu_input_'..ID_ext.dcl.id
-                else
-                    local sufix = TYPES.noc(TYPES.tostring(loc.info.dcl[2]))
-                    id = 'tceu_event_'..sufix
-                end
-            end
+            local sufix = TYPES.noc(TYPES.tostring(loc.info.dcl[2]))
+            local id = 'tceu_event_'..sufix
             for i, loc in ipairs(List) do
                 if loc.tag ~= 'ID_any' then
                     local ps = '(('..id..'*)(_ceu_occ->params))'
