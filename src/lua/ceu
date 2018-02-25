@@ -33,7 +33,7 @@ SOFTWARE.
 PAK = {
     lua_exe = 'lua5.3',
     ceu_ver = '0.30-alpha',
-    ceu_git = '9b918d96cf2d70f5c9d28717878a4ea715eb485e',
+    ceu_git = 'aa0025948d960bea517b7e808aba64e0979ebe31',
     files = {
         ceu_c =
             [====[
