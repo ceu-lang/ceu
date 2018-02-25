@@ -395,6 +395,34 @@ escape 1;
 }
 ]==]
 
+-- MARK_01
+-- BUG #100
+Test { [=[
+native/pre do
+    int V = 0;
+end
+
+code/await UV_FS_Write2 (none) -> none do
+    await 1s;
+    {V++;}
+end
+
+do
+    await UV_FS_Write2();
+end
+par/or do
+    await FOREVER;
+with
+    await UV_FS_Write2();
+end
+
+escape {V};
+]=],
+    wrn = true,
+    run = {['~>2s']=2},
+}
+
+--]=====]
 Test { [[
 input none A;
 var int ret = 0;
@@ -407,7 +435,7 @@ escape ret+1;
 ]],
     run = {['~>A']=11},
 }
---do return end
+
 Test { [[
 code/await Ff (none) -> none do
 end
@@ -41700,33 +41728,7 @@ escape ret;
     run = 20;
 }
 
---]=====]
--- BUG #100
-Test { [=[
-native/pre do
-    int V = 0;
-end
-
-code/await UV_FS_Write2 (none) -> none do
-    await 1s;
-    {V++;}
-end
-
-do
-    await UV_FS_Write2();
-end
-par/or do
-    await FOREVER;
-with
-    await UV_FS_Write2();
-end
-
-escape {V};
-]=],
-    wrn = true,
-    run = {['~>2s']=2},
-}
-
+-- MARK_01
 --<<< CODE / AWAIT / FUNCTIONS
 
 -- TODO: SKIP-03
