@@ -1152,7 +1152,7 @@ ceu_assert(]]..V(to,{is_bind=true})..[[!=NULL, "call failed");
         local id = 'tceu_input_'..ID_ext.dcl.id
         for i, loc in ipairs(List) do
             if loc.tag ~= 'ID_any' then
-                local ps = '(('..id..'*)(_ceu_occ->params))'
+                local ps = '(('..id..'*)(_ceu_evt_params))'
                 SET(me, loc, ps..'->_'..i, nil,true)
             end
         end
@@ -1377,34 +1377,41 @@ do {
             if AST.par(me,'Async_Isr') then
                 LINE(me, 'static ')
             end
-            LINE(me, [[
+            local id do
+                if inout == 'input' then
+                    id = CUR('__ps_'..me.n)
+                else
+                    id = '__ceu_ps'
+                    LINE(me, [[
 tceu_]]..inout..'_'..ID_ext.dcl.id..[[ __ceu_ps;
 ]])
+                end
+            end
             for i, exp in ipairs(List_Exp) do
                 if TYPES.check(Typelist[i],'?') then
                     if exp.tag == 'ID_any' then
                         LINE(me, [[
-__ceu_ps._]]..i..[[.is_set = 0;
+]]..id..[[._]]..i..[[.is_set = 0;
 ]])
                     else
                         if TYPES.check(exp.info.tp,'?') then
                             LINE(me, [[
-__ceu_ps._]]..i..' = '..V(exp)..[[;
+]]..id..[[._]]..i..' = '..V(exp)..[[;
 ]])
                         else
                             LINE(me, [[
-__ceu_ps._]]..i..[[.is_set = 1;
-__ceu_ps._]]..i..'.value = '..V(exp)..[[;
+]]..id..[[._]]..i..[[.is_set = 1;
+]]..id..[[._]]..i..'.value = '..V(exp)..[[;
 ]])
                         end
                     end
                 else
                     LINE(me, [[
-__ceu_ps._]]..i..' = '..V(exp)..[[;
+]]..id..[[._]]..i..' = '..V(exp)..[[;
 ]])
                 end
             end
-            ps = '&__ceu_ps'
+            ps = '&'..id
         end
 
         if inout == 'output' then
@@ -1428,8 +1435,9 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
 {
     tceu_evt   __ceu_evt   = {]]..V(ID_ext)..[[.id, {NULL}};
     tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N };
-    _ceu_stk->evt   = __ceu_evt;
-    _ceu_stk->range = __ceu_range;
+    _ceu_stk->evt    = __ceu_evt;
+    _ceu_stk->params = ]]..ps..[[;
+    _ceu_stk->range  = __ceu_range;
     return 1;
 }
 ]])

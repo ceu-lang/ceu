@@ -2257,7 +2257,6 @@ escape 10;
     run = 10,
 }
 
---]=====]
 Test { [[
 await async do
     loop _ in [0 -> 50[ do
@@ -2401,6 +2400,7 @@ escape 1;
     run = 1,
 }
 
+--]=====]
 Test { [[
 native _CEU_SEQ_MAX;
 event none e;

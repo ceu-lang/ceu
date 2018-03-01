@@ -287,13 +287,9 @@ static tceu_opt_Exception* CEU_OPTION_tceu_opt_Exception_ (tceu_opt_Exception* o
 
 /*****************************************************************************/
 
-=== CEU_CODES_MEMS ===
-#if 0
-=== CODES_ARGS ===
-#endif
-
 === CEU_EXTS_TYPES ===
 === CEU_EVTS_TYPES ===
+=== CEU_CODES_MEMS ===
 
 enum {
     CEU_LABEL_NONE = 0,
@@ -580,14 +576,14 @@ void ceu_input_one (tceu_nevt evt_id, void* evt_params);
 
 #define CEU_GOTO(lbl) {_ceu_lbl=lbl; goto _CEU_LBL_;}
 
-static int ceu_lbl (tceu_nstk _ceu_stk_level, void* _ceu_evt_param, tceu_stk* _ceu_stk, tceu_code_mem* _ceu_mem, tceu_nlbl _ceu_lbl)
+static int ceu_lbl (tceu_nstk _ceu_stk_level, void* _ceu_evt_params, tceu_stk* _ceu_stk, tceu_code_mem* _ceu_mem, tceu_nlbl _ceu_lbl)
 {
 #define CEU_TRACE(n) ((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__+(n)})
 #ifdef CEU_STACK_MAX
     {
         static void* base = NULL;
         if (base == NULL) {
-            base = &_ceu_evt_param;
+            base = &_ceu_evt_params;
         } else {
 #if 0
 #if 0
@@ -596,17 +592,17 @@ Serial.println((usize)base);
 Serial.println((usize)&_ceu_lbl);
 Serial.print(" lbl "); Serial.println(_ceu_lbl);
 //Serial.flush();
-    if((usize)(((byte*)base)-CEU_STACK_MAX) <= (usize)(&_ceu_evt_param)) {
+    if((usize)(((byte*)base)-CEU_STACK_MAX) <= (usize)(&_ceu_evt_params)) {
     } else {
         delay(1000);
     }
 #else
 printf(">>> %p / %p / %ld\n", base, &_ceu_lbl, ((u64)base)-((u64)&_ceu_lbl));
-printf("%ld %ld %d\n", (usize)(base-CEU_STACK_MAX), (usize)(&_ceu_evt_param),
-            ((usize)(base-CEU_STACK_MAX) <= (usize)(&_ceu_evt_param)));
+printf("%ld %ld %d\n", (usize)(base-CEU_STACK_MAX), (usize)(&_ceu_evt_params),
+            ((usize)(base-CEU_STACK_MAX) <= (usize)(&_ceu_evt_params)));
 #endif
 #endif
-            ceu_assert((usize)(((byte*)base)-CEU_STACK_MAX) <= (usize)(&_ceu_evt_param), "stack overflow");
+            ceu_assert((usize)(((byte*)base)-CEU_STACK_MAX) <= (usize)(&_ceu_evt_params), "stack overflow");
         }
     }
 #endif
@@ -867,7 +863,7 @@ void ceu_bcast (tceu_nstk stk_level, tceu_evt* evt, void* evt_params, tceu_range
         int ret = ceu_bcast_exec(stk_level, evt, evt_params, range, &stk);
         if (ret) {
             ceu_assert(stk_level < 255, "too many stack levels");
-            ceu_bcast(stk_level+1, &stk.evt, &stk.params, &stk.range);
+            ceu_bcast(stk_level+1, &stk.evt, stk.params, &stk.range);
         } else {
             break;
         }

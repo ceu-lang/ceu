@@ -545,6 +545,14 @@ end
         end
     end,
 
+    Emit_Ext_emit = function (me)
+        local ID_ext, List_Exp = unpack(me)
+        local inout = unpack(ID_ext.dcl)
+        if #List_Exp>0 and inout=='input' then
+            CUR().mem = CUR().mem..'tceu_input_'..ID_ext.dcl.id..' __ps_'..me.n..';\n'
+        end
+    end,
+
     Await_Wclock = function (me)
         CUR().mem = CUR().mem..'s32 __wclk_'..me.n..';\n'
     end,
