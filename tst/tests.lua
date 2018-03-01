@@ -2400,20 +2400,6 @@ escape 1;
     run = 1,
 }
 
-Test { [[
-native _CEU_SEQ_MAX;
-event none e;
-var int i;
-loop i in [0->_CEU_SEQ_MAX+1[ do
-    emit e;
-end
-escape 1;
-]],
-    _opts = { ceu_features_trace='true' },
-    wrn = true,
-    run = 'too many internal reactions',
-}
-
     -- WALL-CLOCK TIME / WCLOCK
 
 Test { [[
@@ -2914,7 +2900,6 @@ end
     },
 }
 
---]=====]
 Test { [[
 par do
     await 1s;
@@ -3409,6 +3394,7 @@ escape _CEU_APP.root.__mem.trails_n;
 ]],
     run = 2,
 }
+--]=====]
 Test { [[
 native _CEU_APP;
 do finalize with
@@ -7002,6 +6988,19 @@ escape x;
 --<< AWAIT / UNTIL
 
 -->>> INTERNAL EVENTS
+
+Test { [[
+event none e;
+var int i;
+loop i in [0->256[ do
+    emit e;
+end
+escape 1;
+]],
+    _opts = { ceu_features_trace='true' },
+    wrn = true,
+    run = 'too many internal reactions',
+}
 
 Test { [[
 native _abc; // TODO: = 0;
