@@ -116,6 +116,7 @@ F = {
     end,
 
     Emit_Wclock = function (me)
+        me.lbl_in  = new{'Emit_Wclock__IN'}
         me.lbl_out = new{'Emit_Wclock__OUT'}
     end,
     Emit_Ext_emit = function (me)
