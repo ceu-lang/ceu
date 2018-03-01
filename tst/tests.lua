@@ -3394,7 +3394,6 @@ escape _CEU_APP.root.__mem.trails_n;
 ]],
     run = 2,
 }
---]=====]
 Test { [[
 native _CEU_APP;
 do finalize with
@@ -7121,6 +7120,7 @@ escape c;
     --trig_wo = 2,
 }
 
+--]=====]
 Test { [[
 event int c;
 emit c(10);

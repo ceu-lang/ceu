@@ -545,6 +545,14 @@ end
         end
     end,
 
+    Emit_Evt = function (me)
+        local Loc, List_Exp = unpack(me)
+        if #List_Exp > 0 then
+            local sufix = TYPES.noc(TYPES.tostring(Loc.info.dcl[2]))
+            CUR().mem = CUR().mem..'tceu_event_'..sufix..' __ps_'..me.n..';\n'
+        end
+    end,
+
     Emit_Ext_emit = function (me)
         local ID_ext, List_Exp = unpack(me)
         local inout = unpack(ID_ext.dcl)

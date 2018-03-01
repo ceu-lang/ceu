@@ -1191,7 +1191,7 @@ if (_ceu_occ!=NULL && _ceu_occ->evt.id==CEU_INPUT__CODE_TERMINATED) {
             local id = 'tceu_event_'..sufix
             for i, loc in ipairs(List) do
                 if loc.tag ~= 'ID_any' then
-                    local ps = '(('..id..'*)(_ceu_occ->params))'
+                    local ps = '(('..id..'*)(_ceu_evt_params))'
                     SET(me, loc, ps..'->_'..i, nil,true)
                 end
             end
@@ -1493,28 +1493,31 @@ if (]]..V(Loc)..[[ != NULL)
     Emit_Evt = function (me)
         local Loc, List_Exp = unpack(me)
         local Typelist = unpack(Loc.info.dcl)
-        LINE(me, [[
-{
-]])
         local ps = 'NULL'
-        if List_Exp then
+        if #List_Exp > 0 then
             local sufix = TYPES.noc(TYPES.tostring(Loc.info.dcl[2]))
             LINE(me, [[
-    tceu_event_]]..sufix..[[
-        __ceu_ps = { ]]..table.concat(V(List_Exp),',')..[[ };
-]])
-            ps = '&__ceu_ps'
-        end
-        LINE(me, [[
-    tceu_evt_occ __ceu_occ = { ]]..V(Loc)..[[, (tceu_nseq)(CEU_APP.seq+1), &__ceu_ps,
-                               {(tceu_code_mem*)&CEU_APP.root,
-                                0, (tceu_ntrl)(CEU_APP.root._mem.trails_n-1)}
-                             };
-    tceu_stk __ceu_stk  = { 1, 0, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
-    ceu_bcast(&__ceu_occ, &__ceu_stk, 1);
-    CEU_LONGJMP_JMP((&__ceu_stk));
+{
+    tceu_event_]]..sufix..[[ __ceu_ps = { ]]..table.concat(V(List_Exp),',')..[[ };
+    ]]..CUR('__ps_'..me.n)..[[ = __ceu_ps;
 }
 ]])
+            ps = '&'..CUR('__ps_'..me.n)
+        end
+        LINE(me, [[
+_ceu_mem->_trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__STACKED;
+_ceu_mem->_trails[]]..me.trails[1]..[[].stk_level = _ceu_stk_level;
+_ceu_mem->_trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_out.id..[[;
+{
+    tceu_evt   __ceu_evt   = ]]..V(Loc)..[[;
+    tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N-1 };
+    _ceu_stk->evt    = __ceu_evt;
+    _ceu_stk->params = ]]..ps..[[;
+    _ceu_stk->range  = __ceu_range;
+    return 1;
+}
+]])
+        CASE(me, me.lbl_out)
     end,
 
     ---------------------------------------------------------------------------
