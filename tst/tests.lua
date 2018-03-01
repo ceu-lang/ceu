@@ -7120,7 +7120,6 @@ escape c;
     --trig_wo = 2,
 }
 
---]=====]
 Test { [[
 event int c;
 emit c(10);
@@ -7452,8 +7451,8 @@ with
 end
 ]],
     _ana = {acc=true},
-    run = 2,
-    --run = 20,
+    --run = 2,
+    run = 20,
 }
 Test { [[
 input none OS_START;
@@ -7472,8 +7471,8 @@ with
 end
 ]],
     _ana = {acc=true},
-    run = 2,
-    --run = 1,
+    --run = 2,
+    run = 1,
 }
 
 -- the inner "emit e" is aborted and the outer "emit e"
@@ -7509,8 +7508,8 @@ escape ret;
     --_ana = {acc=3},
     _ana = {acc=true},
     --run = 6,
-    run = 9,
-    --run = 20,
+    --run = 9,
+    run = 20,
 }
 
 Test { [[
@@ -7544,8 +7543,8 @@ escape ret;
     --_ana = {acc=3},
     _ana = {acc=true},
     --run = 6,
-    run = 9,
-    --run = 4,
+    --run = 9,
+    run = 4,
 }
 
 -- "emit e" on the stack has to die
@@ -8802,6 +8801,7 @@ end
     },
 }
 
+--]=====]
 Test { [[
 native _V;
 native/pos do
