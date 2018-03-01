@@ -205,8 +205,8 @@ enum {
     CEU_INPUT__CLEAR,           /* 7 */
     CEU_INPUT__PAUSE,
     CEU_INPUT__RESUME,
-CEU_INPUT__SEQ,
     CEU_INPUT__CODE_TERMINATED,
+CEU_INPUT__PRIM,
     CEU_INPUT__ASYNC,
     CEU_INPUT__THREAD,
     CEU_INPUT__WCLOCK,
@@ -854,21 +854,23 @@ static int ceu_bcast_exec (tceu_nstk stk_level, tceu_evt* evt, void* evt_params,
 
 void ceu_bcast (tceu_nstk stk_level, tceu_evt* evt, void* evt_params, tceu_range* range)
 {
-    switch (evt->id) {
-        case CEU_INPUT__WCLOCK:
-            CEU_APP.wclk_min_cmp = CEU_APP.wclk_min_set;    /* swap "cmp" to last "set" */
-            CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;     /* new "set" resets to inactive */
-            ceu_callback_num_ptr(CEU_CALLBACK_WCLOCK_MIN, CEU_WCLOCK_INACTIVE, NULL, CEU_TRACE_null);
-            if (CEU_APP.wclk_min_cmp <= *((s32*)evt_params)) {
-                CEU_APP.wclk_late = *((s32*)evt_params) - CEU_APP.wclk_min_cmp;
-            }
-            break;
-        case CEU_INPUT__ASYNC:
-            CEU_APP.async_pending = 0;
-            break;
-    }
-    if (evt->id != CEU_INPUT__WCLOCK) {
-        CEU_APP.wclk_late = 0;
+    if (evt->id>CEU_INPUT__PRIM && evt->id<CEU_EVENT__MIN) {
+        switch (evt->id) {
+            case CEU_INPUT__WCLOCK:
+                CEU_APP.wclk_min_cmp = CEU_APP.wclk_min_set;    /* swap "cmp" to last "set" */
+                CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;     /* new "set" resets to inactive */
+                ceu_callback_num_ptr(CEU_CALLBACK_WCLOCK_MIN, CEU_WCLOCK_INACTIVE, NULL, CEU_TRACE_null);
+                if (CEU_APP.wclk_min_cmp <= *((s32*)evt_params)) {
+                    CEU_APP.wclk_late = *((s32*)evt_params) - CEU_APP.wclk_min_cmp;
+                }
+                break;
+            case CEU_INPUT__ASYNC:
+                CEU_APP.async_pending = 0;
+                break;
+        }
+        if (evt->id != CEU_INPUT__WCLOCK) {
+            CEU_APP.wclk_late = 0;
+        }
     }
 
     //printf(">>> BCAST[%d]: %d\n", evt->id, stk_level);
