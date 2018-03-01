@@ -277,7 +277,6 @@ if (]]..V(c)..[[) {
                 HALT(me, {
                     { ['evt.id']  = 'CEU_INPUT__CODE_TERMINATED' },
                     { ['evt.mem'] = 'NULL' },   -- will be set on Set_Alias/Spawn
-                    { seq = '(tceu_nseq)(CEU_APP.seq+1)' },
                     { lbl = me.lbl.id },
                     lbl = me.lbl.id,
                     exec = code,
@@ -415,7 +414,6 @@ ceu_assert(0, "reached end of `code`");
 {
     tceu_evt_occ __ceu_occ = {
         { CEU_INPUT__CODE_TERMINATED, {_ceu_mem} },
-        (tceu_nseq)(CEU_APP.seq+1),
         _ceu_mem,
         { (tceu_code_mem*)&CEU_APP.root, 0,
           (tceu_ntrl)(CEU_APP.root._mem.trails_n-1) }
@@ -846,7 +844,6 @@ ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL, CEU_TRACE(0));
 ]])
             HALT(me, {
                 { ['evt.id'] = 'CEU_INPUT__ASYNC' },
-                { seq        = '(tceu_nseq)(CEU_APP.seq+1)' },
                 { lbl        = me.lbl_asy.id },
                 lbl = me.lbl_asy.id,
             })
@@ -1364,7 +1361,6 @@ do {
         local ID_ext = unpack(me)
         HALT(me, {
             { evt = V(ID_ext) },
-            { seq = '(tceu_nseq)(CEU_APP.seq+1)' },
             { lbl = me.lbl_out.id },
             lbl = me.lbl_out.id,
         })
@@ -1428,12 +1424,13 @@ __ceu_ps._]]..i..' = '..V(exp)..[[;
 CEU_APP.async_pending = 1;
 ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL, CEU_TRACE(0));
 _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__ASYNC;
-_ceu_mem->_trails[]]..me.trails[1]..[[].seq    = (tceu_nseq)(CEU_APP.seq+1);
 _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
 {
-    tceu_stk __ceu_stk = { 1, 0, _ceu_stk, {_ceu_mem,]]..me.trails[1]..','..me.trails[1]..[[} };
-    ceu_input_one(]]..V(ID_ext)..'.id, '..ps..[[, &__ceu_stk);
-    CEU_LONGJMP_JMP((&__ceu_stk));
+    tceu_evt   __ceu_evt   = {]]..V(ID_ext)..[[.id, {NULL}};
+    tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N };
+    _ceu_stk->evt   = __ceu_evt;
+    _ceu_stk->range = __ceu_range;
+    return 1;
 }
 ]])
             else
@@ -1473,7 +1470,6 @@ if (]]..V(Loc)..[[ != NULL)
             HALT(me, {
                 { ['evt.id']  = 'CEU_INPUT__CODE_TERMINATED' },
                 { ['evt.mem'] = '(tceu_code_mem*)'..V(Loc) },
-                { seq = '(tceu_nseq)(CEU_APP.seq+1)' },
                 { lbl = me.lbl_out.id },
                 lbl = me.lbl_out.id,
             })
@@ -1481,7 +1477,6 @@ if (]]..V(Loc)..[[ != NULL)
         else
             HALT(me, {
                 { evt = V(Loc) },
-                { seq = '(tceu_nseq)(CEU_APP.seq+1)' },
                 { lbl = me.lbl_out.id },
                 lbl = me.lbl_out.id,
             })
@@ -1529,7 +1524,6 @@ _CEU_HALT_]]..me.n..[[_:
 ]])
         HALT(me, {
             { ['evt.id'] = 'CEU_INPUT__WCLOCK' },
-            { seq        = '(tceu_nseq)(CEU_APP.seq+1)' },
             { lbl        = me.lbl_out.id },
             lbl = me.lbl_out.id,
         })
@@ -1562,7 +1556,6 @@ ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL, CEU_TRACE(0));
 ]])
             HALT(me, {
                 { ['evt.id'] = 'CEU_INPUT__ASYNC' },
-                { seq        = '(tceu_nseq)(CEU_APP.seq+1)' },
                 { lbl        = me.lbl_out.id },
                 lbl = me.lbl_out.id,
             })
@@ -1590,7 +1583,6 @@ ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL, CEU_TRACE(0));
 ]])
         HALT(me, {
             { ['evt.id'] = 'CEU_INPUT__ASYNC' },
-            { seq        = '(tceu_nseq)(CEU_APP.seq+1)' },
             { lbl        = me.lbl_in.id },
             lbl = me.lbl_in.id,
         })

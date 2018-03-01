@@ -2178,7 +2178,6 @@ escape 1;
 ]],
     parser = 'line 1 : after `begin of file` : expected statement',
 }
---]=====]
 Test { [[
 input none A;
 par/or do
@@ -2258,6 +2257,7 @@ escape 10;
     run = 10,
 }
 
+--]=====]
 Test { [[
 await async do
     loop _ in [0 -> 50[ do

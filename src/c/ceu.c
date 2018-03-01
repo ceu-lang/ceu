@@ -635,7 +635,7 @@ static void ceu_bcast_mark (tceu_nstk stk_level, tceu_evt* evt, tceu_range* rang
 
     for (; trlK<=range->trlF; trlK++,trl++)
     {
-        //printf(">>> A %d %d\n", trlK, range->trlF);
+        //printf(">>> A %d/%d evt=%d\n", trlK, range->trlF, trl->evt.id);
 #ifdef CEU_TESTS
         _ceu_tests_trails_visited_++;
 #endif
@@ -735,7 +735,7 @@ static void ceu_bcast_mark (tceu_nstk stk_level, tceu_evt* evt, tceu_range* rang
             }
         }
 
-        return;
+        continue;
 
 _CEU_AWAKE_YES_:
         trl->evt.id    = CEU_INPUT__STACKED;
