@@ -553,6 +553,10 @@ end
         end
     end,
 
+    Emit_Wclock = function (me)
+        CUR().mem = CUR().mem..'s32 __dt_'..me.n..';\n'
+    end,
+
     Await_Wclock = function (me)
         CUR().mem = CUR().mem..'s32 __wclk_'..me.n..';\n'
     end,

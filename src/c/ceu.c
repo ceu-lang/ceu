@@ -572,8 +572,6 @@ int ceu_threads_gc (int force_join) {
 
 /*****************************************************************************/
 
-void ceu_input_one (tceu_nevt evt_id, void* evt_params);
-
 #define CEU_GOTO(lbl) {_ceu_lbl=lbl; goto _CEU_LBL_;}
 
 static int ceu_lbl (tceu_nstk _ceu_stk_level, void* _ceu_evt_params, tceu_stk* _ceu_stk, tceu_code_mem* _ceu_mem, tceu_nlbl _ceu_lbl)
@@ -856,6 +854,23 @@ static int ceu_bcast_exec (tceu_nstk stk_level, tceu_evt* evt, void* evt_params,
 
 void ceu_bcast (tceu_nstk stk_level, tceu_evt* evt, void* evt_params, tceu_range* range)
 {
+    switch (evt->id) {
+        case CEU_INPUT__WCLOCK:
+            CEU_APP.wclk_min_cmp = CEU_APP.wclk_min_set;    /* swap "cmp" to last "set" */
+            CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;     /* new "set" resets to inactive */
+            ceu_callback_num_ptr(CEU_CALLBACK_WCLOCK_MIN, CEU_WCLOCK_INACTIVE, NULL, CEU_TRACE_null);
+            if (CEU_APP.wclk_min_cmp <= *((s32*)evt_params)) {
+                CEU_APP.wclk_late = *((s32*)evt_params) - CEU_APP.wclk_min_cmp;
+            }
+            break;
+        case CEU_INPUT__ASYNC:
+            CEU_APP.async_pending = 0;
+            break;
+    }
+    if (evt->id != CEU_INPUT__WCLOCK) {
+        CEU_APP.wclk_late = 0;
+    }
+
     //printf(">>> BCAST[%d]: %d\n", evt->id, stk_level);
     ceu_bcast_mark(stk_level, evt, range);
     while (1) {
@@ -871,42 +886,19 @@ void ceu_bcast (tceu_nstk stk_level, tceu_evt* evt, void* evt_params, tceu_range
     //printf("<<< BCAST: %d\n", stk_level);
 }
 
-void ceu_input_one (tceu_nevt evt_id, void* evt_params)
-{
-    CEU_APP.seq_base = CEU_APP.seq;
-
-    switch (evt_id) {
-        case CEU_INPUT__WCLOCK:
-            CEU_APP.wclk_min_cmp = CEU_APP.wclk_min_set;    /* swap "cmp" to last "set" */
-            CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;     /* new "set" resets to inactive */
-            ceu_callback_num_ptr(CEU_CALLBACK_WCLOCK_MIN, CEU_WCLOCK_INACTIVE, NULL, CEU_TRACE_null);
-            if (CEU_APP.wclk_min_cmp <= *((s32*)evt_params)) {
-                CEU_APP.wclk_late = *((s32*)evt_params) - CEU_APP.wclk_min_cmp;
-            }
-            break;
-        case CEU_INPUT__ASYNC:
-            CEU_APP.async_pending = 0;
-            break;
-    }
-    if (evt_id != CEU_INPUT__WCLOCK) {
-        CEU_APP.wclk_late = 0;
-    }
-
-    tceu_evt   evt   = {evt_id, {NULL}};
-    tceu_range range = {(tceu_code_mem*)&CEU_APP.root,
-                        0, (tceu_ntrl)(CEU_APP.root._mem.trails_n-1)};
-    ceu_bcast(1, &evt, evt_params, &range);
-}
-
 CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params)
 {
     ceu_callback_void_void(CEU_CALLBACK_WCLOCK_DT, CEU_TRACE_null);
     s32 dt = ceu_callback_ret.num;
     if (dt != CEU_WCLOCK_INACTIVE) {
-        ceu_input_one(CEU_INPUT__WCLOCK, &dt);
+        tceu_evt   evt   = {CEU_INPUT__WCLOCK, {NULL}};
+        tceu_range range = {(tceu_code_mem*)&CEU_APP.root, 0, CEU_TRAILS_N-1};
+        ceu_bcast(1, &evt, &dt, &range);
     }
     if (evt_id != CEU_INPUT__NONE) {
-        ceu_input_one(evt_id, evt_params);
+        tceu_evt   evt   = {evt_id, {NULL}};
+        tceu_range range = {(tceu_code_mem*)&CEU_APP.root, 0, CEU_TRAILS_N-1};
+        ceu_bcast(1, &evt, evt_params, &range);
     }
 }
 

@@ -2400,7 +2400,6 @@ escape 1;
     run = 1,
 }
 
---]=====]
 Test { [[
 native _CEU_SEQ_MAX;
 event none e;
@@ -2915,6 +2914,7 @@ end
     },
 }
 
+--]=====]
 Test { [[
 par do
     await 1s;

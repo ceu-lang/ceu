@@ -1538,7 +1538,7 @@ _CEU_HALT_]]..me.n..[[_:
         LINE(me, [[
 /* subtract time and check if I have to awake */
 {
-    s32* dt = (s32*)_ceu_occ->params;
+    s32* dt = (s32*)_ceu_evt_params;
     if (!ceu_wclock(*dt, NULL, &]]..wclk..[[, CEU_TRACE(0)) ) {
         goto _CEU_HALT_]]..me.n..[[_;
     }
@@ -1551,7 +1551,7 @@ _CEU_HALT_]]..me.n..[[_:
         if AST.par(me,'Async') then
             LINE(me, [[
 {
-    s32 __ceu_dt = ]]..V(e)..[[;
+    ]]..CUR('__dt_'..me.n)..[[ = ]]..V(e)..[[;
 ]])
             CASE(me, me.lbl_in)
             LINE(me, [[
@@ -1563,7 +1563,7 @@ _CEU_HALT_]]..me.n..[[_:
         tceu_evt   __ceu_evt   = { CEU_INPUT__WCLOCK, {NULL} };
         tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N };
         _ceu_stk->evt    = __ceu_evt;
-        _ceu_stk->params = &__ceu_dt;
+        _ceu_stk->params = &]]..CUR('__dt_'..me.n)..[[;
         _ceu_stk->range  = __ceu_range;
         return 1;
     }
@@ -1575,7 +1575,7 @@ _CEU_HALT_]]..me.n..[[_:
             })
             LINE(me, [[
     if (CEU_APP.wclk_min_set <= 0) {
-        __ceu_dt = 0;
+        ]]..CUR('__dt_'..me.n)..[[ = 0;
         CEU_GOTO(]]..me.lbl_out.id..[[);
     }
 }
