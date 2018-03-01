@@ -2160,7 +2160,6 @@ escape ret;
 ]],
     run = 2,
 }
---]=====]
 Test { [[
 var int ret=0;
 par/or do
@@ -2179,6 +2178,7 @@ escape 1;
 ]],
     parser = 'line 1 : after `begin of file` : expected statement',
 }
+--]=====]
 Test { [[
 input none A;
 par/or do

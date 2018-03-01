@@ -202,7 +202,7 @@ enum {
     CEU_INPUT__PROPAGATE_POOL,
 
     /* emitable */
-    CEU_INPUT__CLEAR,           /* 6 */
+    CEU_INPUT__CLEAR,           /* 7 */
     CEU_INPUT__PAUSE,
     CEU_INPUT__RESUME,
 CEU_INPUT__SEQ,
@@ -633,7 +633,7 @@ static void ceu_bcast_mark (tceu_nstk stk_level, tceu_evt* evt, tceu_range* rang
     tceu_ntrl trlK = range->trl0;
     tceu_trl* trl  = &range->mem->_trails[trlK];
 
-    for (; trlK!=range->trlF; trlK++,trl++)
+    for (; trlK<=range->trlF; trlK++,trl++)
     {
         //printf(">>> A %d %d\n", trlK, range->trlF);
 #ifdef CEU_TESTS
@@ -712,6 +712,9 @@ static void ceu_bcast_mark (tceu_nstk stk_level, tceu_evt* evt, tceu_range* rang
         if (evt->id == CEU_INPUT__CLEAR) {
             if (trl->evt.id == CEU_INPUT__FINALIZE) {
                 goto _CEU_AWAKE_YES_;
+            } else {
+//printf("CLR %d\n", trlK);
+                trl->evt.id = CEU_INPUT__NONE;
             }
         } else if (evt->id==CEU_INPUT__CODE_TERMINATED && trl->evt.id==CEU_INPUT__PROPAGATE_CODE) {
             if (trl->evt.mem == evt->mem) {
@@ -857,14 +860,14 @@ static int ceu_bcast_exec (tceu_nstk stk_level, tceu_evt* evt, void* evt_params,
 
 void ceu_bcast (tceu_nstk stk_level, tceu_evt* evt, void* evt_params, tceu_range* range)
 {
-    //printf(">>> BCAST: %d\n", stk_level);
+    //printf(">>> BCAST[%d]: %d\n", evt->id, stk_level);
     ceu_bcast_mark(stk_level, evt, range);
     while (1) {
         tceu_stk stk;
         int ret = ceu_bcast_exec(stk_level, evt, evt_params, range, &stk);
         if (ret) {
             ceu_assert(stk_level < 255, "too many stack levels");
-            ceu_bcast(stk_level+1, evt, evt_params, range);
+            ceu_bcast(stk_level+1, &stk.evt, &stk.params, &stk.range);
         } else {
             break;
         }
@@ -947,7 +950,7 @@ CEU_API void ceu_start (tceu_callback* cb, int argc, char* argv[]) {
     CEU_APP.root._trails[0].lbl       = CEU_LABEL_ROOT;
 
     tceu_evt   evt   = {CEU_INPUT__NONE, {NULL}};
-    tceu_range range = {(tceu_code_mem*)&CEU_APP.root, 0, CEU_TRAILS_N};
+    tceu_range range = {(tceu_code_mem*)&CEU_APP.root, 0, CEU_TRAILS_N-1};
     ceu_bcast(1, &evt, NULL, &range);
 }
 

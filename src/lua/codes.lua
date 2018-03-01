@@ -47,14 +47,18 @@ end
 
 local function CLEAR (me, lbl)
     LINE(me, [[
+_ceu_mem->_trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__STACKED;
+_ceu_mem->_trails[]]..me.trails[1]..[[].stk_level = _ceu_stk_level;
+_ceu_mem->_trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_clr.id..[[;
 {
     tceu_evt   __ceu_evt   = {CEU_INPUT__CLEAR,{NULL}};
-    tceu_range __ceu_range = { _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[ };
+    tceu_range __ceu_range = { _ceu_mem, ]]..me.trails[1]..'+1, '..me.trails[2]..[[ };
     _ceu_stk->evt   = __ceu_evt;
     _ceu_stk->range = __ceu_range;
     return 1;
 }
 ]])
+    CASE(me, me.lbl_clr)
 end
 
 local function HALT (me, T)
