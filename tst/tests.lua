@@ -397,6 +397,31 @@ escape 1;
 
 -- MARK_01
 -- BUG #100
+Test { [[
+event none a;
+var int ret = 0;
+
+spawn do
+    await async do end;
+    emit a;
+    ret = 10;
+    emit a;
+    ret = 20;
+end
+
+do
+    await a;
+end
+par/or do
+    await FOREVER;
+with
+    await a;
+end
+
+escape ret;
+]],
+    run = 20,
+}
 Test { [=[
 native/pre do
     int V = 0;
@@ -421,8 +446,8 @@ escape {V};
     wrn = true,
     run = {['~>2s']=2},
 }
+do return end
 
---]=====]
 Test { [[
 input none A;
 var int ret = 0;
@@ -947,7 +972,7 @@ end
 escape _get_A_id();
 ]],
     wrn = true,
-    run = 14,
+    run = 15,
 }
 
 Test { [[
@@ -2135,6 +2160,7 @@ escape ret;
 ]],
     run = 2,
 }
+--]=====]
 Test { [[
 var int ret=0;
 par/or do

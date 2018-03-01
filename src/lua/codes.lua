@@ -48,22 +48,11 @@ end
 local function CLEAR (me, lbl)
     LINE(me, [[
 {
-    /*
-     * clears pending stack frames that I am killing
-     * returns and makes them "longjmp" back to here
-     */
-    ceu_stack_clear(_ceu_stk, _ceu_mem,
-                    ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
-    CEU_LONGJMP_SET(_ceu_stk,]]..(lbl and lbl.id or me.lbl_clr.id)..[[)
-}
-{
-    tceu_evt_range __ceu_range = { _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[ };
-    tceu_evt_occ __ceu_occ = { {CEU_INPUT__CLEAR,{NULL}}, (tceu_nseq)(CEU_APP.seq+1),
-                               NULL, __ceu_range };
-
-    tceu_stk __ceu_stk  = { 1, 0, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
-    ceu_bcast(&__ceu_occ, &__ceu_stk, 1);
-    CEU_LONGJMP_JMP((&__ceu_stk));
+    tceu_evt   __ceu_evt   = {CEU_INPUT__CLEAR,{NULL}};
+    tceu_range __ceu_range = { _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[ };
+    _ceu_stk->evt   = __ceu_evt;
+    _ceu_stk->range = __ceu_range;
+    return 1;
 }
 ]])
 end
@@ -82,7 +71,7 @@ _ceu_mem->_trails[]]..(T.trail or me.trails[1])..'].'..id..' = '..val..[[;
 ]])
     end
     LINE(me, [[
-return;
+return 0;
 ]])
     if T.lbl then
         LINE(me, [[
@@ -798,6 +787,7 @@ ceu_assert(0, "reached end of `do`");
         CASE(me, me.lbl_out)
 
         if me.has_escape and (me.trails_n>1 or blk.needs_clear) then
+-- TODO: has_escape precisa estar dentro de um par qq
             CLEAR(me)
         end
     end,
@@ -811,8 +801,7 @@ goto ]]..me.outer.lbl_out.id..[[;
 ]])
         else
             LINE(me, [[
-RETURN_CEU_LBL(NULL, _ceu_stk,
-               _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
+CEU_GOTO(]]..me.outer.lbl_out.id..[[);
 ]])
         end
     end,
@@ -973,8 +962,7 @@ goto ]]..me.outer.lbl_out.id..[[;
 ]])
         else
             LINE(me, [[
-RETURN_CEU_LBL(NULL, _ceu_stk,
-               _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
+CEU_GOTO(]]..me.outer.lbl_out.id..[[);
 ]])
         end
     end,
@@ -985,8 +973,7 @@ goto ]]..me.outer.lbl_out.id..[[;
 ]])
         else
             LINE(me, [[
-RETURN_CEU_LBL(NULL, _ceu_stk,
-               _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_cnt.id..[[);
+CEU_GOTO(]]..me.outer.lbl_cnt.id..[[);
 ]])
         end
     end,
@@ -1016,22 +1003,17 @@ RETURN_CEU_LBL(NULL, _ceu_stk,
         end
 
         -- call each branch
-        for i, sub in ipairs(me) do
-            if i < #me then
-                local abt = me[i+1].trails[1]
+        for i=#me, 1, -1 do
+            local sub = me[i]
+            if i > 1 then
                 LINE(me, [[
-{
-    tceu_stk __ceu_stk = { 1, 0, _ceu_stk, {_ceu_mem,]]..abt..','..abt..[[} };
-    ceu_lbl(_ceu_occ, &__ceu_stk,
-            _ceu_mem, ]]..sub.trails[1]..[[, ]]..me.lbls_in[i].id..[[);
-    CEU_LONGJMP_JMP((&__ceu_stk));
-}
+_ceu_mem->_trails[]]..sub.trails[1]..[[].evt.id    = CEU_INPUT__STACKED;
+_ceu_mem->_trails[]]..sub.trails[1]..[[].stk_level = _ceu_stk_level;
+_ceu_mem->_trails[]]..sub.trails[1]..[[].lbl       = ]]..me.lbls_in[i].id..[[;
 ]])
             else
-                -- no need to abort since there's a "return" below
                 LINE(me, [[
-RETURN_CEU_LBL(_ceu_occ, _ceu_stk,
-              _ceu_mem, ]]..sub.trails[1]..','..me.lbls_in[i].id..[[);
+CEU_GOTO(]]..me.lbls_in[i].id..[[);
 ]])
             end
         end
@@ -1051,8 +1033,7 @@ RETURN_CEU_LBL(_ceu_occ, _ceu_stk,
 ]])
                 end
                 LINE(me, [[
-RETURN_CEU_LBL(_ceu_occ, _ceu_stk,
-               _ceu_mem, ]]..me.trails[1]..','..me.lbl_out.id..[[);
+CEU_GOTO(]]..me.lbl_out.id..[[);
 ]])
             end
         end
@@ -2005,6 +1986,7 @@ end
 
 -- CEU.C
 local c = PAK.files.ceu_c
+local c = SUB(c, '=== CEU_TRAILS_N ===',         AST.root.trails_n)
 local c = SUB(c, '=== CEU_FEATURES ===',         features)
 local c = SUB(c, '=== CEU_NATIVE_PRE ===',       CODES.native.pre)
 local c = SUB(c, '=== CEU_EXTS_ENUM_INPUT ===',  MEMS.exts.enum_input)
