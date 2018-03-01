@@ -46,10 +46,11 @@ local function CASE (me, lbl)
 end
 
 local function CLEAR (me, lbl)
+    lbl = lbl or me.lbl_clr
     LINE(me, [[
 _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__STACKED;
 _ceu_mem->_trails[]]..me.trails[1]..[[].stk_level = _ceu_stk_level;
-_ceu_mem->_trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_clr.id..[[;
+_ceu_mem->_trails[]]..me.trails[1]..[[].lbl       = ]]..lbl.id..[[;
 {
     tceu_evt   __ceu_evt   = {CEU_INPUT__CLEAR,{NULL}};
     tceu_range __ceu_range = { _ceu_mem, ]]..me.trails[1]..'+1, '..me.trails[2]..[[ };
@@ -58,7 +59,7 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_clr.id..[[;
     return 1;
 }
 ]])
-    CASE(me, me.lbl_clr)
+    CASE(me, lbl)
 end
 
 local function HALT (me, T)
