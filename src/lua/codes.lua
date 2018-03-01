@@ -1434,7 +1434,7 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__ASYNC;
 _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
 {
     tceu_evt   __ceu_evt   = {]]..V(ID_ext)..[[.id, {NULL}};
-    tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N };
+    tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N-1 };
     _ceu_stk->evt    = __ceu_evt;
     _ceu_stk->params = ]]..ps..[[;
     _ceu_stk->range  = __ceu_range;
@@ -1561,7 +1561,7 @@ _CEU_HALT_]]..me.n..[[_:
     _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
     {
         tceu_evt   __ceu_evt   = { CEU_INPUT__WCLOCK, {NULL} };
-        tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N };
+        tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N-1 };
         _ceu_stk->evt    = __ceu_evt;
         _ceu_stk->params = &]]..CUR('__dt_'..me.n)..[[;
         _ceu_stk->range  = __ceu_range;
@@ -1576,7 +1576,7 @@ _CEU_HALT_]]..me.n..[[_:
             LINE(me, [[
     if (CEU_APP.wclk_min_set <= 0) {
         ]]..CUR('__dt_'..me.n)..[[ = 0;
-        CEU_GOTO(]]..me.lbl_out.id..[[);
+        CEU_GOTO(]]..me.lbl_in.id..[[);
     }
 }
 ]])
