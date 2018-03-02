@@ -574,7 +574,7 @@ int ceu_threads_gc (int force_join) {
 
 #define CEU_GOTO(lbl) {_ceu_lbl=lbl; goto _CEU_LBL_;}
 
-static int ceu_lbl (tceu_nstk _ceu_stk_level, void* _ceu_evt_params, tceu_stk* _ceu_stk, tceu_code_mem* _ceu_mem, tceu_nlbl _ceu_lbl)
+static int ceu_lbl (tceu_nstk _ceu_stk_level, void* _ceu_evt_params, tceu_stk* _ceu_stk, tceu_code_mem* _ceu_mem, tceu_nlbl _ceu_lbl, tceu_ntrl* _ceu_trlK)
 {
 #define CEU_TRACE(n) ((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__+(n)})
 #ifdef CEU_STACK_MAX
@@ -629,7 +629,7 @@ static void ceu_bcast_mark (tceu_nstk stk_level, tceu_evt* evt, tceu_range* rang
 
     for (; trlK<=range->trlF; trlK++,trl++)
     {
-        //printf(">>> A %d/%d evt=%d\n", trlK, range->trlF, trl->evt.id);
+        //printf(">>> A %d: [%d->%d] evt=%d\n", trlK, range->trl0, range->trlF, trl->evt.id);
 #ifdef CEU_TESTS
         _ceu_tests_trails_visited_++;
 #endif
@@ -705,9 +705,10 @@ static void ceu_bcast_mark (tceu_nstk stk_level, tceu_evt* evt, tceu_range* rang
 
         if (evt->id == CEU_INPUT__CLEAR) {
             if (trl->evt.id == CEU_INPUT__FINALIZE) {
+//printf("AWK %d %d\n", trlK, trl->lbl);
                 goto _CEU_AWAKE_YES_;
             } else {
-//printf("CLR %d\n", trlK);
+//printf("CLR %d %d\n", trlK, trl->lbl);
                 trl->evt.id = CEU_INPUT__NONE;
             }
         } else if (evt->id==CEU_INPUT__CODE_TERMINATED && trl->evt.id==CEU_INPUT__PROPAGATE_CODE) {
@@ -739,9 +740,6 @@ _CEU_AWAKE_YES_:
 
 static int ceu_bcast_exec (tceu_nstk stk_level, tceu_evt* evt, void* evt_params, tceu_range* range, tceu_stk* stk)
 {
-    tceu_ntrl trlK;
-    tceu_trl* trl;
-
     /* CLEAR: inverse execution order */
     tceu_ntrl trl0 = range->trl0;
     tceu_ntrl trlF = range->trlF;
@@ -751,9 +749,13 @@ static int ceu_bcast_exec (tceu_nstk stk_level, tceu_evt* evt, void* evt_params,
         trlF = tmp;
     }
 
+    tceu_ntrl trlK = trl0;
+
     //printf(">>> exec %d -> %d\n", trl0, trlF);
-    for (trlK=trl0, trl=&range->mem->_trails[trlK]; ;)
+    while (1)
     {
+        tceu_trl* trl = &range->mem->_trails[trlK];
+
         //printf(">>> exec %d\n", trlK);
         switch (trl->evt.id)
         {
@@ -833,9 +835,11 @@ static int ceu_bcast_exec (tceu_nstk stk_level, tceu_evt* evt, void* evt_params,
             case CEU_INPUT__STACKED: {
                 if (trl->evt.id==CEU_INPUT__STACKED && trl->stk_level==stk_level) {
                     trl->evt.id = CEU_INPUT__NONE;
-                    if (ceu_lbl(stk_level, evt_params, stk, range->mem, trl->lbl)) {
+//printf(">>> trlK = %d\n", trlK);
+                    if (ceu_lbl(stk_level, evt_params, stk, range->mem, trl->lbl, &trlK)) {
                         return 1;
                     }
+//printf("<<< trlK = %d\n", trlK);
                 }
                 break;
             }
@@ -879,7 +883,7 @@ void ceu_bcast (tceu_nstk stk_level, tceu_evt* evt, void* evt_params, tceu_range
         tceu_stk stk;
         int ret = ceu_bcast_exec(stk_level, evt, evt_params, range, &stk);
         if (ret) {
-            ceu_assert(stk_level < 255, "too many stack levels");
+            //ceu_assert(stk_level < 255, "too many stack levels");
             ceu_bcast(stk_level+1, &stk.evt, stk.params, &stk.range);
         } else {
             break;

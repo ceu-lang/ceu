@@ -870,6 +870,7 @@ while (1) {
         CODES.F.__loop_async(me)
         LINE(me, [[
     ]]..max.inc..[[
+    *_ceu_trlK = ]]..(me.trails[1]-1)..[[;
 }
 ]])
         CASE(me, me.lbl_out)
@@ -946,6 +947,8 @@ while (1) {
     ceu_assert_ex(]]..V(i)..op..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n)..[[,
         "control variable overflow", CEU_TRACE(-2));
     ]]..max.inc..[[
+//printf("KKK %d %d\n", *_ceu_trlK, ]]..(me.trails[1]-1)..[[);
+    *_ceu_trlK = ]]..(me.trails[1]-1)..[[;
 }
 ]])
         CASE(me, me.lbl_out)

@@ -50,6 +50,9 @@ TRAILS.F = {
         for _, sub in ipairs(me) do
             me.trails_n = me.trails_n + sub.trails_n
         end
+        if me.tag == 'Par_Or' then
+            me.trails_n = me.trails_n + 1   -- CLEAR
+        end
     end,
 
     Code = function (me)
@@ -94,7 +97,7 @@ G = {
         for i, sub in ipairs(me) do
             sub.trails = {}
             if i == 1 then
-                sub.trails[1] = me.trails[1]
+                sub.trails[1] = me.trails[1] + (me.tag=='Par_Or' and 1 or 0)
             else
                 local pre = me[i-1]
                 sub.trails[1] = pre.trails[1] + pre.trails_n
