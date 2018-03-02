@@ -411,6 +411,7 @@ ceu_assert(0, "reached end of `code`");
 
         -- CODE/DELAYED
         if mods.await then
+--[=[
             LINE(me, [[
 {
     tceu_evt_occ __ceu_occ = {
@@ -437,9 +438,10 @@ ceu_assert(0, "reached end of `code`");
     }
 #endif
 ]])
+]=]
         end
         LINE(me, [[
-    return; /* HALT(me) */
+    return 0; /* HALT(me) */
 }
 ]])
     end,
@@ -479,11 +481,24 @@ assert(not obj, 'not implemented')
 ]]
         end
         ret = ret .. [[
-    tceu_stk __ceu_stk  = { 1, 0, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
-    CEU_CODE_]]..ID_abs.dcl.id_..[[(&__ceu_stk, 0, ]]..mem..[[);
-    CEU_LONGJMP_JMP((&__ceu_stk));
+    ]]..mem..[[->_mem._trails[0].evt.id    = CEU_INPUT__STACKED;
+    ]]..mem..[[->_mem._trails[0].stk_level = _ceu_stk_level+1;
+    ]]..mem..[[->_mem._trails[0].lbl       = ]]..ID_abs.dcl.lbl_in.id..[[;
+
+}
+
+_ceu_mem->_trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__STACKED;
+_ceu_mem->_trails[]]..me.trails[1]..[[].stk_level = _ceu_stk_level;
+_ceu_mem->_trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_out.id..[[;
+{
+    tceu_evt   __ceu_evt   = {CEU_INPUT__NONE, {NULL}};
+    tceu_range __ceu_range = { (tceu_code_mem*)]]..mem..[[, 0, ]]..ID_abs.dcl.trails_n..[[-1 };
+    _ceu_stk->evt   = __ceu_evt;
+    _ceu_stk->range = __ceu_range;
+    return 1;
 }
 ]]
+        --CASE(me, me.lbl_out)
         return ret
     end,
 

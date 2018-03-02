@@ -481,6 +481,8 @@ static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
 
 /*****************************************************************************/
 
+static int ceu_lbl (tceu_nstk _ceu_stk_level, void* _ceu_evt_params, tceu_stk* _ceu_stk, tceu_code_mem* _ceu_mem, tceu_nlbl _ceu_lbl, tceu_ntrl* _ceu_trlK);
+
 === CEU_NATIVE_POS ===
 
 === CEU_CODES_WRAPPERS ===
@@ -743,6 +745,9 @@ static int ceu_bcast_exec (tceu_nstk stk_level, tceu_evt* evt, void* evt_params,
     /* CLEAR: inverse execution order */
     tceu_ntrl trl0 = range->trl0;
     tceu_ntrl trlF = range->trlF;
+    if (trl0 > trlF) {
+        return 0;
+    }
     if (evt->id == CEU_INPUT__CLEAR) {
         tceu_ntrl tmp = trl0;
         trl0 = trlF;

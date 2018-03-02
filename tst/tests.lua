@@ -7019,7 +7019,6 @@ escape x;
 
 -->>> INTERNAL EVENTS
 
---]=====]
 Test { [[
 event none e;
 var int i;
@@ -21127,6 +21126,43 @@ escape call Ff(_) + call Ff(&x);
 }
 
 Test { [[
+par do
+with
+    escape 1;
+end
+]],
+    run = 1,
+}
+
+Test { [[
+var int ret = do
+    par do
+    with
+        escape 1;
+    end
+end;
+escape ret;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (none) -> int do
+    var int ret = do
+        par do
+        with
+            escape 1;
+        end
+    end;
+    escape ret;
+end
+var int ret = await Ff();
+escape ret;
+]],
+    run = 1,
+}
+
+Test { [[
 code/await Ff (var&? int i) -> int do
     if i? then
         escape i!;
@@ -29337,6 +29373,7 @@ end
     stmts = 'line 6 : invalid `emit` : types mismatch : "(bool)" <= "(int)"',
 }
 
+--]=====]
 Test { [[
 input int A; input int  B;
 event bool a;

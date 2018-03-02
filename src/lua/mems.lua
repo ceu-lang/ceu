@@ -203,7 +203,7 @@ CEU_CODE_]]..me.id_..[[ (tceu_code_mem_]]..me.id_..[[ mem_,
 ]]
             end
             me.mems.wrapper = me.mems.wrapper .. [[
-    ceu_lbl(NULL, NULL, (tceu_code_mem*)mem, 0, lbl);
+    ceu_lbl(0, NULL, NULL, (tceu_code_mem*)mem, lbl, 0);
 ]]
             if Type and (not TYPES.check(Type,'none')) then
                 me.mems.wrapper = me.mems.wrapper..[[
@@ -214,6 +214,7 @@ CEU_CODE_]]..me.id_..[[ (tceu_code_mem_]]..me.id_..[[ mem_,
 }
 ]]
         else
+--[=[
             me.mems.wrapper = me.mems.wrapper .. [[
 static void CEU_CODE_]]..me.id_..[[ (tceu_stk* stk, tceu_ntrl trlK,
                                      tceu_code_mem_]]..me.id_..[[* mem)
@@ -234,6 +235,7 @@ static void CEU_CODE_]]..me.id_..[[ (tceu_stk* stk, tceu_ntrl trlK,
             me.mems.wrapper = me.mems.wrapper .. [[
 }
 ]]
+]=]
         end
     end,
 
