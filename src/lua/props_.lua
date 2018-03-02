@@ -260,6 +260,10 @@ PROPS_.F = {
         ASR(CEU.opts.ceu_features_thread or CEU.opts.ceu_features_isr, me,
             '`atomic` support is disabled: enable `--ceu-features-thread` or `--ceu-features-isr`')
     end,
+
+    Pause_If = function (me)
+        ASR(CEU.opts.ceu_features_pause, me, '`pause/if` support is disabled')
+    end
 }
 
 AST.visit(PROPS_.F)

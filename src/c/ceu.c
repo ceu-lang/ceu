@@ -83,11 +83,13 @@ typedef struct tceu_trl {
             };
 
             /* CEU_INPUT__PAUSE_BLOCK */
+#ifdef CEU_FEATURES_PAUSE
             struct {
                 tceu_evt  pse_evt;
                 tceu_ntrl pse_skip;
                 u8        pse_paused;
             };
+#endif
         };
     };
 } tceu_trl;
@@ -624,13 +626,14 @@ _CEU_LBL_:
 static int xxx = 0;
 #endif
 
-static void ceu_bcast_mark (tceu_nstk stk_level, tceu_evt* evt, tceu_range* range)
+static void ceu_bcast_mark (tceu_nstk stk_level, tceu_evt* evt, void* evt_params, tceu_range* range)
 {
     tceu_ntrl trlK = range->trl0;
-    tceu_trl* trl  = &range->mem->_trails[trlK];
 
-    for (; trlK<=range->trlF; trlK++,trl++)
+    for (; trlK<=range->trlF; trlK++)
     {
+        tceu_trl* trl = &range->mem->_trails[trlK];
+
         //printf(">>> A %d: [%d->%d] evt=%d\n", trlK, range->trl0, range->trlF, trl->evt.id);
 #ifdef CEU_TESTS
         _ceu_tests_trails_visited_++;
@@ -650,7 +653,7 @@ static void ceu_bcast_mark (tceu_nstk stk_level, tceu_evt* evt, tceu_range* rang
                     0,
                     (tceu_ntrl)(((tceu_code_mem*)trl->evt.mem)->trails_n-1)
                 };
-                ceu_bcast_mark(stk_level, evt, &_range);
+                ceu_bcast_mark(stk_level, evt, evt_params, &_range);
                 break;
             }
 
@@ -660,83 +663,79 @@ static void ceu_bcast_mark (tceu_nstk stk_level, tceu_evt* evt, tceu_range* rang
                 while (cur != &trl->evt.pak->first) {
                     tceu_range _range = { &cur->mem[0],
                                               0, (tceu_ntrl)((&cur->mem[0])->trails_n-1) };
-                    ceu_bcast_mark(stk_level, evt, &_range);
+                    ceu_bcast_mark(stk_level, evt, evt_params, &_range);
                     cur = cur->nxt;
                 }
                 break;
             }
 #endif
 
-#if 0
+#ifdef CEU_FEATURES_PAUSE
             case CEU_INPUT__PAUSE_BLOCK: {
                 u8 was_paused = trl->pse_paused;
-                if (occ->evt.id==trl->pse_evt.id &&
-                    (occ->evt.id<CEU_EVENT__MIN || occ->evt.mem==trl->pse_evt.mem))
+                if ( (evt->id == trl->pse_evt.id)                           &&
+                     (evt->id<CEU_EVENT__MIN || evt->mem==trl->pse_evt.mem) &&
+                     (*((u8*)evt_params) != trl->pse_paused) )
                 {
-                    if (*((u8*)occ->params) != trl->pse_paused) {
-                        trl->pse_paused = *((u8*)occ->params);
+                    trl->pse_paused = *((u8*)evt_params);
 
-                        if (trl->pse_paused) {
-                            tceu_evt_occ occ2 = { {CEU_INPUT__PAUSE,{NULL}}, CEU_APP.seq, occ->params,
-                                                  {range.mem,
-                                                   (tceu_ntrl)(trlK+1), (tceu_ntrl)(trlK+trl->pse_skip)}
-                                                };
-                            ceu_bcast(&occ2, &_stk, 0);
-                        } else {
-                            CEU_APP.wclk_min_set = 0;   /* maybe resuming a timer, let it be the minimum set */
-                            tceu_evt_occ occ2 = { {CEU_INPUT__RESUME,{NULL}}, CEU_APP.seq, occ->params,
-                                                  {range.mem,
-                                                   (tceu_ntrl)(trlK+1), (tceu_ntrl)(trlK+trl->pse_skip)}
-                                                };
-                            ceu_bcast(&occ2, &_stk, 0);
-                        }
-                        ceu_assert_ex(_stk.is_alive, "bug found", CEU_TRACE_null);
+                    tceu_evt evt_;
+                    tceu_range range_ = { range->mem,
+                                          (tceu_ntrl)(trlK+1), (tceu_ntrl)(trlK+trl->pse_skip) };
+                    if (trl->pse_paused) {
+                        evt_.id = CEU_INPUT__PAUSE;
+                    } else {
+                        CEU_APP.wclk_min_set = 0;   /* maybe resuming a timer, let it be the minimum set */
+                        evt_.id = CEU_INPUT__RESUME;
                     }
+                    ceu_bcast_mark(stk_level, &evt_, NULL, &range_);
                 }
                 /* don't skip if pausing now */
-                if (was_paused && occ->evt.id!=CEU_INPUT__CLEAR) {
+                if (was_paused && evt->id!=CEU_INPUT__CLEAR) {
                                   /* also don't skip on CLEAR (going reverse) */
-                    trlK += (trl->pse_skip - 1);
-                    trl  += (trl->pse_skip - 1);
-                    goto _CEU_AWAKE_NO_;
+                    trlK += trl->pse_skip;
                 }
                 break;
             }
 #endif
-        }
 
-        if (evt->id == CEU_INPUT__CLEAR) {
-            if (trl->evt.id == CEU_INPUT__FINALIZE) {
+            default: {
+                if (evt->id == CEU_INPUT__CLEAR) {
+                    if (trl->evt.id == CEU_INPUT__FINALIZE) {
 //printf("AWK %d %d\n", trlK, trl->lbl);
-                goto _CEU_AWAKE_YES_;
-            } else {
+                        goto _CEU_AWAKE_YES_;
+                    } else {
 //printf("CLR %d %d\n", trlK, trl->lbl);
-                trl->evt.id = CEU_INPUT__NONE;
-            }
-        } else if (evt->id==CEU_INPUT__CODE_TERMINATED && trl->evt.id==CEU_INPUT__PROPAGATE_CODE) {
-            if (trl->evt.mem == evt->mem) {
-                goto _CEU_AWAKE_YES_;
-            }
-        } else if (trl->evt.id == evt->id) {
-            if (evt->id==CEU_INPUT__PAUSE || evt->id==CEU_INPUT__RESUME) {
-                goto _CEU_AWAKE_YES_;
-            }
-            if (trl->evt.id>CEU_EVENT__MIN || trl->evt.id==CEU_INPUT__CODE_TERMINATED) {
-                if (trl->evt.mem == evt->mem) {
-                    goto _CEU_AWAKE_YES_;   /* internal event matches "mem" */
+                        trl->evt.id = CEU_INPUT__NONE;
+                    }
+                } else if (evt->id==CEU_INPUT__CODE_TERMINATED && trl->evt.id==CEU_INPUT__PROPAGATE_CODE) {
+                    if (trl->evt.mem == evt->mem) {
+                        goto _CEU_AWAKE_YES_;
+                    }
+                } else if (trl->evt.id == evt->id) {
+#ifdef CEU_FEATURES_PAUSE
+                    if (evt->id==CEU_INPUT__PAUSE || evt->id==CEU_INPUT__RESUME) {
+                        goto _CEU_AWAKE_YES_;
+                    }
+#endif
+                    if (trl->evt.id>CEU_EVENT__MIN || trl->evt.id==CEU_INPUT__CODE_TERMINATED) {
+                        if (trl->evt.mem == evt->mem) {
+                            goto _CEU_AWAKE_YES_;   /* internal event matches "mem" */
+                        }
+                    } else {
+                        if (evt->id != CEU_INPUT__NONE) {
+                            goto _CEU_AWAKE_YES_;       /* external event matches */
+                        }
+                    }
                 }
-            } else {
-                if (evt->id != CEU_INPUT__NONE) {
-                    goto _CEU_AWAKE_YES_;       /* external event matches */
-                }
-            }
-        }
 
-        continue;
+                continue;
 
 _CEU_AWAKE_YES_:
-        trl->evt.id    = CEU_INPUT__STACKED;
-        trl->stk_level = stk_level;
+                trl->evt.id    = CEU_INPUT__STACKED;
+                trl->stk_level = stk_level;
+            }
+        }
     }
 }
 
@@ -883,7 +882,7 @@ void ceu_bcast (tceu_nstk stk_level, tceu_evt* evt, void* evt_params, tceu_range
     }
 
     //printf(">>> BCAST[%d]: %d\n", evt->id, stk_level);
-    ceu_bcast_mark(stk_level, evt, range);
+    ceu_bcast_mark(stk_level, evt, evt_params, range);
     while (1) {
         tceu_stk stk;
         int ret = ceu_bcast_exec(stk_level, evt, evt_params, range, &stk);

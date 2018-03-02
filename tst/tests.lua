@@ -531,6 +531,7 @@ escape v+1;
     run = {['~>A']=11},
 }
 --do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -29300,6 +29301,7 @@ pause/if a do
 end
 escape 1;
 ]],
+    _opts = { ceu_features_pause='true' },
     run = 1,
 }
 
@@ -29309,6 +29311,7 @@ pause/if a do
 end
 escape 1;
 ]],
+    _opts = { ceu_features_pause='true' },
     stmts = 'line 2 : invalid `pause/if` : unexpected context for variable "a"',
 }
 
@@ -29318,6 +29321,7 @@ pause/if A do
 end
 escape 0;
 ]],
+    _opts = { ceu_features_pause='true' },
     stmts = 'line 2 : invalid `pause/if` : expected event of type `bool`',
 }
 
@@ -29327,6 +29331,7 @@ pause/if A do
 end
 escape 1;
 ]],
+    _opts = { ceu_features_pause='true' },
     run = 1,
 }
 
@@ -29335,6 +29340,7 @@ event none a;
 var int v = await a;
 escape 0;
 ]],
+    _opts = { ceu_features_pause='true' },
     --env = 'line 2 : event type must be numeric',
     --env = 'line 2 : invalid attribution',
     --env = 'line 2 : arity mismatch',
@@ -29348,6 +29354,7 @@ pause/if a do
 end
 escape 0;
 ]],
+    _opts = { ceu_features_pause='true' },
     stmts = 'line 2 : invalid `pause/if` : expected event of type `bool`',
     --env = 'line 2 : event type must be numeric',
     --env = 'line 2 : arity mismatch',
@@ -29370,10 +29377,18 @@ with
     end
 end
 ]],
+    _opts = { ceu_features_pause='true' },
     stmts = 'line 6 : invalid `emit` : types mismatch : "(bool)" <= "(int)"',
 }
 
---]=====]
+Test { [[
+event bool a;
+    pause/if a do
+    end
+]],
+    props_ = 'line 2 : `pause/if` support is disabled',
+}
+
 Test { [[
 input int A; input int  B;
 event bool a;
@@ -29389,6 +29404,7 @@ with
     end
 end
 ]],
+    _opts = { ceu_features_pause='true' },
     _ana = {
         unreachs = 1,
     },
