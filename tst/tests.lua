@@ -36175,7 +36175,6 @@ escape 1;
     dcls = 'line 2 : invalid call : expected `code/tight` : got `code/await` (/tmp/tmp.ceu:2)',
 }
 
---]=====]
 Test { [[
 code/await Tx (none)->none do end
 await Tx();
@@ -37598,6 +37597,7 @@ escape 1;
 }
 
 -- test valgrind used to fail
+--]=====]
 Test { [[
 code/await Ff (none) -> (var& int xxx) -> none do
     var int v = 10;

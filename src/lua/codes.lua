@@ -586,6 +586,14 @@ assert(not obj, 'not implemented')
         tceu_code_mem_]]..ID_abs.dcl.id_..[[* __ceu_new_mem =
             (tceu_code_mem_]]..ID_abs.dcl.id_..[[*) &__ceu_new->mem[0];
         ]]..CODES.F.__abs(me, '__ceu_new_mem', '(&'..V(pool)..')')..[[
+]])
+        HALT(me, {
+            { ['evt.id']    = 'CEU_INPUT__STACKED' },
+            { ['stk_level'] = '_ceu_stk_level' },
+            { lbl = me.lbl_out.id },
+            lbl = me.lbl_out.id,
+        }, 1)
+        LINE(me, [[
     } else {
 ]])
         if set and to.dcl[1]=='&' then
@@ -665,14 +673,16 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__FINALIZE;
 _ceu_mem->_trails[]]..me.trails[1]..[[].evt.mem   = _ceu_mem;
 _ceu_mem->_trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_fin.id..[[;
 _ceu_mem->_trails[]]..me.trails[1]..[[].clr_range =
-    (tceu_evt_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[1]..[[ };
+    (tceu_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[1]..[[ };
 
+#if 0
 if (0) {
     case ]]..me.lbl_fin.id..[[:
         ]]..V(pool)..[[.n_traversing--;
         ceu_code_mem_dyn_gc(&]]..V(pool)..[[);
         return;
 }
+#endif
 {
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
     ]]..cur..[[ = ]]..V(pool)..[[.first.nxt;
@@ -685,14 +695,16 @@ if (0) {
             local abs = TYPES.abs_dcl(i.info.tp,'Code')
             SET(me, i, '((tceu_code_mem_'..abs.id_..'*)'..cur..'->mem)', nil,true, {is_bind=true},nil)
             LINE(me, [[
-            _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].evt.id    = CEU_INPUT__CODE_TERMINATED;
-            _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].evt.mem   = ]]..cur..'->mem'..[[;
-            _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].lbl       = ]]..me.lbl_null.id..[[;
+#if 0
+            _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].evt.id  = CEU_INPUT__CODE_TERMINATED;
+            _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].evt.mem = ]]..cur..'->mem'..[[;
+            _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].lbl     = ]]..me.lbl_null.id..[[;
             if (0) {
                 case ]]..me.lbl_null.id..[[:;
                     ]]..V(i,{is_bind=true})..[[ = NULL;
                     return;
             }
+#endif
 ]])
         end
         CONC(me, body)
@@ -700,6 +712,7 @@ if (0) {
         LINE(me, [[
         }
         ]]..cur..[[ = ]]..cur..[[->nxt;
+        *_ceu_trlK = ]]..(me.trails[1]-1)..[[;
     }
 }
 ]])
@@ -957,7 +970,6 @@ while (1) {
     ceu_assert_ex(]]..V(i)..op..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n)..[[,
         "control variable overflow", CEU_TRACE(-2));
     ]]..max.inc..[[
-//printf("KKK %d %d\n", *_ceu_trlK, ]]..(me.trails[1]-1)..[[);
     *_ceu_trlK = ]]..(me.trails[1]-1)..[[;
 }
 ]])

@@ -89,6 +89,9 @@ F = {
 
     ---------------------------------------------------------------------------
 
+    Abs_Spawn_Pool = function (me)
+        me.lbl_out = new{'Await_Spawn_Pool__OUT'}
+    end,
     Abs_Spawn = function (me)
         me.lbl_out = new{'Await_Spawn__OUT'}
     end,

@@ -645,7 +645,7 @@ static void ceu_bcast_mark (tceu_nstk stk_level, tceu_evt* evt, void* evt_params
                 tceu_code_mem_dyn* cur = trl->evt.pak->first.nxt;
                 while (cur != &trl->evt.pak->first) {
                     tceu_range _range = { &cur->mem[0],
-                                              0, (tceu_ntrl)((&cur->mem[0])->trails_n-1) };
+                                          0, (tceu_ntrl)((&cur->mem[0])->trails_n-1) };
                     ceu_bcast_mark(stk_level, evt, evt_params, &_range);
                     cur = cur->nxt;
                 }
@@ -789,7 +789,7 @@ static int ceu_bcast_exec (tceu_nstk stk_level, tceu_evt* evt, void* evt_params,
                 tceu_code_mem_dyn* cur = trl->evt.pak->first.nxt;
                 while (cur != &trl->evt.pak->first) {
                     tceu_range range_ = { &cur->mem[0],
-                                              0, (tceu_ntrl)((&cur->mem[0])->trails_n-1) };
+                                          0, (tceu_ntrl)((&cur->mem[0])->trails_n-1) };
                     if (ceu_bcast_exec(stk_level, evt, evt_params, &range_, stk)) {
                         return 1;
                     }
