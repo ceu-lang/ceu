@@ -483,7 +483,7 @@ static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
 
 /*****************************************************************************/
 
-static int ceu_lbl (tceu_nstk _ceu_stk_level, void* _ceu_evt_params, tceu_stk* _ceu_stk, tceu_code_mem* _ceu_mem, tceu_nlbl _ceu_lbl, tceu_ntrl* _ceu_trlK);
+static int ceu_lbl (tceu_nstk _ceu_stk_level, tceu_evt* _ceu_evt, void* _ceu_evt_params, tceu_stk* _ceu_stk, tceu_code_mem* _ceu_mem, tceu_nlbl _ceu_lbl, tceu_ntrl* _ceu_trlK);
 
 === CEU_NATIVE_POS ===
 
@@ -578,7 +578,7 @@ int ceu_threads_gc (int force_join) {
 
 #define CEU_GOTO(lbl) {_ceu_lbl=lbl; goto _CEU_LBL_;}
 
-static int ceu_lbl (tceu_nstk _ceu_stk_level, void* _ceu_evt_params, tceu_stk* _ceu_stk, tceu_code_mem* _ceu_mem, tceu_nlbl _ceu_lbl, tceu_ntrl* _ceu_trlK)
+static int ceu_lbl (tceu_nstk _ceu_stk_level, tceu_evt* _ceu_evt, void* _ceu_evt_params, tceu_stk* _ceu_stk, tceu_code_mem* _ceu_mem, tceu_nlbl _ceu_lbl, tceu_ntrl* _ceu_trlK)
 {
 #define CEU_TRACE(n) ((tceu_trace){&_ceu_mem->trace,__FILE__,__LINE__+(n)})
 #ifdef CEU_STACK_MAX
@@ -803,7 +803,7 @@ static int ceu_bcast_exec (tceu_nstk stk_level, tceu_evt* evt, void* evt_params,
                 if (trl->evt.id==CEU_INPUT__STACKED && trl->stk_level==stk_level) {
                     trl->evt.id = CEU_INPUT__NONE;
 //printf(">>> trlK = %d\n", trlK);
-                    if (ceu_lbl(stk_level, evt_params, stk, range->mem, trl->lbl, &trlK)) {
+                    if (ceu_lbl(stk_level, evt, evt_params, stk, range->mem, trl->lbl, &trlK)) {
                         return 1;
                     }
 //printf("<<< trlK = %d\n", trlK);

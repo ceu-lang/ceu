@@ -1200,13 +1200,15 @@ ceu_assert(]]..V(to,{is_bind=true})..[[!=NULL, "call failed");
                 --  to
                 -- _spw = spawn Ff();
                 -- x = await _spw;
+error'oi'
                 SET(me, to, CUR('__mem_'..spawn.n)..'._ret', nil,true)
             else
                 LINE(me, [[
-if (_ceu_occ!=NULL && _ceu_occ->evt.id==CEU_INPUT__CODE_TERMINATED) {
+if (_ceu_evt->id == CEU_INPUT__CODE_TERMINATED) {
     ]]..V(to)..[[.is_set = 1;
-    ]]..V(to)..[[.value  = ((tceu_code_mem_]]..abs.id_..[[*)_ceu_occ->evt.mem)->_ret;
-} else {
+    ]]..V(to)..[[.value  = ((tceu_code_mem_]]..abs.id_..[[*)_ceu_evt->mem)->_ret;
+} else
+{
     ]]..V(to)..[[.is_set = 0;
 }
 ]])

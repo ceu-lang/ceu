@@ -51,7 +51,7 @@ TRAILS.F = {
             me.trails_n = me.trails_n + sub.trails_n
         end
         if me.tag == 'Par_Or' then
-            me.trails_n = me.trails_n + 1   -- CLEAR
+            me.trails_n = me.trails_n + 1   -- CLEAR continuation
         end
     end,
 
@@ -98,6 +98,7 @@ G = {
             sub.trails = {}
             if i == 1 then
                 sub.trails[1] = me.trails[1] + (me.tag=='Par_Or' and 1 or 0)
+                                                                -- CLEAR continuation
             else
                 local pre = me[i-1]
                 sub.trails[1] = pre.trails[1] + pre.trails_n
@@ -112,16 +113,16 @@ G = {
         local is_alias,_,_,dim = unpack(me)
         if (not dim.is_const) and (not is_alias) then
             TRAILS.F.__ok = true
-            me.trails[1] = me.trails[1] + 1
-            me.trails[2] = me.trails[2] + 1
+            me.trails[1] = me.trails[1] + 1 + 1 -- (+1 CLEAR continuation)
+            me.trails[2] = me.trails[2] + 1 + 1 -- (+1 CLEAR continuation)
         end
     end,
     Pool_Finalize = function (me)
         if TRAILS.F.__ok then
             TRAILS.F.__ok = false
             local fin = AST.par(me, 'Finalize_Case')
-            fin.trails[1] = fin.trails[1] - 1
-            fin.trails[2] = fin.trails[2] - 1
+            fin.trails[1] = fin.trails[1] - 1 - 1 -- (-1 CLEAR continuation)
+            fin.trails[2] = fin.trails[2] - 1 - 1 -- (-1 CLEAR continuation)
         end
     end,
 }

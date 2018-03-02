@@ -37597,7 +37597,6 @@ escape 1;
 }
 
 -- test valgrind used to fail
---]=====]
 Test { [[
 code/await Ff (none) -> (var& int xxx) -> none do
     var int v = 10;
@@ -40384,6 +40383,7 @@ escape ret;
     --run = 10,
 }
 
+--]=====]
 Test { [[
 code/await Ff (none) -> (var& int x) -> NEVER do
     code/await Gg (none) -> (var& int x) -> NEVER do
