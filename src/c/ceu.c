@@ -640,23 +640,6 @@ static void ceu_bcast_mark (tceu_nstk stk_level, tceu_evt* evt, void* evt_params
 #endif
         switch (trl->evt.id)
         {
-            case CEU_INPUT__PROPAGATE_CODE: {
-#if 0
-                // TODO: simple optimization that could be done
-                //          - do it also for POOL?
-                if (occ->evt.id==CEU_INPUT__CODE_TERMINATED && occ->params==trl->evt.mem ) {
-                    // dont propagate when I am terminating
-                } else
-#endif
-                tceu_range _range = {
-                    (tceu_code_mem*)trl->evt.mem,
-                    0,
-                    (tceu_ntrl)(((tceu_code_mem*)trl->evt.mem)->trails_n-1)
-                };
-                ceu_bcast_mark(stk_level, evt, evt_params, &_range);
-                break;
-            }
-
 #ifdef CEU_FEATURES_POOL
             case CEU_INPUT__PROPAGATE_POOL: {
                 tceu_code_mem_dyn* cur = trl->evt.pak->first.nxt;
@@ -699,16 +682,33 @@ static void ceu_bcast_mark (tceu_nstk stk_level, tceu_evt* evt, void* evt_params
             }
 #endif
 
+            case CEU_INPUT__PROPAGATE_CODE: {
+#if 0
+                // TODO: simple optimization that could be done
+                //          - do it also for POOL?
+                if (occ->evt.id==CEU_INPUT__CODE_TERMINATED && occ->params==trl->evt.mem ) {
+                    // dont propagate when I am terminating
+                } else
+#endif
+                tceu_range _range = {
+                    (tceu_code_mem*)trl->evt.mem,
+                    0,
+                    (tceu_ntrl)(((tceu_code_mem*)trl->evt.mem)->trails_n-1)
+                };
+                ceu_bcast_mark(stk_level, evt, evt_params, &_range);
+                //break;    (may awake from CODE_TERMINATED)
+            }
+
             default: {
                 if (evt->id == CEU_INPUT__CLEAR) {
                     if (trl->evt.id == CEU_INPUT__FINALIZE) {
 //printf("AWK %d %d\n", trlK, trl->lbl);
                         goto _CEU_AWAKE_YES_;
                     } else {
-//printf("CLR %d %d\n", trlK, trl->lbl);
                         trl->evt.id = CEU_INPUT__NONE;
                     }
                 } else if (evt->id==CEU_INPUT__CODE_TERMINATED && trl->evt.id==CEU_INPUT__PROPAGATE_CODE) {
+//printf("TERM %d %d\n", trlK, trl->lbl);
                     if (trl->evt.mem == evt->mem) {
                         goto _CEU_AWAKE_YES_;
                     }
@@ -783,6 +783,7 @@ static int ceu_bcast_exec (tceu_nstk stk_level, tceu_evt* evt, void* evt_params,
                 }
                 break;
             }
+
 #ifdef CEU_FEATURES_POOL
             case CEU_INPUT__PROPAGATE_POOL: {
                 tceu_code_mem_dyn* cur = trl->evt.pak->first.nxt;
@@ -793,44 +794,6 @@ static int ceu_bcast_exec (tceu_nstk stk_level, tceu_evt* evt, void* evt_params,
                         return 1;
                     }
                     cur = cur->nxt;
-                }
-                break;
-            }
-#endif
-
-#if 0
-            /* skip "paused" blocks || set "paused" block */
-            case CEU_INPUT__PAUSE_BLOCK: {
-                u8 was_paused = trl->pse_paused;
-                if (occ->evt.id==trl->pse_evt.id &&
-                    (occ->evt.id<CEU_EVENT__MIN || occ->evt.mem==trl->pse_evt.mem))
-                {
-                    if (*((u8*)occ->params) != trl->pse_paused) {
-                        trl->pse_paused = *((u8*)occ->params);
-
-                        if (trl->pse_paused) {
-                            tceu_evt_occ occ2 = { {CEU_INPUT__PAUSE,{NULL}}, CEU_APP.seq, occ->params,
-                                                  {range.mem,
-                                                   (tceu_ntrl)(trlK+1), (tceu_ntrl)(trlK+trl->pse_skip)}
-                                                };
-                            ceu_bcast(&occ2, &_stk, 0);
-                        } else {
-                            CEU_APP.wclk_min_set = 0;   /* maybe resuming a timer, let it be the minimum set */
-                            tceu_evt_occ occ2 = { {CEU_INPUT__RESUME,{NULL}}, CEU_APP.seq, occ->params,
-                                                  {range.mem,
-                                                   (tceu_ntrl)(trlK+1), (tceu_ntrl)(trlK+trl->pse_skip)}
-                                                };
-                            ceu_bcast(&occ2, &_stk, 0);
-                        }
-                        ceu_assert_ex(_stk.is_alive, "bug found", CEU_TRACE_null);
-                    }
-                }
-                /* don't skip if pausing now */
-                if (was_paused && occ->evt.id!=CEU_INPUT__CLEAR) {
-                                  /* also don't skip on CLEAR (going reverse) */
-                    trlK += trl->pse_skip;
-                    trl  += trl->pse_skip;
-                    goto _CEU_AWAKE_NO_;
                 }
                 break;
             }

@@ -63,7 +63,8 @@ F = {
 
     Code = function (me)
         local mods = unpack(me)
-        me.lbl_in = new{'Code_'..me.id_, true}
+        me.lbl_in  = new{'Code_'..me.id_, true}
+        me.lbl_out = new{'Code_'..me.id_..'__OUT'}
         if mods.await then
             me.lbl_clr = new{'Code__CLR'}
         end

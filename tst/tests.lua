@@ -531,7 +531,6 @@ escape v+1;
     run = {['~>A']=11},
 }
 --do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -29428,6 +29427,7 @@ pause/if A do
     escape v;
 end
 ]],
+    _opts = { ceu_features_pause='true' },
     _ana = {
         unreachs = 1,
     },
@@ -29463,6 +29463,7 @@ with
 end
 escape ret;
 ]],
+    _opts = { ceu_features_pause='true' },
     stmts = 'line 7 : invalid `emit` : types mismatch : "(bool)" <= "(int)"',
 }
 
@@ -29477,6 +29478,7 @@ var int ret = 0;
     end
 escape ret;
 ]],
+    _opts = { ceu_features_pause='true' },
     run = {
         ['1~>B;1~>B'] = 1,
         ['false~>A ; 1~>B'] = 1,
@@ -29510,6 +29512,7 @@ with
 end
 escape ret;
 ]],
+    _opts = { ceu_features_pause='true' },
     run = {
         ['1~>Z'] = 1,
         ['1~>A ; 10~>Z ; 1~>B ; 10~>Z ; 0~>B ; 10~>Z ; 0~>A ; 5~>Z'] = 5,
@@ -29536,6 +29539,7 @@ with
 end
 escape ret;
 ]],
+    _opts = { ceu_features_pause='true' },
     run = {
         ['~>Z ; 1~>B'] = 1,
         ['0~>A ; 1~>B ; ~>Z ; 2~>B'] = 2,
@@ -29562,6 +29566,7 @@ with
 end
 escape ret;
 ]],
+    _opts = { ceu_features_pause='true' },
     _ana = {
         acc = 1,
     },
@@ -29590,6 +29595,7 @@ with
 end
 escape ret;
 ]],
+    _opts = { ceu_features_pause='true' },
     _ana = {
         acc = 1,     -- TODO: 0
     },
@@ -29616,6 +29622,7 @@ with
 end
 escape ret;
 ]],
+    _opts = { ceu_features_pause='true' },
     run = {
         ['1~>A ; 10~>B ; 1~>C'] = 50,
     },
@@ -29650,6 +29657,7 @@ with
 end
 escape ret;
 ]],
+    _opts = { ceu_features_pause='true' },
     run = {
         ['~>1us;0~>A;~>1us;0~>A;~>19us'] = 12,
         --['~>1us;1~>A;~>1s;0~>A;~>19us'] = 11,
@@ -29668,6 +29676,7 @@ var int i;
 end
 escape 1;
 ]],
+    _opts = { ceu_features_pause='true' },
     run = 1,
 }
 
@@ -29688,6 +29697,7 @@ with
     escape 1;
 end
 ]],
+    _opts = { ceu_features_pause='true' },
     _ana = {acc=true},
     run = {['~>2s']=1},
 }
@@ -29710,6 +29720,7 @@ with
     escape 1;
 end
 ]],
+    _opts = { ceu_features_pause='true' },
     _ana = {acc=true},
     run = {['~>2s']=-1},
 }
@@ -29757,6 +29768,7 @@ with
 end
 escape ret;
 ]],
+    _opts = { ceu_features_pause='true' },
     wrn = true,
     run = 46,
 }
@@ -29806,6 +29818,7 @@ with
 end
 escape ret;
 ]],
+    _opts = { ceu_features_pause='true' },
     -- todo: this examples uses trails[4], trails[6], but not trails[5]
     wrn = true,
     run = 46,
@@ -31021,7 +31034,7 @@ var[n] byte us = [0,1,2,3,4,5,6,7,8,9];
 us[n-1] = 1;
 escape _CEU_APP.root.__mem.trails_n;
 ]],
-    run = 2,
+    run = 3,
 }
 Test { [[
 native _CEU_APP;
@@ -36162,6 +36175,7 @@ escape 1;
     dcls = 'line 2 : invalid call : expected `code/tight` : got `code/await` (/tmp/tmp.ceu:2)',
 }
 
+--]=====]
 Test { [[
 code/await Tx (none)->none do end
 await Tx();
@@ -36271,6 +36285,7 @@ end
 
 escape _V;
 ]],
+    _opts = { ceu_features_pause='true' },
     _ana = {acc=true},
     run = {['~>5s']=1},
 }

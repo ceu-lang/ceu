@@ -62,7 +62,7 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].lbl       = ]]..lbl.id..[[;
     CASE(me, lbl)
 end
 
-local function HALT (me, T)
+local function HALT (me, T, ret)
     T = T or {}
     for _, t in ipairs(T) do
         local id, val = next(t)
@@ -76,7 +76,7 @@ _ceu_mem->_trails[]]..(T.trail or me.trails[1])..'].'..id..' = '..val..[[;
 ]])
     end
     LINE(me, [[
-return 0;
+return ]]..(ret or 0)..[[;
 ]])
     if T.lbl then
         LINE(me, [[
@@ -411,20 +411,20 @@ ceu_assert(0, "reached end of `code`");
 
         -- CODE/DELAYED
         if mods.await then
---[=[
             LINE(me, [[
+_ceu_mem->_trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__STACKED;
+_ceu_mem->_trails[]]..me.trails[1]..[[].stk_level = _ceu_stk_level;
+_ceu_mem->_trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_out.id..[[;
 {
-    tceu_evt_occ __ceu_occ = {
-        { CEU_INPUT__CODE_TERMINATED, {_ceu_mem} },
-        _ceu_mem,
-        { (tceu_code_mem*)&CEU_APP.root, 0,
-          (tceu_ntrl)(CEU_APP.root._mem.trails_n-1) }
-    };
-    tceu_stk __ceu_stk = { 1, 0, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
-    ceu_bcast(&__ceu_occ, &__ceu_stk, 1);
-    CEU_LONGJMP_JMP((&__ceu_stk));
+    tceu_evt   __ceu_evt   = { CEU_INPUT__CODE_TERMINATED, {_ceu_mem} };
+    tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N-1 };
+    _ceu_stk->evt    = __ceu_evt;
+    _ceu_stk->range  = __ceu_range;
+    return 1;
 }
-
+]])
+            CASE(me, me.lbl_out)
+            LINE(me, [[
 /* TODO: if return value can be stored with "ceu_bcast", we can "free" first
          and remove this extra stack level */
 
@@ -438,7 +438,6 @@ ceu_assert(0, "reached end of `code`");
     }
 #endif
 ]])
-]=]
         end
         LINE(me, [[
     return 0; /* HALT(me) */
@@ -487,18 +486,14 @@ assert(not obj, 'not implemented')
 
 }
 
-_ceu_mem->_trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__STACKED;
-_ceu_mem->_trails[]]..me.trails[1]..[[].stk_level = _ceu_stk_level;
-_ceu_mem->_trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_out.id..[[;
 {
     tceu_evt   __ceu_evt   = {CEU_INPUT__NONE, {NULL}};
     tceu_range __ceu_range = { (tceu_code_mem*)]]..mem..[[, 0, ]]..ID_abs.dcl.trails_n..[[-1 };
     _ceu_stk->evt   = __ceu_evt;
     _ceu_stk->range = __ceu_range;
-    return 1;
+    //return 1; (later, after deciding for spawn/await)
 }
 ]]
-        --CASE(me, me.lbl_out)
         return ret
     end,
 
@@ -522,7 +517,7 @@ _ceu_mem->_trails[]]..(to.dcl.trails[1])..[[].evt.mem =  &]]..CUR('__mem_'..me.n
             { lbl = me.lbl_out.id },
             lbl = me.lbl_out.id,
             exec = CODES.F.__abs(me, '(&'..CUR(' __mem_'..me.n)..')', 'NULL'),
-        })
+        }, 1)
     end,
 
 -- TODO: mover p/ Abs_Await
