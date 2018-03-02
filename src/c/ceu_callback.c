@@ -122,8 +122,13 @@ static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
 #endif
 #endif
 
-#define ceu_dbg_log(msg)  { ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg), CEU_TRACE(0)); \
-                            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n",  CEU_TRACE(0)); }
+#ifndef ceu_assert_sys
+#define ceu_assert_sys(v,msg)   \
+    if (!(v)) {                 \
+        ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)msg, CEU_TRACE_null);  \
+        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL, CEU_TRACE_null);      \
+    }
+#endif
 
 enum {
     CEU_CALLBACK_START,

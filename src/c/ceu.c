@@ -883,7 +883,7 @@ void ceu_bcast (tceu_nstk stk_level, tceu_evt* evt, void* evt_params, tceu_range
         tceu_stk stk;
         int ret = ceu_bcast_exec(stk_level, evt, evt_params, range, &stk);
         if (ret) {
-            //ceu_assert(stk_level < 255, "too many stack levels");
+            ceu_assert_sys(stk_level < 255, "too many stack levels");
             ceu_bcast(stk_level+1, &stk.evt, stk.params, &stk.range);
         } else {
             break;

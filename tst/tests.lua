@@ -395,6 +395,37 @@ escape 1;
 }
 ]==]
 
+-- BUG: scope of emit args is dead
+-- MARK_02
+Test { [[
+input none OS_START;
+event int e;
+var int ret = 1;
+par/or do
+    do
+        var int x = 2;
+        par/or do
+            await OS_START;
+            emit e(x);
+        with
+            await e;
+        end
+    end
+    do
+        var int x = 10;
+        await 1s;
+        ret = x;
+    end
+with
+    var int v = await e;
+    ret = v;
+end
+escape ret;
+]],
+    --run = { ['~>2s']=10 },
+    run = { ['~>2s']=2 },
+}
+
 -- MARK_01
 -- BUG #100
 Test { [[
@@ -3382,7 +3413,7 @@ spawn do
 end
 escape _CEU_APP.root.__mem.trails_n;
 ]],
-    run = 2,
+    run = 3,
 }
 Test { [[
 native _CEU_APP;
@@ -3392,7 +3423,7 @@ spawn do
 end
 escape _CEU_APP.root.__mem.trails_n;
 ]],
-    run = 2,
+    run = 3,
 }
 Test { [[
 native _CEU_APP;
@@ -3403,7 +3434,7 @@ spawn do
 end
 escape _CEU_APP.root.__mem.trails_n;
 ]],
-    run = 3,
+    run = 5,
 }
 --<<< SPAWN / BLOCK
 
@@ -6988,6 +7019,7 @@ escape x;
 
 -->>> INTERNAL EVENTS
 
+--]=====]
 Test { [[
 event none e;
 var int i;
@@ -6996,9 +7028,9 @@ loop i in [0->256[ do
 end
 escape 1;
 ]],
-    _opts = { ceu_features_trace='true' },
     wrn = true,
-    run = 'too many internal reactions',
+    --run = 'too many internal reactions',
+    run = 1,
 }
 
 Test { [[
@@ -8801,7 +8833,6 @@ end
     },
 }
 
---]=====]
 Test { [[
 native _V;
 native/pos do
@@ -8838,35 +8869,7 @@ escape _V;
 ]],
     run = { ['~>2s']=10 },
 }
-Test { [[
-input none OS_START;
-event int e;
-var int ret = 1;
-par/or do
-    do
-        var int x = 2;
-        par/or do
-            await OS_START;
-            emit e(x);
-        with
-            await e;
-        end
-    end
-    do
-        var int x = 10;
-        await 1s;
-        ret = x;
-    end
-with
-    var int v = await e;
-    ret = v;
-end
-escape ret;
-]],
-    --run = { ['~>2s']=10 },
-    run = { ['~>2s']=2 },
-}
-
+-- MARK_02
 Test { [[
 input int A;
 var int a=0; var int  b=0;
@@ -16013,6 +16016,22 @@ end;
     run = {
         ['2~>Z ; 1~>A ; 1~>X'] = 2,
     }
+}
+
+Test { [[
+input none OS_START;
+await OS_START;
+var int ret = 0;
+var int i;
+loop i in [0 -> 5[ do
+    par/and do
+    with
+        ret = ret + i;
+    end
+end
+escape ret;
+]],
+    run = 10,
 }
 
 Test { [[
