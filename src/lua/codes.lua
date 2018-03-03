@@ -482,8 +482,7 @@ assert(not obj, 'not implemented')
         ret = ret .. [[
     ]]..mem..[[->_mem._trails[0].evt.id = CEU_INPUT__STACKED;
     ]]..mem..[[->_mem._trails[0].level  = _ceu_level+1;
-    ]]..mem..[[->_mem._trails[0].lbl    = ]]..ID_abs.dcl.lbl_in.id..[[;
-
+    ]]..mem..[[->_mem._trails[0].lbl    = CEU_CODE_]]..ID_abs.dcl.id_..[[_to_lbl(]]..mem..[[);
 }
 
 {
