@@ -324,11 +324,9 @@ ceu_vector_setmax(&]]..V(ID_int,ctx)..[[, 0, 0);
 {
     /* first.nxt = first.prv = &first; */
     tceu_code_mem_dyn* __ceu_dyn = &]]..V(ID_int)..[[.first;
-    ]]..V(ID_int)..[[.first = (tceu_code_mem_dyn) { __ceu_dyn, __ceu_dyn, 1, {} };
+    ]]..V(ID_int)..[[.first = (tceu_code_mem_dyn) { __ceu_dyn, __ceu_dyn, {} };
 };
 ]]..V(ID_int)..[[.up_mem = _ceu_mem;
-]]..V(ID_int)..[[.up_trl = ]]..ID_int.dcl.trails[1]..[[;
-]]..V(ID_int)..[[.n_traversing = 0;
 ]])
         if dim == '[]' then
             LINE(me, [[
@@ -434,7 +432,7 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
     if (_ceu_mem->pak != NULL) {
         tceu_code_mem_dyn* __ceu_dyn =
             (tceu_code_mem_dyn*)(((byte*)(_ceu_mem)) - sizeof(tceu_code_mem_dyn));
-        ceu_code_mem_dyn_remove(&_ceu_mem->pak->pool, __ceu_dyn);
+        ceu_code_mem_dyn_free(&_ceu_mem->pak->pool, __ceu_dyn);
     }
 #endif
 ]])
@@ -456,11 +454,10 @@ assert(not obj, 'not implemented')
 {
     *((tceu_code_mem_]]..ID_abs.dcl.id_..'*)'..mem..') = '..V(Abs_Cons)..[[;
 #ifdef CEU_FEATURES_POOL
-    ]]..mem..[[->_mem.pak     = ]]..pak..[[;
+    ]]..mem..[[->_mem.pak    = ]]..pak..[[;
 #endif
-    ]]..mem..[[->_mem.up_mem  = ]]..((pak=='NULL' and '_ceu_mem')   or (pak..'->up_mem'))..[[;
-    ]]..mem..[[->_mem.up_trl  = ]]..((pak=='NULL' and me.trails[1]) or (pak..'->up_trl'))..[[;
-    ]]..mem..[[->_mem.depth   = ]]..ID_abs.dcl.depth..[[;
+    ]]..mem..[[->_mem.up_mem = ]]..((pak=='NULL' and '_ceu_mem') or (pak..'->up_mem'))..[[;
+    ]]..mem..[[->_mem.depth  = ]]..ID_abs.dcl.depth..[[;
 ]]
         if CEU.opts.ceu_features_trace then
             ret = ret .. LINE_DIRECTIVE(me) .. [[
@@ -576,7 +573,6 @@ assert(not obj, 'not implemented')
 
         LINE(me, [[
     if (__ceu_new != NULL) {
-        __ceu_new->is_alive = 1;
         __ceu_new->nxt = &]]..V(pool)..[[.first;
         ]]..V(pool)..[[.first.prv->nxt = __ceu_new;
         __ceu_new->prv = ]]..V(pool)..[[.first.prv;
@@ -637,16 +633,14 @@ assert(not obj, 'not implemented')
         tceu_stk __ceu_stk2 = { 1, 0, &__ceu_stk1, {__ceu_mem,]]..abs.trails[1]..','..abs.trails[2]..[[} };
         ceu_bcast(&__ceu_occ, &__ceu_stk2, 1);
 #ifdef CEU_FEATURES_POOL
-        if (__ceu_stk2.is_alive) {
 /* TODO: if return value can be stored with "ceu_bcast", we can "free" first
          and remove this extra stack level */
-            /* free */
-            /* TODO: classes w/o pools don't need this code */
-            if (__ceu_mem->pak != NULL) {
-                tceu_code_mem_dyn* __ceu_dyn =
-                    (tceu_code_mem_dyn*)(((byte*)(__ceu_mem)) - sizeof(tceu_code_mem_dyn));
-                ceu_code_mem_dyn_remove(&__ceu_mem->pak->pool, __ceu_dyn);
-            }
+        /* free */
+        /* TODO: classes w/o pools don't need this code */
+        if (__ceu_mem->pak != NULL) {
+            tceu_code_mem_dyn* __ceu_dyn =
+                (tceu_code_mem_dyn*)(((byte*)(__ceu_mem)) - sizeof(tceu_code_mem_dyn));
+            ceu_code_mem_dyn_remove(&__ceu_mem->pak->pool, __ceu_dyn);
         }
 #endif
 
@@ -666,18 +660,13 @@ assert(not obj, 'not implemented')
         local cur = CUR('__cur_'..me.n)
 
         LINE(me, [[
-ceu_assert(]]..V(pool)..[[.n_traversing < 255, "bug found");
-]]..V(pool)..[[.n_traversing++;
-_ceu_mem->_trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__FINALIZE;
-_ceu_mem->_trails[]]..me.trails[1]..[[].evt.mem   = _ceu_mem;
-_ceu_mem->_trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_fin.id..[[;
-_ceu_mem->_trails[]]..me.trails[1]..[[].clr_range =
-    (tceu_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[1]..[[ };
+_ceu_mem->_trails[]]..me.trails[1]..[[].evt.id  = CEU_INPUT__FINALIZE;
+_ceu_mem->_trails[]]..me.trails[1]..[[].evt.mem = _ceu_mem;
+_ceu_mem->_trails[]]..me.trails[1]..[[].lbl     = ]]..me.lbl_fin.id..[[;
 
 #if 0
 if (0) {
     case ]]..me.lbl_fin.id..[[:
-        ]]..V(pool)..[[.n_traversing--;
         ceu_code_mem_dyn_gc(&]]..V(pool)..[[);
         return;
 }
@@ -687,29 +676,14 @@ if (0) {
     ]]..cur..[[ = ]]..V(pool)..[[.first.nxt;
     while (]]..cur..[[ != &]]..V(pool)..[[.first)
     {
-        if (]]..cur..[[->is_alive)
-        {
 ]])
         if i.tag ~= 'ID_any' then
             local abs = TYPES.abs_dcl(i.info.tp,'Code')
             SET(me, i, '((tceu_code_mem_'..abs.id_..'*)'..cur..'->mem)', nil,true, {is_bind=true},nil)
-            LINE(me, [[
-#if 0
-            _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].evt.id  = CEU_INPUT__CODE_TERMINATED;
-            _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].evt.mem = ]]..cur..'->mem'..[[;
-            _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].lbl     = ]]..me.lbl_null.id..[[;
-            if (0) {
-                case ]]..me.lbl_null.id..[[:;
-                    ]]..V(i,{is_bind=true})..[[ = NULL;
-                    return;
-            }
-#endif
-]])
         end
         CONC(me, body)
         CASE(me, me.lbl_cnt)
         LINE(me, [[
-        }
         ]]..cur..[[ = ]]..cur..[[->nxt;
         *_ceu_trlK = ]]..(me.trails[1]-1)..[[;
     }
@@ -1659,8 +1633,6 @@ ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL, CEU_TRACE(0));
         LINE(me, [[
 _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__FINALIZE;
 _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_fin.id..[[;
-_ceu_mem->_trails[]]..me.trails[1]..[[].clr_range =
-    (tceu_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[2]..[[ };
 
 if (0) {
 ]])

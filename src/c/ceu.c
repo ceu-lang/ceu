@@ -73,16 +73,10 @@ typedef struct tceu_trl {
     struct {
         tceu_evt evt;
         union {
-            /* NORMAL, CEU_EVENT__MIN */
             struct {
                 tceu_nlbl lbl;
-                union {
-                    tceu_nstk  level;   /* CEU_INPUT__STACKED */
-                    tceu_range clr_range;   /* CEU_INPUT__CLEAR */
-                };
+                tceu_nstk level;       /* CEU_INPUT__STACKED */
             };
-
-            /* CEU_INPUT__PAUSE_BLOCK */
 #ifdef CEU_FEATURES_PAUSE
             struct {
                 tceu_evt  pse_evt;
@@ -108,7 +102,6 @@ typedef struct tceu_code_mem {
     struct tceu_pool_pak* pak;
 #endif
     struct tceu_code_mem* up_mem;
-    tceu_ntrl   up_trl;
     u8          depth;
 #ifdef CEU_FEATURES_TRACE
     tceu_trace  trace;
@@ -127,7 +120,6 @@ typedef struct tceu_code_mem {
 typedef struct tceu_code_mem_dyn {
     struct tceu_code_mem_dyn* prv;
     struct tceu_code_mem_dyn* nxt;
-    u8 is_alive: 1;
     tceu_code_mem mem[0];   /* actual tceu_code_mem is in sequence */
 } tceu_code_mem_dyn;
 
@@ -135,8 +127,6 @@ typedef struct tceu_pool_pak {
     tceu_pool         pool;
     tceu_code_mem_dyn first;
     tceu_code_mem*    up_mem;
-    tceu_ntrl         up_trl;
-    u8                n_traversing;
 } tceu_pool_pak;
 #endif
 
@@ -403,27 +393,15 @@ void ceu_code_mem_dyn_free (tceu_pool* pool, tceu_code_mem_dyn* cur) {
     }
 }
 
-void ceu_code_mem_dyn_remove (tceu_pool* pool, tceu_code_mem_dyn* cur) {
-    cur->is_alive = 0;
-
-    if (cur->mem[0].pak->n_traversing == 0) {
-        ceu_code_mem_dyn_free(pool, cur);
-    }
-}
-
 void ceu_code_mem_dyn_gc (tceu_pool_pak* pak) {
-    if (pak->n_traversing == 0) {
-        /* TODO-OPT: one element killing another is unlikely:
-                     set bit in pool when this happens and only
-                     traverses in this case */
-        tceu_code_mem_dyn* cur = pak->first.nxt;
-        while (cur != &pak->first) {
-            tceu_code_mem_dyn* nxt = cur->nxt;
-            if (!cur->is_alive) {
-                ceu_code_mem_dyn_free(&pak->pool, cur);
-            }
-            cur = nxt;
-        }
+    /* TODO-OPT: one element killing another is unlikely:
+                 set bit in pool when this happens and only
+                 traverses in this case */
+    tceu_code_mem_dyn* cur = pak->first.nxt;
+    while (cur != &pak->first) {
+        tceu_code_mem_dyn* nxt = cur->nxt;
+        ceu_code_mem_dyn_free(&pak->pool, cur);
+        cur = nxt;
     }
 }
 #endif
