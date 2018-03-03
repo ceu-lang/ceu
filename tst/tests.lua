@@ -531,6 +531,7 @@ escape v+1;
     run = {['~>A']=11},
 }
 --do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -40383,7 +40384,6 @@ escape ret;
     --run = 10,
 }
 
---]=====]
 Test { [[
 code/await Ff (none) -> (var& int x) -> NEVER do
     code/await Gg (none) -> (var& int x) -> NEVER do

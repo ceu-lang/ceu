@@ -48,14 +48,14 @@ end
 local function CLEAR (me, lbl)
     lbl = lbl or me.lbl_clr
     LINE(me, [[
-_ceu_mem->_trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__STACKED;
-_ceu_mem->_trails[]]..me.trails[1]..[[].stk_level = _ceu_stk_level;
-_ceu_mem->_trails[]]..me.trails[1]..[[].lbl       = ]]..lbl.id..[[;
+_ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__STACKED;
+_ceu_mem->_trails[]]..me.trails[1]..[[].level  = _ceu_level;
+_ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..lbl.id..[[;
 {
     tceu_evt   __ceu_evt   = {CEU_INPUT__CLEAR,{NULL}};
     tceu_range __ceu_range = { _ceu_mem, ]]..me.trails[1]..'+1, '..me.trails[2]..[[ };
-    _ceu_stk->evt   = __ceu_evt;
-    _ceu_stk->range = __ceu_range;
+    _ceu_nxt->evt   = __ceu_evt;
+    _ceu_nxt->range = __ceu_range;
     return 1;
 }
 ]])
@@ -412,14 +412,14 @@ ceu_assert(0, "reached end of `code`");
         -- CODE/DELAYED
         if mods.await then
             LINE(me, [[
-_ceu_mem->_trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__STACKED;
-_ceu_mem->_trails[]]..me.trails[1]..[[].stk_level = _ceu_stk_level;
-_ceu_mem->_trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_out.id..[[;
+_ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__STACKED;
+_ceu_mem->_trails[]]..me.trails[1]..[[].level  = _ceu_level;
+_ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
 {
     tceu_evt   __ceu_evt   = { CEU_INPUT__CODE_TERMINATED, {_ceu_mem} };
     tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N-1 };
-    _ceu_stk->evt    = __ceu_evt;
-    _ceu_stk->range  = __ceu_range;
+    _ceu_nxt->evt    = __ceu_evt;
+    _ceu_nxt->range  = __ceu_range;
     return 1;
 }
 ]])
@@ -480,17 +480,17 @@ assert(not obj, 'not implemented')
 ]]
         end
         ret = ret .. [[
-    ]]..mem..[[->_mem._trails[0].evt.id    = CEU_INPUT__STACKED;
-    ]]..mem..[[->_mem._trails[0].stk_level = _ceu_stk_level+1;
-    ]]..mem..[[->_mem._trails[0].lbl       = ]]..ID_abs.dcl.lbl_in.id..[[;
+    ]]..mem..[[->_mem._trails[0].evt.id = CEU_INPUT__STACKED;
+    ]]..mem..[[->_mem._trails[0].level  = _ceu_level+1;
+    ]]..mem..[[->_mem._trails[0].lbl    = ]]..ID_abs.dcl.lbl_in.id..[[;
 
 }
 
 {
     tceu_evt   __ceu_evt   = {CEU_INPUT__NONE, {NULL}};
     tceu_range __ceu_range = { (tceu_code_mem*)]]..mem..[[, 0, ]]..ID_abs.dcl.trails_n..[[-1 };
-    _ceu_stk->evt   = __ceu_evt;
-    _ceu_stk->range = __ceu_range;
+    _ceu_nxt->evt   = __ceu_evt;
+    _ceu_nxt->range = __ceu_range;
     //return 1; (later, after deciding for spawn/await)
 }
 ]]
@@ -588,8 +588,8 @@ assert(not obj, 'not implemented')
         ]]..CODES.F.__abs(me, '__ceu_new_mem', '(&'..V(pool)..')')..[[
 ]])
         HALT(me, {
-            { ['evt.id']    = 'CEU_INPUT__STACKED' },
-            { ['stk_level'] = '_ceu_stk_level' },
+            { ['evt.id'] = 'CEU_INPUT__STACKED' },
+            { ['level']  = '_ceu_level' },
             { lbl = me.lbl_out.id },
             lbl = me.lbl_out.id,
         }, 1)
@@ -1032,9 +1032,9 @@ CEU_GOTO(]]..me.outer.lbl_cnt.id..[[);
             local sub = me[i]
             if i > 1 then
                 LINE(me, [[
-_ceu_mem->_trails[]]..sub.trails[1]..[[].evt.id    = CEU_INPUT__STACKED;
-_ceu_mem->_trails[]]..sub.trails[1]..[[].stk_level = _ceu_stk_level;
-_ceu_mem->_trails[]]..sub.trails[1]..[[].lbl       = ]]..me.lbls_in[i].id..[[;
+_ceu_mem->_trails[]]..sub.trails[1]..[[].evt.id = CEU_INPUT__STACKED;
+_ceu_mem->_trails[]]..sub.trails[1]..[[].level  = _ceu_level;
+_ceu_mem->_trails[]]..sub.trails[1]..[[].lbl    = ]]..me.lbls_in[i].id..[[;
 ]])
             else
                 LINE(me, [[
@@ -1176,7 +1176,7 @@ ceu_assert(]]..V(to,{is_bind=true})..[[!=NULL, "call failed");
         local id = 'tceu_input_'..ID_ext.dcl.id
         for i, loc in ipairs(List) do
             if loc.tag ~= 'ID_any' then
-                local ps = '(('..id..'*)(_ceu_evt_params))'
+                local ps = '(('..id..'*)(_ceu_cur->params))'
                 SET(me, loc, ps..'->_'..i, nil,true)
             end
         end
@@ -1204,9 +1204,9 @@ error'oi'
                 SET(me, to, CUR('__mem_'..spawn.n)..'._ret', nil,true)
             else
                 LINE(me, [[
-if (_ceu_evt->id == CEU_INPUT__CODE_TERMINATED) {
+if (_ceu_cur->evt.id == CEU_INPUT__CODE_TERMINATED) {
     ]]..V(to)..[[.is_set = 1;
-    ]]..V(to)..[[.value  = ((tceu_code_mem_]]..abs.id_..[[*)_ceu_evt->mem)->_ret;
+    ]]..V(to)..[[.value  = ((tceu_code_mem_]]..abs.id_..[[*)_ceu_cur->evt.mem)->_ret;
 } else
 {
     ]]..V(to)..[[.is_set = 0;
@@ -1218,7 +1218,7 @@ if (_ceu_evt->id == CEU_INPUT__CODE_TERMINATED) {
             local id = 'tceu_event_'..sufix
             for i, loc in ipairs(List) do
                 if loc.tag ~= 'ID_any' then
-                    local ps = '(('..id..'*)(_ceu_evt_params))'
+                    local ps = '(('..id..'*)(_ceu_cur->params))'
                     SET(me, loc, ps..'->_'..i, nil,true)
                 end
             end
@@ -1461,9 +1461,9 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
 {
     tceu_evt   __ceu_evt   = {]]..V(ID_ext)..[[.id, {NULL}};
     tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N-1 };
-    _ceu_stk->evt    = __ceu_evt;
-    _ceu_stk->params = ]]..ps..[[;
-    _ceu_stk->range  = __ceu_range;
+    _ceu_nxt->evt    = __ceu_evt;
+    _ceu_nxt->params = ]]..ps..[[;
+    _ceu_nxt->range  = __ceu_range;
     return 1;
 }
 ]])
@@ -1532,15 +1532,15 @@ if (]]..V(Loc)..[[ != NULL)
             ps = '&'..CUR('__ps_'..me.n)
         end
         LINE(me, [[
-_ceu_mem->_trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__STACKED;
-_ceu_mem->_trails[]]..me.trails[1]..[[].stk_level = _ceu_stk_level;
-_ceu_mem->_trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_out.id..[[;
+_ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__STACKED;
+_ceu_mem->_trails[]]..me.trails[1]..[[].level  = _ceu_level;
+_ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
 {
     tceu_evt   __ceu_evt   = ]]..V(Loc)..[[;
     tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N-1 };
-    _ceu_stk->evt    = __ceu_evt;
-    _ceu_stk->params = ]]..ps..[[;
-    _ceu_stk->range  = __ceu_range;
+    _ceu_nxt->evt    = __ceu_evt;
+    _ceu_nxt->params = ]]..ps..[[;
+    _ceu_nxt->range  = __ceu_range;
     return 1;
 }
 ]])
@@ -1567,7 +1567,7 @@ _CEU_HALT_]]..me.n..[[_:
         LINE(me, [[
 /* subtract time and check if I have to awake */
 {
-    s32* dt = (s32*)_ceu_evt_params;
+    s32* dt = (s32*)_ceu_cur->params;
     if (!ceu_wclock(*dt, NULL, &]]..wclk..[[, CEU_TRACE(0)) ) {
         goto _CEU_HALT_]]..me.n..[[_;
     }
@@ -1591,9 +1591,9 @@ _CEU_HALT_]]..me.n..[[_:
     {
         tceu_evt   __ceu_evt   = { CEU_INPUT__WCLOCK, {NULL} };
         tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N-1 };
-        _ceu_stk->evt    = __ceu_evt;
-        _ceu_stk->params = &]]..CUR('__dt_'..me.n)..[[;
-        _ceu_stk->range  = __ceu_range;
+        _ceu_nxt->evt    = __ceu_evt;
+        _ceu_nxt->params = &]]..CUR('__dt_'..me.n)..[[;
+        _ceu_nxt->range  = __ceu_range;
         return 1;
     }
 ]])
