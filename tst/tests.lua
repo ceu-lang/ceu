@@ -42189,6 +42189,27 @@ escape ret;
 
 Test { [[
 code/await Gg (none) -> none do
+end
+
+code/await Ff (none) -> none do
+end
+
+pool[4] Gg gs;
+
+await Ff();
+
+loop _ in gs do
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_pool='true' },
+    wrn = true,
+    run = 8,
+}
+
+Test { [[
+code/await Gg (none) -> none do
     await FOREVER;
 end
 

@@ -766,7 +766,7 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].pse_paused = 0;
     ]]..V(loc)..[[.value._enum = CEU_DATA_]]..tp..[[;
     ]]..CUR('__catch_'..me.n)..[[.up        = ]]..CATCHES(me)..[[;
     ]]..CUR('__catch_'..me.n)..[[.mem       = _ceu_mem;
-    ]]..CUR('__catch_'..me.n)..[[.trl       = ]]..me.trails[1]..[[;
+    ]]..CUR('__catch_'..me.n)..[[.trl       = ]]..(me.trails[1]+1)..[[; /* (+1: Par_Or CLEAR) */
     ]]..CUR('__catch_'..me.n)..[[.exception = (tceu_opt_Exception*) &]]..V(loc)..[[;
 ]])
         CONC(me, body)

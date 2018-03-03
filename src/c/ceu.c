@@ -496,7 +496,8 @@ static int ceu_lbl (tceu_nstk _ceu_level, tceu_stk* _ceu_cur, tceu_stk* _ceu_nxt
 /*****************************************************************************/
 
 #ifdef CEU_FEATURES_EXCEPTION
-void ceu_throw_ex (tceu_catch* catches, tceu_data_Exception* exception, usize len, tceu_stk* stk
+int ceu_throw_ex (tceu_catch* catches, tceu_data_Exception* exception, usize len
+                  , tceu_nstk level, tceu_stk* nxt
 #ifdef CEU_FEATURES_TRACE
                   , tceu_trace trace
 #endif
@@ -519,16 +520,27 @@ void ceu_throw_ex (tceu_catch* catches, tceu_data_Exception* exception, usize le
             }
 #endif
 
-            return ceu_lbl(NULL, stk, cur->mem, cur->trl, cur->mem->_trails[cur->trl].lbl);
+            //return ceu_lbl(NULL, stk, cur->mem, cur->trl, cur->mem->_trails[cur->trl].lbl);
+            //return ceu_lbl(_ceu_level, _ceu_cur, _ceu_nxt, _ceu_mem, _ceu_lbl, _ceu_trlK)
+            cur->mem->_trails[cur->trl].evt.id = CEU_INPUT__STACKED;
+            cur->mem->_trails[cur->trl].level = level + 1;
+//printf(">>> %d %d\n", cur->trl, cur->mem->_trails[cur->trl].lbl);
+            tceu_evt   evt   = {CEU_INPUT__NONE, {NULL}};
+            //tceu_range range = { cur->mem, cur->trl, cur->trl };
+            tceu_range range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N-1 };
+            nxt->evt   = evt;
+            nxt->range = range;
+            return 1;
         }
         cur = cur->up;
     }
     ceu_assert_ex(0, exception->message, trace);
+    return 0;
 }
 #ifdef CEU_FEATURES_TRACE
-#define ceu_throw(a,b,c) ceu_throw_ex(a,b,c,_ceu_stk,CEU_TRACE(0))
+#define ceu_throw(a,b,c) ceu_throw_ex(a,b,c,_ceu_level,_ceu_nxt,CEU_TRACE(0))
 #else
-#define ceu_throw(a,b,c) ceu_throw_ex(a,b,c,_ceu_stk)
+#define ceu_throw(a,b,c) ceu_throw_ex(a,b,c,_ceu_level,_ceu_nxt)
 #endif
 #endif
 
