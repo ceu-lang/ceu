@@ -41408,12 +41408,14 @@ end
 code/await Ff (none)->none do
     do finalize with
         _V = _V + 1;
+        //{printf(">>> V1 = %d\n", V);}
     end
     await FOREVER;
 end
 watching 1s do
     do finalize with
         _V = _V * 2;
+        //{printf(">>> V2 = %d\n", V);}
     end
     await Ff();
 end

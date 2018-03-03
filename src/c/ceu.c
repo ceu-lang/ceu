@@ -634,7 +634,7 @@ static void ceu_bcast_mark (tceu_nstk level, tceu_stk* cur)
     {
         tceu_trl* trl = &cur->range.mem->_trails[trlK];
 
-        //printf(">>> A %d: [%d->%d] evt=%d\n", trlK, cur->range.trl0, cur->range.trlF, trl->evt.id);
+        //printf(">>> mark [%d/%p] evt=%d\n", trlK, trl, trl->evt.id);
 #ifdef CEU_TESTS
         _ceu_tests_trails_visited_++;
 #endif
@@ -709,8 +709,6 @@ static void ceu_bcast_mark (tceu_nstk level, tceu_stk* cur)
                     if (trl->evt.id == CEU_INPUT__FINALIZE) {
 //printf("AWK %d %d\n", trlK, trl->lbl);
                         goto _CEU_AWAKE_YES_;
-                    } else {
-                        trl->evt.id = CEU_INPUT__NONE;
                     }
                 } else if (cur->evt.id==CEU_INPUT__CODE_TERMINATED && trl->evt.id==CEU_INPUT__PROPAGATE_CODE) {
 //printf("TERM %d %d\n", trlK, trl->lbl);
@@ -765,7 +763,7 @@ static int ceu_bcast_exec (tceu_nstk level, tceu_stk* cur, tceu_stk* nxt)
     {
         tceu_trl* trl = &cur->range.mem->_trails[trlK];
 
-        //printf(">>> exec %d\n", trlK);
+        //printf(">>> exec [%d/%p] evt=%d\n", trlK, trl, trl->evt.id);
         switch (trl->evt.id)
         {
             case CEU_INPUT__PROPAGATE_CODE: {
@@ -811,7 +809,7 @@ static int ceu_bcast_exec (tceu_nstk level, tceu_stk* cur, tceu_stk* nxt)
             case CEU_INPUT__STACKED: {
                 if (trl->evt.id==CEU_INPUT__STACKED && trl->level==level) {
                     trl->evt.id = CEU_INPUT__NONE;
-//printf(">>> trlK = %d\n", trlK);
+//printf("STK = %d\n", trlK);
                     if (ceu_lbl(level, cur, nxt, cur->range.mem, trl->lbl, &trlK)) {
                         return 1;
                     }
@@ -819,6 +817,10 @@ static int ceu_bcast_exec (tceu_nstk level, tceu_stk* cur, tceu_stk* nxt)
                 }
                 break;
             }
+        }
+
+        if (cur->evt.id == CEU_INPUT__CLEAR) {
+            trl->evt.id = CEU_INPUT__NONE;
         }
 
         if (trlK == trlF) {
