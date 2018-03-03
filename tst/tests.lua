@@ -48115,7 +48115,7 @@ var Vv yyy = val Vv(_);
 escape _CEU_APP.root.__mem.trails_n;
 ]],
     _opts = { ceu_features_dynamic='true' },
-    run = 2,
+    run = 3,
 }
 Test { [[
 native _CEU_APP;
@@ -48127,7 +48127,7 @@ var Vv zzz = val Vv(_,_);
 escape _CEU_APP.root.__mem.trails_n;
 ]],
     _opts = { ceu_features_dynamic='true' },
-    run = 3,
+    run = 5,
 }
 Test { [[
 native _CEU_APP;
@@ -48142,7 +48142,7 @@ end
 escape _CEU_APP.root.__mem.trails_n;
 ]],
     _opts = { ceu_features_dynamic='true' },
-    run = 4,
+    run = 6,
 }
 Test { [[
 data Vv with

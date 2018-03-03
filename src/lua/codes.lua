@@ -875,6 +875,7 @@ ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL, CEU_TRACE(0));
     Loop = function (me)
         local _, body = unpack(me)
         local max = CODES.F.__loop_max(me)
+        local trlK = (AST.par(me, 'Async_Thread') and '' or '*_ceu_trlK = '..(me.trails[1]-1)..';\n')
 
         LINE(me, [[
 ]]..max.ini..[[
@@ -893,7 +894,7 @@ while (1) {
         CODES.F.__loop_async(me)
         LINE(me, [[
     ]]..max.inc..[[
-    *_ceu_trlK = ]]..(me.trails[1]-1)..[[;
+    ]]..trlK..[[
 }
 ]])
         CASE(me, me.lbl_out)
@@ -907,6 +908,7 @@ while (1) {
         local _, i, range, body = unpack(me)
         local fr, dir, to, step = unpack(range)
         local max = CODES.F.__loop_max(me)
+        local trlK = (AST.par(me, 'Async_Thread') and '' or '*_ceu_trlK = '..(me.trails[1]-1)..';\n')
 
         -- check if step is positive (static)
         if step then
@@ -970,7 +972,7 @@ while (1) {
     ceu_assert_ex(]]..V(i)..op..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n)..[[,
         "control variable overflow", CEU_TRACE(-2));
     ]]..max.inc..[[
-    *_ceu_trlK = ]]..(me.trails[1]-1)..[[;
+    ]]..trlK..[[
 }
 ]])
         CASE(me, me.lbl_out)
@@ -1662,7 +1664,7 @@ ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL, CEU_TRACE(0));
 _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__FINALIZE;
 _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_fin.id..[[;
 _ceu_mem->_trails[]]..me.trails[1]..[[].clr_range =
-    (tceu_evt_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[2]..[[ };
+    (tceu_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[2]..[[ };
 
 if (0) {
 ]])
@@ -1714,7 +1716,7 @@ if (]]..v..[[ != NULL)
         })
         LINE(me, [[
             {
-                CEU_THREADS_T** __ceu_casted = (CEU_THREADS_T**)_ceu_occ->params;
+                CEU_THREADS_T** __ceu_casted = (CEU_THREADS_T**)_ceu_cur->params;
                 if (*(*(__ceu_casted)) == ]]..v..[[->id) {
                     break; /* this thread is terminating */
                 }
