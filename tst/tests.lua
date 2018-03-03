@@ -53928,7 +53928,7 @@ end
 escape _CEU_APP.root.__mem.trails_n;
 ]],
     _opts = { ceu_features_isr='true' },
-    run = 2,
+    run = 3,
 }
 Test { [[
 native _CEU_APP;
@@ -53939,7 +53939,7 @@ end
 escape _CEU_APP.root.__mem.trails_n;
 ]],
     _opts = { ceu_features_isr='true' },
-    run = 3,
+    run = 5,
 }
 
 Test { [[

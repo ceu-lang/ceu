@@ -1401,9 +1401,6 @@ do {
 ]])
         local ps = 'NULL'
         if #List_Exp > 0 then
-            if AST.par(me,'Async_Isr') then
-                LINE(me, 'static ')
-            end
             local id do
                 if inout == 'input' then
                     id = CUR('__ps_'..me.n)
