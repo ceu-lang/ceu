@@ -395,143 +395,8 @@ escape 1;
 }
 ]==]
 
--- BUG: scope of emit args is dead
--- MARK_02
-Test { [[
-input none OS_START;
-event int e;
-var int ret = 1;
-par/or do
-    do
-        var int x = 2;
-        par/or do
-            await OS_START;
-            emit e(x);
-        with
-            await e;
-        end
-    end
-    do
-        var int x = 10;
-        await 1s;
-        ret = x;
-    end
-with
-    var int v = await e;
-    ret = v;
-end
-escape ret;
-]],
-    --run = { ['~>2s']=10 },
-    run = { ['~>2s']=2 },
-}
-
--- MARK_01
--- BUG #100
-Test { [[
-event none a;
-var int ret = 0;
-
-spawn do
-    await async do end;
-    emit a;
-    ret = 10;
-    emit a;
-    ret = 20;
-end
-
-do
-    await a;
-end
-par/or do
-    await FOREVER;
-with
-    await a;
-end
-
-escape ret;
-]],
-    run = 20,
-}
-Test { [=[
-native/pre do
-    int V = 0;
-end
-
-code/await UV_FS_Write2 (none) -> none do
-    await 1s;
-    {V++;}
-end
-
-do
-    await UV_FS_Write2();
-end
-par/or do
-    await FOREVER;
-with
-    await UV_FS_Write2();
-end
-
-escape {V};
-]=],
-    wrn = true,
-    run = {['~>2s']=2},
-}
-do return end
-
-Test { [[
-input none A;
-var int ret = 0;
-code/await Ff (none) -> none do
-    await A;
-    outer.ret = 10;
-end
-await Ff();
-escape ret+1;
-]],
-    run = {['~>A']=11},
-}
-
-Test { [[
-code/await Ff (none) -> none do
-end
-await Ff();
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-code/await Ff (none) -> NEVER do
-    await FOREVER;
-end
-var& Ff f = spawn Ff();
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-code/await Ff (none) -> NEVER do
-    await FOREVER;
-end
-var& Ff f = spawn Ff();
-kill f;     // error
-escape 1;
-]],
-    stmts = 'line 5 : invalid `kill` : expected `&?` alias',
-}
-Test { [[
-input none A;
-code/await Ff (none) -> int do
-    await A;
-    escape 10;
-end
-var int v = await Ff();
-escape v+1;
-]],
-    run = {['~>A']=11},
-}
---do return end -- OK
 --]=====]
+--do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -8869,7 +8734,37 @@ escape _V;
 ]],
     run = { ['~>2s']=10 },
 }
--- MARK_02
+
+-- BUG: scope of emit args is dead
+Test { [[
+input none OS_START;
+event int e;
+var int ret = 1;
+par/or do
+    do
+        var int x = 2;
+        par/or do
+            await OS_START;
+            emit e(x);
+        with
+            await e;
+        end
+    end
+    do
+        var int x = 10;
+        await 1s;
+        ret = x;
+    end
+with
+    var int v = await e;
+    ret = v;
+end
+escape ret;
+]],
+    --run = { ['~>2s']=10 },
+    run = { ['~>2s']=2 },
+}
+
 Test { [[
 input int A;
 var int a=0; var int  b=0;
@@ -41842,7 +41737,88 @@ escape ret;
     run = 20;
 }
 
--- MARK_01
+-- BUG #100
+Test { [[
+event none a;
+var int ret = 0;
+
+spawn do
+    await async do end;
+    emit a;
+    ret = 10;
+    emit a;
+    ret = 20;
+end
+
+do
+    await a;
+end
+par/or do
+    await FOREVER;
+with
+    await a;
+end
+
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [=[
+native/pre do
+    int V = 0;
+end
+
+code/await UV_FS_Write2 (none) -> none do
+    await 1s;
+    {V++;}
+end
+
+do
+    await UV_FS_Write2();
+end
+par/or do
+    await FOREVER;
+with
+    await UV_FS_Write2();
+end
+
+escape {V};
+]=],
+    wrn = true,
+    run = {['~>2s']=2},
+}
+
+Test { [[
+input none A;
+var int ret = 0;
+code/await Ff (none) -> none do
+    await A;
+    outer.ret = 10;
+end
+await Ff();
+escape ret+1;
+]],
+    run = {['~>A']=11},
+}
+
+Test { [[
+code/await Ff (none) -> none do
+end
+await Ff();
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+code/await Ff (none) -> NEVER do
+    await FOREVER;
+end
+var& Ff f = spawn Ff();
+escape 1;
+]],
+    run = 1,
+}
 --<<< CODE / AWAIT / FUNCTIONS
 
 -- TODO: SKIP-03
@@ -51103,6 +51079,28 @@ escape 0;
     _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     wrn = true,
     stmts = 'line 9 : invalid kill : `code/await` executes forever',
+}
+
+Test { [[
+code/await Ff (none) -> NEVER do
+    await FOREVER;
+end
+var& Ff f = spawn Ff();
+kill f;     // error
+escape 1;
+]],
+    stmts = 'line 5 : invalid `kill` : expected `&?` alias',
+}
+Test { [[
+input none A;
+code/await Ff (none) -> int do
+    await A;
+    escape 10;
+end
+var int v = await Ff();
+escape v+1;
+]],
+    run = {['~>A']=11},
 }
 
 --<< KILL
