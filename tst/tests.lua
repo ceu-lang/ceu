@@ -395,8 +395,8 @@ escape 1;
 }
 ]==]
 
---]=====]
 --do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -7586,8 +7586,8 @@ with
     escape a+b;
 end
 ]],
-    run = 7,
-    --run = 3,
+    --run = 7,
+    run = 3,
 }
 
 -- different semantics w/ longjmp

@@ -34,11 +34,12 @@ typedef === CEU_TCEU_NTRL === tceu_ntrl;
 typedef === CEU_TCEU_NLBL === tceu_nlbl;
 
 #define CEU_TRAILS_N === CEU_TRAILS_N ===
+#define CEU_STACK_N 500
 
 #define CEU_API
 CEU_API void ceu_start (tceu_callback* cb, int argc, char* argv[]);
 CEU_API void ceu_stop  (void);
-CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params);
+CEU_API void ceu_input (tceu_nevt id, void* params);
 CEU_API int  ceu_loop  (tceu_callback* cb, int argc, char* argv[]);
 CEU_API void ceu_callback_register (tceu_callback* cb);
 
@@ -63,8 +64,9 @@ typedef struct tceu_range {
 
 typedef struct tceu_stk {
     tceu_evt   evt;
-    void*      params;
     tceu_range range;
+    void*      params;
+    usize      params_n;
 } tceu_stk;
 
 struct tceu_data_Exception;
@@ -317,6 +319,9 @@ typedef struct tceu_app {
     tceu_threads_data*  threads_head;   /* linked list of threads alive */
     tceu_threads_data** cur_;           /* TODO: HACK_6 "gc" mutable iterator */
 #endif
+
+    byte  stack[CEU_STACK_N];
+    usize stack_i;
 
     tceu_code_mem_ROOT root;
 } tceu_app;
@@ -663,7 +668,7 @@ static void ceu_bcast_mark (tceu_nstk level, tceu_stk* cur)
                         CEU_APP.wclk_min_set = 0;   /* maybe resuming a timer, let it be the minimum set */
                         evt_.id = CEU_INPUT__RESUME;
                     }
-                    tceu_stk cur_ = { evt_, NULL, range_ };
+                    tceu_stk cur_ = { evt_, range_, NULL, 0 };
                     ceu_bcast_mark(level, &cur_);
                 }
                 /* don't skip if pausing now */
@@ -852,28 +857,34 @@ void ceu_bcast (tceu_nstk level, tceu_stk* cur)
         int ret = ceu_bcast_exec(level, cur, &nxt);
         if (ret) {
             ceu_assert_sys(level < 255, "too many stack levels");
+            ceu_assert_sys(CEU_APP.stack_i+nxt.params_n < CEU_STACK_N, "stack overflow");
+            memcpy(&CEU_APP.stack[CEU_APP.stack_i], nxt.params, nxt.params_n);
+            nxt.params = &CEU_APP.stack[CEU_APP.stack_i];
+            CEU_APP.stack_i += nxt.params_n;
             ceu_bcast(level+1, &nxt);
         } else {
             break;
         }
     }
+
+    CEU_APP.stack_i -= cur->params_n;
     //printf("<<< BCAST: %d\n", level);
 }
 
-CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params)
+CEU_API void ceu_input (tceu_nevt id, void* params)
 {
     ceu_callback_void_void(CEU_CALLBACK_WCLOCK_DT, CEU_TRACE_null);
     s32 dt = ceu_callback_ret.num;
     if (dt != CEU_WCLOCK_INACTIVE) {
         tceu_evt   evt   = {CEU_INPUT__WCLOCK, {NULL}};
         tceu_range range = {(tceu_code_mem*)&CEU_APP.root, 0, CEU_TRAILS_N-1};
-        tceu_stk   cur   = { evt, &dt, range };
+        tceu_stk   cur   = { evt, range, &dt, 0 };
         ceu_bcast(1, &cur);
     }
-    if (evt_id != CEU_INPUT__NONE) {
-        tceu_evt   evt   = {evt_id, {NULL}};
+    if (id != CEU_INPUT__NONE) {
+        tceu_evt   evt   = {id, {NULL}};
         tceu_range range = {(tceu_code_mem*)&CEU_APP.root, 0, CEU_TRAILS_N-1};
-        tceu_stk   cur   = { evt, evt_params, range };
+        tceu_stk   cur   = { evt, range, params, 0 };
         ceu_bcast(1, &cur);
     }
 }
@@ -907,6 +918,8 @@ CEU_API void ceu_start (tceu_callback* cb, int argc, char* argv[]) {
     CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
 #endif
 
+    CEU_APP.stack_i = 0;
+
     ceu_callback_void_void(CEU_CALLBACK_START, CEU_TRACE_null);
 
     CEU_APP.root._trails[0].evt.id    = CEU_INPUT__STACKED;
@@ -915,7 +928,7 @@ CEU_API void ceu_start (tceu_callback* cb, int argc, char* argv[]) {
 
     tceu_evt   evt   = {CEU_INPUT__NONE, {NULL}};
     tceu_range range = {(tceu_code_mem*)&CEU_APP.root, 0, CEU_TRAILS_N-1};
-    tceu_stk   cur   = { evt, NULL, range };
+    tceu_stk   cur   = { evt, range, NULL, 0 };
     ceu_bcast(1, &cur);
 }
 
