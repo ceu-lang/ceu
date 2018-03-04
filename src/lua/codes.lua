@@ -325,9 +325,10 @@ ceu_vector_setmax(&]]..V(ID_int,ctx)..[[, 0, 0);
 {
     /* first.nxt = first.prv = &first; */
     tceu_code_mem_dyn* __ceu_dyn = &]]..V(ID_int)..[[.first;
-    ]]..V(ID_int)..[[.first = (tceu_code_mem_dyn) { __ceu_dyn, __ceu_dyn, {} };
+    ]]..V(ID_int)..[[.first = (tceu_code_mem_dyn) { __ceu_dyn, __ceu_dyn, 1, {} };
 };
 ]]..V(ID_int)..[[.up_mem = _ceu_mem;
+]]..V(ID_int)..[[.n_traversing = 0;
 ]])
         if dim == '[]' then
             LINE(me, [[
@@ -575,6 +576,7 @@ assert(not obj, 'not implemented')
 
         LINE(me, [[
     if (__ceu_new != NULL) {
+        __ceu_new->is_alive = 1;
         __ceu_new->nxt = &]]..V(pool)..[[.first;
         ]]..V(pool)..[[.first.prv->nxt = __ceu_new;
         __ceu_new->prv = ]]..V(pool)..[[.first.prv;
@@ -662,30 +664,44 @@ assert(not obj, 'not implemented')
         local cur = CUR('__cur_'..me.n)
 
         LINE(me, [[
+ceu_assert(]]..V(pool)..[[.n_traversing < 255, "bug found");
+]]..V(pool)..[[.n_traversing++;
 _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id  = CEU_INPUT__FINALIZE;
 _ceu_mem->_trails[]]..me.trails[1]..[[].evt.mem = _ceu_mem;
 _ceu_mem->_trails[]]..me.trails[1]..[[].lbl     = ]]..me.lbl_fin.id..[[;
 
-#if 0
 if (0) {
     case ]]..me.lbl_fin.id..[[:
+        ]]..V(pool)..[[.n_traversing--;
         ceu_code_mem_dyn_gc(&]]..V(pool)..[[);
-        return;
+        return 0;
 }
-#endif
 {
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
     ]]..cur..[[ = ]]..V(pool)..[[.first.nxt;
     while (]]..cur..[[ != &]]..V(pool)..[[.first)
     {
+        if (]]..cur..[[->is_alive)
+        {
 ]])
         if i.tag ~= 'ID_any' then
             local abs = TYPES.abs_dcl(i.info.tp,'Code')
             SET(me, i, '((tceu_code_mem_'..abs.id_..'*)'..cur..'->mem)', nil,true, {is_bind=true},nil)
+            LINE(me, [[
+            _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].evt.id    = CEU_INPUT__CODE_TERMINATED;
+            _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].evt.mem   = ]]..cur..'->mem'..[[;
+            _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].lbl       = ]]..me.lbl_null.id..[[;
+            if (0) {
+                case ]]..me.lbl_null.id..[[:;
+                    ]]..V(i,{is_bind=true})..[[ = NULL;
+                    return 0;
+            }
+]])
         end
         CONC(me, body)
         CASE(me, me.lbl_cnt)
         LINE(me, [[
+        }
         ]]..cur..[[ = ]]..cur..[[->nxt;
         *_ceu_trlK = ]]..(me.trails[1]-1)..[[;
     }

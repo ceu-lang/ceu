@@ -122,6 +122,7 @@ typedef struct tceu_code_mem {
 typedef struct tceu_code_mem_dyn {
     struct tceu_code_mem_dyn* prv;
     struct tceu_code_mem_dyn* nxt;
+    u8 is_alive: 1;
     tceu_code_mem mem[0];   /* actual tceu_code_mem is in sequence */
 } tceu_code_mem_dyn;
 
@@ -129,6 +130,7 @@ typedef struct tceu_pool_pak {
     tceu_pool         pool;
     tceu_code_mem_dyn first;
     tceu_code_mem*    up_mem;
+    u8                n_traversing;
 } tceu_pool_pak;
 #endif
 
@@ -398,15 +400,27 @@ void ceu_code_mem_dyn_free (tceu_pool* pool, tceu_code_mem_dyn* cur) {
     }
 }
 
+void ceu_code_mem_dyn_remove (tceu_pool* pool, tceu_code_mem_dyn* cur) {
+    cur->is_alive = 0;
+
+    if (cur->mem[0].pak->n_traversing == 0) {
+        ceu_code_mem_dyn_free(pool, cur);
+    }
+}
+
 void ceu_code_mem_dyn_gc (tceu_pool_pak* pak) {
-    /* TODO-OPT: one element killing another is unlikely:
-                 set bit in pool when this happens and only
-                 traverses in this case */
-    tceu_code_mem_dyn* cur = pak->first.nxt;
-    while (cur != &pak->first) {
-        tceu_code_mem_dyn* nxt = cur->nxt;
-        ceu_code_mem_dyn_free(&pak->pool, cur);
-        cur = nxt;
+    if (pak->n_traversing == 0) {
+        /* TODO-OPT: one element killing another is unlikely:
+                     set bit in pool when this happens and only
+                     traverses in this case */
+        tceu_code_mem_dyn* cur = pak->first.nxt;
+        while (cur != &pak->first) {
+            tceu_code_mem_dyn* nxt = cur->nxt;
+            if (!cur->is_alive) {
+                ceu_code_mem_dyn_free(&pak->pool, cur);
+            }
+            cur = nxt;
+        }
     }
 }
 #endif
@@ -787,17 +801,23 @@ static int ceu_bcast_exec (tceu_nstk level, tceu_stk* cur, tceu_stk* nxt)
 
 #ifdef CEU_FEATURES_POOL
             case CEU_INPUT__PROPAGATE_POOL: {
+                ceu_assert_ex(trl->evt.pak->n_traversing < 255, "bug found", CEU_TRACE_null);
+                trl->evt.pak->n_traversing++;
                 tceu_code_mem_dyn* v = trl->evt.pak->first.nxt;
                 while (v != &trl->evt.pak->first) {
-                    tceu_range range_ = { &v->mem[0],
-                                          0, (tceu_ntrl)((&v->mem[0])->trails_n-1) };
-                    tceu_stk cur_ = *cur;
-                    cur_.range = range_;
-                    if (ceu_bcast_exec(level, &cur_, nxt)) {
-                        return 1;
+                    if (v->is_alive) {
+                        tceu_range range_ = { &v->mem[0],
+                                              0, (tceu_ntrl)((&v->mem[0])->trails_n-1) };
+                        tceu_stk cur_ = *cur;
+                        cur_.range = range_;
+                        if (ceu_bcast_exec(level, &cur_, nxt)) {
+                            return 1;
+                        }
                     }
                     v = v->nxt;
                 }
+                trl->evt.pak->n_traversing--;
+                ceu_code_mem_dyn_gc(trl->evt.pak);
                 break;
             }
 #endif
