@@ -386,7 +386,7 @@ LINE(me, [[
 if (0)
 {
 ]])
-        CASE(me, me.lbl_in)
+        CASE(me, me.lbl)
 
         -- CODE/DELAYED
         if mods.await then
@@ -397,9 +397,6 @@ if (0)
         end
 
         CONC(me, body)
-        if mods.await then
-            CLEAR(me)           -- TODO: only stack_clear?
-        end
 
         local Type = AST.get(body,'Block', 1,'Stmts', 1,'Code_Ret', 1,'', 2,'Type')
         if not Type then
@@ -411,32 +408,34 @@ ceu_assert(0, "reached end of `code`");
         -- CODE/DELAYED
         if mods.await then
             LINE(me, [[
-_ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__STACKED;
-_ceu_mem->_trails[]]..me.trails[1]..[[].level  = _ceu_level;
-_ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
-{
-    tceu_evt   __ceu_evt   = { CEU_INPUT__CODE_TERMINATED, {_ceu_mem} };
-    tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N-1 };
-    _ceu_nxt->evt      = __ceu_evt;
-    _ceu_nxt->range    = __ceu_range;
-    _ceu_nxt->params_n = 0;
-    return 1;
-}
-]])
-            CASE(me, me.lbl_out)
-            LINE(me, [[
-/* TODO: if return value can be stored with "ceu_bcast", we can "free" first
-         and remove this extra stack level */
-
 #ifdef CEU_FEATURES_POOL
     /* free */
-    /* TODO: classes w/o pools don't need this code */
     if (_ceu_mem->pak != NULL) {
         tceu_code_mem_dyn* __ceu_dyn =
             (tceu_code_mem_dyn*)(((byte*)(_ceu_mem)) - sizeof(tceu_code_mem_dyn));
         ceu_code_mem_dyn_free(&_ceu_mem->pak->pool, __ceu_dyn);
     }
 #endif
+{
+    tceu_evt   __ceu_evt   = { CEU_INPUT__CODE_TERMINATED, {_ceu_mem} };
+    tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N-1 };
+    _ceu_nxt->evt      = __ceu_evt;
+    _ceu_nxt->range    = __ceu_range;
+]])
+            if Type and (not TYPES.check(Type,'none')) then
+                local ret = CUR('_ret')
+                LINE(me, [[
+    _ceu_nxt->params   = &]]..ret..[[;          /* TODO: pointer after free above */
+    _ceu_nxt->params_n = sizeof(]]..ret..[[);
+]])
+            else
+                LINE(me, [[
+    _ceu_nxt->params_n = 0;
+]])
+            end
+            LINE(me, [[
+    return 1;
+}
 ]])
         end
         LINE(me, [[
@@ -1172,25 +1171,16 @@ ceu_assert(]]..V(to,{is_bind=true})..[[!=NULL, "call failed");
             local to = unpack(List)
             local code = TYPES.abs_dcl(loc.info.tp, 'Code')
 
-            local spawn = AST.get(me,2,'Par_Or', 1,'Stmts', 1,'Set_Abs_Spawn', 1,'Abs_Spawn')
-            if spawn then
-                -- x = await Ff();
-                --  to
-                -- _spw = spawn Ff();
-                -- x = await _spw;
-error'oi'
-                SET(me, to, CUR('__mem_'..spawn.n)..'._ret', nil,true)
-            else
-                LINE(me, [[
+            local Type = AST.get(abs,'Code', 4,'Block', 1,'Stmts', 1,'Code_Ret', 1,'', 2,'Type')
+            LINE(me, [[
 if (_ceu_cur->evt.id == CEU_INPUT__CODE_TERMINATED) {
     ]]..V(to)..[[.is_set = 1;
-    ]]..V(to)..[[.value  = ((tceu_code_mem_]]..abs.id_..[[*)_ceu_cur->evt.mem)->_ret;
+    ]]..V(to)..[[.value  = *((]]..TYPES.toc(Type)..[[*)CEU_APP.stack);
 } else
 {
     ]]..V(to)..[[.is_set = 0;
 }
 ]])
-            end
         else
             local sufix = TYPES.noc(TYPES.tostring(loc.info.dcl[2]))
             local id = 'tceu_event_'..sufix

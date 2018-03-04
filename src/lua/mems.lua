@@ -199,7 +199,7 @@ CEU_CODE_]]..me.id_..[[ (tceu_code_mem_]]..me.id_..[[ mem_,
                 me.mems.wrapper = me.mems.wrapper .. multis.lbl
             else
                 me.mems.wrapper = me.mems.wrapper .. [[
-    tceu_nlbl lbl = ]]..me.lbl_in.id..[[;
+    tceu_nlbl lbl = ]]..me.lbl.id..[[;
 ]]
             end
             me.mems.wrapper = me.mems.wrapper .. [[
@@ -222,7 +222,7 @@ static tceu_nlbl CEU_CODE_]]..me.id_..[[_to_lbl (tceu_code_mem_]]..me.id_..[[* m
                 me.mems.wrapper = me.mems.wrapper .. multis.lbl
             else
                 me.mems.wrapper = me.mems.wrapper .. [[
-    tceu_nlbl lbl = ]]..me.lbl_in.id..[[;
+    tceu_nlbl lbl = ]]..me.lbl.id..[[;
 ]]
             end
             me.mems.wrapper = me.mems.wrapper .. [[

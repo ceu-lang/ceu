@@ -42181,7 +42181,7 @@ escape 1;
 ]],
     _opts = { ceu_features_pool='true' },
     wrn = true,
-    run = 8,
+    run = 1,
 }
 
 Test { [[

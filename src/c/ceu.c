@@ -511,8 +511,9 @@ int ceu_throw_ex (tceu_catch* catches, tceu_data_Exception* exception, usize len
             tceu_evt   evt   = {CEU_INPUT__NONE, {NULL}};
             //tceu_range range = { cur->mem, cur->trl, cur->trl };
             tceu_range range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N-1 };
-            nxt->evt   = evt;
-            nxt->range = range;
+            nxt->evt      = evt;
+            nxt->range    = range;
+            nxt->params_n = 0;
             return 1;
         }
         cur = cur->up;
