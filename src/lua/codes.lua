@@ -1175,7 +1175,7 @@ ceu_assert(]]..V(to,{is_bind=true})..[[!=NULL, "call failed");
             LINE(me, [[
 if (_ceu_cur->evt.id == CEU_INPUT__CODE_TERMINATED) {
     ]]..V(to)..[[.is_set = 1;
-    ]]..V(to)..[[.value  = *((]]..TYPES.toc(Type)..[[*)CEU_APP.stack);
+    ]]..V(to)..[[.value  = *((]]..TYPES.toc(Type)..[[*)(&CEU_APP.stack[CEU_APP.stack_i- sizeof(]]..TYPES.toc(Type)..[[)]));
 } else
 {
     ]]..V(to)..[[.is_set = 0;
