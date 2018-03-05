@@ -409,14 +409,6 @@ ceu_assert(0, "reached end of `code`");
         -- CODE/DELAYED
         if mods.await then
             LINE(me, [[
-#ifdef CEU_FEATURES_POOL
-    /* free */
-    if (_ceu_mem->pak != NULL) {
-        tceu_code_mem_dyn* __ceu_dyn =
-            (tceu_code_mem_dyn*)(((byte*)(_ceu_mem)) - sizeof(tceu_code_mem_dyn));
-        ceu_code_mem_dyn_free(&_ceu_mem->pak->pool, __ceu_dyn);
-    }
-#endif
 {
     tceu_evt   __ceu_evt   = { CEU_INPUT__CODE_TERMINATED, {_ceu_mem} };
     tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N-1 };
@@ -426,8 +418,7 @@ ceu_assert(0, "reached end of `code`");
             if Type and (not TYPES.check(Type,'none')) then
                 local ret = CUR('_ret')
                 LINE(me, [[
-    _ceu_nxt->params   = &]]..ret..[[;          /* TODO: pointer after free above */
-    _ceu_nxt->params_n = sizeof(]]..ret..[[);
+    ceu_params_cpy(_ceu_nxt, &]]..ret..[[, sizeof(]]..ret..[[));
 ]])
             else
                 LINE(me, [[
@@ -435,6 +426,14 @@ ceu_assert(0, "reached end of `code`");
 ]])
             end
             LINE(me, [[
+#ifdef CEU_FEATURES_POOL
+    /* free */
+    if (_ceu_mem->pak != NULL) {
+        tceu_code_mem_dyn* __ceu_dyn =
+            (tceu_code_mem_dyn*)(((byte*)(_ceu_mem)) - sizeof(tceu_code_mem_dyn));
+        ceu_code_mem_dyn_free(&_ceu_mem->pak->pool, __ceu_dyn);
+    }
+#endif
     return 1;
 }
 ]])
@@ -1442,8 +1441,7 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
 
                 if #List_Exp > 0 then
                     LINE(me, [[
-    _ceu_nxt->params   = &__ceu_ps;
-    _ceu_nxt->params_n = sizeof(__ceu_ps);
+    ceu_params_cpy(_ceu_nxt, &__ceu_ps, sizeof(__ceu_ps));
 ]])
                 else
                     LINE(me, [[
@@ -1522,8 +1520,7 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
             LINE(me, [[
 {
     tceu_event_]]..sufix..[[ __ceu_ps = { ]]..table.concat(V(List_Exp),',')..[[ };
-    _ceu_nxt->params   = &__ceu_ps;
-    _ceu_nxt->params_n = sizeof(__ceu_ps);
+    ceu_params_cpy(_ceu_nxt, &__ceu_ps, sizeof(__ceu_ps));
 }
 ]])
         else
@@ -1584,8 +1581,7 @@ _CEU_HALT_]]..me.n..[[_:
         tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N-1 };
         _ceu_nxt->evt      = __ceu_evt;
         _ceu_nxt->range    = __ceu_range;
-        _ceu_nxt->params   = &__ceu_dt;
-        _ceu_nxt->params_n = sizeof(__ceu_dt);
+        ceu_params_cpy(_ceu_nxt, &__ceu_dt, sizeof(__ceu_dt));
         return 1;
     }
 ]])

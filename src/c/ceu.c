@@ -381,6 +381,14 @@ static int ceu_wclock_ (s32 dt, s32* set, s32* sub
     return ret;
 }
 
+static void ceu_params_cpy (tceu_stk* stk, void* params, usize params_n) {
+    ceu_assert_sys(CEU_APP.stack_i+params_n < CEU_STACK_N, "stack overflow");
+    memcpy(&CEU_APP.stack[CEU_APP.stack_i], params, params_n);
+    stk->params   = &CEU_APP.stack[CEU_APP.stack_i];
+    stk->params_n = params_n;
+    CEU_APP.stack_i += stk->params_n;
+}
+
 /*****************************************************************************/
 
 #ifdef CEU_FEATURES_POOL
@@ -878,10 +886,6 @@ void ceu_bcast (tceu_nstk level, tceu_stk* cur)
         int ret = ceu_bcast_exec(level, cur, &nxt);
         if (ret) {
             ceu_assert_sys(level < 255, "too many stack levels");
-            ceu_assert_sys(CEU_APP.stack_i+nxt.params_n < CEU_STACK_N, "stack overflow");
-            memcpy(&CEU_APP.stack[CEU_APP.stack_i], nxt.params, nxt.params_n);
-            nxt.params = &CEU_APP.stack[CEU_APP.stack_i];
-            CEU_APP.stack_i += nxt.params_n;
             ceu_bcast(level+1, &nxt);
         } else {
             break;
