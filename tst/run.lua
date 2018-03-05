@@ -286,7 +286,6 @@ end
     if not check(T,'adjs')   then return end
     dofile(DIR..'types.lua')
     dofile(DIR..'exps.lua')
---AST.dump(AST.root)
     if not check(T,'dcls')   then return end
 --do return end
     --if not check(T,'exps')   then return end
@@ -308,6 +307,7 @@ end
     dofile(DIR..'multis.lua')
     if not check(T,'mems')   then return end
     if not check(T,'codes')  then return end
+--AST.dump(AST.root)
 
 if T.ana or T.tmp or T.props or T.mode then return end
 
@@ -675,57 +675,6 @@ stats = {
 (./run.lua: 2506.29s 46936k)
 
 stats = {
-    count  = 3042,
-    trails = 5196,
-    bytes  = 47457808,
-    visits = 3057706,
-}
-(./run.lua: 664.08s 37504k)
-
-stats = {
-    count  = 3046,
-    trails = 5205,
-    bytes  = 47528448,
-    visits = 2505081,
-}
-(./run.lua: 647.16s 38344k)
-
-stats = {
-    count  = 3093,
-    trails = 5648,
-    bytes  = 49990960,
-    visits = 5207437,
-}
-(./run.lua: 760.84s 40444k)
-
-stats = {
-    count  = 3093,
-    trails = 5648,
-    bytes  = 49990960,
-    visits = 4152987,
-             5006862,
-             4564906,
-}
-(./run.lua: 711.48s 40732k)
-
-stats = {
-    count  = 3093,
-    trails = 5648,
-    bytes  = 49392944,
-    visits = 5075900,
-}
-
-(./run.lua: 747.26s 42228k)
-
-stats = {
-    count  = 3093,
-    trails = 5648,
-    bytes  = 49392944,
-    visits = 5211691,
-}
-(./run.lua: 755.32s 40812k)
-
-stats = {
     count  = 3106,
     trails = 5684,
     bytes  = 53819176,
@@ -735,13 +684,27 @@ stats = {
 (./run.lua: 648.72s 42460k)
 
 stats = {
-    count  = 3221,
-    trails = 5966,
-    bytes  = 62600496,
-    bcasts = 1282728,
-    visits = 3842010,
+    count  = 3462,
+    trails = 6267,
+    bytes  = 56626936,
+    bcasts = 2263016,
+    visits = 5881354,
 }
-(./run.lua: 769.72s 42800k)
+
+(./run.lua: 784.45s 51300k)
+
+-- 2-pass scheduler is back
+
+stats = {
+    count  = 3470,
+    trails = 8202,
+    bytes  = 50547208,
+    bcasts = 0,
+    visits = 3621448,
+}
+
+(./run.lua: 719.35s 46048k)
+
 
 -------------------------------------------------------------------------------
 
