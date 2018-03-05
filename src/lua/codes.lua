@@ -611,47 +611,47 @@ assert(not obj, 'not implemented')
         local abs = TYPES.abs_dcl(loc.info.tp, 'Code')
         assert(abs)
 
+        -- TODO: change to "watching _kill" inside code/await + "emit _kill"
+
         LINE(me, [[
+_ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__STACKED;
+_ceu_mem->_trails[]]..me.trails[1]..[[].level  = _ceu_level;
+_ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_clr.id..[[;
 {
-    tceu_code_mem* __ceu_mem = (tceu_code_mem*) ]]..V(loc)..[[;
-
-    tceu_stk __ceu_stk1 = { 1, 0, _ceu_stk, {_ceu_mem,]]..me.trails[1]..','..me.trails[2]..[[} };
-
-    /* clear code blocks */
-    {
-        tceu_evt_range __ceu_range = { __ceu_mem, ]]..abs.trails[1]..', '..abs.trails[2]..[[ };
-        tceu_evt_occ __ceu_occ = { {CEU_INPUT__CLEAR,{NULL}}, (tceu_nseq)(CEU_APP.seq+1),
-                                   NULL, __ceu_range };
-        ceu_bcast(&__ceu_occ, _ceu_stk, 1);
-    }
-
-    /* bcast termination */
-    {
-        tceu_evt_occ __ceu_occ = {
-            { CEU_INPUT__CODE_TERMINATED, {__ceu_mem} },
-            (tceu_nseq)(CEU_APP.seq+1),
-            __ceu_mem,
-            { (tceu_code_mem*)&CEU_APP.root, 0,
-              (tceu_ntrl)(CEU_APP.root._mem.trails_n-1) }
-        };
-        tceu_stk __ceu_stk2 = { 1, 0, &__ceu_stk1, {__ceu_mem,]]..abs.trails[1]..','..abs.trails[2]..[[} };
-        ceu_bcast(&__ceu_occ, &__ceu_stk2, 1);
-#ifdef CEU_FEATURES_POOL
-/* TODO: if return value can be stored with "ceu_bcast", we can "free" first
-         and remove this extra stack level */
-        /* free */
-        /* TODO: classes w/o pools don't need this code */
-        if (__ceu_mem->pak != NULL) {
-            tceu_code_mem_dyn* __ceu_dyn =
-                (tceu_code_mem_dyn*)(((byte*)(__ceu_mem)) - sizeof(tceu_code_mem_dyn));
-            ceu_code_mem_dyn_remove(&__ceu_mem->pak->pool, __ceu_dyn);
-        }
-#endif
-
-        CEU_LONGJMP_JMP((&__ceu_stk1));
-    }
+    tceu_evt   __ceu_evt   = {CEU_INPUT__CLEAR,{NULL}};
+    tceu_range __ceu_range = { (tceu_code_mem*) ]]..V(loc)..', 0, '..abs.trails_n..[[ };
+    _ceu_nxt->evt      = __ceu_evt;
+    _ceu_nxt->range    = __ceu_range;
+    _ceu_nxt->params_n = 0;
+    return 1;
 }
 ]])
+        CASE(me, me.lbl_clr)
+        LINE(me, [[
+#ifdef CEU_FEATURES_POOL
+{
+    tceu_code_mem* __ceu_mem = (tceu_code_mem*)]]..V(loc)..[[;
+    if (__ceu_mem->pak != NULL) {
+        tceu_code_mem_dyn* __ceu_dyn =
+            (tceu_code_mem_dyn*)(((byte*)(__ceu_mem)) - sizeof(tceu_code_mem_dyn));
+        ceu_code_mem_dyn_remove(&__ceu_mem->pak->pool, __ceu_dyn);
+    }
+}
+#endif
+
+_ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__STACKED;
+_ceu_mem->_trails[]]..me.trails[1]..[[].level  = _ceu_level;
+_ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_term.id..[[;
+{
+    tceu_evt   __ceu_evt   = {CEU_INPUT__CODE_TERMINATED,{]]..V(loc)..[[}};
+    tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N-1 };
+    _ceu_nxt->evt      = __ceu_evt;
+    _ceu_nxt->range    = __ceu_range;
+    _ceu_nxt->params_n = 0;
+    return 1;
+}
+]])
+        CASE(me, me.lbl_term)
         -- TODO: e
     end,
 

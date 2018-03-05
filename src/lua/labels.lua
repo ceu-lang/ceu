@@ -84,6 +84,10 @@ F = {
 
     ---------------------------------------------------------------------------
 
+    Kill = function (me)
+        me.lbl_clr  = new{'Kill__CLR'}
+        me.lbl_term = new{'Kill__TERM'}
+    end,
     Abs_Spawn_Pool = function (me)
         me.lbl_out = new{'Await_Spawn_Pool__OUT'}
     end,
