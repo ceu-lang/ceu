@@ -633,7 +633,7 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_clr.id..[[;
     if (__ceu_mem->pak != NULL) {
         tceu_code_mem_dyn* __ceu_dyn =
             (tceu_code_mem_dyn*)(((byte*)(__ceu_mem)) - sizeof(tceu_code_mem_dyn));
-        ceu_code_mem_dyn_remove(&__ceu_mem->pak->pool, __ceu_dyn);
+        ceu_code_mem_dyn_remove(&__ceu_mem->pak->pool, __ceu_dyn, _ceu_cur);
     }
 }
 #endif

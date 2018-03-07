@@ -67,6 +67,8 @@ typedef struct tceu_stk {
     tceu_range range;
     void*      params;
     usize      params_n;
+    bool       is_alive;
+    struct tceu_stk* prv;
 } tceu_stk;
 
 struct tceu_data_Exception;
@@ -391,6 +393,16 @@ static void ceu_params_cpy (tceu_stk* stk, void* params, usize params_n) {
 
 /*****************************************************************************/
 
+void ceu_stack_clear (tceu_stk* cur, tceu_code_mem* mem) {
+    if (cur == NULL) {
+        return;
+    }
+    if (cur->range.mem == mem) {
+        cur->is_alive = 0;
+    }
+    ceu_stack_clear(cur->prv, mem);
+}
+
 #ifdef CEU_FEATURES_POOL
 void ceu_code_mem_dyn_free (tceu_pool* pool, tceu_code_mem_dyn* cur) {
     cur->nxt->prv = cur->prv;
@@ -408,8 +420,9 @@ void ceu_code_mem_dyn_free (tceu_pool* pool, tceu_code_mem_dyn* cur) {
     }
 }
 
-void ceu_code_mem_dyn_remove (tceu_pool* pool, tceu_code_mem_dyn* cur) {
+void ceu_code_mem_dyn_remove (tceu_pool* pool, tceu_code_mem_dyn* cur, tceu_stk* stk) {
     cur->is_alive = 0;
+    ceu_stack_clear(stk, cur->mem);
 
     if (cur->mem[0].pak->n_traversing == 0) {
         ceu_code_mem_dyn_free(pool, cur);
@@ -883,11 +896,15 @@ void ceu_bcast (tceu_nstk level, tceu_stk* cur)
     ceu_bcast_mark(level, cur);
     while (1) {
         tceu_stk nxt;
+        nxt.is_alive = 1;
+        nxt.prv = cur;
         int ret = ceu_bcast_exec(level, cur, &nxt);
         if (ret) {
             ceu_assert_sys(level < 255, "too many stack levels");
             ceu_bcast(level+1, &nxt);
-            cur->range = (tceu_range){(tceu_code_mem*)&CEU_APP.root, 0, CEU_TRAILS_N-1};
+            if (!cur->is_alive) {
+                break;
+            }
         } else {
             break;
         }
@@ -904,13 +921,13 @@ CEU_API void ceu_input (tceu_nevt id, void* params)
     if (dt != CEU_WCLOCK_INACTIVE) {
         tceu_evt   evt   = {CEU_INPUT__WCLOCK, {NULL}};
         tceu_range range = {(tceu_code_mem*)&CEU_APP.root, 0, CEU_TRAILS_N-1};
-        tceu_stk   cur   = { evt, range, &dt, 0 };
+        tceu_stk   cur   = { evt, range, &dt, 0, 1, NULL };
         ceu_bcast(1, &cur);
     }
     if (id != CEU_INPUT__NONE) {
         tceu_evt   evt   = {id, {NULL}};
         tceu_range range = {(tceu_code_mem*)&CEU_APP.root, 0, CEU_TRAILS_N-1};
-        tceu_stk   cur   = { evt, range, params, 0 };
+        tceu_stk   cur   = { evt, range, params, 0, 1, NULL };
         ceu_bcast(1, &cur);
     }
 }
@@ -954,7 +971,7 @@ CEU_API void ceu_start (tceu_callback* cb, int argc, char* argv[]) {
 
     tceu_evt   evt   = {CEU_INPUT__NONE, {NULL}};
     tceu_range range = {(tceu_code_mem*)&CEU_APP.root, 0, CEU_TRAILS_N-1};
-    tceu_stk   cur   = { evt, range, NULL, 0 };
+    tceu_stk   cur   = { evt, range, NULL, 0, 1, NULL };
     ceu_bcast(1, &cur);
 }
 
