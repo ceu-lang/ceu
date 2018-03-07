@@ -427,11 +427,10 @@ ceu_assert(0, "reached end of `code`");
             end
             LINE(me, [[
 #ifdef CEU_FEATURES_POOL
-    /* free */
     if (_ceu_mem->pak != NULL) {
         tceu_code_mem_dyn* __ceu_dyn =
             (tceu_code_mem_dyn*)(((byte*)(_ceu_mem)) - sizeof(tceu_code_mem_dyn));
-        ceu_code_mem_dyn_free(&_ceu_mem->pak->pool, __ceu_dyn);
+        ceu_code_mem_dyn_remove(&_ceu_mem->pak->pool, __ceu_dyn, _ceu_cur);
     }
 #endif
     return 1;
