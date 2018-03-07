@@ -887,6 +887,7 @@ void ceu_bcast (tceu_nstk level, tceu_stk* cur)
         if (ret) {
             ceu_assert_sys(level < 255, "too many stack levels");
             ceu_bcast(level+1, &nxt);
+            cur->range = (tceu_range){(tceu_code_mem*)&CEU_APP.root, 0, CEU_TRAILS_N-1};
         } else {
             break;
         }
