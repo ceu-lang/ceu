@@ -593,7 +593,7 @@ error'oi'
             return
         end
 
-        local proto_body = AST.asr(me,'', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block',1,'Stmts')
+        local proto_body = AST.asr(me.__adjs_1,'Block',1,'Stmts')
         local orig = proto_body[2]
         AST.set(proto_body, 2, node('Stmts', me.ln))
         local new = AST.copy(me)
@@ -622,7 +622,8 @@ error'oi'
         end
 
         local blk = AST.par(me, 'Block')
-        local proto1 = AST.asr(body1,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 1,'Code_Pars')
+        local proto1 = AST.asr(me.__adjs_1,'Block', 1,'Stmts', 1,'Code_Pars')
+AST.dump(proto1)
 
         if (not me.is_dyn_base) and mods1.dynamic and me.is_impl then
             me.id = id..proto1.ids_dyn
@@ -651,6 +652,7 @@ error'oi'
             else
                 me.id_ = id.._n
             end
+DBG('dcl', me.id_)
         end
 
         if old then
@@ -663,7 +665,8 @@ error'oi'
             end
 
             -- compare ins
-            local proto2 = AST.asr(body2,'Block',1,'Stmts',2,'Do',3,'Block',1,'Stmts',1,'Code_Pars')
+            local proto2 = AST.asr(old.__adjs_block_ins,'Block',1,'Stmts',1,'Code_Pars')
+
             local ok = AST.is_equal(proto1, proto2)
 
             -- compare mods
@@ -826,7 +829,7 @@ error'oi'
                         node('Loc', v.ln,
                             node('ID_int', v.ln, id)))
             elseif v.tag == 'ID_any' then
-                local vars = AST.asr(code.dcl,'Code', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block').dcls
+                local vars = code.dcl.__adjs_block_ins.dcls
                 if vars[i] then
                     local is_alias,tp = unpack(vars[i])
                     if not is_alias then
@@ -916,7 +919,7 @@ error'oi'
             if obj then
                 assert(obj.info.tp)
                 local Code = TYPES.abs_dcl(obj.info.tp, 'Code')
-                blk = AST.asr(Code,'Code', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 2,'Block')
+                blk = Code.__adjs_3 --AST.asr(Code,'Code', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 2,'Block', 1,'Stmts', 2,'Block')
             else
                 blk = AST.par(me,'Block')
             end
@@ -962,7 +965,7 @@ error'oi'
                 if dcl then
                     me.dcl = DCLS.asr(me, dcl, member, false, 'field')
                 else
-                    dcl = AST.asr(abs.dcl,'Code',4,'Block',1,'Stmts',2,'Do',3,'Block',1,'Stmts',2,'Block')
+                    dcl = abs.dcl.__adjs_block_mid
                     me.dcl = DCLS.asr(me, dcl, member, false, 'parameter')
                 end
             else

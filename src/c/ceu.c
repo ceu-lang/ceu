@@ -1,3 +1,4 @@
+// remover __1,__2,__3
 #include <stddef.h>     /* offsetof */
 #include <stdlib.h>     /* NULL */
 #include <string.h>     /* memset, strlen */
@@ -423,10 +424,6 @@ void ceu_code_mem_dyn_free (tceu_pool* pool, tceu_code_mem_dyn* cur) {
 void ceu_code_mem_dyn_remove (tceu_pool* pool, tceu_code_mem_dyn* cur, tceu_stk* stk) {
     cur->is_alive = 0;
     ceu_stack_clear(stk, cur->mem);
-
-    if (cur->mem[0].pak->n_traversing == 0) {
-        ceu_code_mem_dyn_free(pool, cur);
-    }
 }
 
 void ceu_code_mem_dyn_gc (tceu_pool_pak* pak) {

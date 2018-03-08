@@ -228,7 +228,7 @@ F = {
         -- RUN_INITS
         if me.is_implicit                   or      -- compiler defined
            AST.get(me.blk,1,'Ext_impl')     or      -- "output" parameter
-           AST.get(me.blk,4,'Code')         or      -- "code" parameter
+           me.blk == (code and code.__adjs_block_ins) or      -- "code" parameter
            AST.par(me,'Data')               or      -- "data" member
            code and code.is_dyn_base        or      -- base dynamic class
            alias == '&?'                    or      -- option alias
@@ -243,7 +243,7 @@ F = {
                 -- var x = ...
                 -- event& e = ...
                 --__detect_cycles = {}
-                local dont_await = AST.get(me.blk,6,'Code') -- mid param
+                local dont_await = (me.blk == (code and code.__adjs_block_mid))
                 local ok,stmt,endof = run_inits(me, #me+1, me, AST.par(me,'Code'), dont_await)
                 if ok and ok~=true then
                     if (ok=='Code' or ok=='Escape') and me.__dcls_unused

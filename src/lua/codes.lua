@@ -347,6 +347,7 @@ _ceu_mem->_trails[]]..ID_int.dcl.trails[1]..[[].evt.pak = &]]..V(ID_int)..[[;
 ]])
     end,
     Pool_Finalize = function (me)
+DBG'TODO: remove'
         local ID_int = unpack(me)
         LINE(me, [[
 ceu_assert(]]..V(ID_int,ctx)..[[.pool.queue == NULL, "bug found");
@@ -405,42 +406,23 @@ if (0)
 ceu_assert(0, "reached end of `code`");
 ]])
         end
-
-        -- CODE/DELAYED
-        if mods.await then
-            LINE(me, [[
-{
-    tceu_evt   __ceu_evt   = { CEU_INPUT__CODE_TERMINATED, {_ceu_mem} };
-    tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N-1 };
-    _ceu_nxt->evt      = __ceu_evt;
-    _ceu_nxt->range    = __ceu_range;
-]])
-            if Type and (not TYPES.check(Type,'none')) then
-                local ret = CUR('_ret')
-                LINE(me, [[
-    ceu_params_cpy(_ceu_nxt, &]]..ret..[[, sizeof(]]..ret..[[));
-]])
-            else
-                LINE(me, [[
-    _ceu_nxt->params_n = 0;
-]])
-            end
-            LINE(me, [[
-#ifdef CEU_FEATURES_POOL
-    if (_ceu_mem->pak != NULL) {
-        tceu_code_mem_dyn* __ceu_dyn =
-            (tceu_code_mem_dyn*)(((byte*)(_ceu_mem)) - sizeof(tceu_code_mem_dyn));
-        ceu_code_mem_dyn_remove(&_ceu_mem->pak->pool, __ceu_dyn, _ceu_cur);
-    }
-#endif
-    return 1;
-}
-]])
-        end
+        HALT(me)
         LINE(me, [[
-    return 0; /* HALT(me) */
 }
 ]])
+    end,
+
+    Code_Finalize = function (me)
+        LINE(me, [[
+#ifdef CEU_FEATURES_POOL
+if (_ceu_mem->pak != NULL) {
+    tceu_code_mem_dyn* __ceu_dyn =
+        (tceu_code_mem_dyn*)(((byte*)(_ceu_mem)) - sizeof(tceu_code_mem_dyn));
+    ceu_code_mem_dyn_remove(&_ceu_mem->pak->pool, __ceu_dyn, _ceu_cur);
+}
+#endif
+]])
+        HALT(me)
     end,
 
     --------------------------------------------------------------------------
@@ -798,6 +780,36 @@ ceu_assert(0, "reached end of `do`");
 ]])
         end
         CASE(me, me.lbl_out)
+
+        if me.__adjs_toplevel_do then
+            local Code = AST.par(me, 'Code')
+            LINE(me, [[
+_ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__STACKED;
+_ceu_mem->_trails[]]..me.trails[1]..[[].level  = _ceu_level;
+_ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..Code.lbl_term.id..[[;
+{
+    tceu_evt   __ceu_evt   = { CEU_INPUT__CODE_TERMINATED, {_ceu_mem} };
+    tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N-1 };
+    _ceu_nxt->evt      = __ceu_evt;
+    _ceu_nxt->range    = __ceu_range;
+]])
+            local Type = AST.get(Code,'', 4,'Block', 1,'Stmts', 1,'Code_Ret', 1,'', 2,'Type')
+            if Type and (not TYPES.check(Type,'none')) then
+                local ret = CUR('_ret')
+                LINE(me, [[
+    ceu_params_cpy(_ceu_nxt, &]]..ret..[[, sizeof(]]..ret..[[));
+]])
+            else
+                LINE(me, [[
+    _ceu_nxt->params_n = 0;
+]])
+            end
+            LINE(me, [[
+    return 1;
+}
+]])
+            CASE(me, Code.lbl_term)
+        end
 
         if me.has_escape and (me.trails_n>1 or blk.needs_clear) then
 -- TODO: has_escape precisa estar dentro de um par qq

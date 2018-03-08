@@ -445,8 +445,7 @@ error'TODO: remove below'
                         Dcl = DCLS.asr(me,data,member,false,e.info.id)
                     else
                         local code = AST.asr(ID_abs.dcl,'Code')
-                        Dcl = DCLS.asr(me,
-                                       AST.asr(code,'',4,'Block',1,'Stmts',2,'Do', 3,'Block',1,'Stmts',2,'Block'),
+                        Dcl = DCLS.asr(me, code.__adjs_block_mid,
                                        member,false,e.info.id)
                     end
                     me.info = {

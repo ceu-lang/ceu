@@ -251,6 +251,9 @@ error'TODO: luacov never executes this?'
                                         node('Stmts', me.ln,
                                             mid,
                                             (blk or node('Stmts',me.ln)))))))
+        set_or_do.__adjs_toplevel_do = mods.await
+        local __adjs_block_ins = set_or_do[3]
+        local __adjs_block_mid = set_or_do[3][1][2]
 
         if Type and (not is_void) then
             set_or_do = node('_Set', me.ln,
@@ -260,23 +263,40 @@ error'TODO: luacov never executes this?'
                                 set_or_do))
         end
 
+        local fin = set_or_do
+        if mods.await then
+            -- TODO: only required in pools or w/ awaits
+            fin = node('Stmts', me.ln,
+                        node('_Finalize', me.ln,
+                            false,
+                            false,
+                            node('Block', me.ln,
+                                node('Stmts', me.ln,
+                                    node('Code_Finalize', me.ln))),
+                            false,
+                            false),
+                        set_or_do)
+        end
+
         local ret = node('Code', me.ln, mods, id, throws,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 node('Code_Ret', me.ln,
                                     out),
-                                set_or_do)),
+                                fin)),
                         eoc)
         ret.is_impl = (blk ~= false)
 
         AST.par(ins,'Block').__adjs_1 = true
         AST.par(mid,'Block').__adjs_2 = true
-        if blk then
+        if ret.is_impl then
             blk.__adjs_3 = true
         end
         ret.__adjs_1 = AST.par(ins,'Block')
         ret.__adjs_2 = AST.par(mid,'Block')
         ret.__adjs_3 = blk
+        ret.__adjs_block_ins = __adjs_block_ins
+        ret.__adjs_block_mid = __adjs_block_mid
 
         return ret
     end,

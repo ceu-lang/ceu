@@ -106,8 +106,7 @@ typedef struct tceu_code_mem_]]..me.id_..[[ {
 
         local multis = {}
         if mods.dynamic then
-            local Code_Pars = AST.asr(body,'', 1,'Stmts', 2,'Do', 3,'Block', 1,'Stmts', 1,'Code_Pars')
-            for i, dcl in ipairs(AST.par(Code_Pars,'Block').dcls) do
+            for i, dcl in ipairs(me.__adjs_1.dcls) do
                 local _,_,_,dcl_mods = unpack(dcl)
                 if dcl_mods.dynamic then
                     local _,Type,id = unpack(dcl)
@@ -121,6 +120,9 @@ tceu_ndata _data_]]..i..[[;     /* force multimethod arg data id */
 ]=]
 
                     -- arg "i" is dynamic:
+DBG(data.dcl, dcl.id_dyn, id, dcl, dcl.id_)
+AST.dump(dcl)
+--AST.dump(me)
                     multis[#multis+1] = {
                         base = data.dcl,    -- datatype for the argument
                         dyn  = dcl.id_dyn,  -- identifier considering the "base" value
@@ -409,7 +411,7 @@ tceu_pool_pak]]..ptr..' '..dcl.id_..[[;
 
         local code = AST.par(me, 'Code')
         local toplevel = ( AST.get(me,1,'Data') or
-                           code and AST.depth(me)<=AST.depth(code.__adjs_2) )
+                           code and code.__adjs_3 and AST.depth(me)<=AST.depth(code.__adjs_3) )
 
         for _, dcl in ipairs(me.dcls) do
 if dcl.tag ~= 'Prim' then
@@ -425,6 +427,7 @@ if dcl.tag ~= 'Prim' then
 
             if dcl.tag=='Var' or dcl.tag=='Evt' then
                 dcl.id_ = dcl.id
+DBG('>>>', dcl, dcl.id_)
 
                 local ok = (not dcl.__dcls_dup)
                 if ok then
