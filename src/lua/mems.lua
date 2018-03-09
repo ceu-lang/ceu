@@ -120,9 +120,6 @@ tceu_ndata _data_]]..i..[[;     /* force multimethod arg data id */
 ]=]
 
                     -- arg "i" is dynamic:
-DBG(data.dcl, dcl.id_dyn, id, dcl, dcl.id_)
-AST.dump(dcl)
---AST.dump(me)
                     multis[#multis+1] = {
                         base = data.dcl,    -- datatype for the argument
                         dyn  = dcl.id_dyn,  -- identifier considering the "base" value
@@ -427,7 +424,6 @@ if dcl.tag ~= 'Prim' then
 
             if dcl.tag=='Var' or dcl.tag=='Evt' then
                 dcl.id_ = dcl.id
-DBG('>>>', dcl, dcl.id_)
 
                 local ok = (not dcl.__dcls_dup)
                 if ok then

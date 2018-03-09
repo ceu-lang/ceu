@@ -218,6 +218,8 @@ error'TODO: luacov never executes this?'
     _Code_proto__PRE = function (me)
         local mods, id, ins, mid, out, throws, blk, eoc = unpack(me)
         me.tag = 'Code'
+        local is_impl = (blk ~= false)
+        blk = blk or node('Stmts',me.ln)
 
         mid = mid or node('_Code_Pars', me.ln)
 
@@ -250,7 +252,7 @@ error'TODO: luacov never executes this?'
                                     node('Block', me.ln,
                                         node('Stmts', me.ln,
                                             mid,
-                                            (blk or node('Stmts',me.ln)))))))
+                                            blk)))))
         set_or_do.__adjs_toplevel_do = mods.await
         local __adjs_block_ins = set_or_do[3]
         local __adjs_block_mid = set_or_do[3][1][2]
@@ -285,7 +287,7 @@ error'TODO: luacov never executes this?'
                                     out),
                                 fin)),
                         eoc)
-        ret.is_impl = (blk ~= false)
+        ret.is_impl = is_impl
 
         AST.par(ins,'Block').__adjs_1 = true
         AST.par(mid,'Block').__adjs_2 = true

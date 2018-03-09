@@ -37584,6 +37584,7 @@ escape 1;
     _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = { ['~>1s']=1 },
 }
+
 Test { [[
 code/await Ff (event& none e) -> none do
     emit e;
@@ -51403,6 +51404,25 @@ var Aa.Bb b = val Aa.Bb(2,3);
 escape (call Ff(&&b,22)) + (call Ff(&&a,33));
 ]],
     dcls = 'line 20 : invalid call : expected `/dynamic` or `/static` modifier',
+}
+Test { [[
+data Aa with
+    var int x;
+end
+data Aa.Bb with
+    var int y;
+end
+
+code/tight/dynamic Ff (var/dynamic Aa&& a) -> int do
+    escape a:x;
+end
+
+var Aa i = val Aa(1);
+
+escape (call/dynamic Ff(&&i));
+]],
+    wrn = true,
+    run = 1,
 }
 Test { [[
 data Aa with

@@ -603,6 +603,9 @@ error'oi'
         new.id = id
         new.is_dyn_base = true
         new.dyns = {}
+        new.__adjs_1 = AST.get(new,'Code', 4,'Block', 1,'Stmts', 2,'Do', 3,'Block')
+                        or AST.asr(new,'Code', 4,'Block', 1,'Stmts', 2,'Stmts', 2,'Do', 3,'Block')
+-- TODO: _2/_3
 
         local s = node('Stmts', me.ln, new, me)
         return s
@@ -623,7 +626,6 @@ error'oi'
 
         local blk = AST.par(me, 'Block')
         local proto1 = AST.asr(me.__adjs_1,'Block', 1,'Stmts', 1,'Code_Pars')
-AST.dump(proto1)
 
         if (not me.is_dyn_base) and mods1.dynamic and me.is_impl then
             me.id = id..proto1.ids_dyn
@@ -652,7 +654,6 @@ AST.dump(proto1)
             else
                 me.id_ = id.._n
             end
-DBG('dcl', me.id_)
         end
 
         if old then
