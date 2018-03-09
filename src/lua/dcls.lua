@@ -666,7 +666,7 @@ error'oi'
             end
 
             -- compare ins
-            local proto2 = AST.asr(old.__adjs_block_ins,'Block',1,'Stmts',1,'Code_Pars')
+            local proto2 = AST.asr(old.__adjs_1,'Block',1,'Stmts',1,'Code_Pars')
 
             local ok = AST.is_equal(proto1, proto2)
 
@@ -830,7 +830,7 @@ error'oi'
                         node('Loc', v.ln,
                             node('ID_int', v.ln, id)))
             elseif v.tag == 'ID_any' then
-                local vars = code.dcl.__adjs_block_ins.dcls
+                local vars = code.dcl.__adjs_1.dcls
                 if vars[i] then
                     local is_alias,tp = unpack(vars[i])
                     if not is_alias then
@@ -966,7 +966,7 @@ error'oi'
                 if dcl then
                     me.dcl = DCLS.asr(me, dcl, member, false, 'field')
                 else
-                    dcl = abs.dcl.__adjs_block_mid
+                    dcl = abs.dcl.__adjs_2
                     me.dcl = DCLS.asr(me, dcl, member, false, 'parameter')
                 end
             else

@@ -254,8 +254,6 @@ error'TODO: luacov never executes this?'
                                             mid,
                                             blk)))))
         set_or_do.__adjs_toplevel_do = mods.await
-        local __adjs_block_ins = set_or_do[3]
-        local __adjs_block_mid = set_or_do[3][1][2]
 
         if Type and (not is_void) then
             set_or_do = node('_Set', me.ln,
@@ -287,18 +285,10 @@ error'TODO: luacov never executes this?'
                                     out),
                                 fin)),
                         eoc)
-        ret.is_impl = is_impl
-
-        AST.par(ins,'Block').__adjs_1 = true
-        AST.par(mid,'Block').__adjs_2 = true
-        if ret.is_impl then
-            blk.__adjs_3 = true
-        end
+        ret.is_impl  = is_impl
         ret.__adjs_1 = AST.par(ins,'Block')
         ret.__adjs_2 = AST.par(mid,'Block')
         ret.__adjs_3 = blk
-        ret.__adjs_block_ins = __adjs_block_ins
-        ret.__adjs_block_mid = __adjs_block_mid
 
         return ret
     end,

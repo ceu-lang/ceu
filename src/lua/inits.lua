@@ -138,7 +138,8 @@ local function run_inits (par, i, Dcl, stop, dont_await)
         local ok2,stmt2 = run_inits(s2, 1, Dcl, s2, dont_await)
 
         if ok1 or ok2 then
-            if (ok1=='Escape' or ok2=='Escape') and Dcl.blk.__adjs_2 then
+            local code = AST.par(Dcl.blk, 'Code')
+            if (ok1=='Escape' or ok2=='Escape') and (code and code.__adjs_2==Dcl.blk) then
                 return me.tag, (ok1=='Escape' and stmt1 or stmt2)
             elseif ok1 and ok2 then
                 return true, me
@@ -226,12 +227,12 @@ F = {
         local code = AST.par(me, 'Code')
 
         -- RUN_INITS
-        if me.is_implicit                   or      -- compiler defined
-           AST.get(me.blk,1,'Ext_impl')     or      -- "output" parameter
-           me.blk == (code and code.__adjs_block_ins) or      -- "code" parameter
-           AST.par(me,'Data')               or      -- "data" member
-           code and code.is_dyn_base        or      -- base dynamic class
-           alias == '&?'                    or      -- option alias
+        if me.is_implicit                     or    -- compiler defined
+           AST.get(me.blk,1,'Ext_impl')       or    -- "output" parameter
+           me.blk == (code and code.__adjs_1) or    -- "code" parameter
+           AST.par(me,'Data')                 or    -- "data" member
+           code and code.is_dyn_base          or    -- base dynamic class
+           alias == '&?'                      or    -- option alias
            TYPES.check(tp,'?') and (not alias)      -- optional initialization
         then
             -- ok: don't need initialization
@@ -243,15 +244,15 @@ F = {
                 -- var x = ...
                 -- event& e = ...
                 --__detect_cycles = {}
-                local dont_await = (me.blk == (code and code.__adjs_block_mid))
+                local dont_await = (me.blk == (code and code.__adjs_2))
                 local ok,stmt,endof = run_inits(me, #me+1, me, AST.par(me,'Code'), dont_await)
                 if ok and ok~=true then
                     if (ok=='Code' or ok=='Escape') and me.__dcls_unused
-                        and (not (code and code[2].await and me.blk.__adjs_2))
+                        and (not (code and code[2].await and code.__adjs_2==me.blk))
                     then
                         -- ok, warning generated (unless in init list)
                     --elseif ok=='Escape' and me.blk.__adjs_2 then
-                    elseif me.blk.__adjs_2 then
+                    elseif code and code.__adjs_2==me.blk then
                     else
                         err_inits(me, stmt, nil, endof) --, 'end of '..AST.tag2id[me.tag])
                     end

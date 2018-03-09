@@ -180,8 +180,9 @@ F = {
                                    or AST.get(watch,'', 1,'Par_Or', 1,'Block', 1,'Stmts', 1,'Set_Await_Int',1,'Await_Int', 1,'')
                 if awt and awt.info.dcl==me.info.dcl_obj.orig then
                     if to then
+                        local code = AST.par(me,'Code')
                         -- watching.depth < to.dcl.blk.depth
-                        if to.info.dcl.blk.__adjs_2 then
+                        if code and code.__adjs_2==to.info.dcl.blk then
                             -- ok: allow mid destination binding even outliving source
                             -- TODO: check it is not accessed outside the watching
                             ok = true
