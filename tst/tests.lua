@@ -396,7 +396,6 @@ escape 1;
 ]==]
 
 --do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -36952,7 +36951,7 @@ end
 spawn Ff();
 escape 1;
 ]],
-    run = '1] -> runtime error: reached end of `code`',
+    run = '3] -> runtime error: reached end of `code`',
     _opts = { ceu_features_trace='true' },
 }
 
@@ -40221,6 +40220,28 @@ escape 10;
 }
 
 Test { [[
+code/await Ff (none) -> none do
+    await async do end;
+end
+
+code/await Gg (none) -> int
+do
+    pool[] Ff fs;
+    var&? Ff f = spawn Ff() in fs;
+    await f;
+    escape 10;
+end
+
+var int ret = await Gg();
+
+escape ret;
+]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
+    run = 10,
+    --inits = 'line 8 : uninitialized variable "x" : reached yielding statement (/tmp/tmp.ceu:12)',
+}
+
+Test { [[
 code/await Ff (none) -> (var& int x) -> int
 do
     var int xx = 10;
@@ -41776,6 +41797,31 @@ code/await UV_FS_Write2 (none) -> none do
 end
 
 do
+    await 1s;
+end
+par/or do
+    await FOREVER;
+with
+    await UV_FS_Write2();
+end
+
+escape {V};
+]=],
+    wrn = true,
+    run = {['~>2s']=1},
+}
+
+Test { [=[
+native/pre do
+    int V = 0;
+end
+
+code/await UV_FS_Write2 (none) -> none do
+    await 1s;
+    {V++;}
+end
+
+do
     await UV_FS_Write2();
 end
 par/or do
@@ -42871,6 +42917,7 @@ escape ret + (b1 as int) + (b2 as int) + (b3 as int) + (b4 as int);
     _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 15,
 }
+--]=====]
 
 Test { [[
 event& none e2;
@@ -44098,6 +44145,23 @@ await OS_START;
 
 escape _V;
 ]],
+    run = 1,
+}
+
+Test { [[
+code/await Ux (none)->none do
+end
+code/await Tx (none)->none do
+    await Ux();
+end
+do
+    pool[] Tx ts;
+    spawn Tx() in ts;
+end
+
+escape 1;
+]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
 }
 
@@ -49455,6 +49519,7 @@ escape 1;
 ]],
     run = 1,
     _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
+    valgrind = false,
 }
 Test { [[
 native _usleep;
@@ -49486,6 +49551,7 @@ escape 1;
 ]],
     run = 1,
     _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
+    valgrind = false,
 }
 
 Test { [[

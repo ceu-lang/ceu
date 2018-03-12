@@ -255,6 +255,17 @@ if (]]..V(c)..[[) {
 {
 ]])
         CONC_ALL(me)
+
+        local Code = AST.par(me, 'Code')
+        if Code and Code.__adjs_3==me then
+            local Type = AST.get(Code,'', 4,'Block', 1,'Stmts', 1,'Code_Ret', 1,'', 2,'Type')
+            if not Type then
+                LINE(me, [[
+ceu_assert(0, "reached end of `code`");
+]])
+            end
+        end
+
         if me.needs_clear then
             CLEAR(me)
         end
@@ -347,18 +358,11 @@ _ceu_mem->_trails[]]..ID_int.dcl.trails[1]..[[].evt.pak = &]]..V(ID_int)..[[;
 ]])
     end,
     Pool_Finalize = function (me)
-DBG'TODO: remove'
         local ID_int = unpack(me)
         LINE(me, [[
 ceu_assert(]]..V(ID_int,ctx)..[[.pool.queue == NULL, "bug found");
-{
-    tceu_code_mem_dyn* __ceu_cur = ]]..V(ID_int,ctx)..[[.first.nxt;
-    while (__ceu_cur != &]]..V(ID_int,ctx)..[[.first) {
-        tceu_code_mem_dyn* __ceu_nxt = __ceu_cur->nxt;
-        ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, __ceu_cur, 0, CEU_TRACE(0));
-        __ceu_cur = __ceu_nxt;
-    }
-}
+]]..V(ID_int,ctx)..[[.n_traversing = 0;
+ceu_code_mem_dyn_gc(&]]..V(ID_int,ctx)..[[);
 ]])
     end,
 
@@ -399,13 +403,6 @@ if (0)
         end
 
         CONC(me, body)
-
-        local Type = AST.get(body,'Block', 1,'Stmts', 1,'Code_Ret', 1,'', 2,'Type')
-        if not Type then
-            LINE(me, [[
-ceu_assert(0, "reached end of `code`");
-]])
-        end
         HALT(me)
         LINE(me, [[
 }
@@ -413,15 +410,51 @@ ceu_assert(0, "reached end of `code`");
     end,
 
     Code_Finalize = function (me)
+        local Code = AST.par(me, 'Code')
         LINE(me, [[
+if (_ceu_mem->has_term) {
+    /* generate only if terminating from inside */
+    _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__STACKED;
+    _ceu_mem->_trails[]]..me.trails[1]..[[].level  = _ceu_level;
+    _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..Code.lbl_term.id..[[;
+
+    tceu_evt   __ceu_evt   = { CEU_INPUT__CODE_TERMINATED, {_ceu_mem} };
+    tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N-1 };
+    _ceu_nxt->evt      = __ceu_evt;
+    _ceu_nxt->range    = __ceu_range;
+]])
+        local Type = AST.get(Code,'', 4,'Block', 1,'Stmts', 1,'Code_Ret', 1,'', 2,'Type')
+        if Type and (not TYPES.check(Type,'none')) then
+            local ret = CUR('_ret')
+            LINE(me, [[
+ceu_params_cpy(_ceu_nxt, &]]..ret..[[, sizeof(]]..ret..[[));
+]])
+        else
+            LINE(me, [[
+_ceu_nxt->params_n = 0;
+]])
+        end
+        LINE(me, [[
+}
+
 #ifdef CEU_FEATURES_POOL
 if (_ceu_mem->pak != NULL) {
     tceu_code_mem_dyn* __ceu_dyn =
         (tceu_code_mem_dyn*)(((byte*)(_ceu_mem)) - sizeof(tceu_code_mem_dyn));
-    ceu_code_mem_dyn_remove(&_ceu_mem->pak->pool, __ceu_dyn, _ceu_cur);
+    __ceu_dyn->is_alive = 0;
 }
 #endif
+
+ceu_stack_clear(_ceu_cur, _ceu_mem);
+
+if (_ceu_mem->has_term) {
+    _ceu_mem->has_term = 0;
+    return 1;
+} else {
+    return 0;
+}
 ]])
+        --CASE(me, Code.lbl_term)
         HALT(me)
     end,
 
@@ -440,6 +473,7 @@ assert(not obj, 'not implemented')
 #endif
     ]]..mem..[[->_mem.up_mem = ]]..((pak=='NULL' and '_ceu_mem') or (pak..'->up_mem'))..[[;
     ]]..mem..[[->_mem.depth  = ]]..ID_abs.dcl.depth..[[;
+    ]]..mem..[[->_mem.has_term = 0;
 ]]
         if CEU.opts.ceu_features_trace then
             ret = ret .. LINE_DIRECTIVE(me) .. [[
@@ -782,33 +816,9 @@ ceu_assert(0, "reached end of `do`");
         CASE(me, me.lbl_out)
 
         if me.__adjs_toplevel_do then
-            local Code = AST.par(me, 'Code')
             LINE(me, [[
-_ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__STACKED;
-_ceu_mem->_trails[]]..me.trails[1]..[[].level  = _ceu_level;
-_ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..Code.lbl_term.id..[[;
-{
-    tceu_evt   __ceu_evt   = { CEU_INPUT__CODE_TERMINATED, {_ceu_mem} };
-    tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N-1 };
-    _ceu_nxt->evt      = __ceu_evt;
-    _ceu_nxt->range    = __ceu_range;
+    _ceu_mem->has_term = 1;
 ]])
-            local Type = AST.get(Code,'', 4,'Block', 1,'Stmts', 1,'Code_Ret', 1,'', 2,'Type')
-            if Type and (not TYPES.check(Type,'none')) then
-                local ret = CUR('_ret')
-                LINE(me, [[
-    ceu_params_cpy(_ceu_nxt, &]]..ret..[[, sizeof(]]..ret..[[));
-]])
-            else
-                LINE(me, [[
-    _ceu_nxt->params_n = 0;
-]])
-            end
-            LINE(me, [[
-    return 1;
-}
-]])
-            CASE(me, Code.lbl_term)
         end
 
         if me.has_escape and (me.trails_n>1 or blk.needs_clear) then

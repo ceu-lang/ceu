@@ -116,6 +116,7 @@ typedef struct tceu_code_mem {
 #ifdef CEU_FEATURES_LUA
     lua_State*  lua;
 #endif
+    bool has_term;
     tceu_ntrl   trails_n;
     tceu_trl    _trails[0];
 } tceu_code_mem;
@@ -418,11 +419,6 @@ void ceu_code_mem_dyn_free (tceu_pool* pool, tceu_code_mem_dyn* cur) {
         /* static pool */
         ceu_pool_free(pool, (byte*)cur);
     }
-}
-
-void ceu_code_mem_dyn_remove (tceu_pool* pool, tceu_code_mem_dyn* cur, tceu_stk* stk) {
-    cur->is_alive = 0;
-    ceu_stack_clear(stk, cur->mem);
 }
 
 void ceu_code_mem_dyn_gc (tceu_pool_pak* pak) {
