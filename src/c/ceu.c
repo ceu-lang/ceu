@@ -824,6 +824,7 @@ static int ceu_bcast_exec (tceu_nstk level, tceu_stk* cur, tceu_stk* nxt)
                         tceu_stk cur_ = *cur;
                         cur_.range = range_;
                         if (ceu_bcast_exec(level, &cur_, nxt)) {
+                            trl->evt.pak->n_traversing--;
                             return 1;
                         }
                     }

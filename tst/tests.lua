@@ -396,6 +396,7 @@ escape 1;
 ]==]
 
 --do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -42883,25 +42884,50 @@ code/await Ff (none) -> (var& int x, event& none e) -> none do
     await e_;
 end
 
+pool[1] Ff ffs;
+
+var&? Ff fa = spawn Ff() in ffs;
+
+emit fa!.e;
+
+var&? Ff fc = spawn Ff() in ffs;
+var bool b3 = fc?;                  // b3=1
+
+//{printf("%d %d %d %d\n", @b1, @b2, @b3, @b4);}
+escape (b3 as int);
+]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
+    run = 1,
+}
+
+Test { [[
+code/await Ff (none) -> (var& int x, event& none e) -> none do
+    var int v = 10;
+    x = &v;
+    event none e_;
+    e = &e_;
+    await e_;
+end
+
 pool[2] Ff ffs;
 
 var&? Ff fa = spawn Ff() in ffs;
 var&? Ff fb = spawn Ff() in ffs;
-var bool b1 = fa?;
-var bool b2 = fb?;
+var bool b1 = fa?;                  // b1=1
+var bool b2 = fb?;                  // b2=1
 
 event none g;
 
-var int ret = 0;
+var int ret = 0;                    // ret=0
 watching g do
     var&? Ff f1;
     loop f1 in ffs do
         emit f1!.e;
         var&? Ff f2;
         loop f2 in ffs do
-            ret = ret + f2!.x;
+            ret = ret + f2!.x;              // ret=10
             emit f2!.e;
-            ret = ret + (f2? as int) + 1;
+            ret = ret + (f2? as int) + 1;   // ret=11
             emit g;
         end
     end
@@ -42909,15 +42935,15 @@ end
 
 var&? Ff fc = spawn Ff() in ffs;
 var&? Ff fd = spawn Ff() in ffs;
-var bool b3 = fc?;
-var bool b4 = fd?;
+var bool b3 = fc?;                  // b3=1
+var bool b4 = fd?;                  // b4=1
 
+//{printf("%d %d %d %d\n", @b1, @b2, @b3, @b4);}
 escape ret + (b1 as int) + (b2 as int) + (b3 as int) + (b4 as int);
 ]],
     _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 15,
 }
---]=====]
 
 Test { [[
 event& none e2;
