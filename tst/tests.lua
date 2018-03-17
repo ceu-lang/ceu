@@ -43308,6 +43308,25 @@ escape 1;
     wrn = true,
     scopes = 'line 13 : invalid binding : incompatible scopes',
 }
+
+Test { [[
+code/await Ff (none) -> none do
+end
+
+pool[1] Ff fs;
+var&? Ff f;
+event none e;
+watching e do
+    loop f in fs do
+        emit e;
+    end
+end
+escape 1;
+]],
+    run = 1,
+    _opts = { ceu_features_pool='true' },
+}
+
 --<< POOL / LOOP
 --||| TODO: POOL ITERATORS
 

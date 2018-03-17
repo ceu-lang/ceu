@@ -653,9 +653,9 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_clr.id..[[;
         LINE(me, [[
 ceu_assert(]]..V(pool)..[[.n_traversing < 255, "bug found");
 ]]..V(pool)..[[.n_traversing++;
-_ceu_mem->_trails[]]..me.trails[1]..[[].evt.id  = CEU_INPUT__FINALIZE;
-_ceu_mem->_trails[]]..me.trails[1]..[[].evt.mem = _ceu_mem;
-_ceu_mem->_trails[]]..me.trails[1]..[[].lbl     = ]]..me.lbl_fin.id..[[;
+_ceu_mem->_trails[]]..(me.trails[1]+1)..[[].evt.id  = CEU_INPUT__FINALIZE;
+_ceu_mem->_trails[]]..(me.trails[1]+1)..[[].evt.mem = _ceu_mem;
+_ceu_mem->_trails[]]..(me.trails[1]+1)..[[].lbl     = ]]..me.lbl_fin.id..[[;
 
 if (0) {
     case ]]..me.lbl_fin.id..[[:
@@ -675,9 +675,9 @@ if (0) {
             local abs = TYPES.abs_dcl(i.info.tp,'Code')
             SET(me, i, '((tceu_code_mem_'..abs.id_..'*)'..cur..'->mem)', nil,true, {is_bind=true},nil)
             LINE(me, [[
-            _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].evt.id    = CEU_INPUT__CODE_TERMINATED;
-            _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].evt.mem   = ]]..cur..'->mem'..[[;
-            _ceu_mem->_trails[]]..(me.trails[1]+1)..[[].lbl       = ]]..me.lbl_null.id..[[;
+            _ceu_mem->_trails[]]..(me.trails[1]+2)..[[].evt.id    = CEU_INPUT__CODE_TERMINATED;
+            _ceu_mem->_trails[]]..(me.trails[1]+2)..[[].evt.mem   = ]]..cur..'->mem'..[[;
+            _ceu_mem->_trails[]]..(me.trails[1]+2)..[[].lbl       = ]]..me.lbl_null.id..[[;
             if (0) {
                 case ]]..me.lbl_null.id..[[:;
                     ]]..V(i,{is_bind=true})..[[ = NULL;
@@ -872,8 +872,6 @@ while (1) {
         if me.has_continue and me.trails_n>1 then
             CLEAR(me, me.lbl_cnt_clr)
         end
-
-        assert(body.trails[1]==me.trails[1] and body.trails[2]==me.trails[2])
 
         CODES.F.__loop_async(me)
         LINE(me, [[
