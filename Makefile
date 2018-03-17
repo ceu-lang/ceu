@@ -34,12 +34,12 @@ samples:
 		echo -n "Press <enter> to start...";                                \
 		read _;                                                             \
 		echo ceu --pre --pre-input=$$i --pre-args=\"-I./include\"           \
-	        --ceu --ceu-features-lua=true --ceu-features-thread=true --ceu-err-unused=pass \
+	        --ceu --ceu-features-lua=true --ceu-features-thread=true --ceu-err-unused=pass --ceu-features-dynamic=true \
 		    --env --env-types=env/types.h --env-threads=env/threads.h --env-main=env/main.c \
             --cc --cc-args=\"-llua5.3 -lpthread\"                           \
 	             --cc-output=/tmp/$$(basename $$i .ceu);                    \
 		ceu --pre --pre-input=$$i --pre-args=\"-I./include\"                \
-	        --ceu --ceu-features-lua=true --ceu-features-thread=true --ceu-err-unused=pass \
+	        --ceu --ceu-features-lua=true --ceu-features-thread=true --ceu-err-unused=pass --ceu-features-dynamic=true \
 		    --env --env-types=env/types.h --env-threads=env/threads.h --env-main=env/main.c \
             --cc --cc-args="-llua5.3 -lpthread"                             \
 	             --cc-output=/tmp/$$(basename $$i .ceu);                    \
