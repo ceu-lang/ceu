@@ -130,6 +130,8 @@ static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
     }
 #endif
 
+#define ceu_log(msg) ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)msg, CEU_TRACE_null)
+
 enum {
     CEU_CALLBACK_START,
     CEU_CALLBACK_STOP,
