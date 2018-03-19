@@ -570,7 +570,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , Await_Pause   = K'await' * K'pause'   * V'Y'
     , Await_Resume  = K'await' * K'resume'  * V'Y'
 
-    , _Emit_ps = OPT(V'__Exp' + V'ID_any' + PARENS(OPT(V'_List_Exp_Any')))
+    , _Emit_ps = OPT(PARENS(OPT(V'_List_Exp_Any')))
     , Emit_Wclock   = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
     , Emit_Ext_emit = K'emit'                     * V'ID_ext' * V'_Emit_ps'
     , Emit_Ext_call = (K'call/recursive'+K'call') * V'ID_ext' * V'_Emit_ps'
@@ -658,7 +658,6 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     , _Set_Async_Thread  = #(K'await' * K'async/thread') * V'Async_Thread'
     , _Set_Lua           = #V'__lua_pre'     * V'_Lua'
-    , _Set_Lua_Do        =                     V'_Lua_Do'
     , _Set_Vec           =                     V'Vec_Cons'
 
     , _Set_Emit_Wclock   = #K'emit'          * V'Emit_Wclock'
