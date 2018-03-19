@@ -17,8 +17,8 @@ a job position referring to a person is a pointer.
 
 Céu support aliases to all storage entity classes, except external events and
 pointer types.
-Céu also supports option variable aliases which are aliases that may be set or
-not.
+Céu also supports option variable aliases which are aliases that may be bounded
+or not.
 
 An alias is declared by suffixing the entity class with the modifier
 `&` and is acquired by prefixing an entity identifier with the operator `&`.
@@ -43,9 +43,9 @@ An option variable alias, declared as `var&?`, serves two purposes:
 - Map a [native resource](../statements/#resources-finalization) to Céu.
   The alias is acquired by prefixing the associated
   [native call](../statements/#native-call) with the operator `&`.
-  Since the allocation may fail, the alias may remain unset.
+  Since the allocation may fail, the alias may remain unbounded.
 - Hold the result of a [`spawn`](../statements/#code-invocation) invocation.
-  Since the allocation may fail, the alias may remain unset.
+  Since the allocation may fail, the alias may remain unbounded.
 
 <!--
 - Track the lifetime of a variable.
@@ -57,6 +57,8 @@ An option variable alias, declared as `var&?`, serves two purposes:
 
 Accesses to option variable aliases must always use
 [option checking or unwrapping](../expressions/#option).
+
+`TODO: or implicit assert with & declarations`
 
 Examples:
 

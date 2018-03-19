@@ -53,6 +53,8 @@ buf = buf .. [4];           // write access
 escape buf[1];              // read access (yields 2)
 ```
 
+`TODO: ring buffers`
+
 ### Events
 
 Events account for the reactive nature of Céu.
@@ -157,9 +159,9 @@ Example:
 code/await Anim (none) => none do       // defines the "Anim" code abstraction
     <...>                               // body of "Anim"
 end
-pool[] Anim ms;                         // declares an unlimited container for "Anim" instances
+pool[] Anim as;                         // declares an unlimited container for "Anim" instances
 loop i in [1->10] do
-    spawn Anim() in ms;                 // creates 10 instances of "Anim" into "ms"
+    spawn Anim() in as;                 // creates 10 instances of "Anim" into "as"
 end
 ```
 

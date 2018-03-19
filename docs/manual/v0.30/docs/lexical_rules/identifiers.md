@@ -22,7 +22,7 @@ ID_type  ::= ( ID_nat | ID_abs
              | s8    | s16    | s32     | s64
              | u8    | u16    | u32     | u64
              | int   | uint   | integer
-             | ssize   | usize )
+             | ssize | usize )
 ```
 
 Declarations for [`code` and `data` abstractions](../statements/#abstractions)

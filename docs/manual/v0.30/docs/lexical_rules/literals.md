@@ -14,7 +14,7 @@ The boolean type has only two possible values: `true` and `false`.
 
 The boolean values `on` and `yes` are synonymous to `true` and can be used
 interchangeably.
-The boolean values `off` and `no` are synonymous to `false and can be used
+The boolean values `off` and `no` are synonymous to `false` and can be used
 interchangeably.
 
 ### Integers
