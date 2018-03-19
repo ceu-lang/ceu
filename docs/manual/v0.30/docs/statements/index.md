@@ -5,7 +5,7 @@ block:
 
 ```ceu
 Program ::= Block
-Block   ::= {Stmt `;´} {`;´}
+Block   ::= {Stmt `;´}
 ```
 
 *Note: statements terminated with the `end` keyword do not require a
