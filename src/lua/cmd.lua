@@ -26,7 +26,6 @@ Options:
     --ceu-input=FILE                    input file to compile (Céu source)
     --ceu-output=FILE                   output source file to generate (C source)
     --ceu-line-directives=BOOL          insert `#line` directives in the C output (default `true`)
-    --ceu-callbacks-lines=BOOL          pass current filename and line number to callbacks (default `true`)
 
     --ceu-features-trace=BOOL           enable trace support (default `false`)
     --ceu-features-exception=BOOL       enable exceptions support (default `false`)
