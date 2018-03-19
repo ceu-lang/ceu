@@ -40,3 +40,5 @@ for variables and events):
 
     var             watching        with            yes
 ```
+
+`TODO: catch, throw, throws`

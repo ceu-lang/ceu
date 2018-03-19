@@ -14,9 +14,14 @@ Follows the complete syntax of Céu in a BNF-like syntax:
 - `(...)` : groups `...`
 - `<...>` : special informal rule
 
+<!--
+TODO:
+    deterministic
+-->
+
 ```ceu
 Program ::= Block
-Block   ::= {Stmt `;´} {`;´}
+Block   ::= {Stmt `;´}
 
 Stmt ::= nothing
 
@@ -26,7 +31,7 @@ Stmt ::= nothing
       | do [`/´(ID_int|`_´)] [`(´ [LIST(ID_int)] `)´]
             Block
         end
-      |  escape [`/´ID_int] [Exp]
+      | escape [`/´ID_int] [Exp]
 
       /* pre (top level) execution */
       | pre do
@@ -36,12 +41,13 @@ Stmt ::= nothing
   /* Storage Entities / Declarations */
 
       // Dcls ::=
-      | var [`&´|`&?´] `[´ [Exp] `]´ [`/dynamic´|`/nohold´] Type ID_int [`=´ Sources]
+      | var [`&´|`&?´] `[´ [Exp [`*´]] `]´ [`/dynamic´|`/nohold´] Type ID_int [`=´ Sources]
       | pool [`&´] `[´ [Exp] `]´ Type ID_int [`=´ Sources]
       | event [`&´] (Type | `(´ LIST(Type) `)´) ID_int [`=´ Sources]
 
       | input (Type | `(´ LIST(Type) `)´) ID_ext
-      | output (Type | `(´ LIST([`&´] Type) `)´) ID_ext
+      | output (Type | `(´ LIST([`&´] Type [ID_int]) `)´) ID_ext
+            [ do Block end ]
 
   /* Event Handling */
 
@@ -123,6 +129,13 @@ Stmt ::= nothing
             Block
         end
 
+  /* Exceptions */
+
+      | throw Exp
+      | catch LIST(Loc) do
+            Block
+        end
+
   /* Pause */
 
       | pause/if (Loc|ID_ext) do
@@ -151,9 +164,7 @@ Stmt ::= nothing
 
   /* C integration */
 
-      | native [`/´(pure|const|nohold|plain)] `(´ List_Nat `)´
-        // where
-            List_Nat ::= LIST(ID_nat)
+      | native [`/´(pure|const|nohold|plain)] `(´ LIST(ID_nat) `)´
       | native `/´(pre|pos) do
             <code definitions in C>
         end
@@ -165,9 +176,9 @@ Stmt ::= nothing
 
       /* finalization */
       | do [Stmt] Finalize
-      | var `&?´ Type ID_int `=´ `&´ (Nat_Call | Code_Call) Finalize
+      | var [`&´|`&?´] Type ID_int `=´ `&´ (Nat_Call | Code_Call) Finalize
         // where
-            Finalize ::= finalize `(´ LIST(Loc) `)´ with
+            Finalize ::= finalize [ `(´ LIST(Loc) `)´ ] with
                              Block
                          [ pause  with Block ]
                          [ resume with Block ]
@@ -189,8 +200,7 @@ Stmt ::= nothing
       /* Data */
 
       | data ID_abs [as (nothing|Exp)] [ with
-            Dcls `;´ {`;´}
-            { Dcls `;´ {`;´} }
+            Dcls `;´ { Dcls `;´ }
         end ]
 
       /* Code */
@@ -199,7 +209,10 @@ Stmt ::= nothing
       | code/tight Mods ID_abs `(´ Params `)´ `->´ Type
 
       // Code_Await ::=
-      | code/await Mods ID_abs `(´ Params `)´ [ `->´ `(´ Params `)´ ] `->´ (Type | NEVER)
+      | code/await Mods ID_abs `(´ Params `)´
+                                    [ `->´ `(´ Params `)´ ]
+                                        `->´ (Type | NEVER)
+                                [ throws LIST(ID_abs) ]
         // where
             Params ::= none | LIST(Dcls)
 
@@ -218,6 +231,7 @@ Stmt ::= nothing
 
       // Code_Spawn ::=
       | spawn Mods Abs_Cons [in Loc]
+      | kill Loc [ `(` Exp `)` ]
 
         // where
             Mods ::= [`/´dynamic | `/´static] [`/´recursive]
@@ -232,7 +246,6 @@ Stmt ::= nothing
                         | Await
                         | Watching
                         | Thread
-                        | Lua_State
                         | Lua_Stmts
                         | Code_Await
                         | Code_Spawn
@@ -284,12 +297,18 @@ Exp ::= NUM | STR | null | true | false | on | off | yes | no
      |  `(´ Exp `)´
      |  Exp <binop> Exp
      |  <unop> Exp
+     |  Exp (`:´|`.´) (ID_int|ID_nat)
+     |  Exp (`?´|`!´)
      |  Exp `[´ Exp `]´
+     |  Exp `(´ [ LIST(Exp) ] `)´
      |  Exp is Type
      |  Exp as Type
      |  Exp as `/´(nohold|plain|pure)
      |  sizeof `(´ (Type|Exp) `)´
      |  Nat_Call | Code_Call
+     |  ID_int
+     |  ID_nat
+     |  outer
 
 /* Locations */
 
