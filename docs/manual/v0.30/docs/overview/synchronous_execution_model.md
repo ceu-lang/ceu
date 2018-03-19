@@ -1,6 +1,6 @@
 ## Synchronous Execution Model
 
-Céu is grounded on a precise definition of *logical time* (as opposed to
+Céu is grounded on a precise notion of *logical time* (as opposed to
 *physical*) as a discrete sequence of input events:
 a sequence because only a single input event is handled at a logical time; 
 discrete because reactions to events are guaranteed to execute in bounded

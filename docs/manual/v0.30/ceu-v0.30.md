@@ -7,11 +7,9 @@ general characteristics:
 
 - *Reactive*:    code executes in reactions to events.
 - *Structured*:  code uses structured control-flow mechanisms, such as `spawn`
-                 and `await` (to create and suspend an activity).
-- *Synchronous*: event reactions never overlap and run atomically and to
-                 completion on each activity.
-                 There is no implicit preemption or real parallelism, resulting
-                 in deterministic execution.
+                 and `await` (to create and suspend lines of execution).
+- *Synchronous*: event reactions run atomically and to completion on each line
+                 of execution.        
 
 <!--
 - Event Handling:
@@ -47,13 +45,13 @@ end
 
 The synchronous concurrency model of Céu greatly diverges from multithreaded
 and actor-based models (e.g. *pthreads* and *erlang*).
-On the one hand, there is no real parallelism at the synchronous kernel of the
-language (i.e., no multi-core execution).
+On the one hand, there is no preemption or real parallelism at the synchronous
+core of the language (i.e., no multi-core execution).
 On the other hand, accesses to shared variables among trails are deterministic
 and do not require synchronization primitives (i.e., *locks* or
 *queues*).
 
-Céu provides static memory management based on lexical scopes and does not
+Céu provides static memory management based on lexical scope and does not
 require a garbage collector.
 
 Céu integrates safely with C, particularly when manipulating external resources
@@ -84,7 +82,7 @@ video output.
 
 ### Synchronous Execution Model
 
-Céu is grounded on a precise definition of *logical time* (as opposed to
+Céu is grounded on a precise notion of *logical time* (as opposed to
 *physical*) as a discrete sequence of input events:
 a sequence because only a single input event is handled at a logical time; 
 discrete because reactions to events are guaranteed to execute in bounded
@@ -203,7 +201,7 @@ rejoin and proceed to the statement in sequence:
 
 As mentioned in the introduction and emphasized in the execution model, trails
 in parallel do not execute with real parallelism.
-Therefore, it is important to note that parallel compositions provide
+Therefore, it is important to note that parallel compositions support
 *awaiting in parallel*, rather than *executing in parallel* (see
 [Asynchronous Threads](statements/#thread) for real parallelism support).
 <!--
@@ -261,10 +259,10 @@ runtime stack:
     (see [`rule 2`](#synchronous-execution-model) for external reactions).
     If an awaking trail emits another internal event, a nested internal
     reaction starts with `rule 1`.
-3. The top of stack is popped and the last emitting trail resumes execution
+3. The top of the stack is popped and the last emitting trail resumes execution
     from its continuation.
 
-The program and follow illustrates the behavior of internal reactions in Céu:
+The program as follow illustrates the behavior of internal reactions in Céu:
 
 ```ceu
 1:  par/and do      // trail 1

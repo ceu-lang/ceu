@@ -12,7 +12,7 @@ rejoin and proceed to the statement in sequence:
 
 As mentioned in the introduction and emphasized in the execution model, trails
 in parallel do not execute with real parallelism.
-Therefore, it is important to note that parallel compositions provide
+Therefore, it is important to note that parallel compositions support
 *awaiting in parallel*, rather than *executing in parallel* (see
 [Asynchronous Threads](statements/#thread) for real parallelism support).
 <!--

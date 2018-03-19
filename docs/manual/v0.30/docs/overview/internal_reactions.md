@@ -17,10 +17,10 @@ runtime stack:
     (see [`rule 2`](#synchronous-execution-model) for external reactions).
     If an awaking trail emits another internal event, a nested internal
     reaction starts with `rule 1`.
-3. The top of stack is popped and the last emitting trail resumes execution
+3. The top of the stack is popped and the last emitting trail resumes execution
     from its continuation.
 
-The program and follow illustrates the behavior of internal reactions in Céu:
+The program as follow illustrates the behavior of internal reactions in Céu:
 
 ```ceu
 1:  par/and do      // trail 1

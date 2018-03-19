@@ -5,11 +5,9 @@ general characteristics:
 
 - *Reactive*:    code executes in reactions to events.
 - *Structured*:  code uses structured control-flow mechanisms, such as `spawn`
-                 and `await` (to create and suspend an activity).
-- *Synchronous*: event reactions never overlap and run atomically and to
-                 completion on each activity.
-                 There is no implicit preemption or real parallelism, resulting
-                 in deterministic execution.
+                 and `await` (to create and suspend lines of execution).
+- *Synchronous*: event reactions run atomically and to completion on each line
+                 of execution.
 
 <!--
 - Event Handling:
@@ -45,13 +43,13 @@ end
 
 The synchronous concurrency model of Céu greatly diverges from multithreaded
 and actor-based models (e.g. *pthreads* and *erlang*).
-On the one hand, there is no real parallelism at the synchronous kernel of the
-language (i.e., no multi-core execution).
+On the one hand, there is no preemption or real parallelism at the synchronous
+core of the language (i.e., no multi-core execution).
 On the other hand, accesses to shared variables among trails are deterministic
 and do not require synchronization primitives (i.e., *locks* or
 *queues*).
 
-Céu provides static memory management based on lexical scopes and does not
+Céu provides static memory management based on lexical scope and does not
 require a garbage collector.
 
 Céu integrates safely with C, particularly when manipulating external resources
