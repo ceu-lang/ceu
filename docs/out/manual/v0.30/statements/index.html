@@ -109,6 +109,8 @@
                 
                     <li><a class="toctree-l4" href="#pausing_1">Pausing</a></li>
                 
+                    <li><a class="toctree-l4" href="#exceptions">Exceptions</a></li>
+                
                     <li><a class="toctree-l4" href="#asynchronous-execution">Asynchronous Execution</a></li>
                 
                     <li><a class="toctree-l4" href="#c-integration">C Integration</a></li>
@@ -189,7 +191,7 @@
 <p>A program in Céu is a sequence of statements delimited by an implicit enclosing
 block:</p>
 <pre><code class="ceu">Program ::= Block
-Block   ::= {Stmt `;´} {`;´}
+Block   ::= {Stmt `;´}
 </code></pre>
 
 <p><em>Note: statements terminated with the <code>end</code> keyword do not require a
@@ -218,11 +220,13 @@ Escape ::= escape [`/´ID_int] [Exp]
 </code></pre>
 
 <p>A <code>do-end</code> and <code>escape</code> accept an optional identifier following the symbol <code>/</code>.
-A <code>escape</code> only matches a <code>do-end</code> with the same identifier.
+An <code>escape</code> only matches a <code>do-end</code> with the same identifier.
 The neutral identifier <code>_</code> in a <code>do-end</code> is guaranteed not to match any
 <code>escape</code> statement.</p>
 <p>A <code>do-end</code> also supports an optional list of identifiers in parenthesis which
-restricts the visible variables inside the block to those matching the list.</p>
+restricts the visible storage entities inside the block to those matching the
+list.
+An empty list hides all storage entities from the enclosing scope.</p>
 <p>A <code>do-end</code> can be <a href="#assignments">assigned</a> to a variable whose type must be
 matched by nested <code>escape</code> statements.
 The whole block evaluates to the value of a reached <code>escape</code>.
@@ -247,9 +251,9 @@ do (a)
     a = 1;
     b = 2;  // &quot;b&quot; is not visible
 end
+</code></pre>
 
-```ceu
-var int? v =
+<pre><code class="ceu">var int? v =
     do
         if &lt;cnd&gt; then
             escape 10;  // assigns 10 to &quot;v&quot;
@@ -271,19 +275,21 @@ program:</p>
 </code></pre>
 
 <p>All <code>pre-do-end</code> statements are concatenated together in the order they appear
-and moved to the beginning of the top-level block, before all other statements.</p>
+and are moved to the beginning of the top-level block, before all other
+statements.</p>
 <h2 id="declarations">Declarations<a class="headerlink" href="#declarations" title="Permanent link">&para;</a></h2>
 <p>A declaration introduces a <a href="./../storage_entities/#storage-entities">storage entity</a>
 to the enclosing block.
 All declarations are subject to <a href="./../storage_entities/#lexical-scope">lexical scope</a>.</p>
 <p>Céu supports variables, vectors, pools, internal events, and external events:</p>
 <pre><code class="ceu">
-Var  ::= var [`&amp;´|`&amp;?´] [ `[´ [Exp] `]´ ] [`/dynamic´|`/nohold´] Type ID_int [`=´ Sources]
+Var  ::= var [`&amp;´|`&amp;?´] [ `[´ [Exp [`*`]] `]´ ] [`/dynamic´|`/nohold´] Type ID_int [`=´ Sources]
 Pool ::= pool [`&amp;´] `[´ [Exp] `]´ Type ID_int [`=´ Sources]
 Int  ::= event [`&amp;´] (Type | `(´ LIST(Type) `)´) ID_int [`=´ Sources]
 
 Ext  ::= input  (Type | `(´ LIST(Type) `)´) ID_ext
-      |  output (Type | `(´ LIST([`&amp;´] Type) `)´) ID_ext
+      |  output (Type | `(´ LIST([`&amp;´] Type [ID_int]) `)´) ID_ext
+            [ do Block end ]
 
 Sources ::= /* (see &quot;Assignments&quot;) */
 </code></pre>
@@ -309,7 +315,8 @@ var&amp; int z = &amp;v;    // &quot;z&quot; is an alias to &quot;v&quot;
 <a href="#dimension">dimension</a> between brackets,
 an associated <a href="./../types/#types">type</a> and can be optionally
 <a href="#assignments">initialized</a>.
-Declarations can also be <a href="./../storage_entities/#aliases">aliases</a>.</p>
+Declarations can also be <a href="./../storage_entities/#aliases">aliases</a>.
+<code>TODO: ring buffers</code></p>
 <!--
 `TODO: unmacthing [] in binding`
 -->
@@ -339,7 +346,7 @@ pool&amp;[]  Play a = &amp;plays;   // &quot;a&quot; is an alias to &quot;plays&
 See also [Code Invocation](#TODO).
 -->
 
-<p><code>TODO: data</code></p>
+<p><code>TODO: data pools</code></p>
 <h3 id="dimension">Dimension<a class="headerlink" href="#dimension" title="Permanent link">&para;</a></h3>
 <p>Declarations for <a href="#vectors">vectors</a> or <a href="#pools">pools</a> require an expression
 between brackets to specify a dimension as follows:</p>
@@ -352,6 +359,7 @@ between brackets to specify a dimension as follows:</p>
 <li><em>omitted</em>: Maximum number of elements is unbounded and space is dynamically
              allocated.
              The space for dynamic dimensions grow and shrink automatically.</li>
+<li><code>TODO: ring buffers</code></li>
 </ul>
 <h3 id="events">Events<a class="headerlink" href="#events" title="Permanent link">&para;</a></h3>
 <p>An <a href="./../storage_entities/#events">event</a> declaration specifies a
@@ -363,12 +371,12 @@ See also [Introduction](#TODO) for a general overview of events.
 
 <h4 id="external-events">External Events<a class="headerlink" href="#external-events" title="Permanent link">&para;</a></h4>
 <p>Examples:</p>
-<pre><code class="ceu">input  none A,B;        // &quot;A&quot; and &quot;B&quot; are input events carrying no values
+<pre><code class="ceu">input  none A;          // &quot;A&quot; is an input event carrying no values
 output int  MY_EVT;     // &quot;MY_EVT&quot; is an output event carrying integer values
 input (int,byte&amp;&amp;) BUF; // &quot;BUF&quot; is an input event carrying an &quot;(int,byte&amp;&amp;)&quot; pair
 </code></pre>
 
-<p><code>TODO: output &amp;</code></p>
+<p><code>TODO: output &amp;/impl</code></p>
 <h4 id="internal-events">Internal Events<a class="headerlink" href="#internal-events" title="Permanent link">&para;</a></h4>
 <p>Declarations for internal events can also be
 <a href="./../storage_entities/#aliases">aliases</a>.
@@ -389,7 +397,6 @@ Sources ::= ( Do
             | Await
             | Watching
             | Thread
-            | Lua_State
             | Lua_Stmts
             | Code_Await
             | Code_Spawn
@@ -406,7 +413,6 @@ Sources ::= ( Do
 <li><a href="#await">await</a></li>
 <li><a href="#watching">watching statement</a></li>
 <li><a href="#thread">thread</a></li>
-<li><a href="#lua-state">lua state</a></li>
 <li><a href="#lua-statement">lua statement</a></li>
 <li><a href="#code-invocation">code await</a></li>
 <li><a href="#code-invocation">code spawn</a></li>
@@ -425,7 +431,7 @@ copies the result(s) to the location(s) at the left side.</p>
 <h3 id="alias-assignment">Alias Assignment<a class="headerlink" href="#alias-assignment" title="Permanent link">&para;</a></h3>
 <p>An <em>alias assignment</em>, aka <em>binding</em>, makes the location at the left side to be
 an <a href="./../storage_entities/#aliases">alias</a> to the expression at the right side.</p>
-<p>The right side of a binding is always prefixed by the operator <code>&amp;</code>.</p>
+<p>The right side of a binding must always be prefixed with the operator <code>&amp;</code>.</p>
 <h2 id="event-handling">Event Handling<a class="headerlink" href="#event-handling" title="Permanent link">&para;</a></h2>
 <h3 id="await">Await<a class="headerlink" href="#await" title="Permanent link">&para;</a></h3>
 <p>The <code>await</code> statement halts the running trail until the specified event occurs.
@@ -719,7 +725,7 @@ the right.</li>
     If the step is omitted, it assumes the value <code>1</code>.
     If the direction is <code>-&gt;</code>, the step is added, otherwise it is subtracted.</li>
 </ul>
-<p>If the interval is not specified, it assumes the default <code>[0 -&gt; _]</code>.</p>
+<p>If the interval is not specified, it assumes the default <code>[0 -&gt; _[</code>.</p>
 </li>
 </ul>
 <p>A numeric iterator executes as follows:</p>
@@ -803,6 +809,7 @@ end
 <p>However, the body of an <code>every</code> cannot contain
 <a href="#synchronous-control-statements">synchronous control statements</a>, ensuring
 that no occurrences of the specified event are ever missed.</p>
+<p><code>TODO: reject break inside every</code></p>
 <p>Examples:</p>
 <pre><code class="ceu">every 1s do
     _printf(&quot;Hello World!\n&quot;);      // prints the &quot;Hello World!&quot; message on every second
@@ -1015,6 +1022,14 @@ end
 *Note: The timeouts for timers remain frozen while paused.*
 -->
 
+<h2 id="exceptions">Exceptions<a class="headerlink" href="#exceptions" title="Permanent link">&para;</a></h2>
+<p><code>TODO</code></p>
+<pre><code class="ceu">Throw ::= throw Exp
+Catch ::= catch LIST(Loc) do
+              Block
+          end
+</code></pre>
+
 <h2 id="asynchronous-execution">Asynchronous Execution<a class="headerlink" href="#asynchronous-execution" title="Permanent link">&para;</a></h2>
 <p>Asynchronous execution allow programs to departure from the rigorous
 synchronous model and preform computations under separate scheduling rules.</p>
@@ -1186,7 +1201,7 @@ external resources.
 <a href="#native-statement">native statements</a> to inline C statements,
 <a href="#native-call">native calls</a> to call C functions,
 and <a href="#resources-finalization">finalization</a> to deal with C pointers safely:</p>
-<pre><code class="ceu">Nat_Symbol ::= native [`/´(pure|const|nohold|plain)] `(´ List_Nat `)´
+<pre><code class="ceu">Nat_Symbol ::= native [`/´(pure|const|nohold|plain)] `(´ LIST(ID_nat) `)´
 Nat_Block  ::= native `/´(pre|pos) do
                    &lt;code definitions in C&gt;
                end
@@ -1196,11 +1211,9 @@ Nat_Stmts  ::= `{´ {&lt;code in C&gt; | `@´ (`(´Exp`)´|Exp)} `}´     /* `@@
 
 Nat_Call   ::= [call] (Loc | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
 
-List_Nat ::= LIST(ID_nat)
-
 Finalization ::= do [Stmt] Finalize
-              |  var `&amp;?´ Type ID_int `=´ `&amp;´ (Call_Nat | Call_Code) Finalize
-Finalize ::= finalize `(´ LIST(Loc) `)´ with
+              |  var [`&amp;´|`&amp;?´] Type ID_int `=´ `&amp;´ (Call_Nat | Call_Code) Finalize
+Finalize ::= finalize [ `(´ LIST(Loc) `)´ ] with
                  Block
              [ pause  with Block ]
              [ resume with Block ]
@@ -1429,7 +1442,9 @@ var _tp v = _f() as /plain;
 
 <h2 id="lua-integration">Lua Integration<a class="headerlink" href="#lua-integration" title="Permanent link">&para;</a></h2>
 <p>Céu provides <a href="#lua-state">Lua states</a> to delimit the effects of inlined
-<a href="#lua-statement">Lua statements</a>:</p>
+<a href="#lua-statement">Lua statements</a>.
+Lua statements transfer execution to the Lua runtime, losing the guarantees of
+the <a href="./../#synchronous-execution-model">synchronous model</a>:</p>
 <pre><code class="ceu">Lua_State ::= lua `[´ [Exp] `]´ do
                  Block
               end
@@ -1438,12 +1453,7 @@ Lua_Stmts ::= `[´ {`=´} `[´
               `]´ {`=´} `]´
 </code></pre>
 
-<p>Lua statements transfer execution to Lua, losing the guarantees of the
-<a href="./../#synchronous-execution-model">synchronous model</a>.
-For this reason, programs should only resort to C for asynchronous
-functionality (e.g., non-blocking I/O) or simple <code>struct</code> accessors, but
-never for control purposes.</p>
-<p>All programs have an implicit enclosing <em>global Lua state</em> which all orphan
+<p>Programs have an implicit enclosing <em>global Lua state</em> which all orphan
 statements apply.</p>
 <h3 id="lua-state">Lua State<a class="headerlink" href="#lua-state" title="Permanent link">&para;</a></h3>
 <p>A Lua state creates an isolated state for inlined
@@ -1486,10 +1496,14 @@ error.
 The list that follows specifies the <em>Céu destination</em> and expected
 <em>Lua source</em>:</p>
 <ul>
-<li>a <code>var</code> <code>bool</code>                            expects a <code>boolean</code></li>
-<li>a <a href="./../types/#primitives">numeric</a> <code>var</code>   expects a <code>number</code></li>
-<li>a pointer <code>var</code>                           expects a <code>lightuserdata</code></li>
-<li>a <code>vector</code> <code>byte</code>                         expects a <code>string</code></li>
+<li>a <a href="./../types/#primitives">boolean</a> <a href="./../storage_entities/#variables">variable</a>
+    expects a <code>boolean</code> value</li>
+<li>a <a href="./../types/#primitives">numeric</a> <a href="./../storage_entities/#variables">variable</a>
+    expects a <code>number</code> value</li>
+<li>a <a href="./../storage_entities/#pointers">pointer</a> <a href="./../storage_entities/#variables">variable</a>
+    expects a <code>lightuserdata</code> value</li>
+<li>a <a href="./../types/#primitives">byte</a> <a href="./../storage_entities/#vectors">vector</a>
+    expects a <code>string</code> value</li>
 </ul>
 <p><code>TODO: lua state captures errors</code></p>
 <p>Examples:</p>
@@ -1510,8 +1524,7 @@ declarations to define new subprograms.</p>
 <h3 id="data">Data<a class="headerlink" href="#data" title="Permanent link">&para;</a></h3>
 <p>A <code>data</code> declaration creates a new data type:</p>
 <pre><code class="ceu">Data ::= data ID_abs [as (nothing|Exp)] [ with
-             (Var|Vec|Pool|Int) `;´ {`;´}
-             { (Var|Vec|Pool|Int) `;´ {`;´} }
+             (Var|Vec|Pool|Int) `;´ { (Var|Vec|Pool|Int) `;´ }
          end
 
 Data_Cons ::= (val|new) Abs_Cons
@@ -1554,14 +1567,14 @@ escape (dir as int);        // returns 1 or -1
 
 <p><code>TODO: new, pool, recursive types</code></p>
 <h4 id="data-constructor">Data Constructor<a class="headerlink" href="#data-constructor" title="Permanent link">&para;</a></h4>
-<p>A new static value constructor is created in the contexts as follows:</p>
+<p>A new data value is created in the contexts that follow:</p>
 <ul>
 <li>Prefixed by the keyword <code>val</code> in an <a href="#assignments">assignment</a> to a variable.</li>
 <li>As an argument to a <a href="#code-invocation"><code>code</code> invocation</a>.</li>
 <li>Nested as an argument in a <code>data</code> creation (i.e., a <code>data</code> that contains
   another <code>data</code>).</li>
 </ul>
-<p>In all cases, the arguments are copied to a destination with static storage.
+<p>In all cases, the arguments are copied to the destination.
 The destination must be a plain declaration (i.e., not an alias or pointer).</p>
 <p>The constructor uses the <code>data</code> identifier followed by a list of arguments
 matching the fields of the type.</p>
@@ -1590,7 +1603,10 @@ var Object o1 = val Object(Rect(0,0,10,10,_), Dir.Right());
 be invoked from arbitrary points in programs:</p>
 <pre><code class="ceu">// prototype declaration
 Code_Tight ::= code/tight Mods ID_abs `(´ Params `)´ `-&gt;´ Type
-Code_Await ::= code/await Mods ID_abs `(´ Params `)´ [`-&gt;´ `(´ Params `)´] `-&gt;´ (Type | NEVER)
+Code_Await ::= code/await Mods ID_abs `(´ Params `)´
+                                        [ `-&gt;´ `(´ Params `)´ ]
+                                            `-&gt;´ (Type | NEVER)
+                    [ throws LIST(ID_abs) ]
 Params ::= none | LIST(Var|Vec|Pool|Int)
 
 // full declaration
@@ -1602,6 +1618,7 @@ Code_Impl ::= (Code_Tight | Code_Await) do
 Code_Call  ::= call  Mods Abs_Cons
 Code_Await ::= await Mods Abs_Cons
 Code_Spawn ::= spawn Mods Abs_Cons [in Loc]
+Code_Kill  ::= kill Loc [ `(` Exp `)` ]
 
 Mods ::= [`/´dynamic | `/´static] [`/´recursive]
 </code></pre>
@@ -1670,6 +1687,7 @@ These entities are visible to the invoking context, which may
 <a href="#code-references">access</a> them while the abstraction executes.
 Likewise, nested code declarations in the outermost scope, known as methods,
 are also visible to the invoking context.</p>
+<p><code>TODO: throws</code></p>
 <!--
 - The invoker passes a list of unbound aliases to the code.
 - The code [binds](#alias-assignment) the aliases to the local resources before
@@ -1678,7 +1696,7 @@ are also visible to the invoking context.</p>
 Examples:
 
 
-wzxhzdk:83
+wzxhzdk:85
 
 -->
 
@@ -1715,6 +1733,7 @@ are aborted.
 If the <code>spawn</code> omits the pool, the invocation always succeed and has the same
 scope as the invoking point: when the enclosing block terminates, the invoked
 code is also aborted.</p>
+<p><code>TODO: kill</code></p>
 <h4 id="code-references">Code References<a class="headerlink" href="#code-references" title="Permanent link">&para;</a></h4>
 <p>The <code>spawn</code> <a href="#code-invocation">invocation</a> and the control variable of
 <a href="#pool-iterator">pool iterators</a> evaluate to a reference as an

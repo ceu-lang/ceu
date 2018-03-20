@@ -175,11 +175,9 @@ general characteristics:</p>
 <ul>
 <li><em>Reactive</em>:    code executes in reactions to events.</li>
 <li><em>Structured</em>:  code uses structured control-flow mechanisms, such as <code>spawn</code>
-                 and <code>await</code> (to create and suspend an activity).</li>
-<li><em>Synchronous</em>: event reactions never overlap and run atomically and to
-                 completion on each activity.
-                 There is no implicit preemption or real parallelism, resulting
-                 in deterministic execution.</li>
+                 and <code>await</code> (to create and suspend lines of execution).</li>
+<li><em>Synchronous</em>: event reactions run atomically and to completion on each line
+                 of execution.</li>
 </ul>
 <!--
 - Event Handling:
@@ -212,12 +210,12 @@ end
 
 <p>The synchronous concurrency model of Céu greatly diverges from multithreaded
 and actor-based models (e.g. <em>pthreads</em> and <em>erlang</em>).
-On the one hand, there is no real parallelism at the synchronous kernel of the
-language (i.e., no multi-core execution).
+On the one hand, there is no preemption or real parallelism at the synchronous
+core of the language (i.e., no multi-core execution).
 On the other hand, accesses to shared variables among trails are deterministic
 and do not require synchronization primitives (i.e., <em>locks</em> or
 <em>queues</em>).</p>
-<p>Céu provides static memory management based on lexical scopes and does not
+<p>Céu provides static memory management based on lexical scope and does not
 require a garbage collector.</p>
 <p>Céu integrates safely with C, particularly when manipulating external resources
 (e.g., file handles).
@@ -239,7 +237,7 @@ video output.</p>
 -->
 
 <h2 id="synchronous-execution-model">Synchronous Execution Model<a class="headerlink" href="#synchronous-execution-model" title="Permanent link">&para;</a></h2>
-<p>Céu is grounded on a precise definition of <em>logical time</em> (as opposed to
+<p>Céu is grounded on a precise notion of <em>logical time</em> (as opposed to
 <em>physical</em>) as a discrete sequence of input events:
 a sequence because only a single input event is handled at a logical time; 
 discrete because reactions to events are guaranteed to execute in bounded
@@ -350,7 +348,7 @@ rejoin and proceed to the statement in sequence:</p>
 </ol>
 <p>As mentioned in the introduction and emphasized in the execution model, trails
 in parallel do not execute with real parallelism.
-Therefore, it is important to note that parallel compositions provide
+Therefore, it is important to note that parallel compositions support
 <em>awaiting in parallel</em>, rather than <em>executing in parallel</em> (see
 <a href="./statements/#thread">Asynchronous Threads</a> for real parallelism support).
 <!--
@@ -398,10 +396,10 @@ runtime stack:</p>
     (see <a href="#synchronous-execution-model"><code>rule 2</code></a> for external reactions).
     If an awaking trail emits another internal event, a nested internal
     reaction starts with <code>rule 1</code>.</li>
-<li>The top of stack is popped and the last emitting trail resumes execution
+<li>The top of the stack is popped and the last emitting trail resumes execution
     from its continuation.</li>
 </ol>
-<p>The program and follow illustrates the behavior of internal reactions in Céu:</p>
+<p>The program as follow illustrates the behavior of internal reactions in Céu:</p>
 <pre><code class="ceu">1:  par/and do      // trail 1
 2:      await e;
 3:      emit f;
@@ -474,5 +472,5 @@ executes:</p>
 
 <!--
 MkDocs version : 0.15.3
-Build Date UTC : 2017-10-29 15:39:37
+Build Date UTC : 2018-03-20 21:39:56
 -->

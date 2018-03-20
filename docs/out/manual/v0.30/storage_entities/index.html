@@ -233,6 +233,7 @@ buf = buf .. [4];           // write access
 escape buf[1];              // read access (yields 2)
 </code></pre>
 
+<p><code>TODO: ring buffers</code></p>
 <h3 id="events">Events<a class="headerlink" href="#events" title="Permanent link">&para;</a></h3>
 <p>Events account for the reactive nature of Céu.
 Programs manipulate events through the <a href="./../statements/#event"><code>await</code></a> and
@@ -319,9 +320,9 @@ removed automatically when the code execution terminates.</p>
 <pre><code class="ceu">code/await Anim (none) =&gt; none do       // defines the &quot;Anim&quot; code abstraction
     &lt;...&gt;                               // body of &quot;Anim&quot;
 end
-pool[] Anim ms;                         // declares an unlimited container for &quot;Anim&quot; instances
+pool[] Anim as;                         // declares an unlimited container for &quot;Anim&quot; instances
 loop i in [1-&gt;10] do
-    spawn Anim() in ms;                 // creates 10 instances of &quot;Anim&quot; into &quot;ms&quot;
+    spawn Anim() in as;                 // creates 10 instances of &quot;Anim&quot; into &quot;as&quot;
 end
 </code></pre>
 
@@ -370,8 +371,8 @@ a job position referring to a person is a pointer.</p>
 <h3 id="aliases">Aliases<a class="headerlink" href="#aliases" title="Permanent link">&para;</a></h3>
 <p>Céu support aliases to all storage entity classes, except external events and
 pointer types.
-Céu also supports option variable aliases which are aliases that may be set or
-not.</p>
+Céu also supports option variable aliases which are aliases that may be bounded
+or not.</p>
 <p>An alias is declared by suffixing the entity class with the modifier
 <code>&amp;</code> and is acquired by prefixing an entity identifier with the operator <code>&amp;</code>.</p>
 <p>An alias must have a narrower scope than the entity it refers to.
@@ -391,9 +392,9 @@ _printf(&quot;%d\n&quot;, v);     // prints 1
 <li>Map a <a href="./../statements/#resources-finalization">native resource</a> to Céu.
   The alias is acquired by prefixing the associated
   <a href="./../statements/#native-call">native call</a> with the operator <code>&amp;</code>.
-  Since the allocation may fail, the alias may remain unset.</li>
+  Since the allocation may fail, the alias may remain unbounded.</li>
 <li>Hold the result of a <a href="./../statements/#code-invocation"><code>spawn</code></a> invocation.
-  Since the allocation may fail, the alias may remain unset.</li>
+  Since the allocation may fail, the alias may remain unbounded.</li>
 </ul>
 <!--
 - Track the lifetime of a variable.
@@ -405,6 +406,7 @@ _printf(&quot;%d\n&quot;, v);     // prints 1
 
 <p>Accesses to option variable aliases must always use
 <a href="./../expressions/#option">option checking or unwrapping</a>.</p>
+<p><code>TODO: or implicit assert with &amp; declarations</code></p>
 <p>Examples:</p>
 <pre><code class="ceu">var&amp;? _FILE f = &amp;_fopen(&lt;...&gt;) finalize with
                     _fclose(f);
