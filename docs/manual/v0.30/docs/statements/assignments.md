@@ -11,7 +11,6 @@ Sources ::= ( Do
             | Await
             | Watching
             | Thread
-            | Lua_State
             | Lua_Stmts
             | Code_Await
             | Code_Spawn
@@ -28,7 +27,6 @@ Céu supports the following constructs as assignment sources:
 - [await](#await)
 - [watching statement](#watching)
 - [thread](#thread)
-- [lua state](#lua-state)
 - [lua statement](#lua-statement)
 - [code await](#code-invocation)
 - [code spawn](#code-invocation)
@@ -53,4 +51,4 @@ copies the result(s) to the location(s) at the left side.
 An *alias assignment*, aka *binding*, makes the location at the left side to be
 an [alias](../storage_entities/#aliases) to the expression at the right side.
 
-The right side of a binding is always prefixed by the operator `&`.
+The right side of a binding must always be prefixed with the operator `&`.

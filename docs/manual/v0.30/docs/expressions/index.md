@@ -8,12 +8,18 @@ Exp ::= NUM | STR | null | true | false | on | off | yes | no
      |  `(´ Exp `)´
      |  Exp <binop> Exp
      |  <unop> Exp
+     |  Exp (`:´|`.´) (ID_int|ID_nat)
+     |  Exp (`?´|`!´)
      |  Exp `[´ Exp `]´
+     |  Exp `(´ [ LIST(Exp) ] `)´
      |  Exp is Type
      |  Exp as Type
      |  Exp as `/´(nohold|plain|pure)
      |  sizeof `(´ (Type|Exp) `)´
      |  Nat_Call | Code_Call
+     |  ID_int
+     |  ID_nat
+     |  outer
 
 /* Locations */
 

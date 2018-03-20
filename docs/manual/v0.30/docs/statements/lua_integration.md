@@ -1,7 +1,9 @@
 ## Lua Integration
 
 Céu provides [Lua states](#lua-state) to delimit the effects of inlined
-[Lua statements](#lua-statement):
+[Lua statements](#lua-statement).
+Lua statements transfer execution to the Lua runtime, losing the guarantees of
+the [synchronous model](../#synchronous-execution-model):
 
 ```ceu
 Lua_State ::= lua `[´ [Exp] `]´ do
@@ -12,13 +14,7 @@ Lua_Stmts ::= `[´ {`=´} `[´
               `]´ {`=´} `]´
 ```
 
-Lua statements transfer execution to Lua, losing the guarantees of the
-[synchronous model](../#synchronous-execution-model).
-For this reason, programs should only resort to C for asynchronous
-functionality (e.g., non-blocking I/O) or simple `struct` accessors, but
-never for control purposes.
-
-All programs have an implicit enclosing *global Lua state* which all orphan
+Programs have an implicit enclosing *global Lua state* which all orphan
 statements apply.
 
 ### Lua State
@@ -71,10 +67,14 @@ error.
 The list that follows specifies the *Céu destination* and expected
 *Lua source*:
 
-- a `var` `bool`                            expects a `boolean`
-- a [numeric](../types/#primitives) `var`   expects a `number`
-- a pointer `var`                           expects a `lightuserdata`
-- a `vector` `byte`                         expects a `string`
+- a [boolean](../types/#primitives) [variable](../storage_entities/#variables)
+    expects a `boolean` value
+- a [numeric](../types/#primitives) [variable](../storage_entities/#variables)
+    expects a `number` value
+- a [pointer](../storage_entities/#pointers) [variable](../storage_entities/#variables)
+    expects a `lightuserdata` value
+- a [byte](../types/#primitives) [vector](../storage_entities/#vectors)
+    expects a `string` value
 
 `TODO: lua state captures errors`
 

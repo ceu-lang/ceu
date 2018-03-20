@@ -13,7 +13,7 @@ Céu provides [native declarations](#native-declaration) to import C symbols,
 and [finalization](#resources-finalization) to deal with C pointers safely:
 
 ```ceu
-Nat_Symbol ::= native [`/´(pure|const|nohold|plain)] `(´ List_Nat `)´
+Nat_Symbol ::= native [`/´(pure|const|nohold|plain)] `(´ LIST(ID_nat) `)´
 Nat_Block  ::= native `/´(pre|pos) do
                    <code definitions in C>
                end
@@ -23,11 +23,9 @@ Nat_Stmts  ::= `{´ {<code in C> | `@´ (`(´Exp`)´|Exp)} `}´     /* `@@´ esc
 
 Nat_Call   ::= [call] (Loc | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
 
-List_Nat ::= LIST(ID_nat)
-
 Finalization ::= do [Stmt] Finalize
-              |  var `&?´ Type ID_int `=´ `&´ (Call_Nat | Call_Code) Finalize
-Finalize ::= finalize `(´ LIST(Loc) `)´ with
+              |  var [`&´|`&?´] Type ID_int `=´ `&´ (Call_Nat | Call_Code) Finalize
+Finalize ::= finalize [ `(´ LIST(Loc) `)´ ] with
                  Block
              [ pause  with Block ]
              [ resume with Block ]

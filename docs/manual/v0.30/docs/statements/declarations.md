@@ -8,12 +8,13 @@ Céu supports variables, vectors, pools, internal events, and external events:
 
 ```ceu
 
-Var  ::= var [`&´|`&?´] [ `[´ [Exp] `]´ ] [`/dynamic´|`/nohold´] Type ID_int [`=´ Sources]
+Var  ::= var [`&´|`&?´] [ `[´ [Exp [`*`]] `]´ ] [`/dynamic´|`/nohold´] Type ID_int [`=´ Sources]
 Pool ::= pool [`&´] `[´ [Exp] `]´ Type ID_int [`=´ Sources]
 Int  ::= event [`&´] (Type | `(´ LIST(Type) `)´) ID_int [`=´ Sources]
 
 Ext  ::= input  (Type | `(´ LIST(Type) `)´) ID_ext
-      |  output (Type | `(´ LIST([`&´] Type) `)´) ID_ext
+      |  output (Type | `(´ LIST([`&´] Type [ID_int]) `)´) ID_ext
+            [ do Block end ]
 
 Sources ::= /* (see "Assignments") */
 ```
@@ -46,6 +47,7 @@ A [vector](../storage_entities/#vectors) declaration specifies a
 an associated [type](../types/#types) and can be optionally
 [initialized](#assignments).
 Declarations can also be [aliases](../storage_entities/#aliases).
+`TODO: ring buffers`
 
 <!--
 `TODO: unmacthing [] in binding`
@@ -83,7 +85,7 @@ pool&[]  Play a = &plays;   // "a" is an alias to "plays"
 See also [Code Invocation](#TODO).
 -->
 
-`TODO: data`
+`TODO: data pools`
 
 ### Dimension
 
@@ -98,6 +100,7 @@ between brackets to specify a dimension as follows:
 - *omitted*: Maximum number of elements is unbounded and space is dynamically
              allocated.
              The space for dynamic dimensions grow and shrink automatically.
+- `TODO: ring buffers`
 
 ### Events
 
@@ -114,12 +117,12 @@ See also [Introduction](#TODO) for a general overview of events.
 Examples:
 
 ```ceu
-input  none A,B;        // "A" and "B" are input events carrying no values
+input  none A;          // "A" is an input event carrying no values
 output int  MY_EVT;     // "MY_EVT" is an output event carrying integer values
 input (int,byte&&) BUF; // "BUF" is an input event carrying an "(int,byte&&)" pair
 ```
 
-`TODO: output &`
+`TODO: output &/impl`
 
 #### Internal Events
 

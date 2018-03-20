@@ -132,7 +132,7 @@ for each iteration of the loop body:
         If the step is omitted, it assumes the value `1`.
         If the direction is `->`, the step is added, otherwise it is subtracted.
 
-    If the interval is not specified, it assumes the default `[0 -> _]`.
+    If the interval is not specified, it assumes the default `[0 -> _[`.
 
 A numeric iterator executes as follows:
 
@@ -225,6 +225,8 @@ end
 However, the body of an `every` cannot contain
 [synchronous control statements](#synchronous-control-statements), ensuring
 that no occurrences of the specified event are ever missed.
+
+`TODO: reject break inside every`
 
 Examples:
 

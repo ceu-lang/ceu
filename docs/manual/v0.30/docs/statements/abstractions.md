@@ -11,8 +11,7 @@ A `data` declaration creates a new data type:
 
 ```ceu
 Data ::= data ID_abs [as (nothing|Exp)] [ with
-             (Var|Vec|Pool|Int) `;´ {`;´}
-             { (Var|Vec|Pool|Int) `;´ {`;´} }
+             (Var|Vec|Pool|Int) `;´ { (Var|Vec|Pool|Int) `;´ }
          end
 
 Data_Cons ::= (val|new) Abs_Cons
@@ -62,14 +61,14 @@ escape (dir as int);        // returns 1 or -1
 
 #### Data Constructor
 
-A new static value constructor is created in the contexts as follows:
+A new data value is created in the contexts that follow:
 
 - Prefixed by the keyword `val` in an [assignment](#assignments) to a variable.
 - As an argument to a [`code` invocation](#code-invocation).
 - Nested as an argument in a `data` creation (i.e., a `data` that contains
   another `data`).
 
-In all cases, the arguments are copied to a destination with static storage.
+In all cases, the arguments are copied to the destination.
 The destination must be a plain declaration (i.e., not an alias or pointer).
 
 The constructor uses the `data` identifier followed by a list of arguments
@@ -104,7 +103,10 @@ be invoked from arbitrary points in programs:
 ```ceu
 // prototype declaration
 Code_Tight ::= code/tight Mods ID_abs `(´ Params `)´ `->´ Type
-Code_Await ::= code/await Mods ID_abs `(´ Params `)´ [`->´ `(´ Params `)´] `->´ (Type | NEVER)
+Code_Await ::= code/await Mods ID_abs `(´ Params `)´
+                                        [ `->´ `(´ Params `)´ ]
+                                            `->´ (Type | NEVER)
+                    [ throws LIST(ID_abs) ]
 Params ::= none | LIST(Var|Vec|Pool|Int)
 
 // full declaration
@@ -116,6 +118,7 @@ Code_Impl ::= (Code_Tight | Code_Await) do
 Code_Call  ::= call  Mods Abs_Cons
 Code_Await ::= await Mods Abs_Cons
 Code_Spawn ::= spawn Mods Abs_Cons [in Loc]
+Code_Kill  ::= kill Loc [ `(` Exp `)` ]
 
 Mods ::= [`/´dynamic | `/´static] [`/´recursive]
 ```
@@ -198,6 +201,8 @@ These entities are visible to the invoking context, which may
 Likewise, nested code declarations in the outermost scope, known as methods,
 are also visible to the invoking context.
 
+`TODO: throws`
+
 <!--
 - The invoker passes a list of unbound aliases to the code.
 - The code [binds](#alias-assignment) the aliases to the local resources before
@@ -261,6 +266,8 @@ are aborted.
 If the `spawn` omits the pool, the invocation always succeed and has the same
 scope as the invoking point: when the enclosing block terminates, the invoked
 code is also aborted.
+
+`TODO: kill`
 
 #### Code References
 

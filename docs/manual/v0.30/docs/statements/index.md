@@ -29,6 +29,8 @@ terminating semicolon.*
 
 {!statements/pausing.md!}
 
+{!statements/exceptions.md!}
+
 {!statements/asynchronous_execution.md!}
 
 {!statements/c_integration.md!}
