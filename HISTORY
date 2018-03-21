@@ -1,3 +1,23 @@
+* v0.30 (mar'18)
+    (+) `output` implementation directly in Céu
+    (+) exceptions with `throw`/`catch`
+    (+) ring vectors with `var[*]`
+    (+) stack trace for runtime errors
+    (+) access to program arguments via `CEU_APP.argc`/`CEU_APP.argv`
+    (+) list of visible variables to `do-end` and `spawn-do-end`
+    (*) type names
+        (+) `yes/no`, `on/off` as synonyms to `true/false`
+        (+) `integer` as synonym to `int`
+        (^) `float`, `f32`, `f64` renamed to `real`, `r32`, `r64`
+        (^) `void` renamed to `none`
+        (^) `FOREVER` renamed to `NEVER` in code return type
+    (^) scheduler based on the formal semantics
+    (^) new syntax to access public variables and methods from `code/await` abstractions
+    (^) operator `!` no longer required when subject is enclosed by `watching`
+    (-) `vector` keyword removed (now vectors use `var[]`)
+    (-) `nil` keyword (in favor of `_` for undefined values)
+    (-) bug: missing implementation for operator `^`
+
 * v0.20 (jan'17)
     (*) full rewrite of the language (too many changes to list)
 
