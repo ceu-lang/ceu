@@ -395,7 +395,7 @@ escape 1;
 }
 ]==]
 
---do return end -- OK
+do return end -- OK
 --]=====]
 
 ----------------------------------------------------------------------------
@@ -24714,18 +24714,6 @@ end
 --<<< OUTPUT
 
 Test { [[
-native/pos do
-    /******/
-    int end = 1;
-    /******/
-end
-native _end;
-escape _end;
-]],
-    run = 1
-}
-
-Test { [[
 native/pre do
     typedef struct {
         int a;
@@ -26640,12 +26628,41 @@ escape 1;
 }
 
 Test { [[
+native/pre do
+end
+native/end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native/pre do
+end native/end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native/pos do
+    /******/
+    int end = 1;
+    /******/
+end
+native _end;
+escape _end;
+]],
+    run = 1
+}
+
+Test { [[
 native/pos do
     byte* a = (byte*)"end";
 end
 escape 1;
 ]],
-    run = 1,
+    parser = 'line 2 : after `"` : expected `"`',
 }
 
 Test { [[

@@ -509,8 +509,9 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     , Nat_End = K'native' * KK'/' * K'end'
     , Nat_Block = K'native' * (CK'/pre'+CK'/pos') * (#K'do')*'do' *
-                ( C(V'_C') + C((P(1)-(S'\t\n\r '*'end'*P';'^0*'\n'))^0) ) *
-             x* K'end'
+                    ( S'\t\n\r '^0*C(V'_C')*x +
+                      C(('#endif'+(P(1)-'end'))^0) ) *
+                  K'end'
 
     , Nat_Stmt = KK('{',nil,true) * V'__nat1' * KK'}'
     , _Nat_Exp = KK('{',nil,true) * V'__nat1' * KK'}'
@@ -849,12 +850,12 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
               + V'_Var_set_fin'
 
     --, _C = '/******/' * (P(1)-'/******/')^0 * '/******/'
-    , _C      = m.Cg(V'_CSEP','mark') *
-                    (P(1)-V'_CEND')^0 *
-                V'_CEND'
-    , _CSEP = '/***' * (1-P'***/')^0 * '***/'
-    , _CEND = m.Cmt(C(V'_CSEP') * m.Cb'mark',
-                    function (s,i,a,b) return a == b end)
+    , _C      = m.Cg(V'__CSEP','mark') *
+                    (P(1)-V'__CEND')^0 *
+                V'__CEND'
+    , __CSEP = '/***' * (1-P'***/')^0 * '***/'
+    , __CEND = m.Cmt(C(V'__CSEP') * m.Cb'mark',
+                    function (s,i,a,b) return a==b end)
 
     , __SPACE = ('\n' * (V'__comm'+S'\t\n\r ')^0 *
                   '#' * (P(1)-'\n')^0)
