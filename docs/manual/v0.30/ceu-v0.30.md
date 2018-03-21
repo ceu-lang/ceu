@@ -3277,41 +3277,49 @@ Usage: ceu [<options>] <file>...
 
 Options:
 
-    --help                      display this help, then exit
-    --version                   display version information, then exit
+    --help                          display this help, then exit
+    --version                       display version information, then exit
 
-    --pre                       Preprocessor Phase: preprocess Céu into Céu
-    --pre-exe=FILE                  preprocessor executable
-    --pre-args=ARGS                 preprocessor arguments
-    --pre-input=FILE                input file to compile (Céu source)
-    --pre-output=FILE               output file to generate (Céu source)
+    --pre                           Preprocessor phase: preprocess Céu into Céu
+    --pre-exe=FILE                      preprocessor executable
+    --pre-args=ARGS                     preprocessor arguments
+    --pre-input=FILE                    input file to compile (Céu source)
+    --pre-output=FILE                   output file to generate (Céu source)
 
-    --ceu                       Céu Phase: compiles Céu into C
-    --ceu-input=FILE                input file to compile (Céu source)
-    --ceu-output=FILE               output source file to generate (C source)
-    --ceu-line-directives=BOOL      insert `#line´ directives in the C output
+    --ceu                           Céu phase: compiles Céu into C
+    --ceu-input=FILE                    input file to compile (Céu source)
+    --ceu-output=FILE                   output source file to generate (C source)
+    --ceu-line-directives=BOOL          insert `#line` directives in the C output (default `true`)
 
-    --ceu-features-lua=BOOL         enable `lua´ support
-    --ceu-features-thread=BOOL      enable `async/thread´ support
-    --ceu-features-isr=BOOL         enable `async/isr´ support
+    --ceu-features-trace=BOOL           enable trace support (default `false`)
+    --ceu-features-exception=BOOL       enable exceptions support (default `false`)
+    --ceu-features-dynamic=BOOL         enable dynamic allocation support (default `false`)
+    --ceu-features-pool=BOOL            enable pool support (default `false`)
+    --ceu-features-lua=BOOL             enable `lua` support (default `false`)
+    --ceu-features-thread=BOOL          enable `async/thread` support (default `false`)
+    --ceu-features-isr=BOOL             enable `async/isr` support (default `false`)
+    --ceu-features-pause=BOOL           enable `pause/if` support (default `false`)
 
-    --ceu-err-unused=OPT            effect for unused identifier: error|warning|pass
-    --ceu-err-unused-native=OPT                unused native identifier
-    --ceu-err-unused-code=OPT                  unused code identifier
-    --ceu-err-uninitialized=OPT     effect for uninitialized variable: error|warning|pass
+    --ceu-err-unused=OPT                effect for unused identifier: error|warning|pass
+    --ceu-err-unused-native=OPT                    unused native identifier
+    --ceu-err-unused-code=OPT                      unused code identifier
+    --ceu-err-uninitialized=OPT         effect for uninitialized variable: error|warning|pass
+    --ceu-err-uncaught-exception=OPT    effect for uncaught exception: error|warning|pass
+    --ceu-err-uncaught-exception-main=OPT   ... at the main block (outside `code` abstractions)
+    --ceu-err-uncaught-exception-lua=OPT    ... from Lua code
 
-    --env                       Environment Phase: packs all C files together
-    --env-types=FILE                header file with type declarations (C source)
-    --env-threads=FILE              header file with thread declarations (C source)
-    --env-ceu=FILE                  output file from Céu phase (C source)
-    --env-main=FILE                 source file with main function (C source)
-    --env-output=FILE               output file to generate (C source)
+    --env                           Environment phase: packs all C files together
+    --env-types=FILE                    header file with type declarations (C source)
+    --env-threads=FILE                  header file with thread declarations (C source)
+    --env-ceu=FILE                      output file from Céu phase (C source)
+    --env-main=FILE                     source file with main function (C source)
+    --env-output=FILE                   output file to generate (C source)
 
-    --cc                        C Compiler Phase: compiles C into binary
-    --cc-exe=FILE                   C compiler executable
-    --cc-args=ARGS                  compiler arguments
-    --cc-input=FILE                 input file to compile (C source)
-    --cc-output=FILE                output file to generate (binary)
+    --cc                            C phase: compiles C into binary
+    --cc-exe=FILE                       C compiler executable
+    --cc-args=ARGS                      compiler arguments
+    --cc-input=FILE                     input file to compile (C source)
+    --cc-output=FILE                    output file to generate (binary)
 ```
 
 All phases are optional.
@@ -3510,9 +3518,9 @@ execution of Céu programs:
     Finalizes the program.
     Should be called once.
 
-- `void ceu_input (tceu_nevt evt_id, void* evt_params)`
+- `void ceu_input (tceu_nevt id, void* params)`
 
-    Notifies the program about an input `evt_id` with a payload `evt_params`.
+    Notifies the program about an input `id` with a payload `params`.
     Should be called whenever the event loop senses a change.
     The call to `ceu_input(CEU_INPUT__ASYNC, NULL)` makes
     [asynchronous blocks](../statements/#asynchronous-block) to execute a step.
@@ -3570,30 +3578,30 @@ typedef struct tceu_callback {
 } tceu_callback;
 ```
 
-The handler should expect a request identifier with two arguments, as well as
-the filename and line number in the source code in Céu making the request:
+A handler expects a request identifier with two arguments, as well as runtime
+trace information (e.g., file name and line number of the request):
 
 ```
-typedef tceu_callback_ret (*tceu_callback_f) (int, tceu_callback_arg, tceu_callback_arg, const char*, u32);
+typedef int (*tceu_callback_f) (int, tceu_callback_val, tceu_callback_val, tceu_trace);
 ```
 
 An argument has one of the following types:
 
 ```
-typedef union tceu_callback_arg {
+typedef union tceu_callback_val {
     void* ptr;
     s32   num;
     usize size;
-} tceu_callback_arg;
+} tceu_callback_val;
 ```
 
-The handler returns if it handled the request and an optional value:
+A handler returns whether it handled the request or not (return type `int`).
+
+Depending on the request, the handler must also assign a return value to the
+global `ceu_callback_ret`:
 
 ```
-typedef struct tceu_callback_ret {
-    bool is_handled;
-    tceu_callback_arg value;
-} tceu_callback_ret;
+static tceu_callback_val ceu_callback_ret;
 ```
 
 <!--
@@ -3624,18 +3632,18 @@ callback to handle occurrences of `O`:
 
 int ceu_is_running;     // detects program termination
 
-tceu_callback_ret ceu_callback_main (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* filename, u32 line)
+int ceu_callback_main (int cmd, tceu_callback_val p1, tceu_callback_val p2, tceu_trace trace)
 {
-    tceu_callback_ret ret = { .is_handled=0 };
+    int is_handled = 0;
     switch (cmd) {
         case CEU_CALLBACK_TERMINATING:
             ceu_is_running = 0;
-            ret.is_handled = 1;
+            is_handled = 1;
             break;
         case CEU_CALLBACK_OUTPUT:
             if (p1.num == CEU_OUTPUT_O) {
                 printf("output O has been emitted with %d\n", p2.num);
-                ret.is_handled = 1;
+                is_handled = 1;
             }
             break;
     }
