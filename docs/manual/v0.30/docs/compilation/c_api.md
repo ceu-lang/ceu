@@ -176,9 +176,9 @@ execution of Céu programs:
     Finalizes the program.
     Should be called once.
 
-- `void ceu_input (tceu_nevt evt_id, void* evt_params)`
+- `void ceu_input (tceu_nevt id, void* params)`
 
-    Notifies the program about an input `evt_id` with a payload `evt_params`.
+    Notifies the program about an input `id` with a payload `params`.
     Should be called whenever the event loop senses a change.
     The call to `ceu_input(CEU_INPUT__ASYNC, NULL)` makes
     [asynchronous blocks](../statements/#asynchronous-block) to execute a step.
@@ -236,30 +236,30 @@ typedef struct tceu_callback {
 } tceu_callback;
 ```
 
-The handler should expect a request identifier with two arguments, as well as
-the filename and line number in the source code in Céu making the request:
+A handler expects a request identifier with two arguments, as well as runtime
+trace information (e.g., file name and line number of the request):
 
 ```
-typedef tceu_callback_ret (*tceu_callback_f) (int, tceu_callback_arg, tceu_callback_arg, const char*, u32);
+typedef int (*tceu_callback_f) (int, tceu_callback_val, tceu_callback_val, tceu_trace);
 ```
 
 An argument has one of the following types:
 
 ```
-typedef union tceu_callback_arg {
+typedef union tceu_callback_val {
     void* ptr;
     s32   num;
     usize size;
-} tceu_callback_arg;
+} tceu_callback_val;
 ```
 
-The handler returns if it handled the request and an optional value:
+A handler returns whether it handled the request or not (return type `int`).
+
+Depending on the request, the handler must also assign a return value to the
+global `ceu_callback_ret`:
 
 ```
-typedef struct tceu_callback_ret {
-    bool is_handled;
-    tceu_callback_arg value;
-} tceu_callback_ret;
+static tceu_callback_val ceu_callback_ret;
 ```
 
 <!--
@@ -290,18 +290,18 @@ callback to handle occurrences of `O`:
 
 int ceu_is_running;     // detects program termination
 
-tceu_callback_ret ceu_callback_main (int cmd, tceu_callback_arg p1, tceu_callback_arg p2, const char* filename, u32 line)
+int ceu_callback_main (int cmd, tceu_callback_val p1, tceu_callback_val p2, tceu_trace trace)
 {
-    tceu_callback_ret ret = { .is_handled=0 };
+    int is_handled = 0;
     switch (cmd) {
         case CEU_CALLBACK_TERMINATING:
             ceu_is_running = 0;
-            ret.is_handled = 1;
+            is_handled = 1;
             break;
         case CEU_CALLBACK_OUTPUT:
             if (p1.num == CEU_OUTPUT_O) {
                 printf("output O has been emitted with %d\n", p2.num);
-                ret.is_handled = 1;
+                is_handled = 1;
             }
             break;
     }
