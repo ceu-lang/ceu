@@ -22,13 +22,15 @@ local SS = S^0
 -- #line N "file" :: directive to set line/filename
 local dir_lins = m.Cmt( m.P'#' *SS* m.P'line'^-1
                           *SS* m.C(m.R'09'^1)             -- line
-                          *SS* ( m.P'"' * m.C((1-m.P'"')^0) * m.P'"'
+                          *SS* ( m.P'"' * m.C((1-(m.P'"'+'\n'))^0) * m.P'"'
                               + m.Cc(false) )            -- file
                           * (S + (m.P(1)-'\n'))^0 * '\n' -- \n
                  ,
     function (s,i, line, file)
         LINE = tonumber(line)
-        FILE = string.gsub(file,'\\','/')
+        if file then
+            FILE = string.gsub(file,'\\','/')
+        end
         return true
     end )
 

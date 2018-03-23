@@ -28566,6 +28566,28 @@ escape 1;
     valgrind = false,
     asr = true,
 }
+
+Test { [[
+native/pre do
+    void f (char* str) {}
+end
+native _f;
+_f("#99\n");
+{ceu_assert(0,"err");}
+escape 1;
+]],
+    _opts = { ceu_features_trace='true' },
+    run = 1,
+}
+Test { [[
+var byte&& str = "#9" as byte&&;
+{ceu_assert(0,"err");}
+escape 1;
+]],
+    _opts = { ceu_features_trace='true' },
+    run = 1,
+}
+
 --<<< CPP / DEFINE / PREPROCESSOR
 
 -- ASYNC
