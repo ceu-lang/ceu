@@ -344,6 +344,17 @@ escape 10;
     _opts = { ceu_features_exception='true' },
 }
 
+-- BUG: #117
+Test { [[
+var byte&& str = "#9" as byte&&;
+{ceu_assert(0,"err");}
+escape 1;
+]],
+    _opts = { ceu_features_trace='true' },
+    run = '2] -> runtime error: err',
+    --todo = '"9" is inside a string, it shouldnt count',
+}
+
 -- var/nohold int x;
 -- var/dynamic int x;
 -------------------------------------------------------------------------------
@@ -394,6 +405,32 @@ escape 1;
     run = '2] -> runtime error: [string " error \'oi\' "]:1: oi',
 }
 ]==]
+
+Test { [[
+code/await Xxx (var u32 freq, var u8 byte_order, var u8 mode, var int? cs, var int? csn) -> NEVER do
+    par/or do with end
+    await FOREVER;
+end
+
+spawn do
+    await async do
+        emit 10s;
+    end
+end
+
+var byte i;
+loop i do
+    {printf("loop\n");}
+    watching Xxx(1400000, 10, 10, _, _) do
+        await 1s;
+        {printf("dentro\n");}
+    end
+    await 1s;
+end
+]],
+    wrn = true,
+    run = 1,
+}
 
 do return end -- OK
 --]=====]
@@ -28577,15 +28614,7 @@ _f("#99\n");
 escape 1;
 ]],
     _opts = { ceu_features_trace='true' },
-    run = 1,
-}
-Test { [[
-var byte&& str = "#9" as byte&&;
-{ceu_assert(0,"err");}
-escape 1;
-]],
-    _opts = { ceu_features_trace='true' },
-    run = 1,
+    run = '99] -> runtime error: err',
 }
 
 --<<< CPP / DEFINE / PREPROCESSOR
@@ -34537,6 +34566,16 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+code/tight Abc(none) -> none do
+    escape;
+end
+call Abc();
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
 Test { [[
 code/tight Code ()->none
 do
@@ -53254,6 +53293,33 @@ escape v1 + v2;
 ]],
     --run = 58,
     run = 59,
+}
+
+Test { [[
+data My_Data;
+data My_Data.Aa with
+  var int x;
+end
+
+code/await/dynamic Code_A (var&/dynamic My_Data ddd) -> none do
+  //var int x;
+end
+
+code/await/dynamic Code_A (var&/dynamic My_Data.Aa ddd) -> none do
+  var int x = ddd.x; //it works if we remove this line
+    par/or do with with with end
+end
+
+var My_Data.Aa a = val My_Data.Aa(10);
+
+pool[] Code_A p;
+spawn/dynamic Code_A (&a) in p;
+
+escape 1;
+]],
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
+    wrn = true,
+    run = 1,
 }
 
 --<< CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC

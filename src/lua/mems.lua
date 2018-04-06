@@ -70,13 +70,17 @@ typedef struct tceu_code_mem_ROOT {
     ---------------------------------------------------------------------------
 
     Code__PRE = function (me)
-        me.mems = { me=me, mem='' }
+        me.mems = { me=me, mem='', multis='' }
     end,
     Code__POS = function (me)
         local mods = unpack(me)
 
         if me.is_dyn_base or me.is_impl then
             MEMS.codes[#MEMS.codes+1] = me.mems
+        end
+
+        if me.dyn_base then
+            me.dyn_base.mems.multis = me.dyn_base.mems.multis..'tceu_code_mem_'..me.id_..' _'..me.n..';\n'
         end
 
         if not me.is_impl then
@@ -88,7 +92,10 @@ typedef struct tceu_code_mem_]]..me.id_..[[ {
     tceu_code_mem _mem;
     tceu_trl      _trails[]]..(me.dyn_base and me.dyn_base.max_trails_n or me.trails_n)..[[];
     byte          _params[0];
-    ]]..me.mems.mem..[[
+    union {
+        /* MULTIS */
+        ]]..me.mems.mem..[[
+    };
 } tceu_code_mem_]]..me.id_..[[;
 ]]
     end,
@@ -728,6 +735,8 @@ for i, code in ipairs(MEMS.codes) do
               mem = string.gsub(mem,
                                 '} tceu_code_mem_'..first.id_..';',
                                 '} tceu_code_mem_'..me.dyn_base.id_..';')
+              mem = string.gsub(mem, '/%* MULTIS %*/',
+                                     me.dyn_base.mems.multis)
         MEMS.codes.mems = MEMS.codes.mems..mem
     end
 end
