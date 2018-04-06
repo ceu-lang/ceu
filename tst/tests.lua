@@ -754,17 +754,6 @@ escape (not false) as int;
 }
 
 Test { [[
-native/const _A, _B;
-native/pos do
-    ##define A 0
-    ##define B 1
-end
-escape _A | _B;
-]],
-    run = 1,
-}
-
-Test { [[
 var real esp = 2 * 3.1415;
 escape esp as int;
 ]],
@@ -963,6 +952,27 @@ _X = _X + {
 escape _X;
 ]],
     run = 12,
+}
+
+Test { [[
+native/pre do
+    void f (void* timer) {
+        send();
+    }
+end
+escape 1;
+]],
+    cc = '9: error: implicit declaration of function ‘send’',
+}
+
+Test { [[
+native/pre do
+    void f (void* timer) {
+        send();
+    }
+end
+]],
+    cc = '9: error: implicit declaration of function ‘send’',
 }
 
 --<<< NATIVE
@@ -26694,12 +26704,24 @@ escape _end;
 }
 
 Test { [[
+native/const _A, _B;
+native/pos do
+    ##define A 0
+    ##define B 1
+end
+escape _A | _B;
+]],
+    run = 1,
+}
+
+Test { [[
 native/pos do
     byte* a = (byte*)"end";
 end
 escape 1;
 ]],
-    parser = 'line 2 : after `"` : expected `"`',
+    --parser = 'line 2 : after `"` : expected `"`',
+    run = 1,
 }
 
 Test { [[

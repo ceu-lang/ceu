@@ -510,8 +510,9 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , Nat_End = K'native' * KK'/' * K'end'
     , Nat_Block = K'native' * (CK'/pre'+CK'/pos') * (#K'do')*'do' *
                     ( S'\t\n\r '^0*C(V'_C')*x +
-                      C(('#endif'+(P(1)-'end'))^0) ) *
-                  K'end'
+                      C(((P(1)-(V'__Nat_Block_S'^1*'end'*(P';'+V'__Nat_Block_S')^1)))^0) ) *
+                  V'__Nat_Block_S'^0*K'end'
+    , __Nat_Block_S = S'\t\n\r '
 
     , Nat_Stmt = KK('{',nil,true) * V'__nat1' * KK'}'
     , _Nat_Exp = KK('{',nil,true) * V'__nat1' * KK'}'
