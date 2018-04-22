@@ -942,6 +942,19 @@ CEU_API void ceu_start (tceu_callback* cb, int argc, char* argv[]) {
     CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;
     CEU_APP.wclk_min_cmp = CEU_WCLOCK_INACTIVE;
 
+    CEU_APP.root._mem.up_mem   = NULL;
+    CEU_APP.root._mem.depth    = 0;
+
+#ifdef CEU_FEATURES_TRACE
+    CEU_APP.root._mem.trace.up = NULL;
+#endif
+#ifdef CEU_FEATURES_EXCEPTION
+    CEU_APP.root._mem.catches  = NULL;
+#endif
+#ifdef CEU_FEATURES_LUA
+    CEU_APP.root._mem.lua      = NULL;
+#endif
+
 #ifdef CEU_FEATURES_THREAD
     pthread_mutex_init(&CEU_APP.threads_mutex, NULL);
     CEU_APP.threads_head = NULL;
@@ -956,18 +969,19 @@ CEU_API void ceu_start (tceu_callback* cb, int argc, char* argv[]) {
 
     CEU_APP.stack_i = 0;
 
-    ceu_callback_void_void(CEU_CALLBACK_START, CEU_TRACE_null);
+    CEU_APP.root._mem.trails_n = CEU_TRAILS_N;
+    memset(&CEU_APP.root._trails, 0, CEU_TRAILS_N*sizeof(tceu_trl));
+    CEU_APP.root._trails[0].evt.id = CEU_INPUT__STACKED;
+    CEU_APP.root._trails[0].level  = 1;
+    CEU_APP.root._trails[0].lbl    = CEU_LABEL_ROOT;
 
-    CEU_APP.root._trails[0].evt.id    = CEU_INPUT__STACKED;
-    CEU_APP.root._trails[0].level = 1;
-    CEU_APP.root._trails[0].lbl       = CEU_LABEL_ROOT;
+    ceu_callback_void_void(CEU_CALLBACK_START, CEU_TRACE_null);
 
     tceu_evt   evt   = {CEU_INPUT__NONE, {NULL}};
     tceu_range range = {(tceu_code_mem*)&CEU_APP.root, 0, CEU_TRAILS_N-1};
     tceu_stk   cur   = { evt, range, NULL, 0, 1, NULL };
     ceu_bcast(1, &cur);
 }
-
 CEU_API void ceu_stop (void) {
 #ifdef CEU_FEATURES_THREAD
     CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);

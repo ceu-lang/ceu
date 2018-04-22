@@ -65,6 +65,13 @@ TRAILS.F = {
         if me.dyn_base then
             me.dyn_base.max_trails_n = MAX(me.dyn_base.max_trails_n or 0, me.trails_n)
         end
+
+        local blk = AST.par(me, 'Block')
+        local old = DCLS.get(blk, me.id)
+        if old then
+            assert((not old.trails_n) or (old.trails_n <= me.trails_n))
+            old.trails_n = me.trails_n
+        end
     end,
 }
 

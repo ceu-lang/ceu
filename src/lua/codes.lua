@@ -195,21 +195,6 @@ CODES.F = {
 
     ROOT__PRE = function (me)
         CASE(me, me.lbl_in)
-        LINE(me, [[
-_ceu_mem->up_mem   = NULL;
-_ceu_mem->depth    = 0;
-#ifdef CEU_FEATURES_TRACE
-_ceu_mem->trace.up = NULL;
-#endif
-#ifdef CEU_FEATURES_EXCEPTION
-_ceu_mem->catches  = NULL;
-#endif
-#ifdef CEU_FEATURES_LUA
-_ceu_mem->lua      = NULL;
-#endif
-_ceu_mem->trails_n = ]]..AST.root.trails_n..[[;
-memset(&_ceu_mem->_trails, 0, ]]..AST.root.trails_n..[[*sizeof(tceu_trl));
-]])
     end,
 
     Nat_Block = function (me)
@@ -394,14 +379,6 @@ if (0)
 ]])
         CASE(me, me.lbl)
 
-        -- CODE/DELAYED
-        if mods.await then
-            LINE(me, [[
-    _ceu_mem->trails_n = ]]..me.trails_n..[[;
-    memset(&_ceu_mem->_trails, 0, ]]..me.trails_n..[[*sizeof(tceu_trl));
-]])
-        end
-
         CONC(me, body)
         HALT(me)
         LINE(me, [[
@@ -492,7 +469,10 @@ assert(not obj, 'not implemented')
     ]]..mem..[[->_mem.lua    = ]]..LUA(me)..[[;
 ]]
         end
+
         ret = ret .. [[
+    ]]..mem..[[->_mem.trails_n = ]]..ID_abs.dcl.trails_n..[[;
+    memset(&]]..mem..[[->_mem._trails, 0, ]]..ID_abs.dcl.trails_n..[[*sizeof(tceu_trl));
     ]]..mem..[[->_mem._trails[0].evt.id = CEU_INPUT__STACKED;
     ]]..mem..[[->_mem._trails[0].level  = _ceu_level+1;
     ]]..mem..[[->_mem._trails[0].lbl    = CEU_CODE_]]..ID_abs.dcl.id_..[[_to_lbl(]]..mem..[[);

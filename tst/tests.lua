@@ -36694,6 +36694,21 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+code/await Ff (none) -> none;
+
+code/await Ff (none) -> none do
+    {ceu_assert(_ceu_mem->trails_n == 5, "erro");}
+    par/or do
+    with
+    end
+end
+
+await Ff();
+escape 1;
+]],
+    run = 1,
+}
 -->> CODE / ALIAS
 
 Test { [[
