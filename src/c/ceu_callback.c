@@ -1,3 +1,5 @@
+#include <stdlib.h>     /* NULL */
+
 === CEU_FEATURES ===        /* CEU_FEATURES */
 
 #ifdef CEU_FEATURES_TRACE
