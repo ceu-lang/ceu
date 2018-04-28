@@ -31,6 +31,10 @@ TRAILS.F = {
     Loop = function (me)
         local _, body = unpack(me)
         me.trails_n = body.trails_n + 1 -- CLEAR continuation
+        local Code = AST.par(me, 'Code')
+        if Code and Code[1].tight then
+            me.trails_n = me.trails_n - 1
+        end
     end,
 
     Pause_If = function (me)

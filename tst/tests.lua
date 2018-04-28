@@ -406,32 +406,6 @@ escape 1;
 }
 ]==]
 
-Test { [[
-code/await Xxx (var u32 freq, var u8 byte_order, var u8 mode, var int? cs, var int? csn) -> NEVER do
-    par/or do with end
-    await FOREVER;
-end
-
-spawn do
-    await async do
-        emit 10s;
-    end
-end
-
-var byte i;
-loop i do
-    {printf("loop\n");}
-    watching Xxx(1400000, 10, 10, _, _) do
-        await 1s;
-        {printf("dentro\n");}
-    end
-    await 1s;
-end
-]],
-    wrn = true,
-    run = 1,
-}
-
 do return end -- OK
 --]=====]
 
@@ -35288,6 +35262,23 @@ escape call Ff(&1);
     run = 1,
     dcls = 'line 4 : invalid binding : unexpected context for value "1"',
     --todo = 'support aliases to constants',
+}
+
+Test { [[
+code/tight Ff (none) -> int do
+    loop do
+        if true then
+            break;
+        end
+    end
+    escape 10;
+end
+
+var int x = call Ff();
+escape x;
+]],
+    wrn = true,
+    run = 10,
 }
 
 -->>> RECURSIVE
