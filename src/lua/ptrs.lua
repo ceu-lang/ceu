@@ -22,7 +22,7 @@ local function run_ptrs (par, i, Dcl, stop)
                 to = { to }
             end
             for _, v in ipairs(to) do
-                if v.info.dcl == Dcl then
+                if v.info and v.info.dcl==Dcl then
                     ok = true
                     break
                 end

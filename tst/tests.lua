@@ -1345,6 +1345,14 @@ end
 --<< TYPE / BOOL
 
 
+Test { [[
+var u8 u = 10;
+var byte b = u;
+escape b;
+]],
+    run = 10,
+}
+
 -- TYPE / NATIVE / ANNOTATIONS
 
 Test { [[
@@ -5404,6 +5412,25 @@ escape ret;
     run = 33,
 }
 
+Test { [[
+native/plain _RF24NetworkHeader;
+input _RF24NetworkHeader&& NETWORK;
+var _RF24NetworkHeader&& x;
+every (x) in NETWORK do
+end
+]],
+    wrn = true,
+    cc = 'error: unknown type name ‘RF24NetworkHeader’',
+}
+Test { [[
+native/plain _RF24NetworkHeader;
+input _RF24NetworkHeader&& NETWORK;
+every (_) in NETWORK do
+end
+]],
+    wrn = true,
+    cc = 'error: unknown type name ‘RF24NetworkHeader’',
+}
 Test { [[
 var int ret = 0;
 watching 10s do
@@ -36700,6 +36727,36 @@ escape 1;
 ]],
     run = 1,
 }
+
+Test { [[
+code/await Xxx (var u32 freq, var u8 byte_order, var u8 mode, var int? cs, var int? csn) -> NEVER do
+    par/or do with end
+    await FOREVER;
+end
+
+spawn do
+    await async do
+        emit 1min;
+    end
+end
+
+var int ret = 0;
+
+var byte i;
+loop i in [0->10[ do
+    watching Xxx(1400000, 10, 10, _, _) do
+        await 1s;
+        ret = ret + 1;
+    end
+    await 1s;
+end
+
+escape ret;
+]],
+    wrn = true,
+    run = 10,
+}
+
 -->> CODE / ALIAS
 
 Test { [[
@@ -47911,6 +47968,17 @@ escape t.v[0];
 ]],
     --env = 'line 4 : arity mismatch',
     dcls = 'line 5 : invalid constructor : expected 1 argument(s)',
+}
+
+Test { [[
+data Dd with
+    var[10] byte x;
+end
+var Dd d = _;
+d.x = d.x..[1];
+escape d.x[0];
+]],
+    run = 1,
 }
 
 Test { [[
