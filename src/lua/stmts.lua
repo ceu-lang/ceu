@@ -8,7 +8,7 @@ STMTS.F = {
         local fr, to = unpack(me)
 
         local err do
-            if AST.get(me.__par,'Stmts', me.__i+1,'Escape') then
+            if me.__par.tag == 'Escape' then
                 err = 'invalid `escape`'
             else
                 err = 'invalid assignment'

@@ -82,8 +82,7 @@ F = {
                 end
             end 
             if not ok then
-                local stmts = AST.get(me,1,'Stmts')
-                if stmts and AST.get(stmts,'', #stmts,'Escape') and stmts[#stmts-1]==me then
+                if me.__par.tag == 'Escape' then
                     ASR(false, me, 'invalid `escape` : incompatible scopes')
                 elseif fr_data_ptr then
                     ASR(false, me,

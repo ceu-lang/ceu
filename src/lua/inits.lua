@@ -64,6 +64,7 @@ local function run_inits (par, i, Dcl, stop, dont_await)
         return run_inits(par, i+1, Dcl, stop, dont_await)
 
     elseif me.tag == 'Escape' then
+        run_inits(me[2], 1, Dcl, stop, dont_await)
         local blk = AST.asr(me.outer,'',3,'Block')
         if AST.depth(blk) <= AST.depth(Dcl.blk) then
             return 'Escape', me

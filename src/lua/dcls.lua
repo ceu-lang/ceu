@@ -141,6 +141,8 @@ assert(can_cross==nil)
             me.__dcls_old = true
         end
         F = PSS
+    elseif id == '_ret' then
+        F = PSS
     else
         if me.tag=='Nat' or me.tag=='Ext' then
             -- or me.tag=='Ext_Code' or me.tag=='Ext_Req'
@@ -810,6 +812,8 @@ error'oi'
             return
         end
 
+        code.dcl.__dcls_uses = (code.dcl.__dcls_uses or 0) + 1
+
         if me.__dcls_ok then
             EXPS.F.Abs_Cons(me)
             return
@@ -932,7 +936,7 @@ error'oi'
         local id = unpack(me)
         local blk = AST.par(me,'Block')
         local can_cross = false
-        do
+        if id ~= '_ret' then
             -- escape should refer to the parent "a"
             -- var int a = do var int a; ... escape ...; end;
             local set = AST.par(me,'Set_Exp')
@@ -1019,45 +1023,46 @@ error'oi'
             'invalid `continue` : expected matching enclosing `loop`')
     end,
 
-    TODO__POS = function (me)
-        local id = unpack(me)
-        if id == 'escape' then
-            local _, esc = unpack(me)
-            local id_int1 = (esc[1]==true) or esc[1][1]
-            local do_ = nil
-            for n in AST.iter() do
-                if string.sub(n.tag,1,5)=='Async' or n.tag=='Data' or n.tag=='Code'
-                    -- or n.tag=='Ext_Code_impl' or n.tag=='Ext_Req_impl'
-                then
+    Escape__PRE = function (me)
+        local id_int1 = (me[1]==true) or me[1][1]
+        me.outer = nil
+        for n in AST.iter() do
+            if string.sub(n.tag,1,5)=='Async' or n.tag=='Data' or n.tag=='Code'
+                -- or n.tag=='Ext_Code_impl' or n.tag=='Ext_Req_impl'
+            then
+                break
+            end
+            if n.tag == 'Do' then
+                local id_int2 = (n[1]==true) or n[1][1]
+                if id_int1 == id_int2 then
+                    me.outer = n
                     break
                 end
-                if n.tag == 'Do' then
-                    local id_int2 = (n[1]==true) or n[1][1]
-                    if id_int1 == id_int2 then
-                        do_ = n
-                        break
-                    end
-                end
             end
-            ASR(do_, esc, 'invalid `escape` : no matching enclosing `do`')
-            esc.outer = do_
-            local _,outer,_,to = unpack(do_)
-            local set = AST.get(me.__par,'Set_Exp') or AST.asr(me.__par,'Set_Alias')
-            set.__dcls_is_escape = do_
-            local fr = unpack(set)
-            if to and type(to)~='boolean' then
-                ASR(type(fr)~='boolean', me,
-                    'invalid `escape` : expected expression')
-                to.__dcls_is_escape = true
-                return AST.copy(to)
-            else
-                ASR(type(fr)=='boolean', me,
-                    'invalid `escape` : unexpected expression')
-                set.tag = 'Nothing'
-                return node('Nothing', me.ln)
-            end
+        end
+        ASR(me.outer, me, 'invalid `escape` : no matching enclosing `do`')
+    end,
+
+    Set_Alias__PRE = 'Set_Exp__PRE',
+    Set_Exp__PRE = function (me)
+        if me.__par.tag ~= 'Escape' then
+            return
+        end
+
+        local do_ = assert(me.__par.outer)
+        me.__dcls_is_escape = do_
+
+        local _,_,_,to = unpack(do_)
+        local fr = unpack(me)
+        if to and type(to)~='boolean' then
+            ASR(type(fr)~='boolean', me,
+                'invalid `escape` : expected expression')
+            to.__dcls_is_escape = true
+            AST.set(me, 2, AST.copy(to))
         else
-            error'bug found'
+            ASR(type(fr)=='boolean', me,
+                'invalid `escape` : unexpected expression')
+            return node('Nothing', me.ln)
         end
     end,
 }

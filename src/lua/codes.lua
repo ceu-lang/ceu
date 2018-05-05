@@ -781,6 +781,7 @@ ceu_assert(0, "reached end of `do`");
     end,
 
     Escape = function (me)
+        CONC_ALL(me)
         local code = AST.par(me, 'Code')
         local mods = code and code[2]
         if AST.par(me,'Async_Thread') or AST.par(me,'Async_Isr') or AST.par(me,'Ext_impl') then

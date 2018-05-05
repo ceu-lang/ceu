@@ -105,13 +105,10 @@ F = {
     end,
 
     -- skiped by run_ptrs with tag=='Do'
-    Stmts__PRE = function (me)
-        local Set_Exp, Escape = unpack(me, #me-1)
-        if #me>=2 and Set_Exp.tag=='Set_Exp' and Escape.tag=='Escape' then
-            local ID_int = AST.get(Set_Exp,'', 2,'Loc', 1,'ID_int')
-            if ID_int then
-                ID_int.__run_ptrs_ok = true
-            end
+    Escape__PRE = function (me)
+        local ID_int = AST.get(me,'', 2,'Set_Exp', 2,'Loc', 1,'ID_int')
+        if ID_int then
+            ID_int.__run_ptrs_ok = true
         end
     end,
 

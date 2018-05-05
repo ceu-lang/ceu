@@ -602,17 +602,14 @@ error'TODO: luacov never executes this?'
     _Escape__PRE = function (me)
         local _, fr = unpack(me)
 
-        local set = node('Set_Exp', me.ln,
-                        fr,
-                        node('TODO', me.ln, 'escape', me))   -- see dcls.lua
-        -- a = &b   (Set_Exp->Set_Alias)
-        if fr and fr.tag=='Exp_1&' then
-            set.tag = 'Set_Alias'
+        if fr then
+            -- a = &b   (Set_Exp->Set_Alias)
+            local tag = (fr.tag=='Exp_1&' and 'Set_Alias') or 'Set_Exp'
+            AST.set(me, 2, node(tag,me.ln,fr,'TODO-to'))
+        else
+            AST.set(me, 2, node('Set_Exp',me.ln,fr,'TODO-none'))
         end
-
         me.tag = 'Escape'
-        me[2] = nil
-        return node('Stmts', me.ln, set, me)
     end,
 
     _Catch__PRE = function (me)
