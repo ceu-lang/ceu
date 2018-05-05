@@ -128,6 +128,7 @@ assert(can_cross==nil)
         old.__dcls_old = true
     end
 
+    local F
     local implicit = (me.is_implicit and 'implicit ') or ''
     if not old then
         F = PSS
@@ -142,6 +143,8 @@ assert(can_cross==nil)
         end
         F = PSS
     elseif id == '_ret' then
+        F = PSS
+    elseif __inlines then
         F = PSS
     else
         if me.tag=='Nat' or me.tag=='Ext' then
@@ -812,7 +815,9 @@ error'oi'
             return
         end
 
+if not __inlines then
         code.dcl.__dcls_uses = (code.dcl.__dcls_uses or 0) + 1
+end
 
         if me.__dcls_ok then
             EXPS.F.Abs_Cons(me)

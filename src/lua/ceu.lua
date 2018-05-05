@@ -15,6 +15,7 @@ if CEU.opts.ceu then
     dofile 'types.lua'
     dofile 'exps.lua'
     dofile 'dcls.lua'
+    dofile 'inlines.lua'
     dofile 'consts.lua'
     dofile 'fins.lua'
     dofile 'spawns.lua'

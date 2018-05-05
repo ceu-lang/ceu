@@ -406,8 +406,200 @@ escape 1;
 }
 ]==]
 
-do return end -- OK
+Test { [[
+var int y = do escape 1; end;
+
+code/await Ff (none) -> int do
+    escape 1;
+end
+await Ff();
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+var int y = do escape 1; end;
+
+code/await Ff (none) -> int do
+    escape 1;
+end
+var int x = _;
+x = await Ff();
+escape x;
+]],
+    run = 1,
+}
+
+Test { [[
+code/tight Ff (none) -> int do
+    escape 1;
+end
+var int x = await Ff();
+escape x;
+]],
+    run = 1,
+}
+
+Test { [[
+code/tight Ff (none) -> bool do
+    escape true;
+end
+var bool x = await Ff();
+if x then
+    escape 1;
+else
+    escape 0;
+end
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (var int x) -> int do
+    escape x + 1;
+end
+var int x = await Ff(10);
+escape x;
+]],
+    run = 11,
+}
+
+Test { [[
+code/await Ff (var int x, var bool z) -> int do
+    if z then
+        escape x + 1;
+    else
+        escape x + 2;
+    end
+end
+var bool z = false;
+var int x = await Ff(10,z);
+escape x;
+]],
+    run = 12,
+}
+
+Test { [[
+code/tight Ff (var int x) -> int do
+    escape x + 1;
+end
+var int x = call Ff(10);
+escape x;
+]],
+    run = 11,
+}
+
+Test { [[
+code/tight Ff (var int x) -> int do
+    escape x + 1;
+end
+call Ff(10);
+escape 11;
+]],
+    run = 11,
+}
+
+Test { [[
+code/await Ff (var int x) -> int do
+    escape x + 1;
+end
+var int y = 10;
+var int ret = await Ff(y);
+escape ret;
+]],
+    run = 11,
+}
+
 --]=====]
+Test { [[
+code/await Gg (var int y) -> int do
+    escape y + 1;
+end
+
+code/await Ff (var int x) -> int do
+    x = await Gg(x);
+    escape x;
+end
+var int y = 10;
+var int ret = await Ff(y);
+escape ret;
+]],
+    run = 11,
+}
+
+Test { [[
+code/await Gg (var int y) -> int do
+    escape {@y} + 1;
+end
+
+code/await Ff (var int x) -> int do
+    x = await Gg(x);
+    escape x;
+end
+var int y = 10;
+var int ret = await Ff(y);
+escape ret;
+]],
+    run = 11,
+}
+
+Test { [[
+code/await Ff (var int x) -> int do
+    escape x + 1;
+end
+var int y = 10;
+var int ret1 = await Ff(y);
+var int ret2 = await Ff(y);
+escape ret1+ret2;
+]],
+    run = 22,
+}
+
+Test { [[
+code/await Ff (var& int x) -> int do
+    escape x + 1;
+end
+var int y = 10;
+var int ret = await Ff(&y);
+escape ret;
+]],
+    run = 11,
+}
+
+Test { [[
+code/await Ff (var int x) -> int do
+    escape x + 1;
+end
+var int x = 10;
+var int ret = await Ff(x);
+escape ret;
+]],
+    run = 11,
+}
+
+Test { [[
+code/await Ff (var& int x) -> int do
+    escape x + 1;
+end
+var int x = 10;
+var int ret = await Ff(&x);
+escape ret;
+]],
+    run = 11,
+}
+
+Test { [[
+code/await Ff (var& int x) -> none do
+    x = x + 1;
+end
+var int x = 10;
+spawn Ff(&x);
+escape x;
+]],
+    run = 11,
+}
+
+do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested
