@@ -406,6 +406,26 @@ escape 1;
 }
 ]==]
 
+--]=====]
+Test { [[
+code/await Ff (none) -> NEVER do
+    await FOREVER;
+end
+spawn Ff();
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (none) -> none do
+end
+await Ff();
+escape 1;
+]],
+    run = 1,
+}
+
 Test { [[
 var int y = do escape 1; end;
 
@@ -510,7 +530,6 @@ escape ret;
     run = 11,
 }
 
---]=====]
 Test { [[
 code/await Gg (var int y) -> int do
     escape y + 1;
@@ -599,7 +618,74 @@ escape x;
     run = 11,
 }
 
-do return end -- OK
+Test { [[
+code/await Ff (var u8? x) -> u8 do
+    escape x!;
+end
+var u8? y = 10;
+var u8 v = await Ff(y!);
+escape v as int;
+]],
+    run = 10,
+}
+Test { [[
+code/await Ff (var u8 x) -> u8 do
+    escape x;
+end
+var u8? y = 10;
+var u8 v = await Ff(y!);
+escape v as int;
+]],
+    run = 10,
+}
+
+Test { [[
+code/await Gg (var u8 b) -> u8 do
+    escape b;
+end
+
+code/await Ff (var u8? v) -> u8 do
+    if v? then
+        var u8 a = await Gg(v!);
+        escape a;
+    else
+        escape 0;
+    end
+end
+var u8 x = await Ff(10);
+escape x as int;
+]],
+    run = 10,
+}
+
+Test { [[
+code/await Ff (none) -> none do
+end
+await Ff();
+await Ff();
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (none) -> int do
+    loop do
+        if true then
+            break;
+        else
+            await 1s;
+        end
+    end
+    escape 10;
+end
+var int x = await Ff();
+escape x;
+]],
+    run = 10,
+}
+
+--do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -21327,6 +21413,17 @@ escape v1;
 }
 
 Test { [[
+code/await Ff (var&? int i) -> int do
+    escape i!;
+end
+var int v1 = await Ff(_);
+escape v1;
+]],
+    --wrn = true,
+    run = 'Aborted (core dumped)',
+}
+
+Test { [[
 code/await Gg (var&? int i) -> int do
     if i? then
         escape i!;
@@ -33456,7 +33553,23 @@ do
 end
 ]],
     wrn = true,
-    cc = '4:57: error: implicit declaration of function ‘f’',
+    --cc = '4:57: error: implicit declaration of function ‘f’',
+    run = 'Aborted (core dumped)',
+}
+
+Test { [[
+native/nohold _S, _F, _f;
+code/await Surface_from_desc (var _S desc) -> NEVER
+do
+    var&? _F f = &_f(desc) finalize (f) with end;
+    await FOREVER;
+end
+var _S x = _;
+await Surface_from_desc(x);
+escape 0;
+]],
+    wrn = true,
+    cc = 'error: implicit declaration of function ‘f’',
     --run = 1,
 }
 
@@ -35147,6 +35260,22 @@ end
 Test { [[
 code/await Tx (none) -> int
 do
+    code/await Fx (var int a)->int;
+    code/await Fx (var int a)->int do
+        escape a;
+    end
+    var int y = await Fx(10);
+    escape y;
+end
+var int x = await Tx();
+escape x;
+]],
+    run = {['~>1s']=10},
+}
+
+Test { [[
+code/await Tx (none) -> int
+do
     code/tight Fx (var int a)->int;
     code/tight Fx (var int a)->int do
         escape a;
@@ -36440,7 +36569,7 @@ await FOREVER;
 ]],
     --run = 1,
     wrn = true,
-    cc = '1: error: unknown type name ‘SDL_MouseButtonEvent’',
+    cc = 'error: unknown type name ‘SDL_MouseButtonEvent’',
     _ana = {
         isForever = true,
     },

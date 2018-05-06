@@ -386,7 +386,8 @@ STMTS.F = {
                 'invalid `'..AST.tag2id[me.tag]..'` : unexpected `/'..mod..'` modifier')
         end
 
-        ASR(AST.par(me,'Code') ~= me.__code, me,
+        local code = AST.par(me,'Code')
+        ASR((not code) or code.base~=me.__code.base, me,
             'invalid `'..AST.tag2id[me.tag]..'` : unexpected recursive invocation')
 
         local ret = AST.get(me.__code,'', 4,'Block', 1,'Stmts',

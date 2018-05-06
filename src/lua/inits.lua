@@ -229,6 +229,7 @@ F = {
 
         -- RUN_INITS
         if me.is_implicit                     or    -- compiler defined
+           me.__inlines                       or    -- result of inlined call
            AST.get(me.blk,1,'Ext_impl')       or    -- "output" parameter
            me.blk == (code and code.__adjs_1) or    -- "code" parameter
            AST.par(me,'Data')                 or    -- "data" member

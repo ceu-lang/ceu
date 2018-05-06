@@ -625,6 +625,8 @@ error'oi'
         me.depth = 0
         local par = AST.par(me, 'Code')
         while par do
+            me.__dcls_depth  = true
+            par.__dcls_depth = true
             par = AST.par(par, 'Code')
             me.depth = me.depth + 1
         end
@@ -646,6 +648,7 @@ error'oi'
         end
 
         local old = DCLS.get(blk, me.id)
+        me.base = old or me
 
         do
             local _n = ''
@@ -816,7 +819,7 @@ error'oi'
         end
 
 if not __inlines then
-        code.dcl.__dcls_uses = (code.dcl.__dcls_uses or 0) + 1
+        code.dcl.base.__dcls_uses = (code.dcl.base.__dcls_uses or 0) + 1
 end
 
         if me.__dcls_ok then
