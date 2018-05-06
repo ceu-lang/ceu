@@ -54,7 +54,15 @@ F = {
                     --  var int _x = x;
                     --  var int x;          -- parameter
                     --  x = _x;             -- passing
-                    local tag = ((var[1]=='&' or var[1]=='&?') and 'Set_Alias') or 'Set_Exp'
+                    local tag do
+                        if var[1]=='&' or var[1]=='&?' then
+                            tag = 'Set_Alias'
+                        elseif args[i].tag == 'ID_any' then
+                            tag = 'Set_Any'
+                        else
+                            tag = 'Set_Exp'
+                        end
+                    end
 
                     local _var = AST.copy(var)
                     _var[3] = '_'.._var[3]..'_'..me.n
