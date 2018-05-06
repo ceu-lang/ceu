@@ -238,6 +238,18 @@ DCLS.F = {
             DCLS.F.__prims(me)
             DCLS.F.__prims = nil
         end
+
+        local code = AST.par(me, 'Code')
+        if code and code.__adjs_3==me then
+            local Type = AST.get(code,'', 4,'Block', 1,'Stmts', 1,'Code_Ret', 1,'', 2,'Type')
+            if not Type then
+                local stmts = AST.asr(me,'', 1,'Stmts')
+                AST.set(stmts, #stmts+1,
+                    node('Nat_Stmt', me.ln,
+                        'ceu_assert(0, "reached end of `code`")'))
+            end
+        end
+
     end,
     Block__POS = function (me)
         if AST.par(me,'Data') then
@@ -465,6 +477,9 @@ DCLS.F = {
         local _,_,id,_ = unpack(me)
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
+
+        local ID_abs = AST.asr(me,'', 2,'Type', 1,'ID_abs')
+        ID_abs.dcl.__dcls_noinline = true
     end,
 
     Evt = function (me)
@@ -883,6 +898,12 @@ end
         if not is_pending then
             EXPS.F.Abs_Cons(me)
         end
+    end,
+
+    Abs_Spawn = function (me)
+        local _, Abs_Cons = unpack(me)
+        local _, ID_abs = unpack(Abs_Cons)
+        ID_abs.dcl.__dcls_noinline = AST.get(me, 1, 'Set_Abs_Spawn')
     end,
 
     Stmts__POS = function (me)

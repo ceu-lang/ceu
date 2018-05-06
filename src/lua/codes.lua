@@ -241,16 +241,6 @@ if (]]..V(c)..[[) {
 ]])
         CONC_ALL(me)
 
-        local Code = AST.par(me, 'Code')
-        if Code and Code.__adjs_3==me then
-            local Type = AST.get(Code,'', 4,'Block', 1,'Stmts', 1,'Code_Ret', 1,'', 2,'Type')
-            if not Type then
-                LINE(me, [[
-ceu_assert(0, "reached end of `code`");
-]])
-            end
-        end
-
         if me.needs_clear then
             CLEAR(me)
         end

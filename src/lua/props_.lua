@@ -68,7 +68,7 @@ PROPS_.F = {
                 end
 
                 ASR(false, me,
-                    'invalid `'..AST.tag2id[me.tag]..
+                    'invalid `'..(me.__spawns and 'spawn' or AST.tag2id[me.tag])..
                     '` : unexpected enclosing `'..AST.tag2id[par.tag]..'`')
             end
         end
