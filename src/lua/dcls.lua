@@ -246,7 +246,7 @@ DCLS.F = {
                 local stmts = AST.asr(me,'', 1,'Stmts')
                 AST.set(stmts, #stmts+1,
                     node('Nat_Stmt', me.ln,
-                        'ceu_assert(0, "reached end of `code`")'))
+                        'ceu_assert(0, "reached end of `code`");'))
             end
         end
 
