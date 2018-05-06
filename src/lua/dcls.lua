@@ -577,12 +577,16 @@ error'oi'
     -- detect "base" dynamic multimethod: create dummy copy with plain "id"
     Code__PRE = function (me)
         local mods,id = unpack(me)
+
+        local blk = AST.par(me, 'Block')
+        local base = DCLS.get(blk, id, nil, true)
+        me.base = base or me
+
         if not mods.dynamic then
             return  -- not dynamic code
         end
 
-        local old = DCLS.get(AST.par(me,'Block'), id)
-        if old then
+        if me.base ~= me then
             ASR(me.is_impl, me, 'not implemented : prototype for non-base dynamic code')
             return  -- not first appearence
         end
@@ -647,15 +651,12 @@ error'oi'
             me.id = id
         end
 
-        local old = DCLS.get(blk, me.id)
-        me.base = old or me
-
         do
             local _n = ''
             local blk1 = AST.par(me, 'Block')
             local blk2 = AST.par(blk1,'Block') or blk1
             if blk2.__par.tag ~= 'ROOT' then
-                _n = '_'..((old and old.n) or me.n)
+                _n = '_'..(me.base.n or me.n)
             end
             if me.dyn_base then
                 me.id_ = id.._n..proto1.ids_dyn
@@ -664,17 +665,17 @@ error'oi'
             end
         end
 
-        if old then
-            ASR(old.tag == 'Code', me, 'invalid `code` declaration')
-            local mods2,_,_,body2 = unpack(old)
+        if me.base ~= me then
+            ASR(me.base.tag == 'Code', me, 'invalid `code` declaration')
+            local mods2,_,_,body2 = unpack(me.base)
             if me.is_impl then
-                ASR(not (old.is_impl or old.__impl), me,
+                ASR(not (me.base.is_impl or me.base.__impl), me,
                     'invalid `code` declaration : body for "'..id..'" already exists')
-                old.__impl = true
+                me.base.__impl = true
             end
 
             -- compare ins
-            local proto2 = AST.asr(old.__adjs_1,'Block',1,'Stmts',1,'Code_Pars')
+            local proto2 = AST.asr(me.base.__adjs_1,'Block',1,'Stmts',1,'Code_Pars')
 
             local ok = AST.is_equal(proto1, proto2)
 
@@ -699,15 +700,14 @@ error'oi'
                 '(vs. '..proto1.ln[1]..':'..proto2.ln[2]..')')
         else
             dcls_new(blk,me)
-            assert(me == DCLS.get(blk,me.id))
+            assert(me == DCLS.get(blk,me.id,nil,true))
 
             if not mods1.dynamic then
                 dcls_new(blk,me,nil,{id=id})
-                assert(me == DCLS.get(blk,id))
+                assert(me == DCLS.get(blk,id,nil,true))
             end
         end
-        me.is_used = (old and old.is_used)
-                        or (mods1.dynamic and (not me.is_dyn_base))
+        me.is_used = me.base.is_used or (mods1.dynamic and (not me.is_dyn_base))
     end,
 
     Data__PRE = function (me)
