@@ -597,6 +597,10 @@ error'oi'
         local base = DCLS.get(blk, id, nil, true)
         me.base = base or me
 
+        if me.is_impl then
+            me.base.impl = me
+        end
+
         if not mods.dynamic then
             return  -- not dynamic code
         end

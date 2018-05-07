@@ -407,6 +407,23 @@ escape 1;
 ]==]
 
 --]=====]
+Test { [[
+code/await Gg (var& int x) -> NEVER;
+code/await Gg (var& int x) -> NEVER do
+    x = x + 1;
+    await FOREVER;
+end
+code/await Ff (var& int x) -> NEVER do
+    spawn Gg(&x);
+    await FOREVER;
+end
+var int x = 10;
+spawn Ff(&x);
+escape x;
+]],
+    run = 11,
+}
+
 --do return end -- OK
 
 ----------------------------------------------------------------------------
@@ -37689,6 +37706,7 @@ Test { [[
 code/await UV_TCP_Open (none) -> (var& int v) -> none
 do
 end
+await UV_TCP_Open();
 var int x = 1;
 escape x;
 ]],

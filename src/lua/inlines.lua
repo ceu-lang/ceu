@@ -35,7 +35,7 @@ F = {
         local _, ID_abs, Abslist = unpack(Abs_Cons)
         if ID_abs.dcl.__inlines_should then
             local do_ = node('Do', me.ln, true, false)
-            AST.insert(do_, #do_+1, AST.copy(ID_abs.dcl.__adjs_2))
+            AST.insert(do_, #do_+1, AST.copy(ID_abs.dcl.base.impl.__adjs_2))
 
             local pars = AST.get(ID_abs.dcl.__adjs_1,'Block', 1,'Stmts', 1,'Code_Pars')
             local attrs1 = node('Stmts', me.ln)
