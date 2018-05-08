@@ -406,25 +406,7 @@ escape 1;
 }
 ]==]
 
---]=====]
-Test { [[
-code/await Gg (var& int x) -> NEVER;
-code/await Gg (var& int x) -> NEVER do
-    x = x + 1;
-    await FOREVER;
-end
-code/await Ff (var& int x) -> NEVER do
-    spawn Gg(&x);
-    await FOREVER;
-end
-var int x = 10;
-spawn Ff(&x);
-escape x;
-]],
-    run = 11,
-}
-
---do return end -- OK
+do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -33292,8 +33274,8 @@ do
 end
 ]],
     wrn = true,
-    --cc = '4:57: error: implicit declaration of function ‘f’',
-    run = 'Aborted (core dumped)',
+    cc = '4:57: error: implicit declaration of function ‘f’',
+    --run = 'Aborted (core dumped)',
 }
 
 Test { [[
@@ -36554,7 +36536,8 @@ code/await Tx (none)->none do
 end
 escape 1;
 ]],
-    run = 1,
+    stmts = 'line 3 : invalid `await` : unexpected recursive invocation',
+    --run = 1,
 }
 Test { [[
 code/await Tx (none)->none do
@@ -37666,6 +37649,23 @@ var int x = await Ff();
 escape x;
 ]],
     run = 10,
+}
+
+Test { [[
+code/await Gg (var& int x) -> NEVER;
+code/await Gg (var& int x) -> NEVER do
+    x = x + 1;
+    await FOREVER;
+end
+code/await Ff (var& int x) -> NEVER do
+    spawn Gg(&x);
+    await FOREVER;
+end
+var int x = 10;
+spawn Ff(&x);
+escape x;
+]],
+    run = 11,
 }
 
 --<< CODE / AWAIT / INLINE
@@ -40906,6 +40906,7 @@ escape ret;
     --run = 10,
 }
 
+--]=====]
 Test { [[
 code/await Ff (none) -> (var& int x) -> NEVER do
     code/await Gg (none) -> (var& int x) -> NEVER do

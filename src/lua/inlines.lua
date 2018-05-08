@@ -116,5 +116,5 @@ F = {
 }
 
 __inlines = true    -- disables <<declaration of "x" hides previous declaration>>
-AST.visit(F)
+--AST.visit(F)
 __inlines = false
