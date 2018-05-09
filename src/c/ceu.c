@@ -909,8 +909,7 @@ void ceu_bcast (tceu_nstk level, tceu_stk* cur)
 
 CEU_API void ceu_input (tceu_nevt id, void* params)
 {
-    ceu_callback_void_void(CEU_CALLBACK_WCLOCK_DT, CEU_TRACE_null);
-    s32 dt = ceu_callback_ret.num;
+    s32 dt = ceu_callback_wclock_dt(CEU_TRACE_null);
     if (dt != CEU_WCLOCK_INACTIVE) {
         tceu_evt   evt   = {CEU_INPUT__WCLOCK, {NULL}};
         tceu_range range = {(tceu_code_mem*)&CEU_APP.root, 0, CEU_TRAILS_N-1};
@@ -975,7 +974,7 @@ CEU_API void ceu_start (tceu_callback* cb, int argc, char* argv[]) {
     CEU_APP.root._trails[0].level  = 1;
     CEU_APP.root._trails[0].lbl    = CEU_LABEL_ROOT;
 
-    ceu_callback_void_void(CEU_CALLBACK_START, CEU_TRACE_null);
+    ceu_callback_start(CEU_TRACE_null);
 
     tceu_evt   evt   = {CEU_INPUT__NONE, {NULL}};
     tceu_range range = {(tceu_code_mem*)&CEU_APP.root, 0, CEU_TRAILS_N-1};

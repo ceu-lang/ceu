@@ -1,3 +1,13 @@
+#ifndef ceu_callback_start
+    #define ceu_callback_start(trace) ceu_callback_void_void(CEU_CALLBACK_START, trace)
+#endif
+#ifndef ceu_callback_abort
+    #define ceu_callback_abort(err,trace) ceu_callback_num_void(CEU_CALLBACK_ABORT, err, trace)
+#endif
+#ifndef ceu_callback_wclock_dt
+    #define ceu_callback_wclock_dt(trace) ceu_callback_void_void(CEU_CALLBACK_WCLOCK_DT, trace)
+#endif
+
 #include <stdlib.h>     /* NULL */
 
 === CEU_FEATURES ===        /* CEU_FEATURES */
@@ -112,13 +122,13 @@ static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
 #define ceu_assert_ex(v,msg,trace)                                  \
     if (!(v)) {                                                     \
         ceu_trace(trace, msg);                                      \
-        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL, trace);   \
+        ceu_callback_abort(0, trace);   \
     }
 #define ceu_assert(v,msg) ceu_assert_ex((v),(msg), CEU_TRACE(0))
 #else
 #define ceu_assert_ex(v,msg,trace)                                  \
     if (!(v)) {                                                     \
-        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL, trace);   \
+        ceu_callback_abort(0, trace);   \
     }
 #define ceu_assert(v,msg) ceu_assert_ex((v),(msg),NONE)
 #endif
@@ -128,7 +138,7 @@ static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
 #define ceu_assert_sys(v,msg)   \
     if (!(v)) {                 \
         ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)msg, CEU_TRACE_null);  \
-        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL, CEU_TRACE_null);      \
+        ceu_callback_abort(0, CEU_TRACE_null);      \
     }
 #endif
 
