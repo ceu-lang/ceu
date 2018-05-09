@@ -407,6 +407,7 @@ escape 1;
 ]==]
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -37668,6 +37669,21 @@ escape x;
     run = 11,
 }
 
+Test { [[
+input none A;
+
+code/await Ff (none) -> bool do
+    escape true;
+end
+
+await Ff();
+await A;
+
+escape 100;
+]],
+    run = { ['~>A']=100 },
+}
+
 --<< CODE / AWAIT / INLINE
 
 -->> CODE / AWAIT / INITIALIZATION / PUBLIC
@@ -40906,7 +40922,6 @@ escape ret;
     --run = 10,
 }
 
---]=====]
 Test { [[
 code/await Ff (none) -> (var& int x) -> NEVER do
     code/await Gg (none) -> (var& int x) -> NEVER do

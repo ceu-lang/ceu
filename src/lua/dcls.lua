@@ -247,6 +247,7 @@ DCLS.F = {
                 AST.set(stmts, #stmts+1,
                     node('Nat_Stmt', me.ln,
                         'ceu_assert(0, "reached end of `code`");'))
+                stmts[#stmts].__dcls_endofcode = true
             end
         end
 
@@ -670,12 +671,14 @@ error'oi'
             me.id = id
         end
 
+        local old = DCLS.get(blk, me.id)
+
         do
             local _n = ''
             local blk1 = AST.par(me, 'Block')
             local blk2 = AST.par(blk1,'Block') or blk1
             if blk2.__par.tag ~= 'ROOT' then
-                _n = '_'..(me.base.n or me.n)
+                _n = '_'..((old and old.n) or me.n)
             end
             if me.dyn_base then
                 me.id_ = id.._n..proto1.ids_dyn
@@ -684,17 +687,17 @@ error'oi'
             end
         end
 
-        if me.base ~= me then
-            ASR(me.base.tag == 'Code', me, 'invalid `code` declaration')
-            local mods2,_,_,body2 = unpack(me.base)
+        if old then
+            ASR(old.tag == 'Code', me, 'invalid `code` declaration')
+            local mods2,_,_,body2 = unpack(old)
             if me.is_impl then
-                ASR(not (me.base.is_impl or me.base.__impl), me,
+                ASR(not (old.is_impl or old.__impl), me,
                     'invalid `code` declaration : body for "'..id..'" already exists')
-                me.base.__impl = true
+                old.__impl = true
             end
 
             -- compare ins
-            local proto2 = AST.asr(me.base.__adjs_1,'Block',1,'Stmts',1,'Code_Pars')
+            local proto2 = AST.asr(old.__adjs_1,'Block',1,'Stmts',1,'Code_Pars')
 
             local ok = AST.is_equal(proto1, proto2)
 

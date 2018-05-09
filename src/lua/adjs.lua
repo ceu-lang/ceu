@@ -18,7 +18,7 @@ F = {
         --      Stmts
         --          nats
         --          Lock
-        --          Var             -- _ret
+        --          Var             -- _RET
         --          Set
         --              ret
         --              Do
@@ -52,7 +52,7 @@ F = {
                         false,
                         node('Type', me.ln,
                             node('ID_prim', me.ln, 'int')),
-                        '_ret')
+                        '_RET')
         ret.is_implicit = true
 
         local lock = node('Data', me.ln, 'Lock', false,
@@ -132,7 +132,7 @@ F = {
                         ret,
                         node('_Set', me.ln,
                             node('Loc', me.ln,
-                                node('ID_int', me.ln, '_ret')),
+                                node('ID_int', me.ln, '_RET')),
                             node('_Set_Do', me.ln,
                                 node('Do', me.ln,
                                     true, false,

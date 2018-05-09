@@ -31,14 +31,14 @@ local function run_inits (par, i, Dcl, stop, dont_await)
             while x.__par.tag ~= 'Code' do
                 if x.__i ~= #x.__par then
                     local do_int = AST.get(x.__par,'Do',4,'Loc',1,'ID_int')
-                    if do_int and do_int[1]=='_ret' and x.__i==3 then
+                    if do_int and (do_int[1]=='_RET' or do_int[1]=='_ret') and x.__i==3 then
                         break   -- ok, last in ROOT
                     end
 
 -- HACK_04: check escape/set_exp (will fix with exceptions)
                     -- check if all statements after myself are code dcls or escape
                     for i=x.__i+1, #x.__par do
-                        if x.__par[i].tag~='Code' and x.__par[i].tag~='Escape' and x.__par[i].tag~='Set_Exp' and x.__par[i].tag~='Var' and x.__par[i].tag~='Set_Abs_Val' and x.__par[i].tag~='Throw' then
+                        if x.__par[i].tag~='Code' and x.__par[i].tag~='Escape' and x.__par[i].tag~='Set_Exp' and x.__par[i].tag~='Var' and x.__par[i].tag~='Set_Abs_Val' and x.__par[i].tag~='Throw' and (not x.__par[i].__dcls_endofcode) then
                             is_last_watching = false        -- no: error
                             break
                         elseif x.__par[i].tag ~= 'Code' then

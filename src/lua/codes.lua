@@ -1056,7 +1056,7 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
         else
             SET(me, to, fr)
 
-            if to.info.dcl.id=='_ret' and (not AST.par(me,'Code')) then
+            if to.info.dcl.id=='_RET' then
                 LINE(me, [[
 {   CEU_APP.end_ok=1; CEU_APP.end_val=]]..V(fr)..[[;
     ceu_callback_void_void(CEU_CALLBACK_TERMINATING, CEU_TRACE(0));
