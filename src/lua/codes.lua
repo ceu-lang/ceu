@@ -1380,7 +1380,13 @@ tceu_]]..inout..'_'..ID_ext.dcl.id..[[ __ceu_ps;
         if inout == 'output' then
             local set = AST.par(me,'Set_Emit_Ext_emit')
             local cb = [[
+
+#ifdef ceu_callback_output_]]..ID_ext.dcl.id..[[
+
+ceu_callback_output_]]..ID_ext.dcl.id..'('..ps..[[, CEU_TRACE(0));
+#else
 (ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..'.id, '..ps..[[, CEU_TRACE(0)), ceu_callback_ret.num);
+#endif
 ]]
             if set then
                 local _, to = unpack(set)

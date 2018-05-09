@@ -34,7 +34,9 @@ typedef === CEU_TCEU_NTRL === tceu_ntrl;
 typedef === CEU_TCEU_NLBL === tceu_nlbl;
 
 #define CEU_TRAILS_N === CEU_TRAILS_N ===
+#ifndef CEU_STACK_N
 #define CEU_STACK_N 500
+#endif
 
 #define CEU_API
 CEU_API void ceu_start (tceu_callback* cb, int argc, char* argv[]);
@@ -309,7 +311,9 @@ typedef struct tceu_app {
     tceu_nseq seq_base;
 
     /* CALLBACKS */
+#ifdef CEU_FEATURES_CALLBACKS
     tceu_callback* cbs;
+#endif
 
     /* ASYNC */
     bool async_pending;
@@ -378,7 +382,7 @@ static int ceu_wclock_ (s32 dt, s32* set, s32* sub
     /* didn't awake, but can be the smallest wclk */
     if ( (!ret) && (CEU_APP.wclk_min_set > t) ) {
         CEU_APP.wclk_min_set = t;
-        ceu_callback_num_ptr(CEU_CALLBACK_WCLOCK_MIN, t, NULL, trace);
+        ceu_callback_wclock_min(t, CEU_TRACE_null);
     }
 
     return ret;
@@ -457,6 +461,7 @@ static void ceu_lua_createargtable (lua_State* lua, char** argv, int argc, int s
 
 /*****************************************************************************/
 
+#ifdef CEU_FEATURES_CALLBACKS
 CEU_API void ceu_callback_register (tceu_callback* cb) {
     cb->nxt = CEU_APP.cbs;
     CEU_APP.cbs = cb;
@@ -490,6 +495,7 @@ static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
     }
 #undef CEU_TRACE
 }
+#endif
 
 /*****************************************************************************/
 
@@ -871,7 +877,7 @@ void ceu_bcast (tceu_nstk level, tceu_stk* cur)
             case CEU_INPUT__WCLOCK:
                 CEU_APP.wclk_min_cmp = CEU_APP.wclk_min_set;    /* swap "cmp" to last "set" */
                 CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;     /* new "set" resets to inactive */
-                ceu_callback_num_ptr(CEU_CALLBACK_WCLOCK_MIN, CEU_WCLOCK_INACTIVE, NULL, CEU_TRACE_null);
+                ceu_callback_wclock_min(CEU_WCLOCK_INACTIVE, CEU_TRACE_null);
                 if (CEU_APP.wclk_min_cmp <= *((s32*)cur->params)) {
                     CEU_APP.wclk_late = *((s32*)cur->params) - CEU_APP.wclk_min_cmp;
                 }
@@ -933,7 +939,9 @@ CEU_API void ceu_start (tceu_callback* cb, int argc, char* argv[]) {
     CEU_APP.seq      = 0;
     CEU_APP.seq_base = 0;
 
+#ifdef CEU_FEATURES_CALLBACKS
     CEU_APP.cbs = cb;
+#endif
 
     CEU_APP.async_pending = 0;
 
@@ -986,7 +994,7 @@ CEU_API void ceu_stop (void) {
     CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
     ceu_assert_ex(ceu_threads_gc(1) == 0, "bug found", CEU_TRACE_null); /* wait all terminate/free */
 #endif
-    ceu_callback_void_void(CEU_CALLBACK_STOP, CEU_TRACE_null);
+    ceu_callback_stop(CEU_TRACE_null);
 }
 
 /*****************************************************************************/
@@ -996,7 +1004,7 @@ CEU_API int ceu_loop (tceu_callback* cb, int argc, char* argv[])
     ceu_start(cb, argc, argv);
 
     while (!CEU_APP.end_ok) {
-        ceu_callback_void_void(CEU_CALLBACK_STEP, CEU_TRACE_null);
+        ceu_callback_step(CEU_TRACE_null);
 #ifdef CEU_FEATURES_THREAD
         if (CEU_APP.threads_head != NULL) {
             CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);

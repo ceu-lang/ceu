@@ -117,17 +117,12 @@ byte* ceu_vector_setmax_ex_      (tceu_vector* vector, usize len, bool freeze
         /* free */
         if (vector->buf != NULL) {
             vector->max = 0;
-            ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, vector->buf, 0, trace);
+            ceu_callback_realloc(vector->buf, 0, trace);
             vector->buf = NULL;
         }
     } else {
         ceu_assert_ex(len > vector->max, "not implemented: shrinking vectors", trace);
-        ceu_callback_ptr_size(CEU_CALLBACK_REALLOC,
-                              vector->buf,
-                              len*vector->unit,
-                              trace
-                             );
-        vector->buf = (byte*) ceu_callback_ret.ptr;
+        vector->buf = (byte*) ceu_callback_realloc(vector->buf, len*vector->unit, trace);
 
         if (vector->is_ring && vector->ini>0) {
             /*
