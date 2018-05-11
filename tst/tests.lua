@@ -407,7 +407,6 @@ escape 1;
 ]==]
 
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -30947,8 +30946,18 @@ var[nnn] u8 xxx;
 xxx[0] = 10;
 escape 1;
 ]],
-    run = ':3] -> runtime error: access out of bounds',
+    consts = 'line 2 : dynamic allocation support is disabled',
     _opts = { ceu_features_trace='true' },
+}
+
+Test { [[
+var int nnn = 10;
+var[nnn] u8 xxx;
+xxx[0] = 10;
+escape 1;
+]],
+    run = ':3] -> runtime error: access out of bounds',
+    _opts = { ceu_features_dynamic='true', ceu_features_trace='true' },
 }
 
 Test { [[
@@ -30961,6 +30970,7 @@ xxx[9] = 1;
 escape xxx[0]+xxx[9];
 ]],
     run = 11,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -30971,7 +30981,7 @@ _ceu_vector_setlen(&&xxx,nnn+1,1);
 escape 1;
 ]],
     run = '4] -> runtime error: access out of bounds',
-    _opts = { ceu_features_trace='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_trace='true' },
 }
 
 Test { [[
@@ -30981,7 +30991,7 @@ $us = 20;
 escape 1;
 ]],
     run = ':3] -> runtime error: access out of bounds',
-    _opts = { ceu_features_trace='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_trace='true' },
 }
 
 Test { [[
@@ -30992,6 +31002,7 @@ _ceu_vector_setlen(&&us,n,1);
 escape $us as int;
 ]],
     run = 10,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -31022,7 +31033,7 @@ us[n] = 10;
 escape us[0]+us[9];
 ]],
     run = ':3] -> runtime error: access out of bounds',
-    _opts = { ceu_features_trace='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_trace='true' },
 }
 
 Test { [[
@@ -31033,6 +31044,7 @@ us[n-1] = 1;
 escape _CEU_APP.root.__mem.trails_n;
 ]],
     run = 3,
+    _opts = { ceu_features_dynamic='true' },
 }
 Test { [[
 native _CEU_APP;
@@ -31051,6 +31063,7 @@ us[n-1] = 1;
 escape us[0]+us[9];
 ]],
     run = 1,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 
@@ -31141,6 +31154,7 @@ var[n] byte bs;
 escape ($$bs) as int;
 ]],
     run = 32,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [=[
@@ -31360,6 +31374,7 @@ var&[] byte ref = &vec;
 escape ($ref + $$ref) as int;
 ]],
     run = 13,
+    _opts = { ceu_features_dynamic='true' },
 }
 Test { [[
 var int n = 10;
@@ -31367,6 +31382,7 @@ var[n] byte vec = [1,2,3];
 var&[n] byte ref = &vec;
 ]],
     consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -31623,6 +31639,7 @@ vec = vec .. [3];
 escape vec[$vec-1] - vec[0];
 ]],
     run = 2,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -31632,6 +31649,7 @@ $vec = 1;
 escape vec[0];
 ]],
     run = 3,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -31641,6 +31659,7 @@ $vec = $vec - 1;
 escape vec[0];
 ]],
     run = 2,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -31714,7 +31733,7 @@ do/_
 end
 ]],
     run = '6] -> runtime error: access out of bounds',
-    _opts = { ceu_features_trace='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_trace='true' },
 }
 
 Test { [[
@@ -31728,6 +31747,7 @@ do/_
 end
 ]],
     run = 5,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -31813,6 +31833,7 @@ _ceu_vector_buf_set(&&v2,0, &&v1[0], 5);
 escape ret + v2[0] + v2[4];
 ]],
     run = 16,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -31827,6 +31848,7 @@ _ceu_vector_buf_set(&&v2,0, &&v1[0] as byte&&, 5*sizeof(int));
 escape ret + v2[0] + v2[4];
 ]],
     run = 16,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -31839,6 +31861,7 @@ $vec = $vec - 1;
 escape vec[0];
 ]],
     run = 12,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -31878,6 +31901,7 @@ var[10] int v2 = []..v1;
 escape v2[0] + v2[1] + ($v2 as int);
 ]],
     run = 7,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -31889,6 +31913,7 @@ var[10] int v2 = []..v1;
 escape v2[0] + v2[2] + ($v2 as int);
 ]],
     run = 9,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -49211,6 +49236,7 @@ escape 1;
     stmts = 'line 3 : invalid assignment : unexpected context for pool "a"',
 }
 
+--]=====]
 Test { [[
 data Dd with
     var int n;
@@ -49219,6 +49245,7 @@ end
 ]],
     wrn = true,
     consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[

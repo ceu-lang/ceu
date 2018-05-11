@@ -77,6 +77,10 @@ F = {
 
     Vec = function (me)
         local is_alias,_,_,dim = unpack(me)
+        if (dim=='[]' or (not dim.is_const)) and (not is_alias) then
+            ASR(CEU.opts.ceu_features_dynamic, me, 'dynamic allocation support is disabled')
+        end
+
         if dim == '[]' then
             return
         end

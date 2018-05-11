@@ -1,3 +1,5 @@
+#define CEU_FEATURES_CALLBACKS
+
 #include <stdlib.h>     /* NULL */
 
 === CEU_FEATURES ===        /* CEU_FEATURES */
@@ -30,13 +32,19 @@ typedef struct tceu_trace {
     #define ceu_callback_wclock_dt(trace) (ceu_callback_void_void(CEU_CALLBACK_WCLOCK_DT,trace), ceu_callback_ret.num)
 #endif
 #ifndef ceu_callback_wclock_min
-    #define ceu_callback_wclock_min(dt,trace)
+    #define ceu_callback_wclock_min(dt,trace) ceu_callback_num_void(CEU_CALLBACK_WCLOCK_MIN,dt,trace)
 #endif
-#ifndef ceu_callback_log
-    #define ceu_callback_log(n,msg,trace)
+#ifndef ceu_callback_log_str
+    #define ceu_callback_log_str(str,trace) ceu_callback_num_ptr(CEU_CALLBACK_LOG,0,(void*)(str),trace)
+#endif
+#ifndef ceu_callback_log_ptr
+    #define ceu_callback_log_ptr(ptr,trace) ceu_callback_num_ptr(CEU_CALLBACK_LOG,0,(void*)(ptr),trace)
+#endif
+#ifndef ceu_callback_log_num
+    #define ceu_callback_log_num(num,trace) ceu_callback_num_num(CEU_CALLBACK_LOG,2,num,trace)
 #endif
 #ifndef ceu_callback_realloc
-    #define ceu_callback_realloc(ptr,n,trace) NULL
+    #define ceu_callback_realloc(ptr_,n,trace) (ceu_callback_ptr_num(CEU_CALLBACK_REALLOC,ptr_,n,trace), ceu_callback_ret.ptr)
 #endif
 
 typedef union tceu_callback_val {
@@ -149,34 +157,9 @@ enum {
     CEU_CALLBACK_REALLOC,
 };
 
-#else // CEU_FEATURES_CALLBACKS
+#else // !CEU_FEATURES_CALLBACKS
 
 typedef void tceu_callback;
-
-#ifndef ceu_callback_start
-    #define ceu_callback_start(trace)
-#endif
-#ifndef ceu_callback_stop
-    #define ceu_callback_stop(trace)
-#endif
-#ifndef ceu_callback_step
-    #define ceu_callback_step(trace)
-#endif
-#ifndef ceu_callback_abort
-    #define ceu_callback_abort(err,trace)
-#endif
-#ifndef ceu_callback_wclock_dt
-    #define ceu_callback_wclock_dt(trace)
-#endif
-#ifndef ceu_callback_wclock_min
-    #define ceu_callback_wclock_min(dt,trace)
-#endif
-#ifndef ceu_callback_log
-    #define ceu_callback_log(n,msg,trace)
-#endif
-#ifndef ceu_callback_realloc
-    #define ceu_callback_realloc(ptr,n,trace) NULL
-#endif
 
 #endif // CEU_FEATURES_CALLBACKS
 
@@ -204,12 +187,10 @@ typedef void tceu_callback;
 #ifndef ceu_assert_sys
 #define ceu_assert_sys(v,msg)   \
     if (!(v)) {                 \
-        ceu_callback_log(0, (void*)msg, CEU_TRACE_null);  \
+        ceu_callback_log_str(msg, CEU_TRACE_null);  \
         ceu_callback_abort(0, CEU_TRACE_null);      \
     }
 #endif
-
-#define ceu_log(msg) ceu_callback_log(0, (void*)msg, CEU_TRACE_null)
 
 #ifdef CEU_FEATURES_TRACE
 static void ceu_trace (tceu_trace trace, const char* msg) {
@@ -224,20 +205,20 @@ static void ceu_trace (tceu_trace trace, const char* msg) {
 
     if (is_first) {
         IS_FIRST = 1;
-        ceu_callback_log(0, (void*)"\n", CEU_TRACE_null);
+        ceu_callback_log_str("\n", CEU_TRACE_null);
     }
 
-    ceu_callback_log(0, (void*)"[",          CEU_TRACE_null);
-    ceu_callback_log(0, (void*)(trace.file), CEU_TRACE_null);
-    ceu_callback_log(0, (void*)":",          CEU_TRACE_null);
-    ceu_callback_log(2, trace.line,          CEU_TRACE_null);
-    ceu_callback_log(0, (void*)"]",          CEU_TRACE_null);
-    ceu_callback_log(0, (void*)" -> ",       CEU_TRACE_null);
+    ceu_callback_log_str("[",        CEU_TRACE_null);
+    ceu_callback_log_str(trace.file, CEU_TRACE_null);
+    ceu_callback_log_str(":",        CEU_TRACE_null);
+    ceu_callback_log_num(trace.line, CEU_TRACE_null);
+    ceu_callback_log_str("]",        CEU_TRACE_null);
+    ceu_callback_log_str(" -> ",     CEU_TRACE_null);
 
     if (is_first) {
-        ceu_callback_log(0, (void*)"runtime error: ", CEU_TRACE_null);
-        ceu_callback_log(0, (void*)(msg),             CEU_TRACE_null);
-        ceu_callback_log(0, (void*)"\n",              CEU_TRACE_null);
+        ceu_callback_log_str("runtime error: ", CEU_TRACE_null);
+        ceu_callback_log_str(msg,               CEU_TRACE_null);
+        ceu_callback_log_str("\n",              CEU_TRACE_null);
     }
 }
 #else

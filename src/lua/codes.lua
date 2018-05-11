@@ -298,9 +298,11 @@ ceu_vector_setmax(&]]..V(vec)..', '..V(dim)..[[, 1);
         end
     end,
     Vec_Finalize = function (me)
-        local ID_int = unpack(me)
+        local vec = unpack(me)
+        local _, tp, _, dim = unpack(vec.info.dcl)
+        assert(not dim.is_const)
         LINE(me, [[
-ceu_vector_setmax(&]]..V(ID_int,ctx)..[[, 0, 0);
+ceu_vector_setmax(&]]..V(vec,ctx)..[[, 0, 0);
 ]])
     end,
 
