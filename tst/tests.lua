@@ -405,6 +405,15 @@ escape ret;
     },
     run = 1,
 }
+Test { [[
+atomic do
+    escape 1;
+end
+]],
+    props = 'line 2 : not permitted inside `atomic`',
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
+}
+
 
 -- var/nohold int x;
 -- var/dynamic int x;
@@ -458,6 +467,7 @@ escape 1;
 ]==]
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -24558,10 +24568,10 @@ escape 1;
 }
 
 Test { [[
-output none O do
+output none OOO do
     {ceu_assert(0, "oioioi");}
 end
-emit O();
+emit OOO();
 escape 99;
 ]],
     run = '4] -> runtime error: oioioi',
@@ -43090,7 +43100,7 @@ await Ff(&ggs);
 
 escape _V;
 ]],
-    _opts = { ceu_features_pool='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
 }
 
@@ -50359,15 +50369,6 @@ escape (ret as int) + a + b + p;
 }
 
 Test { [[
-atomic do
-    escape 1;
-end
-]],
-    props = 'line 2 : not permitted inside `atomic`',
-    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
-}
-
-Test { [[
 native/pos do
     ##define ceu_out_isr_on();
     ##define ceu_out_isr_off();
@@ -53942,7 +53943,6 @@ escape 1;
 
 -->>> ASYNCS / ISR / ATOMIC
 
---]=====]
 PRE_ISR = [[
 native/pre do
     ##define ceu_out_isr_on()
@@ -55567,7 +55567,7 @@ spawn Ff() in fs;
 escape 1;
 ]],
     _opts = { ceu_features_pool='true', },
-    dcls = 'line 3 : dynamic allocation support is disabled',
+    consts = 'line 3 : dynamic allocation support is disabled',
 }
 
 Test { [[
