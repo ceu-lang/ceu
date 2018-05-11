@@ -1427,7 +1427,7 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
                 LINE(me, [[
 {
     tceu_evt_id_params __ceu_evt = { ]]..V(ID_ext)..'.id, '..ps..[[ };
-    ceu_callback_num_ptr(CEU_CALLBACK_ISR_EMIT, ]]..V(exps[1])..[[, (void*)&__ceu_evt, CEU_TRACE(0));
+    ceu_callback_isr_emit(]]..V(exps[1])..[[, (void*)&__ceu_evt, CEU_TRACE(0));
 }
 ]])
             end
@@ -1574,7 +1574,7 @@ _CEU_HALT_]]..me.n..[[_:
     static s32 __ceu_dt;
     __ceu_dt = ]]..V(e)..[[;
     tceu_evt_id_params __ceu_evt = { CEU_INPUT__WCLOCK, &__ceu_dt };
-    ceu_callback_num_ptr(CEU_CALLBACK_ISR_EMIT, ]]..V(exps[1])..[[, (void*)&__ceu_evt, CEU_TRACE(0));
+    ceu_callback_isr_emit(]]..V(exps[1])..[[, (void*)&__ceu_evt, CEU_TRACE(0));
 }
 ]])
         end
@@ -1725,7 +1725,7 @@ static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
 {
     tceu_isr __ceu_isr = { CEU_ISR_]]..me.n..','..[[ _ceu_mem };
     int __ceu_args[] = { ]]..me.args..[[ };
-    ceu_callback_ptr_ptr(CEU_CALLBACK_ISR_ATTACH, (void*)&__ceu_isr, &__ceu_args, CEU_TRACE(0));
+    ceu_callback_isr_attach(1, (void*)&__ceu_isr, __ceu_args, CEU_TRACE(0));
 }
 ]])
 
@@ -1748,7 +1748,7 @@ void CEU_ISR_]]..me.n..[[ (tceu_code_mem* _ceu_mem) {
         LINE(me, [[{
     tceu_isr __ceu_isr = { CEU_ISR_]]..isr.n..','..[[ _ceu_mem };
     int __ceu_args[] = { ]]..isr.args..[[ };
-    ceu_callback_ptr_ptr(CEU_CALLBACK_ISR_DETACH, &__ceu_isr, &__ceu_args, CEU_TRACE(0));
+    ceu_callback_isr_attach(0, (void*)&__ceu_isr, __ceu_args, CEU_TRACE(0));
 }]])
     end,
 
@@ -1768,9 +1768,9 @@ if (_ceu_p.thread->has_aborted) {
 }
 ]])
         else
-            LINE(me, 'ceu_callback_num_void(CEU_CALLBACK_ISR_ENABLE, 0, CEU_TRACE(0));')
+            LINE(me, 'ceu_callback_isr_enable(0, CEU_TRACE(0));')
             CONC_ALL(me)
-            LINE(me, 'ceu_callback_num_void(CEU_CALLBACK_ISR_ENABLE, 1, CEU_TRACE(0));')
+            LINE(me, 'ceu_callback_isr_enable(1, CEU_TRACE(0));')
         end
     end,
 
