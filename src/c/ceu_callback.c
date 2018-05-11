@@ -46,6 +46,20 @@ typedef struct tceu_trace {
 #ifndef ceu_callback_realloc
     #define ceu_callback_realloc(ptr_,n,trace) (ceu_callback_ptr_num(CEU_CALLBACK_REALLOC,ptr_,n,trace), ceu_callback_ret.ptr)
 #endif
+#ifndef ceu_callback_isr_enable
+    #define ceu_callback_isr_enable(on,trace) ceu_callback_num_void(CEU_CALLBACK_ISR_ENABLE,on,trace)
+#endif
+#ifndef ceu_callback_isr_emit
+    #define ceu_callback_isr_emit(idx,args,trace) ceu_callback_num_ptr(CEU_CALLBACK_ISR_EMIT,idx,args,trace)
+#endif
+#ifndef ceu_callback_isr_attach
+    #define ceu_callback_isr_attach(on,isr,args,trace)                      \
+        if (on) {                                                           \
+            ceu_callback_ptr_ptr(CEU_CALLBACK_ISR_ATTACH,isr,args,trace);   \
+        } else {                                                            \
+            ceu_callback_ptr_ptr(CEU_CALLBACK_ISR_DETACH,isr,args,trace);   \
+        }
+#endif
 
 typedef union tceu_callback_val {
     void* ptr;
