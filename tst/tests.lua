@@ -355,6 +355,44 @@ escape 1;
     --todo = '"9" is inside a string, it shouldnt count',
 }
 
+-- BUG: #124
+Test { [[
+par/or do
+    atomic do
+        ...
+        await 1s;
+        ...
+    end
+with
+    await 500ms;
+with
+    await async/thread do
+        ...
+    end
+end
+escape ...;
+]],
+    run = 1,
+    _opts = { ceu_features_thread='true' },
+}
+
+-- TODO: isr/thread/atomic together
+Test { [[
+spawn async/isr[1] do
+    atomic do end
+end
+
+await async do
+    atomic do
+        nothing;
+    end
+end
+escape 1;
+]],
+    codes = 'line 2 : not supported',
+    _opts = { ceu_features_isr='true', ceu_features_dynamic='true', ceu_features_thread='true' },
+}
+
 -- var/nohold int x;
 -- var/dynamic int x;
 -------------------------------------------------------------------------------
@@ -49236,7 +49274,6 @@ escape 1;
     stmts = 'line 3 : invalid assignment : unexpected context for pool "a"',
 }
 
---]=====]
 Test { [[
 data Dd with
     var int n;
@@ -50317,12 +50354,14 @@ end
     _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
+--]=====]
+
 Test { [[
 native/pos do
     ##define ceu_out_isr_on();
     ##define ceu_out_isr_off();
 end
-await async do
+await async/thread do
     atomic do
         nothing;
     end

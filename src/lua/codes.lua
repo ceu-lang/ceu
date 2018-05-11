@@ -1755,21 +1755,30 @@ void CEU_ISR_]]..me.n..[[ (tceu_code_mem* _ceu_mem) {
     end,
 
     Atomic = function (me)
-        local thread = AST.par(me, 'Async_Thread')
-        if thread then
-            LINE(me, [[
+        -- TODO: #124
+
+        if CEU.opts.ceu_features_thread then
+            ASR(not CEU.opts.ceu_features_isr, me, 'not supported')
+
+            local thread = AST.par(me, 'Async_Thread')
+            if thread then
+                LINE(me, [[
 CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
 if (_ceu_p.thread->has_aborted) {
     CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
     goto ]]..thread.lbl_abt.id..[[;   /* exit if ended from "sync" */
 } else {                              /* othrewise, execute block */
 ]])
-            CONC_ALL(me)
-            LINE(me, [[
+                CONC_ALL(me)
+                LINE(me, [[
     CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
 }
 ]])
+            else
+                ASR(false, me, 'not implemented')
+            end
         else
+            ASR(not CEU.opts.ceu_features_thread, me, 'not supported')
             LINE(me, 'ceu_callback_isr_enable(0, CEU_TRACE(0));')
             CONC_ALL(me)
             LINE(me, 'ceu_callback_isr_enable(1, CEU_TRACE(0));')
