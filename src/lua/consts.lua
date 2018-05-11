@@ -98,10 +98,10 @@ F = {
 
     Pool = function (me)
         local _,_,_,dim = unpack(me)
-        if dim == '[]' then
-            return
+        if (dim=='[]' or (not dim.is_const)) and (not is_alias) then
+            ASR(CEU.opts.ceu_features_dynamic, me, 'dynamic allocation support is disabled')
         end
-        ASR(dim.is_const, me, 'not implemented : dynamic limit for pools')
+        ASR(dim=='[]' or dim.is_const, me, 'not implemented : dynamic limit for pools')
     end,
 
     Loop_Num = 'Loop',
