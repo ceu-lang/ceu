@@ -1,5 +1,3 @@
-#define CEU_FEATURES_CALLBACKS
-
 #include <stdlib.h>     /* NULL */
 
 === CEU_FEATURES ===        /* CEU_FEATURES */
@@ -14,7 +12,7 @@ typedef struct tceu_trace {
 } tceu_trace;
 #endif
 
-#ifdef CEU_FEATURES_CALLBACKS
+#ifdef CEU_FEATURES_CALLBACKS_DYNAMIC
 
 #ifndef ceu_callback_start
     #define ceu_callback_start(trace) ceu_callback_void_void(CEU_CALLBACK_START, trace)
@@ -171,11 +169,11 @@ enum {
     CEU_CALLBACK_REALLOC,
 };
 
-#else // !CEU_FEATURES_CALLBACKS
+#else // !CEU_FEATURES_CALLBACKS_DYNAMIC
 
 typedef void tceu_callback;
 
-#endif // CEU_FEATURES_CALLBACKS
+#endif // CEU_FEATURES_CALLBACKS_DYNAMIC
 
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 

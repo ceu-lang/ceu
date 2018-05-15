@@ -315,7 +315,7 @@ typedef struct tceu_app {
     tceu_nseq seq_base;
 
     /* CALLBACKS */
-#ifdef CEU_FEATURES_CALLBACKS
+#ifdef CEU_FEATURES_CALLBACKS_DYNAMIC
     tceu_callback* cbs;
 #endif
 
@@ -465,7 +465,7 @@ static void ceu_lua_createargtable (lua_State* lua, char** argv, int argc, int s
 
 /*****************************************************************************/
 
-#ifdef CEU_FEATURES_CALLBACKS
+#ifdef CEU_FEATURES_CALLBACKS_DYNAMIC
 CEU_API void ceu_callback_register (tceu_callback* cb) {
     cb->nxt = CEU_APP.cbs;
     CEU_APP.cbs = cb;
@@ -943,7 +943,7 @@ CEU_API void ceu_start (tceu_callback* cb, int argc, char* argv[]) {
     CEU_APP.seq      = 0;
     CEU_APP.seq_base = 0;
 
-#ifdef CEU_FEATURES_CALLBACKS
+#ifdef CEU_FEATURES_CALLBACKS_DYNAMIC
     CEU_APP.cbs = cb;
 #endif
 
