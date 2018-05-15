@@ -929,7 +929,7 @@ end
 escape _get_A_id();
 ]],
     wrn = true,
-    run = 15,
+    run = 16,
 }
 
 Test { [[
