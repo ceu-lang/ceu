@@ -466,24 +466,8 @@ escape 1;
 }
 ]==]
 
-Test { [[
-output (&int) OOO;
-output (&int p) OOO do
-    p = 10;
-    if true then
-        escape;
-    else
-        p = 99;
-    end
-end
-var int x = _;
-var int y = emit OOO(&x);
-escape x+y;
-]],
-    run = 10,
-    _opts = { ceu_features_callbacks='false' },
-}
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -24845,6 +24829,24 @@ end
     cc = 'undeclared',
 }
 
+
+Test { [[
+output (&int) OOO;
+output (&int p) OOO do
+    p = 10;
+    if true then
+        escape;
+    else
+        p = 99;
+    end
+end
+var int x = _;
+var int y = emit OOO(&x);
+escape x+y;
+]],
+    run = 10,
+    --_opts = { ceu_features_callbacks='static' },
+}
 
 --<<< OUTPUT
 
@@ -53958,7 +53960,6 @@ escape 1;
 --<< CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
 
 -->>> ASYNCS / ISR / ATOMIC
---]=====]
 
 PRE_ISR = [[
 native/pre do
@@ -54108,7 +54109,6 @@ escape 1;
     --cc = 'error: implicit declaration of function ‘ceu_out_isr_attach’',
     _opts = { ceu_features_isr='dynamic' },
 }
-do return end
 
 Test { [[
 par/or do
