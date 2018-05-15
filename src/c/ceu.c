@@ -171,7 +171,8 @@ typedef struct {
 } tceu_threads_param;
 #endif
 
-#ifdef CEU_FEATURES_ISR
+#ifdef CEU_FEATURES_ISR_DYNAMIC
+
 typedef struct tceu_evt_id_params {
     tceu_nevt id;
     void*     params;
@@ -211,7 +212,10 @@ CEU_INPUT__PRIM,
     CEU_INPUT__ASYNC,
     CEU_INPUT__THREAD,
     CEU_INPUT__WCLOCK,
+
+CEU_INPUT__MIN,
     === CEU_EXTS_ENUM_INPUT ===
+CEU_INPUT__MAX,
 
 CEU_EVENT__MIN,
     === CEU_EVTS_ENUM ===

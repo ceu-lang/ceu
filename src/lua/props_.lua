@@ -255,6 +255,9 @@ PROPS_.F = {
     end,
     Async_Isr = function (me)
         ASR(CEU.opts.ceu_features_isr, me, '`async/isr` support is disabled')
+        if CEU.opts.ceu_features_isr == 'static' then
+            ASR(AST.par(me,'Stmts') == ADJS.stmts, me, '`async/isr` must be at the top-level block')
+        end
     end,
     Atomic = function (me)
         ASR(CEU.opts.ceu_features_thread or CEU.opts.ceu_features_isr, me,

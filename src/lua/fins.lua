@@ -84,16 +84,18 @@ F = {
 
     _Async_Isr__PRE = function (me)
         me.tag = 'Async_Isr'
-        return node('Stmts', me.ln,
-                me,
-                node('_Finalize', me.ln,
-                    false,
-                    false,
-                    node('Block', me.ln,
-                        node('Stmts', me.ln,
-                            node('Finalize_Async_Isr', me.ln))),
-                    false,
-                    false))
+        if CEU.opts.ceu_features_isr == 'dynamic' then
+            return node('Stmts', me.ln,
+                    me,
+                    node('_Finalize', me.ln,
+                        false,
+                        false,
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('Finalize_Async_Isr', me.ln))),
+                        false,
+                        false))
+        end
     end,
 
     _Lua_Do__PRE = function (me)

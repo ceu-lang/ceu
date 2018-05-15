@@ -33,7 +33,7 @@ Options:
     --ceu-features-pool=BOOL            enable pool support (default `false`)
     --ceu-features-lua=BOOL             enable `lua` support (default `false`)
     --ceu-features-thread=BOOL          enable `async/thread` support (default `false`)
-    --ceu-features-isr=BOOL             enable `async/isr` support (default `false`)
+    --ceu-features-isr=OPT              enable `async/isr` support: false|static|dynamic (default `false`)
     --ceu-features-pause=BOOL           enable `pause/if` support (default `false`)
 
     --ceu-err-unused=OPT                effect for unused identifier: error|warning|pass
@@ -47,8 +47,8 @@ Options:
     --env                           Environment phase: packs all C files together
     --env-types=FILE                    header file with type declarations (C source)
     --env-threads=FILE                  header file with thread declarations (C source)
-    --env-ceu=FILE                      output file from Céu phase (C source)
     --env-main=FILE                     source file with main function (C source)
+    --env-ceu=FILE                      output file from Céu phase (C source)
     --env-output=FILE                   output file to generate (C source)
 
     --cc                            C phase: compiles C into binary
@@ -131,6 +131,16 @@ do
         return nil
     end
 
+    local function toisr (v)
+        if v == 'false' then
+            return false
+        elseif v=='static' or v=='dynamic' then
+            return v
+        else
+            return nil
+        end
+    end
+
     local T = {
         ceu_output             = { tostring,  '-'     },
         ceu_line_directives    = { toboolean, 'true'  },
@@ -140,7 +150,7 @@ do
         ceu_features_pool      = { toboolean, 'false' },
         ceu_features_lua       = { toboolean, 'false' },
         ceu_features_thread    = { toboolean, 'false' },
-        ceu_features_isr       = { toboolean, 'false' },
+        ceu_features_isr       = { toisr,     'false' },
         ceu_features_pause     = { toboolean, 'false' },
 
         env_output             = { tostring,  '-'     },

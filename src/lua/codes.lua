@@ -350,11 +350,22 @@ ceu_code_mem_dyn_gc(&]]..V(ID_int,ctx)..[[);
         local stmts = AST.asr(block,'Block', 1,'Stmts')
         local body = AST.asr(stmts[#stmts], 'Do')
         local inout = unpack(ext)
-        CODES.exts[#CODES.exts+1] = [[
-case ]]..ext.id_..[[: {
+
+        local pre, pos do
+            if CEU.opts.ceu_features_callbacks then
+                pre = 'case '..ext.id_..':'
+                pos = 'break;'
+            else
+                pre = 'int ceu_callback_'..inout..'_'..ext.id..' (void* p2, tceu_trace trace)'
+                pos = ''
+            end
+        end
+
+        CODES.exts[#CODES.exts+1] = pre..[[
+{
     tceu_]]..inout..[[_mem_]]..ext.id..[[ _ceu_loc;
 ]]..body.code..[[
-    break;
+    ]]..pos..[[
 }
 ]]
     end,
@@ -1426,8 +1437,12 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
                 local exps = unpack(isr)
                 LINE(me, [[
 {
+#ifdef CEU_FEATURES_ISR_STATIC
+    ceu_callback_isr_emit(]]..V(ID_ext)..'.id, '..ps..[[, CEU_TRACE(0));
+#else
     tceu_evt_id_params __ceu_evt = { ]]..V(ID_ext)..'.id, '..ps..[[ };
     ceu_callback_isr_emit(]]..V(exps[1])..[[, (void*)&__ceu_evt, CEU_TRACE(0));
+#endif
 }
 ]])
             end
@@ -1715,21 +1730,33 @@ static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
 
     Async_Isr = function (me)
         local exps, vars, _, blk = unpack(me)
-        me.args = {}
+        local args = {}
         for _, arg in ipairs(exps) do
-            me.args[#me.args+1] = V(arg)
+            args[#args+1] = V(arg)
         end
-        me.args = table.concat(me.args,',')
+        me.args = table.concat(args,',')
 
-        LINE(me, [[
+        if CEU.opts.ceu_features_isr == 'static' then
+            CODES.isrs = CODES.isrs .. [[
+typedef struct tceu_isr_mem_]]..me.n..[[ {
+    ]]..me.mems.mem..[[
+} tceu_isr_mem_]]..me.n..[[;
+
+ISR(]]..args[1]..[[) {
+    tceu_code_mem* _ceu_mem = &CEU_APP.root._mem;
+    tceu_isr_mem_]]..me.n..[[ _ceu_loc;
+    ]]..blk.code..[[
+}
+]]
+        else
+            LINE(me, [[
 {
     tceu_isr __ceu_isr = { CEU_ISR_]]..me.n..','..[[ _ceu_mem };
     int __ceu_args[] = { ]]..me.args..[[ };
     ceu_callback_isr_attach(1, (void*)&__ceu_isr, __ceu_args, CEU_TRACE(0));
 }
 ]])
-
-        CODES.isrs = CODES.isrs .. [[
+            CODES.isrs = CODES.isrs .. [[
 typedef struct tceu_isr_mem_]]..me.n..[[ {
     ]]..me.mems.mem..[[
 } tceu_isr_mem_]]..me.n..[[;
@@ -1739,6 +1766,7 @@ void CEU_ISR_]]..me.n..[[ (tceu_code_mem* _ceu_mem) {
     ]]..blk.code..[[
 }
 ]]
+        end
     end,
 
     Finalize_Async_Isr = function (me)
@@ -1988,7 +2016,11 @@ local features do
     for k,v in pairs(CEU.opts) do
         if string.sub(k,1,13) == 'ceu_features_' then
             if v then
-                features = features .. '#define '..string.upper(k)..'\n'
+                features = features .. '#define '..string.upper(k)..' '..tostring(v)..'\n'
+                if v ~= true then
+                    assert(tostring(v), 'bug found')
+                    features = features .. '#define '..string.upper(k..'_'..v)..'\n'
+                end
             end
         end
     end

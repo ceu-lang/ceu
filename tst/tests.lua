@@ -390,7 +390,7 @@ end
 escape 1;
 ]],
     codes = 'line 2 : not supported',
-    _opts = { ceu_features_isr='true', ceu_features_dynamic='true', ceu_features_thread='true' },
+    _opts = { ceu_features_isr='dynamic', ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 Test { [[
 var int ret = 0;
@@ -466,8 +466,24 @@ escape 1;
 }
 ]==]
 
+Test { [[
+output (&int) OOO;
+output (&int p) OOO do
+    p = 10;
+    if true then
+        escape;
+    else
+        p = 99;
+    end
+end
+var int x = _;
+var int y = emit OOO(&x);
+escape x+y;
+]],
+    run = 10,
+    _opts = { ceu_features_callbacks='false' },
+}
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -24798,7 +24814,7 @@ end
 escape 1;
 ]],
     dcls = 'is not declared',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -53942,6 +53958,7 @@ escape 1;
 --<< CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
 
 -->>> ASYNCS / ISR / ATOMIC
+--]=====]
 
 PRE_ISR = [[
 native/pre do
@@ -53972,7 +53989,7 @@ end
 escape 1;
 ]],
     props = 'line 2 : not permitted inside `atomic`',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -53986,7 +54003,7 @@ end
 escape 1;
 ]],
     props = 'line 2 : not permitted inside `atomic`',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -53997,7 +54014,7 @@ end
 escape 1;
 ]],
     props = 'line 3 : not permitted inside `atomic`',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
@@ -54011,7 +54028,7 @@ end
 escape 1;
 ]],
     run = 1,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
@@ -54023,7 +54040,7 @@ escape 1;
 ]],
     run = 1,
     --props = 'line 4 : not permitted inside `atomic`',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54035,7 +54052,7 @@ escape 1;
 ]],
     props = 'line 3 : not permitted inside `atomic`',
     wrn = true,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54047,7 +54064,7 @@ end
 escape 1;
 ]],
     props = 'line 3 : not permitted inside `atomic`',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54061,7 +54078,21 @@ escape 1;
     parser = 'line 1 : after `do` : expected statement',
     --parser = 'line 1 : after `do` : expected `nothing` or `var` or `vector`',
     --adj = 'line 2 : `async/isr` must be followed by `await FOREVER`',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
+}
+
+Test { [[
+par/or do
+    async/isr [20] do
+    end
+with
+end
+escape 1;
+]],
+    parser = 'line 1 : after `do` : expected statement',
+    --parser = 'line 1 : after `do` : expected `nothing` or `var` or `vector`',
+    --adj = 'line 2 : `async/isr` must be followed by `await FOREVER`',
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54075,7 +54106,23 @@ escape 1;
 ]],
     run = 1,
     --cc = 'error: implicit declaration of function ‘ceu_out_isr_attach’',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
+}
+do return end
+
+Test { [[
+par/or do
+    spawn async/isr [20] do
+    end
+    await FOREVER;
+with
+end
+escape 1;
+]],
+    run = 1,
+    props_ = 'line 2 : `async/isr` must be at the top-level block',
+    --cc = 'error: implicit declaration of function ‘ceu_out_isr_attach’',
+    _opts = { ceu_features_isr='static' },
 }
 
 Test { [[
@@ -54096,7 +54143,7 @@ end
 escape 1;
 ]],
     run = 1,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54132,7 +54179,7 @@ native _V;
 escape _V;
 ]],
     run = 20,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54168,7 +54215,7 @@ native _V;
 escape _V;
 ]],
     run = 12,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
@@ -54185,7 +54232,7 @@ escape v[0];
 ]],
     run = 2,
     --isr = 'line 2 : access to "v" must be atomic',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54205,7 +54252,7 @@ atomic do
 end
 ]],
     props = 'line 13 : not permitted inside `atomic`',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54247,7 +54294,7 @@ end
 ]],
     _ana = {acc=1},
     run = 2,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54260,7 +54307,7 @@ end
 await FOREVER;
 ]],
     props = 'line 2 : not permitted inside `async/isr`',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54279,7 +54326,7 @@ end
 escape x;
 ]],
     dcls = 'line 8 : internal identifier "x" is not declared',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54318,7 +54365,7 @@ end
 escape x;
 ]],
     run = 1,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
@@ -54334,7 +54381,7 @@ escape v;
 ]],
     run = 2,
     --isr = 'line 1 : access to "v" must be atomic',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
@@ -54347,7 +54394,7 @@ var int&& v = null;
     ptrs = 'line 22 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:21)',
     --isr = 'line 4 : pointer access breaks the static check for `atomic` sections',
     --run = 1,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
@@ -54366,7 +54413,7 @@ escape 1;
     --inits = 'line 23 : invalid pointer access : crossed `par/or` (/tmp/tmp.ceu:22)',
     --isr = 'line 4 : pointer access breaks the static check for `atomic` sections',
     --run = 1,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
@@ -54386,7 +54433,7 @@ escape v;
     --dcls = 'line 25 : abstraction inside `async` : not implemented',
     --isr = 'line 7 : call breaks the static check for `atomic` sections',
     run = 2,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
@@ -54407,7 +54454,7 @@ escape v;
     run = 2,
     --wrn = true,
     --isr = 'line 1 : access to "_f" must be atomic',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54429,7 +54476,7 @@ end
 escape v;
 ]],
     run = 2,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
@@ -54446,7 +54493,7 @@ escape v;
 ]],
     --isr = 'line 2 : access to "v" must be atomic',
     run = 2,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
@@ -54464,7 +54511,7 @@ end
 escape v;
 ]],
     run = 2,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54488,7 +54535,7 @@ end
 ]],
     _ana = {acc=2},
     run = 2,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
@@ -54507,7 +54554,7 @@ escape v;
 ]],
     --isr = 'line 12 : access to "v" must be atomic',
     props = 'line 27 : not permitted inside `async/isr`',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
@@ -54528,7 +54575,7 @@ escape 1;
 ]],
     --isr = 'line 5 : reference access breaks the static check for `atomic` sections',
     run = 1,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54550,7 +54597,7 @@ escape 1;
     --dcls = 'line 4 : invalid operand to `&&` : unexpected context for vector "v"',
     --env = 'line 4 : types mismatch (`int&&` <= `int[]&&`)',
     --env = 'line 4 : invalid operand to unary "&&"',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54564,7 +54611,7 @@ end
 escape 1;
 ]],
     dcls = 'line 3 : external identifier "A" is not declared',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54580,7 +54627,7 @@ escape 1;
 ]],
     --adj = 'line 3 : missing ISR identifier',
     parser = 'line 3 : after `[` : expected expression',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54596,7 +54643,7 @@ escape 1;
 ]],
     stmts = 'line 4 : invalid `emit` : types mismatch : "(int)" <= "()"',
     --env = ' line 4 : arity mismatch',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54613,7 +54660,7 @@ end
 escape 1;
 ]],
     run = 1,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54653,7 +54700,7 @@ _ceu_assert(_V==0, "bug found");
 escape _V+1;
 ]],
     run = { ['~>1s']=1 },
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54673,7 +54720,7 @@ escape 1;
     todo = 'acc',
     acc = 'line 8 : access to symbol "_digitalWrite" must be atomic (vs symbol `_digitalRead` (/tmp/tmp.ceu:4))',
     run = 1,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54691,7 +54738,7 @@ end
 escape 1;
 ]],
     dcls = 'line 6 : internal identifier "i" is not declared',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54709,7 +54756,7 @@ end
 escape 1;
 ]],
     cc = '10:1: error: implicit declaration of function ‘digitalWrite’',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54726,7 +54773,7 @@ escape 1;
 ]],
     todo = 'acc',
     acc = 'line 9 : access to symbol "i" must be atomic (vs variable/event `i` (/tmp/tmp.ceu:5))',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54748,7 +54795,7 @@ escape 1;
     _ana = {acc=1},
     run = 1,
     --cc = '#error "Missing definition for macro',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
@@ -54768,7 +54815,7 @@ escape v;
     --wrn = true,
     --isr = 'line 4 : access to "Fx" must be atomic',
     run = 2,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
     --dcls = 'line 25 : abstraction inside `async` : not implemented',
 }
 
@@ -54778,7 +54825,7 @@ spawn async/isr [1] do
 end
 escape _CEU_APP.root.__mem.trails_n;
 ]],
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
     run = 3,
 }
 Test { [[
@@ -54789,7 +54836,7 @@ spawn do
 end
 escape _CEU_APP.root.__mem.trails_n;
 ]],
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
     run = 5,
 }
 
@@ -54799,7 +54846,7 @@ spawn async/isr [0] do
 end
 escape 1;
 ]],
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
     run = 1,
 }
 
@@ -54831,7 +54878,7 @@ spawn async/isr [_f(0)] do
 end
 escape _V+_U;
 ]],
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
     run = 2,
 }
 
@@ -54844,7 +54891,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
     run = 1,
 }
 
@@ -54857,7 +54904,7 @@ code/await Ff (var int x) -> none do
 end
 escape 1;
 ]],
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
     wrn = true,
     run = 1,
 }
