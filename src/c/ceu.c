@@ -171,19 +171,22 @@ typedef struct {
 } tceu_threads_param;
 #endif
 
-#ifdef CEU_FEATURES_ISR_DYNAMIC
-
+#ifdef CEU_FEATURES_ISR_STATIC
+typedef struct tceu_isr_evt {
+    tceu_nevt id;
+    u8        len;
+    void*     args;
+} tceu_isr_evt;
+#else
 typedef struct tceu_evt_id_params {
     tceu_nevt id;
     void*     params;
 } tceu_evt_id_params;
-
 typedef struct tceu_isr {
     void (*fun)(tceu_code_mem*);
     tceu_code_mem*     mem;
     tceu_evt_id_params evt;
 } tceu_isr;
-
 #endif
 
 /*****************************************************************************/

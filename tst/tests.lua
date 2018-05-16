@@ -54909,6 +54909,16 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+spawn async/isr [1] do
+end
+escape 1;
+]],
+    run = 1,
+    cc = 'error: expected declaration specifiers or ‘...’ before numeric constant',
+    _opts = { ceu_features_isr='static' },
+}
+
 --<<< ASYNCS / ISR / ATOMIC
 
 -->>> OUTER

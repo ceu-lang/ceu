@@ -8,6 +8,9 @@ SPAWNS.F = {
     end,
     __stmts_flatten = function (stmts, new)
         local new = new or node('Stmts', stmts.ln)
+        if ADJS.stmts == stmts then
+            ADJS.stmts = new    -- TODO: terrible hack
+        end
         for _, sub in ipairs(stmts) do
             if AST.is_node(sub) and sub.tag=='Stmts' then
                 SPAWNS.F.__stmts_flatten(sub, new)

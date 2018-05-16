@@ -1435,14 +1435,11 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
             else
                 local isr = assert(AST.par(me,'Async_Isr'))
                 local exps = unpack(isr)
+                local sz = (ps=='NULL' and '0') or 'sizeof(__ceu_ps)'
                 LINE(me, [[
 {
-#ifdef CEU_FEATURES_ISR_STATIC
-    ceu_callback_isr_emit(]]..V(ID_ext)..'.id, '..ps..[[, CEU_TRACE(0));
-#else
-    tceu_evt_id_params __ceu_evt = { ]]..V(ID_ext)..'.id, '..ps..[[ };
+    tceu_isr_evt __ceu_evt = { ]]..V(ID_ext)..'.id, '..sz..', '..ps..[[ };
     ceu_callback_isr_emit(]]..V(exps[1])..[[, (void*)&__ceu_evt, CEU_TRACE(0));
-#endif
 }
 ]])
             end
@@ -1588,7 +1585,7 @@ _CEU_HALT_]]..me.n..[[_:
 {
     static s32 __ceu_dt;
     __ceu_dt = ]]..V(e)..[[;
-    tceu_evt_id_params __ceu_evt = { CEU_INPUT__WCLOCK, &__ceu_dt };
+    tceu_isr_evt __ceu_evt = { CEU_INPUT__WCLOCK, sizeof(__ceu_dt), &__ceu_dt };
     ceu_callback_isr_emit(]]..V(exps[1])..[[, (void*)&__ceu_evt, CEU_TRACE(0));
 }
 ]])
