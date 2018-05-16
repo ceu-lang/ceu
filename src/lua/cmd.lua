@@ -27,15 +27,17 @@ Options:
     --ceu-output=FILE                   output source file to generate (C source)
     --ceu-line-directives=BOOL          insert `#line` directives in the C output (default `true`)
 
+    --ceu-features-os=BOOL              enable running in OS (default `false`)
     --ceu-features-trace=BOOL           enable trace support (default `false`)
     --ceu-features-exception=BOOL       enable exceptions support (default `false`)
     --ceu-features-dynamic=BOOL         enable dynamic allocation support (default `false`)
     --ceu-features-pool=BOOL            enable pool support (default `false`)
     --ceu-features-lua=BOOL             enable `lua` support (default `false`)
+    --ceu-features-async=BOOL           enable `async` support (default `false`)
     --ceu-features-thread=BOOL          enable `async/thread` support (default `false`)
     --ceu-features-isr=OPT              enable `async/isr` support: false|static|dynamic (default `false`)
     --ceu-features-pause=BOOL           enable `pause/if` support (default `false`)
-    --ceu-features-callbacks=OPT        enable callbacks support: static|dynamic (default `dynamic`)
+    --ceu-features-callbacks=OPT        enable callbacks support: false|static|dynamic (default `false`)
 
     --ceu-err-unused=OPT                effect for unused identifier: error|warning|pass
     --ceu-err-unused-native=OPT                    unused native identifier
@@ -142,26 +144,22 @@ do
         end
     end
 
-    local function tocbs (v)
-        if v=='static' or v=='dynamic' then
-            return v
-        else
-            return nil
-        end
-    end
+    local tocbs = toisr
 
     local T = {
         ceu_output             = { tostring,  '-'     },
         ceu_line_directives    = { toboolean, 'true'  },
+        ceu_features_os        = { toboolean, 'false' },
         ceu_features_trace     = { toboolean, 'false' },
         ceu_features_exception = { toboolean, 'false' },
         ceu_features_dynamic   = { toboolean, 'false' },
         ceu_features_pool      = { toboolean, 'false' },
         ceu_features_lua       = { toboolean, 'false' },
+        ceu_features_async     = { toboolean, 'false' },
         ceu_features_thread    = { toboolean, 'false' },
         ceu_features_isr       = { toisr,     'false' },
         ceu_features_pause     = { toboolean, 'false' },
-        ceu_features_callbacks = { tocbs,     'dynamic' },
+        ceu_features_callbacks = { tocbs,     'false' },
 
         env_output             = { tostring,  '-'     },
     }

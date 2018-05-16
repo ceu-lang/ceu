@@ -1071,7 +1071,10 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
 
             if to.info.dcl.id=='_RET' then
                 LINE(me, [[
-{   CEU_APP.end_ok=1; CEU_APP.end_val=]]..V(fr)..[[;
+{
+#ifdef CEU_FEATURES_OS
+    CEU_APP.end_ok=1; CEU_APP.end_val=]]..V(fr)..[[;
+#endif
     ceu_callback_void_void(CEU_CALLBACK_TERMINATING, CEU_TRACE(0));
 }
 ]])

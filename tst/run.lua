@@ -245,6 +245,10 @@ end
             --ceu_line_directives = 'true',
             --ceu_line_directives = 'false',
             --ceu_err_unused_native = 'pass'
+
+            ceu_features_os        = 'true',
+            ceu_features_async     = 'true',
+            ceu_features_callbacks = 'dynamic',
         }
     }
     if T.opts_pre then

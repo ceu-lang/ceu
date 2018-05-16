@@ -28,7 +28,6 @@
 #define U64_MAX   18446744073709551615
 
 typedef u16 tceu_nevt;   /* TODO */
-typedef u16 tceu_nseq;   /* TODO */
 typedef u8  tceu_nstk;   /* TODO */
 typedef === CEU_TCEU_NTRL === tceu_ntrl;
 typedef === CEU_TCEU_NLBL === tceu_nlbl;
@@ -307,15 +306,13 @@ enum {
 /*****************************************************************************/
 
 typedef struct tceu_app {
+#ifdef CEU_FEATURES_OS
     int    argc;
     char** argv;
 
     bool end_ok;
     int  end_val;
-
-    /* SEQ */
-    tceu_nseq seq;
-    tceu_nseq seq_base;
+#endif
 
     /* CALLBACKS */
 #ifdef CEU_FEATURES_CALLBACKS_DYNAMIC
@@ -323,7 +320,9 @@ typedef struct tceu_app {
 #endif
 
     /* ASYNC */
+#ifdef CEU_FEATURES_ASYNC
     bool async_pending;
+#endif
 
     /* WCLOCK */
     s32 wclk_late;
@@ -889,9 +888,11 @@ void ceu_bcast (tceu_nstk level, tceu_stk* cur)
                     CEU_APP.wclk_late = *((s32*)cur->params) - CEU_APP.wclk_min_cmp;
                 }
                 break;
+#ifdef CEU_FEATURES_ASYNC
             case CEU_INPUT__ASYNC:
                 CEU_APP.async_pending = 0;
                 break;
+#endif
         }
         if (cur->evt.id != CEU_INPUT__WCLOCK) {
             CEU_APP.wclk_late = 0;
@@ -938,19 +939,19 @@ CEU_API void ceu_input (tceu_nevt id, void* params)
 }
 
 CEU_API void ceu_start (tceu_callback* cb, int argc, char* argv[]) {
+#ifdef CEU_FEATURES_OS
     CEU_APP.argc     = argc;
     CEU_APP.argv     = argv;
-
     CEU_APP.end_ok   = 0;
-
-    CEU_APP.seq      = 0;
-    CEU_APP.seq_base = 0;
+#endif
 
 #ifdef CEU_FEATURES_CALLBACKS_DYNAMIC
     CEU_APP.cbs = cb;
 #endif
 
+#ifdef CEU_FEATURES_ASYNC
     CEU_APP.async_pending = 0;
+#endif
 
     CEU_APP.wclk_late = 0;
     CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;
@@ -1010,7 +1011,12 @@ CEU_API int ceu_loop (tceu_callback* cb, int argc, char* argv[])
 {
     ceu_start(cb, argc, argv);
 
-    while (!CEU_APP.end_ok) {
+#ifdef CEU_FEATURES_OS
+    while (!CEU_APP.end_ok)
+#else
+    while (1)
+#endif
+    {
         ceu_callback_step(CEU_TRACE_null);
 #ifdef CEU_FEATURES_THREAD
         if (CEU_APP.threads_head != NULL) {
@@ -1021,9 +1027,12 @@ CEU_API int ceu_loop (tceu_callback* cb, int argc, char* argv[])
             ceu_threads_gc(0);
         }
 #endif
+#ifdef CEU_FEATURES_ASYNC
         ceu_input(CEU_INPUT__ASYNC, NULL);
+#endif
     }
 
+#ifdef CEU_FEATURES_OS
     ceu_stop();
 
 #ifdef CEU_TESTS
@@ -1032,4 +1041,7 @@ CEU_API int ceu_loop (tceu_callback* cb, int argc, char* argv[])
 #endif
 
     return CEU_APP.end_val;
+#else
+    return 0;
+#endif
 }
