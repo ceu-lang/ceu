@@ -23,6 +23,9 @@ typedef struct tceu_trace {
 #ifndef ceu_callback_step
     #define ceu_callback_step(trace) ceu_callback_void_void(CEU_CALLBACK_STEP, trace)
 #endif
+#ifndef ceu_callback_terminating
+    #define ceu_callback_terminating(trace) ceu_callback_void_void(CEU_CALLBACK_TERMINATING, trace)
+#endif
 #ifndef ceu_callback_abort
     #define ceu_callback_abort(err,trace) ceu_callback_num_void(CEU_CALLBACK_ABORT, err, trace)
 #endif
@@ -172,6 +175,15 @@ enum {
 #else // !CEU_FEATURES_CALLBACKS_DYNAMIC
 
 typedef void tceu_callback;
+
+#define ceu_callback_log_str(a,b)
+#define ceu_callback_wclock_min(a,b)
+#define ceu_callback_abort(a,b)
+#define ceu_callback_terminating(a)
+#define ceu_callback_wclock_dt(a) 0
+#define ceu_callback_start(a)
+#define ceu_callback_stop(a)
+#define ceu_callback_step(a)
 
 #endif // CEU_FEATURES_CALLBACKS_DYNAMIC
 

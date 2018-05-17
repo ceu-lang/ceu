@@ -352,12 +352,22 @@ ceu_code_mem_dyn_gc(&]]..V(ID_int,ctx)..[[);
         local inout = unpack(ext)
 
         local pre, pos do
-            if CEU.opts.ceu_features_callbacks then
+            if CEU.opts.ceu_features_callbacks == 'static' then
+                pre = [[
+#ifdef CEU_FEATURES_TRACE
+#define ceu_callback_]]..inout..'_'..ext.id..[[(a,b) ceu_callback_]]..inout..'_'..ext.id..[[_(a,b)
+#else
+#define ceu_callback_]]..inout..'_'..ext.id..[[(a,b) ceu_callback_]]..inout..'_'..ext.id..[[_(a)
+#endif
+void ceu_callback_]]..inout..'_'..ext.id..'_ (tceu_output_'..ext.id..[[* ps
+#ifdef CEU_FEATURES_TRACE
+                                                                  , tceu_trace trace
+#endif
+                                                                  )]]
+                pos = ''
+            else
                 pre = 'case '..ext.id_..':'
                 pos = 'break;'
-            else
-                pre = 'int ceu_callback_'..inout..'_'..ext.id..' (void* p2, tceu_trace trace)'
-                pos = ''
             end
         end
 
@@ -1075,7 +1085,7 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
 #ifdef CEU_FEATURES_OS
     CEU_APP.end_ok=1; CEU_APP.end_val=]]..V(fr)..[[;
 #endif
-    ceu_callback_void_void(CEU_CALLBACK_TERMINATING, CEU_TRACE(0));
+    ceu_callback_terminating(CEU_TRACE(0));
 }
 ]])
             end
@@ -1396,7 +1406,7 @@ tceu_]]..inout..'_'..ID_ext.dcl.id..[[ __ceu_ps;
         if inout == 'output' then
             local set = AST.par(me,'Set_Emit_Ext_emit')
             local cb = '\n'..[[
-#ifdef ceu_callback_output_]]..ID_ext.dcl.id..'\n'..[[
+#ifdef CEU_FEATURES_CALLBACKS_STATIC
 ceu_callback_output_]]..ID_ext.dcl.id..'('..ps..[[, CEU_TRACE(-2));
 #else
 (ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..'.id, '..ps..[[, CEU_TRACE(-4)), ceu_callback_ret.num);
@@ -1441,7 +1451,11 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
                 local sz = (ps=='NULL' and '0') or 'sizeof(__ceu_ps)'
                 LINE(me, [[
 {
+#ifdef CEU_FEATURES_ISR_STATIC
     tceu_isr_evt __ceu_evt = { ]]..V(ID_ext)..'.id, '..sz..', '..ps..[[ };
+#else
+    tceu_evt_id_params __ceu_evt = { ]]..V(ID_ext)..'.id, '..ps..[[ };
+#endif
     ceu_callback_isr_emit(]]..V(exps[1])..[[, (void*)&__ceu_evt, CEU_TRACE(0));
 }
 ]])
@@ -1588,7 +1602,11 @@ _CEU_HALT_]]..me.n..[[_:
 {
     static s32 __ceu_dt;
     __ceu_dt = ]]..V(e)..[[;
+#ifdef CEU_FEATURES_ISR_STATIC
     tceu_isr_evt __ceu_evt = { CEU_INPUT__WCLOCK, sizeof(__ceu_dt), &__ceu_dt };
+#else
+    tceu_evt_id_params __ceu_evt = { CEU_INPUT__WCLOCK, &__ceu_dt };
+#endif
     ceu_callback_isr_emit(]]..V(exps[1])..[[, (void*)&__ceu_evt, CEU_TRACE(0));
 }
 ]])

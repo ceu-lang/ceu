@@ -303,6 +303,10 @@ enum {
     === CEU_LABELS ===
 };
 
+#ifdef CEU_FEATURES_CALLBACKS_STATIC
+=== CEU_CALLBACKS_OUTPUTS ===
+#endif
+
 /*****************************************************************************/
 
 typedef struct tceu_app {
@@ -493,6 +497,7 @@ static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
         cur = cur->nxt;
     }
 
+#ifdef CEU_FEATURES_CALLBACKS_DYNAMIC
 #define CEU_TRACE(n) trace
     if (cmd == CEU_CALLBACK_OUTPUT) {
         switch (p1.num) {
@@ -500,6 +505,7 @@ static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
         }
     }
 #undef CEU_TRACE
+#endif
 }
 #endif
 

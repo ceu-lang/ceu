@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#ifdef CEU_FEATURES_CALLBACKS_DYNAMIC
 int ceu_callback_ceu (int cmd, tceu_callback_val p1, tceu_callback_val p2
 #ifdef CEU_FEATURES_TRACE
                      , tceu_trace trace
@@ -57,15 +58,20 @@ int ceu_callback_ceu (int cmd, tceu_callback_val p1, tceu_callback_val p2
     }
     return is_handled;
 }
+#endif
 
 int main (int argc, char* argv[])
 {
+#ifdef CEU_FEATURES_CALLBACKS_STATIC
+    int ret = ceu_loop(NULL, argc, argv);
+#else
     tceu_callback cb = { &ceu_callback_ceu, NULL };
 #ifdef CEU_CALLBACK_ENV
     CEU_CALLBACK_ENV.nxt = &cb;
     int ret = ceu_loop(&CEU_CALLBACK_ENV, argc, argv);
 #else
     int ret = ceu_loop(&cb, argc, argv);
+#endif
 #endif
     return ret;
 }

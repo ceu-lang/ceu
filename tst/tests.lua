@@ -24848,6 +24848,17 @@ escape x+y;
     --_opts = { ceu_features_callbacks='static' },
 }
 
+Test { [[
+output (&int x) OOO do
+    x = x + 1;
+end
+var int x = 10;
+emit OOO(&x);
+escape x;
+]],
+    run = 11,
+    _opts = { ceu_features_callbacks='static' },
+}
 --<<< OUTPUT
 
 Test { [[
