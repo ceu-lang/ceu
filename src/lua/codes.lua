@@ -830,7 +830,9 @@ ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL, CEU_TRACE(0));
     Loop = function (me)
         local _, body = unpack(me)
         local max = CODES.F.__loop_max(me)
-        local trlK = (AST.par(me, 'Async_Thread') and '' or '*_ceu_trlK = '..(me.trails[1]-1)..';\n')
+        local code = AST.par(me,'Code')
+        local thread_or_tight = AST.par(me,'Async_Thread') or (code and code[1].tight)
+        local trlK = (thread_or_tight and '') or ('*_ceu_trlK = '..(me.trails[1]-1)..';\n')
 
         LINE(me, [[
 ]]..max.ini..[[

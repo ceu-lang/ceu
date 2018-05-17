@@ -35367,6 +35367,22 @@ escape x;
     run = 10,
 }
 
+Test { [[
+code/tight Test (var int a) -> int do
+    var int ret = 0;
+    loop do
+        if a < 1 then break; end
+        a = a - 1;
+        ret = ret + 1;
+    end
+    escape ret;
+end
+var int ret = call Test(3);
+escape ret;
+]],
+    wrn = true,
+    run = 3,
+}
 -->>> RECURSIVE
 
 Test { [[
