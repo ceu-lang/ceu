@@ -407,7 +407,6 @@ escape 1;
 ]==]
 
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -43817,10 +43816,10 @@ escape _V;
 
 Test { [[
 native _V;
-native/pure _f;
+native/pure _fff;
 native/nohold _ceu_assert;
 native/pos do
-    ##define f(x) x
+    ##define fff(x) x
     none* V;
 end
 
@@ -43843,7 +43842,7 @@ code/await Collisions (none) -> none do
     loop cloud1 in outer.clouds do
         var&? Cloud cloud2;
         loop cloud2 in outer.clouds do
-            _V = _f(&&cloud1!.i);
+            _V = _fff(&&cloud1!.i);
             spawn Collides();
             _ceu_assert(_V == &&cloud1!.i, "bug found");
         end
@@ -54783,19 +54782,20 @@ escape 1;
     run = 1,
 }
 
+--]=====]
 Test { [[
-native _X, _V, _U, _f;
+native _X, _V, _U, _fff;
 native/pre do
     ##define X 1
 end
 native/pos do
-    ##define f(x) 1
+    ##define fff(x) 1
     ##ifdef CEU_ISR__X
         int V = 1;
     ##else
         int V = 0;
     ##endif
-    ##ifdef CEU_ISR__f__lpar__0__rpar__
+    ##ifdef CEU_ISR__fff__lpar__0__rpar__
         int U = 1;
     ##else
         int U = 0;
@@ -54806,7 +54806,7 @@ end
 spawn async/isr [_X] do
     emit 1s;
 end
-spawn async/isr [_f(0)] do
+spawn async/isr [_fff(0)] do
     emit 1s;
 end
 escape _V+_U;
