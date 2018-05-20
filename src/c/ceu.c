@@ -457,6 +457,25 @@ static void ceu_lua_createargtable (lua_State* lua, char** argv, int argc, int s
 
 /*****************************************************************************/
 
+static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
+#ifdef CEU_FEATURES_TRACE
+                         , tceu_trace trace
+#else
+#endif
+                         );
+
+static int ceu_lbl (tceu_nstk _ceu_level, tceu_stk* _ceu_cur, tceu_stk* _ceu_nxt, tceu_code_mem* _ceu_mem, tceu_nlbl _ceu_lbl, tceu_ntrl* _ceu_trlK);
+
+=== CEU_NATIVE_POS ===
+
+=== CEU_CODES_WRAPPERS ===
+
+=== CEU_ISRS ===
+
+=== CEU_THREADS ===
+
+/*****************************************************************************/
+
 CEU_API void ceu_callback_register (tceu_callback* cb) {
     cb->nxt = CEU_APP.cbs;
     CEU_APP.cbs = cb;
@@ -490,18 +509,6 @@ static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
     }
 #undef CEU_TRACE
 }
-
-/*****************************************************************************/
-
-static int ceu_lbl (tceu_nstk _ceu_level, tceu_stk* _ceu_cur, tceu_stk* _ceu_nxt, tceu_code_mem* _ceu_mem, tceu_nlbl _ceu_lbl, tceu_ntrl* _ceu_trlK);
-
-=== CEU_NATIVE_POS ===
-
-=== CEU_CODES_WRAPPERS ===
-
-=== CEU_ISRS ===
-
-=== CEU_THREADS ===
 
 /*****************************************************************************/
 

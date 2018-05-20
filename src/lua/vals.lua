@@ -135,6 +135,9 @@ F = {
         local mem do
             if obj then
                 mem = '(&'..V(obj)..')'
+            elseif AST.par(me,'Ext_impl') then
+                --mem = '&CEU_APP.root._mem'
+                mem = 'NULL'
             else
                 mem = '_ceu_mem'
             end

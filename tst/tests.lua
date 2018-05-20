@@ -24782,6 +24782,22 @@ end
 }
 
 
+Test { [[
+code/tight Inc(var& int ret) -> none do
+    ret = ret + 1;
+end
+output &int INC;
+output (&int v) INC do
+    call Inc(&v);
+end
+var int ret = 10;
+emit INC(&ret);
+escape ret;
+]],
+    wrn = true,
+    run = 11,
+}
+
 --<<< OUTPUT
 
 Test { [[
