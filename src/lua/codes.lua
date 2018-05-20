@@ -38,7 +38,9 @@ local function CONC_ALL (me)
 end
 
 local function NO_AWAIT (me)
-    return AST.par(me,'Async_Thread') or AST.par(me,'Async_Isr') or AST.par(me,'Ext_impl')
+    local code = AST.par(me, 'Code')
+    local is_code_tight = code and code[1].tight
+    return is_code_tight or AST.par(me,'Async_Thread') or AST.par(me,'Async_Isr') or AST.par(me,'Ext_impl')
 end
 
 local function CASE (me, lbl)
