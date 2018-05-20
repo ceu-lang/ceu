@@ -407,6 +407,7 @@ escape 1;
 ]==]
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -54782,7 +54783,6 @@ escape 1;
     run = 1,
 }
 
---]=====]
 Test { [[
 native _X, _V, _U, _fff;
 native/pre do
@@ -55003,6 +55003,20 @@ code/await Ff (none) -> int do
 end
 var int zzz = await Ff();
 escape zzz;
+]],
+    run = 20,
+}
+
+Test { [[
+code/tight Ff (var int xxx) -> int do
+    var int b = 0;
+    var int yyy = xxx;
+    code/tight Get (none) -> int do
+        escape outer.yyy + outer.xxx;
+    end
+    escape b + call Get();
+end
+escape call Ff(10);
 ]],
     run = 20,
 }

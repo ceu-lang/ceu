@@ -43,11 +43,27 @@ local function NO_AWAIT (me)
     return is_code_tight or AST.par(me,'Async_Thread') or AST.par(me,'Async_Isr') or AST.par(me,'Ext_impl')
 end
 
+local function NO_LBL (me)
+    return AST.par(me,'Async_Thread') or AST.par(me,'Async_Isr') or AST.par(me,'Ext_impl')
+end
+
 local function CASE (me, lbl)
-    if NO_AWAIT(me) then
+    if NO_LBL(me) then
         LINE(me, lbl.id..':;\n')
     else
         LINE(me, 'case '..lbl.id..':;\n')
+    end
+end
+
+local function GOTO (me, lbl)
+    if NO_LBL(me) then
+        LINE(me, [[
+goto ]]..lbl.id..[[;
+]])
+    else
+        LINE(me, [[
+CEU_GOTO(]]..lbl.id..[[);
+]])
     end
 end
 
@@ -780,15 +796,7 @@ ceu_assert(0, "reached end of `do`");
         CONC_ALL(me)
         local code = AST.par(me, 'Code')
         local mods = code and code[2]
-        if NO_AWAIT(me) then
-            LINE(me, [[
-goto ]]..me.outer.lbl_out.id..[[;
-]])
-        else
-            LINE(me, [[
-CEU_GOTO(]]..me.outer.lbl_out.id..[[);
-]])
-        end
+        GOTO(me, me.outer.lbl_out)
     end,
 
     ---------------------------------------------------------------------------
@@ -836,7 +844,6 @@ ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL, CEU_TRACE(0));
     Loop = function (me)
         local _, body = unpack(me)
         local max = CODES.F.__loop_max(me)
-        local code = AST.par(me,'Code')
         local trlK = (NO_AWAIT(me) and '') or ('*_ceu_trlK = '..(me.trails[1]-1)..';\n')
 
         LINE(me, [[
@@ -943,26 +950,10 @@ while (1) {
     end,
 
     Break = function (me)
-        if NO_AWAIT(me) then
-            LINE(me, [[
-goto ]]..me.outer.lbl_out.id..[[;
-]])
-        else
-            LINE(me, [[
-CEU_GOTO(]]..me.outer.lbl_out.id..[[);
-]])
-        end
+        GOTO(me, me.outer.lbl_out)
     end,
     Continue = function (me)
-        if NO_AWAIT(me) then
-            LINE(me, [[
-goto ]]..me.outer.lbl_out.id..[[;
-]])
-        else
-            LINE(me, [[
-CEU_GOTO(]]..me.outer.lbl_cnt.id..[[);
-]])
-        end
+        GOTO(me, me.outer.lbl_cnt)
     end,
 
     Stmt_Call = function (me)
