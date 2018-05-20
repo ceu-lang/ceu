@@ -24635,6 +24635,18 @@ escape xxx;
 }
 
 Test { [[
+output (none) A do
+    var int i;
+    loop i in [0 -> 7] do
+    end
+end
+emit A();
+escape 10;
+]],
+    run = 10,
+}
+
+Test { [[
 native/pos do
     static tceu_data_Dd DD = { 1 };
 end
