@@ -26095,12 +26095,12 @@ escape 1;
 }
 
 Test { [[
-native _f, _p;
+native _fff, _p;
 native/pos do
-    ##define f(p)
+    ##define fff(p)
 end
 par/or do
-    _f(_p);
+    _fff(_p);
 with
     await FOREVER;
 end
