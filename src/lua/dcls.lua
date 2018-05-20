@@ -969,7 +969,7 @@ end
         local id = unpack(me)
         local blk = AST.par(me,'Block')
         local can_cross = false
-        if id ~= '_ret' then
+        do
             -- escape should refer to the parent "a"
             -- var int a = do var int a; ... escape ...; end;
             local set = AST.par(me,'Set_Exp')
