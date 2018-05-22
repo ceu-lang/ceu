@@ -354,7 +354,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     -- break/i
     -- continue/i
     , _Escape   = K'escape'   * ('/'*V'ID_int' + Cc(true)) * OPT(V'__Exp')
-    , Break    = K'break'    * OPT('/'*V'ID_int') * V'Y'
+    , Break    = K'break'    * OPT('/'*V'ID_int') --* V'Y'
     , Continue = K'continue' * OPT('/'*V'ID_int')
 
     -- do/A ... end
