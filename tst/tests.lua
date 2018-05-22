@@ -19787,6 +19787,19 @@ end
 }
 
 Test { [[
+var byte&& b=_;
+loop do
+    if true then
+        break;
+    end
+    *b = 1;
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
 var int v = 10;
 var int&& ptr = &&v;
 await 1s;
@@ -26586,6 +26599,15 @@ escape *(&&x);
 ]],
     run = 1,
     --parser = 'line 2 : after `(` : expected location',
+}
+
+Test { [[
+var int x = 10;
+var int&& p = &&x;
+escape p[0];
+]],
+    wrn = true,
+    run = 10,
 }
 
 --<<< NATIVE/POINTERS/VECTORS
