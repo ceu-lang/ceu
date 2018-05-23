@@ -2009,17 +2009,6 @@ _CEU_LUA_ERR_]]..me.n..[[:;
 
 -------------------------------------------------------------------------------
 
-local function SUB (str, from, to)
-    assert(to, from)
-    local i,e = string.find(str, from, 1, true)
-    if i then
-        return SUB(string.sub(str,1,i-1) .. to .. string.sub(str,e+1),
-                   from, to)
-    else
-        return str
-    end
-end
-
 AST.visit(CODES.F)
 
 local labels do

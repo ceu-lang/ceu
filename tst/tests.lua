@@ -24848,7 +24848,19 @@ escape x+y;
     --_opts = { ceu_features_callbacks='static' },
 }
 
-Test { [[
+PRE_CALLBACKS = [[
+native/pre do
+    ##define ceu_callback_log_str(a,b)
+    ##define ceu_callback_wclock_min(a,b)
+    ##define ceu_callback_abort(a,b)
+    ##define ceu_callback_terminating(a)
+    ##define ceu_callback_wclock_dt(a) 0
+    ##define ceu_callback_start(a)
+    ##define ceu_callback_stop(a)
+    ##define ceu_callback_step(a)
+end
+]]
+Test { PRE_CALLBACKS..[[
 output (&int x) OOO do
     x = x + 1;
 end

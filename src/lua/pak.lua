@@ -15,7 +15,7 @@ end
 local fout = assert(io.open('ceu','w'))
 local fin  = assert(io.open'ceu.lua'):read'*a'
 
-local function subst (name, returns)
+local function subst_lua (name, returns)
     local s, e = string.find(fin, "dofile '"..name.."'")
     local src do
         if returns then
@@ -31,35 +31,54 @@ local function subst (name, returns)
     fin = string.sub(fin, 1, (s-1)) .. src .. string.sub(fin, (e+1))
 end
 
-subst('optparse.lua', true)
-subst 'dbg.lua'
-subst 'cmd.lua'
-subst 'pre.lua'
-subst 'lines.lua'
-subst 'parser.lua'
-subst 'ast.lua'
-subst 'adjs.lua'
-subst 'types.lua'
-subst 'exps.lua'
-subst 'dcls.lua'
-subst 'inlines.lua'
-subst 'consts.lua'
-subst 'fins.lua'
-subst 'spawns.lua'
-subst 'stmts.lua'
-subst 'inits.lua'
-subst 'ptrs.lua'
-subst 'scopes.lua'
-subst 'tight_.lua'
-subst 'props_.lua'
-subst 'trails.lua'
-subst 'labels.lua'
-subst 'vals.lua'
-subst 'multis.lua'
-subst 'mems.lua'
-subst 'codes.lua'
-subst 'env.lua'
-subst 'cc.lua'
+local function subst_c (str, from, to)
+    assert(to, from)
+    local i,e = string.find(str, from, 1, true)
+    if i then
+        return subst_c(string.sub(str,1,i-1) .. to .. string.sub(str,e+1),
+                       from, to)
+    else
+        return str
+    end
+end
+
+subst_lua('optparse.lua', true)
+subst_lua 'dbg.lua'
+subst_lua 'cmd.lua'
+subst_lua 'pre.lua'
+subst_lua 'lines.lua'
+subst_lua 'parser.lua'
+subst_lua 'ast.lua'
+subst_lua 'adjs.lua'
+subst_lua 'types.lua'
+subst_lua 'exps.lua'
+subst_lua 'dcls.lua'
+subst_lua 'inlines.lua'
+subst_lua 'consts.lua'
+subst_lua 'fins.lua'
+subst_lua 'spawns.lua'
+subst_lua 'stmts.lua'
+subst_lua 'inits.lua'
+subst_lua 'ptrs.lua'
+subst_lua 'scopes.lua'
+subst_lua 'tight_.lua'
+subst_lua 'props_.lua'
+subst_lua 'trails.lua'
+subst_lua 'labels.lua'
+subst_lua 'vals.lua'
+subst_lua 'multis.lua'
+subst_lua 'mems.lua'
+subst_lua 'codes.lua'
+subst_lua 'env.lua'
+subst_lua 'cc.lua'
+
+local ceu_callback_c = assert(io.open'../c/ceu_callback.c'):read'*a'
+local ceu_vector_c   = assert(io.open'../c/ceu_vector.c'):read'*a'
+local ceu_pool_c     = assert(io.open'../c/ceu_pool.c'):read'*a'
+local ceu_c          = assert(io.open'../c/ceu.c'):read'*a'
+ceu_c = subst_c(ceu_c, '=== CEU_CALLBACK_C ===', ceu_callback_c)
+ceu_c = subst_c(ceu_c, '=== CEU_VECTOR_C ===',   ceu_vector_c)
+ceu_c = subst_c(ceu_c, '=== CEU_POOL_C ===',     ceu_pool_c)
 
 fout:write([=[
 #!/usr/bin/env ]=]..LUA_EXE..[=[
@@ -100,11 +119,7 @@ PAK = {
     ceu_ver = ']=]..CEU_VER..[=[',
     ceu_git = ']=]..CEU_GIT..[=[',
     files = {
-        ceu_c =
-            [====[]=]..'\n'..assert(io.open'../c/ceu_callback.c'):read'*a'..[=[]====]..
-            [====[]=]..'\n'..assert(io.open'../c/ceu_vector.c'):read'*a'..[=[]====]..
-            [====[]=]..'\n'..assert(io.open'../c/ceu_pool.c'):read'*a'..[=[]====]..
-            [====[]=]..'\n'..assert(io.open'../c/ceu.c'):read'*a'..[=[]====],
+        ceu_c = [====[]=]..'\n'..ceu_c..[=[]====],
     }
 }
 ]=]..fin)

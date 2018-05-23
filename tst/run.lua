@@ -204,17 +204,6 @@ end
     end
     defines = defines..' -DCEU_TESTS'
 
-    PAK = {
-        lua_exe = '?',
-        ceu_ver = '?',
-        ceu_git = '?',
-        files = {
-            ceu_c = assert(io.open'../src/c/ceu_callback.c'):read'*a'..
-                    assert(io.open'../src/c/ceu_vector.c'):read'*a'..
-                    assert(io.open'../src/c/ceu_pool.c'):read'*a'..
-                    assert(io.open'../src/c/ceu.c'):read'*a',
-        }
-    }
     CEU = {
         arg  = {},
         opts = T.opts or {
@@ -270,6 +259,23 @@ end
 
     dofile(DIR..'dbg.lua')
     DBG,ASR = DBG1,ASR1
+
+    local ceu_callback_c = assert(io.open'../src/c/ceu_callback.c'):read'*a'
+    local ceu_vector_c   = assert(io.open'../src/c/ceu_vector.c'):read'*a'
+    local ceu_pool_c     = assert(io.open'../src/c/ceu_pool.c'):read'*a'
+    local ceu_c          = assert(io.open'../src/c/ceu.c'):read'*a'
+    ceu_c = SUB(ceu_c, '=== CEU_CALLBACK_C ===', ceu_callback_c)
+    ceu_c = SUB(ceu_c, '=== CEU_VECTOR_C ===',   ceu_vector_c)
+    ceu_c = SUB(ceu_c, '=== CEU_POOL_C ===',     ceu_pool_c)
+    PAK = {
+        lua_exe = '?',
+        ceu_ver = '?',
+        ceu_git = '?',
+        files = {
+            ceu_c = ceu_c,
+        }
+    }
+
     if not check(T,'cmd') then return end
 
     if CEU.opts.pre then

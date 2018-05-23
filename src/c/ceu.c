@@ -1,3 +1,6 @@
+/* CEU_CALLBACK_C */
+=== CEU_CALLBACK_C ===
+
 #include <stddef.h>     /* offsetof */
 #include <stdlib.h>     /* NULL */
 #include <string.h>     /* memset, strlen */
@@ -37,12 +40,17 @@ typedef === CEU_TCEU_NLBL === tceu_nlbl;
 #define CEU_STACK_N 500
 #endif
 
+/* CEU_NATIVE_PRE */
+=== CEU_NATIVE_PRE ===
+
 #define CEU_API
 CEU_API void ceu_start (tceu_callback* cb, int argc, char* argv[]);
 CEU_API void ceu_stop  (void);
 CEU_API void ceu_input (tceu_nevt id, void* params);
 CEU_API int  ceu_loop  (tceu_callback* cb, int argc, char* argv[]);
+#ifdef CEU_FEATURES_CALLBACKS_DYNAMIC
 CEU_API void ceu_callback_register (tceu_callback* cb);
+#endif
 
 struct tceu_code_mem;
 struct tceu_pool_pak;
@@ -122,22 +130,6 @@ typedef struct tceu_code_mem {
     tceu_trl    _trails[0];
 } tceu_code_mem;
 
-#ifdef CEU_FEATURES_POOL
-typedef struct tceu_code_mem_dyn {
-    struct tceu_code_mem_dyn* prv;
-    struct tceu_code_mem_dyn* nxt;
-    u8 is_alive: 1;
-    tceu_code_mem mem[0];   /* actual tceu_code_mem is in sequence */
-} tceu_code_mem_dyn;
-
-typedef struct tceu_pool_pak {
-    tceu_pool         pool;
-    tceu_code_mem_dyn first;
-    tceu_code_mem*    up_mem;
-    u8                n_traversing;
-} tceu_pool_pak;
-#endif
-
 #ifdef CEU_FEATURES_TRACE
 #define CEU_OPTION_EVT(a,b) CEU_OPTION_EVT_(a,b)
 #else
@@ -190,8 +182,29 @@ typedef struct tceu_isr {
 
 /*****************************************************************************/
 
-/* CEU_NATIVE_PRE */
-=== CEU_NATIVE_PRE ===
+/* CEU_VECTOR_C */
+=== CEU_VECTOR_C ===
+
+#ifdef CEU_FEATURES_POOL
+
+/* CEU_POOL_C */
+=== CEU_POOL_C ===
+
+typedef struct tceu_code_mem_dyn {
+    struct tceu_code_mem_dyn* prv;
+    struct tceu_code_mem_dyn* nxt;
+    u8 is_alive: 1;
+    tceu_code_mem mem[0];   /* actual tceu_code_mem is in sequence */
+} tceu_code_mem_dyn;
+
+typedef struct tceu_pool_pak {
+    tceu_pool         pool;
+    tceu_code_mem_dyn first;
+    tceu_code_mem*    up_mem;
+    u8                n_traversing;
+} tceu_pool_pak;
+
+#endif
 
 /* EVENTS_ENUM */
 

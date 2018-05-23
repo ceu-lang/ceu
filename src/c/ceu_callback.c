@@ -176,6 +176,7 @@ enum {
 
 typedef void tceu_callback;
 
+#if 0
 #define ceu_callback_log_str(a,b)
 #define ceu_callback_wclock_min(a,b)
 #define ceu_callback_abort(a,b)
@@ -184,6 +185,7 @@ typedef void tceu_callback;
 #define ceu_callback_start(a)
 #define ceu_callback_stop(a)
 #define ceu_callback_step(a)
+#endif
 
 #endif // CEU_FEATURES_CALLBACKS_DYNAMIC
 
