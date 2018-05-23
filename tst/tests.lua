@@ -466,8 +466,18 @@ escape 1;
 }
 ]==]
 
-do return end -- OK
 --]=====]
+Test { [[
+var int x = 99;
+output none O do
+    outer.x = 10;
+end
+emit O;
+escape x;
+]],
+    run = 10,
+}
+--do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -929,7 +939,7 @@ end
 escape _get_A_id();
 ]],
     wrn = true,
-    run = 16,
+    run = 15,
 }
 
 Test { [[
@@ -26210,12 +26220,12 @@ escape 1;
 }
 
 Test { [[
-native _f, _p;
+native _fff, _p;
 native/pos do
-    ##define f(p)
+    ##define fff(p)
 end
 par/or do
-    _f(_p);
+    _fff(_p);
 with
     await FOREVER;
 end
@@ -44017,10 +44027,10 @@ escape _V;
 
 Test { [[
 native _V;
-native/pure _f;
+native/pure _fff;
 native/nohold _ceu_assert;
 native/pos do
-    ##define f(x) x
+    ##define fff(x) x
     none* V;
 end
 
@@ -44043,7 +44053,7 @@ code/await Collisions (none) -> none do
     loop cloud1 in outer.clouds do
         var&? Cloud cloud2;
         loop cloud2 in outer.clouds do
-            _V = _f(&&cloud1!.i);
+            _V = _fff(&&cloud1!.i);
             spawn Collides();
             _ceu_assert(_V == &&cloud1!.i, "bug found");
         end
@@ -50531,7 +50541,8 @@ atomic do
     escape 1;
 end
 ]],
-    props = 'line 2 : not permitted inside `atomic`',
+    codes = 'line 1 : not implemented',
+    --props = 'line 2 : not permitted inside `atomic`',
     _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
@@ -51690,6 +51701,7 @@ atomic do
 end
 escape ret;
 ]],
+    codes = 'line 2 : not implemented',
     _opts = {
         ceu = true,
         ceu_features_dynamic='true', ceu_features_thread = 'true',
@@ -55014,18 +55026,18 @@ escape 1;
 }
 
 Test { [[
-native _X, _V, _U, _f;
+native _X, _V, _U, _fff;
 native/pre do
     ##define X 1
 end
 native/pos do
-    ##define f(x) 1
+    ##define fff(x) 1
     ##ifdef CEU_ISR__X
         int V = 1;
     ##else
         int V = 0;
     ##endif
-    ##ifdef CEU_ISR__f__lpar__0__rpar__
+    ##ifdef CEU_ISR__fff__lpar__0__rpar__
         int U = 1;
     ##else
         int U = 0;
@@ -55036,7 +55048,7 @@ end
 spawn async/isr [_X] do
     emit 1s;
 end
-spawn async/isr [_f(0)] do
+spawn async/isr [_fff(0)] do
     emit 1s;
 end
 escape _V+_U;

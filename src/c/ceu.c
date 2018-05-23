@@ -228,9 +228,9 @@ CEU_INPUT__PRIM,
     CEU_INPUT__THREAD,
     CEU_INPUT__WCLOCK,
 
-CEU_INPUT__MIN,
+//CEU_INPUT__MIN,
     === CEU_EXTS_ENUM_INPUT ===
-CEU_INPUT__MAX,
+//CEU_INPUT__MAX,
 
 CEU_EVENT__MIN,
     === CEU_EVTS_ENUM ===
@@ -315,10 +315,6 @@ enum {
     CEU_LABEL_NONE = 0,
     === CEU_LABELS ===
 };
-
-#ifdef CEU_FEATURES_CALLBACKS_STATIC
-=== CEU_CALLBACKS_OUTPUTS ===
-#endif
 
 /*****************************************************************************/
 
@@ -484,6 +480,22 @@ static void ceu_lua_createargtable (lua_State* lua, char** argv, int argc, int s
 
 /*****************************************************************************/
 
+static int ceu_lbl (tceu_nstk _ceu_level, tceu_stk* _ceu_cur, tceu_stk* _ceu_nxt, tceu_code_mem* _ceu_mem, tceu_nlbl _ceu_lbl, tceu_ntrl* _ceu_trlK);
+
+=== CEU_NATIVE_POS ===
+
+=== CEU_CODES_WRAPPERS ===
+
+=== CEU_ISRS ===
+
+=== CEU_THREADS ===
+
+#ifdef CEU_FEATURES_CALLBACKS_STATIC
+=== CEU_CALLBACKS_OUTPUTS ===
+#endif
+
+/*****************************************************************************/
+
 #ifdef CEU_FEATURES_CALLBACKS_DYNAMIC
 CEU_API void ceu_callback_register (tceu_callback* cb) {
     cb->nxt = CEU_APP.cbs;
@@ -521,18 +533,6 @@ static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
 #endif
 }
 #endif
-
-/*****************************************************************************/
-
-static int ceu_lbl (tceu_nstk _ceu_level, tceu_stk* _ceu_cur, tceu_stk* _ceu_nxt, tceu_code_mem* _ceu_mem, tceu_nlbl _ceu_lbl, tceu_ntrl* _ceu_trlK);
-
-=== CEU_NATIVE_POS ===
-
-=== CEU_CODES_WRAPPERS ===
-
-=== CEU_ISRS ===
-
-=== CEU_THREADS ===
 
 /*****************************************************************************/
 
