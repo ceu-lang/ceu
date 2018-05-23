@@ -3,12 +3,14 @@ local node = AST.node
 F = {
     Code__PRE = function (me)
         local mods = unpack(me)
-        me.__inlines_should = (not me.__dcls_depth) and (not me.__dcls_noinline) and mods.await and (me.base.__dcls_uses or 0)<=1
+        --me.__inlines_should = (not me.__dcls_depth) and (not me.__dcls_noinline) and mods.await and (me.base.__dcls_uses or 0)<=1
+        me.__inlines_should = (not me.__dcls_depth) and (not me.__dcls_noinline) and mods.await and (me.base.__dcls_uses or 0)==0
         if me.__inlines_should then
             return node('Nothing', me.ln)
         end
     end,
 
+--[[
     Set_Abs_Await__PRE = function (me)
         local fr, to = unpack(me)
         local ret = F.Abs_Await__PRE(fr)
@@ -115,6 +117,7 @@ F = {
             return ret
         end
     end,
+]]
 }
 
 __inlines = true    -- disables <<declaration of "x" hides previous declaration>>

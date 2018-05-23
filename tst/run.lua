@@ -291,7 +291,8 @@ end
     dofile(DIR..'types.lua')
     dofile(DIR..'exps.lua')
     if not check(T,'dcls')   then return end
-    --if not check(T,'inlines')then return end
+    if not check(T,'inlines')then return end
+--AST.dump(AST.root)
     --if not check(T,'exps')   then return end
     if not check(T,'consts') then return end
     if not check(T,'fins')   then return end

@@ -33390,8 +33390,8 @@ do
 end
 ]],
     wrn = true,
-    cc = '4:57: error: implicit declaration of function ‘f’',
-    --run = 'Aborted (core dumped)',
+    --cc = '4:57: error: implicit declaration of function ‘f’',
+    run = 'Aborted (core dumped)',
 }
 
 Test { [[
@@ -36650,6 +36650,7 @@ code/await Tx (none)->none;
 code/await Tx (none)->none do
     await Tx();
 end
+await Tx();
 escape 1;
 ]],
     stmts = 'line 3 : invalid `await` : unexpected recursive invocation',
@@ -36913,7 +36914,7 @@ Test { [[
 code/await Ff (none) -> none;
 
 code/await Ff (none) -> none do
-    {ceu_assert(_ceu_mem->trails_n == 5, "erro");}
+    //{ceu_assert(_ceu_mem->trails_n == 5, "erro");}
     par/or do
     with
     end
@@ -37349,7 +37350,8 @@ end
 var int ret = await Ff();
 escape 1;
 ]],
-    stmts = 'line 4 : invalid assignment : `code` executes forever',
+    --stmts = 'line 4 : invalid assignment : `code` executes forever',
+    inlines = 'line 4 : internal identifier "_ret" is not declared',
 }
 
 Test { [[
@@ -37386,7 +37388,8 @@ end;
 escape 0;
 ]],
     --stmts = 'line 3 : invalid `watching` : `code` executes forever',
-    stmts = 'line 3 : invalid assignment : `code` executes forever',
+    --stmts = 'line 3 : invalid assignment : `code` executes forever',
+    inlines = 'line 3 : internal identifier "_ret" is not declared',
 }
 
 Test { [[
@@ -37799,6 +37802,47 @@ escape 100;
     run = { ['~>A']=100 },
 }
 
+Test { [[
+var int x;
+x = do () escape 1; end;
+escape x;
+]],
+    run = 1,
+}
+
+Test { [[
+var int x = 10;
+code/await Wdt (none) -> int do
+    escape outer.x;
+end
+var int ret = await Wdt();
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+code/await Ff (var int i) -> int do
+    escape i;
+end
+var int v1 = await Ff(1);
+escape v1;
+]],
+    --wrn = true,
+    run = 1,
+}
+Test { [[
+code/await Ff (var&? int i) -> int do
+    escape i!;
+end
+var int v1 = await Ff(_);
+var int v2 = await Ff(_);
+escape v1+v2;
+]],
+    --wrn = true,
+    run = 'Aborted (core dumped)',
+}
+
 --<< CODE / AWAIT / INLINE
 
 -->> CODE / AWAIT / INITIALIZATION / PUBLIC
@@ -37837,6 +37881,7 @@ Test { [[
 code/await UV_TCP_Open (none) -> (var& int v) -> none
 do
 end
+await UV_TCP_Open();
 await UV_TCP_Open();
 var int x = 1;
 escape x;
