@@ -33390,8 +33390,8 @@ do
 end
 ]],
     wrn = true,
-    --cc = '4:57: error: implicit declaration of function ‘f’',
-    run = 'Aborted (core dumped)',
+    cc = '4:57: error: implicit declaration of function ‘f’',
+    --run = 'Aborted (core dumped)',
 }
 
 Test { [[
@@ -37350,8 +37350,8 @@ end
 var int ret = await Ff();
 escape 1;
 ]],
-    --stmts = 'line 4 : invalid assignment : `code` executes forever',
-    inlines = 'line 4 : internal identifier "_ret" is not declared',
+    stmts = 'line 4 : invalid assignment : `code` executes forever',
+    --inlines = 'line 4 : internal identifier "_ret" is not declared',
 }
 
 Test { [[
@@ -37388,8 +37388,8 @@ end;
 escape 0;
 ]],
     --stmts = 'line 3 : invalid `watching` : `code` executes forever',
-    --stmts = 'line 3 : invalid assignment : `code` executes forever',
-    inlines = 'line 3 : internal identifier "_ret" is not declared',
+    stmts = 'line 3 : invalid assignment : `code` executes forever',
+    --inlines = 'line 3 : internal identifier "_ret" is not declared',
 }
 
 Test { [[
