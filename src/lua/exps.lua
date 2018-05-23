@@ -385,7 +385,8 @@ error'TODO: remove below'
 
         local tp = AST.copy(vec.info.tp)
         tp[2] = nil
-        if (vec.info.tag=='Var' or vec.info.tag=='Nat') and TYPES.is_nat(tp) then
+        if (vec.info.tag=='Var' or vec.info.tag=='Nat') and
+           (TYPES.is_nat(tp) or TYPES.check(vec.info.tp,'&&')) then
             -- _V[0][0]
             -- var _char&&&& argv; argv[1][0]
             -- v[1]._plain[0]

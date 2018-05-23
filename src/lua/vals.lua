@@ -139,6 +139,9 @@ F = {
         local mem do
             if obj then
                 mem = '(&'..V(obj)..')'
+            elseif AST.par(me,'Ext_impl') then
+                --mem = '&CEU_APP.root._mem'
+                mem = 'NULL'
             else
                 mem = '_ceu_mem'
             end
@@ -462,7 +465,8 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..args..[[)
 
     ['Exp_idx'] = function (me)
         local _,arr,idx = unpack(me)
-        if TYPES.is_nat(TYPES.get(arr.info.tp,1)) then
+        if TYPES.is_nat(TYPES.get(arr.info.tp,1)) or
+           arr.info.tag~='Vec' and TYPES.check(arr.info.tp,'&&') then
             return '('..V(arr)..'['..V(idx)..'])'
         elseif AST.get(me,1,'Exp_&&',2,'')==me then
             return [[

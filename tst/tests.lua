@@ -19847,6 +19847,19 @@ end
 }
 
 Test { [[
+var byte&& b=_;
+loop do
+    if true then
+        break;
+    end
+    *b = 1;
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
 var int v = 10;
 var int&& ptr = &&v;
 await 1s;
@@ -24695,6 +24708,18 @@ escape xxx;
 }
 
 Test { [[
+output (none) A do
+    var int i;
+    loop i in [0 -> 7] do
+    end
+end
+emit A();
+escape 10;
+]],
+    run = 10,
+}
+
+Test { [[
 native/pos do
     static tceu_data_Dd DD = { 1 };
 end
@@ -24871,6 +24896,23 @@ escape x;
     run = 11,
     _opts = { ceu_features_callbacks='static' },
 }
+
+Test { [[
+code/tight Inc(var& int ret) -> none do
+    ret = ret + 1;
+end
+output &int INC;
+output (&int v) INC do
+    call Inc(&v);
+end
+var int ret = 10;
+emit INC(&ret);
+escape ret;
+]],
+    wrn = true,
+    run = 11,
+}
+
 --<<< OUTPUT
 
 Test { [[
@@ -26659,6 +26701,15 @@ escape *(&&x);
 ]],
     run = 1,
     --parser = 'line 2 : after `(` : expected location',
+}
+
+Test { [[
+var int x = 10;
+var int&& p = &&x;
+escape p[0];
+]],
+    wrn = true,
+    run = 10,
 }
 
 --<<< NATIVE/POINTERS/VECTORS
@@ -35494,6 +35545,22 @@ escape x;
     run = 10,
 }
 
+Test { [[
+code/tight Test (var int a) -> int do
+    var int ret = 0;
+    loop do
+        if a < 1 then break; end
+        a = a - 1;
+        ret = ret + 1;
+    end
+    escape ret;
+end
+var int ret = call Test(3);
+escape ret;
+]],
+    wrn = true,
+    run = 3,
+}
 -->>> RECURSIVE
 
 Test { [[
@@ -36090,7 +36157,11 @@ escape call Strlen(&&str[0]);
 }
 
 Test { [[
-native _char, _strlen;
+native _char;
+native/pure _strlen;
+native/pre do
+    ##include <string.h>
+end
 code/tight Strlen (var byte&& str)->int do
     escape _strlen(str[0]);
 end
@@ -36099,7 +36170,8 @@ var[] byte str = [].."Ola Mundo!";
 escape call Strlen((&&str[0]) as _char&&);
 ]],
     _opts = { ceu_features_dynamic='true' },
-    dcls = 'line 3 : invalid vector : unexpected context for variable "str"',
+    cc = 'note: expected ‘const char *’ but argument is of type ‘byte {aka unsigned char}’',
+    --dcls = 'line 3 : invalid vector : unexpected context for variable "str"',
     --run = 10,
 }
 
@@ -36926,7 +36998,7 @@ Test { [[
 code/await Ff (none) -> none;
 
 code/await Ff (none) -> none do
-    //{ceu_assert(_ceu_mem->trails_n == 5, "erro");}
+    {ceu_assert(_ceu_mem->trails_n == 5, "erro");}
     par/or do
     with
     end
@@ -50455,6 +50527,15 @@ escape (ret as int) + a + b + p;
 }
 
 Test { [[
+atomic do
+    escape 1;
+end
+]],
+    props = 'line 2 : not permitted inside `atomic`',
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
+}
+
+Test { [[
 native/pos do
     ##define ceu_out_isr_on();
     ##define ceu_out_isr_off();
@@ -51600,6 +51681,20 @@ end
         ceu_features_dynamic='true', ceu_features_thread = 'true',
     },
     todo = 'no escape',
+}
+
+Test { [[
+var int ret = 0;
+atomic do
+    ret = 1;
+end
+escape ret;
+]],
+    _opts = {
+        ceu = true,
+        ceu_features_dynamic='true', ceu_features_thread = 'true',
+    },
+    run = 1,
 }
 
 Test { [[
@@ -55148,6 +55243,20 @@ code/await Ff (none) -> int do
 end
 var int zzz = await Ff();
 escape zzz;
+]],
+    run = 20,
+}
+
+Test { [[
+code/tight Ff (var int xxx) -> int do
+    var int b = 0;
+    var int yyy = xxx;
+    code/tight Get (none) -> int do
+        escape outer.yyy + outer.xxx;
+    end
+    escape b + call Get();
+end
+escape call Ff(10);
 ]],
     run = 20,
 }

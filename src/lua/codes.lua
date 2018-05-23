@@ -37,11 +37,33 @@ local function CONC_ALL (me)
     end
 end
 
+local function NO_AWAIT (me)
+    local code = AST.par(me, 'Code')
+    local is_code_tight = code and code[1].tight
+    return is_code_tight or AST.par(me,'Async_Thread') or AST.par(me,'Async_Isr') or AST.par(me,'Ext_impl')
+end
+
+local function NO_LBL (me)
+    return AST.par(me,'Async_Thread') or AST.par(me,'Async_Isr') or AST.par(me,'Ext_impl')
+end
+
 local function CASE (me, lbl)
-    if AST.par(me,'Async_Thread') or AST.par(me,'Async_Isr') or AST.par(me,'Ext_impl') then
+    if NO_LBL(me) then
         LINE(me, lbl.id..':;\n')
     else
         LINE(me, 'case '..lbl.id..':;\n')
+    end
+end
+
+local function GOTO (me, lbl)
+    if NO_LBL(me) then
+        LINE(me, [[
+goto ]]..lbl.id..[[;
+]])
+    else
+        LINE(me, [[
+CEU_GOTO(]]..lbl.id..[[);
+]])
     end
 end
 
@@ -797,15 +819,7 @@ ceu_assert(0, "reached end of `do`");
         CONC_ALL(me)
         local code = AST.par(me, 'Code')
         local mods = code and code[2]
-        if AST.par(me,'Async_Thread') or AST.par(me,'Async_Isr') or AST.par(me,'Ext_impl') then
-            LINE(me, [[
-goto ]]..me.outer.lbl_out.id..[[;
-]])
-        else
-            LINE(me, [[
-CEU_GOTO(]]..me.outer.lbl_out.id..[[);
-]])
-        end
+        GOTO(me, me.outer.lbl_out)
     end,
 
     ---------------------------------------------------------------------------
@@ -853,7 +867,7 @@ ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL, CEU_TRACE(0));
     Loop = function (me)
         local _, body = unpack(me)
         local max = CODES.F.__loop_max(me)
-        local trlK = (AST.par(me, 'Async_Thread') and '' or '*_ceu_trlK = '..(me.trails[1]-1)..';\n')
+        local trlK = (NO_AWAIT(me) and '') or ('*_ceu_trlK = '..(me.trails[1]-1)..';\n')
 
         LINE(me, [[
 ]]..max.ini..[[
@@ -884,7 +898,7 @@ while (1) {
         local _, i, range, body = unpack(me)
         local fr, dir, to, step = unpack(range)
         local max = CODES.F.__loop_max(me)
-        local trlK = (AST.par(me, 'Async_Thread') and '' or '*_ceu_trlK = '..(me.trails[1]-1)..';\n')
+        local trlK = (NO_AWAIT(me) and '') or ('*_ceu_trlK = '..(me.trails[1]-1)..';\n')
 
         -- check if step is positive (static)
         if step then
@@ -906,11 +920,11 @@ while (1) {
         if to.tag ~= 'ID_any' then
             local op = (dir=='->' and '<' or '>')
             LINE(me, [[
-]]..CUR('__lim_'..me.n)..' = '..V(to)..' + ('..V(step)..'*'..to.__adj_step_mul..[[*-1);
+]]..CUR('__lim_'..me.n,{is_local=true})..' = '..V(to)..' + ('..V(step)..'*'..to.__adj_step_mul..[[*-1);
 ]])
             if to.__adj_step_mul ~= 0 then
                 LINE(me, [[
-ceu_assert(]]..CUR('__lim_'..me.n)..' '..op..' '..V(to)..[[, "`loop` limit underflow/overflow");
+ceu_assert(]]..CUR('__lim_'..me.n,{is_local=true})..' '..op..' '..V(to)..[[, "`loop` limit underflow/overflow");
 ]])
             end
         end
@@ -922,16 +936,16 @@ ceu_assert(]]..sig..V(step)..[[> 0, "invalid `loop` step : expected positive num
 ]])
         local op = (dir=='->' and '>' or '<')
         LINE(me, [[
-]]..CUR('__fr_'..me.n)..' = '..V(fr)..[[;
+]]..CUR('__fr_'..me.n,{is_local=true})..' = '..V(fr)..[[;
 ]]..V(i)..' = '..V(fr)..' + '..V(step)..' * '..fr.__adj_step_mul..[[;
-ceu_assert_ex(]]..V(i)..(op..'=')..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n)..[[,
+ceu_assert_ex(]]..V(i)..(op..'=')..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n,{is_local=true})..[[,
     "control variable overflow", CEU_TRACE(-3));
 while (1) {
 ]])
         if to.tag ~= 'ID_any' then
             local op = (dir=='->' and '>' or '<')
             LINE(me, [[
-    if (]]..V(i)..' '..op..' '..CUR('__lim_'..me.n)..[[) {
+    if (]]..V(i)..' '..op..' '..CUR('__lim_'..me.n,{is_local=true})..[[) {
         break;
     }
 ]])
@@ -945,7 +959,7 @@ while (1) {
         CODES.F.__loop_async(me)
         LINE(me, [[
     ]]..V(i)..' = '..V(i)..' + '..V(step)..[[;
-    ceu_assert_ex(]]..V(i)..op..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n)..[[,
+    ceu_assert_ex(]]..V(i)..op..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n,{is_local=true})..[[,
         "control variable overflow", CEU_TRACE(-2));
     ]]..max.inc..[[
     ]]..trlK..[[
@@ -959,26 +973,10 @@ while (1) {
     end,
 
     Break = function (me)
-        if AST.par(me,'Async_Thread') or AST.par(me,'Async_Isr') then
-            LINE(me, [[
-goto ]]..me.outer.lbl_out.id..[[;
-]])
-        else
-            LINE(me, [[
-CEU_GOTO(]]..me.outer.lbl_out.id..[[);
-]])
-        end
+        GOTO(me, me.outer.lbl_out)
     end,
     Continue = function (me)
-        if AST.par(me,'Async_Thread') or AST.par(me,'Async_Isr') then
-            LINE(me, [[
-goto ]]..me.outer.lbl_out.id..[[;
-]])
-        else
-            LINE(me, [[
-CEU_GOTO(]]..me.outer.lbl_cnt.id..[[);
-]])
-        end
+        GOTO(me, me.outer.lbl_cnt)
     end,
 
     Stmt_Call = function (me)
