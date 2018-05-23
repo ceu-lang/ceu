@@ -36029,7 +36029,11 @@ escape call Strlen(&&str[0]);
 }
 
 Test { [[
-native _char, _strlen;
+native _char;
+native/pure _strlen;
+native/pre do
+    ##include <string.h>
+end
 code/tight Strlen (var byte&& str)->int do
     escape _strlen(str[0]);
 end
@@ -36038,7 +36042,8 @@ var[] byte str = [].."Ola Mundo!";
 escape call Strlen((&&str[0]) as _char&&);
 ]],
     _opts = { ceu_features_dynamic='true' },
-    dcls = 'line 3 : invalid vector : unexpected context for variable "str"',
+    cc = 'note: expected ‘const char *’ but argument is of type ‘byte {aka unsigned char}’',
+    --dcls = 'line 3 : invalid vector : unexpected context for variable "str"',
     --run = 10,
 }
 
