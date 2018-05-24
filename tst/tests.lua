@@ -24811,6 +24811,35 @@ escape ret;
     run = 11,
 }
 
+Test { [[
+output none OOO do
+    var int i;
+    loop i in [0->1] do
+        if true then
+            break;
+        end
+    end
+end
+escape 10;
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+output none OOO do
+    loop do
+        if true then
+            break;
+        end
+    end
+end
+escape 10;
+]],
+    wrn = true,
+    run = 10,
+}
+
 --<<< OUTPUT
 
 Test { [[

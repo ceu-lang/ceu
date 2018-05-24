@@ -893,7 +893,6 @@ while (1) {
             end
         end
 
-
         if to.tag ~= 'ID_any' then
             local op = (dir=='->' and '<' or '>')
             LINE(me, [[
@@ -932,7 +931,7 @@ while (1) {
     ]]..body.code..[[
 ]])
         CASE(me, me.lbl_cnt)
-            assert(body.trails[1]==me.trails[1] and body.trails[2]==me.trails[2])
+        --assert(body.trails[1]==me.trails[1] and body.trails[2]==me.trails[2])
         CODES.F.__loop_async(me)
         LINE(me, [[
     ]]..V(i)..' = '..V(i)..' + '..V(step)..[[;
