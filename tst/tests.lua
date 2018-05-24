@@ -466,18 +466,8 @@ escape 1;
 }
 ]==]
 
+do return end -- OK
 --]=====]
-Test { [[
-var int x = 99;
-output none O do
-    outer.x = 10;
-end
-emit O;
-escape x;
-]],
-    run = 10,
-}
---do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested

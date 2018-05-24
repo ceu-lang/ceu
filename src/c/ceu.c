@@ -486,13 +486,13 @@ static int ceu_lbl (tceu_nstk _ceu_level, tceu_stk* _ceu_cur, tceu_stk* _ceu_nxt
 
 === CEU_CODES_WRAPPERS ===
 
-=== CEU_ISRS ===
-
-=== CEU_THREADS ===
-
 #ifdef CEU_FEATURES_CALLBACKS_STATIC
 === CEU_CALLBACKS_OUTPUTS ===
 #endif
+
+=== CEU_ISRS ===
+
+=== CEU_THREADS ===
 
 /*****************************************************************************/
 
