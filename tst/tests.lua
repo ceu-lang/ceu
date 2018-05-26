@@ -1371,6 +1371,16 @@ escape a as int;
 }
 
 Test { [[
+input none A;
+var high/low a = (1 as bool);
+a = (2 as on/off);
+escape a as int;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
 output none O;
 await O;
 escape 1;
@@ -1393,6 +1403,30 @@ end
 Test { [[
 var on/off v = off;
 v = yes;
+if v then
+    escape 1;
+else
+    escape 2;
+end
+]],
+    run = 1,
+}
+
+Test { [[
+var high/low v = yes;
+v = low;
+if v then
+    escape 1;
+else
+    escape 2;
+end
+]],
+    run = 2,
+}
+
+Test { [[
+var high/low v = low;
+v = high;
 if v then
     escape 1;
 else

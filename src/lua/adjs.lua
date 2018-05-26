@@ -955,7 +955,7 @@ error'TODO: luacov never executes this?'
 
     ID_prim = function (me)
         me.tag = 'ID_prim'
-        if me[1]=='on/off' or me[1]=='yes/no' then
+        if me[1]=='on/off' or me[1]=='yes/no' or me[1]=='high/low' then
             me[1] = 'bool'
         elseif me[1]=='integer' then
             me[1] = 'int'
