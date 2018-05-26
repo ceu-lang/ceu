@@ -37435,6 +37435,18 @@ escape 0;
     _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = false,
 }
+
+Test { [[
+code/await Ff (none) -> int? do
+    escape 1;
+end
+var int? eee;
+var int? ddd = eee;
+var int? d = await Ff();
+escape d!;
+]],
+    run = 1,
+}
 --<< CODE / AWAIT / OPTION
 
 -->> CODE / AWAIT / FOREVER

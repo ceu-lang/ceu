@@ -128,7 +128,8 @@ function SET (me, to, fr, to_ok, fr_ok, to_ctx, fr_ctx)
         fr_val = cast..V(fr,fr_ctx)
     end
 
-    local fr_is_opt = fr.info and TYPES.check(fr.info.tp,'?')
+    local fr_is_opt = (fr_ctx and fr_ctx.tp and TYPES.check(fr_ctx.tp,'?')) or
+                      (fr.info and TYPES.check(fr.info.tp,'?'))
     local to_is_opt = TYPES.check(to.info.tp,'?')
     if to_is_opt then
         to_val = '('..to_val..'.value)'
@@ -1144,7 +1145,8 @@ ceu_assert(]]..V(to,{is_bind=true})..[[!=NULL, "call failed");
         local fr, to = unpack(me)
         CONC_ALL(me)
         assert(fr.tag == 'Abs_Await')
-        SET(me, to, CUR('__mem_'..fr.n)..'._ret', nil,true)
+        local fr_ctx = { tp=fr.tp }
+        SET(me, to, CUR('__mem_'..fr.n)..'._ret', nil,true,nil,fr_ctx)
     end,
 
     Set_Await_Ext = function (me)
