@@ -26,6 +26,9 @@ typedef struct tceu_trace {
 #ifndef ceu_callback_terminating
     #define ceu_callback_terminating(trace) ceu_callback_void_void(CEU_CALLBACK_TERMINATING, trace)
 #endif
+#ifndef ceu_callback_thread_terminating
+    #define ceu_callback_thread_terminating(trace) ceu_callback_void_void(CEU_CALLBACK_THREAD_TERMINATING, trace)
+#endif
 #ifndef ceu_callback_abort
     #define ceu_callback_abort(err,trace) ceu_callback_num_void(CEU_CALLBACK_ABORT, err, trace)
 #endif

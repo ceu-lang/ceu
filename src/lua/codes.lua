@@ -564,12 +564,11 @@ assert(not obj, 'not implemented')
             LINE(me, [[
 #ifdef CEU_FEATURES_DYNAMIC
     if (]]..V(pool)..[[.pool.queue == NULL) {
-        ceu_callback_ptr_num(CEU_CALLBACK_REALLOC,
-                             NULL,
+        __ceu_new = (tceu_code_mem_dyn*)
+                        ceu_callback_realloc(NULL,
                              sizeof(tceu_code_mem_dyn) + sizeof(tceu_code_mem_]]..ID_abs.dcl.id_..[[),
                              CEU_TRACE(0)
                             );
-        __ceu_new = (tceu_code_mem_dyn*) ceu_callback_ret.ptr;
     } else
 #endif
     {
@@ -578,12 +577,11 @@ assert(not obj, 'not implemented')
 ]])
         elseif dim == '[]' then
             LINE(me, [[
-    ceu_callback_ptr_num(CEU_CALLBACK_REALLOC,
-                         NULL,
+    __ceu_new = (tceu_code_mem_dyn*)
+                    ceu_callback_realloc(NULL,
                          sizeof(tceu_code_mem_dyn) + sizeof(tceu_code_mem_]]..ID_abs.dcl.id_..[[),
                          CEU_TRACE(0)
                         );
-    __ceu_new = (tceu_code_mem_dyn*) ceu_callback_ret.ptr;
 ]])
         else
             LINE(me, [[
@@ -1668,12 +1666,11 @@ if (0) {
 
         -- spawn
         LINE(me, [[
-ceu_callback_ptr_num(CEU_CALLBACK_REALLOC,
-                     NULL,
+]]..v..[[ = (tceu_threads_data*)
+                ceu_callback_realloc(NULL,
                      sizeof(tceu_threads_data),
                      CEU_TRACE(0)
                     );
-]]..v..[[ = (tceu_threads_data*) ceu_callback_ret.ptr;
 if (]]..v..[[ != NULL)
 {
     ]]..v..[[->nxt = CEU_APP.threads_head;
@@ -1738,7 +1735,7 @@ static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
     CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
     _ceu_p.thread->has_terminated = 1;
     _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__NONE;
-    ceu_callback_void_void(CEU_CALLBACK_THREAD_TERMINATING, CEU_TRACE_null);
+    ceu_callback_thread_terminating(CEU_TRACE_null);
     CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
     CEU_THREADS_RETURN(NULL);
 #undef CEU_TRACE

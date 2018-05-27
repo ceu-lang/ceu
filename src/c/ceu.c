@@ -435,7 +435,7 @@ void ceu_code_mem_dyn_free (tceu_pool* pool, tceu_code_mem_dyn* cur) {
 #ifdef CEU_FEATURES_DYNAMIC
     if (pool->queue == NULL) {
         /* dynamic pool */
-        ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, cur, 0, CEU_TRACE_null);
+        ceu_assert_ex(ceu_callback_realloc(cur,0,CEU_TRACE_null)==NULL, "bug found", CEU_TRACE_null);
     } else
 #endif
     {
@@ -613,7 +613,7 @@ int ceu_threads_gc (int force_join) {
                 if (has_joined) {
                     *CEU_APP.cur_ = head->nxt;
                     nxt_ = CEU_APP.cur_;
-                    ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, head, 0, CEU_TRACE_null);
+                    ceu_callback_realloc(head, 0, CEU_TRACE_null);
                 }
             }
         }
