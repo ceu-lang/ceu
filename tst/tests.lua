@@ -35541,7 +35541,7 @@ code/call get (none)->int&& do
 end
 escape 10;
 ]],
-    parser = 'line 1 : after `/tight` : expected `/dynamic` or `/recursive` or abstraction identifier',
+    parser = 'line 1 : after `/call` : expected `/dynamic` or `/recursive` or abstraction identifier',
     --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at /tmp/tmp.ceu:2)',
 }
 
@@ -35549,7 +35549,7 @@ Test { [[
 code/call Fx.Fx (none)->none do
 end
 ]],
-    parser = 'line 1 : after `/tight` : expected `/dynamic` or `/recursive`',
+    parser = 'line 1 : after `/call` : expected `/dynamic` or `/recursive`',
 }
 
 Test { [[
