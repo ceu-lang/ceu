@@ -32412,6 +32412,32 @@ escape $str as int;
 
 Test { [[
 #include "string.ceu"
+var[5] byte str;
+call String_Append_INT(&str, 0,  _);
+call String_Append_INT(&str, 10, 2);
+escape $str as int;
+]],
+    wrn = true,
+    opts_pre = true,
+    _opts = { ceu_features_trace='true' },
+    run = '98] -> runtime error: access out of bounds',
+}
+
+Test { [[
+#include "string.ceu"
+var[6] byte str;
+call String_Append_INT(&str, 0,  _);
+call String_Append_INT(&str, 10, 2);
+escape $str as int;
+]],
+    wrn = true,
+    opts_pre = true,
+    _opts = { ceu_features_trace='true' },
+    run = 6,
+}
+
+Test { [[
+#include "string.ceu"
 var[30] byte str;
 call String_Append_INT(&str, 0, _);
 call String_Append_STR(&str, " 0x");
