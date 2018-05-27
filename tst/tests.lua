@@ -32282,6 +32282,136 @@ escape xxx[$xxx-1] + xxx[$xxx-2];
 
 --<< VECTOR / RING
 
+-->> STRING / STRING.CEU
+
+Test { [[
+native/nohold _ceu_vector_setlen, _itoa, _strncat, _strlen;
+native/pre do
+    ##include <string.h>
+/* A utility function to reverse a string  */
+void reverse(char str[], int length)
+{
+    int start = 0;
+    int end_ = length -1;
+    while (start < end_)
+    {
+        char tmp = *(str+start);
+        *(str+start) = *(str+end_);
+        *(str+end_) = tmp;
+        start++;
+        end_--;
+    }
+}
+ 
+// Implementation of itoa()
+usize itoa(int num, char* str, int base)
+{
+    int i = 0;
+    bool isNegative = 0;
+ 
+    /* Handle 0 explicitely, otherwise empty string is printed for 0 */
+    if (num == 0) {
+        str[i++] = '0';
+        str[i] = '\0';
+        return i;
+    }
+ 
+    // In standard itoa(), negative numbers are handled only with 
+    // base 10. Otherwise numbers are considered unsigned.
+    if (num < 0 && base == 10) {
+        isNegative = 1;
+        num = -num;
+    }
+ 
+    // Process individual digits
+    while (num != 0) {
+        int rem = num % base;
+        str[i++] = (rem > 9)? (rem-10) + 'A' : rem + '0';
+        num = num/base;
+    }
+ 
+    // If number is negative, append '-'
+    if (isNegative) {
+        str[i++] = '-';
+    }
+ 
+    str[i] = '\0'; // Append string terminator
+ 
+    // Reverse the string
+    reverse(str, i);
+ 
+    return i+1;
+}
+end
+
+code/tight String_Check (var&[] byte dst) -> none do
+    _ceu_assert($$dst > 0, "dynamic vector is not supported");
+    if $dst > 0 then
+        _ceu_assert(dst[$dst-1] == {'\0'}, "invalid string");
+    else
+        dst = dst..[{'\0'}];
+    end
+end
+
+code/tight String_Append_STR (var&[] byte dst, var _char&& src) -> none do
+    call String_Check(&dst);
+    _strncat(&&dst[0] as _char&&, &&src[0] as _char&&, $$dst-$dst);
+    _ceu_vector_setlen(&&dst, $dst+_strlen(src), 1);
+end
+
+code/tight String_Append_INT (var&[] byte dst, var int src, var int? base) -> none do
+    call String_Check(&dst);
+    //_ceu_assert($$dst-$dst >= 12, "no space available");
+    $dst = $dst - 1;
+
+    if not base? then
+        base = 10;
+    end
+
+    var usize n = _itoa(src, &&dst[$dst] as _char&&, base!);
+    _ceu_vector_setlen(&&dst, $dst+n, 1);
+end
+
+var[20] byte str1 = [];
+call String_Append_STR(&str1, "123");
+call String_Append_STR(&str1, "456");
+call String_Append_INT(&str1, 7, _);
+call String_Append_INT(&str1, 7, 2);
+call String_Append_INT(&str1,13,16);
+
+var[20] byte str2 = [];
+call String_Append_INT(&str2, 99, _);
+
+//{printf("%s\n", @(&&str1[0]));}
+//{printf("%s\n", @(&&str2[0]));}
+escape ($str1 as int) + ($str2 as int);
+]],
+    --wrn = true,
+    run = 15,
+    _opts = { ceu_features_trace='true' },
+}
+
+Test { [[
+#include "string.ceu"
+
+var[20] byte str = [];
+call String_Append_STR(&str, "123");
+call String_Append_STR(&str, "456");
+call String_Append_INT(&str, 7, _);
+call String_Append_INT(&str, 7, 2);
+call String_Append_INT(&str,13,16);
+
+//{printf("%s\n", @(&&str[0]));}
+escape $str as int;
+]],
+    wrn = true,
+    run = 12,
+    _opts = { ceu_features_trace='true' },
+    opts_pre = true,
+}
+
+--<< STRING / STRING.CEU
+
 --<<< VECTORS / STRINGS
 
 -->>> OPTION TYPES

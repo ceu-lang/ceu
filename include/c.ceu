@@ -41,6 +41,7 @@ native/nohold
     _sprintf,
     _sscanf,
     _strcpy,
+    _strncat,
     _strncpy,
 ;
 

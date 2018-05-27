@@ -458,7 +458,7 @@ DCLS.F = {
         DCLS.F.__no_abs(Type, 'Code', 'tight')
 
         local code = AST.par(me, 'Code')
-        if code and code[1].tight and (not is_alias) then
+        if code and code[1].tight and (not is_alias) and (not TYPES.is_nat(TYPES.get(Type,1))) then
             ASR(false, me,
                 'invalid declaration : vector inside `code/tight`')
         end
