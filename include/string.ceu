@@ -5,7 +5,7 @@
 
 // https://www.geeksforgeeks.org/implement-itoa/
 
-native/nohold _itoa;
+native/nohold _ceu_itoa;
 native/pre do
     ##include <string.h>
 
@@ -24,8 +24,8 @@ native/pre do
         }
     }
      
-    // Implementation of itoa()
-    usize itoa(int num, char* str, int base)
+    // Implementation of ceu_itoa()
+    usize ceu_itoa(int num, char* str, int base)
     {
         int i = 0;
         bool isNegative = 0;
@@ -34,10 +34,10 @@ native/pre do
         if (num == 0) {
             str[i++] = '0';
             str[i] = '\0';
-            return i;
+            return i+1;
         }
      
-        // In standard itoa(), negative numbers are handled only with 
+        // In standard ceu_itoa(), negative numbers are handled only with 
         // base 10. Otherwise numbers are considered unsigned.
         if (num < 0 && base == 10) {
             isNegative = 1;
@@ -89,7 +89,7 @@ code/tight String_Append_INT (var&[] byte dst, var int src, var int? base) -> no
         base = 10;
     end
 
-    var usize n = _itoa(src, &&dst[$dst] as _char&&, base!);
+    var usize n = _ceu_itoa(src, &&dst[$dst] as _char&&, base!);
     _ceu_vector_setlen(&&dst, $dst+n, 1);
 end
 

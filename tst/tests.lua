@@ -32410,6 +32410,19 @@ escape $str as int;
     opts_pre = true,
 }
 
+Test { [[
+#include "string.ceu"
+var[30] byte str;
+call String_Append_INT(&str, 0, _);
+call String_Append_STR(&str, " 0x");
+escape $str as int;
+]],
+    wrn = true,
+    opts_pre = true,
+    run = 5,
+    _opts = { ceu_features_trace='true' },
+}
+
 --<< STRING / STRING.CEU
 
 --<<< VECTORS / STRINGS
