@@ -70,7 +70,7 @@ native/pre do
     }
 end
 
-code/tight String_Check (var&[] byte dst) -> none do
+code/call String_Check (var&[] byte dst) -> none do
     _ceu_assert($$dst > 0, "dynamic vector is not supported");
     if $dst > 0 then
         _ceu_assert(dst[$dst-1] == {'\0'}, "invalid string");
@@ -79,13 +79,13 @@ code/tight String_Check (var&[] byte dst) -> none do
     end
 end
 
-code/tight String_Append_STR (var&[] byte dst, var _char&& src) -> none do
+code/call String_Append_STR (var&[] byte dst, var _char&& src) -> none do
     call String_Check(&dst);
     _strncat(&&dst[0] as _char&&, &&src[0] as _char&&, $$dst-$dst);
     _ceu_vector_setlen(&&dst, $dst+_strlen(src), 1);
 end
 
-code/tight String_Append_INT (var&[] byte dst, var int src, var int? base) -> none do
+code/call String_Append_INT (var&[] byte dst, var int src, var int? base) -> none do
     call String_Check(&dst);
     //_ceu_assert($$dst-$dst >= 12, "no space available");
     $dst = $dst - 1;

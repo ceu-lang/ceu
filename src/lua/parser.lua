@@ -259,7 +259,7 @@ KEYS = P
 'until' +
 'true' +
 'traverse' +
-'tight' +
+--'tight' +
 'throws' +
 'throw' +
 'thread' +
@@ -445,7 +445,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     -- CODE
 
-    , __code = K'code' * Ct( Cg(K'/tight'*Cc'tight','tight') *
+    , __code = K'code' * Ct( Cg(K'/call'*Cc'tight','tight') *
                              Cg(K'/dynamic'*Cc'dynamic','dynamic')^-1 *
                              Cg(K'/recursive'*Cc'recursive','recursive')^-1 ) *
                 (V'__ID_abs'-V'__id_data') *

@@ -202,7 +202,7 @@ EXPS.F = {
                                          ..' "'..(ID_abs.dcl.id or '')..'"')
         ASR(mods_dcl.tight, me,
                 'invalid call : '..
-                'expected `code/tight` : got `code/await` ('..ID_abs.dcl.ln[1]..':'..ID_abs.ln[2]..')')
+                'expected `code/call` : got `code/await` ('..ID_abs.dcl.ln[1]..':'..ID_abs.ln[2]..')')
 
         -- info
         me.info = INFO.new(me, 'Val', nil,
