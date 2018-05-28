@@ -8,7 +8,7 @@
 
 # Clone Céu repository:
 
-> git clone https://github.com/fsantanna/ceu
+> git clone https://github.com/ceu-lang/ceu
 > cd ceu/
 
 # Run self tests:

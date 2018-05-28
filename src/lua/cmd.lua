@@ -61,7 +61,7 @@ Options:
 
 http://www.ceu-lang.org/
 
-Please report bugs at <http://github.com/fsantanna/ceu/issues>.
+Please report bugs at <http://github.com/ceu-lang/ceu/issues>.
 ]]
 
 --[[

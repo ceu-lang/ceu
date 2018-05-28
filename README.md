@@ -7,11 +7,11 @@ http://www.ceu-lang.org/
 
 Documentation:
 
-http://fsantanna.github.io/ceu/
+http://ceu-lang.github.io/ceu/
 
 Source code:
 
-https://github.com/fsantanna/ceu/
+https://github.com/ceu-lang/ceu/
 
 Join our chat:
 
@@ -36,7 +36,7 @@ $ sudo apt-get install git lua5.3 lua-lpeg liblua5.3-0 liblua5.3-dev
 ## Clone the repository of Céu:
 
 ```
-$ git clone https://github.com/fsantanna/ceu
+$ git clone https://github.com/ceu-lang/ceu
 $ cd ceu/
 $ git checkout v0.30
 ```

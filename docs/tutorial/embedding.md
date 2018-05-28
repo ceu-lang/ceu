@@ -38,7 +38,7 @@ $ ceu --pre --pre-input=app.ceu \
 It expects the file `types.h` with the type definitions for your plaftorm,
 e.g.:
 
-https://github.com/fsantanna/ceu/blob/master/env/types.h
+https://github.com/ceu-lang/ceu/blob/master/env/types.h
 
 ## Embed `app.c` in `main.c`
 
