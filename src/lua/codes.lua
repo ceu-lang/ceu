@@ -374,31 +374,23 @@ ceu_code_mem_dyn_gc(&]]..V(ID_int,ctx)..[[);
         local body = AST.asr(stmts[#stmts], 'Do')
         local inout = unpack(ext)
 
-        local pre, pos do
-            if CEU.opts.ceu_features_callbacks == 'static' then
-                pre = [[
+        CODES.exts[#CODES.exts+1] = [[
 #ifdef CEU_FEATURES_TRACE
 #define ceu_callback_]]..inout..'_'..ext.id..[[(a,b) ceu_callback_]]..inout..'_'..ext.id..[[_(a,b)
 #else
 #define ceu_callback_]]..inout..'_'..ext.id..[[(a,b) ceu_callback_]]..inout..'_'..ext.id..[[_(a)
 #endif
-void ceu_callback_]]..inout..'_'..ext.id..'_ (tceu_output_'..ext.id..[[* ps
+int ceu_callback_]]..inout..'_'..ext.id..'_ (tceu_output_'..ext.id..[[* ps
 #ifdef CEU_FEATURES_TRACE
                                                                   , tceu_trace trace
 #endif
-                                                                  )]]
-                pos = ''
-            else
-                pre = 'case '..ext.id_..':'
-                pos = 'break;'
-            end
-        end
-
-        CODES.exts[#CODES.exts+1] = pre..[[
+                                                                  )
 {
+#define CEU_TRACE(n) trace
     tceu_]]..inout..[[_mem_]]..ext.id..[[ _ceu_loc;
 ]]..body.code..[[
-    ]]..pos..[[
+#undef CEU_TRACE
+return 0;
 }
 ]]
     end,
@@ -853,7 +845,7 @@ ceu_assert(]]..CUR('__max_'..me.n)..' < '..V(max)..[[, "`loop` overflow");
         if async then
             LINE(me, [[
 CEU_APP.async_pending = 1;
-ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL, CEU_TRACE(0));
+ceu_callback_async_pending(CEU_TRACE(0));
 ]])
             HALT(me, {
                 { ['evt.id'] = 'CEU_INPUT__ASYNC' },
@@ -1404,10 +1396,10 @@ tceu_]]..inout..'_'..ID_ext.dcl.id..[[ __ceu_ps;
         if inout == 'output' then
             local set = AST.par(me,'Set_Emit_Ext_emit')
             local cb = '\n'..[[
-#ifdef CEU_FEATURES_CALLBACKS_STATIC
+#ifdef ceu_callback_output_]]..ID_ext.dcl.id..'\n'..[[
 ceu_callback_output_]]..ID_ext.dcl.id..'('..ps..[[, CEU_TRACE(-2));
 #else
-(ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..'.id, '..ps..[[, CEU_TRACE(-4)), ceu_callback_ret.num);
+1;
 #endif
 ]]
             if set then
@@ -1420,7 +1412,7 @@ ceu_callback_output_]]..ID_ext.dcl.id..'('..ps..[[, CEU_TRACE(-2));
             if AST.par(me, 'Async') then
                 LINE(me, [[
 CEU_APP.async_pending = 1;
-ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL, CEU_TRACE(0));
+ceu_callback_async_pending(CEU_TRACE(0));
 _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__ASYNC;
 _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
 {
@@ -1569,7 +1561,7 @@ _CEU_HALT_]]..me.n..[[_:
             CASE(me, me.lbl_in)
             LINE(me, [[
     CEU_APP.async_pending = 1;
-    ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL, CEU_TRACE(0));
+    ceu_callback_async_pending(CEU_TRACE(0));
     _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__ASYNC;
     _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
     {
@@ -1617,7 +1609,7 @@ _CEU_HALT_]]..me.n..[[_:
         local _,_,blk = unpack(me)
         LINE(me, [[
 CEU_APP.async_pending = 1;
-ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL, CEU_TRACE(0));
+ceu_callback_async_pending(CEU_TRACE(0));
 ]])
         HALT(me, {
             { ['evt.id'] = 'CEU_INPUT__ASYNC' },
@@ -2056,6 +2048,14 @@ local c = SUB(c, '=== CEU_ISRS ===',             CODES.isrs)
 local c = SUB(c, '=== CEU_THREADS ===',          CODES.threads)
 local c = SUB(c, '=== CEU_CODES_WRAPPERS ===',   MEMS.codes.wrappers)
 local c = SUB(c, '=== CEU_CODES ===',            AST.root.code)
+
+--env-main
+if CEU.opts.env_main then
+    local f = ASR(io.open(CEU.opts.env_main))
+    c = SUB(c, '=== CEU_MAIN_C ===', f:read'*a')
+    f:close()
+end
+
 
 if CEU.opts.ceu_output == '-' then
     print('\n\n/* CEU_C */\n\n'..c)

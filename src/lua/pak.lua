@@ -72,11 +72,11 @@ subst_lua 'codes.lua'
 subst_lua 'env.lua'
 subst_lua 'cc.lua'
 
-local ceu_callback_c = assert(io.open'../c/ceu_callback.c'):read'*a'
+local ceu_vector_h   = assert(io.open'../c/ceu_vector.h'):read'*a'
 local ceu_vector_c   = assert(io.open'../c/ceu_vector.c'):read'*a'
 local ceu_pool_c     = assert(io.open'../c/ceu_pool.c'):read'*a'
 local ceu_c          = assert(io.open'../c/ceu.c'):read'*a'
-ceu_c = subst_c(ceu_c, '=== CEU_CALLBACK_C ===', ceu_callback_c)
+ceu_c = subst_c(ceu_c, '=== CEU_VECTOR_H ===',   ceu_vector_h)
 ceu_c = subst_c(ceu_c, '=== CEU_VECTOR_C ===',   ceu_vector_c)
 ceu_c = subst_c(ceu_c, '=== CEU_POOL_C ===',     ceu_pool_c)
 

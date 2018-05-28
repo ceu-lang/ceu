@@ -31,11 +31,7 @@ function CUR (field, ctx)
                 data = '_ceu_loc'
             else
                 local ext = unpack(Ext)
-                if CEU.opts.ceu_features_callbacks == 'static' then
-                    data = '(*ps)'
-                else
-                    data = '(*((tceu_output_'..ext.id..'*)p2.ptr))'
-                end
+                data = '(*ps)'
                 field = '_'..Ext.__dcls_vars[field]
             end
         else

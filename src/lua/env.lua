@@ -30,15 +30,6 @@ do
     f:close()
 end
 
---env-main
-do
-    if CEU.opts.env_main then
-        local f = ASR(io.open(CEU.opts.env_main))
-        c = c..'\n\n/* ENV_MAIN */\n\n'..f:read'*a'
-        f:close()
-    end
-end
-
 --env-output
 do
     local out = [[

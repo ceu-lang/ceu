@@ -20433,6 +20433,8 @@ native _V, _void_ptr, _alloc, _hold;
 native/nohold _dealloc, _unhold;
 native/pre do
     typedef void* void_ptr;
+end
+native/pos do
     int V = 2;
     int* P = &V;
     void** alloc () {
@@ -24444,24 +24446,9 @@ escape 1;
 }
 
 Test { [[
-native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled;
-        if (cmd != CEU_CALLBACK_OUTPUT) {
-            is_handled = 0;
-        } else {
-            is_handled = 1;
-            if (p1.num == CEU_OUTPUT_O) {
-                *(*((int**)p2.ptr)) = 10;
-            } else {
-                *((int*)p2.ptr) = 5;
-            }
-        }
-        return is_handled;
-    }
-    tceu_callback CB = { &CB_F, NULL };
+native/pre do
+    ##define ceu_callback_output_O(ptr,trace) *(*(int**)ptr) = 10
 end
-{ ceu_callback_register(&CB); }
 
 output (&int) O;
 var int xxx = _;
@@ -24769,24 +24756,9 @@ escape 1;
 }
 
 Test { [[
-native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled;
-        if (cmd != CEU_CALLBACK_OUTPUT) {
-            is_handled = 0;
-        } else {
-            is_handled = 1;
-            if (p1.num == CEU_OUTPUT_O) {
-                *(*((int**)p2.ptr)) = 10;
-            } else {
-                *((int*)p2.ptr) = 5;
-            }
-        }
-        return is_handled;
-    }
-    tceu_callback CB = { &CB_F, NULL };
+native/pre do
+    ##define ceu_callback_output_O(ptr,trace) *(*(int**)ptr) = 10
 end
-{ ceu_callback_register(&CB); }
 
 output &int O;
 var int xxx = _;
@@ -24813,25 +24785,14 @@ escape 1;
 
 Test { [[
 native _V1, _V2;
-native/pos do
+native/pre do
     int V1, V2;
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled;
-        if (cmd != CEU_CALLBACK_OUTPUT) {
-            is_handled = 0;
-        } else {
-            is_handled = 1;
-            if (p1.num == CEU_OUTPUT_O) {
-                tceu_output_O* o = (tceu_output_O*) p2.ptr;
-                V1 = (o->_1.is_set == 0);
-                V2 = (o->_2.is_set == 1) + (o->_2.value);
-            }
-        }
-        return is_handled;
+    ##define ceu_callback_output_O(ptr,trace) {     \
+        tceu_output_O* o = (tceu_output_O*) ptr;    \
+        V1 = (o->_1.is_set == 0);                   \
+        V2 = (o->_2.is_set == 1) + (o->_2.value);   \
     }
-    tceu_callback CB = { &CB_F, NULL };
 end
-{ ceu_callback_register(&CB); }
 
 output (int?,int?) O;
 emit O(_,10);
@@ -24928,7 +24889,7 @@ emit OOO(&x);
 escape x;
 ]],
     run = 11,
-    _opts = { ceu_features_callbacks='static' },
+    --_opts = { ceu_features_callbacks='static' },
 }
 
 Test { [[
@@ -25025,26 +24986,15 @@ native/pre do
         int a;
         int b;
     } t;
+    ##define ceu_callback_output_A(ptr,trace) AAA(ptr)
+    ##define ceu_callback_output_B(ptr,trace) *((int*)ptr);
 end
 native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled;
-        if (cmd != CEU_CALLBACK_OUTPUT) {
-            is_handled = 0;
-        } else {
-            is_handled = 1;
-            if (p1.num == CEU_OUTPUT_A) {
-                t* x = ((tceu_output_A*)p2.ptr)->_1;
-                ceu_callback_ret.num = x->a + x->b;
-            } else {
-                ceu_callback_ret.num = *((int*)p2.ptr);
-            }
-        }
-        return is_handled;
+    int AAA (tceu_output_A* ptr) {
+        t* x = ptr->_1;
+        return x->a + x->b;
     }
-    tceu_callback CB = { &CB_F, NULL };
 end
-{ ceu_callback_register(&CB); }
 
 native/plain _t;
 output _t&& A;
@@ -25067,26 +25017,15 @@ native/pre do
         int a;
         int b;
     } t;
+    ##define ceu_callback_output_A(ptr,trace) AAA(ptr)
+    ##define ceu_callback_output_B(ptr,trace) *((int*)ptr);
 end
 native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled;
-        if (cmd != CEU_CALLBACK_OUTPUT) {
-            is_handled = 0;
-        } else {
-            is_handled = 1;
-            if (p1.num == CEU_OUTPUT_A) {
-                t* x = ((tceu_output_A*)p2.ptr)->_1;
-                ceu_callback_ret.num = x->a + x->b;
-            } else {
-                ceu_callback_ret.num = *((int*)p2.ptr);
-            }
-        }
-        return is_handled;
+    int AAA (tceu_output_A* ptr) {
+        t* x = ptr->_1;
+        return x->a + x->b;
     }
-    tceu_callback CB = { &CB_F, NULL };
 end
-{ ceu_callback_register(&CB); }
 
 native/plain _t;
 output _t&& A;
@@ -25109,26 +25048,15 @@ native/pre do
         int a;
         int b;
     } t;
+    ##define ceu_callback_output_A(ptr,trace) AAA(ptr)
+    ##define ceu_callback_output_B(ptr,trace) *((int*)ptr);
 end
 native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled;
-        if (cmd != CEU_CALLBACK_OUTPUT) {
-            is_handled = 0;
-        } else {
-            is_handled = 1;
-            if (p1.num == CEU_OUTPUT_A) {
-                t x = ((tceu_output_A*)p2.ptr)->_1;
-                ceu_callback_ret.num = x.a + x.b;
-            } else {
-                ceu_callback_ret.num = *((int*)p2.ptr);
-            }
-        }
-        return is_handled;
+    int AAA (tceu_output_A* ptr) {
+        t x = ptr->_1;
+        return x.a + x.b;
     }
-    tceu_callback CB = { &CB_F, NULL };
 end
-{ ceu_callback_register(&CB); }
 native/plain _t;
 output _t A;
 output int B;
@@ -25248,24 +25176,13 @@ escape 1;
 }
 
 Test { [[
-native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled;
-        if (cmd != CEU_CALLBACK_OUTPUT) {
-            is_handled = 0;
-        } else {
-            is_handled = 1;
-
-            tceu_output_RADIO_SEND* v = (tceu_output_RADIO_SEND*) p2.ptr;
-            *(v->_1) = 1;
-            *(v->_2) = 2;
-            ceu_callback_ret.num = 0;
-        }
-        return is_handled;
+native/pre do
+    ##define ceu_callback_output_RADIO_SEND(ptr,trace) { \
+        int** v = (int**) ptr;   \
+        (*v)[0] = 1;                \
+        (*v)[1] = 2;                \
     }
-    tceu_callback CB = { &CB_F, NULL };
 end
-{ ceu_callback_register(&CB); }
 
 output (int&&,  int&&) RADIO_SEND;
 var int a=1; var int b=1;
@@ -25277,24 +25194,13 @@ escape a + b;
 }
 
 Test { [[
-native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled;
-        if (cmd != CEU_CALLBACK_OUTPUT) {
-            is_handled = 0;
-        } else {
-            is_handled = 1;
-
-            tceu_output_RADIO_SEND* v = (tceu_output_RADIO_SEND*) p2.ptr;
-            *(v->_1) = (p1.num == CEU_OUTPUT_RADIO_SEND);
-            *(v->_2) = 2;
-            ceu_callback_ret.num = 0;
-        }
-        return is_handled;
+native/pre do
+    ##define ceu_callback_output_RADIO_SEND(ptr,trace) { \
+        int** v = (int**) ptr;   \
+        (*v)[0] = 1;                \
+        (*v)[1] = 2;                \
     }
-    tceu_callback CB = { &CB_F, NULL };
 end
-{ ceu_callback_register(&CB); }
 
 output (int&&,  int&&) RADIO_SEND;
 var int a=1; var int b=1;
@@ -25502,20 +25408,9 @@ var int ret = (call Z(2));
 }
 
 Test { [[
-native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled;
-        if (cmd != CEU_CALLBACK_OUTPUT) {
-            is_handled = 0;
-        } else {
-            is_handled = 1;
-            ceu_callback_ret.num = (p1.num == CEU_OUTPUT_Z && p2.ptr==NULL);
-        }
-        return is_handled;
-    }
-    tceu_callback CB = { &CB_F, NULL };
+native/pre do
+    ##define ceu_callback_output_Z(ptr,trace) 1
 end
-{ ceu_callback_register(&CB); }
 
 output none Z;
 var int ret = (emit Z);
@@ -25525,20 +25420,9 @@ escape ret;
 }
 
 Test { [[
-native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled;
-        if (cmd != CEU_CALLBACK_OUTPUT) {
-            is_handled = 0;
-        } else {
-            is_handled = 1;
-            ceu_callback_ret.num = 1;
-        }
-        return is_handled;
-    }
-    tceu_callback CB = { &CB_F, NULL };
+native/pre do
+    ##define ceu_callback_output_Z(ptr,trace) 1
 end
-{ ceu_callback_register(&CB); }
 
 output none Z;
 var int ret = (emit Z);
@@ -42585,7 +42469,7 @@ escape _V;
 ]],
     _opts = { ceu_features_trace='true', ceu_features_dynamic='true', ceu_features_pool='true' },
     defines = {
-        CEU_STACK_MAX = 40000,
+        CEU_STACK_MAX = 30000,
     },
     --wrn = 'line 7 : unbounded recursive spawn',
     run = 'runtime error: stack overflow',
@@ -54506,14 +54390,6 @@ escape 1;
 }
 
 Test { [[
-native/pre do
-    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
-    int CB (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled;
-        is_handled = 0;
-        return is_handled;
-    }
-end
 par/or do
     spawn async/isr [1] do
     end
@@ -54529,27 +54405,12 @@ escape 1;
 Test { [[
 native/pre do
     int V = 1;
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled = 1;
-        int* args = (int*) p2.ptr;
-        switch (cmd) {
-            case CEU_CALLBACK_ISR_ATTACH:
-                V = V + args[0] + args[1];
-                break;
-            case CEU_CALLBACK_ISR_DETACH:
-                V = V * args[0] - args[1];
-                break;
-            default:
-                is_handled = 0;
-        }
-        return is_handled;
-    }
-    tceu_callback CB = { &CB_F, NULL };
+    ##define ceu_callback_isr_attach(on,f,ptr,trace) if (on) { V+=((int*)ptr)[0]+((int*)ptr)[1]; } else { V*=((int*)ptr)[0]-((int*)ptr)[1]; }
+    //##define ceu_callback_isr_attach(on,f,ptr,trace) printf(">>> %d\n", ((int*)ptr)[1]);
 end
-{ ceu_callback_register(&CB); }
 par/or do
 do
-    spawn async/isr [3,4] do
+    spawn async/isr [4,3] do
     end
     await FOREVER;
 end             // TODO: forcing finalize out_isr(null)
@@ -54558,31 +54419,15 @@ end
 native _V;
 escape _V;
 ]],
-    run = 20,
+    run = 8,
     _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
 native/pre do
+    ##define ceu_callback_isr_attach(on,f,ptr,trace) if (on) { V+=((int*)ptr)[0]; } else { V*=((int*)ptr)[0]; }
     int V = 1;
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled = 1;
-        int* args = (int*) p2.ptr;
-        switch (cmd) {
-            case CEU_CALLBACK_ISR_ATTACH:
-                V = V + args[0];
-                break;
-            case CEU_CALLBACK_ISR_DETACH:
-                V = V * args[0];
-                break;
-            default:
-                is_handled = 0;
-        }
-        return is_handled;
-    }
-    tceu_callback CB = { &CB_F, NULL };
 end
-{ ceu_callback_register(&CB); }
 par/or do
     do
         spawn async/isr [3] do
@@ -54638,22 +54483,7 @@ end
 Test { [[
 native/pre do
     int V = 1;
-    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
-    int CB (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled = 1;
-        int* args = (int*) p2.ptr;
-        switch (cmd) {
-            case CEU_CALLBACK_ISR_ATTACH:
-                V = V + args[0];
-                break;
-            case CEU_CALLBACK_ISR_DETACH:
-                V = V * args[0];
-                break;
-            default:
-                is_handled = 0;
-        }
-        return is_handled;
-    }
+    ##define ceu_callback_isr_attach(on,f,ptr,trace) if (on) { V+=((int*)ptr)[0]; } else { V*=((int*)ptr)[0]; }
 end
 var[10] int v = [];
 atomic do
@@ -54712,22 +54542,7 @@ escape x;
 Test { [[
 native/pre do
     int V = 1;
-    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
-    int CB (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled = 1;
-        int* args = (int*) p2.ptr;
-        switch (cmd) {
-            case CEU_CALLBACK_ISR_ATTACH:
-                V = V + args[0];
-                break;
-            case CEU_CALLBACK_ISR_DETACH:
-                V = V * args[0];
-                break;
-            default:
-                is_handled = 0;
-        }
-        return is_handled;
-    }
+    ##define ceu_callback_isr_attach(on,f,ptr,trace) if (on) { V+=((int*)ptr)[0]; } else { V*=((int*)ptr)[0]; }
 end
 
 var int x = 0;
@@ -55046,24 +54861,8 @@ escape 1;
 Test { [[
 native/pre do
     int V = 0;
-    int CB (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled = 1;
-        int* args = (int*) p2.ptr;
-        switch (cmd) {
-            case CEU_CALLBACK_ISR_ATTACH:
-                V = V + args[0];
-                break;
-            case CEU_CALLBACK_ISR_DETACH:
-                V = V - args[0];
-                break;
-            default:
-                is_handled = 0;
-        }
-        return is_handled;
-    }
-    tceu_callback CB_ = { &CB, NULL };
+    ##define ceu_callback_isr_attach(on,f,ptr,trace) if (on) { V+=((int*)ptr)[0]; } else { V-=((int*)ptr)[0]; }
 end
-{ ceu_callback_register(&CB_); }
 native _ceu_assert;
 native _V;
 par/or do

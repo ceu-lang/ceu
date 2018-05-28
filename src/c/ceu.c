@@ -1,5 +1,4 @@
-/* CEU_CALLBACK_C */
-=== CEU_CALLBACK_C ===
+=== CEU_FEATURES ===        /* CEU_FEATURES */
 
 #include <stddef.h>     /* offsetof */
 #include <stdlib.h>     /* NULL */
@@ -40,16 +39,20 @@ typedef === CEU_TCEU_NLBL === tceu_nlbl;
 #define CEU_STACK_N 500
 #endif
 
-/* CEU_NATIVE_PRE */
-=== CEU_NATIVE_PRE ===
-
 #define CEU_API
-CEU_API void ceu_start (tceu_callback* cb, int argc, char* argv[]);
+CEU_API void ceu_start (int argc, char* argv[]);
 CEU_API void ceu_stop  (void);
 CEU_API void ceu_input (tceu_nevt id, void* params);
-CEU_API int  ceu_loop  (tceu_callback* cb, int argc, char* argv[]);
-#ifdef CEU_FEATURES_CALLBACKS_DYNAMIC
-CEU_API void ceu_callback_register (tceu_callback* cb);
+CEU_API int  ceu_loop  (int argc, char* argv[]);
+
+#ifdef CEU_FEATURES_TRACE
+#define CEU_TRACE_null   ((tceu_trace){NULL,NULL,0})
+
+typedef struct tceu_trace {
+    struct tceu_trace* up;
+    const char* file;
+    u32 line;
+} tceu_trace;
 #endif
 
 struct tceu_code_mem;
@@ -130,22 +133,6 @@ typedef struct tceu_code_mem {
     tceu_trl    _trails[0];
 } tceu_code_mem;
 
-#ifdef CEU_FEATURES_TRACE
-#define CEU_OPTION_EVT(a,b) CEU_OPTION_EVT_(a,b)
-#else
-#define CEU_OPTION_EVT(a,b) CEU_OPTION_EVT_(a)
-#endif
-
-static tceu_evt* CEU_OPTION_EVT_ (tceu_evt* alias
-#ifdef CEU_FEATURES_TRACE
-                                 , tceu_trace trace
-#endif
-                                 )
-{
-    ceu_assert_ex(alias != NULL, "value is not set", trace);
-    return alias;
-}
-
 #ifdef CEU_FEATURES_THREAD
 typedef struct tceu_threads_data {
     CEU_THREADS_T id;
@@ -182,29 +169,11 @@ typedef struct tceu_isr {
 
 /*****************************************************************************/
 
-/* CEU_VECTOR_C */
-=== CEU_VECTOR_C ===
+/* CEU_VECTOR_H */
+=== CEU_VECTOR_H ===
 
-#ifdef CEU_FEATURES_POOL
-
-/* CEU_POOL_C */
-=== CEU_POOL_C ===
-
-typedef struct tceu_code_mem_dyn {
-    struct tceu_code_mem_dyn* prv;
-    struct tceu_code_mem_dyn* nxt;
-    u8 is_alive: 1;
-    tceu_code_mem mem[0];   /* actual tceu_code_mem is in sequence */
-} tceu_code_mem_dyn;
-
-typedef struct tceu_pool_pak {
-    tceu_pool         pool;
-    tceu_code_mem_dyn first;
-    tceu_code_mem*    up_mem;
-    u8                n_traversing;
-} tceu_pool_pak;
-
-#endif
+/* CEU_NATIVE_PRE */
+=== CEU_NATIVE_PRE ===
 
 /* EVENTS_ENUM */
 
@@ -241,18 +210,90 @@ enum {
     === CEU_EXTS_ENUM_OUTPUT ===
 };
 
-/* CEU_ISRS_DEFINES */
+/* CEU_MAIN */
+=== CEU_MAIN_C ===
 
+#if 0
+#define ceu_callback_log_str(a,b)
+#define ceu_callback_wclock_min(a,b)
+#define ceu_callback_abort(a,b)
+#define ceu_callback_terminating(a)
+#define ceu_callback_wclock_dt(a) 0
+#define ceu_callback_start(a)
+#define ceu_callback_stop(a)
+#define ceu_callback_step(a)
+#endif
+
+//#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
+#ifdef ceu_assert_ex
+#define ceu_assert(a,b) ceu_assert_ex(a,b,NONE)
+#else
+#ifdef CEU_FEATURES_TRACE
+#define ceu_assert_ex(v,msg,trace)                                  \
+    if (!(v)) {                                                     \
+        ceu_trace(trace, msg);                                      \
+        ceu_callback_abort(0, trace);   \
+    }
+#define ceu_assert(v,msg) ceu_assert_ex((v),(msg), CEU_TRACE(0))
+#else
+#define ceu_assert_ex(v,msg,trace)                                  \
+    if (!(v)) {                                                     \
+        ceu_callback_abort(0, trace);   \
+    }
+#define ceu_assert(v,msg) ceu_assert_ex((v),(msg),NONE)
+#endif
+#endif
+
+#ifndef ceu_assert_sys
+#define ceu_assert_sys(v,msg)   \
+    if (!(v)) {                 \
+        ceu_callback_log_str(msg, CEU_TRACE_null);  \
+        ceu_callback_abort(0, CEU_TRACE_null);      \
+    }
+#endif
+
+#ifdef CEU_FEATURES_TRACE
+static void ceu_trace (tceu_trace trace, const char* msg) {
+    static bool IS_FIRST = 1;
+    bool is_first = IS_FIRST;
+
+    IS_FIRST = 0;
+
+    if (trace.up != NULL) {
+        ceu_trace(*trace.up, msg);
+    }
+
+    if (is_first) {
+        IS_FIRST = 1;
+        ceu_callback_log_str("\n", CEU_TRACE_null);
+    }
+
+    ceu_callback_log_str("[",        CEU_TRACE_null);
+    ceu_callback_log_str(trace.file, CEU_TRACE_null);
+    ceu_callback_log_str(":",        CEU_TRACE_null);
+    ceu_callback_log_num(trace.line, CEU_TRACE_null);
+    ceu_callback_log_str("]",        CEU_TRACE_null);
+    ceu_callback_log_str(" -> ",     CEU_TRACE_null);
+
+    if (is_first) {
+        ceu_callback_log_str("runtime error: ", CEU_TRACE_null);
+        ceu_callback_log_str(msg,               CEU_TRACE_null);
+        ceu_callback_log_str("\n",              CEU_TRACE_null);
+    }
+}
+#else
+#define ceu_trace(a,b)
+#endif
+
+/* CEU_ISRS_DEFINES */
 === CEU_ISRS_DEFINES ===
 
 /* EVENTS_DEFINES */
-
 === CEU_EXTS_DEFINES_INPUT_OUTPUT ===
 
 /* CEU_DATAS_HIERS */
-
 typedef s16 tceu_ndata;  /* TODO */
-
 === CEU_DATAS_HIERS ===
 
 static int ceu_data_is (tceu_ndata* supers, tceu_ndata me, tceu_ndata cmp) {
@@ -274,6 +315,46 @@ static void* ceu_data_as_ (tceu_ndata* supers, tceu_ndata* me, tceu_ndata cmp
     ceu_assert_ex(ceu_data_is(supers, *me, cmp), "invalid cast `as`", trace);
     return me;
 }
+
+#ifdef CEU_FEATURES_TRACE
+#define CEU_OPTION_EVT(a,b) CEU_OPTION_EVT_(a,b)
+#else
+#define CEU_OPTION_EVT(a,b) CEU_OPTION_EVT_(a)
+#endif
+
+static tceu_evt* CEU_OPTION_EVT_ (tceu_evt* alias
+#ifdef CEU_FEATURES_TRACE
+                                 , tceu_trace trace
+#endif
+                                 )
+{
+    ceu_assert_ex(alias != NULL, "value is not set", trace);
+    return alias;
+}
+
+/* CEU_VECTOR_C */
+=== CEU_VECTOR_C ===
+
+#ifdef CEU_FEATURES_POOL
+
+/* CEU_POOL_C */
+=== CEU_POOL_C ===
+
+typedef struct tceu_code_mem_dyn {
+    struct tceu_code_mem_dyn* prv;
+    struct tceu_code_mem_dyn* nxt;
+    u8 is_alive: 1;
+    tceu_code_mem mem[0];   /* actual tceu_code_mem is in sequence */
+} tceu_code_mem_dyn;
+
+typedef struct tceu_pool_pak {
+    tceu_pool         pool;
+    tceu_code_mem_dyn first;
+    tceu_code_mem*    up_mem;
+    u8                n_traversing;
+} tceu_pool_pak;
+
+#endif
 
 /* CEU_DATAS_MEMS */
 
@@ -325,11 +406,6 @@ typedef struct tceu_app {
 
     bool end_ok;
     int  end_val;
-#endif
-
-    /* CALLBACKS */
-#ifdef CEU_FEATURES_CALLBACKS_DYNAMIC
-    tceu_callback* cbs;
 #endif
 
     /* ASYNC */
@@ -486,53 +562,11 @@ static int ceu_lbl (tceu_nstk _ceu_level, tceu_stk* _ceu_cur, tceu_stk* _ceu_nxt
 
 === CEU_CODES_WRAPPERS ===
 
-#ifdef CEU_FEATURES_CALLBACKS_STATIC
 === CEU_CALLBACKS_OUTPUTS ===
-#endif
 
 === CEU_ISRS ===
 
 === CEU_THREADS ===
-
-/*****************************************************************************/
-
-#ifdef CEU_FEATURES_CALLBACKS_DYNAMIC
-CEU_API void ceu_callback_register (tceu_callback* cb) {
-    cb->nxt = CEU_APP.cbs;
-    CEU_APP.cbs = cb;
-}
-
-static void ceu_callback (int cmd, tceu_callback_val p1, tceu_callback_val p2
-#ifdef CEU_FEATURES_TRACE
-                         , tceu_trace trace
-#else
-#endif
-                         )
-{
-    tceu_callback* cur = CEU_APP.cbs;
-    while (cur) {
-        int is_handled = cur->f(cmd,p1,p2
-#ifdef CEU_FEATURES_TRACE
-              ,trace
-#endif
-              );
-        if (is_handled) {
-            return;
-        }
-        cur = cur->nxt;
-    }
-
-#ifdef CEU_FEATURES_CALLBACKS_DYNAMIC
-#define CEU_TRACE(n) trace
-    if (cmd == CEU_CALLBACK_OUTPUT) {
-        switch (p1.num) {
-            === CEU_CALLBACKS_OUTPUTS ===
-        }
-    }
-#undef CEU_TRACE
-#endif
-}
-#endif
 
 /*****************************************************************************/
 
@@ -613,7 +647,7 @@ int ceu_threads_gc (int force_join) {
                 if (has_joined) {
                     *CEU_APP.cur_ = head->nxt;
                     nxt_ = CEU_APP.cur_;
-                    ceu_callback_realloc(head, 0, CEU_TRACE_null);
+                    ceu_assert_ex(ceu_callback_realloc(head,0,CEU_TRACE_null)==NULL, "bug found", CEU_TRACE_null);
                 }
             }
         }
@@ -957,15 +991,11 @@ CEU_API void ceu_input (tceu_nevt id, void* params)
     }
 }
 
-CEU_API void ceu_start (tceu_callback* cb, int argc, char* argv[]) {
+CEU_API void ceu_start (int argc, char* argv[]) {
 #ifdef CEU_FEATURES_OS
     CEU_APP.argc     = argc;
     CEU_APP.argv     = argv;
     CEU_APP.end_ok   = 0;
-#endif
-
-#ifdef CEU_FEATURES_CALLBACKS_DYNAMIC
-    CEU_APP.cbs = cb;
 #endif
 
 #ifdef CEU_FEATURES_ASYNC
@@ -1026,9 +1056,9 @@ CEU_API void ceu_stop (void) {
 
 /*****************************************************************************/
 
-CEU_API int ceu_loop (tceu_callback* cb, int argc, char* argv[])
+CEU_API int ceu_loop (int argc, char* argv[])
 {
-    ceu_start(cb, argc, argv);
+    ceu_start(argc, argv);
 
 #ifdef CEU_FEATURES_OS
     while (!CEU_APP.end_ok)

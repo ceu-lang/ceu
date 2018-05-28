@@ -37,7 +37,6 @@ Options:
     --ceu-features-thread=BOOL          enable `async/thread` support (default `false`)
     --ceu-features-isr=OPT              enable `async/isr` support: false|static|dynamic (default `false`)
     --ceu-features-pause=BOOL           enable `pause/if` support (default `false`)
-    --ceu-features-callbacks=OPT        enable callbacks support: false|static|dynamic (default `false`)
 
     --ceu-err-unused=OPT                effect for unused identifier: error|warning|pass
     --ceu-err-unused-native=OPT                    unused native identifier
@@ -144,8 +143,6 @@ do
         end
     end
 
-    local tocbs = toisr
-
     local T = {
         ceu_output             = { tostring,  '-'     },
         ceu_line_directives    = { toboolean, 'true'  },
@@ -159,7 +156,6 @@ do
         ceu_features_thread    = { toboolean, 'false' },
         ceu_features_isr       = { toisr,     'false' },
         ceu_features_pause     = { toboolean, 'false' },
-        ceu_features_callbacks = { tocbs,     'false' },
 
         env_output             = { tostring,  '-'     },
     }

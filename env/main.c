@@ -1,77 +1,74 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#ifdef CEU_FEATURES_CALLBACKS_DYNAMIC
-int ceu_callback_ceu (int cmd, tceu_callback_val p1, tceu_callback_val p2
-#ifdef CEU_FEATURES_TRACE
-                     , tceu_trace trace
+#ifndef ceu_callback_start
+    #define ceu_callback_start(trace)
 #endif
-                     )
-{
-    int is_handled;
+#ifndef ceu_callback_step
+    #define ceu_callback_step(trace)
+#endif
+#ifndef ceu_callback_stop
+    #define ceu_callback_stop(trace)
+#endif
+#ifndef ceu_callback_terminating
+    #define ceu_callback_terminating(trace)
+#endif
+#ifndef ceu_callback_thread_terminating
+    #define ceu_callback_thread_terminating(trace)
+#endif
+#ifndef ceu_callback_async_pending
+    #define ceu_callback_async_pending(trace)
+#endif
+#ifndef ceu_callback_isr_enable
+    #define ceu_callback_isr_enable(on,trace)
+#endif
+#ifndef ceu_callback_isr_attach
+    #define ceu_callback_isr_attach(on,f,args,trace)
+#endif
+#ifndef ceu_callback_isr_emit
+    #define ceu_callback_isr_emit(a,b,c)
+#endif
+#ifndef ceu_callback_abort
+    #define ceu_callback_abort(err,trace) abort()
+#endif
+#ifndef ceu_callback_wclock_dt
+    #define ceu_callback_wclock_dt(trace) CEU_WCLOCK_INACTIVE
+#endif
+#ifndef ceu_callback_wclock_min
+    #define ceu_callback_wclock_min(dt,trace)
+#endif
+#ifndef ceu_callback_log_str
+    #define ceu_callback_log_str(str,trace) printf("%s", str)
+#endif
+#ifndef ceu_callback_log_ptr
+    #define ceu_callback_log_ptr(ptr,trace) printf("%p", ptr)
+#endif
+#ifndef ceu_callback_log_num
+    #define ceu_callback_log_num(num,trace) printf("%d", num)
+#endif
 
-    switch (cmd) {
-        case CEU_CALLBACK_WCLOCK_DT:
-            is_handled = 1;
-            ceu_callback_ret.num = CEU_WCLOCK_INACTIVE;
-            break;
-        case CEU_CALLBACK_ABORT:
-            is_handled = 1;
-            abort();
-            break;
-        case CEU_CALLBACK_LOG: {
-            is_handled = 1;
-            switch (p1.num) {
-                case 0:
-                    printf("%s", (char*)p2.ptr);
-                    break;
-                case 1:
-                    printf("%p", p2.ptr);
-                    break;
-                case 2:
-                    printf("%d", p2.num);
-                    break;
-            }
-            break;
-        }
-        case CEU_CALLBACK_REALLOC:
+#ifndef ceu_callback_realloc
 #ifdef CEU_TESTS_REALLOC
-        {
-            static int _ceu_tests_realloc_ = 0;
-            if (p2.size == 0) {
-                _ceu_tests_realloc_--;
-            } else {
-                if (_ceu_tests_realloc_ >= CEU_TESTS_REALLOC) {
-                    is_handled = 1;
-                    ceu_callback_ret.ptr = NULL;
-                    return is_handled;
-                }
-                _ceu_tests_realloc_++;
+    #define ceu_callback_realloc(ptr,size,trace) ceu_main_callback_realloc(ptr,size)
+    void* ceu_main_callback_realloc (void* ptr, size_t size) {
+        static int _ceu_tests_realloc_ = 0;
+        if (size == 0) {
+            _ceu_tests_realloc_--;
+            return NULL;
+        } else {
+            if (_ceu_tests_realloc_ >= CEU_TESTS_REALLOC) {
+                return NULL;
             }
+            _ceu_tests_realloc_++;
+            return realloc(ptr, size);
         }
-#endif
-            is_handled = 1;
-            ceu_callback_ret.ptr = realloc(p1.ptr, p2.size);
-            break;
-        default:
-            is_handled = 0;
     }
-    return is_handled;
-}
+#else
+    #define ceu_callback_realloc(ptr,size,trace) realloc(ptr,size)
+#endif
 #endif
 
-int main (int argc, char* argv[])
-{
-#ifdef CEU_FEATURES_CALLBACKS_STATIC
-    int ret = ceu_loop(NULL, argc, argv);
-#else
-    tceu_callback cb = { &ceu_callback_ceu, NULL };
-#ifdef CEU_CALLBACK_ENV
-    CEU_CALLBACK_ENV.nxt = &cb;
-    int ret = ceu_loop(&CEU_CALLBACK_ENV, argc, argv);
-#else
-    int ret = ceu_loop(&cb, argc, argv);
-#endif
-#endif
+int main (int argc, char* argv[]) {
+    int ret = ceu_loop(argc, argv);
     return ret;
 }
