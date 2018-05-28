@@ -2054,6 +2054,8 @@ if CEU.opts.env_main then
     local f = ASR(io.open(CEU.opts.env_main))
     c = SUB(c, '=== CEU_MAIN_C ===', f:read'*a')
     f:close()
+else
+    c = SUB(c, '=== CEU_MAIN_C ===', '')
 end
 
 
