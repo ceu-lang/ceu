@@ -3888,7 +3888,7 @@ native/pre do
     typedef int xxx;
     ##define ff(x) x
 end
-var _xxx x = {ff}(1);
+var _xxx x = {ff(1)};
 escape x;
 ]],
     run = 1,
@@ -24617,7 +24617,7 @@ end
 emit O();
 escape 1;
 ]],
-    parser = 'line 1 : after `(` : expected `&` or type',
+    parser = 'line 1 : after `(` : expected `&?` or `&` or type',
 }
 Test { [[
 output (none) O do
@@ -32931,6 +32931,9 @@ escape 0;
 
 Test { [[
 native _void, _f;
+native/pre do
+    void* f (void) { return NULL; }
+end
 var&? _void x = &_f()
     finalize (x) with
         nothing;
@@ -32938,11 +32941,15 @@ var&? _void x = &_f()
 x! = null;
 escape 0;
 ]],
-    stmts = 'line 6 : invalid assignment : read-only variable "x"',
+    --stmts = 'line 6 : invalid assignment : read-only variable "x"',
+    cc = '9:2: error: dereferencing ‘void *’ pointer [-Werror]',
 }
 
 Test { [[
 native _void, _f;
+native/pre do
+    void* f (void) { return NULL; }
+end
 var&? _void x = &_f()
     finalize (x) with
         nothing;
@@ -32951,7 +32958,8 @@ var&? _void v = &x;
 v! = null;
 escape (x! == null) as int;
 ]],
-    stmts = 'line 7 : invalid assignment : read-only variable "v"',
+    --stmts = 'line 7 : invalid assignment : read-only variable "v"',
+    cc = '11:34: error: dereferencing ‘void *’ pointer [-Werror]',
 }
 
 Test { [[
