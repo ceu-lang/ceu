@@ -1446,8 +1446,8 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
 #else
     tceu_evt_id_params __ceu_evt = { ]]..V(ID_ext)..'.id, '..ps..[[ };
 #endif
-    //ceu_callback_isr_emit(]]..V(exps[1])..[[, (void*)&__ceu_evt, CEU_TRACE(0));
-    ceu_callback_isr_emit((void*)&__ceu_evt, CEU_TRACE(0));
+    ceu_callback_isr_emit(]]..V(exps[1])..[[, (void*)&__ceu_evt, CEU_TRACE(0));
+    //ceu_callback_isr_emit((void*)&__ceu_evt, CEU_TRACE(0));
 }
 ]])
             end
@@ -1598,8 +1598,8 @@ _CEU_HALT_]]..me.n..[[_:
 #else
     tceu_evt_id_params __ceu_evt = { CEU_INPUT__WCLOCK, &__ceu_dt };
 #endif
-    //ceu_callback_isr_emit(]]..V(exps[1])..[[, (void*)&__ceu_evt, CEU_TRACE(0));
-    ceu_callback_isr_emit((void*)&__ceu_evt, CEU_TRACE(0));
+    ceu_callback_isr_emit(]]..V(exps[1])..[[, (void*)&__ceu_evt, CEU_TRACE(0));
+    //ceu_callback_isr_emit((void*)&__ceu_evt, CEU_TRACE(0));
 }
 ]])
         end
