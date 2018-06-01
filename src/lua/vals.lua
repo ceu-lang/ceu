@@ -360,7 +360,7 @@ CEU_CODE_]]..ID_abs.dcl.id_..'('..V(Abs_Cons)..','..mem..args..[[)
             ret = string.gsub(ret, '\n%s*##', '\n#')
             ret = string.gsub(ret, '^%s*##',  '#')
 
-            return ret
+            return '('..ret..')'
         else
             -- _nat
             return string.sub(v1, 2)
