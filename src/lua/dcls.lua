@@ -277,7 +277,7 @@ DCLS.F = {
                 if not (dcl.is_used or dcl.is_predefined or dcl.__dcls_unused or dcl.__dcls_old) then
                     dcl.__dcls_unused = true
                     f(false, dcl,
-                      AST.tag2id[dcl.tag]..' "'..dcl.id..'" declared but not used')
+                      AST.tag2id[dcl.tag]..' "'..(dcl.id or '?')..'" declared but not used')
                 end
             end
         end
