@@ -842,7 +842,7 @@ error'TODO: luacov never executes this?'
             if Type and Type.tag=='_Typelist_amp' then
                 for i,T in ipairs(Type) do
                     local is_alias,tp,id = unpack(T)
-                    ASR(is_alias==false or is_alias=='&')
+                    ASR(is_alias==false or is_alias=='&' or is_alias=='&?')
                     ASR(tp.tag == 'Type')
                     AST.set(Type, i, tp)
                     me.are_aliases[i] = is_alias

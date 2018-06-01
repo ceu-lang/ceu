@@ -16,7 +16,8 @@ STMTS.F = {
         end
 
         if to.info.dcl.is_read_only then
-            ASR(me.set_read_only, me,
+            local is_bang = AST.get(to,'Loc', 1,'Exp_!')
+            ASR(is_bang or me.set_read_only, me,
                 'invalid assignment : read-only variable "'..to.info.id..'"')
         end
 
