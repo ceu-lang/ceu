@@ -24908,6 +24908,30 @@ escape ret;
     run = 11,
 }
 
+Test { [[
+var int ret = 0;
+output (&?int x) FFF do
+    if x? then
+        x! = x! + 10;
+    else
+        outer.ret = outer.ret + 1;
+    end
+end
+emit FFF(&ret);
+emit FFF(_);
+escape ret;
+]],
+    run = 11,
+}
+
+Test { [[
+output (u8) I2C_REQUEST_SEND do
+end
+escape 1;
+]],
+    dcls = 'line 1 : variable "?" declared but not used',
+}
+
 --<<< OUTPUT
 
 Test { [[
@@ -28001,6 +28025,13 @@ escape ok as int;
 ]=],
     run = 1,
 }
+
+Test { [[
+escape {1+1} * 2;
+]],
+    run = 4,
+}
+
 --<< NATIVE / RAW / INTERPOLATION
 
     -- STRINGS
@@ -35648,6 +35679,34 @@ escape ret;
     wrn = true,
     run = 3,
 }
+
+Test { [[
+var int ret = 0;
+code/call Ff (none) -> int do
+    outer.ret = outer.ret + 1;
+    escape outer.ret;
+end
+escape call Ff();
+]],
+    run = 1,
+}
+
+Test { [[
+code/call Ff (var&? int i) -> int do
+    if i? then
+        i! = i! + 1;
+        escape i!;
+    else
+        escape 99;
+    end
+end
+var int x = 10;
+escape call Ff(_) + call Ff(&x);
+]],
+    wrn = true,
+    run = 110,
+}
+
 -->>> RECURSIVE
 
 Test { [[
