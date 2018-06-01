@@ -1072,7 +1072,7 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
                 LINE(me, [[
 {
 #ifdef CEU_FEATURES_OS
-    CEU_APP.end_ok=1; CEU_APP.end_val=]]..V(fr)..[[;
+    CEU_APP.end_ok=1; CEU_APP.end_val=CEU_APP.root._RET;
 #endif
     ceu_callback_terminating(CEU_TRACE(0));
 }
