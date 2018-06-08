@@ -15,7 +15,7 @@ compiler:
 	cd ./src/lua/ && $(LUA_EXE) pak.lua $(LUA_EXE) && ./ceu --version
 
 install:
-	cp ./src/lua/ceu $(CEU_EXE)
+	install ./src/lua/ceu $(CEU_EXE)
 
 one:
 	ceu --pre --pre-input=$(CEU_SRC) --pre-args=\"-I./include\"                \

@@ -280,6 +280,7 @@ static void ceu_trace (tceu_trace trace, const char* msg) {
         ceu_callback_log_str("runtime error: ", CEU_TRACE_null);
         ceu_callback_log_str(msg,               CEU_TRACE_null);
         ceu_callback_log_str("\n",              CEU_TRACE_null);
+        ceu_callback_log_flush(CEU_TRACE_null);
     }
 }
 #else
@@ -1087,6 +1088,7 @@ CEU_API int ceu_loop (int argc, char* argv[])
 #ifdef CEU_TESTS
     printf("_ceu_tests_bcasts_ = %d\n", _ceu_tests_bcasts_);
     printf("_ceu_tests_trails_visited_ = %d\n", _ceu_tests_trails_visited_);
+    fflush(stdout);
 #endif
 
     return CEU_APP.end_val;

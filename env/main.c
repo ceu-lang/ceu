@@ -46,6 +46,9 @@
 #ifndef ceu_callback_log_num
     #define ceu_callback_log_num(num,trace) printf("%d", num)
 #endif
+#ifndef ceu_callback_log_flush
+    #define ceu_callback_log_flush(trace) fflush(stdout)
+#endif
 
 #ifndef ceu_callback_realloc
 #ifdef CEU_TESTS_REALLOC
