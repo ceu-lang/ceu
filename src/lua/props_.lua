@@ -250,6 +250,9 @@ PROPS_.F = {
         end
     end,
 
+    Async = function (me)
+        ASR(CEU.opts.ceu_features_async, me, '`async` support is disabled')
+    end,
     Async_Thread = function (me)
         ASR(CEU.opts.ceu_features_thread, me, '`async/thread` support is disabled')
     end,

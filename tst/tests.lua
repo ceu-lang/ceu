@@ -28808,6 +28808,14 @@ escape 1;
 -- ASYNC
 
 Test { [[
+await async do end
+escape 1;
+]],
+    props_ = 'line 1 : `async` support is disabled',
+    _opts = { ceu_features_async = 'false', },
+}
+
+Test { [[
 input none A;
 par/or do
     await async do
