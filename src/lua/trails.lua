@@ -29,13 +29,19 @@ TRAILS.F = {
         me.trails_n = me.trails_n + 1   -- CLEAR continuation
     end,
     Loop = function (me)
-        local _, body = unpack(me)
-        me.trails_n = body.trails_n + 1 -- CLEAR continuation
-        local Code = AST.par(me, 'Code')
-        if Code and Code[1].tight then
-            me.trails_n = me.trails_n - 1
+        local _,body do
+            if me.tag == 'Loop' then
+                _, body = unpack(me)
+            else
+                _, _, _, body = unpack(me)
+            end
+        end
+        me.trails_n = body.trails_n
+        if body.trails_n > 1 then
+            me.trails_n = me.trails_n + 1 -- CLEAR continuation
         end
     end,
+    Loop_Num = 'Loop',
 
     Pause_If = function (me)
         local _, body = unpack(me)
@@ -102,10 +108,19 @@ G = {
     end,
 
     Loop__PRE = function (me)
-        local _, body = unpack(me)
-        body.trails = { unpack(me.trails) }
-        body.trails[1] = body.trails[1] + 1
+        local _,body do
+            if me.tag == 'Loop' then
+                _, body = unpack(me)
+            else
+                _, _, _, body = unpack(me)
+            end
+        end
+        if me.trails_n > 1 then
+            body.trails = { unpack(me.trails) }
+            body.trails[1] = body.trails[1] + 1
+        end
     end,
+    Loop_Num__PRE = 'Loop__PRE',
 
     Pause_If__PRE = function (me)
         local _,body = unpack(me)

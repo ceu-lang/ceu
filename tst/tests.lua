@@ -6155,6 +6155,28 @@ escape x;
     run = 10,
 }
 
+Test { [[
+var int ret = 0;
+var int i;
+loop i do
+    if i == 2 then
+        break;
+    end
+    par do
+        do finalize with
+            //{printf("oi\n");}
+            ret = ret + 1;
+        end
+        await FOREVER;
+    with
+        continue;
+    end
+end
+escape ret;
+]],
+    run = 2,
+}
+
 --<<< CONTINUE
 
 -- EX.05
@@ -24930,6 +24952,35 @@ end
 escape 1;
 ]],
     dcls = 'line 1 : variable "?" declared but not used',
+}
+
+Test { [[
+output none OOO do
+    var int i;
+    loop i in [0->1] do
+        if true then
+            break;
+        end
+    end
+end
+escape 10;
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+output none OOO do
+    loop do
+        if true then
+            break;
+        end
+    end
+end
+escape 10;
+]],
+    wrn = true,
+    run = 10,
 }
 
 --<<< OUTPUT
