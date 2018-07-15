@@ -932,6 +932,11 @@ while (1) {
 ]])
         CASE(me, me.lbl_cnt)
         --assert(body.trails[1]==me.trails[1] and body.trails[2]==me.trails[2])
+
+        if me.has_continue and me.trails_n>1 then
+            CLEAR(me, me.lbl_cnt_clr)
+        end
+
         CODES.F.__loop_async(me)
         LINE(me, [[
     ]]..V(i)..' = '..V(i)..' + '..V(step)..[[;
