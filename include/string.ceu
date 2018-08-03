@@ -79,6 +79,13 @@ code/call String_Check (var&[] byte dst) -> none do
     end
 end
 
+code/call String_Print (var&[] byte str) -> none do
+    {
+        const char* strC = @&&str[0] as _char&&;
+        printf("%s", strC);   
+    }       
+end
+
 code/call String_Append_STR (var&[] byte dst, var _char&& src) -> none do
     call String_Check(&dst);
     _strncat(&&dst[0] as _char&&, &&src[0] as _char&&, $$dst-$dst);
