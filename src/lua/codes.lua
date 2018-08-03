@@ -1560,16 +1560,12 @@ _CEU_HALT_]]..me.n..[[_:
         local e = unpack(me)
         if AST.par(me,'Async') then
             LINE(me, [[
-{
-    s32 __ceu_dt = ]]..V(e)..[[;
-]])
-            CASE(me, me.lbl_in)
-            LINE(me, [[
     CEU_APP.async_pending = 1;
     ceu_callback_async_pending(CEU_TRACE(0));
     _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__ASYNC;
     _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
     {
+        s32 __ceu_dt = ]]..V(e)..[[;
         tceu_evt   __ceu_evt   = { CEU_INPUT__WCLOCK, {NULL} };
         tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N-1 };
         _ceu_nxt->evt      = __ceu_evt;
@@ -1585,10 +1581,20 @@ _CEU_HALT_]]..me.n..[[_:
             })
             LINE(me, [[
     if (CEU_APP.wclk_min_set <= 0) {
-        __ceu_dt = 0;
-        CEU_GOTO(]]..me.lbl_in.id..[[);
+        CEU_APP.async_pending = 1;
+        ceu_callback_async_pending(CEU_TRACE(0));
+        _ceu_mem->_trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__ASYNC;
+        _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
+        {
+            s32 __ceu_dt = 0;
+            tceu_evt   __ceu_evt   = { CEU_INPUT__WCLOCK, {NULL} };
+            tceu_range __ceu_range = { &CEU_APP.root._mem, 0, CEU_TRAILS_N-1 };
+            _ceu_nxt->evt      = __ceu_evt;
+            _ceu_nxt->range    = __ceu_range;
+            ceu_params_cpy(_ceu_nxt, &__ceu_dt, sizeof(__ceu_dt));
+            return 1;
+        }
     }
-}
 ]])
         else
             local isr = assert(AST.par(me,'Async_Isr'))
