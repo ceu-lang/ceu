@@ -467,6 +467,7 @@ escape 1;
 ]==]
 
 do return end -- OK
+--]=====]
 
 Test { [[
 ]],
@@ -475,7 +476,6 @@ Test { [[
     _opts = { ceu_features_trace='true' },
 }
 
---]=====]
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
@@ -32401,7 +32401,7 @@ escape $str as int;
     wrn = true,
     opts_pre = true,
     _opts = { ceu_features_trace='true' },
-    run = '98] -> runtime error: access out of bounds',
+    run = '105] -> runtime error: access out of bounds',
 }
 
 Test { [[
