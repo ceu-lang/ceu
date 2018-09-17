@@ -287,6 +287,8 @@ static void ceu_trace (tceu_trace trace, const char* msg) {
 #define ceu_trace(a,b)
 #endif
 
+#define CEU_ISRS_N === CEU_ISRS_N ===
+
 /* CEU_ISRS_DEFINES */
 === CEU_ISRS_DEFINES ===
 

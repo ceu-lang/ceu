@@ -1,4 +1,5 @@
 MEMS = {
+    isrs_n = 0,
     isrs = '',
     exts = {
         types       = '',
@@ -619,7 +620,8 @@ end
     Ext_impl__PRE = 'Async_Isr__PRE',
 
     Async_Isr__PRE = function (me)
-        me.mems = { mem='' }
+        me.mems = { n=MEMS.isrs_n, mem='' }
+        MEMS.isrs_n = MEMS.isrs_n + 1
     end,
 
     Async_Isr = function (me)

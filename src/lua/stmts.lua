@@ -561,6 +561,10 @@ STMTS.F = {
 
         -- tp
         EXPS.check_tp(me, ID_ext.dcl[2], ps.tp, 'invalid `emit`')
+
+        if AST.par(me,'Async_Isr') and have=='input' then
+            ASR(#AST.asr(ID_ext.dcl[2],'Typelist') == 0, me, 'invalid `emit` : only `none` input is supported inside `async/isr`')
+        end
     end,
 
     Emit_Ext_call = function (me)

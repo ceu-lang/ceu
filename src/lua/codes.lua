@@ -1447,7 +1447,7 @@ _ceu_mem->_trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
 {
 #ifdef CEU_FEATURES_ISR_STATIC
     tceu_isr_evt __ceu_evt = { ]]..V(ID_ext)..'.id, '..sz..', '..ps..[[ };
-    ceu_callback_isr_emit((void*)&__ceu_evt, CEU_TRACE(0));
+    ceu_callback_isr_emit(]]..isr.mems.n..[[, (void*)&__ceu_evt, CEU_TRACE(0));
 #else
     tceu_evt_id_params __ceu_evt = { ]]..V(ID_ext)..'.id, '..ps..[[ };
     ceu_callback_isr_emit(]]..V(exps[1])..[[, (void*)&__ceu_evt, CEU_TRACE(0));
@@ -2046,6 +2046,7 @@ local c = SUB(c, '=== CEU_FEATURES ===',         features)
 local c = SUB(c, '=== CEU_NATIVE_PRE ===',       CODES.native.pre)
 local c = SUB(c, '=== CEU_EXTS_ENUM_INPUT ===',  MEMS.exts.enum_input)
 local c = SUB(c, '=== CEU_ISRS_DEFINES ===',     MEMS.isrs)
+local c = SUB(c, '=== CEU_ISRS_N ===',           MEMS.isrs_n)
 local c = SUB(c, '=== CEU_EXTS_DEFINES_INPUT_OUTPUT ===', MEMS.exts.defines_input_output)
 local c = SUB(c, '=== CEU_EVTS_ENUM ===',        MEMS.evts.enum)
 local c = SUB(c, '=== CEU_DATAS_HIERS ===',      MEMS.datas.hiers)

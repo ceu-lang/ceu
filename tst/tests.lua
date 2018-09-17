@@ -475,10 +475,10 @@ Test { [[
     _opts = { ceu_features_trace='true' },
 }
 
+--]=====]
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
---]=====]
 
 Test { [[]], run='Aborted' }
 Test { [[]],
@@ -54987,6 +54987,23 @@ with
 end
 escape 1;
 ]],
+    stmts = 'line 5 : invalid `emit` : only `none` input is supported inside `async/isr`',
+    _opts = { ceu_features_isr='dynamic' },
+}
+
+Test { [[
+input none A;
+par/or do
+    spawn async/isr [1] do
+        var int x = 111;
+        emit A;
+        x = 222;
+    end
+    await FOREVER;
+with
+end
+escape 1;
+]],
     run = 1,
     _opts = { ceu_features_isr='dynamic' },
 }
@@ -55055,11 +55072,12 @@ escape 1;
 
 Test { [[
 native _digitalWrite;
-input int PIN02;
+input none PIN02;
 par/or do
     var int i = 0;
     spawn async/isr [1] do
-        emit PIN02(outer.i);
+        var int x = (outer.i);
+        emit PIN02;
     end
     await FOREVER;
 with
@@ -55067,7 +55085,7 @@ with
 end
 escape 1;
 ]],
-    cc = '10:1: error: implicit declaration of function ‘digitalWrite’',
+    cc = '11:1: error: implicit declaration of function ‘digitalWrite’',
     _opts = { ceu_features_isr='dynamic' },
 }
 
