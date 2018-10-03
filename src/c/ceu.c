@@ -214,7 +214,9 @@ enum {
 === CEU_MAIN_C ===
 
 #if 0
+#define ceu_callback_log_num(a,b)
 #define ceu_callback_log_str(a,b)
+#define ceu_callback_log_flush(a)
 #define ceu_callback_wclock_min(a,b)
 #define ceu_callback_abort(a,b)
 #define ceu_callback_terminating(a)
@@ -222,6 +224,7 @@ enum {
 #define ceu_callback_start(a)
 #define ceu_callback_stop(a)
 #define ceu_callback_step(a)
+#define ceu_callback_realloc(a,b,c) NULL
 #endif
 
 //#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
