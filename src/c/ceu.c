@@ -220,7 +220,7 @@ enum {
 #define ceu_callback_wclock_min(a,b)
 #define ceu_callback_abort(a,b)
 #define ceu_callback_terminating(a)
-#define ceu_callback_wclock_dt(a) 0
+#define ceu_callback_wclock_dt(a) CEU_WCLOCK_INACTIVE
 #define ceu_callback_start(a)
 #define ceu_callback_stop(a)
 #define ceu_callback_step(a)
