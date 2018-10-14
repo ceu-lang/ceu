@@ -57,14 +57,13 @@
         static int _ceu_tests_realloc_ = 0;
         if (size == 0) {
             _ceu_tests_realloc_--;
-            return NULL;
         } else {
             if (_ceu_tests_realloc_ >= CEU_TESTS_REALLOC) {
                 return NULL;
             }
             _ceu_tests_realloc_++;
-            return realloc(ptr, size);
         }
+        return realloc(ptr, size);
     }
 #else
     #define ceu_callback_realloc(ptr,size,trace) realloc(ptr,size)
