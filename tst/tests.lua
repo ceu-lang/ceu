@@ -13,13 +13,13 @@ end
 -- BUG #89
 Test { [[
 code/await Ff (none) -> (var& int x) -> NEVER do
-    code/tight Gg (none) -> none;
+    code/call Gg (none) -> none;
     call Gg();
 
     var int y = 10;
     x = &y;
 
-    code/tight Gg (none) -> none do
+    code/call Gg (none) -> none do
         outer.x = 10;
     end
 
@@ -34,7 +34,7 @@ escape 1;
 -- BUG #89
 Test { [[
 code/await Ff (none) -> (var& int x) -> NEVER do
-    code/tight Gg (none) -> none do
+    code/call Gg (none) -> none do
         outer.x = 10;
     end
     call Gg();
@@ -161,7 +161,7 @@ Test { [[
 data Dd with
     var int x;
 end
-code/tight Ff (none) -> Dd do
+code/call Ff (none) -> Dd do
     var Dd d = val Dd(10);
     escape d;
 end
@@ -222,7 +222,7 @@ data Aa with
     var int a;
 end
 
-code/tight/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
+code/call/dynamic Ff (var&/dynamic Aa a, var int xxx) -> int do
     escape a.a + xxx;
 end
 
@@ -230,7 +230,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/tight/dynamic Ff (var&/dynamic Aa.Bb b, var int yyy) -> int do
+code/call/dynamic Ff (var&/dynamic Aa.Bb b, var int yyy) -> int do
     escape b.b + (call/static Ff(&b as Aa,11)) + yyy;
 end
 
@@ -354,6 +354,66 @@ escape 1;
     run = '2] -> runtime error: err',
     --todo = '"9" is inside a string, it shouldnt count',
 }
+
+-- BUG: #124
+Test { [[
+par/or do
+    atomic do
+        ...
+        await 1s;
+        ...
+    end
+with
+    await 500ms;
+with
+    await async/thread do
+        ...
+    end
+end
+escape ...;
+]],
+    run = 1,
+    _opts = { ceu_features_thread='true' },
+}
+
+-- TODO: isr/thread/atomic together
+Test { [[
+spawn async/isr[1] do
+    atomic do end
+end
+
+await async do
+    atomic do
+        nothing;
+    end
+end
+escape 1;
+]],
+    codes = 'line 2 : not supported',
+    _opts = { ceu_features_isr='dynamic', ceu_features_dynamic='true', ceu_features_thread='true' },
+}
+Test { [[
+var int ret = 0;
+atomic do
+    ret = 1;
+end
+escape ret;
+]],
+    _opts = {
+        ceu = true,
+        ceu_features_dynamic='true', ceu_features_thread = 'true',
+    },
+    run = 1,
+}
+Test { [[
+atomic do
+    escape 1;
+end
+]],
+    props = 'line 2 : not permitted inside `atomic`',
+    _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
+}
+
 
 -- var/nohold int x;
 -- var/dynamic int x;
@@ -881,7 +941,7 @@ escape _f(_V);
 
 Test { [[
 var int x = 0;
-code/tight Ff (none) -> int do
+code/call Ff (none) -> int do
     outer.x = outer.x() - 1;
     escape x;
 end
@@ -1311,6 +1371,16 @@ escape a as int;
 }
 
 Test { [[
+input none A;
+var high/low a = (1 as bool);
+a = (2 as on/off);
+escape a as int;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
 output none O;
 await O;
 escape 1;
@@ -1333,6 +1403,30 @@ end
 Test { [[
 var on/off v = off;
 v = yes;
+if v then
+    escape 1;
+else
+    escape 2;
+end
+]],
+    run = 1,
+}
+
+Test { [[
+var high/low v = yes;
+v = low;
+if v then
+    escape 1;
+else
+    escape 2;
+end
+]],
+    run = 2,
+}
+
+Test { [[
+var high/low v = low;
+v = high;
 if v then
     escape 1;
 else
@@ -3794,7 +3888,7 @@ native/pre do
     typedef int xxx;
     ##define ff(x) x
 end
-var _xxx x = {ff}(1);
+var _xxx x = {ff(1)};
 escape x;
 ]],
     run = 1,
@@ -6059,6 +6153,28 @@ end
 escape x;
 ]],
     run = 10,
+}
+
+Test { [[
+var int ret = 0;
+var int i;
+loop i do
+    if i == 2 then
+        break;
+    end
+    par do
+        do finalize with
+            //{printf("oi\n");}
+            ret = ret + 1;
+        end
+        await FOREVER;
+    with
+        continue;
+    end
+end
+escape ret;
+]],
+    run = 2,
 }
 
 --<<< CONTINUE
@@ -20339,6 +20455,8 @@ native _V, _void_ptr, _alloc, _hold;
 native/nohold _dealloc, _unhold;
 native/pre do
     typedef void* void_ptr;
+end
+native/pos do
     int V = 2;
     int* P = &V;
     void** alloc () {
@@ -20917,7 +21035,7 @@ Test { [[
 data Dd with
     var int x = 10;
 end
-code/tight Ff (none) -> Dd do
+code/call Ff (none) -> Dd do
     var Dd d = _;
     escape d;
 end
@@ -21050,7 +21168,7 @@ escape (v? as int) + 1;
 -->> OPTION / ALIAS / ID_any
 
 Test { [[
-code/tight Ff (var&? int i) -> int do
+code/call Ff (var&? int i) -> int do
     if i? then
         escape i!;
     else
@@ -21065,14 +21183,14 @@ escape call Ff(_) + call Ff(&x);
 }
 
 Test { [[
-code/tight Gg (var&? int i) -> int do
+code/call Gg (var&? int i) -> int do
     if i? then
         escape i!;
     else
         escape 99;
     end
 end
-code/tight Ff (var&? int i) -> int do
+code/call Ff (var&? int i) -> int do
     escape call Gg(&i);
 end
 var int x = 1;
@@ -24350,24 +24468,9 @@ escape 1;
 }
 
 Test { [[
-native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled;
-        if (cmd != CEU_CALLBACK_OUTPUT) {
-            is_handled = 0;
-        } else {
-            is_handled = 1;
-            if (p1.num == CEU_OUTPUT_O) {
-                *(*((int**)p2.ptr)) = 10;
-            } else {
-                *((int*)p2.ptr) = 5;
-            }
-        }
-        return is_handled;
-    }
-    tceu_callback CB = { &CB_F, NULL };
+native/pre do
+    ##define ceu_callback_output_O(ptr,trace) *(*(int**)ptr) = 10
 end
-{ ceu_callback_register(&CB); }
 
 output (&int) O;
 var int xxx = _;
@@ -24521,10 +24624,10 @@ escape 1;
 }
 
 Test { [[
-output none O do
+output none OOO do
     {ceu_assert(0, "oioioi");}
 end
-emit O();
+emit OOO();
 escape 99;
 ]],
     run = '4] -> runtime error: oioioi',
@@ -24536,7 +24639,7 @@ end
 emit O();
 escape 1;
 ]],
-    parser = 'line 1 : after `(` : expected `&` or type',
+    parser = 'line 1 : after `(` : expected `&?` or `&` or type',
 }
 Test { [[
 output (none) O do
@@ -24675,24 +24778,9 @@ escape 1;
 }
 
 Test { [[
-native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled;
-        if (cmd != CEU_CALLBACK_OUTPUT) {
-            is_handled = 0;
-        } else {
-            is_handled = 1;
-            if (p1.num == CEU_OUTPUT_O) {
-                *(*((int**)p2.ptr)) = 10;
-            } else {
-                *((int*)p2.ptr) = 5;
-            }
-        }
-        return is_handled;
-    }
-    tceu_callback CB = { &CB_F, NULL };
+native/pre do
+    ##define ceu_callback_output_O(ptr,trace) *(*(int**)ptr) = 10
 end
-{ ceu_callback_register(&CB); }
 
 output &int O;
 var int xxx = _;
@@ -24719,25 +24807,14 @@ escape 1;
 
 Test { [[
 native _V1, _V2;
-native/pos do
+native/pre do
     int V1, V2;
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled;
-        if (cmd != CEU_CALLBACK_OUTPUT) {
-            is_handled = 0;
-        } else {
-            is_handled = 1;
-            if (p1.num == CEU_OUTPUT_O) {
-                tceu_output_O* o = (tceu_output_O*) p2.ptr;
-                V1 = (o->_1.is_set == 0);
-                V2 = (o->_2.is_set == 1) + (o->_2.value);
-            }
-        }
-        return is_handled;
+    ##define ceu_callback_output_O(ptr,trace) {     \
+        tceu_output_O* o = (tceu_output_O*) ptr;    \
+        V1 = (o->_1.is_set == 0);                   \
+        V2 = (o->_2.is_set == 1) + (o->_2.value);   \
     }
-    tceu_callback CB = { &CB_F, NULL };
 end
-{ ceu_callback_register(&CB); }
 
 output (int?,int?) O;
 emit O(_,10);
@@ -24763,7 +24840,7 @@ end
 escape 1;
 ]],
     dcls = 'is not declared',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -24796,7 +24873,49 @@ end
 
 
 Test { [[
-code/tight Inc(var& int ret) -> none do
+output (&int) OOO;
+output (&int p) OOO do
+    p = 10;
+    if true then
+        escape;
+    else
+        p = 99;
+    end
+end
+var int x = _;
+var int y = emit OOO(&x);
+escape x+y;
+]],
+    run = 10,
+    --_opts = { ceu_features_callbacks='static' },
+}
+
+PRE_CALLBACKS = [[
+native/pre do
+    ##define ceu_callback_log_str(a,b)
+    ##define ceu_callback_wclock_min(a,b)
+    ##define ceu_callback_abort(a,b)
+    ##define ceu_callback_terminating(a)
+    ##define ceu_callback_wclock_dt(a) 0
+    ##define ceu_callback_start(a)
+    ##define ceu_callback_stop(a)
+    ##define ceu_callback_step(a)
+end
+]]
+Test { PRE_CALLBACKS..[[
+output (&int x) OOO do
+    x = x + 1;
+end
+var int x = 10;
+emit OOO(&x);
+escape x;
+]],
+    run = 11,
+    --_opts = { ceu_features_callbacks='static' },
+}
+
+Test { [[
+code/call Inc(var& int ret) -> none do
     ret = ret + 1;
 end
 output &int INC;
@@ -24809,6 +24928,30 @@ escape ret;
 ]],
     wrn = true,
     run = 11,
+}
+
+Test { [[
+var int ret = 0;
+output (&?int x) FFF do
+    if x? then
+        x! = x! + 10;
+    else
+        outer.ret = outer.ret + 1;
+    end
+end
+emit FFF(&ret);
+emit FFF(_);
+escape ret;
+]],
+    run = 11,
+}
+
+Test { [[
+output (u8) I2C_REQUEST_SEND do
+end
+escape 1;
+]],
+    dcls = 'line 1 : variable "?" declared but not used',
 }
 
 Test { [[
@@ -24918,26 +25061,15 @@ native/pre do
         int a;
         int b;
     } t;
+    ##define ceu_callback_output_A(ptr,trace) AAA(ptr)
+    ##define ceu_callback_output_B(ptr,trace) *((int*)ptr);
 end
 native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled;
-        if (cmd != CEU_CALLBACK_OUTPUT) {
-            is_handled = 0;
-        } else {
-            is_handled = 1;
-            if (p1.num == CEU_OUTPUT_A) {
-                t* x = ((tceu_output_A*)p2.ptr)->_1;
-                ceu_callback_ret.num = x->a + x->b;
-            } else {
-                ceu_callback_ret.num = *((int*)p2.ptr);
-            }
-        }
-        return is_handled;
+    int AAA (tceu_output_A* ptr) {
+        t* x = ptr->_1;
+        return x->a + x->b;
     }
-    tceu_callback CB = { &CB_F, NULL };
 end
-{ ceu_callback_register(&CB); }
 
 native/plain _t;
 output _t&& A;
@@ -24960,26 +25092,15 @@ native/pre do
         int a;
         int b;
     } t;
+    ##define ceu_callback_output_A(ptr,trace) AAA(ptr)
+    ##define ceu_callback_output_B(ptr,trace) *((int*)ptr);
 end
 native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled;
-        if (cmd != CEU_CALLBACK_OUTPUT) {
-            is_handled = 0;
-        } else {
-            is_handled = 1;
-            if (p1.num == CEU_OUTPUT_A) {
-                t* x = ((tceu_output_A*)p2.ptr)->_1;
-                ceu_callback_ret.num = x->a + x->b;
-            } else {
-                ceu_callback_ret.num = *((int*)p2.ptr);
-            }
-        }
-        return is_handled;
+    int AAA (tceu_output_A* ptr) {
+        t* x = ptr->_1;
+        return x->a + x->b;
     }
-    tceu_callback CB = { &CB_F, NULL };
 end
-{ ceu_callback_register(&CB); }
 
 native/plain _t;
 output _t&& A;
@@ -25002,26 +25123,15 @@ native/pre do
         int a;
         int b;
     } t;
+    ##define ceu_callback_output_A(ptr,trace) AAA(ptr)
+    ##define ceu_callback_output_B(ptr,trace) *((int*)ptr);
 end
 native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled;
-        if (cmd != CEU_CALLBACK_OUTPUT) {
-            is_handled = 0;
-        } else {
-            is_handled = 1;
-            if (p1.num == CEU_OUTPUT_A) {
-                t x = ((tceu_output_A*)p2.ptr)->_1;
-                ceu_callback_ret.num = x.a + x.b;
-            } else {
-                ceu_callback_ret.num = *((int*)p2.ptr);
-            }
-        }
-        return is_handled;
+    int AAA (tceu_output_A* ptr) {
+        t x = ptr->_1;
+        return x.a + x.b;
     }
-    tceu_callback CB = { &CB_F, NULL };
 end
-{ ceu_callback_register(&CB); }
 native/plain _t;
 output _t A;
 output int B;
@@ -25141,24 +25251,13 @@ escape 1;
 }
 
 Test { [[
-native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled;
-        if (cmd != CEU_CALLBACK_OUTPUT) {
-            is_handled = 0;
-        } else {
-            is_handled = 1;
-
-            tceu_output_RADIO_SEND* v = (tceu_output_RADIO_SEND*) p2.ptr;
-            *(v->_1) = 1;
-            *(v->_2) = 2;
-            ceu_callback_ret.num = 0;
-        }
-        return is_handled;
+native/pre do
+    ##define ceu_callback_output_RADIO_SEND(ptr,trace) { \
+        int** v = (int**) ptr;   \
+        (*v)[0] = 1;                \
+        (*v)[1] = 2;                \
     }
-    tceu_callback CB = { &CB_F, NULL };
 end
-{ ceu_callback_register(&CB); }
 
 output (int&&,  int&&) RADIO_SEND;
 var int a=1; var int b=1;
@@ -25170,24 +25269,13 @@ escape a + b;
 }
 
 Test { [[
-native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled;
-        if (cmd != CEU_CALLBACK_OUTPUT) {
-            is_handled = 0;
-        } else {
-            is_handled = 1;
-
-            tceu_output_RADIO_SEND* v = (tceu_output_RADIO_SEND*) p2.ptr;
-            *(v->_1) = (p1.num == CEU_OUTPUT_RADIO_SEND);
-            *(v->_2) = 2;
-            ceu_callback_ret.num = 0;
-        }
-        return is_handled;
+native/pre do
+    ##define ceu_callback_output_RADIO_SEND(ptr,trace) { \
+        int** v = (int**) ptr;   \
+        (*v)[0] = 1;                \
+        (*v)[1] = 2;                \
     }
-    tceu_callback CB = { &CB_F, NULL };
 end
-{ ceu_callback_register(&CB); }
 
 output (int&&,  int&&) RADIO_SEND;
 var int a=1; var int b=1;
@@ -25395,20 +25483,9 @@ var int ret = (call Z(2));
 }
 
 Test { [[
-native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled;
-        if (cmd != CEU_CALLBACK_OUTPUT) {
-            is_handled = 0;
-        } else {
-            is_handled = 1;
-            ceu_callback_ret.num = (p1.num == CEU_OUTPUT_Z && p2.ptr==NULL);
-        }
-        return is_handled;
-    }
-    tceu_callback CB = { &CB_F, NULL };
+native/pre do
+    ##define ceu_callback_output_Z(ptr,trace) 1
 end
-{ ceu_callback_register(&CB); }
 
 output none Z;
 var int ret = (emit Z);
@@ -25418,20 +25495,9 @@ escape ret;
 }
 
 Test { [[
-native/pos do
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled;
-        if (cmd != CEU_CALLBACK_OUTPUT) {
-            is_handled = 0;
-        } else {
-            is_handled = 1;
-            ceu_callback_ret.num = 1;
-        }
-        return is_handled;
-    }
-    tceu_callback CB = { &CB_F, NULL };
+native/pre do
+    ##define ceu_callback_output_Z(ptr,trace) 1
 end
-{ ceu_callback_register(&CB); }
 
 output none Z;
 var int ret = (emit Z);
@@ -28010,6 +28076,13 @@ escape ok as int;
 ]=],
     run = 1,
 }
+
+Test { [[
+escape {1+1} * 2;
+]],
+    run = 4,
+}
+
 --<< NATIVE / RAW / INTERPOLATION
 
     -- STRINGS
@@ -28733,6 +28806,14 @@ escape 1;
 --<<< CPP / DEFINE / PREPROCESSOR
 
 -- ASYNC
+
+Test { [[
+await async do end
+escape 1;
+]],
+    props_ = 'line 1 : `async` support is disabled',
+    _opts = { ceu_features_async = 'false', },
+}
 
 Test { [[
 input none A;
@@ -30885,7 +30966,7 @@ escape $str as int;
 }
 
 Test { [[
-code/tight Ff (none) -> _char&& do
+code/call Ff (none) -> _char&& do
     escape "oi";
 end
 var[] byte str = [] .. (call Ff());
@@ -30895,7 +30976,7 @@ escape $str as int;
     run = 3,
 }
 Test { [[
-code/tight Ff (none) -> bool do
+code/call Ff (none) -> bool do
     escape true;
 end
 var[] byte str = [] .. (call Ff());
@@ -31026,8 +31107,18 @@ var[nnn] u8 xxx;
 xxx[0] = 10;
 escape 1;
 ]],
-    run = ':3] -> runtime error: access out of bounds',
+    consts = 'line 2 : dynamic allocation support is disabled',
     _opts = { ceu_features_trace='true' },
+}
+
+Test { [[
+var int nnn = 10;
+var[nnn] u8 xxx;
+xxx[0] = 10;
+escape 1;
+]],
+    run = ':3] -> runtime error: access out of bounds',
+    _opts = { ceu_features_dynamic='true', ceu_features_trace='true' },
 }
 
 Test { [[
@@ -31040,6 +31131,7 @@ xxx[9] = 1;
 escape xxx[0]+xxx[9];
 ]],
     run = 11,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -31050,7 +31142,7 @@ _ceu_vector_setlen(&&xxx,nnn+1,1);
 escape 1;
 ]],
     run = '4] -> runtime error: access out of bounds',
-    _opts = { ceu_features_trace='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_trace='true' },
 }
 
 Test { [[
@@ -31060,7 +31152,7 @@ $us = 20;
 escape 1;
 ]],
     run = ':3] -> runtime error: access out of bounds',
-    _opts = { ceu_features_trace='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_trace='true' },
 }
 
 Test { [[
@@ -31071,6 +31163,7 @@ _ceu_vector_setlen(&&us,n,1);
 escape $us as int;
 ]],
     run = 10,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -31101,7 +31194,7 @@ us[n] = 10;
 escape us[0]+us[9];
 ]],
     run = ':3] -> runtime error: access out of bounds',
-    _opts = { ceu_features_trace='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_trace='true' },
 }
 
 Test { [[
@@ -31112,6 +31205,7 @@ us[n-1] = 1;
 escape _CEU_APP.root.__mem.trails_n;
 ]],
     run = 3,
+    _opts = { ceu_features_dynamic='true' },
 }
 Test { [[
 native _CEU_APP;
@@ -31130,6 +31224,7 @@ us[n-1] = 1;
 escape us[0]+us[9];
 ]],
     run = 1,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 
@@ -31220,6 +31315,7 @@ var[n] byte bs;
 escape ($$bs) as int;
 ]],
     run = 32,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [=[
@@ -31439,6 +31535,7 @@ var&[] byte ref = &vec;
 escape ($ref + $$ref) as int;
 ]],
     run = 13,
+    _opts = { ceu_features_dynamic='true' },
 }
 Test { [[
 var int n = 10;
@@ -31446,6 +31543,7 @@ var[n] byte vec = [1,2,3];
 var&[n] byte ref = &vec;
 ]],
     consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -31702,6 +31800,7 @@ vec = vec .. [3];
 escape vec[$vec-1] - vec[0];
 ]],
     run = 2,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -31711,6 +31810,7 @@ $vec = 1;
 escape vec[0];
 ]],
     run = 3,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -31720,6 +31820,7 @@ $vec = $vec - 1;
 escape vec[0];
 ]],
     run = 2,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -31793,7 +31894,7 @@ do/_
 end
 ]],
     run = '6] -> runtime error: access out of bounds',
-    _opts = { ceu_features_trace='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_trace='true' },
 }
 
 Test { [[
@@ -31807,6 +31908,7 @@ do/_
 end
 ]],
     run = 5,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -31892,6 +31994,7 @@ _ceu_vector_buf_set(&&v2,0, &&v1[0], 5);
 escape ret + v2[0] + v2[4];
 ]],
     run = 16,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -31906,6 +32009,7 @@ _ceu_vector_buf_set(&&v2,0, &&v1[0] as byte&&, 5*sizeof(int));
 escape ret + v2[0] + v2[4];
 ]],
     run = 16,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -31918,6 +32022,7 @@ $vec = $vec - 1;
 escape vec[0];
 ]],
     run = 12,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -31957,6 +32062,7 @@ var[10] int v2 = []..v1;
 escape v2[0] + v2[1] + ($v2 as int);
 ]],
     run = 7,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -31968,6 +32074,7 @@ var[10] int v2 = []..v1;
 escape v2[0] + v2[2] + ($v2 as int);
 ]],
     run = 9,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -32148,6 +32255,175 @@ escape xxx[$xxx-1] + xxx[$xxx-2];
 }
 
 --<< VECTOR / RING
+
+-->> STRING / STRING.CEU
+
+Test { [[
+native/nohold _ceu_vector_setlen, _itoa, _strncat, _strlen;
+native/pre do
+    ##include <string.h>
+/* A utility function to reverse a string  */
+void reverse(char str[], int length)
+{
+    int start = 0;
+    int end_ = length -1;
+    while (start < end_)
+    {
+        char tmp = *(str+start);
+        *(str+start) = *(str+end_);
+        *(str+end_) = tmp;
+        start++;
+        end_--;
+    }
+}
+ 
+// Implementation of itoa()
+usize itoa(int num, char* str, int base)
+{
+    int i = 0;
+    bool isNegative = 0;
+ 
+    /* Handle 0 explicitely, otherwise empty string is printed for 0 */
+    if (num == 0) {
+        str[i++] = '0';
+        str[i] = '\0';
+        return i;
+    }
+ 
+    // In standard itoa(), negative numbers are handled only with 
+    // base 10. Otherwise numbers are considered unsigned.
+    if (num < 0 && base == 10) {
+        isNegative = 1;
+        num = -num;
+    }
+ 
+    // Process individual digits
+    while (num != 0) {
+        int rem = num % base;
+        str[i++] = (rem > 9)? (rem-10) + 'A' : rem + '0';
+        num = num/base;
+    }
+ 
+    // If number is negative, append '-'
+    if (isNegative) {
+        str[i++] = '-';
+    }
+ 
+    str[i] = '\0'; // Append string terminator
+ 
+    // Reverse the string
+    reverse(str, i);
+ 
+    return i+1;
+}
+end
+
+code/call String_Check (var&[] byte dst) -> none do
+    _ceu_assert($$dst > 0, "dynamic vector is not supported");
+    if $dst > 0 then
+        _ceu_assert(dst[$dst-1] == {'\0'}, "invalid string");
+    else
+        dst = dst..[{'\0'}];
+    end
+end
+
+code/call String_Append_STR (var&[] byte dst, var _char&& src) -> none do
+    call String_Check(&dst);
+    _strncat(&&dst[0] as _char&&, &&src[0] as _char&&, $$dst-$dst);
+    _ceu_vector_setlen(&&dst, $dst+_strlen(src), 1);
+end
+
+code/call String_Append_INT (var&[] byte dst, var int src, var int? base) -> none do
+    call String_Check(&dst);
+    //_ceu_assert($$dst-$dst >= 12, "no space available");
+    $dst = $dst - 1;
+
+    if not base? then
+        base = 10;
+    end
+
+    var usize n = _itoa(src, &&dst[$dst] as _char&&, base!);
+    _ceu_vector_setlen(&&dst, $dst+n, 1);
+end
+
+var[20] byte str1 = [];
+call String_Append_STR(&str1, "123");
+call String_Append_STR(&str1, "456");
+call String_Append_INT(&str1, 7, _);
+call String_Append_INT(&str1, 7, 2);
+call String_Append_INT(&str1,13,16);
+
+var[20] byte str2 = [];
+call String_Append_INT(&str2, 99, _);
+
+//{printf("%s\n", @(&&str1[0]));}
+//{printf("%s\n", @(&&str2[0]));}
+escape ($str1 as int) + ($str2 as int);
+]],
+    --wrn = true,
+    run = 15,
+    _opts = { ceu_features_trace='true' },
+}
+
+Test { [[
+#include "string.ceu"
+
+var[20] byte str = [];
+call String_Append_STR(&str, "123");
+call String_Append_STR(&str, "456");
+call String_Append_INT(&str, 7, _);
+call String_Append_INT(&str, 7, 2);
+call String_Append_INT(&str,13,16);
+
+//{printf("%s\n", @(&&str[0]));}
+escape $str as int;
+]],
+    wrn = true,
+    run = 12,
+    _opts = { ceu_features_trace='true' },
+    opts_pre = true,
+}
+
+Test { [[
+#include "string.ceu"
+var[5] byte str;
+call String_Append_INT(&str, 0,  _);
+call String_Append_INT(&str, 10, 2);
+escape $str as int;
+]],
+    wrn = true,
+    opts_pre = true,
+    _opts = { ceu_features_trace='true' },
+    run = '105] -> runtime error: access out of bounds',
+}
+
+Test { [[
+#include "string.ceu"
+var[6] byte str;
+call String_Append_INT(&str, 0,  _);
+call String_Append_INT(&str, 10, 2);
+escape $str as int;
+]],
+    wrn = true,
+    opts_pre = true,
+    _opts = { ceu_features_trace='true' },
+    run = 6,
+}
+
+Test { [[
+#include "string.ceu"
+var[30] byte str;
+call String_Append_INT(&str, 0, _);
+call String_Append_STR(&str, " 0x");
+escape $str as int;
+]],
+    wrn = true,
+    opts_pre = true,
+    run = 5,
+    _opts = { ceu_features_trace='true' },
+}
+
+--<< STRING / STRING.CEU
 
 --<<< VECTORS / STRINGS
 
@@ -32714,6 +32990,9 @@ escape 0;
 
 Test { [[
 native _void, _f;
+native/pre do
+    void* f (void) { return NULL; }
+end
 var&? _void x = &_f()
     finalize (x) with
         nothing;
@@ -32721,11 +33000,15 @@ var&? _void x = &_f()
 x! = null;
 escape 0;
 ]],
-    stmts = 'line 6 : invalid assignment : read-only variable "x"',
+    --stmts = 'line 6 : invalid assignment : read-only variable "x"',
+    cc = '9:2: error: dereferencing ‘void *’ pointer [-Werror]',
 }
 
 Test { [[
 native _void, _f;
+native/pre do
+    void* f (void) { return NULL; }
+end
 var&? _void x = &_f()
     finalize (x) with
         nothing;
@@ -32734,7 +33017,8 @@ var&? _void v = &x;
 v! = null;
 escape (x! == null) as int;
 ]],
-    stmts = 'line 7 : invalid assignment : read-only variable "v"',
+    --stmts = 'line 7 : invalid assignment : read-only variable "v"',
+    cc = '11:34: error: dereferencing ‘void *’ pointer [-Werror]',
 }
 
 Test { [[
@@ -34569,7 +34853,7 @@ end
 -->>> CODE / TIGHT / FUNCTIONS
 
 Test { [[
-code/tight Code (var int)->none
+code/call Code (var int)->none
 do
 end
 escape 1;
@@ -34582,7 +34866,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Code (var int)->none;
+code/call Code (var int)->none;
 escape 1;
 ]],
     --wrn = true,
@@ -34593,7 +34877,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Code (var int x, var  int)->none
+code/call Code (var int x, var  int)->none
 do
 end
 escape 1;
@@ -34604,7 +34888,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Code (var none, var  int x) -> none
+code/call Code (var none, var  int x) -> none
 do
 end
 escape 1;
@@ -34617,7 +34901,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Code (var none, var  int) -> none
+code/call Code (var none, var  int) -> none
 do
 end
 escape 1;
@@ -34631,7 +34915,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Code (var none a, var  int b) -> none
+code/call Code (var none a, var  int b) -> none
 do
 end
 escape 1;
@@ -34643,7 +34927,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Code (var int a)->none
+code/call Code (var int a)->none
     __ceu_nothing(&&a);
 do
 end
@@ -34653,8 +34937,8 @@ escape 1;
 }
 
 Test { [[
-code/tight Code (var int a)->none;
-code/tight Code (var int a)->none
+code/call Code (var int a)->none;
+code/call Code (var int a)->none
 do
     //native/nohold ___ceu_nothing;
     //___ceu_nothing(&&a);
@@ -34666,7 +34950,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Code (var none a)->none
+code/call Code (var none a)->none
 do
 end
 escape 1;
@@ -34676,7 +34960,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Code (var none a)->none
+code/call Code (var none a)->none
 do
 end
 escape 1;
@@ -34686,7 +34970,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Code (none)->none
+code/call Code (none)->none
 do
 end
 escape 1;
@@ -34696,7 +34980,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Abc(none) -> none do
+code/call Abc(none) -> none do
     escape;
 end
 call Abc();
@@ -34706,7 +34990,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-code/tight Code ()->none
+code/call Code ()->none
 do
 end
 escape 1;
@@ -34715,7 +34999,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Code (var int xxx) -> int
+code/call Code (var int xxx) -> int
 do
     xxx = xxx + 1;
     escape xxx;
@@ -34728,7 +35012,7 @@ escape b;
 }
 
 Test { [[
-code/tight Code (var int x) -> int
+code/call Code (var int x) -> int
 do
     x = x + 1;
     escape x;
@@ -34740,7 +35024,7 @@ escape call Code(a+10);
 }
 
 Test { [[
-code/tight Code (var int x) -> int
+code/call Code (var int x) -> int
 do
     x = x + 1;
     escape x;
@@ -34752,7 +35036,7 @@ escape call Code(a+10) + call Code(1);
 }
 
 Test { [[
-code/tight Fx (var int v)->int do
+code/call Fx (var int v)->int do
     escape v+1;
 end
 escape call Fx();
@@ -34761,7 +35045,7 @@ escape call Fx();
 }
 
 Test { [[
-code/tight Fx (var int v)->int do
+code/call Fx (var int v)->int do
     escape v+1;
 end
 var int&& ptr;
@@ -34771,7 +35055,7 @@ escape call Fx(ptr);
 }
 
 Test { [[
-code/tight Fx (var int v)->int do
+code/call Fx (var int v)->int do
     escape v+1;
 end
 escape call Fx(1);
@@ -34780,21 +35064,21 @@ escape call Fx(1);
 }
 
 Test { [[
-code/tight Fx (none);
+code/call Fx (none);
 escape 1;
 ]],
     parser = 'line 1 : after `)` : expected `->`',
 }
 
 Test { [[
-code/tight Fx (none) -> none
+code/call Fx (none) -> none
 escape 1;
 ]],
     parser = 'line 1 : after `none` : expected type modifier or `do` or `;`'
 }
 
 Test { [[
-code/tight Fx (none) -> none;
+code/call Fx (none) -> none;
 escape 1;
 ]],
     wrn = true,
@@ -34802,7 +35086,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx none -> (none);
+code/call Fx none -> (none);
 escape 1;
 ]],
     wrn = true,
@@ -34812,7 +35096,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (none) -> none;
+code/call Fx (none) -> none;
 escape 1;
 ]],
     wrn = true,
@@ -34820,7 +35104,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var int) -> none do
+code/call Fx (var int) -> none do
     escape 1;
 end
 escape 1;
@@ -34834,7 +35118,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (none) -> none do
+code/call Fx (none) -> none do
     event none i;
     emit i;
     await i;
@@ -34847,7 +35131,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (none) -> none do
+code/call Fx (none) -> none do
     event none i;
     await i;
     emit i;
@@ -34860,7 +35144,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (none) -> none do
+code/call Fx (none) -> none do
     var int a = 1;
     if a!=0 then end;
 end
@@ -34871,7 +35155,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (none) -> none do
+code/call Fx (none) -> none do
     escape;
 end
 escape 1;
@@ -34881,7 +35165,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (none) -> none do
+code/call Fx (none) -> none do
     escape 1;
 end
 escape 1;
@@ -34893,7 +35177,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (none) -> none do
+code/call Fx (none) -> none do
     escape;
 end
 escape 1;
@@ -34921,7 +35205,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (none)->int do
+code/call Fx (none)->int do
     escape 1;
 end
 escape call Fx();
@@ -34930,7 +35214,7 @@ escape call Fx();
 }
 
 Test { [[
-code/tight Fx (none)->int do
+code/call Fx (none)->int do
     escape 1;
 end
 escape call Fx();
@@ -34940,8 +35224,8 @@ escape call Fx();
 }
 
 Test { [[
-code/tight Fx (none) -> int;
-code/tight Fx (var int x)  -> int do end
+code/call Fx (none) -> int;
+code/call Fx (var int x)  -> int do end
 escape 1;
 ]],
     dcls = 'line 2 : invalid `code` declaration : unmatching prototypes (vs. /tmp/tmp.ceu:1)',
@@ -34950,8 +35234,8 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (none) -> int;
-code/tight Fx (var int a)  -> int;
+code/call Fx (none) -> int;
+code/call Fx (var int a)  -> int;
 escape 1;
 ]],
     wrn = true,
@@ -34961,8 +35245,8 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (none) -> int;
-code/tight Fx (none) -> int do escape 111; end
+code/call Fx (none) -> int;
+code/call Fx (none) -> int do escape 111; end
 escape 1;
 ]],
     wrn = true,
@@ -34970,7 +35254,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var none a, var int b) -> int;
+code/call Fx (var none a, var int b) -> int;
 escape 1;
 ]],
     dcls = 'line 1 : invalid declaration : variable cannot be of type `none`',
@@ -34978,7 +35262,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var int a) -> none;
+code/call Fx (var int a) -> none;
 escape 1;
 ]],
     wrn = true,
@@ -34986,8 +35270,8 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var int a, var int b) -> int;
-code/tight Fx (var int a, var  int b) -> int do
+code/call Fx (var int a, var int b) -> int;
+code/call Fx (var int a, var  int b) -> int do
     escape a + b;
 end
 escape 1;
@@ -34997,8 +35281,8 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var int a, var int b) -> int;
-code/tight Fx (var int a, var  u8 b) -> int do
+code/call Fx (var int a, var int b) -> int;
+code/call Fx (var int a, var  u8 b) -> int do
     escape a + b;
 end
 escape 1;
@@ -35007,8 +35291,8 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var int a, var int b) -> int;
-code/tight Fx (var int a, var  int b) -> int do
+code/call Fx (var int a, var int b) -> int;
+code/call Fx (var int a, var  int b) -> int do
     escape a + b;
 end
 escape call Fx(1,2);
@@ -35017,11 +35301,11 @@ escape call Fx(1,2);
 }
 
 Test { [[
-code/tight Fx (var int a, var int b) -> int;
-code/tight Fx (var int a, var  int b) -> int do
+code/call Fx (var int a, var int b) -> int;
+code/call Fx (var int a, var  int b) -> int do
     escape a + b;
 end
-code/tight Fx (var int a, var  int b) -> int do
+code/call Fx (var int a, var  int b) -> int do
     escape a + b;
 end
 escape call Fx(1,2);
@@ -35030,7 +35314,7 @@ escape call Fx(1,2);
 }
 
 Test { [[
-code/tight Fff (var int x)->int do
+code/call Fff (var int x)->int do
     escape x + 1;
 end
 
@@ -35046,7 +35330,7 @@ escape call Fff(x);
 
 Test { [[
 escape 1;
-code/tight Fx (var int x)->int do
+code/call Fx (var int x)->int do
     if x!=0 then end;
 var int i;
     loop i in [0 -> 10[ do
@@ -35093,8 +35377,8 @@ escape x;
 Test { [[
 code/await Tx (none) -> int
 do
-    code/tight Fx (var int a)->int;
-    code/tight Fx (var int a)->int do
+    code/call Fx (var int a)->int;
+    code/call Fx (var int a)->int do
         escape a;
     end
     escape call Fx(10);
@@ -35107,7 +35391,7 @@ escape x;
 
 Test { [[
 escape 1;
-code/tight Fx (none) -> int do
+code/call Fx (none) -> int do
     escape 1;
 end
 ]],
@@ -35116,7 +35400,7 @@ end
 }
 
 Test { [[
-code/tight Fx (none) -> int do
+code/call Fx (none) -> int do
     escape 1;
 end
 escape 1;
@@ -35126,7 +35410,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Set (var u8&& v)->none do
+code/call Set (var u8&& v)->none do
     *v = 3;
 end
 var u8 v = 0;
@@ -35137,7 +35421,7 @@ escape v as int;
 }
 
 Test { [[
-code/tight Set (var& u8 v)->none do
+code/call Set (var& u8 v)->none do
     v = 3;
 end
 var u8 v = _;
@@ -35149,7 +35433,7 @@ escape v as int;
 }
 
 Test { [[
-code/tight Set (var u8 v)->int do
+code/call Set (var u8 v)->int do
     escape 3;
 end
 var u8 v = call Set(_);
@@ -35159,7 +35443,7 @@ escape v as int;
 }
 
 Test { [[
-code/tight Set (var u8 v)->int do
+code/call Set (var u8 v)->int do
     escape 3;
 end
 var u8 v = call Set(_);
@@ -35170,7 +35454,7 @@ escape v as int;
 }
 
 Test { [[
-code/tight Set (var& u8 v)->none do
+code/call Set (var& u8 v)->none do
     v = 3;
 end
 var u8 v = 0;
@@ -35182,7 +35466,7 @@ escape v as int;
 }
 
 Test { [[
-code/tight Ff (var& int a)->none do
+code/call Ff (var& int a)->none do
     a = 1;
 end
 var int v = 0;
@@ -35193,7 +35477,7 @@ escape v;
 }
 
 Test { [[
-code/tight Fx (var int x)->int do
+code/call Fx (var int x)->int do
     escape x + 1;
 end
 
@@ -35207,9 +35491,9 @@ end
 }
 
 Test { [[
-code/tight Fx (var int x)->int;
+code/call Fx (var int x)->int;
 var int x = 0;
-code/tight Fx (var int x)->int do
+code/call Fx (var int x)->int do
     this.x = x;
     escape 2;
 end
@@ -35220,8 +35504,8 @@ escape call Fx(1) + this.x;
 }
 
 Test { [[
-code/tight Code (var int a)->none;
-code/tight Code (var int a)->none
+code/call Code (var int a)->none;
+code/call Code (var int a)->none
 do
     escape 1;
 end
@@ -35233,25 +35517,25 @@ escape 1;
 }
 
 Test { [[
-code/tight get (none)->int&& do
+code/call get (none)->int&& do
     var int x;
     escape &&x;
 end
 escape 10;
 ]],
-    parser = 'line 1 : after `/tight` : expected `/dynamic` or `/recursive` or abstraction identifier',
+    parser = 'line 1 : after `/call` : expected `/dynamic` or `/recursive` or abstraction identifier',
     --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at /tmp/tmp.ceu:2)',
 }
 
 Test { [[
-code/tight Fx.Fx (none)->none do
+code/call Fx.Fx (none)->none do
 end
 ]],
-    parser = 'line 1 : after `/tight` : expected `/dynamic` or `/recursive`',
+    parser = 'line 1 : after `/call` : expected `/dynamic` or `/recursive`',
 }
 
 Test { [[
-code/tight Get (none)->int&& do
+code/call Get (none)->int&& do
     var int x;
     //escape &&x;
 end
@@ -35264,7 +35548,7 @@ escape 10;
 }
 
 Test { [[
-code/tight Get (none)->int&& do
+code/call Get (none)->int&& do
     var int x;
     escape null;
 end
@@ -35276,7 +35560,7 @@ escape 10;
 }
 
 Test { [[
-code/tight Get (none)->int&& do
+code/call Get (none)->int&& do
     var int x=0;
     escape &&x;
 end
@@ -35289,7 +35573,7 @@ escape 10;
 }
 
 Test { [[
-code/tight Get (none)->int& do
+code/call Get (none)->int& do
     var int x=1;
     escape &x;
 end
@@ -35304,7 +35588,7 @@ escape 10;
 Test { [[
 var[] byte str = [0,1,2];
 
-code/tight Fx (var&[] byte vec)->int do
+code/call Fx (var&[] byte vec)->int do
     escape vec[1];
 end
 
@@ -35314,7 +35598,7 @@ escape Fx(&str);
 }
 
 Test { [[
-code/tight Ff (var none&& p1, var none&& p2)->none do
+code/call Ff (var none&& p1, var none&& p2)->none do
 end
 var int x = 0;
 do
@@ -35328,7 +35612,7 @@ escape 0;
 }
 
 Test { [[
-code/tight GetVS (var none&& && o1, var  none&& && o2)->int do
+code/call GetVS (var none&& && o1, var  none&& && o2)->int do
     if (*o1!=null) then
         escape 1;
     else/if (*o2!=null) then
@@ -35353,7 +35637,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var int a, var  none b)->int do
+code/call Fx (var int a, var  none b)->int do
 end
 escape 1;
 ]],
@@ -35363,7 +35647,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var none, var int b)->int do
+code/call Fx (var none, var int b)->int do
 end
 escape 1;
 ]],
@@ -35373,7 +35657,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var none a, var  int v)->int do
+code/call Fx (var none a, var  int v)->int do
 end
 escape 1;
 ]],
@@ -35383,7 +35667,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var u8 v)->int do
+code/call Fx (var u8 v)->int do
     escape v as int;
 end
 var s8 i = 0;
@@ -35397,7 +35681,7 @@ native/pos do
     int V;
 end
 native _V;
-code/tight Fx (var int v)->none do
+code/call Fx (var int v)->none do
     _V = v;
 end
 var none&& x=null;
@@ -35409,7 +35693,7 @@ escape (_V==5) as int;
 
 Test { [[
 spawn () do
-    code/tight Ff (none) -> none do end
+    code/call Ff (none) -> none do end
     await FOREVER;
 end
 escape 1;
@@ -35419,7 +35703,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Ff (var& int x) -> int do
+code/call Ff (var& int x) -> int do
     escape x + 1;
 end
 escape call Ff(&1);
@@ -35430,7 +35714,7 @@ escape call Ff(&1);
 }
 
 Test { [[
-code/tight Ff (none) -> int do
+code/call Ff (none) -> int do
     loop do
         if true then
             break;
@@ -35447,7 +35731,7 @@ escape x;
 }
 
 Test { [[
-code/tight Test (var int a) -> int do
+code/call Test (var int a) -> int do
     var int ret = 0;
     loop do
         if a < 1 then break; end
@@ -35462,13 +35746,41 @@ escape ret;
     wrn = true,
     run = 3,
 }
+
+Test { [[
+var int ret = 0;
+code/call Ff (none) -> int do
+    outer.ret = outer.ret + 1;
+    escape outer.ret;
+end
+escape call Ff();
+]],
+    run = 1,
+}
+
+Test { [[
+code/call Ff (var&? int i) -> int do
+    if i? then
+        i! = i! + 1;
+        escape i!;
+    else
+        escape 99;
+    end
+end
+var int x = 10;
+escape call Ff(_) + call Ff(&x);
+]],
+    wrn = true,
+    run = 110,
+}
+
 -->>> RECURSIVE
 
 Test { [[
-code/tight/recursive Fx (none)->none;
-code/tight/recursive Fx (none)->none do end
-code/tight Gx      (none)->none;
-code/tight/recursive Gx (none)->none do end
+code/call/recursive Fx (none)->none;
+code/call/recursive Fx (none)->none do end
+code/call Gx      (none)->none;
+code/call/recursive Gx (none)->none do end
 escape 1;
 ]],
     wrn = true,
@@ -35476,10 +35788,10 @@ escape 1;
     dcls = 'line 4 : invalid `code` declaration : unmatching prototypes (vs. /tmp/tmp.ceu:3)',
 }
 Test { [[
-code/tight/recursive Fx (none)->none;
-code/tight/recursive Fx (none)->none do end
-code/tight/recursive Gx (none)->none;
-code/tight Gx      (none)->none do end
+code/call/recursive Fx (none)->none;
+code/call/recursive Fx (none)->none do end
+code/call/recursive Gx (none)->none;
+code/call Gx      (none)->none do end
 escape 1;
 ]],
     wrn = true,
@@ -35489,16 +35801,16 @@ escape 1;
 Test { [[
 //var int x;
 
-code/tight/recursive Fa (none)->none;
-code/tight/recursive Fb (none)->none;
+code/call/recursive Fa (none)->none;
+code/call/recursive Fb (none)->none;
 
-code/tight/recursive Fa (none)->none do
+code/call/recursive Fa (none)->none do
     if false then
         call/recursive Fb();
     end
 end
 
-code/tight/recursive Fb (none)->none do
+code/call/recursive Fb (none)->none do
     call/recursive Fa();
 end
 
@@ -35511,9 +35823,9 @@ escape 1;
 }
 
 Test { [[
-code/tight Ff (none) -> int;
+code/call Ff (none) -> int;
 var int ret = call Ff();
-code/tight Ff (none) -> int do
+code/call Ff (none) -> int do
     escape 1;
 end
 escape ret;
@@ -35525,14 +35837,14 @@ escape ret;
 Test { [[
 //var int x;
 
-code/tight Fa (none)->none;
-code/tight Fb (none)->none;
+code/call Fa (none)->none;
+code/call Fb (none)->none;
 
-code/tight Fa (none)->none do
+code/call Fa (none)->none do
     call Fb();
 end
 
-code/tight Fb (none)->none do
+code/call Fb (none)->none do
 end
 
 call Fa();
@@ -35545,13 +35857,13 @@ escape 1;
 Test { [[
 //var int x;
 
-code/tight Fa (none)->none;
-code/tight Fb (none)->none;
+code/call Fa (none)->none;
+code/call Fb (none)->none;
 
-code/tight Fb (none)->none do
+code/call Fb (none)->none do
 end
 
-code/tight Fa (none)->none do
+code/call Fa (none)->none do
     call Fb();
 end
 
@@ -35565,14 +35877,14 @@ escape 1;
 Test { [[
 //var int x;
 
-code/tight Fa (none)->none;
-code/tight Fb (none)->none;
+code/call Fa (none)->none;
+code/call Fb (none)->none;
 
-code/tight Fa (none)->none do
+code/call Fa (none)->none do
     call Fb();
 end
 
-code/tight Fb (none)->none do
+code/call Fb (none)->none do
     call Fa();
 end
 
@@ -35587,16 +35899,16 @@ escape 1;
 Test { [[
 //var int x;
 
-code/tight Fa (none)->none;
-code/tight/recursive Fb (none)->none;
+code/call Fa (none)->none;
+code/call/recursive Fb (none)->none;
 
-code/tight Fa (none)->none do
+code/call Fa (none)->none do
     if false then
         call/recursive Fb();
     end
 end
 
-code/tight/recursive Fb (none)->none do
+code/call/recursive Fb (none)->none do
     call Fa();
 end
 
@@ -35609,8 +35921,8 @@ escape 1;
 }
 
 Test { [[
-code/tight/recursive Fx (var int v)->int;
-code/tight Fx (var int v)->int do
+code/call/recursive Fx (var int v)->int;
+code/call Fx (var int v)->int do
     if v == 0 then
         escape 1;
     end
@@ -35623,8 +35935,8 @@ escape call Fx(5);
     --run = 120,
 }
 Test { [[
-code/tight/recursive Fx (var int v)->int;
-code/tight/recursive Fx (var int v)->int do
+code/call/recursive Fx (var int v)->int;
+code/call/recursive Fx (var int v)->int do
     if v == 0 then
         escape 1;
     end
@@ -35661,8 +35973,8 @@ call 1;
 }
 
 Test { [[
-code/tight/recursive Fx (var int v)->int;
-code/tight/recursive Fx (var int v)->int do
+code/call/recursive Fx (var int v)->int;
+code/call/recursive Fx (var int v)->int do
     if v == 0 then
         escape 1;
     end
@@ -35674,7 +35986,7 @@ escape call Fx(5);
     --tight = 'line 8 : `call/recursive` is required for "Fx"',
 }
 Test { [[
-code/tight Fx (var int v)->int do
+code/call Fx (var int v)->int do
     escape v + 1;
 end
 escape call/recursive Fx(5);
@@ -35683,8 +35995,8 @@ escape call/recursive Fx(5);
     --tight = 'line 8 : `call/recursive` is required for "Fx"',
 }
 Test { [[
-code/tight/recursive Fx (var int v)->int;
-code/tight/recursive Fx (var int v)->int do
+code/call/recursive Fx (var int v)->int;
+code/call/recursive Fx (var int v)->int do
     if v == 0 then
         escape 1;
     end
@@ -35696,8 +36008,8 @@ escape call/recursive Fx(5);
 }
 
 Test { [[
-code/tight/recursive Fat (var int v) -> int;
-code/tight/recursive Fat (var int v) -> int do  // "Fat" is a recursive code
+code/call/recursive Fat (var int v) -> int;
+code/call/recursive Fat (var int v) -> int do  // "Fat" is a recursive code
     if v > 1 then
         escape v * (call/recursive Fat(v-1));
     else
@@ -35710,7 +36022,7 @@ escape (call/recursive Fat(10) == 3628800) as int;
 }
 
 Test { [[
-code/tight/recursive Gg (none) -> none do
+code/call/recursive Gg (none) -> none do
     call/recursive Gg();
 end
 code/await Ff (none) -> none do
@@ -35729,7 +36041,7 @@ escape 1;
 Test { [[
 var[] byte str = [0,1,2];
 
-code/tight Fx (var[] byte vec)->int do
+code/call Fx (var[] byte vec)->int do
     escape vec[1];
 end
 
@@ -35737,12 +36049,12 @@ escape call Fx(&str);
 ]],
     _opts = { ceu_features_dynamic='true' },
     --parser = 'line 3 : after `vector` : expected `&`',
-    dcls = 'line 3 : invalid declaration : vector inside `code/tight`',
+    dcls = 'line 3 : invalid declaration : vector inside `code/call`',
 }
 Test { [[
 var[] byte str = [0,1,2];
 
-code/tight Fx (var&[] byte vec)->int do
+code/call Fx (var&[] byte vec)->int do
     escape vec[1];
 end
 
@@ -35756,7 +36068,7 @@ escape call Fx(&str);
 Test { [[
 var[] byte str = [0,1,2];
 
-code/tight Fx (var&[] byte vec)->int do
+code/call Fx (var&[] byte vec)->int do
     escape vec[1] as int;
 end
 
@@ -35769,7 +36081,7 @@ escape call Fx(&str);
 Test { [[
 var[1] byte str = [0,1,2];
 
-code/tight Fx (var&[2] byte&& vec)->int do
+code/call Fx (var&[2] byte&& vec)->int do
     escape vec[1] as int;
 end
 
@@ -35780,7 +36092,7 @@ escape call Fx(&&str);
 Test { [[
 var[1] byte str = [0,1,2];
 
-code/tight Fx (var&[2] byte vec)->int do
+code/call Fx (var&[2] byte vec)->int do
     escape vec[1] as int;
 end
 
@@ -35810,7 +36122,7 @@ escape v2[1];
 Test { [[
 var[] byte str = [0,1,2];
 
-code/tight Fx (var&[] int vec)->int do
+code/call Fx (var&[] int vec)->int do
     escape vec[1];
 end
 
@@ -35823,7 +36135,7 @@ escape call Fx(&str);
 Test { [[
 var[] byte str = [0,1,2];
 
-code/tight Fx (var&[] byte vec)->bool do
+code/call Fx (var&[] byte vec)->bool do
     escape vec[1];
 end
 
@@ -35837,7 +36149,7 @@ escape call Fx(&str);
 Test { [[
 var[] byte str = [0,1,2];
 
-code/tight Fx (var&[] byte vec)->int do
+code/call Fx (var&[] byte vec)->int do
     escape vec[1];
 end
 
@@ -35851,7 +36163,7 @@ escape call Fx(str);
 Test { [[
 var[] byte str = [0,1,2];
 
-code/tight Fx (none) -> byte[] do
+code/call Fx (none) -> byte[] do
     escape &this.str;
 end
 
@@ -35867,21 +36179,21 @@ escape ref[1];
 Test { [[
 var[] byte str = [0,1,2];
 
-code/tight Fx (var none&& x, var[] int vec)->int do
+code/call Fx (var none&& x, var[] int vec)->int do
     escape vec[1];
 end
 
 escape call Fx(str);
 ]],
     _opts = { ceu_features_dynamic='true' },
-    dcls = 'line 3 : invalid declaration : vector inside `code/tight`',
+    dcls = 'line 3 : invalid declaration : vector inside `code/call`',
     --parser = 'line 3 : after `vector` : expected `&`',
     --env = 'line 3 : wrong argument #2 : vectors are not supported',
     --env = 'line 7 : wrong argument #1 : types mismatch (`int[]` <= `byte[]`)',
 }
 
 Test { [[
-code/tight FillBuffer (var&[] u8 buf)->none do
+code/call FillBuffer (var&[] u8 buf)->none do
     buf = buf .. [3];
 end
 var[10] u8 buffer;
@@ -35892,7 +36204,7 @@ escape buffer[0] as int;
 }
 
 Test { [[
-code/tight FillBuffer (var&[20] u8 buf)->none do
+code/call FillBuffer (var&[20] u8 buf)->none do
     buf = buf .. [3];
 end
 var[10] u8 buffer;
@@ -35904,7 +36216,7 @@ escape buffer[0] as int;
 }
 
 Test { [[
-code/tight FillBuffer (var&[3] u8 buf)->none do
+code/call FillBuffer (var&[3] u8 buf)->none do
     buf = buf .. [2,3,4];
 end
 var[3] u8 buffer = [1];
@@ -35917,7 +36229,7 @@ escape buffer[0] as int;
 
 -- TODO: dropped support for pointers to vectors
 Test { [[
-code/tight FillBuffer (var[]&& u8 buf)->none do
+code/call FillBuffer (var[]&& u8 buf)->none do
     *buf = *buf .. [3];
 end
 var[10] u8 buffer;
@@ -35929,7 +36241,7 @@ escape buffer[0] as int;
 }
 
 Test { [[
-code/tight FillBuffer (var[3]&& u8 buf)->none do
+code/call FillBuffer (var[3]&& u8 buf)->none do
     *buf = *buf .. [2,3,4];
 end
 var[3] u8 buffer = [1];
@@ -35942,12 +36254,12 @@ escape buffer[0] as int;
 }
 
 Test { [[
-code/tight Build (var[] u8 bytes)->none do
+code/call Build (var[] u8 bytes)->none do
 end
 escape 1;
 ]],
     _opts = { ceu_features_dynamic='true' },
-    dcls = 'line 1 : invalid declaration : vector inside `code/tight`',
+    dcls = 'line 1 : invalid declaration : vector inside `code/call`',
     --wrn = true,
     --parser = 'line 1 : after `vector` : expected `&`',
     --env = 'line 1 : wrong argument #1 : vectors are not supported',
@@ -35956,7 +36268,7 @@ escape 1;
 Test { [[
 var[] byte str = [0,1,2];
 
-code/tight Fx (none) -> byte[]& do
+code/call Fx (none) -> byte[]& do
     escape &this.str;
 end
 
@@ -35971,7 +36283,7 @@ escape ref[1];
 Test { [[
 var[] byte str = [0,1,2];
 
-code/tight Fx (none) -> byte[]& do
+code/call Fx (none) -> byte[]& do
     escape &this.str;
 end
 
@@ -35987,7 +36299,7 @@ escape str[1];
 Test { [[
 var[] byte str = [0,1,2];
 
-code/tight Fx (none) -> byte[]& do
+code/call Fx (none) -> byte[]& do
     escape &this.str;
 end
 
@@ -36009,7 +36321,7 @@ native/pos do
     }
 end
 
-code/tight Fx (none) -> byte[]& do
+code/call Fx (none) -> byte[]& do
     escape &this.str;
 end
 
@@ -36026,11 +36338,11 @@ escape str[3] == 'o';
 Test { [[
 var[] byte str;
 
-code/tight Fa (none)->byte[]& do
+code/call Fa (none)->byte[]& do
     escape &this.str;
 end
 
-code/tight Fb (none)->none do
+code/call Fb (none)->none do
     var&[] byte ref = &f1();
     ref = [] .. "ola" .. "mundo";
 end
@@ -36045,7 +36357,7 @@ escape str[4] == 'u';
 
 Test { [[
 native/pure _strlen;
-code/tight Strlen (var byte&& str)->int do
+code/call Strlen (var byte&& str)->int do
     escape _strlen(str as _char&&);
 end
 
@@ -36063,7 +36375,7 @@ native/pure _strlen;
 native/pre do
     ##include <string.h>
 end
-code/tight Strlen (var byte&& str)->int do
+code/call Strlen (var byte&& str)->int do
     escape _strlen(str[0]);
 end
 
@@ -36077,21 +36389,21 @@ escape call Strlen((&&str[0]) as _char&&);
 }
 
 Test { [[
-code/tight Fx (none)->none do
+code/call Fx (none)->none do
     var int x = 0;
 
     var[10] byte cs;
 end
 escape 1;
 ]],
-    dcls = 'line 4 : invalid declaration : vector inside `code/tight`',
+    dcls = 'line 4 : invalid declaration : vector inside `code/call`',
     --wrn = true,
     --props = 'line 4 : not permitted inside `function`',
     --props_ = 'line 4 : invalid `await` : unexpected enclosing `code`',
 }
 
 Test { [[
-code/tight Fx (var&[] byte cs)->none do
+code/call Fx (var&[] byte cs)->none do
     cs[0] = 10;
 end
 var[] byte cs = [0];
@@ -36105,7 +36417,7 @@ escape cs[0];
 --<< VECTOR / CODE
 
 Test { [[
-code/tight Rect (none) -> none
+code/call Rect (none) -> none
 do
 end
 await Rect();
@@ -36121,7 +36433,7 @@ escape 0;
 
 Test { [[
 native _void;
-code/tight Ff (none) -> none do
+code/call Ff (none) -> none do
 end
 var&? _void ptr = & call Ff()
         finalize (ptr) with
@@ -36195,7 +36507,7 @@ native/pre do
     int V;
 end
 
-code/tight Ff (var bool x) -> _void&& do
+code/call Ff (var bool x) -> _void&& do
     if x then
         escape &&_V;
     else
@@ -36345,7 +36657,7 @@ code/await Tx (none)->none do end
 call Tx();
 escape 1;
 ]],
-    dcls = 'line 2 : invalid call : expected `code/tight` : got `code/await` (/tmp/tmp.ceu:2)',
+    dcls = 'line 2 : invalid call : expected `code/call` : got `code/await` (/tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -36635,6 +36947,7 @@ code/await Tx (none)->none;
 code/await Tx (none)->none do
     await Tx();
 end
+await Tx();
 escape 1;
 ]],
     stmts = 'line 3 : invalid `await` : unexpected recursive invocation',
@@ -37022,7 +37335,7 @@ escape v;
 }
 
 Test { [[
-code/tight Fx (var& int x) -> none do
+code/call Fx (var& int x) -> none do
     x = 10;
 end
 var int x;
@@ -37048,7 +37361,7 @@ escape x;
     --mode = 'line 7 : cannot read field with mode `input`',
 }
 Test { [[
-code/tight Fx (var& int x) -> none do
+code/call Fx (var& int x) -> none do
 end
 var int x;
 call Fx(&x);
@@ -37076,7 +37389,7 @@ escape x;
 }
 
 Test { [[
-code/tight Ff (var& int x) -> none do
+code/call Ff (var& int x) -> none do
     var int v = 0;
     x = &v;
 end
@@ -37114,7 +37427,7 @@ escape 0;
 }
 
 Test { [[
-code/tight Ff (var int x) -> none do
+code/call Ff (var int x) -> none do
 end
 
 var int x = 0;
@@ -37170,7 +37483,7 @@ escape 0;
 -->> CODE / AWAIT / OPTION
 
 Test { [[
-code/tight Fx (var int? xxx) -> int do
+code/call Fx (var int? xxx) -> int do
     if xxx? then
         escape xxx! + 1;
     else
@@ -37204,7 +37517,7 @@ Test { [[
 data Dd with
     var int x = 10;
 end
-code/tight Ff (var Dd d) -> int do
+code/call Ff (var Dd d) -> int do
     escape d.x;
 end
 escape call Ff(_);
@@ -37213,7 +37526,7 @@ escape call Ff(_);
 }
 
 Test { [[
-code/tight Ff (var int? x) -> int do
+code/call Ff (var int? x) -> int do
     escape (x? as int) + 1;
 end
 escape call Ff(_);
@@ -37301,12 +37614,24 @@ escape 0;
     _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = false,
 }
+
+Test { [[
+code/await Ff (none) -> int? do
+    escape 1;
+end
+var int? eee;
+var int? ddd = eee;
+var int? d = await Ff();
+escape d!;
+]],
+    run = 1,
+}
 --<< CODE / AWAIT / OPTION
 
 -->> CODE / AWAIT / FOREVER
 
 Test { [[
-code/tight Ff (none) -> NEVER do
+code/call Ff (none) -> NEVER do
 end
 ]],
     parser = 'line 1 : after `->` : expected type',
@@ -37335,6 +37660,7 @@ var int ret = await Ff();
 escape 1;
 ]],
     stmts = 'line 4 : invalid assignment : `code` executes forever',
+    --inlines = 'line 4 : internal identifier "_ret" is not declared',
 }
 
 Test { [[
@@ -37372,6 +37698,7 @@ escape 0;
 ]],
     --stmts = 'line 3 : invalid `watching` : `code` executes forever',
     stmts = 'line 3 : invalid assignment : `code` executes forever',
+    --inlines = 'line 3 : internal identifier "_ret" is not declared',
 }
 
 Test { [[
@@ -37518,7 +37845,7 @@ escape x;
 }
 
 Test { [[
-code/tight Ff (none) -> int do
+code/call Ff (none) -> int do
     escape 1;
 end
 var int x = call Ff();
@@ -37528,7 +37855,7 @@ escape x;
 }
 
 Test { [[
-code/tight Ff (none) -> bool do
+code/call Ff (none) -> bool do
     escape true;
 end
 var bool x = call Ff();
@@ -37567,7 +37894,7 @@ escape x;
 }
 
 Test { [[
-code/tight Ff (var int x) -> int do
+code/call Ff (var int x) -> int do
     escape x + 1;
 end
 var int x = call Ff(10);
@@ -37577,7 +37904,7 @@ escape x;
 }
 
 Test { [[
-code/tight Ff (var int x) -> int do
+code/call Ff (var int x) -> int do
     escape x + 1;
 end
 call Ff(10);
@@ -37784,6 +38111,47 @@ escape 100;
     run = { ['~>A']=100 },
 }
 
+Test { [[
+var int x;
+x = do () escape 1; end;
+escape x;
+]],
+    run = 1,
+}
+
+Test { [[
+var int x = 10;
+code/await Wdt (none) -> int do
+    escape outer.x;
+end
+var int ret = await Wdt();
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+code/await Ff (var int i) -> int do
+    escape i;
+end
+var int v1 = await Ff(1);
+escape v1;
+]],
+    --wrn = true,
+    run = 1,
+}
+Test { [[
+code/await Ff (var&? int i) -> int do
+    escape i!;
+end
+var int v1 = await Ff(_);
+var int v2 = await Ff(_);
+escape v1+v2;
+]],
+    --wrn = true,
+    run = 'Aborted (core dumped)',
+}
+
 --<< CODE / AWAIT / INLINE
 
 -->> CODE / AWAIT / INITIALIZATION / PUBLIC
@@ -37822,6 +38190,7 @@ Test { [[
 code/await UV_TCP_Open (none) -> (var& int v) -> none
 do
 end
+await UV_TCP_Open();
 await UV_TCP_Open();
 var int x = 1;
 escape x;
@@ -37996,7 +38365,7 @@ escape f.yyy;
 }
 
 Test { [[
-code/tight Ff (none) -> (var& int x) -> none do
+code/call Ff (none) -> (var& int x) -> none do
 end
 ]],
     parser = 'line 1 : after `->` : expected type',
@@ -41034,8 +41403,8 @@ code/await Ff (none) -> (var& int x) -> NEVER do
         x = &g.x;
         await FOREVER;
     end
-    code/tight Hh (none) -> none do end
-    code/tight Ii (none) -> none do end
+    code/call Hh (none) -> none do end
+    code/call Ii (none) -> none do end
 end
 spawn Ff();
 escape 1;
@@ -41055,9 +41424,9 @@ code/await Ff (none) -> (var& int x) -> NEVER do
         x = &g.x;
         await FOREVER;
     end
-    code/tight Hh (none) -> none do end
+    code/call Hh (none) -> none do end
     nothing;
-    code/tight Ii (none) -> none do end
+    code/call Ii (none) -> none do end
 end
 spawn Ff();
 escape 1;
@@ -42226,7 +42595,7 @@ escape _V;
 ]],
     _opts = { ceu_features_trace='true', ceu_features_dynamic='true', ceu_features_pool='true' },
     defines = {
-        CEU_STACK_MAX = 40000,
+        CEU_STACK_MAX = 30000,
     },
     --wrn = 'line 7 : unbounded recursive spawn',
     run = 'runtime error: stack overflow',
@@ -42372,7 +42741,7 @@ escape v;
 
 Test { [[
 native __ceu_mem, _tceu_code_mem_Ff;
-code/tight Ff (none) -> int do
+code/call Ff (none) -> int do
     var int yyy = 10;
     escape (__ceu_mem as _tceu_code_mem_Ff&&):yyy;
 end
@@ -43114,7 +43483,7 @@ await Ff(&ggs);
 
 escape _V;
 ]],
-    _opts = { ceu_features_pool='true' },
+    _opts = { ceu_features_dynamic='true', ceu_features_pool='true' },
     run = 1,
 }
 
@@ -44694,7 +45063,7 @@ escape 0;
 }
 
 Test { [[
-code/tight Ff (var& int x) -> int do
+code/call Ff (var& int x) -> int do
     escape x + 1;
 end
 code/await Gg (none) -> (var int x) -> NEVER do
@@ -45471,7 +45840,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Ff (none) -> none
+code/call Ff (none) -> none
     throws Exception
 do
     var Exception e_ = val Exception(_);
@@ -45484,7 +45853,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Ff (none) -> none do
+code/call Ff (none) -> none do
     var Exception? e;
     catch e do
         var Exception e_ = val Exception(_);
@@ -45977,7 +46346,7 @@ throw e;
 }
 
 Test { [[
-code/tight Ff (none) -> none do
+code/call Ff (none) -> none do
 end
 call Ff();
 escape 1;
@@ -45987,7 +46356,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Ff (none) -> none
+code/call Ff (none) -> none
     throws Exception
 do
 end
@@ -45999,7 +46368,7 @@ escape 0;
 }
 
 Test { [[
-code/tight Ff (none) -> none
+code/call Ff (none) -> none
 do
     var Exception e = _;
     throw e;
@@ -46449,7 +46818,7 @@ escape (is_int as int)+(is_real as int);
 }
 
 Test { [=[
-code/tight Fx (none)->int do
+code/call Fx (none)->int do
     var int v = [[ 1 ]];
     escape v;
 end
@@ -46563,7 +46932,7 @@ end
 }
 
 Test { [=[
-code/tight Ff (none) -> int do
+code/call Ff (none) -> int do
     var int a = [[a or 3]];
     escape a;
 end
@@ -46790,7 +47159,7 @@ Test { [[
 code/await Tx (none) -> none
 do
 end
-code/tight Tx (none) -> none
+code/call Tx (none) -> none
 do
 end
 escape 1;
@@ -47025,7 +47394,7 @@ data Tx with
     var int x;
 end
 
-code/tight Fx (none)->Tx do
+code/call Fx (none)->Tx do
     var Tx t = val Tx(10);
     escape t;
 end
@@ -47043,7 +47412,7 @@ data Tx with
 end
 data Tx.Ux;
 
-code/tight Fx (none)->Tx.Ux do
+code/call Fx (none)->Tx.Ux do
     var Tx.Ux t = val Tx.Ux(10);
     escape t;
 end
@@ -47066,7 +47435,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (none)->none do end;
+code/call Fx (none)->none do end;
 data Ee;
 var int x = 0;
 var Ee e = val Fx();
@@ -47666,7 +48035,7 @@ data Leaf.Tween with
     var& Ball ball;
 end
 
-code/tight LeafHandler (var& Leaf leaf) -> int do
+code/call LeafHandler (var& Leaf leaf) -> int do
     var& Ball ball = &(leaf as Leaf.Tween).ball;
     escape ball.x;
 end
@@ -47693,7 +48062,7 @@ data Leaf.Tween with
     var& Ball ball;
 end
 
-code/tight LeafHandler (var& Leaf leaf) -> int do
+code/call LeafHandler (var& Leaf leaf) -> int do
     var& Ball ball = &(leaf as Leaf.Tween).ball;
     escape ball.x;
 end
@@ -47797,7 +48166,7 @@ data Aa with
     var int a;
 end
 
-code/tight Ff (var& Aa a) -> int do
+code/call Ff (var& Aa a) -> int do
     escape a.a;
 end
 
@@ -47817,7 +48186,7 @@ data Aa with
     var int a;
 end
 
-code/tight Ff (var Aa&& a) -> int do
+code/call Ff (var Aa&& a) -> int do
     escape a:a;
 end
 
@@ -48189,7 +48558,7 @@ Test { [[
 data Xx as 0;
 data Xx.Yy as 1;
 
-code/tight Ff (var int x) -> int do
+code/call Ff (var int x) -> int do
     escape 111;
 end
 
@@ -48204,7 +48573,7 @@ Test { [[
 data Xx as 0;
 data Xx.Yy as 1;
 
-code/tight Ff (var Xx x) -> int do
+code/call Ff (var Xx x) -> int do
     escape x as int;
 end
 
@@ -48305,7 +48674,7 @@ Test { [[
 data Direction as 0;
 data Direction.Right as 10;
 
-code/tight Ff (var Direction dir) -> int do
+code/call Ff (var Direction dir) -> int do
     escape dir as int;
 end
 
@@ -48430,7 +48799,7 @@ end
 
 native _t,_u;
 var& _t me;
-    code/tight Set_pos (var _u&& p)->none do
+    code/call Set_pos (var _u&& p)->none do
         outer.me.p = val Vector3f(p:x, p:y, p:z);
     end
 escape 1;
@@ -48616,7 +48985,7 @@ data Dd with
     var int x;
 end
 
-code/tight Fx (var Dd? d) -> int do
+code/call Fx (var Dd? d) -> int do
     if d? then
         escape d!.x + 1;
     else
@@ -49319,6 +49688,7 @@ end
 ]],
     wrn = true,
     consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
+    _opts = { ceu_features_dynamic='true' },
 }
 
 Test { [[
@@ -49328,7 +49698,7 @@ data Dd with
     var[] byte xxx;
 end
 
-code/tight Ff (var& Dd d) -> int do
+code/call Ff (var& Dd d) -> int do
     escape _strlen(&&d.xxx[0] as _char&&);
 end
 
@@ -49385,7 +49755,7 @@ data Data with
    var [] byte v;
 end
 var Data d = _;
-code/tight Ff (none)->int do
+code/call Ff (none)->int do
     outer.d = val Data([1,2,3]);
     escape $outer.d.v as int;
 end
@@ -49522,7 +49892,7 @@ data Dd with
     var int x = 10;
 end
 
-code/tight Ff (var Dd d) -> int do
+code/call Ff (var Dd d) -> int do
     escape d.x;
 end
 
@@ -49552,7 +49922,7 @@ data Dd with
     var int x = 10;
 end
 
-code/tight Ff (var Dd d) -> int do
+code/call Ff (var Dd d) -> int do
     escape d.x;
 end
 
@@ -49586,7 +49956,7 @@ Test { [[
 data Dd with
     var int v=10;
 end
-code/tight Ff (var Dd d) -> int do
+code/call Ff (var Dd d) -> int do
     escape d.v;
 end
 escape call Ff(Dd(10));
@@ -49597,7 +49967,7 @@ Test { [[
 data Dd with
     var int v=10;
 end
-code/tight Ff (var Dd d) -> int do
+code/call Ff (var Dd d) -> int do
     escape d.v;
 end
 escape call Ff(Dd(_));
@@ -49693,7 +50063,7 @@ Test { [[
 data Object with
   var int c = 101;
 end
-code/tight Show(var Object obj) -> int do
+code/call Show(var Object obj) -> int do
     escape obj.c;
 end
 escape call Show(Object(_));
@@ -49705,7 +50075,7 @@ Test { [[
 data Object with
   var int c = 101;
 end
-code/tight Show(var Object obj) -> int do
+code/call Show(var Object obj) -> int do
     escape obj.c;
 end
 escape call Show(_);
@@ -49832,7 +50202,7 @@ Test { [[
 data Dd with
     var int x = 111;
 end
-code/tight Ff (var Dd d) -> int do
+code/call Ff (var Dd d) -> int do
     escape d.x;
 end
 var int ret = call Ff(_);
@@ -49879,12 +50249,12 @@ end
 
 Test { [[
 do/_
-    code/tight Ff (none) -> int do
+    code/call Ff (none) -> int do
         escape 10;
     end
 end
 do/_
-    code/tight Ff (none) -> int do
+    code/call Ff (none) -> int do
         escape 100;
     end
     escape call Ff();
@@ -49913,8 +50283,8 @@ end
 }
 
 Test { [[
-code/tight Ff (none) -> none;
-code/tight Ff (none) -> none do
+code/call Ff (none) -> none;
+code/call Ff (none) -> none do
 end
 call Ff();
 escape 1;
@@ -50002,7 +50372,7 @@ data Dd with
     var int x = 10;
 end
 
-code/tight Ff (none) -> Dd do
+code/call Ff (none) -> Dd do
     var Dd d = val Dd(_);
     escape d;
 end
@@ -50019,7 +50389,7 @@ data Dd with
     var int x = 10;
 end
 code/await Ff (none) -> Dd do
-    code/tight Gg (none) -> Dd do
+    code/call Gg (none) -> Dd do
         var Dd d = _;
         escape d;
     end
@@ -50037,7 +50407,7 @@ data Dd with
     var int x = 10;
 end
 code/await Ff (none) -> Dd do
-    code/tight Gg (none) -> Dd do
+    code/call Gg (none) -> Dd do
         var Dd d = _;
         escape d;
     end
@@ -50050,7 +50420,7 @@ escape d.x;
 }
 
 Test { [[
-code/tight Ff (none) -> int do
+code/call Ff (none) -> int do
     data Dd with
         var int x;
     end
@@ -50094,7 +50464,7 @@ data Dd with
     var int x = 1;
     var&? Dd d;
 end
-code/tight/recursive Dd_D(var& Dd d, var& Dd ret) -> none do
+code/call/recursive Dd_D(var& Dd d, var& Dd ret) -> none do
     if d.d? then
         call/recursive Dd_D(&d.d!, &ret);
     end
@@ -50114,13 +50484,13 @@ data Dd with
     var int x = 1;
     var&? Dd d;
 end
-code/tight/recursive Dd_D_(var& Dd d, var& Dd ret) -> none do
+code/call/recursive Dd_D_(var& Dd d, var& Dd ret) -> none do
     if d.d? then
         call/recursive Dd_D_(&d.d!, &ret);
     end
     ret.x = ret.x + d.x;
 end
-code/tight/recursive Dd_D(var& Dd d, var& Dd ret) -> none do
+code/call/recursive Dd_D(var& Dd d, var& Dd ret) -> none do
     ret = val Dd(0,_);
     call/recursive Dd_D_(&d, &ret);
 end
@@ -50386,7 +50756,8 @@ atomic do
     escape 1;
 end
 ]],
-    props = 'line 2 : not permitted inside `atomic`',
+    codes = 'line 1 : not implemented',
+    --props = 'line 2 : not permitted inside `atomic`',
     _opts = { ceu_features_dynamic='true', ceu_features_thread='true' },
 }
 
@@ -50395,7 +50766,7 @@ native/pos do
     ##define ceu_out_isr_on();
     ##define ceu_out_isr_off();
 end
-await async do
+await async/thread do
     atomic do
         nothing;
     end
@@ -51545,6 +51916,7 @@ atomic do
 end
 escape ret;
 ]],
+    codes = 'line 2 : not implemented',
     _opts = {
         ceu = true,
         ceu_features_dynamic='true', ceu_features_thread = 'true',
@@ -51553,7 +51925,7 @@ escape ret;
 }
 
 Test { [[
-code/tight Fx (none)->int do
+code/call Fx (none)->int do
     escape 2;
 end
 var int v = call Fx();
@@ -51973,7 +52345,7 @@ escape ret;
 Test { [[
 var int ret = 0;
 
-code/tight Ff (none) -> none do
+code/call Ff (none) -> none do
     outer.ret = outer.ret + 1;
 end
 
@@ -52107,13 +52479,13 @@ data Aa with
     var int a;
 end
 
-code/tight Ff (var& Aa a, var int xxx) -> int;
+code/call Ff (var& Aa a, var int xxx) -> int;
 
 data Aa.Bb with
     var int b;
 end
 
-code/tight Ff (var& Aa.Bb b, var int yyy) -> int do
+code/call Ff (var& Aa.Bb b, var int yyy) -> int do
     escape 0;
 end
 
@@ -52128,7 +52500,7 @@ data Aa with
     var int a;
 end
 
-code/tight Ff (var& Aa a, var int xxx) -> int do
+code/call Ff (var& Aa a, var int xxx) -> int do
     escape 0;
 end
 
@@ -52136,7 +52508,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/tight Ff (var& Aa.Bb b, var int yyy) -> int do
+code/call Ff (var& Aa.Bb b, var int yyy) -> int do
     escape 0;
 end
 
@@ -52201,7 +52573,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Ff (none) -> none do
+code/call Ff (none) -> none do
 end
 
 escape call/dynamic Ff();
@@ -52228,7 +52600,7 @@ data Aa with
     var int a;
 end
 
-code/tight/dynamic Ff (var/dynamic Aa&& a, var int xxx) -> int do
+code/call/dynamic Ff (var/dynamic Aa&& a, var int xxx) -> int do
     escape a:a + xxx;
 end
 
@@ -52236,7 +52608,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/tight/dynamic Ff (var/dynamic Aa.Bb&& b, var int yyy) -> int do
+code/call/dynamic Ff (var/dynamic Aa.Bb&& b, var int yyy) -> int do
     escape b:b + yyy;
 end
 
@@ -52255,7 +52627,7 @@ data Aa.Bb with
     var int y;
 end
 
-code/tight/dynamic Ff (var/dynamic Aa&& a) -> int do
+code/call/dynamic Ff (var/dynamic Aa&& a) -> int do
     escape a:x;
 end
 
@@ -52274,13 +52646,13 @@ data Aa.Bb with
     var int b;
 end
 
-code/tight/dynamic Ff (var/dynamic Aa&& a, var int xxx) -> int do
+code/call/dynamic Ff (var/dynamic Aa&& a, var int xxx) -> int do
     escape a:a + xxx;
 end
 
 var Aa a = val Aa(1);
 
-code/tight Gg (var int x) -> int do
+code/call Gg (var int x) -> int do
     escape x;
 end
 
@@ -52294,7 +52666,7 @@ data Aa with
     var int a;
 end
 
-code/tight/dynamic Ff (var/dynamic Aa&& a, var int xxx) -> int do
+code/call/dynamic Ff (var/dynamic Aa&& a, var int xxx) -> int do
     escape a:a + xxx;
 end
 
@@ -52302,7 +52674,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/tight/dynamic Ff (var/dynamic Aa.Bb&& b, var int yyy) -> int do
+code/call/dynamic Ff (var/dynamic Aa.Bb&& b, var int yyy) -> int do
     escape b:b + yyy;
 end
 
@@ -52319,7 +52691,7 @@ data Aa with
     var int a;
 end
 
-code/tight/dynamic Ff (var int xxx, var/dynamic Aa&& a) -> int do
+code/call/dynamic Ff (var int xxx, var/dynamic Aa&& a) -> int do
     escape a:a + xxx;
 end
 
@@ -52327,7 +52699,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/tight/dynamic Ff (var int yyy, var/dynamic Aa.Bb&& b) -> int do
+code/call/dynamic Ff (var int yyy, var/dynamic Aa.Bb&& b) -> int do
     escape b:b + yyy;
 end
 
@@ -52345,7 +52717,7 @@ data Aa with
     var int a;
 end
 
-code/tight/dynamic Ff (var&/dynamic Aa a1, var int xxx, var&/dynamic Aa a2) -> int do
+code/call/dynamic Ff (var&/dynamic Aa a1, var int xxx, var&/dynamic Aa a2) -> int do
     escape a1.a + xxx + a2.a;
 end
 
@@ -52353,7 +52725,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/tight/dynamic Ff (var&/dynamic Aa.Bb b1, var int yyy, var&/dynamic Aa.Bb b2) -> int do
+code/call/dynamic Ff (var&/dynamic Aa.Bb b1, var int yyy, var&/dynamic Aa.Bb b2) -> int do
     //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
     escape b1.b + yyy + b2.b;
 end
@@ -52580,10 +52952,10 @@ Test { [[
 data Aa;
 data Aa.Bb;
 
-code/tight/dynamic Ff (var&/dynamic Aa v1, var&/dynamic Aa v2) -> int do
+code/call/dynamic Ff (var&/dynamic Aa v1, var&/dynamic Aa v2) -> int do
     escape 1;
 end
-code/tight/dynamic Ff (var&/dynamic Aa.Bb v1, var&/dynamic Aa.Bb v2) -> int do
+code/call/dynamic Ff (var&/dynamic Aa.Bb v1, var&/dynamic Aa.Bb v2) -> int do
     escape 2;
 end
 
@@ -52602,16 +52974,16 @@ data Aa.Bb;
 data Aa.Bb.Xx;
 data Aa.Cc;
 
-code/tight/dynamic Ff (var&/dynamic Aa v1, var&/dynamic Aa v2, var&/dynamic Aa v3) -> int do
+code/call/dynamic Ff (var&/dynamic Aa v1, var&/dynamic Aa v2, var&/dynamic Aa v3) -> int do
     escape 1;
 end
-code/tight/dynamic Ff (var&/dynamic Aa.Bb v1, var&/dynamic Aa v2, var&/dynamic Aa.Bb v3) -> int do
+code/call/dynamic Ff (var&/dynamic Aa.Bb v1, var&/dynamic Aa v2, var&/dynamic Aa.Bb v3) -> int do
     escape 2;
 end
-code/tight/dynamic Ff (var&/dynamic Aa.Bb v1, var&/dynamic Aa.Bb v2, var&/dynamic Aa.Bb v3) -> int do
+code/call/dynamic Ff (var&/dynamic Aa.Bb v1, var&/dynamic Aa.Bb v2, var&/dynamic Aa.Bb v3) -> int do
     escape 4;
 end
-code/tight/dynamic Ff (var&/dynamic Aa.Bb v1, var&/dynamic Aa.Bb.Xx v2, var&/dynamic Aa.Bb v3) -> int do
+code/call/dynamic Ff (var&/dynamic Aa.Bb v1, var&/dynamic Aa.Bb.Xx v2, var&/dynamic Aa.Bb v3) -> int do
     escape 8;
 end
 
@@ -52631,7 +53003,7 @@ data Bb with
     var int x=10;
 end
 
-code/tight Ff (var Bb b) -> int;
+code/call Ff (var Bb b) -> int;
 
 var int v1 = call Ff(_);
 escape v1;
@@ -52661,11 +53033,11 @@ data Bb.Cc with
     var int y=20;
 end
 
-code/tight/dynamic Ff (var&/dynamic Bb b) -> int do
+code/call/dynamic Ff (var&/dynamic Bb b) -> int do
     escape b.x;
 end
 
-code/tight/dynamic Ff (var&/dynamic Bb.Cc c) -> int do
+code/call/dynamic Ff (var&/dynamic Bb.Cc c) -> int do
     escape c.x + c.y;
 end
 
@@ -52686,11 +53058,11 @@ data Bb.Cc with
     var int y=20;
 end
 
-code/tight/dynamic Ff (var/dynamic Bb b) -> int do
+code/call/dynamic Ff (var/dynamic Bb b) -> int do
     escape b.x;
 end
 
-code/tight/dynamic Ff (var/dynamic Bb.Cc c) -> int do
+code/call/dynamic Ff (var/dynamic Bb.Cc c) -> int do
     escape c.x + c.y;
 end
 
@@ -52707,10 +53079,10 @@ data Bb with
 end
 data Bb.Cc;
 
-code/tight/dynamic Ff (var Bb b, var Aa a) -> none do
+code/call/dynamic Ff (var Bb b, var Aa a) -> none do
 end
 
-code/tight/dynamic Ff (var Bb.Cc c, var Aa a) -> none do
+code/call/dynamic Ff (var Bb.Cc c, var Aa a) -> none do
 end
 ]],
     dcls = 'line 7 : invalid `dynamic` declaration : expected dynamic parameters',
@@ -52723,10 +53095,10 @@ data Bb with
 end
 data Bb.Cc;
 
-code/tight/dynamic Ff (var&/dynamic Bb b, var/dynamic Aa a) -> none do
+code/call/dynamic Ff (var&/dynamic Bb b, var/dynamic Aa a) -> none do
 end
 
-code/tight/dynamic Ff (var&/dynamic Bb.Cc c, var/dynamic Aa a) -> none do
+code/call/dynamic Ff (var&/dynamic Bb.Cc c, var/dynamic Aa a) -> none do
 end
 
 escape 1;
@@ -52743,29 +53115,10 @@ data Bb with
 end
 data Bb.Cc;
 
-code/tight/dynamic Ff (var&/dynamic Bb b, var Aa a) -> none do
+code/call/dynamic Ff (var&/dynamic Bb b, var Aa a) -> none do
 end
 
-code/tight/dynamic Ff (var&/dynamic Bb.Cc c, var Aa a) -> none do
-end
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Aa;
-data Bb with
-    var int x;
-end
-data Bb.Cc;
-
-code/tight/dynamic Ff (var Aa a, var&/dynamic Bb b) -> none do
-end
-
-code/tight/dynamic Ff (var Aa a, var&/dynamic Bb.Cc c) -> none do
+code/call/dynamic Ff (var&/dynamic Bb.Cc c, var Aa a) -> none do
 end
 
 escape 1;
@@ -52781,11 +53134,30 @@ data Bb with
 end
 data Bb.Cc;
 
-code/tight/dynamic Ff (var& Aa a, var&/dynamic Bb b,
+code/call/dynamic Ff (var Aa a, var&/dynamic Bb b) -> none do
+end
+
+code/call/dynamic Ff (var Aa a, var&/dynamic Bb.Cc c) -> none do
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Aa;
+data Bb with
+    var int x;
+end
+data Bb.Cc;
+
+code/call/dynamic Ff (var& Aa a, var&/dynamic Bb b,
                        var Aa a2, var&/dynamic Bb b2, var Aa a3) -> none do
 end
 
-code/tight/dynamic Ff (var& Aa a, var&/dynamic Bb.Cc c,
+code/call/dynamic Ff (var& Aa a, var&/dynamic Bb.Cc c,
                        var Aa a2, var&/dynamic Bb.Cc c2, var Aa a3) -> none do
 end
 
@@ -52802,10 +53174,10 @@ data Bb with
 end
 data Bb.Cc;
 
-code/tight/dynamic Ff (var&/dynamic Bb b,    var& Aa a) -> none do
+code/call/dynamic Ff (var&/dynamic Bb b,    var& Aa a) -> none do
 end
 
-code/tight/dynamic Ff (var&/dynamic Bb.Cc c, var& Aa a) -> none do
+code/call/dynamic Ff (var&/dynamic Bb.Cc c, var& Aa a) -> none do
 end
 
 escape 1;
@@ -52818,10 +53190,10 @@ Test { [[
 data Dd;
 data Dd.Ee;
 
-code/tight Play_New (var& Dd x) -> none;
-code/tight Play_New (var& Dd x) -> none do
+code/call Play_New (var& Dd x) -> none;
+code/call Play_New (var& Dd x) -> none do
 end
-code/tight Play_New (var& Dd x) -> none;
+code/call Play_New (var& Dd x) -> none;
 
 var Dd d = _;
 
@@ -52837,8 +53209,8 @@ Test { [[
 data Dd;
 data Dd.Ee;
 
-//code/tight/dynamic Play_New (var&/dynamic Dd d) -> none;
-code/tight/dynamic Play_New (var&/dynamic Dd d) -> none do
+//code/call/dynamic Play_New (var&/dynamic Dd d) -> none;
+code/call/dynamic Play_New (var&/dynamic Dd d) -> none do
 end
 
 var Dd d = _;
@@ -52855,10 +53227,10 @@ Test { [[
 data Dd;
 data Dd.Ee;
 
-code/tight/dynamic Play_New (var&/dynamic Dd d) -> none;
-code/tight/dynamic Play_New (var&/dynamic Dd d) -> none do
+code/call/dynamic Play_New (var&/dynamic Dd d) -> none;
+code/call/dynamic Play_New (var&/dynamic Dd d) -> none do
 end
-code/tight/dynamic Play_New (var&/dynamic Dd d) -> none;
+code/call/dynamic Play_New (var&/dynamic Dd d) -> none;
 
 var Dd d = _;
 
@@ -52912,8 +53284,8 @@ Test { [[
 data Media;
 data Media.Text;
 do
-    code/tight/dynamic Play (var&/dynamic Media m) -> none do end
-    code/tight/dynamic Play (var&/dynamic Media.Text m) -> none do end
+    code/call/dynamic Play (var&/dynamic Media m) -> none do end
+    code/call/dynamic Play (var&/dynamic Media.Text m) -> none do end
 end
 escape 1;
 ]],
@@ -52924,8 +53296,8 @@ Test { [[
 data Media;
 data Media.Text;
 do/_
-    code/tight/dynamic Play (var&/dynamic Media m) -> int do escape 1; end
-    code/tight/dynamic Play (var&/dynamic Media.Text m) -> int do escape 2; end
+    code/call/dynamic Play (var&/dynamic Media m) -> int do escape 1; end
+    code/call/dynamic Play (var&/dynamic Media.Text m) -> int do escape 2; end
     var Media x = val Media.Text();
     escape call/dynamic Play(&x);
 end
@@ -52936,8 +53308,8 @@ end
 Test { [[
 data Media;
 data Media.Text;
-code/tight/dynamic Play (var&/dynamic Media m) -> none do end
-code/tight/dynamic Play (var&/dynamic Media.Text m) -> none do end
+code/call/dynamic Play (var&/dynamic Media m) -> none do end
+code/call/dynamic Play (var&/dynamic Media.Text m) -> none do end
 escape 1;
 ]],
     _opts = { ceu_features_dynamic='true', ceu_features_lua='true' },
@@ -53002,9 +53374,9 @@ escape ret;
 }
 
 Test { [[
-code/tight Ff (var int x) -> none do
+code/call Ff (var int x) -> none do
 end
-code/tight Ff (var int x) -> none do
+code/call Ff (var int x) -> none do
 end
 escape 1;
 ]],
@@ -53014,9 +53386,9 @@ escape 1;
 
 Test { [[
 data Dd;
-code/tight/dynamic Ff (var&/dynamic Dd d) -> none do
+code/call/dynamic Ff (var&/dynamic Dd d) -> none do
 end
-code/tight Ff (var int x) -> none do
+code/call Ff (var int x) -> none do
 end
 escape 1;
 ]],
@@ -53026,9 +53398,9 @@ escape 1;
 
 Test { [[
 data Dd;
-code/tight/dynamic Ff (var&/dynamic Dd d) -> none do
+code/call/dynamic Ff (var&/dynamic Dd d) -> none do
 end
-code/tight/dynamic Ff (var&/dynamic Dd d) -> none do
+code/call/dynamic Ff (var&/dynamic Dd d) -> none do
 end
 escape 1;
 ]],
@@ -53039,9 +53411,9 @@ escape 1;
 Test { [[
 data Dd;
 data Ee;
-code/tight/dynamic Ff (var&/dynamic Dd d) -> none do
+code/call/dynamic Ff (var&/dynamic Dd d) -> none do
 end
-code/tight/dynamic Ff (var&/dynamic Ee d) -> none do
+code/call/dynamic Ff (var&/dynamic Ee d) -> none do
 end
 escape 1;
 ]],
@@ -53052,11 +53424,11 @@ escape 1;
 Test { [[
 data Dd;
 data Dd.Ee;
-code/tight/dynamic Ff (var&/dynamic Dd a, var&/dynamic Dd b) -> none do
+code/call/dynamic Ff (var&/dynamic Dd a, var&/dynamic Dd b) -> none do
 end
-code/tight/dynamic Ff (var&/dynamic Dd a, var&/dynamic Dd.Ee b) -> none do
+code/call/dynamic Ff (var&/dynamic Dd a, var&/dynamic Dd.Ee b) -> none do
 end
-code/tight/dynamic Ff (var&/dynamic Dd.Ee a, var&/dynamic Dd b) -> none do
+code/call/dynamic Ff (var&/dynamic Dd.Ee a, var&/dynamic Dd b) -> none do
 end
 escape 1;
 ]],
@@ -53067,9 +53439,9 @@ escape 1;
 Test { [[
 data Dd;
 data Dd.Ee;
-code/tight/dynamic Ff (var&/dynamic Dd.Ee b) -> none do
+code/call/dynamic Ff (var&/dynamic Dd.Ee b) -> none do
 end
-code/tight/dynamic Ff (var&/dynamic Dd b) -> none do
+code/call/dynamic Ff (var&/dynamic Dd b) -> none do
 end
 escape 1;
 ]],
@@ -53080,9 +53452,9 @@ escape 1;
 Test { [[
 data Dd;
 data Dd.Ee;
-code/tight/dynamic Ff (var&/dynamic Dd a, var&/dynamic Dd.Ee b) -> none do
+code/call/dynamic Ff (var&/dynamic Dd a, var&/dynamic Dd.Ee b) -> none do
 end
-code/tight/dynamic Ff (var&/dynamic Dd.Ee a, var&/dynamic Dd b) -> none do
+code/call/dynamic Ff (var&/dynamic Dd.Ee a, var&/dynamic Dd b) -> none do
 end
 escape 1;
 ]],
@@ -53138,12 +53510,12 @@ do/_
  data IData.Test1 with
    var int d;
  end
- code/tight/dynamic
+ code/call/dynamic
  Ff (var&/dynamic IData mydata) -> int
  do
    escape 1;
  end
- code/tight/dynamic
+ code/call/dynamic
  Ff (var&/dynamic IData.Test1 mydata) -> int
  do
    escape 2;
@@ -53167,19 +53539,19 @@ data IData;
    var r64 f;
  end
 
- code/tight/dynamic
+ code/call/dynamic
  Test (var&/dynamic IData mydata) -> int
  do
    escape 1;
  end
 
- code/tight/dynamic
+ code/call/dynamic
  Test (var&/dynamic IData.Test1 mydata) -> int
  do
    escape 2;
  end
 
- code/tight/dynamic
+ code/call/dynamic
  Test (var&/dynamic IData.Test2 mydata) -> int
  do
    escape 3;
@@ -53203,9 +53575,9 @@ do/_
     data Media.Audio with
         var int a = 1;
     end
-    code/tight/dynamic Play (var&/dynamic Media media) -> int do
+    code/call/dynamic Play (var&/dynamic Media media) -> int do
     end
-    code/tight/dynamic Play (var&/dynamic Media.Audio media) -> int do
+    code/call/dynamic Play (var&/dynamic Media.Audio media) -> int do
         escape media.a;
     end
     var Media.Audio audio = val Media.Audio(_);
@@ -53345,11 +53717,11 @@ data IData;
 data IData.Test1 with
   var int d;
 end
-code/tight/dynamic Ff (var&/dynamic IData mydata) -> int do
+code/call/dynamic Ff (var&/dynamic IData mydata) -> int do
   escape 1;
 end
-code/tight/dynamic Ff (var&/dynamic IData.Test1 mydata) -> int;
-code/tight/dynamic Ff (var&/dynamic IData.Test1 mydata) -> int do
+code/call/dynamic Ff (var&/dynamic IData.Test1 mydata) -> int;
+code/call/dynamic Ff (var&/dynamic IData.Test1 mydata) -> int do
   escape 2;
 end
 var IData.Test1 t1 = val IData.Test1 (0);
@@ -53366,11 +53738,11 @@ do/_
  data IData.Test1 with
    var int d;
  end
- code/tight/dynamic Ff (var&/dynamic IData mydata) -> int do
+ code/call/dynamic Ff (var&/dynamic IData mydata) -> int do
    escape 1;
  end
- //code/tight/dynamic Ff (var&/dynamic IData.Test1 mydata) -> int;
- code/tight/dynamic
+ //code/call/dynamic Ff (var&/dynamic IData.Test1 mydata) -> int;
+ code/call/dynamic
  Ff (var&/dynamic IData.Test1 mydata) -> int
  do
    escape 2;
@@ -53386,7 +53758,7 @@ end
 Test { [[
 data Dd;
 
-code/tight Ff (none) -> Dd do
+code/call Ff (none) -> Dd do
     var Dd d = val Dd();
     escape d;
 end
@@ -53402,7 +53774,7 @@ Test { [[
 data Dd;
 data Dd.Ee;
 
-code/tight Ff (none) -> Dd do
+code/call Ff (none) -> Dd do
     var Dd d = val Dd.Ee();
     escape d;
 end
@@ -53839,15 +54211,15 @@ data Direction as nothing;
 data Direction.Right as 10;
 data Direction.Left as 20;
 
-code/tight/dynamic Ff (var/dynamic Direction dir) -> int do
+code/call/dynamic Ff (var/dynamic Direction dir) -> int do
     escape 1;
 end
 
-code/tight/dynamic Ff (var/dynamic Direction.Right dir) -> int do
+code/call/dynamic Ff (var/dynamic Direction.Right dir) -> int do
     escape 10;
 end
 
-code/tight/dynamic Ff (var/dynamic Direction.Left dir) -> int do
+code/call/dynamic Ff (var/dynamic Direction.Left dir) -> int do
     escape 100;
 end
 
@@ -53867,15 +54239,15 @@ data Direction as 0;
 data Direction.Right as 10;
 data Direction.Left as 20;
 
-code/tight/dynamic Ff (var/dynamic Direction dir) -> int do
+code/call/dynamic Ff (var/dynamic Direction dir) -> int do
     escape 1;
 end
 
-code/tight/dynamic Ff (var/dynamic Direction.Right dir) -> int do
+code/call/dynamic Ff (var/dynamic Direction.Right dir) -> int do
     escape 10;
 end
 
-code/tight/dynamic Ff (var/dynamic Direction.Left dir) -> int do
+code/call/dynamic Ff (var/dynamic Direction.Left dir) -> int do
     escape 100;
 end
 
@@ -54008,7 +54380,7 @@ end
 escape 1;
 ]],
     props = 'line 2 : not permitted inside `atomic`',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54022,7 +54394,7 @@ end
 escape 1;
 ]],
     props = 'line 2 : not permitted inside `atomic`',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54033,7 +54405,7 @@ end
 escape 1;
 ]],
     props = 'line 3 : not permitted inside `atomic`',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
@@ -54047,11 +54419,11 @@ end
 escape 1;
 ]],
     run = 1,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
-code/tight Fx (none)->none do end
+code/call Fx (none)->none do end
 atomic do
     call Fx();
 end
@@ -54059,7 +54431,7 @@ escape 1;
 ]],
     run = 1,
     --props = 'line 4 : not permitted inside `atomic`',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54071,7 +54443,7 @@ escape 1;
 ]],
     props = 'line 3 : not permitted inside `atomic`',
     wrn = true,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54083,7 +54455,7 @@ end
 escape 1;
 ]],
     props = 'line 3 : not permitted inside `atomic`',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54097,7 +54469,21 @@ escape 1;
     parser = 'line 1 : after `do` : expected statement',
     --parser = 'line 1 : after `do` : expected `nothing` or `var` or `vector`',
     --adj = 'line 2 : `async/isr` must be followed by `await FOREVER`',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
+}
+
+Test { [[
+par/or do
+    async/isr [20] do
+    end
+with
+end
+escape 1;
+]],
+    parser = 'line 1 : after `do` : expected statement',
+    --parser = 'line 1 : after `do` : expected `nothing` or `var` or `vector`',
+    --adj = 'line 2 : `async/isr` must be followed by `await FOREVER`',
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54111,18 +54497,25 @@ escape 1;
 ]],
     run = 1,
     --cc = 'error: implicit declaration of function ‘ceu_out_isr_attach’',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
-native/pre do
-    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
-    int CB (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled;
-        is_handled = 0;
-        return is_handled;
-    }
+par/or do
+    spawn async/isr [20] do
+    end
+    await FOREVER;
+with
 end
+escape 1;
+]],
+    run = 1,
+    props_ = 'line 2 : `async/isr` must be at the top-level block',
+    --cc = 'error: implicit declaration of function ‘ceu_out_isr_attach’',
+    _opts = { ceu_features_isr='static' },
+}
+
+Test { [[
 par/or do
     spawn async/isr [1] do
     end
@@ -54132,33 +54525,18 @@ end
 escape 1;
 ]],
     run = 1,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
 native/pre do
     int V = 1;
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled = 1;
-        int* args = (int*) p2.ptr;
-        switch (cmd) {
-            case CEU_CALLBACK_ISR_ATTACH:
-                V = V + args[0] + args[1];
-                break;
-            case CEU_CALLBACK_ISR_DETACH:
-                V = V * args[0] - args[1];
-                break;
-            default:
-                is_handled = 0;
-        }
-        return is_handled;
-    }
-    tceu_callback CB = { &CB_F, NULL };
+    ##define ceu_callback_isr_attach(on,f,ptr,trace) if (on) { V+=((int*)ptr)[0]+((int*)ptr)[1]; } else { V*=((int*)ptr)[0]-((int*)ptr)[1]; }
+    //##define ceu_callback_isr_attach(on,f,ptr,trace) printf(">>> %d\n", ((int*)ptr)[1]);
 end
-{ ceu_callback_register(&CB); }
 par/or do
 do
-    spawn async/isr [3,4] do
+    spawn async/isr [4,3] do
     end
     await FOREVER;
 end             // TODO: forcing finalize out_isr(null)
@@ -54167,31 +54545,15 @@ end
 native _V;
 escape _V;
 ]],
-    run = 20,
-    _opts = { ceu_features_isr='true' },
+    run = 8,
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
 native/pre do
+    ##define ceu_callback_isr_attach(on,f,ptr,trace) if (on) { V+=((int*)ptr)[0]; } else { V*=((int*)ptr)[0]; }
     int V = 1;
-    int CB_F (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled = 1;
-        int* args = (int*) p2.ptr;
-        switch (cmd) {
-            case CEU_CALLBACK_ISR_ATTACH:
-                V = V + args[0];
-                break;
-            case CEU_CALLBACK_ISR_DETACH:
-                V = V * args[0];
-                break;
-            default:
-                is_handled = 0;
-        }
-        return is_handled;
-    }
-    tceu_callback CB = { &CB_F, NULL };
 end
-{ ceu_callback_register(&CB); }
 par/or do
     do
         spawn async/isr [3] do
@@ -54204,7 +54566,7 @@ native _V;
 escape _V;
 ]],
     run = 12,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
@@ -54221,7 +54583,7 @@ escape v[0];
 ]],
     run = 2,
     --isr = 'line 2 : access to "v" must be atomic',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54241,28 +54603,13 @@ atomic do
 end
 ]],
     props = 'line 13 : not permitted inside `atomic`',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
 native/pre do
     int V = 1;
-    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
-    int CB (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled = 1;
-        int* args = (int*) p2.ptr;
-        switch (cmd) {
-            case CEU_CALLBACK_ISR_ATTACH:
-                V = V + args[0];
-                break;
-            case CEU_CALLBACK_ISR_DETACH:
-                V = V * args[0];
-                break;
-            default:
-                is_handled = 0;
-        }
-        return is_handled;
-    }
+    ##define ceu_callback_isr_attach(on,f,ptr,trace) if (on) { V+=((int*)ptr)[0]; } else { V*=((int*)ptr)[0]; }
 end
 var[10] int v = [];
 atomic do
@@ -54283,7 +54630,7 @@ end
 ]],
     _ana = {acc=1},
     run = 2,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54296,7 +54643,7 @@ end
 await FOREVER;
 ]],
     props = 'line 2 : not permitted inside `async/isr`',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54315,28 +54662,13 @@ end
 escape x;
 ]],
     dcls = 'line 8 : internal identifier "x" is not declared',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
 native/pre do
     int V = 1;
-    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
-    int CB (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled = 1;
-        int* args = (int*) p2.ptr;
-        switch (cmd) {
-            case CEU_CALLBACK_ISR_ATTACH:
-                V = V + args[0];
-                break;
-            case CEU_CALLBACK_ISR_DETACH:
-                V = V * args[0];
-                break;
-            default:
-                is_handled = 0;
-        }
-        return is_handled;
-    }
+    ##define ceu_callback_isr_attach(on,f,ptr,trace) if (on) { V+=((int*)ptr)[0]; } else { V*=((int*)ptr)[0]; }
 end
 
 var int x = 0;
@@ -54354,7 +54686,7 @@ end
 escape x;
 ]],
     run = 1,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
@@ -54370,7 +54702,7 @@ escape v;
 ]],
     run = 2,
     --isr = 'line 1 : access to "v" must be atomic',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
@@ -54383,7 +54715,7 @@ var int&& v = null;
     ptrs = 'line 22 : invalid pointer access : crossed yielding statement (/tmp/tmp.ceu:21)',
     --isr = 'line 4 : pointer access breaks the static check for `atomic` sections',
     --run = 1,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
@@ -54402,11 +54734,11 @@ escape 1;
     --inits = 'line 23 : invalid pointer access : crossed `par/or` (/tmp/tmp.ceu:22)',
     --isr = 'line 4 : pointer access breaks the static check for `atomic` sections',
     --run = 1,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
-code/tight Fx (none)->int do
+code/call Fx (none)->int do
     escape 2;
 end
 var int v = call Fx();
@@ -54422,7 +54754,7 @@ escape v;
     --dcls = 'line 25 : abstraction inside `async` : not implemented',
     --isr = 'line 7 : call breaks the static check for `atomic` sections',
     run = 2,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
@@ -54443,7 +54775,7 @@ escape v;
     run = 2,
     --wrn = true,
     --isr = 'line 1 : access to "_f" must be atomic',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54465,7 +54797,7 @@ end
 escape v;
 ]],
     run = 2,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
@@ -54482,7 +54814,7 @@ escape v;
 ]],
     --isr = 'line 2 : access to "v" must be atomic',
     run = 2,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
@@ -54500,7 +54832,7 @@ end
 escape v;
 ]],
     run = 2,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54524,7 +54856,7 @@ end
 ]],
     _ana = {acc=2},
     run = 2,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
@@ -54543,7 +54875,7 @@ escape v;
 ]],
     --isr = 'line 12 : access to "v" must be atomic',
     props = 'line 27 : not permitted inside `async/isr`',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
@@ -54564,7 +54896,7 @@ escape 1;
 ]],
     --isr = 'line 5 : reference access breaks the static check for `atomic` sections',
     run = 1,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54586,7 +54918,7 @@ escape 1;
     --dcls = 'line 4 : invalid operand to `&&` : unexpected context for vector "v"',
     --env = 'line 4 : types mismatch (`int&&` <= `int[]&&`)',
     --env = 'line 4 : invalid operand to unary "&&"',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54600,7 +54932,7 @@ end
 escape 1;
 ]],
     dcls = 'line 3 : external identifier "A" is not declared',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54616,7 +54948,7 @@ escape 1;
 ]],
     --adj = 'line 3 : missing ISR identifier',
     parser = 'line 3 : after `[` : expected expression',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54632,7 +54964,7 @@ escape 1;
 ]],
     stmts = 'line 4 : invalid `emit` : types mismatch : "(int)" <= "()"',
     --env = ' line 4 : arity mismatch',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54648,31 +54980,32 @@ with
 end
 escape 1;
 ]],
+    stmts = 'line 5 : invalid `emit` : only `none` input is supported inside `async/isr`',
+    _opts = { ceu_features_isr='dynamic' },
+}
+
+Test { [[
+input none A;
+par/or do
+    spawn async/isr [1] do
+        var int x = 111;
+        emit A;
+        x = 222;
+    end
+    await FOREVER;
+with
+end
+escape 1;
+]],
     run = 1,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
 native/pre do
     int V = 0;
-    int CB (int cmd, tceu_callback_val p1, tceu_callback_val p2) {
-        int is_handled = 1;
-        int* args = (int*) p2.ptr;
-        switch (cmd) {
-            case CEU_CALLBACK_ISR_ATTACH:
-                V = V + args[0];
-                break;
-            case CEU_CALLBACK_ISR_DETACH:
-                V = V - args[0];
-                break;
-            default:
-                is_handled = 0;
-        }
-        return is_handled;
-    }
-    tceu_callback CB_ = { &CB, NULL };
+    ##define ceu_callback_isr_attach(on,f,ptr,trace) if (on) { V+=((int*)ptr)[0]; } else { V-=((int*)ptr)[0]; }
 end
-{ ceu_callback_register(&CB_); }
 native _ceu_assert;
 native _V;
 par/or do
@@ -54689,7 +55022,7 @@ _ceu_assert(_V==0, "bug found");
 escape _V+1;
 ]],
     run = { ['~>1s']=1 },
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54709,7 +55042,7 @@ escape 1;
     todo = 'acc',
     acc = 'line 8 : access to symbol "_digitalWrite" must be atomic (vs symbol `_digitalRead` (/tmp/tmp.ceu:4))',
     run = 1,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54727,16 +55060,17 @@ end
 escape 1;
 ]],
     dcls = 'line 6 : internal identifier "i" is not declared',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
 native _digitalWrite;
-input int PIN02;
+input none PIN02;
 par/or do
     var int i = 0;
     spawn async/isr [1] do
-        emit PIN02(outer.i);
+        var int x = (outer.i);
+        emit PIN02;
     end
     await FOREVER;
 with
@@ -54744,8 +55078,8 @@ with
 end
 escape 1;
 ]],
-    cc = '10:1: error: implicit declaration of function ‘digitalWrite’',
-    _opts = { ceu_features_isr='true' },
+    cc = '11:1: error: implicit declaration of function ‘digitalWrite’',
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54762,7 +55096,7 @@ escape 1;
 ]],
     todo = 'acc',
     acc = 'line 9 : access to symbol "i" must be atomic (vs variable/event `i` (/tmp/tmp.ceu:5))',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { [[
@@ -54784,11 +55118,11 @@ escape 1;
     _ana = {acc=1},
     run = 1,
     --cc = '#error "Missing definition for macro',
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
 }
 
 Test { PRE_ISR..[[
-code/tight Fx (none)->int do
+code/call Fx (none)->int do
     escape 2;
 end
 var int v = call Fx();
@@ -54804,7 +55138,7 @@ escape v;
     --wrn = true,
     --isr = 'line 4 : access to "Fx" must be atomic',
     run = 2,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
     --dcls = 'line 25 : abstraction inside `async` : not implemented',
 }
 
@@ -54814,7 +55148,7 @@ spawn async/isr [1] do
 end
 escape _CEU_APP.root.__mem.trails_n;
 ]],
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
     run = 3,
 }
 Test { [[
@@ -54825,7 +55159,7 @@ spawn do
 end
 escape _CEU_APP.root.__mem.trails_n;
 ]],
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
     run = 5,
 }
 
@@ -54835,7 +55169,7 @@ spawn async/isr [0] do
 end
 escape 1;
 ]],
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
     run = 1,
 }
 
@@ -54867,7 +55201,7 @@ spawn async/isr [_fff(0)] do
 end
 escape _V+_U;
 ]],
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
     run = 2,
 }
 
@@ -54880,7 +55214,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
     run = 1,
 }
 
@@ -54893,9 +55227,19 @@ code/await Ff (var int x) -> none do
 end
 escape 1;
 ]],
-    _opts = { ceu_features_isr='true' },
+    _opts = { ceu_features_isr='dynamic' },
     wrn = true,
     run = 1,
+}
+
+Test { [[
+spawn async/isr [1] do
+end
+escape 1;
+]],
+    run = 1,
+    cc = 'error: expected declaration specifiers or ‘...’ before numeric constant',
+    _opts = { ceu_features_isr='static' },
 }
 
 --<<< ASYNCS / ISR / ATOMIC
@@ -54904,7 +55248,7 @@ escape 1;
 
 Test { [[
 var int x;
-code/tight Ff (none)->none do
+code/call Ff (none)->none do
 end
 x = 1;
 escape x;
@@ -54917,7 +55261,7 @@ escape x;
 
 Test { [[
 var int x = 0;
-code/tight Ff (none)->none do
+code/call Ff (none)->none do
     outer.y = 1;
 end
 var int y = 10;
@@ -54931,7 +55275,7 @@ Test { [[
 var int ret = 0;
 do
     var int x = 0;
-    code/tight Ff (none)->none do
+    code/call Ff (none)->none do
         outer.x = 1;
     end
     call Ff();
@@ -54945,8 +55289,8 @@ escape ret;
 
 Test { [[
 var int x = 0;
-code/tight Ff (none)->none do
-    code/tight Gg (none)->none do end
+code/call Ff (none)->none do
+    code/call Gg (none)->none do end
     outer.x = 1;
 end
 call Ff();
@@ -54959,7 +55303,7 @@ escape x;
 Test { [[
 var int x = 0;
 data Dd with
-    code/tight Ff (none)->none do
+    code/call Ff (none)->none do
         outer.x = 1;
     end
 end
@@ -54981,7 +55325,7 @@ escape x;
 
 Test { [[
 var int x = 0;
-code/tight Ff (none)->none do
+code/call Ff (none)->none do
     outer.x = 1;
 end
 call Ff();
@@ -54994,7 +55338,7 @@ Test { [[
 var int ret = 0;
 do
     var int x = 0;
-    code/tight Ff (none)->none do
+    code/call Ff (none)->none do
         outer.x = 1;
     end
     call Ff();
@@ -55049,7 +55393,7 @@ code/await Ff (none) -> int do
     var int xxx = 10;
     code/await Gg (none) -> int do
         var int aaa = 10;
-        code/tight Hh (none) -> int do
+        code/call Hh (none) -> int do
             escape outer.xxx + outer.aaa;
         end
         escape call Hh();
@@ -55064,10 +55408,10 @@ escape zzz;
 }
 
 Test { [[
-code/tight Ff (var int xxx) -> int do
+code/call Ff (var int xxx) -> int do
     var int b = 0;
     var int yyy = xxx;
-    code/tight Get (none) -> int do
+    code/call Get (none) -> int do
         escape outer.yyy + outer.xxx;
     end
     escape b + call Get();
@@ -55078,10 +55422,10 @@ escape call Ff(10);
 }
 
 Test { [[
-code/tight Ff (var int xxx) -> int do
+code/call Ff (var int xxx) -> int do
     var int b = 0;
     var int yyy = xxx;
-    code/tight Get (none) -> int do
+    code/call Get (none) -> int do
         escape outer.yyy + outer.xxx;
     end
     escape b + call Get();
@@ -55093,7 +55437,7 @@ escape call Ff(10);
 
 Test { [[
 var int x = 10;
-code/tight Gg (none) -> int do
+code/call Gg (none) -> int do
     escape outer.x;
 end
 escape call Gg();
@@ -55101,9 +55445,9 @@ escape call Gg();
     run = 10,
 }
 Test { [[
-code/tight Ff (none) -> int do
+code/call Ff (none) -> int do
     var int x = 10;
-    code/tight Gg (none) -> int do
+    code/call Gg (none) -> int do
         escape outer.x;
     end
     escape call Gg();
@@ -55113,12 +55457,12 @@ escape call Ff();
     run = 10,
 }
 Test { [[
-code/tight Ff (none) -> int do
+code/call Ff (none) -> int do
     var int x = 10;
-    code/tight Gg (none) -> int do
+    code/call Gg (none) -> int do
         escape outer.x;
     end
-    code/tight Hh (none) -> int do
+    code/call Hh (none) -> int do
         escape call Gg();
     end
     escape call Hh();
@@ -55128,13 +55472,13 @@ escape call Ff();
     run = 10,
 }
 Test { [[
-code/tight Ff (none) -> int do
+code/call Ff (none) -> int do
     var int x = 10;
-    code/tight Gg (none) -> int do
+    code/call Gg (none) -> int do
         escape outer.x;
     end
-    code/tight Hh (none) -> int do
-        code/tight Ii (none) -> int do
+    code/call Hh (none) -> int do
+        code/call Ii (none) -> int do
             escape call Gg();
         end
         escape call Ii();
@@ -55147,11 +55491,11 @@ escape call Ff();
 }
 Test { [[
     var int x = 10;
-    code/tight Gg (none) -> int do
+    code/call Gg (none) -> int do
         escape outer.x;
     end
-    code/tight Hh (none) -> int do
-        code/tight Ii (none) -> int do
+    code/call Hh (none) -> int do
+        code/call Ii (none) -> int do
             escape call Gg();
         end
         escape call Ii();
@@ -55202,9 +55546,9 @@ Test { [[
 }
 
 Test { [[
-code/tight Pingus (none) -> int do
+code/call Pingus (none) -> int do
     var int x = 10;
-    code/tight GetVelocity (none) -> int do
+    code/call GetVelocity (none) -> int do
         escape outer.x;
     end
     escape call GetVelocity();
@@ -55214,15 +55558,15 @@ escape call Pingus();
     run = 10,
 }
 Test { [[
-code/tight Pingus (none) -> int do
+code/call Pingus (none) -> int do
     var int x = 10;
-    code/tight GetVelocity (none) -> int do
+    code/call GetVelocity (none) -> int do
         escape outer.x;
     end
-    code/tight LinearMover (none) -> int do
+    code/call LinearMover (none) -> int do
         escape call GetVelocity();
     end
-    code/tight Faller (none) -> int do
+    code/call Faller (none) -> int do
         escape call LinearMover();
     end
     escape call Faller();
@@ -55256,7 +55600,7 @@ escape x;
 
 Test { [[
 code/await Ff (var int x) -> NEVER do
-    code/tight Get_X (none) -> int do
+    code/call Get_X (none) -> int do
         escape outer.x;
     end
     await FOREVER;
@@ -55311,7 +55655,7 @@ escape ret;
 Test { [[
 data Dd with
     var int x = 10;
-    code/tight Get_X (none) -> int do
+    code/call Get_X (none) -> int do
         escape outer.x;
     end
 end
@@ -55341,7 +55685,7 @@ escape x;
 
 Test { [[
 code/await Ff (none) -> none do
-    code/tight Gg (none) -> none do end
+    code/call Gg (none) -> none do end
 end
 pool[] Ff fs;
 var&? Ff f;
@@ -55369,7 +55713,7 @@ escape f.x;
 
 Test { [[
 code/await Ff (var&[] byte buf) -> NEVER do
-    code/tight Reset (none) -> none do
+    code/call Reset (none) -> none do
         $outer.buf = 0;
     end
     call Reset();
@@ -55387,7 +55731,7 @@ escape ($buf as int) + 1;
 Test { [[
 spawn () do
     var bool v = true;
-    code/tight Is_At (var int x, var int y) -> bool do
+    code/call Is_At (var int x, var int y) -> bool do
         escape outer.v;
     end
 end
@@ -55403,7 +55747,7 @@ par/or do
 with
     var int a = 1;
     code/await Ff (none) -> NEVER do
-        code/tight Gg (none) -> none do
+        code/call Gg (none) -> none do
             var int b = outer.a;
         end
         await FOREVER;
@@ -55617,7 +55961,7 @@ spawn Ff() in fs;
 escape 1;
 ]],
     _opts = { ceu_features_pool='true', },
-    dcls = 'line 3 : dynamic allocation support is disabled',
+    consts = 'line 3 : dynamic allocation support is disabled',
 }
 
 Test { [[

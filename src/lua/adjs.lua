@@ -842,7 +842,7 @@ error'TODO: luacov never executes this?'
             if Type and Type.tag=='_Typelist_amp' then
                 for i,T in ipairs(Type) do
                     local is_alias,tp,id = unpack(T)
-                    ASR(is_alias==false or is_alias=='&')
+                    ASR(is_alias==false or is_alias=='&' or is_alias=='&?')
                     ASR(tp.tag == 'Type')
                     AST.set(Type, i, tp)
                     me.are_aliases[i] = is_alias
@@ -955,7 +955,7 @@ error'TODO: luacov never executes this?'
 
     ID_prim = function (me)
         me.tag = 'ID_prim'
-        if me[1]=='on/off' or me[1]=='yes/no' then
+        if me[1]=='on/off' or me[1]=='yes/no' or me[1]=='high/low' then
             me[1] = 'bool'
         elseif me[1]=='integer' then
             me[1] = 'int'

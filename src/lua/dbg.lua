@@ -4,6 +4,19 @@ loadstring = loadstring or load
 
 -------------------------------------------------------------------------------
 
+function SUB (str, from, to)
+    assert(to, from)
+    local i,e = string.find(str, from, 1, true)
+    if i then
+        return SUB(string.sub(str,1,i-1) .. to .. string.sub(str,e+1),
+                   from, to)
+    else
+        return str
+    end
+end
+
+-------------------------------------------------------------------------------
+
 function DBG1 (...)
     local t = {}
     for i=1, select('#',...) do

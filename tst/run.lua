@@ -204,17 +204,6 @@ end
     end
     defines = defines..' -DCEU_TESTS'
 
-    PAK = {
-        lua_exe = '?',
-        ceu_ver = '?',
-        ceu_git = '?',
-        files = {
-            ceu_c = assert(io.open'../src/c/ceu_callback.c'):read'*a'..
-                    assert(io.open'../src/c/ceu_vector.c'):read'*a'..
-                    assert(io.open'../src/c/ceu_pool.c'):read'*a'..
-                    assert(io.open'../src/c/ceu.c'):read'*a',
-        }
-    }
     CEU = {
         arg  = {},
         opts = T.opts or {
@@ -245,6 +234,9 @@ end
             --ceu_line_directives = 'true',
             --ceu_line_directives = 'false',
             --ceu_err_unused_native = 'pass'
+
+            ceu_features_os    = 'true',
+            ceu_features_async = 'true',
         }
     }
     if T.opts_pre then
@@ -266,6 +258,23 @@ end
 
     dofile(DIR..'dbg.lua')
     DBG,ASR = DBG1,ASR1
+
+    local ceu_vector_h = assert(io.open'../src/c/ceu_vector.h'):read'*a'
+    local ceu_vector_c = assert(io.open'../src/c/ceu_vector.c'):read'*a'
+    local ceu_pool_c   = assert(io.open'../src/c/ceu_pool.c'):read'*a'
+    local ceu_c        = assert(io.open'../src/c/ceu.c'):read'*a'
+    ceu_c = SUB(ceu_c, '=== CEU_VECTOR_H ===',   ceu_vector_h)
+    ceu_c = SUB(ceu_c, '=== CEU_VECTOR_C ===',   ceu_vector_c)
+    ceu_c = SUB(ceu_c, '=== CEU_POOL_C ===',     ceu_pool_c)
+    PAK = {
+        lua_exe = '?',
+        ceu_ver = '?',
+        ceu_git = '?',
+        files = {
+            ceu_c = ceu_c,
+        }
+    }
+
     if not check(T,'cmd') then return end
 
     if CEU.opts.pre then
@@ -287,7 +296,8 @@ end
     dofile(DIR..'types.lua')
     dofile(DIR..'exps.lua')
     if not check(T,'dcls')   then return end
-    if not check(T,'inlines')then return end
+    --if not check(T,'inlines')then return end
+--AST.dump(AST.root)
     --if not check(T,'exps')   then return end
     if not check(T,'consts') then return end
     if not check(T,'fins')   then return end
@@ -307,7 +317,6 @@ end
     dofile(DIR..'multis.lua')
     if not check(T,'mems')   then return end
     if not check(T,'codes')  then return end
---AST.dump(AST.root)
 --do return end
 
 if T.ana or T.tmp or T.props or T.mode then return end

@@ -16,7 +16,8 @@ STMTS.F = {
         end
 
         if to.info.dcl.is_read_only then
-            ASR(me.set_read_only, me,
+            local is_bang = AST.get(to,'Loc', 1,'Exp_!')
+            ASR(is_bang or me.set_read_only, me,
                 'invalid assignment : read-only variable "'..to.info.id..'"')
         end
 
@@ -560,6 +561,10 @@ STMTS.F = {
 
         -- tp
         EXPS.check_tp(me, ID_ext.dcl[2], ps.tp, 'invalid `emit`')
+
+        if AST.par(me,'Async_Isr') and have=='input' then
+            ASR(#AST.asr(ID_ext.dcl[2],'Typelist') == 0, me, 'invalid `emit` : only `none` input is supported inside `async/isr`')
+        end
     end,
 
     Emit_Ext_call = function (me)

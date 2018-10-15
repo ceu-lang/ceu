@@ -1,94 +1,3 @@
-#include <stdlib.h>     /* NULL */
-#include <string.h>     /* memcpy */
-
-typedef struct {
-    usize max;
-    usize len;
-    usize ini;
-    usize unit;
-    u8    is_ring:    1;
-    u8    is_dyn:     1;
-    u8    is_freezed: 1;
-    byte* buf;
-} tceu_vector;
-
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
-#define MAX(a,b) ((a) > (b) ? (a) : (b))
-
-#define ceu_vector_idx(vec,idx)     ((vec)->is_ring ? (((vec)->ini + (idx)) % (vec)->max) : (idx))
-#define ceu_vector_buf_get(vec,idx) (&(vec)->buf[ceu_vector_idx(vec,idx)*(vec)->unit])
-#define ceu_vector_ptr(vec)         (vec)
-
-#ifdef CEU_FEATURES_TRACE
-#define ceu_vector_buf_set(vec,idx,buf,nu)      ceu_vector_buf_set_ex(vec,idx,buf,nu,CEU_TRACE(0))
-#define ceu_vector_copy(dst,dst_i,src,src_i,n)  ceu_vector_copy_ex(dst,dst_i,src,src_i,n,CEU_TRACE(0))
-#define ceu_vector_setmax(vec,len,freeze)       ceu_vector_setmax_ex(vec,len,freeze,CEU_TRACE(0))
-#define ceu_vector_setlen_could(vec,len,grow)   ceu_vector_setlen_could_ex(vec,len,grow,CEU_TRACE(0))
-#define ceu_vector_setlen(a,b,c)                ceu_vector_setlen_ex(a,b,c,CEU_TRACE(0))
-#define ceu_vector_geti(a,b)                    ceu_vector_geti_ex(a,b,CEU_TRACE(0))
-#else
-#define ceu_vector_buf_set(vec,idx,buf,nu)      ceu_vector_buf_set_ex(vec,idx,buf,nu)
-#define ceu_vector_copy(dst,dst_i,src,src_i,n)  ceu_vector_copy_ex(dst,dst_i,src,src_i,n)
-#define ceu_vector_setmax(vec,len,freeze)       ceu_vector_setmax_ex(vec,len,freeze,_)
-#define ceu_vector_setlen_could(vec,len,grow)   ceu_vector_setlen_could_ex(vec,len,grow)
-#define ceu_vector_setlen(a,b,c)                ceu_vector_setlen_ex(a,b,c,_)
-#define ceu_vector_geti(a,b)                    ceu_vector_geti_ex(a,b)
-#endif
-
-void  ceu_vector_init            (tceu_vector* vector, usize max, bool is_ring, bool is_dyn, usize unit, byte* buf);
-
-#ifdef CEU_FEATURES_TRACE
-#define ceu_vector_setmax_ex(a,b,c,d) ceu_vector_setmax_ex_(a,b,c,d)
-#else
-#define ceu_vector_setmax_ex(a,b,c,d) ceu_vector_setmax_ex_(a,b,c)
-#endif
-
-byte* ceu_vector_setmax_ex_      (tceu_vector* vector, usize len, bool freeze
-#ifdef CEU_FEATURES_TRACE
-                                 , tceu_trace trace
-#endif
-                                 );
-
-int   ceu_vector_setlen_could_ex (tceu_vector* vector, usize len, bool grow
-#ifdef CEU_FEATURES_TRACE
-                                 , tceu_trace trace
-#endif
-                                 );
-
-#ifdef CEU_FEATURES_TRACE
-#define ceu_vector_setlen_ex(a,b,c,d) ceu_vector_setlen_ex_(a,b,c,d)
-#else
-#define ceu_vector_setlen_ex(a,b,c,d) ceu_vector_setlen_ex_(a,b,c)
-#endif
-
-void  ceu_vector_setlen_ex_      (tceu_vector* vector, usize len, bool grow
-#ifdef CEU_FEATURES_TRACE
-                                 , tceu_trace trace
-#endif
-                                 );
-
-byte* ceu_vector_geti_ex         (tceu_vector* vector, usize idx
-#ifdef CEU_FEATURES_TRACE
-                                 , tceu_trace trace
-#endif
-                                 );
-
-void  ceu_vector_buf_set_ex      (tceu_vector* vector, usize idx, byte* buf, usize nu
-#ifdef CEU_FEATURES_TRACE
-                                 , tceu_trace trace
-#endif
-                                 );
-
-void  ceu_vector_copy_ex         (tceu_vector* dst, usize dst_i, tceu_vector* src, usize src_i, usize n
-#ifdef CEU_FEATURES_TRACE
-                                 , tceu_trace trace
-#endif
-                                 );
-
-#if 0
-char* ceu_vector_tochar (tceu_vector* vector);
-#endif
-
 void ceu_vector_init (tceu_vector* vector, usize max, bool is_ring,
                       bool is_dyn, usize unit, byte* buf) {
     vector->len        = 0;
@@ -101,6 +10,7 @@ void ceu_vector_init (tceu_vector* vector, usize max, bool is_ring,
     vector->buf        = buf;
 }
 
+#ifdef CEU_FEATURES_DYNAMIC
 byte* ceu_vector_setmax_ex_      (tceu_vector* vector, usize len, bool freeze
 #ifdef CEU_FEATURES_TRACE
                                  , tceu_trace trace
@@ -117,17 +27,12 @@ byte* ceu_vector_setmax_ex_      (tceu_vector* vector, usize len, bool freeze
         /* free */
         if (vector->buf != NULL) {
             vector->max = 0;
-            ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, vector->buf, 0, trace);
+            ceu_assert_ex(ceu_callback_realloc(vector->buf,0,trace)==NULL, "bug found", trace);
             vector->buf = NULL;
         }
     } else {
         ceu_assert_ex(len > vector->max, "not implemented: shrinking vectors", trace);
-        ceu_callback_ptr_size(CEU_CALLBACK_REALLOC,
-                              vector->buf,
-                              len*vector->unit,
-                              trace
-                             );
-        vector->buf = (byte*) ceu_callback_ret.ptr;
+        vector->buf = (byte*) ceu_callback_realloc(vector->buf, len*vector->unit, trace);
 
         if (vector->is_ring && vector->ini>0) {
             /*
@@ -155,6 +60,7 @@ byte* ceu_vector_setmax_ex_      (tceu_vector* vector, usize len, bool freeze
 END:
     return vector->buf;
 }
+#endif
 
 int   ceu_vector_setlen_could_ex (tceu_vector* vector, usize len, bool grow
 #ifdef CEU_FEATURES_TRACE
@@ -170,13 +76,19 @@ int   ceu_vector_setlen_could_ex (tceu_vector* vector, usize len, bool grow
     }
 
     /* fixed size */
-    if (!vector->is_dyn || vector->is_freezed) {
+#ifdef CEU_FEATURES_DYNAMIC
+    if (!vector->is_dyn || vector->is_freezed)
+#endif
+    {
         if (len > vector->max) {
             return 0;
         }
 
     /* variable size */
-    } else {
+    }
+#ifdef CEU_FEATURES_DYNAMIC
+    else
+    {
         if (len <= vector->max) {
             /* ok */    /* len already within limits */
         } else {
@@ -188,6 +100,7 @@ int   ceu_vector_setlen_could_ex (tceu_vector* vector, usize len, bool grow
             }
         }
     }
+#endif
 
     return 1;
 }
@@ -204,11 +117,17 @@ void  ceu_vector_setlen_ex_      (tceu_vector* vector, usize len, bool grow
     }
 
     /* fixed size */
-    if (!vector->is_dyn || vector->is_freezed) {
+#ifdef CEU_FEATURES_DYNAMIC
+    if (!vector->is_dyn || vector->is_freezed)
+#endif
+    {
         ceu_assert_ex(len <= vector->max, "access out of bounds", trace);
 
     /* variable size */
-    } else {
+    }
+#ifdef CEU_FEATURES_DYNAMIC
+    else
+    {
         if (len <= vector->max) {
             /* ok */    /* len already within limits */
 /* TODO: shrink memory */
@@ -219,6 +138,7 @@ void  ceu_vector_setlen_ex_      (tceu_vector* vector, usize len, bool grow
             }
         }
     }
+#endif
 
     if (vector->is_ring && len<vector->len) {
         vector->ini = (vector->ini + (vector->len - len)) % vector->max;

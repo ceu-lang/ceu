@@ -76,24 +76,24 @@ local T = {
     },
 
     {
-        '`do` or `await` or `%[` or location or `{` or `%(` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `call` or `sizeof` or `null` or number or `false` or `true` or `off` or `on` or `no` or `yes` or `"` or string literal or `emit` or `call/recursive` or `val` or `new` or `spawn` or `_` or `request` or `watching`',
+        '`do` or `await` or `%[` or location or `{` or `%(` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `call` or `sizeof` or `null` or number or `false` or `true` or `off` or `on` or `no` or `yes` or `low` or `high` or `"` or string literal or `emit` or `call/recursive` or `val` or `new` or `spawn` or `_` or `request` or `watching`',
         'expression'
     },
     {
-        '`not` or `%-` or `%+` or `~` or `%$%$` or `%*` or `%$` or `&&` or `&` or `call` or internal identifier or native identifier or `outer` or `{` or `%(` or `sizeof` or `null` or number or `false` or `true` or `off` or `on` or `no` or `yes` or `"` or string literal',
+        '`not` or `%-` or `%+` or `~` or `%$%$` or `%*` or `%$` or `&&` or `&` or `call` or internal identifier or native identifier or `outer` or `{` or `%(` or `sizeof` or `null` or number or `false` or `true` or `off` or `on` or `no` or `yes` or `low` or `high` or `"` or string literal',
         'expression'
     },
 
     {
-        '`code` or `input` or `output` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `catch` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `pool` or `event` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `off` or `on` or `no` or `yes` or `"` or string literal or `escape` or `break` or `continue` or `throw` or `par` or end of file',
+        '`code` or `input` or `output` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `catch` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `pool` or `event` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `off` or `on` or `no` or `yes` or `low` or `high` or `"` or string literal or `escape` or `break` or `continue` or `throw` or `par` or end of file',
         'statement'
     },
     {
-        '`code` or `input` or `output` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `catch` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `pool` or `event` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `off` or `on` or `no` or `yes` or `"` or string literal or `escape` or `break` or `continue` or `throw` or `par` or `with`',
+        '`code` or `input` or `output` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `catch` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `pool` or `event` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `off` or `on` or `no` or `yes` or `low` or `high` or `"` or string literal or `escape` or `break` or `continue` or `throw` or `par` or `with`',
         'statement'
     },
     {
-        '`code` or `input` or `output` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `catch` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `pool` or `event` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `off` or `on` or `no` or `yes` or `"` or string literal or `escape` or `break` or `continue` or `throw` or `par` or `end`',
+        '`code` or `input` or `output` or `data` or `native` or `do` or `if` or `loop` or `every` or `lock` or `spawn` or `par/or` or `par/and` or `watching` or `catch` or `pause/if` or `await` or `atomic` or `pre` or `{` or `%[` or `lua` or `var` or `nothing` or `pool` or `event` or `deterministic` or location or `%(` or `emit` or `call/recursive` or `call` or `request` or `kill` or `not` or `%-` or `%+` or `~` or `%$%$` or `&&` or `&` or `sizeof` or `null` or number or `false` or `true` or `off` or `on` or `no` or `yes` or `low` or `high` or `"` or string literal or `escape` or `break` or `continue` or `throw` or `par` or `end`',
         'statement'
     },
 }
@@ -239,7 +239,7 @@ local EE = function (msg)
 end
 
 -->>> OK
-local TYPES = P'bool' + 'yes/no' + 'on/off'
+local TYPES = P'bool' + 'yes/no' + 'on/off' + 'high/low'
             + 'byte'
             + 'r32' + 'r64' + 'real'
             + 'integer' + 'int'
@@ -259,7 +259,7 @@ KEYS = P
 'until' +
 'true' +
 'traverse' +
-'tight' +
+--'tight' +
 'throws' +
 'throw' +
 'thread' +
@@ -291,6 +291,7 @@ KEYS = P
 'new' +
 'NEVER' +
 'native' +
+'low' +
 'lua' +
 'loop' +
 'lock' +
@@ -300,6 +301,7 @@ KEYS = P
 'input' +
 'in' +
 'if' +
+'high' +
 'hold' +
 'FOREVER' +
 'finalize' +
@@ -443,7 +445,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
 
     -- CODE
 
-    , __code = K'code' * Ct( Cg(K'/tight'*Cc'tight','tight') *
+    , __code = K'code' * Ct( Cg(K'/call'*Cc'tight','tight') *
                              Cg(K'/dynamic'*Cc'dynamic','dynamic')^-1 *
                              Cg(K'/recursive'*Cc'recursive','recursive')^-1 ) *
                 (V'__ID_abs'-V'__id_data') *
@@ -552,7 +554,7 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
     , Ext = CK'input'  * (PARENS(V'_Typelist')     + V'Type')             * V'__ID_ext'
           + CK'output' * (PARENS(V'_Typelist_amp') + OPT(CKK'&')*V'Type') * V'__ID_ext'
     , _Typelist     = LIST(V'Type')
-    , _Typelist_amp = LIST(Ct(OPT(CKK'&') * V'Type' * (V'__ID_int' + Cc(false))))
+    , _Typelist_amp = LIST(Ct(OPT(V'__ALS') * V'Type' * (V'__ID_int' + Cc(false))))
 
     , Ext_impl = V'Ext' * V'__Do' * V'Y'
 
@@ -800,6 +802,8 @@ GG = { [1] = x * V'_Stmts' * V'Y' * (P(-1) + E('end of file'))
              + K'on'    / function() return 1 end
              + K'no'    / function() return 0 end
              + K'yes'   / function() return 1 end
+             + K'low'   / function() return 0 end
+             + K'high'  / function() return 1 end
     , STRING = CKK( CKK'"' * (P(1)-'"'-'\n')^0 * K'"', 'string literal' )
     , NULL   = CK'null'     -- TODO: the idea is to get rid of this
 

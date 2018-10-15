@@ -277,7 +277,7 @@ DCLS.F = {
                 if not (dcl.is_used or dcl.is_predefined or dcl.__dcls_unused or dcl.__dcls_old) then
                     dcl.__dcls_unused = true
                     f(false, dcl,
-                      AST.tag2id[dcl.tag]..' "'..dcl.id..'" declared but not used')
+                      AST.tag2id[dcl.tag]..' "'..(dcl.id or '?')..'" declared but not used')
                 end
             end
         end
@@ -430,9 +430,6 @@ DCLS.F = {
     Vec__PRE = function (me)
         local is_alias,tp,id,dim = unpack(me)
 
-        if (dim == '[]') and (not is_alias) then
-            ASR(CEU.opts.ceu_features_dynamic, me, 'dynamic allocation support is disabled')
-        end
         if me.tag == 'Pool' then
             ASR(CEU.opts.ceu_features_pool, me, 'pool support is disabled')
         end
@@ -461,9 +458,9 @@ DCLS.F = {
         DCLS.F.__no_abs(Type, 'Code', 'tight')
 
         local code = AST.par(me, 'Code')
-        if code and code[1].tight and (not is_alias) then
+        if code and code[1].tight and (not is_alias) and (not TYPES.is_nat(TYPES.get(Type,1))) then
             ASR(false, me,
-                'invalid declaration : vector inside `code/tight`')
+                'invalid declaration : vector inside `code/call`')
         end
 
         -- vector[] none vec;
@@ -972,7 +969,7 @@ end
         local id = unpack(me)
         local blk = AST.par(me,'Block')
         local can_cross = false
-        if id ~= '_ret' then
+        do
             -- escape should refer to the parent "a"
             -- var int a = do var int a; ... escape ...; end;
             local set = AST.par(me,'Set_Exp')

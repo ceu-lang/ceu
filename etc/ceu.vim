@@ -12,7 +12,7 @@ endif
 
 syn match	Macro	    "\<_\w*\>"
 
-syn keyword	cConstant   null true false _ yes no on off
+syn keyword	cConstant   null true false _ yes no on off high low
 
 syn keyword	cOperator   not or and sizeof as is
 
