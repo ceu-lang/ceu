@@ -1,5 +1,5 @@
 LUA_EXE = ...
-CEU_VER = 'pre-v0.40'
+CEU_VER = 'v0.40'
 CEU_GIT = ''
     do
         local f = assert(io.popen('git rev-parse HEAD'))
