@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Declarations - Céu v0.30 - Reference Manual</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Declarations";
+    var mkdocs_page_input_path = "statements/declarations.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Céu v0.30 - Reference Manual</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Overview</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../lexical_rules/">Lexical Rules</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../types/">Types</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../storage_entities/">Storage Entities</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../">Statements</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../expressions/">Locations & Expressions</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../compilation/">Compilation</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../syntax/">Syntax</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../license/">License</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Céu v0.30 - Reference Manual</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Declarations</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h2 id="declarations">Declarations<a class="headerlink" href="#declarations" title="Permanent link">&para;</a></h2>
+<p>A declaration introduces a <a href="../storage_entities/#storage-entities">storage entity</a>
+to the enclosing block.
+All declarations are subject to <a href="../storage_entities/#lexical-scope">lexical scope</a>.</p>
+<p>Céu supports variables, vectors, pools, internal events, and external events:</p>
+<pre><code class="ceu">
+Var  ::= var [`&amp;´|`&amp;?´] [ `[´ [Exp [`*`]] `]´ ] [`/dynamic´|`/nohold´] Type ID_int [`=´ Sources]
+Pool ::= pool [`&amp;´] `[´ [Exp] `]´ Type ID_int [`=´ Sources]
+Int  ::= event [`&amp;´] (Type | `(´ LIST(Type) `)´) ID_int [`=´ Sources]
+
+Ext  ::= input  (Type | `(´ LIST(Type) `)´) ID_ext
+      |  output (Type | `(´ LIST([`&amp;´] Type [ID_int]) `)´) ID_ext
+            [ do Block end ]
+
+Sources ::= /* (see &quot;Assignments&quot;) */
+</code></pre>
+
+<p>Most declarations support an initialization <a href="#assignments">assignment</a>.</p>
+<!--
+See also [Storage Classes](#TODO) for an overview of storage entities.
+-->
+
+<h3 id="variables">Variables<a class="headerlink" href="#variables" title="Permanent link">&para;</a></h3>
+<p>A <a href="../storage_entities/#variables">variable</a> declaration has an associated
+<a href="../types/#types">type</a> and can be optionally <a href="#assignments">initialized</a>.
+Declarations can also be
+<a href="../storage_entities/#aliases">aliases or option aliases</a>.</p>
+<p>Examples:</p>
+<pre><code class="ceu">var  int v = 10;    // &quot;v&quot; is an integer variable initialized to 10
+var  int a=0, b=3;  // &quot;a&quot; and &quot;b&quot; are integer variables initialized to 0 and 3
+var&amp; int z = &amp;v;    // &quot;z&quot; is an alias to &quot;v&quot;
+</code></pre>
+
+<h3 id="vectors">Vectors<a class="headerlink" href="#vectors" title="Permanent link">&para;</a></h3>
+<p>A <a href="../storage_entities/#vectors">vector</a> declaration specifies a
+<a href="#dimension">dimension</a> between brackets,
+an associated <a href="../types/#types">type</a> and can be optionally
+<a href="#assignments">initialized</a>.
+Declarations can also be <a href="../storage_entities/#aliases">aliases</a>.
+<code>TODO: ring buffers</code></p>
+<!--
+`TODO: unmacthing [] in binding`
+-->
+
+<p>Examples:</p>
+<pre><code class="ceu">var int n = 10;
+var[10] int vs1 = [];    // &quot;vs1&quot; is a static vector of 10 elements max
+var[n]  int vs2 = [];    // &quot;vs2&quot; is a dynamic vector of 10 elements max
+var[]   int vs3 = [];    // &quot;vs3&quot; is an unbounded vector
+var&amp;[]  int vs4 = &amp;vs1;  // &quot;vs4&quot; is an alias to &quot;vs1&quot;
+</code></pre>
+
+<h3 id="pools">Pools<a class="headerlink" href="#pools" title="Permanent link">&para;</a></h3>
+<p>A <a href="../storage_entities/#pools">pool</a> declaration specifies a dimension and an
+associated <a href="../types/#types">type</a>.
+Declarations for pools can also be <a href="../storage_entities/#aliases">aliases</a>.
+Only in this case they can be <a href="#assignments">initialized</a>.</p>
+<p>The expression between the brackets specifies the <a href="#dimension">dimension</a> of
+the pool.</p>
+<p>Examples:</p>
+<pre><code class="ceu">code/await Play (...) do ... end
+pool[10] Play plays;        // &quot;plays&quot; is a static pool of 10 elements max
+pool&amp;[]  Play a = &amp;plays;   // &quot;a&quot; is an alias to &quot;plays&quot;
+</code></pre>
+
+<!--
+See also [Code Invocation](#TODO).
+-->
+
+<p><code>TODO: data pools</code></p>
+<h3 id="dimension">Dimension<a class="headerlink" href="#dimension" title="Permanent link">&para;</a></h3>
+<p>Declarations for <a href="#vectors">vectors</a> or <a href="#pools">pools</a> require an expression
+between brackets to specify a dimension as follows:</p>
+<ul>
+<li><em>constant expression</em>: Maximum number of elements is fixed and space is
+                         statically pre-allocated.</li>
+<li><em>variable expression</em>: Maximum number of elements is fixed but space is
+                         dynamically allocated.
+                         The expression is evaulated once at declaration time.</li>
+<li><em>omitted</em>: Maximum number of elements is unbounded and space is dynamically
+             allocated.
+             The space for dynamic dimensions grow and shrink automatically.</li>
+<li><code>TODO: ring buffers</code></li>
+</ul>
+<h3 id="events">Events<a class="headerlink" href="#events" title="Permanent link">&para;</a></h3>
+<p>An <a href="../storage_entities/#events">event</a> declaration specifies a
+<a href="../types/#types">type</a> for the values it carries when occurring.
+It can be also a list of types if the event communicates multiple values.</p>
+<!--
+See also [Introduction](#TODO) for a general overview of events.
+-->
+
+<h4 id="external-events">External Events<a class="headerlink" href="#external-events" title="Permanent link">&para;</a></h4>
+<p>Examples:</p>
+<pre><code class="ceu">input  none A;          // &quot;A&quot; is an input event carrying no values
+output int  MY_EVT;     // &quot;MY_EVT&quot; is an output event carrying integer values
+input (int,byte&amp;&amp;) BUF; // &quot;BUF&quot; is an input event carrying an &quot;(int,byte&amp;&amp;)&quot; pair
+</code></pre>
+
+<p><code>TODO: output &amp;/impl</code></p>
+<h4 id="internal-events">Internal Events<a class="headerlink" href="#internal-events" title="Permanent link">&para;</a></h4>
+<p>Declarations for internal events can also be
+<a href="../storage_entities/#aliases">aliases</a>.
+Only in this case they can be <a href="#assignments">initialized</a>.</p>
+<p>Examples:</p>
+<pre><code class="ceu">event  none a;          // &quot;a&quot; is an internal events carrying no values
+event&amp; none z = &amp;a;     // &quot;z&quot; is an alias to event &quot;a&quot;
+event (int,int) c;      // &quot;c&quot; is a internal event carrying an &quot;(int,int)&quot; pair
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+
+</body>
+</html>

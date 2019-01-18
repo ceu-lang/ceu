@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Command line - Céu v0.30 - Reference Manual</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Command line";
+    var mkdocs_page_input_path = "compilation/command_line.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Céu v0.30 - Reference Manual</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Overview</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../lexical_rules/">Lexical Rules</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../types/">Types</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../storage_entities/">Storage Entities</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../statements/">Statements</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../expressions/">Locations & Expressions</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../">Compilation</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../syntax/">Syntax</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../license/">License</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Céu v0.30 - Reference Manual</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Command line</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h2 id="command-line">Command Line<a class="headerlink" href="#command-line" title="Permanent link">&para;</a></h2>
+<p>The single command <code>ceu</code> is used for all compilation phases:</p>
+<pre><code>Usage: ceu [&lt;options&gt;] &lt;file&gt;...
+
+Options:
+
+    --help                          display this help, then exit
+    --version                       display version information, then exit
+
+    --pre                           Preprocessor phase: preprocess Céu into Céu
+    --pre-exe=FILE                      preprocessor executable
+    --pre-args=ARGS                     preprocessor arguments
+    --pre-input=FILE                    input file to compile (Céu source)
+    --pre-output=FILE                   output file to generate (Céu source)
+
+    --ceu                           Céu phase: compiles Céu into C
+    --ceu-input=FILE                    input file to compile (Céu source)
+    --ceu-output=FILE                   output source file to generate (C source)
+    --ceu-line-directives=BOOL          insert `#line` directives in the C output (default `true`)
+
+    --ceu-features-trace=BOOL           enable trace support (default `false`)
+    --ceu-features-exception=BOOL       enable exceptions support (default `false`)
+    --ceu-features-dynamic=BOOL         enable dynamic allocation support (default `false`)
+    --ceu-features-pool=BOOL            enable pool support (default `false`)
+    --ceu-features-lua=BOOL             enable `lua` support (default `false`)
+    --ceu-features-thread=BOOL          enable `async/thread` support (default `false`)
+    --ceu-features-isr=BOOL             enable `async/isr` support (default `false`)
+    --ceu-features-pause=BOOL           enable `pause/if` support (default `false`)
+
+    --ceu-err-unused=OPT                effect for unused identifier: error|warning|pass
+    --ceu-err-unused-native=OPT                    unused native identifier
+    --ceu-err-unused-code=OPT                      unused code identifier
+    --ceu-err-uninitialized=OPT         effect for uninitialized variable: error|warning|pass
+    --ceu-err-uncaught-exception=OPT    effect for uncaught exception: error|warning|pass
+    --ceu-err-uncaught-exception-main=OPT   ... at the main block (outside `code` abstractions)
+    --ceu-err-uncaught-exception-lua=OPT    ... from Lua code
+
+    --env                           Environment phase: packs all C files together
+    --env-types=FILE                    header file with type declarations (C source)
+    --env-threads=FILE                  header file with thread declarations (C source)
+    --env-ceu=FILE                      output file from Céu phase (C source)
+    --env-main=FILE                     source file with main function (C source)
+    --env-output=FILE                   output file to generate (C source)
+
+    --cc                            C phase: compiles C into binary
+    --cc-exe=FILE                       C compiler executable
+    --cc-args=ARGS                      compiler arguments
+    --cc-input=FILE                     input file to compile (C source)
+    --cc-output=FILE                    output file to generate (binary)
+</code></pre>
+
+<p>All phases are optional.
+To enable a phase, the associated prefix must be enabled.
+If two consecutive phases are enabled, the output of the preceding and the
+input of the succeeding phases can be omitted.</p>
+<p>Examples:</p>
+<pre><code># Preprocess &quot;user.ceu&quot;, and converts the output to &quot;user.c&quot;
+$ ceu --pre --pre-input=&quot;user.ceu&quot; --ceu --ceu-output=&quot;user.c&quot;
+</code></pre>
+
+<pre><code># Packs &quot;user.c&quot;, &quot;types.h&quot;, and &quot;main.c&quot;, compiling them to &quot;app.out&quot;
+$ ceu --env --env-ceu=user.c --env-types=types.h --env-main=main.c \
+      --cc --cc-output=app.out
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+
+</body>
+</html>

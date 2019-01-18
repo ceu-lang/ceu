@@ -5,35 +5,27 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="None">
   
-  
-  
-  <title>Compilation - Céu v0.30 - Reference Manual</title>
-  
-
   <link rel="shortcut icon" href="../img/favicon.ico">
-
-  
+  <title>Compilation - Céu v0.30 - Reference Manual</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
-  <link rel="stylesheet" href="../css/highlight.css">
-  <link href="../extra.css" rel="stylesheet">
-
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
   
   <script>
     // Current page data
     var mkdocs_page_name = "Compilation";
     var mkdocs_page_input_path = "compilation/index.md";
-    var mkdocs_page_url = "/compilation/";
+    var mkdocs_page_url = null;
   </script>
   
-  <script src="../js/jquery-2.1.1.min.js"></script>
-  <script src="../js/modernizr-2.8.3.min.js"></script>
-  <script type="text/javascript" src="../js/highlight.pack.js"></script>
-  <script src="../js/theme.js"></script> 
-
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
   
 </head>
 
@@ -47,87 +39,73 @@
         <a href=".." class="icon icon-home"> Céu v0.30 - Reference Manual</a>
         <div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
   </form>
 </div>
       </div>
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-        <ul class="current">
+	<ul class="current">
+	  
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="..">Overview</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="..">Overview</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../lexical_rules/">Lexical Rules</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../lexical_rules/">Lexical Rules</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../types/">Types</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../types/">Types</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../storage_entities/">Storage Entities</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../storage_entities/">Storage Entities</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../statements/">Statements</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../statements/">Statements</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../expressions/">Locations & Expressions</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../expressions/">Locations & Expressions</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 current">
-        <a class="current" href="./">Compilation</a>
-        
-            <ul>
+            <li class="toctree-l1 current">
+		
+    <a class="current" href="./">Compilation</a>
+    <ul class="subnav">
             
-                <li class="toctree-l3"><a href="#compilation">Compilation</a></li>
-                
-                    <li><a class="toctree-l4" href="#command-line">Command Line</a></li>
-                
-                    <li><a class="toctree-l4" href="#c-api">C API</a></li>
-                
-            
-            </ul>
+    <li class="toctree-l2"><a href="#compilation">Compilation</a></li>
+    
+        <ul>
         
-    </li>
-<li>
+            <li><a class="toctree-l3" href="#command-line">Command Line</a></li>
+        
+            <li><a class="toctree-l3" href="#c-api">C API</a></li>
+        
+        </ul>
+    
+
+    </ul>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../syntax/">Syntax</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../syntax/">Syntax</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../license/">License</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../license/">License</a>
+	    </li>
           
         </ul>
       </div>
@@ -163,9 +141,9 @@
               
                 <h1 id="compilation">Compilation<a class="headerlink" href="#compilation" title="Permanent link">&para;</a></h1>
 <p>The compiler converts an input program in Céu to an output in C, which is
-further embedded in an <a href="./../#environments">environment</a> satisfying a
+further embedded in an <a href="../#environments">environment</a> satisfying a
 <a href="#c-api">C API</a>, which is finally compiled to an executable:</p>
-<p><img alt="" src="./compilation.png" /></p>
+<p><img alt="" src="compilation.png" /></p>
 <h2 id="command-line">Command Line<a class="headerlink" href="#command-line" title="Permanent link">&para;</a></h2>
 <p>The single command <code>ceu</code> is used for all compilation phases:</p>
 <pre><code>Usage: ceu [&lt;options&gt;] &lt;file&gt;...
@@ -246,7 +224,7 @@ mapped from the host environment in steps <code>1-3</code>.</p>
 <p>The main program depends on declarations from the Céu program.</p>
 <h3 id="types">Types<a class="headerlink" href="#types" title="Permanent link">&para;</a></h3>
 <p>The type declarations must map the types of the host environment to all
-<a href="./../types/#primitives">primitive types</a> of Céu.</p>
+<a href="../types/#primitives">primitive types</a> of Céu.</p>
 <p>Example:</p>
 <pre><code class="c">#include &lt;stdint.h&gt;
 #include &lt;sys/types.h&gt;
@@ -274,7 +252,7 @@ typedef double   r64;
 </code></pre>
 
 <h3 id="threads">Threads<a class="headerlink" href="#threads" title="Permanent link">&para;</a></h3>
-<p>If the user program uses <a href="./../statements/#thread">threads</a> and the option
+<p>If the user program uses <a href="../statements/#thread">threads</a> and the option
 <code>--ceu-features-thread</code> is set, the host environment must provide declarations
 for types and functions expected by Céu.</p>
 <p>Example:</p>
@@ -298,7 +276,7 @@ for types and functions expected by Céu.</p>
 <p>The converted program generates types and constants required by the main
 program.</p>
 <h4 id="external-events">External Events<a class="headerlink" href="#external-events" title="Permanent link">&para;</a></h4>
-<p>For each <a href="./../statements/#external-events">external input and output event</a>
+<p>For each <a href="../statements/#external-events">external input and output event</a>
 <code>&lt;ID&gt;</code> defined in Céu, the compiler generates corresponding declarations as
 follows:</p>
 <ol>
@@ -384,7 +362,7 @@ Should be called once.</p>
 <p>Notifies the program about an input <code>id</code> with a payload <code>params</code>.
 Should be called whenever the event loop senses a change.
 The call to <code>ceu_input(CEU_INPUT__ASYNC, NULL)</code> makes
-<a href="./../statements/#asynchronous-block">asynchronous blocks</a> to execute a step.</p>
+<a href="../statements/#asynchronous-block">asynchronous blocks</a> to execute a step.</p>
 </li>
 <li>
 <p><code>int ceu_loop (tceu_callback* cb, int argc, char* argv[])</code></p>
@@ -534,7 +512,7 @@ int main (int argc, char* argv[])
 
   Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
 </footer>
-	  
+      
         </div>
       </div>
 
@@ -542,7 +520,7 @@ int main (int argc, char* argv[])
 
   </div>
 
-<div class="rst-versions" role="note" style="cursor: pointer">
+  <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
@@ -553,6 +531,14 @@ int main (int argc, char* argv[])
       
     </span>
 </div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
 
 </body>
 </html>
+
+<!--
+MkDocs version : 1.0.4
+Build Date UTC : 2019-01-18 17:35:08
+-->

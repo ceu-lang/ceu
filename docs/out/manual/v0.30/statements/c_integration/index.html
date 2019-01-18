@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>C integration - Céu v0.30 - Reference Manual</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "C integration";
+    var mkdocs_page_input_path = "statements/c_integration.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Céu v0.30 - Reference Manual</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Overview</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../lexical_rules/">Lexical Rules</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../types/">Types</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../storage_entities/">Storage Entities</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../">Statements</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../expressions/">Locations & Expressions</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../compilation/">Compilation</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../syntax/">Syntax</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../license/">License</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Céu v0.30 - Reference Manual</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>C integration</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h2 id="c-integration">C Integration<a class="headerlink" href="#c-integration" title="Permanent link">&para;</a></h2>
+<!--
+Céu integrates safely with C, and programs can define and make native calls
+seamlessly while avoiding memory leaks and dangling pointers when dealing with
+external resources.
+-->
+
+<p>Céu provides <a href="#native-declaration">native declarations</a> to import C symbols,
+<a href="#native-block">native blocks</a> to define new code in C,
+<a href="#native-statement">native statements</a> to inline C statements,
+<a href="#native-call">native calls</a> to call C functions,
+and <a href="#resources-finalization">finalization</a> to deal with C pointers safely:</p>
+<pre><code class="ceu">Nat_Symbol ::= native [`/´(pure|const|nohold|plain)] `(´ LIST(ID_nat) `)´
+Nat_Block  ::= native `/´(pre|pos) do
+                   &lt;code definitions in C&gt;
+               end
+Nat_End    ::= native `/´ end
+
+Nat_Stmts  ::= `{´ {&lt;code in C&gt; | `@´ (`(´Exp`)´|Exp)} `}´     /* `@@´ escapes to `@´ */
+
+Nat_Call   ::= [call] (Loc | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
+
+Finalization ::= do [Stmt] Finalize
+              |  var [`&amp;´|`&amp;?´] Type ID_int `=´ `&amp;´ (Call_Nat | Call_Code) Finalize
+Finalize ::= finalize [ `(´ LIST(Loc) `)´ ] with
+                 Block
+             [ pause  with Block ]
+             [ resume with Block ]
+             end
+</code></pre>
+
+<p>Native calls and statements transfer execution to C, losing the guarantees of
+the <a href="../#synchronous-execution-model">synchronous model</a>.
+For this reason, programs should only resort to C for asynchronous
+functionality (e.g., non-blocking I/O) or simple <code>struct</code> accessors, but
+never for control purposes.</p>
+<p><code>TODO: Nat_End</code></p>
+<h3 id="native-declaration">Native Declaration<a class="headerlink" href="#native-declaration" title="Permanent link">&para;</a></h3>
+<p>In Céu, any <a href="../lexical_rules/#identifiers">identifier</a> prefixed with an
+underscore is a native symbol defined externally in C.
+However, all external symbols must be declared before their first use in a
+program.</p>
+<p>Native declarations support four modifiers as follows:</p>
+<ul>
+<li><code>const</code>: declares the listed symbols as constants.
+    Constants can be used as bounded limits in <a href="#vectors">vectors</a>,
+    <a href="#pools">pools</a>, and <a href="../statements/#numeric-iterator">numeric loops</a>.
+    Also, constants cannot be <a href="#assignments">assigned</a>.</li>
+<li><code>plain</code>: declares the listed symbols as <em>plain</em> types, i.e., types (or
+    composite types) that do not contain pointers.
+    A value of a plain type passed as argument to a function does not require
+    <a href="../statements/#resources-finalization">finalization</a>.</li>
+<li><code>nohold</code>: declares the listed symbols as <em>non-holding</em> functions, i.e.,
+    functions that do not retain received pointers after returning.
+    Pointers passed to non-holding functions do not require
+    <a href="../statements/#resources-finalization">finalization</a>.</li>
+<li><code>pure</code>: declares the listed symbols as pure functions.
+    In addition to the <code>nohold</code> properties, pure functions never allocate
+    resources that require <a href="../statements/#resources-finalization">finalization</a>
+    and have no side effects to take into account for the <a href="#TODO">safety checks</a>.</li>
+</ul>
+<p>Examples:</p>
+<pre><code class="ceu">// values
+native/const  _LOW, _HIGH;      // Arduino &quot;LOW&quot; and &quot;HIGH&quot; are constants
+native        _errno;           // POSIX &quot;errno&quot; is a global variable
+
+// types
+native/plain  _char;            // &quot;char&quot; is a &quot;plain&quot; type
+native        _SDL_PixelFormat; // SDL &quot;SDL_PixelFormat&quot; is a type holding a pointer
+
+// functions
+native        _uv_read_start;   // Libuv &quot;uv_read_start&quot; retains the received pointer
+native/nohold _free;            // POSIX &quot;free&quot; receives a pointer but does not retain it
+native/pure   _strlen;          // POSIX &quot;strlen&quot; is a &quot;pure&quot; function
+</code></pre>
+
+<h3 id="native-block">Native Block<a class="headerlink" href="#native-block" title="Permanent link">&para;</a></h3>
+<p>A native block allows programs to define new external symbols in C.</p>
+<p>The contents of native blocks is copied unchanged to the output in C depending
+on the modifier specified:</p>
+<ul>
+<li><code>pre</code>: code is placed before the declarations for the Céu program.
+    Symbols defined in <code>pre</code> blocks are visible to Céu.</li>
+<li><code>pos</code>: code is placed after the declarations for the Céu program.
+    Symbols implicitly defined by the compiler of Céu are visible to <code>pos</code>
+    blocks.</li>
+</ul>
+<p>Native blocks are copied in the order they appear in the source code.</p>
+<p>Since Céu uses the <a href="../compilation/#compilation">C preprocessor</a>, hash
+directives <code>#</code> inside native blocks must be quoted as <code>##</code> to be considered
+only in the C compilation phase.</p>
+<p>If the code in C contains the terminating <code>end</code> keyword of Céu, the <code>native</code>
+block should be delimited with matching comments to avoid confusing the parser:</p>
+<p>Symbols defined in native blocks still need to be
+<a href="#native-declaration">declared</a> for use in the program.</p>
+<p>Examples:</p>
+<pre><code class="ceu">native/plain _t;
+native/pre do
+    typedef int t;              // definition for &quot;t&quot; is placed before Céu declarations
+end
+var _t x = 10;                  // requires &quot;t&quot; to be already defined
+</code></pre>
+
+<pre><code class="ceu">input none A;                   // declaration for &quot;A&quot; is placed before &quot;pos&quot; blocks
+native _get_A_id;
+native/pos do
+    int get_A_id (void) {
+        return CEU_INPUT_A;     // requires &quot;A&quot; to be already declared
+    }
+end
+</code></pre>
+
+<pre><code class="ceu">native/nohold _printf;
+native/pre do
+    ##include &lt;stdio.h&gt;         // include the relevant header for &quot;printf&quot;
+end
+</code></pre>
+
+<pre><code class="ceu">native/pos do
+    /******/
+    char str = &quot;This `end` confuses the parser&quot;;
+    /******/
+end
+</code></pre>
+
+<h3 id="native-statement">Native Statement<a class="headerlink" href="#native-statement" title="Permanent link">&para;</a></h3>
+<p>The contents of native statements in between <code>{</code> and <code>}</code> are inlined in the
+program.</p>
+<p>Native statements support interpolation of expressions in Céu which are
+expanded when preceded by the symbol <code>@</code>.</p>
+<p>Examples:</p>
+<pre><code class="ceu">var int v_ceu = 10;
+{
+    int v_c = @v_ceu * 2;       // yields 20
+}
+v_ceu = { v_c + @v_ceu };       // yields 30
+{
+    printf(&quot;%d\n&quot;, @v_ceu);     // prints 30
+}
+</code></pre>
+
+<h3 id="native-call">Native Call<a class="headerlink" href="#native-call" title="Permanent link">&para;</a></h3>
+<p>Expressions that evaluate to a <a href="../types/#natives">native type</a> can be called
+from Céu.</p>
+<p>If a call passes or returns pointers, it may require an accompanying
+<a href="#resources-finalization">finalization statement</a>.</p>
+<p>Examples:</p>
+<pre><code class="ceu">// all expressions below evaluate to a native type and can be called
+
+_printf(&quot;Hello World!\n&quot;);
+
+var _t f = &lt;...&gt;;
+f();
+
+var _s s = &lt;...&gt;;
+s.f();
+</code></pre>
+
+<!--
+`TODO: ex. pointer return`
+-->
+
+<h3 id="resources-finalization">Resources &amp; Finalization<a class="headerlink" href="#resources-finalization" title="Permanent link">&para;</a></h3>
+<p>A finalization statement unconditionally executes a series of statements when
+its associated block terminates or is aborted.</p>
+<p>Céu tracks the interaction of native calls with pointers and requires 
+<code>finalize</code> clauses to accompany the calls:</p>
+<ul>
+<li>If Céu <strong>passes</strong> a pointer to a native call, the pointer represents a
+  <strong>local resource</strong> that requires finalization.
+  Finalization executes when the block of the local resource goes out of scope.</li>
+<li>If Céu <strong>receives</strong> a pointer from a native call return, the pointer
+  represents an <strong>external resource</strong> that requires finalization.
+  Finalization executes when the block of the receiving pointer goes out of
+  scope.</li>
+</ul>
+<p>In both cases, the program does not compile without the <code>finalize</code> statement.</p>
+<p>A <code>finalize</code> cannot contain
+<a href="#synchronous-control-statements">synchronous control statements</a>.</p>
+<p>Examples:</p>
+<pre><code class="ceu">// Local resource finalization
+watching &lt;...&gt; do
+    var _buffer_t msg;
+    &lt;...&gt;                       // prepares msg
+    do
+        _send_request(&amp;&amp;msg);
+    finalize with
+        _send_cancel(&amp;&amp;msg);
+    end
+    await SEND_ACK;             // transmission is complete
+end
+</code></pre>
+
+<p>In the example above, the local variable <code>msg</code> is an internal resource passed
+as a pointer to <code>_send_request</code>, which is an asynchronous call that transmits
+the buffer in the background.
+If the enclosing <code>watching</code> aborts before awaking from the <code>await SEND_ACK</code>,
+the local <code>msg</code> goes out of scope and the external transmission would hold a
+<em>dangling pointer</em>.
+The <code>finalize</code> ensures that <code>_send_cancel</code> also aborts the transmission.</p>
+<pre><code class="ceu">// External resource finalization
+watching &lt;...&gt; do
+    var&amp;? _FILE f = &amp;_fopen(&lt;...&gt;) finalize with
+                        _fclose(f);
+                    end;
+    _fwrite(&lt;...&gt;, f);
+    await A;
+    _fwrite(&lt;...&gt;, f);
+end
+</code></pre>
+
+<p>In the example above, the call to <code>_fopen</code> returns an external file resource as
+a pointer.
+If the enclosing <code>watching</code> aborts before awaking from the <code>await A</code>, the file
+would remain open as a <em>memory leak</em>.
+The <code>finalize</code> ensures that <code>_fclose</code> closes the file properly.</p>
+<p>To access an external resource from Céu requires an
+<a href="#alias-assignment">alias assignment</a> to a
+<a href="../storage_entities/#aliases">variable alias</a>.
+If the external call returns <code>NULL</code> and the variable is an option alias
+<code>var&amp;?</code>, the alias remains unbounded.
+If the variable is an alias <code>var&amp;</code>, the assigment raises a runtime error.</p>
+<p><em>Note: the compiler only forces the programmer to write finalization clauses,
+       but cannot check if they handle the resource properly.</em></p>
+<p><a href="#native-declaration">Declaration</a> and <a href="../expressions/#modifiers">expression</a>
+modifiers may suppress the requirement for finalization in calls:</p>
+<ul>
+<li><code>nohold</code> modifiers or <code>/nohold</code> typecasts make passing pointers safe.</li>
+<li><code>pure</code>   modifiers or <code>/pure</code>   typecasts make passing pointers and returning
+                                  pointers safe.</li>
+<li><code>/plain</code> typecasts make return values safe.</li>
+</ul>
+<p>Examples:</p>
+<pre><code class="ceu">// &quot;_free&quot; does not retain &quot;ptr&quot;
+native/nohold _free;
+_free(ptr);
+// or
+(_free as /nohold)(ptr);
+</code></pre>
+
+<pre><code class="ceu">// &quot;_strchr&quot; does retain &quot;ptr&quot; or allocates resources
+native/pure _strchr;
+var _char&amp;&amp; found = _strchr(ptr);
+// or
+var _char&amp;&amp; found = (_strchr as /pure)(ptr);
+</code></pre>
+
+<pre><code class="ceu">// &quot;_f&quot; returns a non-pointer type
+var _tp v = _f() as /plain;
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+
+</body>
+</html>

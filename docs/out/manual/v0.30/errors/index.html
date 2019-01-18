@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="None">
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Home - Céu v0.30 - Reference Manual</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Home";
+    var mkdocs_page_input_path = "errors/index.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Céu v0.30 - Reference Manual</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="..">Overview</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../lexical_rules/">Lexical Rules</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../types/">Types</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../storage_entities/">Storage Entities</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../statements/">Statements</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../expressions/">Locations & Expressions</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../compilation/">Compilation</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../syntax/">Syntax</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../license/">License</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Céu v0.30 - Reference Manual</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Home</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="errors">Errors<a class="headerlink" href="#errors" title="Permanent link">&para;</a></h1>
+<h2 id="pointer-attributions-11xx">Pointer attributions (11xx)<a class="headerlink" href="#pointer-attributions-11xx" title="Permanent link">&para;</a></h2>
+<h3 id="1101-wrong-operator">1101 : <em>wrong operator</em><a class="headerlink" href="#1101-wrong-operator" title="Permanent link">&para;</a></h3>
+<p>Use of the unsafe operator ":=" for non-pointer attributions.</p>
+<p>Instead, use <code>=</code>.</p>
+<p>Example:</p>
+<pre><code><b>var int</b> v := 1;
+
+>>> ERR [1101] : file.ceu : line 1 : wrong operator
+</code></pre>
+
+<h3 id="1102-attribution-does-not-require-finalize">1102 : <em>attribution does not require "finalize"</em><a class="headerlink" href="#1102-attribution-does-not-require-finalize" title="Permanent link">&para;</a></h3>
+<p>Use of <code>finalize</code> for non-pointer attributions.</p>
+<p>Instead, do not use <code>finalize</code>.</p>
+<p>Example:</p>
+<pre><code><b>var int</b> v;
+<b>finalize</b>
+    v = 1;
+<b>with</b>
+    <...>
+<b>end</b>
+
+>>> ERR [1102] : file.lua : line 3 : attribution does not require "finalize"
+</code></pre>
+
+<h3 id="1103-wrong-operator">1103 : <em>wrong operator</em><a class="headerlink" href="#1103-wrong-operator" title="Permanent link">&para;</a></h3>
+<p>Use of the unsafe operator <code>:=</code> for constant pointer attributions.</p>
+<p>Instead, use <code>=</code>.</p>
+<p>Example:</p>
+<pre><code><b>var int</b> ptr := null;
+
+>>> ERR [1103] : file.ceu : line 1 : wrong operator
+</code></pre>
+
+<h3 id="1104-attribution-does-not-require-finalize">1104 : <em>attribution does not require "finalize"</em><a class="headerlink" href="#1104-attribution-does-not-require-finalize" title="Permanent link">&para;</a></h3>
+<p>Use of <code>finalize</code> for constant pointer attributions.</p>
+<p>Instead, do not use <code>finalize</code>.</p>
+<p>Example:</p>
+<pre><code><b>var int</b> ptr;
+<b>finalize</b>
+    ptr = null;
+<b>with</b>
+    <...>
+<b>end</b>
+
+>>> ERR [1104] : file.lua : line 3 : attribution does not require `finalize´
+</code></pre>
+
+<h3 id="1105-destination-pointer-must-be-declared-with-the-buffer-modifier">1105 : <em>destination pointer must be declared with the "[]" buffer modifier</em><a class="headerlink" href="#1105-destination-pointer-must-be-declared-with-the-buffer-modifier" title="Permanent link">&para;</a></h3>
+<p>Use of normal pointer <code>*</code> to hold pointer to acquired resource.</p>
+<p>Instead, use <code>[]</code>.</p>
+<p>Example:</p>
+<pre><code><b>var int</b>* ptr = _malloc();
+
+>>> ERR [1105] : file.ceu : line 1 : destination pointer must be declared with the `[]´ buffer modifier
+</code></pre>
+
+<h3 id="1106-parameter-must-be-hold">1106 : <em>parameter must be "hold"</em><a class="headerlink" href="#1106-parameter-must-be-hold" title="Permanent link">&para;</a></h3>
+<p>Omit <code>@hold</code> annotation for function parameter held in the class or global.</p>
+<p>Instead, annotate the parameter declaration with <code>@hold</code>.</p>
+<p>Examples:</p>
+<pre><code><b>class</b> T <b>with</b>
+    <b>var none</b>* ptr;
+    <b>function</b> (<b>none</b>* v)=><b>none</b> f;
+<b>do</b>
+    <b>function</b> (<b>none</b>* v)=><b>none</b> f <b>do</b>
+        ptr := v;
+    <b>end</b>
+<b>end</b>
+
+>>> ERR [1106] : file.ceu : line 6 : parameter must be `hold´
+
+/*****************************************************************************/
+
+<b>native do</b>
+    <b>none</b>* V;
+<b>end</b>
+<b>function</b> (<b>none</b>* v)=><b>none</b> f <b>do</b>
+    _V := v;
+<b>end</b>
+
+>>> ERR [1106] : file.ceu : line 5 : parameter must be `hold´
+</code></pre>
+
+<h3 id="1107-pointer-access-across-await">1107 : <em>pointer access across "await"</em><a class="headerlink" href="#1107-pointer-access-across-await" title="Permanent link">&para;</a></h3>
+<p>Access to pointer across an <code>await</code> statement.
+The pointed data may go out of scope between reactions to events.</p>
+<p>Instead, don't do it. :)</p>
+<p>(Or check if the pointer is better represented as a buffer pointer (<code>[]</code>).)</p>
+<p>Examples:</p>
+<pre><code><b>event int</b>* e;
+<b>var int</b>* ptr = <b>await</b> e;
+<b>await</b> e;     // while here, what "ptr" points may go out of scope
+<b>escape</b> *ptr;
+
+>>> ERR [1107] : file.ceu : line 4 : pointer access across `await´
+
+/*****************************************************************************/
+
+<b>var int</b>* ptr = <...>;
+<b>par/and do</b>
+    <b>await</b> 1s;   // while here, what "ptr" points may go out of scope
+<b>with</b>
+    <b>event int</b>* e;
+    ptr = <b>await</b> e;
+<b>end</b>
+<b>escape</b> *ptr;
+
+>>> ERR [1107] : file.ceu : line 8 : pointer access across `await´
+</code></pre>
+
+<h3 id="1108-finalize-inside-constructor">1108 : <em>"finalize" inside constructor</em><a class="headerlink" href="#1108-finalize-inside-constructor" title="Permanent link">&para;</a></h3>
+<p>Use of <code>finalize</code> inside constructor.</p>
+<p>Instead, move it to before the constructor or to inside the class.</p>
+<p>Examples:</p>
+<pre><code><b>class</b> T <b>with</b>
+    <b>var none</b>* ptr;
+<b>do</b>
+    <...>
+<b>end</b>
+
+<b>var</b> T t <b>with</b>
+    <b>finalize</b>
+        this.ptr = _malloc(10);
+    <b>with</b>
+        _free(this.ptr);
+    <b>end</b>
+<b>end</b>;
+
+>>> ERR [1008] : file.ceu : line 7 : `finalize´ inside constructor
+
+/*****************************************************************************/
+
+<b>class</b> T <b>with</b>
+    <b>var none</b>* ptr;
+<b>do</b>
+    <...>
+<b>end</b>
+
+<b>spawn</b> T <b>with</b>
+    <b>finalize</b>
+        this.ptr = _malloc(10);
+    <b>with</b>
+        _free(this.ptr);
+    <b>end</b>
+<b>end</b>;
+
+>>> ERR [1008] : file.ceu : line 7 : `finalize´ inside constructor
+</code></pre>
+
+<h3 id="1109-call-requires-finalize">1109 : <em>call requires "finalize"</em><a class="headerlink" href="#1109-call-requires-finalize" title="Permanent link">&para;</a></h3>
+<p>Call missing <code>finalize</code> clause.</p>
+<p>Call passes a pointer.
+Function may hold the pointer indefinitely.
+Pointed data goes out of scope and yields a dangling pointer.</p>
+<p>Instead, <code>finalize</code> the call.</p>
+<p>Example:</p>
+<pre><code><b>var char</b>[255] buf;
+_enqueue(buf);
+
+>>> ERR [1009] : file.ceu : line 2 : call requires `finalize´'
+</code></pre>
+
+<h3 id="1110-invalid-finalize">1110 : <em>invalid "finalize"</em><a class="headerlink" href="#1110-invalid-finalize" title="Permanent link">&para;</a></h3>
+<p>Call a function that does not require a <code>finalize</code>.</p>
+<p>Instead, don't use it.</p>
+<p>Example:</p>
+<pre><code>_f() <b>finalize with</b>
+        <...>
+     <b>end</b>;
+
+>>> ERR [1010] : file.ceu : line 1 : invalid `finalize´
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.0.4
+Build Date UTC : 2019-01-18 17:35:08
+-->

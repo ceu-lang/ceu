@@ -5,35 +5,27 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="None">
   
-  
-  
-  <title>Types - Céu v0.30 - Reference Manual</title>
-  
-
   <link rel="shortcut icon" href="../img/favicon.ico">
-
-  
+  <title>Types - Céu v0.30 - Reference Manual</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
-  <link rel="stylesheet" href="../css/highlight.css">
-  <link href="../extra.css" rel="stylesheet">
-
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
   
   <script>
     // Current page data
     var mkdocs_page_name = "Types";
     var mkdocs_page_input_path = "types/index.md";
-    var mkdocs_page_url = "/types/";
+    var mkdocs_page_url = null;
   </script>
   
-  <script src="../js/jquery-2.1.1.min.js"></script>
-  <script src="../js/modernizr-2.8.3.min.js"></script>
-  <script type="text/javascript" src="../js/highlight.pack.js"></script>
-  <script src="../js/theme.js"></script> 
-
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
   
 </head>
 
@@ -47,91 +39,77 @@
         <a href=".." class="icon icon-home"> Céu v0.30 - Reference Manual</a>
         <div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
   </form>
 </div>
       </div>
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-        <ul class="current">
+	<ul class="current">
+	  
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="..">Overview</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="..">Overview</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../lexical_rules/">Lexical Rules</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../lexical_rules/">Lexical Rules</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 current">
-        <a class="current" href="./">Types</a>
-        
-            <ul>
+            <li class="toctree-l1 current">
+		
+    <a class="current" href="./">Types</a>
+    <ul class="subnav">
             
-                <li class="toctree-l3"><a href="#types">Types</a></li>
-                
-                    <li><a class="toctree-l4" href="#primitives">Primitives</a></li>
-                
-                    <li><a class="toctree-l4" href="#natives">Natives</a></li>
-                
-                    <li><a class="toctree-l4" href="#abstractions">Abstractions</a></li>
-                
-                    <li><a class="toctree-l4" href="#modifiers">Modifiers</a></li>
-                
-            
-            </ul>
+    <li class="toctree-l2"><a href="#types">Types</a></li>
+    
+        <ul>
         
-    </li>
-<li>
+            <li><a class="toctree-l3" href="#primitives">Primitives</a></li>
+        
+            <li><a class="toctree-l3" href="#natives">Natives</a></li>
+        
+            <li><a class="toctree-l3" href="#abstractions">Abstractions</a></li>
+        
+            <li><a class="toctree-l3" href="#modifiers">Modifiers</a></li>
+        
+        </ul>
+    
+
+    </ul>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../storage_entities/">Storage Entities</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../storage_entities/">Storage Entities</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../statements/">Statements</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../statements/">Statements</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../expressions/">Locations & Expressions</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../expressions/">Locations & Expressions</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../compilation/">Compilation</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../compilation/">Compilation</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../syntax/">Syntax</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../syntax/">Syntax</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../license/">License</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../license/">License</a>
+	    </li>
           
         </ul>
       </div>
@@ -167,9 +145,9 @@
               
                 <h1 id="types">Types<a class="headerlink" href="#types" title="Permanent link">&para;</a></h1>
 <p>Céu is statically typed, requiring all variables, events, and other
-<a href="./../storage_entities/#storage-entities">storage entities</a> to be declared before
+<a href="../storage_entities/#storage-entities">storage entities</a> to be declared before
 they are used in programs.</p>
-<p>A type is composed of a <a href="./../lexical_rules/#identifiers">type identifier</a>,
+<p>A type is composed of a <a href="../lexical_rules/#identifiers">type identifier</a>,
 followed by an optional sequence of <a href="#pointer">pointer modifiers</a> <code>&amp;&amp;</code>,
 followed by an optional <a href="#option">option modifier</a> <code>?</code>:</p>
 <pre><code>Type ::= ID_type {`&amp;&amp;´} [`?´]
@@ -215,14 +193,14 @@ See also the [literals](#TODO) for these types.
 <pre><code class="ceu">var _message_t msg;      // &quot;message_t&quot; is a C type defined in an external library
 </code></pre>
 
-<p>Native types support <a href="./../statements/#native-declaration">modifiers</a> to provide
+<p>Native types support <a href="../statements/#native-declaration">modifiers</a> to provide
 additional information to the compiler.</p>
 <h2 id="abstractions">Abstractions<a class="headerlink" href="#abstractions" title="Permanent link">&para;</a></h2>
 <!--
 `TODO (brief description)`
 -->
 
-<p>See <a href="./../statements/#abstractions">Abstractions</a>.</p>
+<p>See <a href="../statements/#abstractions">Abstractions</a>.</p>
 <h2 id="modifiers">Modifiers<a class="headerlink" href="#modifiers" title="Permanent link">&para;</a></h2>
 <p>Types can be suffixed with the pointer modifier <code>&amp;&amp;</code> and the option modifier
 <code>?</code>.</p>
@@ -256,7 +234,7 @@ additional information to the compiler.</p>
 
   Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
 </footer>
-	  
+      
         </div>
       </div>
 
@@ -264,7 +242,7 @@ additional information to the compiler.</p>
 
   </div>
 
-<div class="rst-versions" role="note" style="cursor: pointer">
+  <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
@@ -275,6 +253,14 @@ additional information to the compiler.</p>
       
     </span>
 </div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
 
 </body>
 </html>
+
+<!--
+MkDocs version : 1.0.4
+Build Date UTC : 2019-01-18 17:35:08
+-->

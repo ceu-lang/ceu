@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Internal reactions - Céu v0.30 - Reference Manual</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Internal reactions";
+    var mkdocs_page_input_path = "overview/internal_reactions.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Céu v0.30 - Reference Manual</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Overview</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../lexical_rules/">Lexical Rules</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../types/">Types</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../storage_entities/">Storage Entities</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../statements/">Statements</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../expressions/">Locations & Expressions</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../compilation/">Compilation</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../syntax/">Syntax</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../license/">License</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Céu v0.30 - Reference Manual</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Internal reactions</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h2 id="internal-reactions">Internal Reactions<a class="headerlink" href="#internal-reactions" title="Permanent link">&para;</a></h2>
+<p>Céu supports inter-trail communication through <code>await</code> and <code>emit</code> statements
+for <em>internal events</em>.
+A trail can <code>await</code> an internal event to suspend it.
+Then, another trail can <code>emit</code> and broadcast an event, awaking all trails
+awaiting that event.</p>
+<p>Unlike input events, multiple internal events can coexist during an external
+reaction.
+An <code>emit</code> starts a new <em>internal reaction</em> in the program which relies on a
+runtime stack:</p>
+<ol>
+<li>The <code>emit</code> suspends the current trail and its continuation is pushed into
+    the stack (i.e., the statement in sequence with the <code>emit</code>).</li>
+<li>All trails awaiting the emitted event awake and execute in sequence
+    (see <a href="#synchronous-execution-model"><code>rule 2</code></a> for external reactions).
+    If an awaking trail emits another internal event, a nested internal
+    reaction starts with <code>rule 1</code>.</li>
+<li>The top of the stack is popped and the last emitting trail resumes execution
+    from its continuation.</li>
+</ol>
+<p>The program as follow illustrates the behavior of internal reactions in Céu:</p>
+<pre><code class="ceu">1:  par/and do      // trail 1
+2:      await e;
+3:      emit f;
+4:  with            // trail 2
+5:      await f;
+6:  with            // trail 3
+7:      emit e;
+8:  end
+</code></pre>
+
+<p>The program starts in the boot reaction with an empty stack and forks into the
+three trails.
+Respecting the lexical order, the first two trails <code>await</code> and the third trail
+executes:</p>
+<ul>
+<li>The <code>emit e</code> in <em>trail-3</em> (line 7) starts an internal reaction (<code>stack=[7]</code>).</li>
+<li>The <code>await e</code> in <em>trail-1</em> awakes (line 2) and then the <code>emit f</code> (line 3)
+  starts another internal reaction (<code>stack=[7,3]</code>).</li>
+<li>The <code>await f</code> in <em>trail-2</em> awakes and terminates the trail (line 5).
+  Since no other trails are awaiting <code>f</code>, the current internal reaction
+  terminates, resuming and popping the top of the stack (<code>stack=[7]</code>).</li>
+<li>The <code>emit f</code> resumes in <em>trail-1</em> and terminates the trail (line 3).
+  The current internal reaction terminates, resuming and popping the top of the
+  stack (<code>stack=[]</code>).</li>
+<li>The <code>emit e</code> resumes in <em>trail-3</em> and terminates the trail (line 7).
+  Finally, the <code>par/and</code> rejoins and the program terminates.</li>
+</ul>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+
+</body>
+</html>
