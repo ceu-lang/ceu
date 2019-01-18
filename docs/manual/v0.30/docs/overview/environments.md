@@ -7,7 +7,7 @@ An environment senses the world and broadcasts `input` events to programs.
 It also intercepts programs signalling `output` events to actuate in the
 world:
 
-![An environment works as a bridge between the program and the real world.](environment.png)
+![An environment works as a bridge between the program and the real world.](overview/environment.png)
 
 As examples of typical environments, an embedded system may provide button
 input and LED output, and a video game engine may provide keyboard input and

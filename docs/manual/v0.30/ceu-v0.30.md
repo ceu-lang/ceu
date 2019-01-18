@@ -70,7 +70,7 @@ An environment senses the world and broadcasts `input` events to programs.
 It also intercepts programs signalling `output` events to actuate in the
 world:
 
-![An environment works as a bridge between the program and the real world.](/data/ceu/ceu/docs/manual/v0.30/site/overview/environment.png)
+![An environment works as a bridge between the program and the real world.](/home/anny/dev/ceu/docs/manual/v0.30/site/overview/environment.png)
 
 As examples of typical environments, an embedded system may provide button
 input and LED output, and a video game engine may provide keyboard input and
@@ -147,7 +147,7 @@ Céu:
 27:  end
 ```
 
-![](/data/ceu/ceu/docs/manual/v0.30/site/overview/reaction.png)
+![](/home/anny/dev/ceu/docs/manual/v0.30/site/overview/reaction.png)
 
 The program starts in the boot reaction and forks into three trails.
 Respecting the lexical order of declaration for the trails, they are scheduled
@@ -2599,7 +2599,10 @@ Examples:
 
 ```ceu
 data Rect with
-    var int x, y, h, w;
+    var int x;
+    var int y;
+    var int h;
+    var int w;
     var int z = 0;
 end
 var Rect r = val Rect(10,10, 100,100, _);  // "r.z" defaults to 0
@@ -3266,7 +3269,7 @@ The compiler converts an input program in Céu to an output in C, which is
 further embedded in an [environment](../#environments) satisfying a
 [C API](#c-api), which is finally compiled to an executable:
 
-![](/data/ceu/ceu/docs/manual/v0.30/site/compilation/compilation.png)
+![](/home/anny/dev/ceu/docs/manual/v0.30/site/compilation/compilation.png)
 
 ### Command Line
 

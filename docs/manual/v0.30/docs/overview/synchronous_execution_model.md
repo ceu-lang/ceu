@@ -65,7 +65,7 @@ Céu:
 27:  end
 ```
 
-![](reaction.png)
+![](overview/reaction.png)
 
 The program starts in the boot reaction and forks into three trails.
 Respecting the lexical order of declaration for the trails, they are scheduled
