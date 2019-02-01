@@ -1,0 +1,170 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Céu",
+	"patterns": [
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#entities"
+		},
+		{
+			"include": "#operators"
+		},
+		{
+			"include": "#constants"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#strings-include"
+		},
+		{
+			"include": "#storages"
+		},
+		{
+			"include": "#line-comments"
+		},
+		{
+			"include": "#block-comments"
+		},
+		{
+			"include": "#block-comments-2"
+		},
+		{
+			"include": "#block-comments-3"
+		}
+	],
+	"repository": {
+		"strings": {
+			"name": "string.quoted.double.ceu",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [{
+				"name": "constant.character.escape.ceu",
+				"match": "\\\\."
+			}]
+		},
+		"strings-include": {
+			"name": "string.quoted.other.lt-gt.include.ceu",
+			"begin": "(?<=include)\\s\\<",
+			"end": "\\>",
+			"patterns": [{
+				"name": "constant.character.escape.ceu",
+				"match": "\\\\."
+			}]
+		},
+		"line-comments": {
+			"name": "comment.line.double-slash.ceu",
+			"begin": "//",
+			"end": "\n",
+			"patterns": [{
+				"name": "comment.line.double-slash.ceu",
+				"match": "\\."
+			}]			
+		},
+		"block-comments": {
+			"name": "comment.block.ceu",
+			"begin": "/\\*[^\\*]",
+			"end": "[^\\*]\\*/",
+			"patterns": [{
+				"name": "constant.character.escape.ceu",
+				"match": "\\."
+			}]			
+		},
+		"block-comments-2": {
+			"name": "comment.block.ceu",
+			"begin": "/\\*\\*[^\\*]",
+			"end": "[^\\*]\\*\\*/",
+			"patterns": [{
+				"name": "constant.character.escape.ceu",
+				"match": "\\."
+			}]			
+		},	
+		"block-comments-3": {
+			"name": "comment.block.ceu",
+			"begin": "/\\*\\*\\*",
+			"end": "\\*\\*\\*/",
+			"patterns": [{
+				"name": "constant.character.escape.ceu",
+				"match": "\\."
+			}]			
+		},				
+		"keywords": {
+			"patterns": [{
+				"name": "keyword.control.ceu",
+				"match": "\\b(const|do|out|end|finaliza|await|until|emit|watching|if|then|else|else/if|loop|continue|escape|code|call|var|event|output|input|val|data|par/or|par/and|par|with|spawn|in|outer|pause|as|break|native|pre|pos|kill)\\b"
+			},{
+				"name": "keyword.control.directive.include.ceu",
+				"match": "#include"
+			},{
+				"name": "keyword.control.directive.define.ceu",
+				"match": "#define"
+			},{
+				"name": "keyword.control.directive.conditional.ceu",
+				"match": "(#endif|#elif|#else|#ifdef|#if)"
+			}]
+		},
+		"operators": {
+			"patterns": [{
+				"name": "keyword.operator.ceu",
+				"match": "(\\b(and|or|not)\\b)|(!=|==|<=|>=|->|<|>|=|\\&|\\&&|\\?|\\!|\\%|\\+|\\-(?!>)|\\*|(\\/(?!(\\/|\\*))))"
+			}]
+		},		
+		"storages": {
+			"patterns": [{
+				"name": "storage.type.ceu",
+				"match": "\\b(integer|none|int|bool|high/low|on/off|yes/no|byte|r32|r64|real|s8|s16|s32|s64|u8|u16|u32|u64|uint|u8|u16|u32|u64|usize|ssize|char)\\b|\\b((?<=\\sas)\\s+\\w+)\\b"
+			}]
+		},
+		"entities": {
+			"patterns": [{
+				"name": "entity.name.function",
+				"match": "(?<=spawn|call)\\s+((\\w|\\.)+)|((?<=data|->|var|var&|var&\\?)\\s+[A-Z])((\\w|\\.)*)|((?<=emit|await)\\s+[^\\s]+?(?=[\\(|;|\\s]))|((?<=watching)\\s+[^\\s]+\\s+(?=do))|(\\b(?!and|or|not|every).\\w+\\s*(?=\\())" 
+			},{
+				"match": "(pool)\\[(\\d*)\\]\\s+(\\w+)\\s+(\\w+);$",
+				"captures": {
+					"1": {
+						"name": "storage.type.ceu"
+					},
+					"2": {
+						"name": "constant.numeric.ceu"
+					},
+					"3": {
+						"name": "entity.name.function"
+					}
+				}				
+			},{
+				"match": "(every)\\s+((\\w|\\(|\\)|,)+\\s+(in)\\s+)?(\\w+)\\s+(do)",
+				"captures": {
+					"1": {
+						"name": "keyword.operator.ceu"
+					},
+					"4": {
+						"name": "keyword.operator.ceu"
+					},
+					"5": {
+						"name": "entity.name.function"
+					},
+					"6": {
+						"name": "keyword.operator.ceu"
+					}
+				}				
+			}]
+		},		
+		"constants": {
+			"patterns": [{
+				"name": "constant.other.ceu",
+				"match": "\\b(COLOR_WHITE|COLOR_SILVER|COLOR_GRAY|COLOR_BLACK|COLOR_RED|COLOR_MAROON|COLOR_YELLOW|COLOR_OLIVE|COLOR_LIME|COLOR_GREEN|COLOR_AQUA|COLOR_TEAL|COLOR_BLUE|COLOR_NAVY|COLOR_FUCHSIA|COLOR_PURPLE|HANCHOR_LEFT|HANCHOR_CENTER|HANCHOR_RIGHT|VANCHOR_TOP|VANCHOR_CENTER|VANCHOR_BOTTOM|MOUSE_LEFT|MOUSE_MIDDLE|MOUSE_RIGHT|MOUSE_X1|MOUSE_X2|KEY_UNKNOWN|KEY_RETURN|KEY_ESCAPE|KEY_BACKSPACE|KEY_TAB|KEY_SPACE|KEY_EXCLAIM|KEY_QUOTEDBL|KEY_HASH|KEY_PERCENT|KEY_DOLLAR|KEY_AMPERSAND|KEY_QUOTE|KEY_LEFTPAREN|KEY_RIGHTPAREN|KEY_ASTERISK|KEY_PLUS|KEY_COMMA|KEY_MINUS|KEY_PERIOD|KEY_SLASH|KEY_0|KEY_1|KEY_2|KEY_3|KEY_4|KEY_5|KEY_6|KEY_7|KEY_8|KEY_9|KEY_COLON|KEY_SEMICOLON|KEY_LESS|KEY_EQUALS|KEY_GREATER|KEY_QUESTION|KEY_AT|KEY_LEFTBRACKET|KEY_BACKSLASH|KEY_RIGHTBRACKET|KEY_CARET|KEY_UNDERSCORE|KEY_BACKQUOTE|KEY_a|KEY_b|KEY_c|KEY_d|KEY_e|KEY_f|KEY_g|KEY_h|KEY_i|KEY_j|KEY_k|KEY_l|KEY_m|KEY_n|KEY_o|KEY_p|KEY_q|KEY_r|KEY_s|KEY_t|KEY_u|KEY_v|KEY_w|KEY_x|KEY_y|KEY_z|KEY_CAPSLOCK|KEY_F1|KEY_F2|KEY_F3|KEY_F4|KEY_F5|KEY_F6|KEY_F7|KEY_F8|KEY_F9|KEY_F10|KEY_F11|KEY_F12|KEY_PRINTSCREEN|KEY_SCROLLLOCK|KEY_PAUSE|KEY_INSERT|KEY_HOME|KEY_PAGEUP|KEY_DELETE|KEY_END|KEY_PAGEDOWN|KEY_RIGHT|KEY_LEFT|KEY_DOWN|KEY_UP|KEY_NUMLOCKCLEAR|KEY_KP_DIVIDE|KEY_KP_MULTIPLY|KEY_KP_MINUS|KEY_KP_PLUS|KEY_KP_ENTER|KEY_KP_1|KEY_KP_2|KEY_KP_3|KEY_KP_4|KEY_KP_5|KEY_KP_6|KEY_KP_7|KEY_KP_8|KEY_KP_9|KEY_KP_0|KEY_KP_PERIOD|KEY_APPLICATION|KEY_POWER|KEY_KP_EQUALS|KEY_F13|KEY_F14|KEY_F15|KEY_F16|KEY_F17|KEY_F18|KEY_F19|KEY_F20|KEY_F21|KEY_F22|KEY_F23|KEY_F24|KEY_EXECUTE|KEY_HELP|KEY_MENU|KEY_SELECT|KEY_STOP|KEY_AGAIN|KEY_UNDO|KEY_CUT|KEY_COPY|KEY_PASTE|KEY_FIND|KEY_MUTE|KEY_VOLUMEUP|KEY_VOLUMEDOWN|KEY_KP_COMMA|KEY_KP_EQUALSAS400|KEY_ALTERASE|KEY_SYSREQ|KEY_CANCEL|KEY_CLEAR|KEY_PRIOR|KEY_RETURN2|KEY_SEPARATOR|KEY_OUT|KEY_OPER|KEY_CLEARAGAIN|KEY_CRSEL|KEY_EXSEL|KEY_KP_00|KEY_KP_000|KEY_THOUSANDSSEPARATOR|KEY_DECIMALSEPARATOR|KEY_CURRENCYUNIT|KEY_CURRENCYSUBUNIT|KEY_KP_LEFTPAREN|KEY_KP_RIGHTPAREN|KEY_KP_LEFTBRACE|KEY_KP_RIGHTBRACE|KEY_KP_TAB|KEY_KP_BACKSPACE|KEY_KP_A|KEY_KP_B|KEY_KP_C|KEY_KP_D|KEY_KP_E|KEY_KP_F|KEY_KP_XOR|KEY_KP_POWER|KEY_KP_PERCENT|KEY_KP_LESS|KEY_KP_GREATER|KEY_KP_AMPERSAND|KEY_KP_DBLAMPERSAND|KEY_KP_VERTICALBAR|KEY_KP_DBLVERTICALBAR|KEY_KP_COLON|KEY_KP_HASH|KEY_KP_SPACE|KEY_KP_AT|KEY_KP_EXCLAM|KEY_KP_MEMSTORE|KEY_KP_MEMRECALL|KEY_KP_MEMCLEAR|KEY_KP_MEMADD|KEY_KP_MEMSUBTRACT|KEY_KP_MEMMULTIPLY|KEY_KP_MEMDIVIDE|KEY_KP_PLUSMINUS|KEY_KP_CLEAR|KEY_KP_CLEARENTRY|KEY_KP_BINARY|KEY_KP_OCTAL|KEY_KP_DECIMAL|KEY_KP_HEXADECIMAL|KEY_LCTRL|KEY_LSHIFT|KEY_LALT|KEY_LGUI|KEY_RCTRL|KEY_RSHIFT|KEY_RALT|KEY_RGUI|KEY_MODE|KEY_AUDIONEXT|KEY_AUDIOPREV|KEY_AUDIOSTOP|KEY_AUDIOPLAY|KEY_AUDIOMUTE|KEY_MEDIASELECT|KEY_WWW|KEY_MAIL|KEY_CALCULATOR|KEY_COMPUTER|KEY_AC_SEARCH|KEY_AC_HOME|KEY_AC_BACK|KEY_AC_FORWARD|KEY_AC_STOP|KEY_AC_REFRESH|KEY_AC_BOOKMARKS|KEY_BRIGHTNESSDOWN|KEY_BRIGHTNESSUP|KEY_DISPLAYSWITCH|KEY_KBDILLUMTOGGLE|KEY_KBDILLUMDOWN|KEY_KBDILLUMUP|KEY_EJECT|KEY_SLEEP|PIN_1|PIN_2|PIN_3|PIN_4|PIN_5|PIN_6|PIN_7|PIN_8|PIN_9|PIN_10|PIN_11|PIN_12|PIN_13|PWM_03|PWM_05|PWM_06|PWM_10|PWM_11|CEUMAKER_PICO|CEUMAKER_ARDUINO)\\b"
+			},{
+				"name": "constant.language.ceu",
+				"match": "\\b(?<=[^/])(true|false|on|off|high|low|yes|no|NEVER|FOREVER|null)(?=[^/])\\b"
+			},{
+				"name": "constant.numeric.ceu",
+				"match": "\\b((0x([0-9]|[A-F]|[a-f])+)|(\\d+\\.?\\d*)+)\\b"
+			}]
+		}
+	},
+	"scopeName": "source.ceu"
+}

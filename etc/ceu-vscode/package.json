@@ -1,0 +1,39 @@
+{
+    "name": "ceu",
+    "displayName": "Céu",
+    "description": "Syntax highlighting for Céu lang",
+    "homepage": "http://ceu-lang.org/",
+    "icon": "icons/star_128.png",
+    "version": "0.0.1",
+    "publisher": "Céu-lang",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/AnnyCaroline/ceu-vscode"
+    },
+    "maintainers": [
+        {
+            "email": "annycarolinegnr@gmail.com",
+            "name": "Anny Chagas",
+            "url": "https://github.com/AnnyCaroline/"
+        }
+    ],    
+    "engines": {
+        "vscode": "^1.30.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "ceu",
+            "aliases": ["Céu", "ceu"],
+            "extensions": [".ceu"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "ceu",
+            "scopeName": "source.ceu",
+            "path": "./syntaxes/ceu.tmLanguage.json"
+        }]
+    }
+}
