@@ -614,14 +614,13 @@ error'TODO: remove below'
         me.info.tag = 'Val'
     end,
 
--- NUMERIC: +, -, %, *, /, ^
+-- NUMERIC: +, -, %, *, /
 
     ['Exp_+']  = 'Exp_num_num_num',
     ['Exp_-']  = 'Exp_num_num_num',
     ['Exp_%']  = 'Exp_num_num_num',
     ['Exp_*']  = 'Exp_num_num_num',
     ['Exp_/']  = 'Exp_num_num_num',
-    ['Exp_^']  = 'Exp_num_num_num',
     Exp_num_num_num = function (me)
         local op, e1, e2 = unpack(me)
 
@@ -646,6 +645,7 @@ error'TODO: remove below'
 
     ['Exp_|']  = 'Exp_int_int_int',
     ['Exp_&']  = 'Exp_int_int_int',
+    ['Exp_^']  = 'Exp_int_int_int',
     ['Exp_<<'] = 'Exp_int_int_int',
     ['Exp_>>'] = 'Exp_int_int_int',
     Exp_int_int_int = function (me)
