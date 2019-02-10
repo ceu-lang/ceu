@@ -5,35 +5,27 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="None">
   
-  
-  
-  <title>Céu v0.30 - Reference Manual</title>
-  
-
-  <link rel="shortcut icon" href="./img/favicon.ico">
-
-  
+  <link rel="shortcut icon" href="img/favicon.ico">
+  <title>Overview - Céu v0.30 - Reference Manual</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
-  <link rel="stylesheet" href="./css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="./css/theme_extra.css" type="text/css" />
-  <link rel="stylesheet" href="./css/highlight.css">
-  <link href="./extra.css" rel="stylesheet">
-
+  <link rel="stylesheet" href="css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
   
   <script>
     // Current page data
-    var mkdocs_page_name = "None";
+    var mkdocs_page_name = "Overview";
     var mkdocs_page_input_path = "index.md";
-    var mkdocs_page_url = "/";
+    var mkdocs_page_url = null;
   </script>
   
-  <script src="./js/jquery-2.1.1.min.js"></script>
-  <script src="./js/modernizr-2.8.3.min.js"></script>
-  <script type="text/javascript" src="./js/highlight.pack.js"></script>
-  <script src="./js/theme.js"></script> 
-
+  <script src="js/jquery-2.1.1.min.js" defer></script>
+  <script src="js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
   
 </head>
 
@@ -47,95 +39,81 @@
         <a href="." class="icon icon-home"> Céu v0.30 - Reference Manual</a>
         <div role="search">
   <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
   </form>
 </div>
       </div>
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-        <ul class="current">
+	<ul class="current">
+	  
           
-            <li>
-    <li class="toctree-l1 current">
-        <a class="current" href=".">Overview</a>
-        
-            <ul>
+            <li class="toctree-l1 current">
+		
+    <a class="current" href=".">Overview</a>
+    <ul class="subnav">
             
-                <li class="toctree-l3"><a href="#overview">Overview</a></li>
-                
-                    <li><a class="toctree-l4" href="#environments">Environments</a></li>
-                
-                    <li><a class="toctree-l4" href="#synchronous-execution-model">Synchronous Execution Model</a></li>
-                
-                    <li><a class="toctree-l4" href="#parallel-compositions-and-abortion">Parallel Compositions and Abortion</a></li>
-                
-                    <li><a class="toctree-l4" href="#bounded-execution">Bounded Execution</a></li>
-                
-                    <li><a class="toctree-l4" href="#deterministic-execution">Deterministic Execution</a></li>
-                
-                    <li><a class="toctree-l4" href="#internal-reactions">Internal Reactions</a></li>
-                
-            
-            </ul>
+    <li class="toctree-l2"><a href="#overview">Overview</a></li>
+    
+        <ul>
         
-    </li>
-<li>
+            <li><a class="toctree-l3" href="#environments">Environments</a></li>
+        
+            <li><a class="toctree-l3" href="#synchronous-execution-model">Synchronous Execution Model</a></li>
+        
+            <li><a class="toctree-l3" href="#parallel-compositions-and-abortion">Parallel Compositions and Abortion</a></li>
+        
+            <li><a class="toctree-l3" href="#bounded-execution">Bounded Execution</a></li>
+        
+            <li><a class="toctree-l3" href="#deterministic-execution">Deterministic Execution</a></li>
+        
+            <li><a class="toctree-l3" href="#internal-reactions">Internal Reactions</a></li>
+        
+        </ul>
+    
+
+    </ul>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="lexical_rules/">Lexical Rules</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="lexical_rules/">Lexical Rules</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="types/">Types</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="types/">Types</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="storage_entities/">Storage Entities</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="storage_entities/">Storage Entities</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="statements/">Statements</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="statements/">Statements</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="expressions/">Locations & Expressions</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="expressions/">Locations & Expressions</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="compilation/">Compilation</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="compilation/">Compilation</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="syntax/">Syntax</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="syntax/">Syntax</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="license/">License</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="license/">License</a>
+	    </li>
           
         </ul>
       </div>
@@ -221,14 +199,14 @@ require a garbage collector.</p>
 (e.g., file handles).
 Programs can make native calls seamlessly while avoiding common pitfalls such
 as memory leaks and dangling pointers.</p>
-<p>Céu is <a href="./license/#license">free software</a>.</p>
+<p>Céu is <a href="license/#license">free software</a>.</p>
 <h2 id="environments">Environments<a class="headerlink" href="#environments" title="Permanent link">&para;</a></h2>
 <p>As a reactive language, Céu depends on an external host platform, known as an
 <em>environment</em>, which exposes <code>input</code> and <code>output</code> events programs can use.</p>
 <p>An environment senses the world and broadcasts <code>input</code> events to programs.
 It also intercepts programs signalling <code>output</code> events to actuate in the
 world:</p>
-<p><img alt="An environment works as a bridge between the program and the real world." src="./overview/environment.png" /></p>
+<p><img alt="An environment works as a bridge between the program and the real world." src="overview/environment.png" /></p>
 <p>As examples of typical environments, an embedded system may provide button
 input and LED output, and a video game engine may provide keyboard input and
 video output.</p>
@@ -298,7 +276,7 @@ Céu:</p>
 27:  end
 </code></pre>
 
-<p><img alt="" src="./overview/reaction.png" /></p>
+<p><img alt="" src="overview/reaction.png" /></p>
 <p>The program starts in the boot reaction and forks into three trails.
 Respecting the lexical order of declaration for the trails, they are scheduled
 as follows (<em>t0</em> in the diagram):</p>
@@ -350,7 +328,7 @@ rejoin and proceed to the statement in sequence:</p>
 in parallel do not execute with real parallelism.
 Therefore, it is important to note that parallel compositions support
 <em>awaiting in parallel</em>, rather than <em>executing in parallel</em> (see
-<a href="./statements/#thread">Asynchronous Threads</a> for real parallelism support).
+<a href="statements/#thread">Asynchronous Threads</a> for real parallelism support).
 <!--
 The termination of a trail inside a <code>par/or</code> aborts the other trails in 
 parallel which are necessarily idle
@@ -376,7 +354,7 @@ end
 <p>Céu warns about tight loops in programs at compile time.
 For computationally-intensive algorithms that require unrestricted loops (e.g.,
 cryptography, image processing), Céu provides
-<a href="./statements/#asynchronous-execution">Asynchronous Execution</a>.</p>
+<a href="statements/#asynchronous-execution">Asynchronous Execution</a>.</p>
 <h2 id="deterministic-execution">Deterministic Execution<a class="headerlink" href="#deterministic-execution" title="Permanent link">&para;</a></h2>
 <p><code>TODO (shared memory + deterministic scheduler + optional static analysis)</code></p>
 <h2 id="internal-reactions">Internal Reactions<a class="headerlink" href="#internal-reactions" title="Permanent link">&para;</a></h2>
@@ -449,7 +427,7 @@ executes:</p>
 
   Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
 </footer>
-	  
+      
         </div>
       </div>
 
@@ -457,7 +435,7 @@ executes:</p>
 
   </div>
 
-<div class="rst-versions" role="note" style="cursor: pointer">
+  <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
@@ -466,11 +444,14 @@ executes:</p>
       
     </span>
 </div>
+    <script>var base_url = '.';</script>
+    <script src="js/theme.js" defer></script>
+      <script src="search/main.js" defer></script>
 
 </body>
 </html>
 
 <!--
-MkDocs version : 0.15.3
-Build Date UTC : 2018-03-21 21:55:14
+MkDocs version : 1.0.4
+Build Date UTC : 2019-01-18 20:09:21
 -->

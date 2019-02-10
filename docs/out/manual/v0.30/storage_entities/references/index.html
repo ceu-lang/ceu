@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>References - Céu v0.30 - Reference Manual</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "References";
+    var mkdocs_page_input_path = "storage_entities/references.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Céu v0.30 - Reference Manual</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Overview</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../lexical_rules/">Lexical Rules</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../types/">Types</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../">Storage Entities</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../statements/">Statements</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../expressions/">Locations & Expressions</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../compilation/">Compilation</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../syntax/">Syntax</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../license/">License</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Céu v0.30 - Reference Manual</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>References</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<p>Céu supports <em>aliases</em> and <em>pointers</em> as references to entities, aka <em>strong</em>
+and <em>weak</em> references, respectively.</p>
+<p>An alias is an alternate view for an entity: after the entity and alias are
+bounded, they are indistinguishable.</p>
+<p>A pointer is a value that is the address of an entity, providing indirect
+access to it.</p>
+<p>As an analogy with a person's identity,
+a family nickname referring to a person is an alias;
+a job position referring to a person is a pointer.</p>
+<h3 id="aliases">Aliases<a class="headerlink" href="#aliases" title="Permanent link">&para;</a></h3>
+<p>Céu support aliases to all storage entity classes, except external events and
+pointer types.
+Céu also supports option variable aliases which are aliases that may be bounded
+or not.</p>
+<p>An alias is declared by suffixing the entity class with the modifier
+<code>&amp;</code> and is acquired by prefixing an entity identifier with the operator <code>&amp;</code>.</p>
+<p>An alias must have a narrower scope than the entity it refers to.
+The <a href="../statements/#assignments">assignment</a> to the alias is immutable and must
+occur between its declaration and first access or next
+<a href="../statements/#synchronous-control-statements">yielding statement</a>.</p>
+<p>Example:</p>
+<pre><code class="ceu">var  int v = 0;
+var&amp; int a = &amp;v;        // &quot;a&quot; is an alias to &quot;v&quot;
+...
+a = 1;                  // &quot;a&quot; and &quot;v&quot; are indistinguishable
+_printf(&quot;%d\n&quot;, v);     // prints 1
+</code></pre>
+
+<p>An option variable alias, declared as <code>var&amp;?</code>, serves two purposes:</p>
+<ul>
+<li>Map a <a href="../statements/#resources-finalization">native resource</a> to Céu.
+  The alias is acquired by prefixing the associated
+  <a href="../statements/#native-call">native call</a> with the operator <code>&amp;</code>.
+  Since the allocation may fail, the alias may remain unbounded.</li>
+<li>Hold the result of a <a href="../statements/#code-invocation"><code>spawn</code></a> invocation.
+  Since the allocation may fail, the alias may remain unbounded.</li>
+</ul>
+<!--
+- Track the lifetime of a variable.
+  The alias is acquired by prefixing the associated variable with
+  the operator `&`.
+  Since the tracked variable may go out of scope, the alias may become
+  unset.
+-->
+
+<p>Accesses to option variable aliases must always use
+<a href="../expressions/#option">option checking or unwrapping</a>.</p>
+<p><code>TODO: or implicit assert with &amp; declarations</code></p>
+<p>Examples:</p>
+<pre><code class="ceu">var&amp;? _FILE f = &amp;_fopen(&lt;...&gt;) finalize with
+                    _fclose(f);
+                end;
+if f? then
+    &lt;...&gt;   // &quot;f&quot; is assigned
+else
+    &lt;...&gt;   // &quot;f&quot; is not assigned
+end
+</code></pre>
+
+<pre><code class="ceu">var&amp;? My_Code my_code = spawn My_Code();
+if my_code? then
+    &lt;...&gt;   // &quot;spawn&quot; succeeded
+else
+    &lt;...&gt;   // &quot;spawn&quot; failed
+end
+</code></pre>
+
+<!--
+
+wzxhzdk:3
+
+-->
+
+<h3 id="pointers">Pointers<a class="headerlink" href="#pointers" title="Permanent link">&para;</a></h3>
+<p>A pointer is declared by suffixing the type with the modifier
+<code>&amp;&amp;</code> and is acquired by prefixing an entity with the operator <code>&amp;&amp;</code>.
+Applying the operator <code>*</code> to a pointer provides indirect access to its
+referenced entity.</p>
+<p>Example:</p>
+<pre><code>var int   v = 0;
+var int&amp;&amp; p = &amp;&amp;v;      // &quot;p&quot; holds a pointer to &quot;v&quot;
+...
+*p = 1;                 // &quot;p&quot; provides indirect access to &quot;v&quot;
+_printf(&quot;%d\n&quot;, v);     // prints 1
+</code></pre>
+
+<p>The following restrictions apply to pointers in Céu:</p>
+<!--
+- Only pointers to [primitive](#TODO) and [data abstraction](#TODO) types
+  are valid.
+-->
+
+<ul>
+<li>No support for pointers to events, vectors, or pools (only variables).</li>
+<li>A pointer is only accessible between its declaration and the next
+  <a href="../statements/#synchronous-control-statements">yielding statement</a>.</li>
+</ul>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Types - Céu v0.30 - Reference Manual</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Types";
+    var mkdocs_page_input_path = "expressions/types.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Céu v0.30 - Reference Manual</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Overview</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../lexical_rules/">Lexical Rules</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../types/">Types</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../storage_entities/">Storage Entities</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../statements/">Statements</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../">Locations & Expressions</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../compilation/">Compilation</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../syntax/">Syntax</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../license/">License</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Céu v0.30 - Reference Manual</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Types</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h2 id="types">Types<a class="headerlink" href="#types" title="Permanent link">&para;</a></h2>
+<p>Céu supports type checks and casts:</p>
+<pre><code class="ceu">Check ::= Exp is Type
+Cast  ::= Exp as Type
+</code></pre>
+
+<h3 id="type-check">Type Check<a class="headerlink" href="#type-check" title="Permanent link">&para;</a></h3>
+<p>A type check evaluates to <em>true</em> or <em>false</em> depending on whether the runtime
+type of the expression is a subtype of the checked type or not.</p>
+<p>The static type of the expression must be a supertype of the checked type.</p>
+<p>Example:</p>
+<pre><code class="ceu">data Aa;
+data Aa.Bb;
+var Aa a = &lt;...&gt;;       // &quot;a&quot; is of static type &quot;Aa&quot;
+&lt;...&gt;
+if a is Aa.Bb then      // is the runtime type of &quot;a&quot; a subtype of &quot;Aa.Bb&quot;?
+    &lt;...&gt;
+end
+</code></pre>
+
+<h3 id="type-cast">Type Cast<a class="headerlink" href="#type-cast" title="Permanent link">&para;</a></h3>
+<p>A type cast converts the type of an expression into a new type as follows:</p>
+<ol>
+<li>The expression type is a <a href="../statements/#data">data type</a>:<ol>
+<li>The new type is <code>int</code>:
+    Evaluates to the <a href="../statements/#data">type enumeration</a> for the
+    expression type.</li>
+<li>The new type is a subtype of the expression static type:<ol>
+<li>The expression runtime type is a subtype of the new type:
+    Evaluates to the new type.</li>
+<li>Evaluates to error.</li>
+</ol>
+</li>
+<li>The new type is a supertype of the expression static type:
+    Always succeeds and evaluates to the new type.
+    See also <a href="../statements/#dynamic-dispatching">Dynamic Dispatching</a>.</li>
+<li>Evaluates to error.</li>
+</ol>
+</li>
+<li>Evaluates to the new type (i.e., a <em>weak typecast</em>, as in C).</li>
+</ol>
+<p>Examples:</p>
+<pre><code class="ceu">var Direction dir = &lt;...&gt;;
+_printf(&quot;dir = %d\n&quot;, dir as int);
+
+var Aa a = &lt;...&gt;;
+_printf(&quot;a.v = %d\n&quot;, (a as Aa.Bb).v);
+
+var Media.Video vid = &lt;...&gt;;
+await/dynamic Play(&amp;m as Media);
+
+var bool b = &lt;...&gt;;
+_printf(&quot;b= %d\n&quot;, b as int);
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+
+</body>
+</html>

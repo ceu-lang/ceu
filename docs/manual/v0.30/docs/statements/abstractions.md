@@ -43,7 +43,10 @@ Examples:
 
 ```ceu
 data Rect with
-    var int x, y, h, w;
+    var int x;
+    var int y;
+    var int h;
+    var int w;
     var int z = 0;
 end
 var Rect r = val Rect(10,10, 100,100, _);  // "r.z" defaults to 0

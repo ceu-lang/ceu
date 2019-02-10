@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Entity classes - Céu v0.30 - Reference Manual</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Entity classes";
+    var mkdocs_page_input_path = "storage_entities/entity_classes.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Céu v0.30 - Reference Manual</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Overview</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../lexical_rules/">Lexical Rules</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../types/">Types</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../">Storage Entities</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../statements/">Statements</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../expressions/">Locations & Expressions</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../compilation/">Compilation</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../syntax/">Syntax</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../license/">License</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Céu v0.30 - Reference Manual</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Entity classes</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h2 id="entity-classes">Entity Classes<a class="headerlink" href="#entity-classes" title="Permanent link">&para;</a></h2>
+<h3 id="variables">Variables<a class="headerlink" href="#variables" title="Permanent link">&para;</a></h3>
+<p>A variable in Céu holds a value of a <a href="../statements/#variables">declared</a>
+<a href="../types/#types">type</a> that may vary during program execution.
+The value of a variable can be read in
+<a href="../expressions/#locations-expressions">expressions</a> or written in
+<a href="#assignments">assignments</a>.
+The current value of a variable is preserved until the next assignment, during
+its whole lifetime.</p>
+<!--
+TODO: exceptions for scope/lifetime
+- pointers have "instant" lifetime, like fleeting events, scope is unbound
+- intermediate values die after "watching", scope is unbound
+
+*Note: since blocks can contain parallel compositions, variables can be read
+       and written in trails in parallel.*
+-->
+
+<p>Example:</p>
+<pre><code class="ceu">var int v = _;  // empty initializaton
+par/and do
+    v = 1;      // write access
+with
+    v = 2;      // write access
+end
+escape v;       // read access (yields 2)
+</code></pre>
+
+<h3 id="vectors">Vectors<a class="headerlink" href="#vectors" title="Permanent link">&para;</a></h3>
+<p>A vector in Céu is a dynamic and contiguous collection of variables of the same
+type.</p>
+<p>A <a href="../statements/#vectors">vector declaration</a> specifies its type and maximum
+number of elements (possibly unlimited).
+The current length of a vector is dynamic and can be accessed through the
+<a href="../expressions/#length">operator <code>$</code></a>.</p>
+<p>Individual elements of a vector can be accessed through an
+<a href="../expressions/#index">index</a> starting from <code>0</code>.
+Céu generates an <a href="#TODO">error</a> for out-of-bounds vector accesses.</p>
+<p>Example:</p>
+<pre><code class="ceu">var[9] byte buf = [1,2,3];  // write access
+buf = buf .. [4];           // write access
+escape buf[1];              // read access (yields 2)
+</code></pre>
+
+<p><code>TODO: ring buffers</code></p>
+<h3 id="events">Events<a class="headerlink" href="#events" title="Permanent link">&para;</a></h3>
+<p>Events account for the reactive nature of Céu.
+Programs manipulate events through the <a href="../statements/#event"><code>await</code></a> and
+<a href="../statements/#events_1"><code>emit</code></a>
+statements.
+An <code>await</code> halts the running trail until the specified event occurs.
+An event occurrence is broadcast to the whole program and awakes trails
+awaiting that event to resume execution.</p>
+<p>Unlike all other entity classes, the value of an event is ephemeral and does
+not persist after a reaction terminates.
+For this reason, an event identifier is not a variable: values can only
+be communicated through <code>emit</code> and <code>await</code> statements.
+A <a href="../statements/#events">declaration</a> includes the type of value the occurring
+event carries.</p>
+<p><em>Note: <tt>none</tt> is a valid type for signal-only events with no associated values.</em></p>
+<p>Example:</p>
+<pre><code class="ceu">input  none I;           // &quot;I&quot; is an input event that carries no values
+output int  O;           // &quot;O&quot; is an output event that carries values of type &quot;int&quot;
+event  int  e;           // &quot;e&quot; is an internal event that carries values of type &quot;int&quot;
+par/and do
+    await I;             // awakes when &quot;I&quot; occurs
+    emit e(10);          // broadcasts &quot;e&quot; passing 10, awakes the &quot;await&quot; below
+with
+    var int v = await e; // awaits &quot;e&quot; assigning the received value to &quot;v&quot;
+    emit O(v);           // emits &quot;O&quot; back to the environment passing &quot;v&quot;
+end
+</code></pre>
+
+<p>As described in <a href="../#internal-reactions">Internal Reactions</a>, Céu supports
+external and internal events with different behavior.</p>
+<h4 id="external-events">External Events<a class="headerlink" href="#external-events" title="Permanent link">&para;</a></h4>
+<p>External events are used as interfaces between programs and devices from the 
+real world:</p>
+<ul>
+<li><em>input events</em> represent input devices such as a sensor, button, mouse, etc.</li>
+<li><em>output events</em> represent output devices such as a LED, motor, screen, etc.</li>
+</ul>
+<p>The availability of external events depends on the
+<a href="../#environments">environment</a> in use.</p>
+<p>Programs can <code>emit</code> output events and <code>await</code> input events.</p>
+<!--
+Therefore, external declarations only make pre-existing events visible to a 
+program.
+Refer to [Environment](#TODO) for information about interfacing with 
+external events at the platform level.
+-->
+
+<!--
+#### External Input Events
+
+As a reactive language, programs in Céu have input events as entry points in
+the code through [await statements](#TODO).
+Input events represent the notion of [logical time](#TODO) in Céu.
+
+<!-
+Only the [environment](#TODO) can emit inputs to the application.
+Programs can only `await` input events.
+->
+
+#### External Output Events
+
+Output events communicate values from the program back to the
+[environment](#TODO).
+
+Programs can only `emit` output events.
+
+-->
+
+<h4 id="internal-events">Internal Events<a class="headerlink" href="#internal-events" title="Permanent link">&para;</a></h4>
+<p>Internal events, unlike external events, do not represent real devices and are
+defined by the programmer.
+Internal events serve as signalling and communication mechanisms among trails
+in a program.</p>
+<p>Programs can <code>emit</code> and <code>await</code> internal events.</p>
+<h3 id="pools">Pools<a class="headerlink" href="#pools" title="Permanent link">&para;</a></h3>
+<p>A pool is a dynamic container to hold running <a href="../statements/#code">code abstractions</a>.</p>
+<p>A <a href="../statements/#pools">pool declaration</a> specifies the type of the
+abstraction and maximum number of concurrent instances (possibly unlimited).
+Individual elements of pools can only be accessed through
+<a href="../statements/#pool-iterator">iterators</a>.
+New elements are created with <a href="../statements/#code-invocation"><code>spawn</code></a> and are
+removed automatically when the code execution terminates.</p>
+<p>Example:</p>
+<pre><code class="ceu">code/await Anim (none) =&gt; none do       // defines the &quot;Anim&quot; code abstraction
+    &lt;...&gt;                               // body of &quot;Anim&quot;
+end
+pool[] Anim as;                         // declares an unlimited container for &quot;Anim&quot; instances
+loop i in [1-&gt;10] do
+    spawn Anim() in as;                 // creates 10 instances of &quot;Anim&quot; into &quot;as&quot;
+end
+</code></pre>
+
+<p>When a pool declaration goes out of scope, all running code abstractions are
+automatically aborted.</p>
+<p><code>TODO: kill</code></p>
+<!--
+`TODO: data`
+-->
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+
+</body>
+</html>

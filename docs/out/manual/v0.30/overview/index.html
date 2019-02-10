@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="None">
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Overview - Céu v0.30 - Reference Manual</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Overview";
+    var mkdocs_page_input_path = "overview/index.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Céu v0.30 - Reference Manual</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="..">Overview</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../lexical_rules/">Lexical Rules</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../types/">Types</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../storage_entities/">Storage Entities</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../statements/">Statements</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../expressions/">Locations & Expressions</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../compilation/">Compilation</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../syntax/">Syntax</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../license/">License</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Céu v0.30 - Reference Manual</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Overview</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h1>
+<p>Céu provides <em>Structured Synchronous Reactive Programming</em> with the following
+general characteristics:</p>
+<ul>
+<li><em>Reactive</em>:    code executes in reactions to events.</li>
+<li><em>Structured</em>:  code uses structured control-flow mechanisms, such as <code>spawn</code>
+                 and <code>await</code> (to create and suspend lines of execution).</li>
+<li><em>Synchronous</em>: event reactions run atomically and to completion on each line
+                 of execution.</li>
+</ul>
+<!--
+- Event Handling:
+    - An `await` statement to suspend a line of execution and wait for an input
+      event from the environment.
+    - An `emit` statement to signal an output event back to the environment.
+- Concurrency:
+    - A set of parallel constructs to compose concurrent lines of execution.
+-->
+
+<p>The lines of execution in Céu, known as <em>trails</em>, react all together to input
+events one after another, in discrete steps.
+An input event is broadcast to all active trails, which share the event as an
+unique and global time reference.</p>
+<p>The example in Céu that follows blinks a LED every second and terminates on a
+button press:</p>
+<pre><code class="ceu">input  none   BUTTON;
+output on/off LED;
+par/or do
+    await BUTTON;
+with
+    loop do
+        await 1s;
+        emit LED(on);
+        await 1s;
+        emit LED(off);
+    end
+end
+</code></pre>
+
+<p>The synchronous concurrency model of Céu greatly diverges from multithreaded
+and actor-based models (e.g. <em>pthreads</em> and <em>erlang</em>).
+On the one hand, there is no preemption or real parallelism at the synchronous
+core of the language (i.e., no multi-core execution).
+On the other hand, accesses to shared variables among trails are deterministic
+and do not require synchronization primitives (i.e., <em>locks</em> or
+<em>queues</em>).</p>
+<p>Céu provides static memory management based on lexical scope and does not
+require a garbage collector.</p>
+<p>Céu integrates safely with C, particularly when manipulating external resources
+(e.g., file handles).
+Programs can make native calls seamlessly while avoiding common pitfalls such
+as memory leaks and dangling pointers.</p>
+<p>Céu is <a href="license/#license">free software</a>.</p>
+<h2 id="environments">Environments<a class="headerlink" href="#environments" title="Permanent link">&para;</a></h2>
+<p>As a reactive language, Céu depends on an external host platform, known as an
+<em>environment</em>, which exposes <code>input</code> and <code>output</code> events programs can use.</p>
+<p>An environment senses the world and broadcasts <code>input</code> events to programs.
+It also intercepts programs signalling <code>output</code> events to actuate in the
+world:</p>
+<p><img alt="An environment works as a bridge between the program and the real world." src="overview/environment.png" /></p>
+<p>As examples of typical environments, an embedded system may provide button
+input and LED output, and a video game engine may provide keyboard input and
+video output.</p>
+<!--
+`TODO: link to compilation`
+-->
+
+<h2 id="synchronous-execution-model">Synchronous Execution Model<a class="headerlink" href="#synchronous-execution-model" title="Permanent link">&para;</a></h2>
+<p>Céu is grounded on a precise notion of <em>logical time</em> (as opposed to
+<em>physical</em>) as a discrete sequence of input events:
+a sequence because only a single input event is handled at a logical time; 
+discrete because reactions to events are guaranteed to execute in bounded
+physical time (see <a href="#bounded-execution">Bounded Execution</a>).</p>
+<p>The execution model for Céu programs is as follows:</p>
+<ol>
+<li>The program initiates the <em>boot reaction</em> from the first line of code in a
+   single trail.</li>
+<li>Active trails, one after another, execute until they await or terminate.
+   This step is named a <em>reaction chain</em>, and always runs in bounded time.
+   New trails can be created with
+   <a href="#parallel-compositions-and-abortion">parallel compositions</a>.</li>
+<li>The program goes idle.</li>
+<li>On the occurrence of a new input event, <em>all</em> trails awaiting that event
+   awake.
+   It then goes to step 2.</li>
+</ol>
+<p>The synchronous execution model of Céu is based on the hypothesis that reaction
+chains run <em>infinitely faster</em> in comparison to the rate of input events.
+A reaction chain, aka <em>external reaction</em>, is the set of computations that
+execute when an input event occurs.
+Conceptually, a program takes no time on step 2 and is always idle on step 3.
+In practice, if a new input event occurs while a reaction chain is 
+running (step 2), it is enqueued to run in the next reaction.
+When multiple trails are active at a logical time (i.e. awaking from the same 
+event), Céu schedules them in the order they appear in the program text.
+This policy is arbitrary, but provides a priority scheme for trails, and also
+ensures deterministic and reproducible execution for programs.
+At any time, at most one trail is executing.</p>
+<p>The program and diagram that follow illustrate the behavior of the scheduler of
+Céu:</p>
+<pre><code class="ceu"> 1:  input none A;
+ 2:  input none B;
+ 3:  input none C;
+ 4:  par/and do
+ 5:      // trail 1
+ 6:      &lt;...&gt;          // a `&lt;...&gt;` represents non-awaiting statements
+ 7:      await A;       // (e.g., assignments and native calls)
+ 8:      &lt;...&gt;
+ 9:  with
+10:      // trail 2
+11:      &lt;...&gt;
+12:      await B;
+13:      &lt;...&gt;
+14:  with
+15:      // trail 3
+16:      &lt;...&gt;
+17:      await A;
+18:      &lt;...&gt;
+19:      await B;
+20:      par/and do
+21:          // trail 3
+22:          &lt;...&gt;
+23:      with
+24:          // trail 4
+25:          &lt;...&gt;
+26:      end
+27:  end
+</code></pre>
+
+<p><img alt="" src="overview/reaction.png" /></p>
+<p>The program starts in the boot reaction and forks into three trails.
+Respecting the lexical order of declaration for the trails, they are scheduled
+as follows (<em>t0</em> in the diagram):</p>
+<ul>
+<li><em>trail-1</em> executes up to the <code>await A</code> (line 7);</li>
+<li><em>trail-2</em> executes up to the <code>await B</code> (line 12);</li>
+<li><em>trail-3</em> executes up to the <code>await A</code> (line 17).</li>
+</ul>
+<p>As no other trails are pending, the reaction chain terminates and the scheduler 
+remains idle until a new event occurs (<em>t1=A</em> in the diagram):</p>
+<ul>
+<li><em>trail-1</em> awakes, executes and terminates (line 8);</li>
+<li><em>trail-2</em> remains suspended, as it is not awaiting <code>A</code>.</li>
+<li><em>trail-3</em> executes up to <code>await B</code> (line 19).</li>
+</ul>
+<p>Note that during the reaction <em>t1</em>, new instances of events <code>A</code>, <code>B</code>, and <code>C</code>
+occur which are all enqueued to be handled in the reactions in sequence.
+As <code>A</code> happened first, it becomes the next reaction.
+However, no trails are awaiting it, so an empty reaction chain takes place 
+(<em>t2</em> in the diagram).
+The next reaction dequeues the event <code>B</code> (<em>t3</em> in the diagram):</p>
+<ul>
+<li><em>trail-2</em> awakes, executes and terminates;</li>
+<li><em>trail-3</em> splits in two and they both terminate immediately.</li>
+</ul>
+<p>Since a <code>par/and</code> rejoins after all trails terminate, the program also
+terminates and does not react to the pending event <code>C</code>.</p>
+<p>Note that each step in the logical time line (<em>t0</em>, <em>t1</em>, etc.) is identified 
+by the unique occurring event.
+Inside a reaction, trails only react to the same shared global event (or remain 
+suspended).</p>
+<!--
+A reaction chain may also contain emissions and reactions to internal events, 
+which are presented in Section~\ref{sec.ceu.ints}.
+-->
+
+<h2 id="parallel-compositions-and-abortion">Parallel Compositions and Abortion<a class="headerlink" href="#parallel-compositions-and-abortion" title="Permanent link">&para;</a></h2>
+<p>The use of trails in parallel allows programs to wait for multiple events at 
+the same time.
+Céu supports three kinds of parallel compositions that differ in how they
+rejoin and proceed to the statement in sequence:</p>
+<ol>
+<li>a <code>par/and</code> rejoins after all trails in parallel terminate;</li>
+<li>a <code>par/or</code> rejoins after any trail in parallel terminates, aborting all
+   other trails automatically;</li>
+<li>a <code>par</code> never rejoins, even if all trails terminate.</li>
+</ol>
+<p>As mentioned in the introduction and emphasized in the execution model, trails
+in parallel do not execute with real parallelism.
+Therefore, it is important to note that parallel compositions support
+<em>awaiting in parallel</em>, rather than <em>executing in parallel</em> (see
+<a href="statements/#thread">Asynchronous Threads</a> for real parallelism support).
+<!--
+The termination of a trail inside a <code>par/or</code> aborts the other trails in 
+parallel which are necessarily idle
+(see <a href="#synchronous-execution-model">klzzwxh:0034 for external reactions</a>).
+Before being aborted, a trail has a last opportunity to execute active 
+<a href="#TODO">finalization statements</a>.
+--></p>
+<h2 id="bounded-execution">Bounded Execution<a class="headerlink" href="#bounded-execution" title="Permanent link">&para;</a></h2>
+<p>Reaction chains must run in bounded time to guarantee that programs are 
+responsive and can handle incoming input events.
+For this reason, Céu requires every path inside the body of a <code>loop</code> statement
+to contain at least one <code>await</code> or <code>break</code> statement.
+This prevents <em>tight loops</em>, which are unbounded loops that do not await.</p>
+<p>In the example that follow, if the condition is false, the true branch of the
+<code>if</code> never executes, resulting in a tight loop:</p>
+<pre><code class="ceu">loop do
+    if &lt;cond&gt; then
+        break;
+    end
+end
+</code></pre>
+
+<p>Céu warns about tight loops in programs at compile time.
+For computationally-intensive algorithms that require unrestricted loops (e.g.,
+cryptography, image processing), Céu provides
+<a href="statements/#asynchronous-execution">Asynchronous Execution</a>.</p>
+<h2 id="deterministic-execution">Deterministic Execution<a class="headerlink" href="#deterministic-execution" title="Permanent link">&para;</a></h2>
+<p><code>TODO (shared memory + deterministic scheduler + optional static analysis)</code></p>
+<h2 id="internal-reactions">Internal Reactions<a class="headerlink" href="#internal-reactions" title="Permanent link">&para;</a></h2>
+<p>Céu supports inter-trail communication through <code>await</code> and <code>emit</code> statements
+for <em>internal events</em>.
+A trail can <code>await</code> an internal event to suspend it.
+Then, another trail can <code>emit</code> and broadcast an event, awaking all trails
+awaiting that event.</p>
+<p>Unlike input events, multiple internal events can coexist during an external
+reaction.
+An <code>emit</code> starts a new <em>internal reaction</em> in the program which relies on a
+runtime stack:</p>
+<ol>
+<li>The <code>emit</code> suspends the current trail and its continuation is pushed into
+    the stack (i.e., the statement in sequence with the <code>emit</code>).</li>
+<li>All trails awaiting the emitted event awake and execute in sequence
+    (see <a href="#synchronous-execution-model"><code>rule 2</code></a> for external reactions).
+    If an awaking trail emits another internal event, a nested internal
+    reaction starts with <code>rule 1</code>.</li>
+<li>The top of the stack is popped and the last emitting trail resumes execution
+    from its continuation.</li>
+</ol>
+<p>The program as follow illustrates the behavior of internal reactions in Céu:</p>
+<pre><code class="ceu">1:  par/and do      // trail 1
+2:      await e;
+3:      emit f;
+4:  with            // trail 2
+5:      await f;
+6:  with            // trail 3
+7:      emit e;
+8:  end
+</code></pre>
+
+<p>The program starts in the boot reaction with an empty stack and forks into the
+three trails.
+Respecting the lexical order, the first two trails <code>await</code> and the third trail
+executes:</p>
+<ul>
+<li>The <code>emit e</code> in <em>trail-3</em> (line 7) starts an internal reaction (<code>stack=[7]</code>).</li>
+<li>The <code>await e</code> in <em>trail-1</em> awakes (line 2) and then the <code>emit f</code> (line 3)
+  starts another internal reaction (<code>stack=[7,3]</code>).</li>
+<li>The <code>await f</code> in <em>trail-2</em> awakes and terminates the trail (line 5).
+  Since no other trails are awaiting <code>f</code>, the current internal reaction
+  terminates, resuming and popping the top of the stack (<code>stack=[7]</code>).</li>
+<li>The <code>emit f</code> resumes in <em>trail-1</em> and terminates the trail (line 3).
+  The current internal reaction terminates, resuming and popping the top of the
+  stack (<code>stack=[]</code>).</li>
+<li>The <code>emit e</code> resumes in <em>trail-3</em> and terminates the trail (line 7).
+  Finally, the <code>par/and</code> rejoins and the program terminates.</li>
+</ul>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.0.4
+Build Date UTC : 2019-01-18 20:09:21
+-->

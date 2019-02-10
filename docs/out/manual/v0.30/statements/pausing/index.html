@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Pausing - Céu v0.30 - Reference Manual</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Pausing";
+    var mkdocs_page_input_path = "statements/pausing.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Céu v0.30 - Reference Manual</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Overview</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../lexical_rules/">Lexical Rules</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../types/">Types</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../storage_entities/">Storage Entities</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../">Statements</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../expressions/">Locations & Expressions</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../compilation/">Compilation</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../syntax/">Syntax</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../license/">License</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Céu v0.30 - Reference Manual</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Pausing</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h2 id="pausing">Pausing<a class="headerlink" href="#pausing" title="Permanent link">&para;</a></h2>
+<p>The <code>pause/if</code> statement controls if its body should temporarily stop to react
+to events:</p>
+<pre><code class="ceu">Pause_If ::= pause/if (Loc|ID_ext) do
+                 Block
+             end
+
+Pause_Await ::= await (pause|resume)
+</code></pre>
+
+<p>A <code>pause/if</code> specifies a pausing event of type <code>bool</code> which, when emitted,
+toggles between pausing (<code>true</code>) and resuming (<code>false</code>) reactions for its body.</p>
+<p>When its body terminates, the whole <code>pause/if</code> terminates and proceeds to the
+statement in sequence.</p>
+<p>In transition instants, the body can react to the special <code>pause</code> and <code>resume</code>
+events before the corresponding state applies.</p>
+<p><code>TODO: finalize/pause/resume</code></p>
+<p>Examples:</p>
+<pre><code class="ceu">event bool e;
+pause/if e do       // pauses/resumes the nested body on each &quot;e&quot;
+    every 1s do
+        &lt;...&gt;       // does something every &quot;1s&quot;
+    end
+end
+</code></pre>
+
+<pre><code class="ceu">event bool e;
+pause/if e do               // pauses/resumes the nested body on each &quot;e&quot;
+    &lt;...&gt;
+        loop do
+            await pause;
+            &lt;...&gt;           // does something before pausing
+            await resume;
+            &lt;...&gt;           // does something before resuming
+        end
+    &lt;...&gt;
+end
+</code></pre>
+
+<!--
+*Note: The timeouts for timers remain frozen while paused.*
+-->
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+
+</body>
+</html>

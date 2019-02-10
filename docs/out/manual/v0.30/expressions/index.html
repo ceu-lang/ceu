@@ -5,35 +5,27 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="None">
   
-  
-  
-  <title>Locations & Expressions - Céu v0.30 - Reference Manual</title>
-  
-
   <link rel="shortcut icon" href="../img/favicon.ico">
-
-  
+  <title>Locations & Expressions - Céu v0.30 - Reference Manual</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
   <link rel="stylesheet" href="../css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
-  <link rel="stylesheet" href="../css/highlight.css">
-  <link href="../extra.css" rel="stylesheet">
-
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
   
   <script>
     // Current page data
     var mkdocs_page_name = "Locations & Expressions";
     var mkdocs_page_input_path = "expressions/index.md";
-    var mkdocs_page_url = "/expressions/";
+    var mkdocs_page_url = null;
   </script>
   
-  <script src="../js/jquery-2.1.1.min.js"></script>
-  <script src="../js/modernizr-2.8.3.min.js"></script>
-  <script type="text/javascript" src="../js/highlight.pack.js"></script>
-  <script src="../js/theme.js"></script> 
-
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
   
 </head>
 
@@ -47,109 +39,95 @@
         <a href=".." class="icon icon-home"> Céu v0.30 - Reference Manual</a>
         <div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
   </form>
 </div>
       </div>
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-        <ul class="current">
+	<ul class="current">
+	  
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="..">Overview</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="..">Overview</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../lexical_rules/">Lexical Rules</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../lexical_rules/">Lexical Rules</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../types/">Types</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../types/">Types</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../storage_entities/">Storage Entities</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../storage_entities/">Storage Entities</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../statements/">Statements</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../statements/">Statements</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 current">
-        <a class="current" href="./">Locations & Expressions</a>
-        
-            <ul>
+            <li class="toctree-l1 current">
+		
+    <a class="current" href="./">Locations & Expressions</a>
+    <ul class="subnav">
             
-                <li class="toctree-l3"><a href="#locations-expressions">Locations &amp; Expressions</a></li>
-                
-                    <li><a class="toctree-l4" href="#primary">Primary</a></li>
-                
-                    <li><a class="toctree-l4" href="#arithmetic">Arithmetic</a></li>
-                
-                    <li><a class="toctree-l4" href="#bitwise">Bitwise</a></li>
-                
-                    <li><a class="toctree-l4" href="#relational">Relational</a></li>
-                
-                    <li><a class="toctree-l4" href="#logical">Logical</a></li>
-                
-                    <li><a class="toctree-l4" href="#types">Types</a></li>
-                
-                    <li><a class="toctree-l4" href="#modifiers">Modifiers</a></li>
-                
-                    <li><a class="toctree-l4" href="#references">References</a></li>
-                
-                    <li><a class="toctree-l4" href="#option">Option</a></li>
-                
-                    <li><a class="toctree-l4" href="#sizeof">Sizeof</a></li>
-                
-                    <li><a class="toctree-l4" href="#calls">Calls</a></li>
-                
-                    <li><a class="toctree-l4" href="#vectors">Vectors</a></li>
-                
-                    <li><a class="toctree-l4" href="#fields">Fields</a></li>
-                
-            
-            </ul>
+    <li class="toctree-l2"><a href="#locations-expressions">Locations &amp; Expressions</a></li>
+    
+        <ul>
         
-    </li>
-<li>
+            <li><a class="toctree-l3" href="#primary">Primary</a></li>
+        
+            <li><a class="toctree-l3" href="#arithmetic">Arithmetic</a></li>
+        
+            <li><a class="toctree-l3" href="#bitwise">Bitwise</a></li>
+        
+            <li><a class="toctree-l3" href="#relational">Relational</a></li>
+        
+            <li><a class="toctree-l3" href="#logical">Logical</a></li>
+        
+            <li><a class="toctree-l3" href="#types">Types</a></li>
+        
+            <li><a class="toctree-l3" href="#modifiers">Modifiers</a></li>
+        
+            <li><a class="toctree-l3" href="#references">References</a></li>
+        
+            <li><a class="toctree-l3" href="#option">Option</a></li>
+        
+            <li><a class="toctree-l3" href="#sizeof">Sizeof</a></li>
+        
+            <li><a class="toctree-l3" href="#calls">Calls</a></li>
+        
+            <li><a class="toctree-l3" href="#vectors">Vectors</a></li>
+        
+            <li><a class="toctree-l3" href="#fields">Fields</a></li>
+        
+        </ul>
+    
+
+    </ul>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../compilation/">Compilation</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../compilation/">Compilation</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../syntax/">Syntax</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../syntax/">Syntax</a>
+	    </li>
           
-            <li>
-    <li class="toctree-l1 ">
-        <a class="" href="../license/">License</a>
-        
-    </li>
-<li>
+            <li class="toctree-l1">
+		
+    <a class="" href="../license/">License</a>
+	    </li>
           
         </ul>
       </div>
@@ -184,7 +162,7 @@
             <div class="section">
               
                 <h1 id="locations-expressions">Locations &amp; Expressions<a class="headerlink" href="#locations-expressions" title="Permanent link">&para;</a></h1>
-<p>Céu specifies <a href="./../storage_entities/#locations">locations</a> and expressions as
+<p>Céu specifies <a href="../storage_entities/#locations">locations</a> and expressions as
 follows:</p>
 <pre><code class="ceu">Exp ::= NUM | STR | null | true | false | on | off | yes | no
      |  `(´ Exp `)´
@@ -302,9 +280,9 @@ end
 <h3 id="type-cast">Type Cast<a class="headerlink" href="#type-cast" title="Permanent link">&para;</a></h3>
 <p>A type cast converts the type of an expression into a new type as follows:</p>
 <ol>
-<li>The expression type is a <a href="./../statements/#data">data type</a>:<ol>
+<li>The expression type is a <a href="../statements/#data">data type</a>:<ol>
 <li>The new type is <code>int</code>:
-    Evaluates to the <a href="./../statements/#data">type enumeration</a> for the
+    Evaluates to the <a href="../statements/#data">type enumeration</a> for the
     expression type.</li>
 <li>The new type is a subtype of the expression static type:<ol>
 <li>The expression runtime type is a subtype of the new type:
@@ -314,7 +292,7 @@ end
 </li>
 <li>The new type is a supertype of the expression static type:
     Always succeeds and evaluates to the new type.
-    See also <a href="./../statements/#dynamic-dispatching">Dynamic Dispatching</a>.</li>
+    See also <a href="../statements/#dynamic-dispatching">Dynamic Dispatching</a>.</li>
 <li>Evaluates to error.</li>
 </ol>
 </li>
@@ -340,28 +318,28 @@ _printf(&quot;b= %d\n&quot;, b as int);
 </code></pre>
 
 <p>Modifiers may suppress the requirement for
-<a href="./../statements/#resources-finalization">resource finalization</a>.</p>
+<a href="../statements/#resources-finalization">resource finalization</a>.</p>
 <h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
 <p>Céu supports <em>aliases</em> and <em>pointers</em> as
-<a href="./../storage_entities/#references">references</a>.</p>
+<a href="../storage_entities/#references">references</a>.</p>
 <h3 id="aliases">Aliases<a class="headerlink" href="#aliases" title="Permanent link">&para;</a></h3>
-<p>An alias is acquired by prefixing a <a href="./../statements/#native-call">native call</a>
-or a <a href="./../storage_entities/#locations">location</a> with the operator <code>&amp;</code>:</p>
+<p>An alias is acquired by prefixing a <a href="../statements/#native-call">native call</a>
+or a <a href="../storage_entities/#locations">location</a> with the operator <code>&amp;</code>:</p>
 <pre><code class="ceu">Alias ::= `&amp;´ (Nat_Call | Loc)
 </code></pre>
 
 <p>See also the <a href="#option">unwrap operator</a> <code>!</code> for option variable aliases.</p>
 <h3 id="pointers">Pointers<a class="headerlink" href="#pointers" title="Permanent link">&para;</a></h3>
 <p>The operator <code>&amp;&amp;</code> returns the address of a
-<a href="./../storage_entities/#locations">location</a>, while the operator <code>*</code> dereferences
+<a href="../storage_entities/#locations">location</a>, while the operator <code>*</code> dereferences
 a pointer:</p>
 <pre><code>Addr  ::= `&amp;&amp;´ Loc
 Deref ::= `*´ Loc
 </code></pre>
 
 <h2 id="option">Option<a class="headerlink" href="#option" title="Permanent link">&para;</a></h2>
-<p>The operator <code>?</code> checks if the <a href="./../storage_entities/#locations">location</a> of an
-<a href="./../types/#option">option type</a> is set, while the operator <code>!</code> unwraps the
+<p>The operator <code>?</code> checks if the <a href="../storage_entities/#locations">location</a> of an
+<a href="../types/#option">option type</a> is set, while the operator <code>!</code> unwraps the
 location, raising an <a href="#TODO">error</a> if it is unset:</p>
 <pre><code class="ceu">Check  ::= Loc `?´
 Unwrap ::= Loc `!´
@@ -377,15 +355,15 @@ The expression is evaluated at compile time.
 -->
 
 <h2 id="calls">Calls<a class="headerlink" href="#calls" title="Permanent link">&para;</a></h2>
-<p>See <a href="./../statements/#native-call">Native Call</a> and
-<a href="./../statements/#code-invocation">Code Invocation</a>.</p>
+<p>See <a href="../statements/#native-call">Native Call</a> and
+<a href="../statements/#code-invocation">Code Invocation</a>.</p>
 <h2 id="vectors">Vectors<a class="headerlink" href="#vectors" title="Permanent link">&para;</a></h2>
 <h3 id="index">Index<a class="headerlink" href="#index" title="Permanent link">&para;</a></h3>
 <p>Céu uses square brackets to index <a href="#Vectors">vectors</a>:</p>
 <pre><code>Vec_Idx ::= Loc `[´ Exp `]´
 </code></pre>
 
-<p>The index expression must be of type <a href="./../types/#primitives"><code>usize</code></a>.</p>
+<p>The index expression must be of type <a href="../types/#primitives"><code>usize</code></a>.</p>
 <p>Vectors start at index zero.
 Céu generates an <a href="#TODO">error</a> for out-of-bounds vector accesses.</p>
 <h3 id="length">Length<a class="headerlink" href="#length" title="Permanent link">&para;</a></h3>
@@ -403,9 +381,9 @@ $vec = 1;
 
 <p>The new length must be smaller or equal to the current length, otherwise the
 assignment raises a runtime error.
-The space for <a href="./../statements/#dimension">dynamic vectors</a> shrinks automatically.</p>
+The space for <a href="../statements/#dimension">dynamic vectors</a> shrinks automatically.</p>
 <h3 id="constructor">Constructor<a class="headerlink" href="#constructor" title="Permanent link">&para;</a></h3>
-<p>Vector constructors are only valid in <a href="./../statements/#assignments">assignments</a>:</p>
+<p>Vector constructors are only valid in <a href="../statements/#assignments">assignments</a>:</p>
 <pre><code class="ceu">Vec_Cons   ::= (Loc | Exp) Vec_Concat { Vec_Concat }
             |  `[´ [LIST(Exp)] `]´ { Vec_Concat }
 Vec_Concat ::= `..´ (Exp | Lua_Stmts | `[´ [LIST(Exp)] `]´)
@@ -419,10 +397,10 @@ v = v .. [1] .. [5]; // append values '1' and '5' to the vector (v = [8, 1, 5])
 
 <h2 id="fields">Fields<a class="headerlink" href="#fields" title="Permanent link">&para;</a></h2>
 <p>The operators <code>.</code> and <code>:</code> access public fields of
-<a href="./../statements/#data">data abstractions</a>,
-<a href="./../statements/#code">code abstractions</a>,
+<a href="../statements/#data">data abstractions</a>,
+<a href="../statements/#code">code abstractions</a>,
 and
-<a href="./../statements/#c-integration">native</a> structs:</p>
+<a href="../statements/#c-integration">native</a> structs:</p>
 <pre><code>Dot   ::= Loc `.´ (ID_int|ID_nat)
 Colon ::= Loc `:´ (ID_int|ID_nat)
 </code></pre>
@@ -459,7 +437,7 @@ Example:
 
   Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
 </footer>
-	  
+      
         </div>
       </div>
 
@@ -467,7 +445,7 @@ Example:
 
   </div>
 
-<div class="rst-versions" role="note" style="cursor: pointer">
+  <div class="rst-versions" role="note" style="cursor: pointer">
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
@@ -478,6 +456,14 @@ Example:
       
     </span>
 </div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
 
 </body>
 </html>
+
+<!--
+MkDocs version : 1.0.4
+Build Date UTC : 2019-01-18 20:09:21
+-->

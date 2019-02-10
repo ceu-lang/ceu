@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>C api - Céu v0.30 - Reference Manual</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "C api";
+    var mkdocs_page_input_path = "compilation/c_api.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Céu v0.30 - Reference Manual</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Overview</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../lexical_rules/">Lexical Rules</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../types/">Types</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../storage_entities/">Storage Entities</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../statements/">Statements</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../expressions/">Locations & Expressions</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../">Compilation</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../syntax/">Syntax</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../license/">License</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Céu v0.30 - Reference Manual</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>C api</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h2 id="c-api">C API<a class="headerlink" href="#c-api" title="Permanent link">&para;</a></h2>
+<p>The environment phase of the compiler packs the converted Céu program and
+additional files in the order as follows:</p>
+<ol>
+<li>type declarations    (option <code>--env-types</code>)</li>
+<li>thread declarations  (option <code>--env-threads</code>, optional)</li>
+<li>a callback prototype (fixed, see below)</li>
+<li>Céu program          (option <code>--env-ceu</code>, auto generated)</li>
+<li>main program         (option <code>--env-main</code>)</li>
+</ol>
+<p>The Céu program uses standardized types and calls, which must be previously
+mapped from the host environment in steps <code>1-3</code>.</p>
+<p>The main program depends on declarations from the Céu program.</p>
+<h3 id="types">Types<a class="headerlink" href="#types" title="Permanent link">&para;</a></h3>
+<p>The type declarations must map the types of the host environment to all
+<a href="../types/#primitives">primitive types</a> of Céu.</p>
+<p>Example:</p>
+<pre><code class="c">#include &lt;stdint.h&gt;
+#include &lt;sys/types.h&gt;
+
+typedef unsigned char bool;
+typedef unsigned char byte;
+typedef unsigned int  uint;
+
+typedef ssize_t  ssize;
+typedef size_t   usize;
+
+typedef int8_t    s8;
+typedef int16_t  s16;
+typedef int32_t  s32;
+typedef int64_t  s64;
+
+typedef uint8_t   u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+
+typedef float    real;
+typedef float    r32;
+typedef double   r64;
+</code></pre>
+
+<h3 id="threads">Threads<a class="headerlink" href="#threads" title="Permanent link">&para;</a></h3>
+<p>If the user program uses <a href="../statements/#thread">threads</a> and the option
+<code>--ceu-features-thread</code> is set, the host environment must provide declarations
+for types and functions expected by Céu.</p>
+<p>Example:</p>
+<pre><code class="c">#include &lt;pthread.h&gt;
+#include &lt;unistd.h&gt;
+#define CEU_THREADS_T               pthread_t
+#define CEU_THREADS_MUTEX_T         pthread_mutex_t
+#define CEU_THREADS_CREATE(t,f,p)   pthread_create(t,NULL,f,p)
+#define CEU_THREADS_CANCEL(t)       ceu_dbg_assert(pthread_cancel(t)==0)
+#define CEU_THREADS_JOIN_TRY(t)     0
+#define CEU_THREADS_JOIN(t)         ceu_dbg_assert(pthread_join(t,NULL)==0)
+#define CEU_THREADS_MUTEX_LOCK(m)   ceu_dbg_assert(pthread_mutex_lock(m)==0)
+#define CEU_THREADS_MUTEX_UNLOCK(m) ceu_dbg_assert(pthread_mutex_unlock(m)==0)
+#define CEU_THREADS_SLEEP(us)       usleep(us)
+#define CEU_THREADS_PROTOTYPE(f,p)  void* f (p)
+#define CEU_THREADS_RETURN(v)       return v
+</code></pre>
+
+<p><code>TODO: describe them</code></p>
+<h3 id="ceu">Céu<a class="headerlink" href="#ceu" title="Permanent link">&para;</a></h3>
+<p>The converted program generates types and constants required by the main
+program.</p>
+<h4 id="external-events">External Events<a class="headerlink" href="#external-events" title="Permanent link">&para;</a></h4>
+<p>For each <a href="../statements/#external-events">external input and output event</a>
+<code>&lt;ID&gt;</code> defined in Céu, the compiler generates corresponding declarations as
+follows:</p>
+<ol>
+<li>An enumeration item <code>CEU_INPUT_&lt;ID&gt;</code> that univocally identifies the event.</li>
+<li>A <code>define</code> macro <code>_CEU_INPUT_&lt;ID&gt;_</code>.</li>
+<li>A struct type <code>tceu_input_&lt;ID&gt;</code> with fields corresponding to the types in
+   of the event payload.</li>
+</ol>
+<p>Example:</p>
+<p>Céu program:</p>
+<pre><code class="ceu">input (int,u8&amp;&amp;) MY_EVT;
+</code></pre>
+
+<p>Converted program:</p>
+<pre><code class="c">enum {
+    ...
+    CEU_INPUT_MY_EVT,
+    ...
+};
+
+#define _CEU_INPUT_MY_EVT_                                                         
+
+typedef struct tceu_input_MY_EVT {                                               
+    int _1;                                                                     
+    u8* _2;                                                                     
+} tceu_input_MY_EVT;
+</code></pre>
+
+<h4 id="data">Data<a class="headerlink" href="#data" title="Permanent link">&para;</a></h4>
+<p>The global <code>CEU_APP</code> of type <code>tceu_app</code> holds all program memory and runtime
+information:</p>
+<pre><code>typedef struct tceu_app {
+    bool end_ok;                /* if the program terminated */
+    int  end_val;               /* final value of the program */
+    bool async_pending;         /* if there is a pending &quot;async&quot; to execute */
+    ...
+    tceu_code_mem_ROOT root;    /* all Céu program memory */
+} tceu_app;
+
+static tceu_app CEU_APP;
+</code></pre>
+
+<p>The struct <code>tceu_code_mem_ROOT</code> holds the whole memory of the Céu program.
+The identifiers for global variables are preserved, making them directly
+accessible.</p>
+<p>Example:</p>
+<pre><code class="ceu">var int x = 10;
+</code></pre>
+
+<pre><code>typedef struct tceu_code_mem_ROOT {                                             
+    ...
+    int  x;                                                                         
+} tceu_code_mem_ROOT;    
+</code></pre>
+
+<h3 id="main">Main<a class="headerlink" href="#main" title="Permanent link">&para;</a></h3>
+<p>The main program provides the entry point for the host platform (i.e., the
+<code>main</code> function), implementing the event loop that senses the world and
+notifies the Céu program about changes.</p>
+<p>The main program interfaces with the Céu program in both directions:</p>
+<ul>
+<li>Through direct calls, in the direction <code>main -&gt; Céu</code>, typically when new input is available.</li>
+<li>Through callbacks, in the direction <code>Céu -&gt; main</code>, typically when new output is available.</li>
+</ul>
+<h4 id="calls">Calls<a class="headerlink" href="#calls" title="Permanent link">&para;</a></h4>
+<p>The functions that follow are called by the main program to command the
+execution of Céu programs:</p>
+<ul>
+<li>
+<p><code>void ceu_start (tceu_callback* cb, int argc, char* argv[])</code></p>
+<p>Initializes and starts the program.
+Should be called once.
+Expects a callback to register for further notifications.
+Also receives the program arguments in <code>argc</code> and <code>argv</code>.</p>
+</li>
+<li>
+<p><code>void ceu_stop  (void)</code></p>
+<p>Finalizes the program.
+Should be called once.</p>
+</li>
+<li>
+<p><code>void ceu_input (tceu_nevt id, void* params)</code></p>
+<p>Notifies the program about an input <code>id</code> with a payload <code>params</code>.
+Should be called whenever the event loop senses a change.
+The call to <code>ceu_input(CEU_INPUT__ASYNC, NULL)</code> makes
+<a href="../statements/#asynchronous-block">asynchronous blocks</a> to execute a step.</p>
+</li>
+<li>
+<p><code>int ceu_loop (tceu_callback* cb, int argc, char* argv[])</code></p>
+<p>Implements a simple loop encapsulating <code>ceu_start</code>, <code>ceu_input</code>, and
+<code>ceu_stop</code>.
+On each loop iteration, make a <code>CEU_CALLBACK_STEP</code> callback and generates
+a <code>CEU_INPUT__ASYNC</code> input.
+Should be called once.
+Returns the final value of the program.</p>
+</li>
+<li>
+<p><code>void ceu_callback_register (tceu_callback* cb)</code></p>
+<p>Registers a new callback.</p>
+</li>
+</ul>
+<h4 id="callbacks">Callbacks<a class="headerlink" href="#callbacks" title="Permanent link">&para;</a></h4>
+<p>The Céu program makes callbacks to the main program in specific situations:</p>
+<pre><code class="c">enum {
+    CEU_CALLBACK_START,                 /* once in the beginning of `ceu_start`             */
+    CEU_CALLBACK_STOP,                  /* once in the end of `ceu_stop`                    */
+    CEU_CALLBACK_STEP,                  /* on every iteration of `ceu_loop`                 */
+    CEU_CALLBACK_ABORT,                 /* whenever an error occurs                         */
+    CEU_CALLBACK_LOG,                   /* on error and debugging messages                  */
+    CEU_CALLBACK_TERMINATING,           /* once after executing the last statement          */
+    CEU_CALLBACK_ASYNC_PENDING,         /* whenever there's a pending &quot;async&quot; block         */
+    CEU_CALLBACK_THREAD_TERMINATING,    /* whenever a thread terminates                     */
+    CEU_CALLBACK_ISR_ENABLE,            /* whenever interrupts should be enabled/disabled   */
+    CEU_CALLBACK_ISR_ATTACH,            /* whenever an &quot;async/isr&quot; starts                   */
+    CEU_CALLBACK_ISR_DETACH,            /* whenever an &quot;async/isr&quot; is aborted               */
+    CEU_CALLBACK_ISR_EMIT,              /* whenever an &quot;async/isr&quot; emits an innput          */
+    CEU_CALLBACK_WCLOCK_MIN,            /* whenever a next minimum timer is required        */
+    CEU_CALLBACK_WCLOCK_DT,             /* whenever the elapsed time is requested           */
+    CEU_CALLBACK_OUTPUT,                /* whenever an output is emitted                    */
+    CEU_CALLBACK_REALLOC,               /* whenever memory is allocated/deallocated         */
+};
+</code></pre>
+
+<p><code>TODO: payloads</code></p>
+<p>Céu invokes the registered callbacks in reverse register order, one after the
+other, stopping when a callback returns that it handled the request.</p>
+<p>A callback is composed of a function handler and a pointer to the next
+callback:</p>
+<pre><code>typedef struct tceu_callback {
+    tceu_callback_f       f;
+    struct tceu_callback* nxt;
+} tceu_callback;
+</code></pre>
+
+<p>A handler expects a request identifier with two arguments, as well as runtime
+trace information (e.g., file name and line number of the request):</p>
+<pre><code>typedef int (*tceu_callback_f) (int, tceu_callback_val, tceu_callback_val, tceu_trace);
+</code></pre>
+
+<p>An argument has one of the following types:</p>
+<pre><code>typedef union tceu_callback_val {
+    void* ptr;
+    s32   num;
+    usize size;
+} tceu_callback_val;
+</code></pre>
+
+<p>A handler returns whether it handled the request or not (return type <code>int</code>).</p>
+<p>Depending on the request, the handler must also assign a return value to the
+global <code>ceu_callback_ret</code>:</p>
+<pre><code>static tceu_callback_val ceu_callback_ret;
+</code></pre>
+
+<!--
+WCLOCK_DT uses `CEU_WCLOCK_INACTIVE`
+- `CEU_FEATURES_ISR`
+- `CEU_FEATURES_LUA`
+- `CEU_FEATURES_THREAD`
+
+            tceu_evt_id_params evt;
+
+    static volatile tceu_isr isrs[_VECTORS_SIZE];
+-->
+
+<h4 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h4>
+<p>Suppose the environment supports the events that follow:</p>
+<pre><code>input  int I;
+output int O;
+</code></pre>
+
+<p>The <code>main.c</code> implements an event loop to sense occurrences of <code>I</code> and a
+callback to handle occurrences of <code>O</code>:</p>
+<pre><code>#include &quot;types.h&quot;      // as illustrated above in &quot;Types&quot;
+
+int ceu_is_running;     // detects program termination
+
+int ceu_callback_main (int cmd, tceu_callback_val p1, tceu_callback_val p2, tceu_trace trace)
+{
+    int is_handled = 0;
+    switch (cmd) {
+        case CEU_CALLBACK_TERMINATING:
+            ceu_is_running = 0;
+            is_handled = 1;
+            break;
+        case CEU_CALLBACK_OUTPUT:
+            if (p1.num == CEU_OUTPUT_O) {
+                printf(&quot;output O has been emitted with %d\n&quot;, p2.num);
+                is_handled = 1;
+            }
+            break;
+    }
+    return ret;
+}
+
+int main (int argc, char* argv[])
+{
+    ceu_is_running = 1;
+    tceu_callback cb = { &amp;ceu_callback_main, NULL };
+    ceu_start(&amp;cb, argc, argv);
+
+    while (ceu_is_running) {
+        if (&lt;call-to-detect-if-A-occurred&gt;()) {
+            int v = &lt;argument-to-A&gt;;
+            ceu_input(CEU_INPUT_A, &amp;v);
+        }
+        ceu_input(CEU_INPUT__ASYNC, NULL);
+    }
+
+    ceu_stop();
+}
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+
+</body>
+</html>

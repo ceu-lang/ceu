@@ -1,6 +1,5 @@
 all:
-	rm -Rf out/
-	mkdir out/
-	pandoc index.md > index.html
-	cd manual/ && make
-	mv manual/out/ out/manual/
+	rm -Rf out/manual/$(VERSION)/
+	mkdir -p out/manual/
+	cd manual/$(VERSION)/ && mkdocs build --clean && mkdocs2pandoc > ceu-$(VERSION).md && pandoc ceu-$(VERSION).md -o ceu-$(VERSION).pdf && mv site/ ../../out/manual/$(VERSION)/
+	pandoc manual/index.md > index.html

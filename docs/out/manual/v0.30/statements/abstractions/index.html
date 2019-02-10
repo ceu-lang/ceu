@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Abstractions - Céu v0.30 - Reference Manual</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Abstractions";
+    var mkdocs_page_input_path = "statements/abstractions.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Céu v0.30 - Reference Manual</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Overview</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../lexical_rules/">Lexical Rules</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../types/">Types</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../storage_entities/">Storage Entities</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../">Statements</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../expressions/">Locations & Expressions</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../compilation/">Compilation</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../syntax/">Syntax</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../license/">License</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Céu v0.30 - Reference Manual</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Abstractions</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h2 id="abstractions">Abstractions<a class="headerlink" href="#abstractions" title="Permanent link">&para;</a></h2>
+<p>Céu supports reuse with <code>data</code> declarations to define new types, and <code>code</code>
+declarations to define new subprograms.</p>
+<p>Declarations are subject to <a href="../storage_entities/#lexical-scope">lexical scope</a>.</p>
+<h3 id="data">Data<a class="headerlink" href="#data" title="Permanent link">&para;</a></h3>
+<p>A <code>data</code> declaration creates a new data type:</p>
+<pre><code class="ceu">Data ::= data ID_abs [as (nothing|Exp)] [ with
+             (Var|Vec|Pool|Int) `;´ { (Var|Vec|Pool|Int) `;´ }
+         end
+
+Data_Cons ::= (val|new) Abs_Cons
+Abs_Cons  ::= [Loc `.´] ID_abs `(´ LIST(Data_Cons|Vec_Cons|Exp|`_´) `)´
+</code></pre>
+
+<p>A declaration may pack fields with
+<a href="#declarations">storage declarations</a> which become publicly
+accessible in the new type.
+Field declarations may <a href="#assignments">assign</a> default values for
+uninitialized instances.</p>
+<p>Data types can form hierarchies using dots (<code>.</code>) in identifiers:</p>
+<ul>
+<li>An isolated identifier such as <code>A</code> makes <code>A</code> a base type.</li>
+<li>A dotted identifier such as <code>A.B</code> makes <code>A.B</code> a subtype of its supertype <code>A</code>.</li>
+</ul>
+<p>A subtype inherits all fields from its supertype.</p>
+<p>The optional modifier <code>as</code> expects the keyword <code>nothing</code> or a constant
+expression of type <code>int</code>:</p>
+<ul>
+<li><code>nothing</code>: the <code>data</code> cannot be instantiated.</li>
+<li><em>constant expression</em>: <a href="../expressions/#type-cast">typecasting</a> a value of
+                         the type to <code>int</code> evaluates to the specified
+                         enumeration expression.</li>
+</ul>
+<p>Examples:</p>
+<pre><code class="ceu">data Rect with
+    var int x;
+    var int y;
+    var int h;
+    var int w;
+    var int z = 0;
+end
+var Rect r = val Rect(10,10, 100,100, _);  // &quot;r.z&quot; defaults to 0
+</code></pre>
+
+<pre><code class="ceu">data Dir       as nothing;  // &quot;Dir&quot; is a base type and cannot be intantiated
+data Dir.Right as  1;       // &quot;Dir.Right&quot; is a subtype of &quot;Dir&quot;
+data Dir.Left  as -1;       // &quot;Dir.Left&quot;  is a subtype of &quot;Dir&quot;
+var  Dir dir = &lt;...&gt;;       // receives one of &quot;Dir.Right&quot; or &quot;Dir.Left&quot;
+escape (dir as int);        // returns 1 or -1
+</code></pre>
+
+<p><code>TODO: new, pool, recursive types</code></p>
+<h4 id="data-constructor">Data Constructor<a class="headerlink" href="#data-constructor" title="Permanent link">&para;</a></h4>
+<p>A new data value is created in the contexts that follow:</p>
+<ul>
+<li>Prefixed by the keyword <code>val</code> in an <a href="#assignments">assignment</a> to a variable.</li>
+<li>As an argument to a <a href="#code-invocation"><code>code</code> invocation</a>.</li>
+<li>Nested as an argument in a <code>data</code> creation (i.e., a <code>data</code> that contains
+  another <code>data</code>).</li>
+</ul>
+<p>In all cases, the arguments are copied to the destination.
+The destination must be a plain declaration (i.e., not an alias or pointer).</p>
+<p>The constructor uses the <code>data</code> identifier followed by a list of arguments
+matching the fields of the type.</p>
+<p>Variables of the exact same type can be copied in <a href="#assignments">assignments</a>.</p>
+<p>For assignments from a subtype to a supertype, the rules are as follows:</p>
+<ul>
+<li><a href="#copy-assignment">Copy assignments</a><ul>
+<li>plain values: only if the subtype contains no extra fields</li>
+<li>pointers: allowed</li>
+</ul>
+</li>
+<li><a href="#alias-assignment">Alias assignment</a>: allowed.</li>
+</ul>
+<pre><code class="ceu">data Object with
+    var Rect rect;
+    var Dir  dir;
+end
+var Object o1 = val Object(Rect(0,0,10,10,_), Dir.Right());
+</code></pre>
+
+<pre><code class="ceu">var Object o2 = o1;         // makes a deep copy of all fields from &quot;o1&quot; to &quot;o2&quot;
+</code></pre>
+
+<h3 id="code">Code<a class="headerlink" href="#code" title="Permanent link">&para;</a></h3>
+<p>The <code>code/tight</code> and <code>code/await</code> declarations specify new subprograms that can
+be invoked from arbitrary points in programs:</p>
+<pre><code class="ceu">// prototype declaration
+Code_Tight ::= code/tight Mods ID_abs `(´ Params `)´ `-&gt;´ Type
+Code_Await ::= code/await Mods ID_abs `(´ Params `)´
+                                        [ `-&gt;´ `(´ Params `)´ ]
+                                            `-&gt;´ (Type | NEVER)
+                    [ throws LIST(ID_abs) ]
+Params ::= none | LIST(Var|Vec|Pool|Int)
+
+// full declaration
+Code_Impl ::= (Code_Tight | Code_Await) do
+                  Block
+              end
+
+// invocation
+Code_Call  ::= call  Mods Abs_Cons
+Code_Await ::= await Mods Abs_Cons
+Code_Spawn ::= spawn Mods Abs_Cons [in Loc]
+Code_Kill  ::= kill Loc [ `(` Exp `)` ]
+
+Mods ::= [`/´dynamic | `/´static] [`/´recursive]
+</code></pre>
+
+<p>A <code>code/tight</code> is a subprogram that cannot contain
+<a href="#synchronous-control-statements">synchronous control statements</a> and its body
+runs to completion in the current <a href="../#internal-reactions">internal reaction</a>.</p>
+<p>A <code>code/await</code> is a subprogram with no restrictions (e.g., it can manipulate
+events and use parallel compositions) and its body execution may outlive
+multiple reactions.</p>
+<p>A <em>prototype declaration</em> specifies the interface parameters of the
+abstraction which invocations must satisfy.
+A <em>full declaration</em> (aka <em>definition</em>) also specifies an implementation
+with a block of code.
+An <em>invocation</em> specifies the name of the code abstraction and arguments
+matching its declaration.</p>
+<p>Declarations can be nested.
+A nested declaration is not visible outside its enclosing declaration.
+The body of a nested declaration may access entities from its enclosing
+declarations with the prefix <a href="../expressions/#outer"><code>outer</code></a>.</p>
+<p>To support recursive abstractions, a code invocation can appear before the
+implementation is known, but after the prototype declaration.
+In this case, the declaration must use the modifier <code>/recursive</code>.</p>
+<p>Examples:</p>
+<pre><code class="ceu">code/tight Absolute (var int v) -&gt; int do   // declares the prototype for &quot;Absolute&quot;
+    if v &gt; 0 then                           // implements the behavior
+        escape  v;
+    else
+        escape -v;
+    end
+end
+var int abs = call Absolute(-10);           // invokes &quot;Absolute&quot; (yields 10)
+</code></pre>
+
+<pre><code class="ceu">code/await Hello_World (none) -&gt; NEVER do
+    every 1s do
+        _printf(&quot;Hello World!\n&quot;);  // prints &quot;Hello World!&quot; every second
+    end
+end
+await Hello_World();                // never awakes
+</code></pre>
+
+<pre><code class="ceu">code/tight/recursive Fat (var int v) -&gt; int;    // &quot;Fat&quot; is a recursive code
+code/tight/recursive Fat (var int v) -&gt; int do
+    if v &gt; 1 then
+        escape v * (call/recursive Fat(v-1));   // recursive invocation before full declaration
+    else
+        escape 1;
+    end
+end
+var int fat = call/recursive Fat(10);           // invokes &quot;Fat&quot; (yields 3628800)
+</code></pre>
+
+<p><code>TODO: hold</code></p>
+<h4 id="code-declaration">Code Declaration<a class="headerlink" href="#code-declaration" title="Permanent link">&para;</a></h4>
+<p>Code abstractions specify a list of input parameters in between the symbols
+<code>(</code> and <code>)</code>.
+Each parameter specifies an <a href="../storage_entities/#entity-classes">entity class</a>
+with modifiers, a type and an identifier.
+A <code>none</code> list specifies that the abstraction has no parameters.</p>
+<p>Code abstractions also specify an output return type.
+A <code>code/await</code> may use <code>NEVER</code> as output to indicate that it never returns.</p>
+<p>A <code>code/await</code> may also specify an optional <em>public field list</em>, which are
+local storage entities living in the outermost scope of the abstraction body.
+These entities are visible to the invoking context, which may
+<a href="#code-references">access</a> them while the abstraction executes.
+Likewise, nested code declarations in the outermost scope, known as methods,
+are also visible to the invoking context.</p>
+<p><code>TODO: throws</code></p>
+<!--
+- The invoker passes a list of unbound aliases to the code.
+- The code [binds](#alias-assignment) the aliases to the local resources before
+  any [synchronous control statement](#synchronous-control-statements) executes.
+
+Examples:
+
+
+wzxhzdk:9
+
+-->
+
+<h4 id="code-invocation">Code Invocation<a class="headerlink" href="#code-invocation" title="Permanent link">&para;</a></h4>
+<p>A <code>code/tight</code> is invoked with the keyword <code>call</code> followed by the abstraction
+name and list of arguments.
+A <code>code/await</code> is invoked with the keywords <code>await</code> or <code>spawn</code> followed by the
+abstraction name and list of arguments.</p>
+<p>The list of arguments must satisfy the list of parameters in the
+<a href="#code-declaration">code declaration</a>.</p>
+<p>The <code>call</code> and <code>await</code> invocations suspend the current trail and transfer
+control to the code abstraction.
+The invoking point only resumes after the abstraction terminates and evaluates
+to a value of its return type which can be captured with an optional
+<a href="#assignment">assignment</a>.</p>
+<p>The <code>spawn</code> invocation also suspends and transfers control to the code
+abstraction.
+However, as soon as the abstraction becomes idle (or terminates), the invoking
+point resumes.
+This makes the invocation point and abstraction to execute concurrently.</p>
+<p>The <code>spawn</code> invocation evaluates to a <a href="#code-references">reference</a>
+representing the instance and can be captured with an optional
+<a href="#assignment">assignment</a>.
+The alias must be an <a href="../storage_entities/#aliases">option alias variable</a> of
+the same type of the code abstraction.
+If the abstraction never terminates (i.e., return type is <code>NEVER</code>), the
+variable may be a simple alias.
+If the <code>spawn</code> fails (e.g., lack of memory) the option alias variable is unset.
+In the case of a simple alias, the assignment raises a runtime error.</p>
+<p>The <code>spawn</code> invocation also accepts an optional <a href="#pools">pool</a> which provides
+storage and scope for invoked abstractions.
+When the pool goes out of scope, all invoked abstractions residing in that pool
+are aborted.
+If the <code>spawn</code> omits the pool, the invocation always succeed and has the same
+scope as the invoking point: when the enclosing block terminates, the invoked
+code is also aborted.</p>
+<p><code>TODO: kill</code></p>
+<h4 id="code-references">Code References<a class="headerlink" href="#code-references" title="Permanent link">&para;</a></h4>
+<p>The <code>spawn</code> <a href="#code-invocation">invocation</a> and the control variable of
+<a href="#pool-iterator">pool iterators</a> evaluate to a reference as an
+<a href="../storage_entities/#aliases">option alias</a> to an abstraction instance.
+If the instance terminates at any time, the option variable is automatically
+unset.</p>
+<p>A reference provides <a href="../expressions/#fields">access</a> to the public fields and
+methods of the instance.</p>
+<p>Examples:</p>
+<pre><code class="ceu">code/await My_Code (var int x) -&gt; (var int y) -&gt; NEVER do
+    y = x;                              // &quot;y&quot; is a public field
+
+    code/tight Get_X (none) -&gt; int do   // &quot;Get_X&quot; is a public method
+        escape outer.x;
+    end
+
+    await FOREVER;
+end
+
+var&amp; My_Code c = spawn My_Code(10);
+_printf(&quot;y=%d, x=%d\n&quot;, c.y, c.Get_X());    // prints &quot;y=10, x=10&quot;
+</code></pre>
+
+<h4 id="dynamic-dispatching">Dynamic Dispatching<a class="headerlink" href="#dynamic-dispatching" title="Permanent link">&para;</a></h4>
+<p>Céu supports dynamic code dispatching based on multiple parameters.</p>
+<p>The modifier <code>/dynamic</code> in a declaration specifies that the code is dynamically
+dispatched.
+A dynamic code must have at least one <code>dynamic</code> parameter.
+Also, all dynamic parameters must be pointers or aliases to a
+<a href="#data">data type</a> in some hierarchy.</p>
+<p>A dynamic declaration requires other compatible dynamic declarations with the
+same name, modifiers, parameters, and return type.
+The exceptions are the <code>dynamic</code> parameters, which must be in the same
+hierarchy of their corresponding parameters in other declarations.</p>
+<p>To determine which declaration to execute during runtime, the actual argument
+runtime type is checked against the first formal <code>dynamic</code> parameter of each
+declaration.
+The declaration with the most specific type matching the argument wins.
+In the case of a tie, the next dynamic parameter is checked.</p>
+<p>A <em>catchall</em> declaration with the most general dynamic types must always be
+provided.</p>
+<p>If the argument is explicitly <a href="../expressions/#type-cast">typecast</a> to a
+supertype, then dispatching considers that type instead.</p>
+<p>Example:</p>
+<pre><code class="ceu">data Media as nothing;
+data Media.Audio     with &lt;...&gt; end
+data Media.Video     with &lt;...&gt; end
+data Media.Video.Avi with &lt;...&gt; end
+
+code/await/dynamic Play (dynamic var&amp; Media media) -&gt; none do
+    _assert(0);             // never dispatched
+end
+code/await/dynamic Play (dynamic var&amp; Media.Audio media) -&gt; none do
+    &lt;...&gt;                   // plays an audio
+end
+code/await/dynamic Play (dynamic var&amp; Media.Video media) -&gt; none do
+    &lt;...&gt;                   // plays a video
+end
+code/await/dynamic Play (dynamic var&amp; Media.Video.Avi media) -&gt; none do
+    &lt;...&gt;                                   // prepare the avi video
+    await/dynamic Play(&amp;m as Media.Video);  // dispatches the supertype
+end
+
+var&amp; Media m = &lt;...&gt;;       // receives one of &quot;Media.Audio&quot; or &quot;Media.Video&quot;
+await/dynamic Play(&amp;m);     // dispatches the appropriate subprogram to play the media
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+
+</body>
+</html>
