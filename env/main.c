@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include <stdlib.h>     /* realloc, free */
 #include <stdio.h>
 
 #ifndef ceu_callback_start
@@ -50,13 +50,15 @@
     #define ceu_callback_log_flush(trace) fflush(stdout)
 #endif
 
-#ifndef ceu_callback_realloc
 #ifdef CEU_TESTS_REALLOC
     #define ceu_callback_realloc(ptr,size,trace) ceu_main_callback_realloc(ptr,size)
+    #define ceu_callback_free(ptr,trace) ceu_main_callback_realloc(ptr,0)
     void* ceu_main_callback_realloc (void* ptr, size_t size) {
         static int _ceu_tests_realloc_ = 0;
         if (size == 0) {
             _ceu_tests_realloc_--;
+            free(ptr);
+            return NULL;
         } else {
             if (_ceu_tests_realloc_ >= CEU_TESTS_REALLOC) {
                 return NULL;
@@ -66,7 +68,11 @@
         return realloc(ptr, size);
     }
 #else
+#ifndef ceu_callback_realloc
     #define ceu_callback_realloc(ptr,size,trace) realloc(ptr,size)
+#endif
+#ifndef ceu_callback_free
+    #define ceu_callback_free(ptr,trace) free(ptr)
 #endif
 #endif
 

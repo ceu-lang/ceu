@@ -225,6 +225,7 @@ enum {
 #define ceu_callback_stop(a)
 #define ceu_callback_step(a)
 #define ceu_callback_realloc(a,b,c) NULL
+#define ceu_callback_free(a,b)
 #endif
 
 //#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
@@ -517,7 +518,7 @@ void ceu_code_mem_dyn_free (tceu_pool* pool, tceu_code_mem_dyn* cur) {
 #ifdef CEU_FEATURES_DYNAMIC
     if (pool->queue == NULL) {
         /* dynamic pool */
-        ceu_assert_ex(ceu_callback_realloc(cur,0,CEU_TRACE_null)==NULL, "bug found", CEU_TRACE_null);
+        ceu_callback_free(cur, CEU_TRACE_null);
     } else
 #endif
     {
@@ -653,7 +654,7 @@ int ceu_threads_gc (int force_join) {
                 if (has_joined) {
                     *CEU_APP.cur_ = head->nxt;
                     nxt_ = CEU_APP.cur_;
-                    ceu_assert_ex(ceu_callback_realloc(head,0,CEU_TRACE_null)==NULL, "bug found", CEU_TRACE_null);
+                    ceu_callback_free(head, CEU_TRACE_null);
                 }
             }
         }

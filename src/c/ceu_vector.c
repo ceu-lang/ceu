@@ -27,7 +27,7 @@ byte* ceu_vector_setmax_ex_      (tceu_vector* vector, usize len, bool freeze
         /* free */
         if (vector->buf != NULL) {
             vector->max = 0;
-            ceu_assert_ex(ceu_callback_realloc(vector->buf,0,trace)==NULL, "bug found", trace);
+            ceu_callback_free(vector->buf, trace);
             vector->buf = NULL;
         }
     } else {
