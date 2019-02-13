@@ -79,7 +79,7 @@ function WRN (cond, ln, code, msg)
 ]])
     end
 
-    DBG2('WRN ['..code..'] : '..ln[1]..' : line '..ln[2]..' : '..msg)
+    DBG2(msg)
     return cond
 end
 function ASR2 (cond, ln, code, msg, extra)
