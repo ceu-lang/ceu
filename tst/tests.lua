@@ -30590,6 +30590,22 @@ escape 0;
     run = false,
 }
 
+Test { [[
+//native _printf;
+var u8 x;
+loop x in [ 2 -> 5],1 do
+  var[x] u8 foo = [x];
+  //_printf("%u ", foo[0]);
+  $foo = 0;
+  //_printf(":%lu ", $foo);
+  foo = foo .. [99];
+  //_printf("%u ", foo[0]);
+end
+escape 1;
+]],
+    run = 1,
+}
+
 -->> VECTOR / _CHAR*
 
 Test { [[
