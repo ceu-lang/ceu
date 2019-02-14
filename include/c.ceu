@@ -24,6 +24,7 @@ native/pure
     _memcmp,
     _PURIFY,
     _strcmp,
+    _strncmp,
     _strlen,
 ;
 
