@@ -27,6 +27,8 @@ F = {
     ['Exp_*'] = '__Exp_num_num',
     ['Exp_+'] = '__Exp_num_num',
     ['Exp_-'] = '__Exp_num_num',
+    ['Exp_>>']= '__Exp_num_num',
+    ['Exp_<<']= '__Exp_num_num',
     __Exp_num_num = function (me)
         local _, e1, e2 = unpack(me)
         if e1.is_const and e2.is_const then
