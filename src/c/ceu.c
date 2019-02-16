@@ -313,6 +313,7 @@ static int ceu_data_is (tceu_ndata* supers, tceu_ndata me, tceu_ndata cmp) {
 #define ceu_data_as(a,b,c,d) ceu_data_as_(a,b,c)
 #endif
 
+__attribute__((__unused__))
 static void* ceu_data_as_ (tceu_ndata* supers, tceu_ndata* me, tceu_ndata cmp
 #ifdef CEU_FEATURES_TRACE
                          , tceu_trace trace
@@ -329,6 +330,7 @@ static void* ceu_data_as_ (tceu_ndata* supers, tceu_ndata* me, tceu_ndata cmp
 #define CEU_OPTION_EVT(a,b) CEU_OPTION_EVT_(a)
 #endif
 
+__attribute__((__unused__))
 static tceu_evt* CEU_OPTION_EVT_ (tceu_evt* alias
 #ifdef CEU_FEATURES_TRACE
                                  , tceu_trace trace
@@ -441,6 +443,7 @@ CEU_API static tceu_app CEU_APP;
 
 /*****************************************************************************/
 
+__attribute__((__unused__))
 static tceu_code_mem* ceu_outer (tceu_code_mem* mem, u8 n) {
     for (; mem->depth!=n; mem=mem->up_mem);
     return mem;
@@ -456,6 +459,7 @@ static tceu_code_mem* ceu_outer (tceu_code_mem* mem, u8 n) {
 #define ceu_wclock(a,b,c,d) ceu_wclock_(a,b,c)
 #endif
 
+__attribute__((__unused__))
 static int ceu_wclock_ (s32 dt, s32* set, s32* sub
 #ifdef CEU_FEATURES_TRACE
                       , tceu_trace trace
@@ -490,6 +494,7 @@ static int ceu_wclock_ (s32 dt, s32* set, s32* sub
     return ret;
 }
 
+__attribute__((__unused__))
 static void ceu_params_cpy (tceu_stk* stk, void* params, usize params_n) {
     ceu_assert_sys(CEU_APP.stack_i+params_n < CEU_STACK_N, "stack overflow");
     memcpy(&CEU_APP.stack[CEU_APP.stack_i], params, params_n);
