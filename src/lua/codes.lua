@@ -2034,6 +2034,8 @@ local features do
                     assert(tostring(v), 'bug found')
                     features = features .. '#define '..string.upper(k..'_'..v)..'\n'
                 end
+            else
+                features = features .. '#undef '..string.upper(k)..'\n'
             end
         end
     end
