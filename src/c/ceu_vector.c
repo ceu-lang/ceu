@@ -39,17 +39,20 @@ byte* ceu_vector_setmax_ex_      (tceu_vector* vector, usize len, bool freeze
              * [X,Y,Z,I,J,K,L,#####,A,B]       -> (grow) ->
              * [X,Y,Z,I,J,K,L,#####,A,B,-,-,-] -> (1st memcpy) ->
              * [?,?,?,I,J,K,L,#####,A,B,X,Y,Z] -> (2nd memmove) ->
-             * [I,J,K,L,#####,-,-,-,A,B,X,Y,Z] variant 1 o(n-rig), 1-2 move(s)
-             *
-             * [X,Y,Z,I,J,K,L,#####,?,?,?,A,B] variant 2 o(rig<n), 0-1 move
-             * [A,B,X,Y,Z,I,J,K,L,#####,-,-,-] variant 3 o(n), 2 moves
+             * [I,J,K,L,#####,-,-,-,A,B,X,Y,Z]
              */
+            usize dif = len - vector->max;
             usize rig = vector->max - vector->ini;
             if (vector->len > rig) { // if wrap-around then need to shuffle
-                memmove(&vector->buf[(len - rig) * vector->unit], // 2 from new max
-                        &vector->buf[vector->ini * vector->unit], // A,B
-                        rig * vector->unit);                      // 2
-                vector->ini = len - rig;
+                usize num = vector->len - rig;
+                memcpy(&vector->buf[vector->max * vector->unit], // -,-,-
+                       &vector->buf[0],                          // X,Y,Z
+                       (num > dif ? dif : num)  * vector->unit); // 3
+                if (num > dif) {
+                    memmove(&vector->buf[0],                     // X,Y,Z
+                            &vector->buf[dif * vector->unit],    // I,J,K,L
+                            (num - dif)      * vector->unit);    // rest
+                }
             }
         }
 
