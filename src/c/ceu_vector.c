@@ -36,18 +36,18 @@ byte* ceu_vector_setmax_ex_      (tceu_vector* vector, usize len, bool freeze
 
         if (vector->is_ring && vector->ini>0) {
             /*
-             * [X,Y,Z,I,J,K,###,A,B,C]       -> (grow) ->
-             * [X,Y,Z,I,J,K,###,A,B,C,-,-,-] -> (1st memcpy) ->
-             * [?,?,?,I,J,K,###,A,B,C,X,Y,Z] -> (2nd memmove) ->
-             * [I,J,K,###,-,-,-,A,B,C,X,Y,Z]
+             * [X,Y,Z,I,J,K,L,#####,A,B]       -> (grow) ->
+             * [X,Y,Z,I,J,K,L,#####,A,B,-,-,-] -> (1st memcpy) ->
+             * [?,?,?,I,J,K,L,#####,A,B,X,Y,Z] -> (2nd memmove) ->
+             * [I,J,K,L,#####,-,-,-,A,B,X,Y,Z]
              */
-            usize dif = (len - vector->max) * vector->unit;
-            memcpy (&vector->buf[vector->max],          // -,-,-
+            usize dif = len - vector->max;
+            memcpy (&vector->buf[vector->max * vector->unit], // -,-,-
                     &vector->buf[0],                    // X,Y,Z
                     dif * vector->unit);                // 3
             memmove(&vector->buf[0],                    // X,Y,Z
-                    &vector->buf[dif * vector->unit],   // I,J,K
-                    vector->ini * vector->unit);        // 3
+                    &vector->buf[dif * vector->unit],   // I,J,K,L
+                    vector->ini * vector->unit);        // rest
         }
 
         vector->max = len;
