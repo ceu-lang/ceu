@@ -24,6 +24,7 @@ F = {
 
     ['Exp_|'] = '__Exp_num_num',
     ['Exp_&'] = '__Exp_num_num',
+    ['Exp_^'] = '__Exp_num_num',
     ['Exp_*'] = '__Exp_num_num',
     ['Exp_+'] = '__Exp_num_num',
     ['Exp_-'] = '__Exp_num_num',
