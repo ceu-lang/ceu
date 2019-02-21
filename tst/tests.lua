@@ -25693,7 +25693,7 @@ Test { [[var int&&p; escape p>>10;]],
     dcls = 'line 1 : invalid operand to `>>` : expected integer type',
 }
 Test { [[var int&&p; escape p^10;]],
-    dcls = 'line 1 : invalid operand to `^` : expected numeric type',
+    dcls = 'line 1 : invalid operand to `^` : expected integer type',
 }
 Test { [[var int&&p; escape ~p;]],
     dcls = 'line 1 : invalid operand to `~` : expected integer type',
@@ -30604,6 +30604,7 @@ end
 escape 1;
 ]],
     run = 1,
+    _opts = { ceu_features_dynamic='true' },
 }
 
 -->> VECTOR / _CHAR*
