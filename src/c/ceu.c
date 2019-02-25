@@ -712,7 +712,7 @@ printf("%ld %ld %d\n", (usize)(base-CEU_STACK_MAX), (usize)(&_ceu_level),
 _CEU_LBL_:
     //printf("-=-=- %d -=-=-\n", _ceu_lbl);
     switch (_ceu_lbl) {
-        CEU_LABEL_NONE:
+        case CEU_LABEL_NONE:
             break;
         === CEU_CODES ===
     }
