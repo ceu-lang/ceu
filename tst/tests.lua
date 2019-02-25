@@ -32271,6 +32271,24 @@ escape xxx[$xxx-1] + xxx[$xxx-2];
     run = 29,
 }
 
+Test { [[
+native _printf;
+var usize x;
+
+var[*] u32 v = _;
+v = v .. [1000,1,2,3,4,5];
+$v=3; // setlen
+v = v .. [6];
+v = v .. [100007, 1000008]; // full again
+v = v .. [1009]; // need to grow
+escape ((($v as u32) + v[0] + v[$v-1]) == 1019) as int;
+        // 7           3      1009
+]],
+    run = 1,
+    wrn = true,
+    _opts = { ceu_features_dynamic='true' },
+}
+
 --<< VECTOR / RING
 
 -->> STRING / STRING.CEU
