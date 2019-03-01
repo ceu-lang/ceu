@@ -505,7 +505,7 @@ static void ceu_params_cpy (tceu_stk* stk, void* params, usize params_n) {
 
 /*****************************************************************************/
 
-void ceu_stack_clear (tceu_stk* cur, tceu_code_mem* mem) {
+static void ceu_stack_clear (tceu_stk* cur, tceu_code_mem* mem) {
     if (cur == NULL) {
         return;
     }
@@ -516,7 +516,7 @@ void ceu_stack_clear (tceu_stk* cur, tceu_code_mem* mem) {
 }
 
 #ifdef CEU_FEATURES_POOL
-void ceu_code_mem_dyn_free (tceu_pool* pool, tceu_code_mem_dyn* cur) {
+static void ceu_code_mem_dyn_free (tceu_pool* pool, tceu_code_mem_dyn* cur) {
     cur->nxt->prv = cur->prv;
     cur->prv->nxt = cur->nxt;
 
@@ -532,7 +532,7 @@ void ceu_code_mem_dyn_free (tceu_pool* pool, tceu_code_mem_dyn* cur) {
     }
 }
 
-void ceu_code_mem_dyn_gc (tceu_pool_pak* pak) {
+static void ceu_code_mem_dyn_gc (tceu_pool_pak* pak) {
     if (pak->n_traversing == 0) {
         /* TODO-OPT: one element killing another is unlikely:
                      set bit in pool when this happens and only
@@ -583,7 +583,7 @@ static int ceu_lbl (tceu_nstk _ceu_level, tceu_stk* _ceu_cur, tceu_stk* _ceu_nxt
 /*****************************************************************************/
 
 #ifdef CEU_FEATURES_EXCEPTION
-int ceu_throw_ex (tceu_catch* catches, tceu_data_Exception* exception, usize len
+static int ceu_throw_ex (tceu_catch* catches, tceu_data_Exception* exception, usize len
                   , tceu_nstk level, tceu_stk* nxt
 #ifdef CEU_FEATURES_TRACE
                   , tceu_trace trace
@@ -633,7 +633,7 @@ int ceu_throw_ex (tceu_catch* catches, tceu_data_Exception* exception, usize len
 #endif
 
 #ifdef CEU_FEATURES_THREAD
-int ceu_threads_gc (int force_join) {
+static int ceu_threads_gc (int force_join) {
     int n_alive = 0;
     CEU_APP.cur_ = &CEU_APP.threads_head;
     tceu_threads_data*  head  = *CEU_APP.cur_;
@@ -941,7 +941,7 @@ static int ceu_bcast_exec (tceu_nstk level, tceu_stk* cur, tceu_stk* nxt)
     return 0;
 }
 
-void ceu_bcast (tceu_nstk level, tceu_stk* cur)
+static void ceu_bcast (tceu_nstk level, tceu_stk* cur)
 {
     if (cur->evt.id>CEU_INPUT__PRIM && cur->evt.id<CEU_EVENT__MIN) {
         switch (cur->evt.id) {
