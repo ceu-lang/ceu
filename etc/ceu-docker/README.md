@@ -8,3 +8,5 @@ Then, you can run Céu examples:
 cd ceu/
 make samples
 ```
+
+This image also includes `vim` and `git`.
