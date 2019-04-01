@@ -1,10 +1,9 @@
-# start with a current Debian image with some build tools installed
 FROM ubuntu
 
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
 
-# install dev packages for lua
+# install dev packages for lua, git and vim
 RUN apt-get update \
   && apt-get install -y lua5.3 lua-lpeg liblua5.3-0 liblua5.3-dev \
   && apt-get install -y git \
