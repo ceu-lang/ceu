@@ -406,7 +406,14 @@ end
 
 <!--
 
-wzxhzdk:9
+<pre><code class="ceu">var&amp;? int x;
+do
+    var int y = 10;
+    x = &amp;y;
+    _printf(&quot;%d\n&quot;, x!);    // prints 10
+end
+_printf(&quot;%d\n&quot;, x!);        // error!
+</code></pre>
 
 -->
 
@@ -486,5 +493,5 @@ _printf(&quot;%d\n&quot;, v);     // prints 1
 
 <!--
 MkDocs version : 1.0.4
-Build Date UTC : 2019-01-18 20:09:21
+Build Date UTC : 2019-04-14 18:58:03
 -->

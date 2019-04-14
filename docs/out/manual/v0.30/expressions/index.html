@@ -410,7 +410,16 @@ Colon ::= Loc `:´ (ID_int|ID_nat)
 <!--
 Example:
 
-wzxhzdk:19
+<pre><code>native do
+    typedef struct {
+        int v;
+    } mystruct;
+end
+var _mystruct s;
+var _mystruct* p = &amp;s;
+s.v = 1;
+p:v = 0;
+</code></pre>
 
 -->
               
@@ -465,5 +474,5 @@ Example:
 
 <!--
 MkDocs version : 1.0.4
-Build Date UTC : 2019-01-18 20:09:21
+Build Date UTC : 2019-04-14 18:58:02
 -->

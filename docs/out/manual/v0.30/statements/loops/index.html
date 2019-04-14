@@ -286,6 +286,13 @@ loop _ in [0 -&gt; 10[ do
 end
 </code></pre>
 
+<pre><code class="ceu">// prints &quot;i=0&quot;, &quot;i=2&quot;, ..., &quot;i=10&quot;
+var int i;
+loop i in [0-&gt;10],2 do
+    _printf(&quot;i=%d\n&quot;, i);
+end
+</code></pre>
+
 <pre><code class="ceu">var int i;
 loop i do
     var int j;

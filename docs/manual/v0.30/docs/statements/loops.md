@@ -173,6 +173,14 @@ end
 ```
 
 ```ceu
+// prints "i=0", "i=2", ..., "i=10"
+var int i;
+loop i in [0->10],2 do
+    _printf("i=%d\n", i);
+end
+```
+
+```ceu
 var int i;
 loop i do
     var int j;

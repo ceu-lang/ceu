@@ -745,6 +745,13 @@ loop _ in [0 -&gt; 10[ do
 end
 </code></pre>
 
+<pre><code class="ceu">// prints &quot;i=0&quot;, &quot;i=2&quot;, ..., &quot;i=10&quot;
+var int i;
+loop i in [0-&gt;10],2 do
+    _printf(&quot;i=%d\n&quot;, i);
+end
+</code></pre>
+
 <pre><code class="ceu">var int i;
 loop i do
     var int j;
@@ -1677,7 +1684,20 @@ are also visible to the invoking context.</p>
 Examples:
 
 
-wzxhzdk:85
+<pre><code class="ceu">// &quot;Open&quot; abstracts &quot;_fopen&quot;/&quot;_fclose&quot;
+code/await Open (var _char&amp;&amp; path) -&gt; (var&amp; _FILE res) -&gt; NEVER do
+    var&amp;? _FILE res_ = _fopen(path, &lt;...&gt;)  // allocates resource
+                       finalize with
+                           _fclose(res_!);  // releases resource
+                       end;
+    res = &amp;res_!;                           // exports resource to invoker
+    await FOREVER;
+end
+
+var&amp; _FILE res;                             // declares resource
+spawn Open(&lt;...&gt;) -&gt; (&amp;res);                // initiliazes resource
+&lt;...&gt;                                       // uses resource
+</code></pre>
 
 -->
 
@@ -1846,5 +1866,5 @@ contain empty <code>finalize</code> statements.</p>
 
 <!--
 MkDocs version : 1.0.4
-Build Date UTC : 2019-01-18 20:09:21
+Build Date UTC : 2019-04-14 18:58:02
 -->

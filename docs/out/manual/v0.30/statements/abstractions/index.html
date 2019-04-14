@@ -307,7 +307,20 @@ are also visible to the invoking context.</p>
 Examples:
 
 
-wzxhzdk:9
+<pre><code class="ceu">// &quot;Open&quot; abstracts &quot;_fopen&quot;/&quot;_fclose&quot;
+code/await Open (var _char&amp;&amp; path) -&gt; (var&amp; _FILE res) -&gt; NEVER do
+    var&amp;? _FILE res_ = _fopen(path, &lt;...&gt;)  // allocates resource
+                       finalize with
+                           _fclose(res_!);  // releases resource
+                       end;
+    res = &amp;res_!;                           // exports resource to invoker
+    await FOREVER;
+end
+
+var&amp; _FILE res;                             // declares resource
+spawn Open(&lt;...&gt;) -&gt; (&amp;res);                // initiliazes resource
+&lt;...&gt;                                       // uses resource
+</code></pre>
 
 -->
 

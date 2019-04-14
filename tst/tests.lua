@@ -4,6 +4,18 @@ local function INCLUDE (fname, src)
     f:close()
 end
 
+Test { [[
+native _void;
+var _void&& p = _;
+var int x = p:get();
+escape 1;
+]],
+    wrn = false,
+    cc = '3a::25: error: dereferencing ‘void *’ pointer',
+}
+
+error="ok"
+
 ----------------------------------------------------------------------------
 -- NO: testing
 ----------------------------------------------------------------------------
@@ -878,7 +890,7 @@ var _void&& p = _;
 var int x = p:get();
 escape 1;
 ]],
-    wrn = true,
+    wrn = false,
     cc = '3:25: error: dereferencing ‘void *’ pointer',
 }
 

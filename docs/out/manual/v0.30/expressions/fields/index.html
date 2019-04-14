@@ -140,7 +140,16 @@ Colon ::= Loc `:´ (ID_int|ID_nat)
 <!--
 Example:
 
-wzxhzdk:1
+<pre><code>native do
+    typedef struct {
+        int v;
+    } mystruct;
+end
+var _mystruct s;
+var _mystruct* p = &amp;s;
+s.v = 1;
+p:v = 0;
+</code></pre>
 
 -->
               
