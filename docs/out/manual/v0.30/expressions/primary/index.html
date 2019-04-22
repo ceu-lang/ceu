@@ -129,6 +129,21 @@
 <p><code>TODO</code></p>
 <h3 id="outer">Outer<a class="headerlink" href="#outer" title="Permanent link">&para;</a></h3>
 <p><code>TODO</code></p>
+<p>Example:</p>
+<pre><code class="ceu">var int x=0;
+
+code/call Test(none)-&gt;none do
+    outer.x = 1;
+    var int x = 0;
+
+    _printf(&quot;%d\n&quot;, outer.x); //prints 1
+    _printf(&quot;%d\n&quot;, x);       //prints 0
+end
+
+call Test();
+_printf(&quot;%d\n&quot;, x); //prints 1
+</code></pre>
+
 <!--
 outer, ID_var, ID_nat, null, NUM, String, true, false, 
 call/call/rec/finalize, C, parens`
