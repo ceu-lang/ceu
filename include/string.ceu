@@ -106,4 +106,17 @@ code/call String_Append_INT (var&[] byte dst, var int src, var int? base) -> non
     _ceu_vector_setlen(&&dst, $dst+n, 1);
 end
 
+code/call String_Equal (var&[] byte str1, var&[] byte str2) -> bool do
+    var int result=_;
+    {
+        @result = strcmp(@&&str1[0] as _char&&, @&&str2[0] as _char&&); 
+    }
+
+    if (result == 0) then
+        escape true;
+    else
+        escape false;
+    end
+end
+
 #endif
