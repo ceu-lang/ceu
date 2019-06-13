@@ -119,4 +119,17 @@ code/call String_Equal (var&[] byte str1, var&[] byte str2) -> bool do
     end
 end
 
+code/call String_Equal_STR (var&[] byte str1, var _char&& str2) -> bool do
+    var int result=_;
+    {
+        @result = strcmp(@&&str1[0] as _char&&, @&&str2[0] as _char&&); 
+    }
+
+    if (result == 0) then
+        escape true;
+    else
+        escape false;
+    end
+end
+
 #endif
