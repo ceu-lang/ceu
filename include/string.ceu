@@ -5,6 +5,7 @@
 
 // https://www.geeksforgeeks.org/implement-itoa/
 
+native _double;
 native/nohold _ceu_itona;
 native/pre do
     ##include <string.h>
@@ -105,6 +106,27 @@ code/call String_Append_INT (var&[] byte dst, var int src, var int? base) -> non
     _ceu_assert(n > 0, "access out of bounds");
     _ceu_vector_setlen(&&dst, $dst+n, 1);
 end
+
+code/call String_Append_REAL (var&[] byte dst, var r64 src, var int? precision) -> none do
+    call String_Check(&dst);
+
+    if not precision? then
+        precision = 2;
+    end
+
+    _ceu_assert(precision! < 999, "precision error");
+
+    {
+        char format[6];
+        sprintf(format, "%%.%df", @precision!);
+    }
+
+    _sprintf(&&dst[0] as _char&&, {format}, src);
+
+    _ceu_vector_setlen(&&dst, $dst+_strlen(&&dst[0] as _char&&), 1);
+    
+end
+
 
 code/call String_Equal (var&[] byte str1, var&[] byte str2) -> bool do
     var int result=_;
