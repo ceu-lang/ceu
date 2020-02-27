@@ -136,8 +136,8 @@ typedef struct tceu_code_mem {
 #ifdef CEU_FEATURES_THREAD
 typedef struct tceu_threads_data {
     CEU_THREADS_T id;
-    u8 has_started:    1;
-    u8 has_terminated: 1;
+    volatile u8 has_started:    1;
+    volatile u8 has_terminated: 1;
     u8 has_aborted:    1;
     u8 has_notified:   1;
     struct tceu_threads_data* nxt;
