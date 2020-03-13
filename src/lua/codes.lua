@@ -1703,8 +1703,8 @@ if (]]..v..[[ != NULL)
         })
         LINE(me, [[
             {
-                CEU_THREADS_T** __ceu_casted = (CEU_THREADS_T**)_ceu_cur->params;
-                if (*(*(__ceu_casted)) == ]]..v..[[->id) {
+                CEU_THREADS_T* __ceu_casted = (CEU_THREADS_T*)_ceu_cur->params;
+                if (*(__ceu_casted) == ]]..v..[[->id) {
                     break; /* this thread is terminating */
                 }
             }
