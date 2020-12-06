@@ -35,17 +35,18 @@ samples:
 		echo    "#####################################";                    \
 		echo -n "Press <enter> to start...";                                \
 		read _;                                                             \
+		mkdir -p ./tmp;																											\
 		echo ceu --pre --pre-input=$$i --pre-args=\"-I./include\"           \
 	        --ceu --ceu-features-os=true --ceu-features-lua=true --ceu-features-thread=true --ceu-features-dynamic=true --ceu-err-unused=pass \
 		    --env --env-types=env/types.h --env-threads=env/threads.h --env-main=env/main.c \
             --cc --cc-args=\"-llua5.3 -lpthread\"                           \
-	             --cc-output=/tmp/$$(basename $$i .ceu);                    \
+	             --cc-output=./tmp/$$(basename $$i .ceu);                    \
 		ceu --pre --pre-input=$$i --pre-args=\"-I./include\"                \
 	        --ceu --ceu-features-async=true --ceu-features-os=true --ceu-features-lua=true --ceu-features-thread=true --ceu-features-dynamic=true --ceu-err-unused=pass \
 		    --env --env-types=env/types.h --env-threads=env/threads.h --env-main=env/main.c \
             --cc --cc-args="-llua5.3 -lpthread"                             \
-	             --cc-output=/tmp/$$(basename $$i .ceu);                    \
-		/tmp/$$(basename $$i .ceu);	                                        \
+	             --cc-output=./tmp/$$(basename $$i .ceu);                    \
+		./tmp/$$(basename $$i .ceu);	                                        \
 		echo ">>> OK";                                                      \
 		echo;                                                               \
 		echo;                                                               \
