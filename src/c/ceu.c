@@ -130,7 +130,7 @@ typedef struct tceu_code_mem {
 #endif
     bool has_term;
     tceu_ntrl   trails_n;
-    tceu_trl    _trails[0];
+    tceu_trl    _trails[1];
 } tceu_code_mem;
 
 #ifdef CEU_FEATURES_THREAD
