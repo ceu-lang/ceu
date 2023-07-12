@@ -6,6 +6,8 @@ LUA_EXE   = lua5.3
 CEU_EXE   = /usr/local/bin/ceu
 CEU_ARGS_ = --ceu-features-trace=true --ceu-err-unused=pass $(CEU_ARGS)
 CC_ARGS_  = -llua5.3 -lpthread $(CC_ARGS)
+GLUE_EXE  = /usr/local/bin/glue
+SRLUA_EXE = /usr/local/bin/srlua
 
 ###############################################################################
 # DO NOT EDIT
@@ -16,6 +18,22 @@ compiler:
 
 install:
 	install ./src/lua/ceu $(CEU_EXE)
+
+docker-build:
+	sudo docker build -t ceu -f ./etc/ceu-binary/Dockerfile .
+
+docker-install:
+	sudo docker run -v $(shell pwd)/bin:/ceu/bin/:z ceu
+
+install-srlua:
+	git clone https://github.com/LuaDist/srlua.git
+	cd srlua && sed -i 's/-ansi//g; s/-llua/-llua5.3/g; s/gcc/gcc -static/g' Makefile && make
+	install ./srlua/glue $(GLUE_EXE)
+	install ./srlua/srlua $(SRLUA_EXE)
+
+binary:
+	glue ./srlua/srlua ./src/lua/ceu ./bin/ceu.bin
+	chmod +x ./bin/ceu.bin
 
 one:
 	ceu --pre --pre-input=$(CEU_SRC) --pre-args=\"-I./include\"                \
